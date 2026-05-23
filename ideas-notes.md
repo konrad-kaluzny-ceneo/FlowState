@@ -1,9 +1,9 @@
-# Smart Day
+# Flow State
 
 ## Cel aplikacji
 
 Aplikacja wspierająca osoby pracujące w dynamicznym i zmiennym środowisku.  
-Jeżeli Twój dzień składa się z kilkunastu lub kilkudziesięciu różnych zadań, przełączania kontekstów, oczekiwania na pipeline’y, pracy rozwojowej pomiędzy „gaszeniem pożarów” — Smart Day ma pomóc Ci zakończyć dzień z poczuciem kontroli zamiast przebodźcowania.
+Jeżeli Twój dzień składa się z kilkunastu lub kilkudziesięciu różnych zadań, przełączania kontekstów, oczekiwania na pipeline’y, pracy rozwojowej pomiędzy „gaszeniem pożarów” — Flow State ma pomóc Ci zakończyć dzień z poczuciem kontroli zamiast przebodźcowania.
 
 Główne założenia:
 
