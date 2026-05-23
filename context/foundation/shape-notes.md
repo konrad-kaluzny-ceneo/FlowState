@@ -91,30 +91,30 @@ Acknowledged on 2026-05-23: 6-week MVP (hard deadline 2026-07-05) requires susta
 - FR-004: User can add a task to their list. Priority: must-have
   > Socrates: Counter-argument considered: "tasks could be imported from existing tools instead." Resolution: kept; user needs to name what they're working on, task list is the minimal shape.
 - FR-005: User can edit a task. Priority: must-have
-  > Socrates: No counter-argument; stands as written — core task management logic.
+  > Socrates: Counter-argument considered: "editing invites over-polishing — users might endlessly refine task names instead of starting work." Resolution: kept; editing is essential for correcting mistakes and updating scope as understanding evolves.
 - FR-006: User can delete a task. Priority: must-have
-  > Socrates: No counter-argument; stands as written — core task management logic.
+  > Socrates: Counter-argument considered: "deletion destroys history — a completed/archived state would preserve the record for session analytics." Resolution: kept; users need a clean list to reduce cognitive load; archival is a post-MVP concern.
 - FR-007: User can mark a task as completed. Priority: must-have
-  > Socrates: No counter-argument; stands as written — core task management logic.
+  > Socrates: Counter-argument considered: "completion is binary — what about tasks that are partially done or blocked?" Resolution: kept; binary completion is the simplest model that closes the Pomodoro loop; partial states add complexity without MVP value.
 - FR-008: User can view active tasks and completed tasks in separate, clearly distinguished lists. Priority: must-have
-  > Socrates: No counter-argument; stands as written — core task management logic.
+  > Socrates: Counter-argument considered: "two lists add visual noise — a single list with strikethrough would be simpler." Resolution: kept; separation reinforces the end-of-day accomplishment feeling (seeing what's done vs. what remains).
 - FR-009: User can select a task to focus on before starting a Pomodoro cycle. Priority: must-have
-  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
+  > Socrates: Counter-argument considered: "manual selection defeats the purpose of the scoring suggestion — why not auto-select?" Resolution: kept; user autonomy is a core principle; the system suggests, the user decides.
 
 ### Pomodoro
 
 - FR-010: User can configure the work cycle duration. Priority: must-have
-  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
+  > Socrates: Counter-argument considered: "configurability adds UI complexity — a fixed 25-minute cycle is the Pomodoro standard and simpler to build." Resolution: kept; different work types (deep work vs. admin) benefit from different cycle lengths; configurability supports the adaptive focus rule.
 - FR-011: User can configure the break cycle duration. Priority: must-have
-  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
+  > Socrates: Counter-argument considered: "break duration could be auto-calculated from session fatigue instead of user-configured." Resolution: kept; auto-calculation is a post-MVP sophistication; user-set breaks are the minimal viable control.
 - FR-012: User can start a Pomodoro cycle linked to the selected task. Priority: must-have
-  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
+  > Socrates: Counter-argument considered: "linking cycle to task adds coupling — what if the user wants to work on something untracked?" Resolution: kept; the link is what makes session context meaningful for scoring; untracked work defeats the feedback loop.
 - FR-013: User receives an in-browser audio signal and a UI prompt when a work cycle ends. Priority: must-have
-  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
+  > Socrates: Counter-argument considered: "audio signals can be disruptive in open offices or shared spaces." Resolution: kept; the signal is the mindful transition trigger — without it, cycles end silently and the user stays on autopilot. Volume/mute is a UX detail, not an FR change.
 - FR-014: User confirms the transition to the next cycle (work → break → work). Priority: must-have
-  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
+  > Socrates: Counter-argument considered: "forced confirmation adds friction — auto-transition would keep flow uninterrupted." Resolution: kept; forced confirmation IS the mindfulness mechanic — it prevents autopilot, which is the core product differentiator.
 - FR-015: When a user marks a task done mid-cycle, the system prompts them to choose: pick the next task and continue the current cycle, or end the cycle and take a break now. Priority: must-have
-  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
+  > Socrates: Counter-argument considered: "mid-cycle completion is rare — most tasks span multiple cycles, making this an edge case not worth the UI complexity." Resolution: kept; the prompt is a mindful decision point that prevents the user from mindlessly jumping to the next task without checking their state.
 
 ### Delight
 
@@ -124,17 +124,17 @@ Acknowledged on 2026-05-23: 6-week MVP (hard deadline 2026-07-05) requires susta
 ### Adaptive Focus (scoring + mindful transitions)
 
 - FR-017: User can assign a work type (deep work / admin / reactive) to a task. Priority: must-have
-  > Socrates: No counter-argument; stands as written — required input for scoring rule.
+  > Socrates: Counter-argument considered: "three categories may not cover all work — what about creative, collaborative, or learning tasks?" Resolution: kept; three types are the minimal taxonomy that enables meaningful scoring; more categories add decision cost at task creation without proportional scoring benefit in MVP.
 - FR-018: User can assign a weight/urgency (1–3 scale) to a task. Priority: must-have
-  > Socrates: No counter-argument; stands as written — required input for scoring rule.
+  > Socrates: Counter-argument considered: "users are bad at self-assessing urgency — everything becomes a 3." Resolution: kept; even imperfect urgency signals improve over no signal; the scoring formula can weight other factors (type fit, energy) more heavily if urgency clusters.
 - FR-019: System tracks session context (cycles completed, interruptions count, time of day). Priority: must-have
-  > Socrates: No counter-argument; stands as written — required input for scoring rule.
+  > Socrates: Counter-argument considered: "tracking interruptions requires defining what counts as an interruption — mid-cycle task switch? page refresh? manual pause?" Resolution: kept; interruption = user-initiated task change or mid-cycle completion; the definition is narrow and measurable.
 - FR-020: After each cycle, user completes a mindful check-in (declares current energy/readiness state). Priority: must-have
-  > Socrates: No counter-argument; stands as written — core mindfulness mechanic.
+  > Socrates: Counter-argument considered: "check-in fatigue — after 6+ cycles the user will click through without thinking, making the data meaningless." Resolution: kept; the check-in is intentionally minimal (one tap from 3 options); if fatigue occurs, that itself is a signal the session should end.
 - FR-021: System suggests the next task based on scoring (weight × work type fit × session context). Priority: must-have
-  > Socrates: No counter-argument; stands as written — the domain rule made concrete.
+  > Socrates: Counter-argument considered: "a deterministic formula may feel robotic or wrong — users might distrust suggestions they can predict." Resolution: kept; predictability builds trust; the user always sees the rationale and can override; a black-box model would be worse for trust.
 - FR-022: User can accept the suggestion or manually override with a different task. Priority: must-have
-  > Socrates: No counter-argument; stands as written — user autonomy preserved.
+  > Socrates: Counter-argument considered: "allowing override means users can ignore the system entirely, reducing it to a fancy task list." Resolution: kept; override preserves autonomy — the value is in the suggestion + rationale, not in enforcement; forced compliance would undermine the mindfulness premise.
 
 ## User Stories
 
@@ -187,6 +187,10 @@ After every cycle-end check-in, the system presents a suggested next task with a
 - No team or social features — no shared tasks, no team visibility, no manager view. Single-user experience only.
 - No AI/ML-powered scoring — the suggestion algorithm is a simple deterministic formula (weight × type fit × session context), not a trained model. No LLM, no personalization beyond current session state.
 - No integrations with external tools — no Jira, Todoist, Google Calendar, or Slack import/export in MVP.
+
+## Open Questions
+
+None — all elements resolved during shaping. Quality check passed with no gaps.
 
 
 ## Quality cross-check
