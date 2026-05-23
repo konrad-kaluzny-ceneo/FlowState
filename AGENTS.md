@@ -4,7 +4,7 @@ FlowState is a Next.js 15 (App Router) application using tRPC 11, Drizzle ORM wi
 
 ## Build, Test, and Development Commands
 
-See `@package.json` scripts section. Key commands: `npm run build`, `npm run test`, `npm run check`, `npm run db:push`.
+See `@package.json` scripts section.
 
 ## Project Structure
 
@@ -33,6 +33,5 @@ Commits: `type(scope): msg`. Allowed types: `feat`, `docs`, `init`. No trailing 
 
 ## Environment & Secrets
 
-- Copy `.env.example` to `.env` for local development. Never commit `.env`.
 - All env vars must be declared in `@src/env.js` (Zod schema). Build fails on missing vars unless `SKIP_ENV_VALIDATION=1`.
 - Currently required: `DATABASE_URL` (SQLite file path, e.g. `file:./db.sqlite`).
