@@ -117,7 +117,8 @@ htmlcov/
 ._*
 
 # Custom folder icons
-Icon
+Icon
+
 
 # Volume root files
 .DocumentRevisions-V100
@@ -203,3 +204,33 @@ x86/
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+# from t3
+/.pnp
+.pnp.js
+
+# database
+/prisma/db.sqlite
+/prisma/db.sqlite-journal
+db.sqlite
+
+# next.js (additional)
+next-env.d.ts
+
+# production
+/build
+
+# misc
+*.pem
+
+# debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# vercel
+.vercel
+
+# idea files
+.idea
