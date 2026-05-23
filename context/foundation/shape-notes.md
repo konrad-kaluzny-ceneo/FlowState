@@ -3,9 +3,18 @@ project: "FlowState"
 context_type: greenfield
 created: 2026-05-23
 updated: 2026-05-23
+product_type: web-app
+target_scale:
+  users: small
+  qps: low
+  data_volume: small
+timeline_budget:
+  mvp_weeks: 6
+  hard_deadline: 2026-07-05
+  after_hours_only: true
 checkpoint:
-  current_phase: 6
-  phases_completed: [1, 2, 3, 4, 5]
+  current_phase: 8
+  phases_completed: [1, 2, 3, 4, 5, 6, 7]
   gray_areas_resolved:
     - topic: "pain category"
       decision: "workflow friction + decision paralysis + coordination overhead"
@@ -26,7 +35,7 @@ checkpoint:
     - topic: "task completion celebration"
       decision: "full surprise animation — distinct, delightful, unexpected (nice-to-have)"
   frs_drafted: 22
-  quality_check_status: pending
+  quality_check_status: accepted
 ---
 
 ## Vision & Problem Statement
@@ -171,3 +180,22 @@ After every cycle-end check-in, the system presents a suggested next task with a
 - The product works correctly on the two latest major versions of Chrome, Firefox, Safari, and Edge (desktop).
 - Session history (completed cycles, check-ins, suggestions) remains accessible to the user for a minimum of 90 days. After that period it may be archived but not deleted without warning.
 
+## Non-Goals
+
+- No mobile app or native push notifications — MVP is browser-only; notifications exist only within the active tab.
+- No historical analytics or dashboards — session history is stored per NFR, but no charts, trends, weekly reports, or pattern visualizations in MVP.
+- No team or social features — no shared tasks, no team visibility, no manager view. Single-user experience only.
+- No AI/ML-powered scoring — the suggestion algorithm is a simple deterministic formula (weight × type fit × session context), not a trained model. No LLM, no personalization beyond current session state.
+- No integrations with external tools — no Jira, Todoist, Google Calendar, or Slack import/export in MVP.
+
+
+## Quality cross-check
+
+All elements present — no gaps. Quality check passed on 2026-05-23.
+
+- Access Control: present
+- Business Logic: present (one-sentence rule + supporting detail)
+- Project artifacts: present
+- Timeline-cost acknowledged: present (6-week timeline, acknowledged)
+- Non-Goals: present (5 entries)
+- Preserved behavior: n/a (greenfield)
