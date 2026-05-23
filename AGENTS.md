@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-FlowState is a Next.js 15 (App Router) application using tRPC 11, Drizzle ORM with SQLite (@libsql), React 19, Tailwind CSS 4, and TypeScript 5.8. Scaffolded via create-t3-app (v7.40.0).
+Stack: see `@package.json`. Scaffolded via create-t3-app (v7.40.0).
 
 ## Tripwires
 
@@ -10,13 +10,8 @@ FlowState is a Next.js 15 (App Router) application using tRPC 11, Drizzle ORM wi
 - Drizzle migrations must be generated with `npx drizzle-kit generate` before `npx drizzle-kit migrate`. Running migrate without a pending generation silently does nothing.
 - tRPC middleware runs in declaration order — auth middleware must come before any procedure that reads `ctx.session`.
 
-## Build, Test, and Development Commands
-
-See `@package.json` scripts section.
-
 ## Project Structure
 
-See `@src/` for full layout. Non-obvious conventions:
 - Page-level components go in `_components/` co-located with their route.
 - tRPC routers go in `src/server/api/routers/<feature>.ts`.
 - Foundation docs live in `context/foundation/` — see `@context/foundation/prd.md` for product requirements and `@context/foundation/tech-stack.md` for stack rationale.
@@ -30,13 +25,11 @@ See `@src/` for full layout. Non-obvious conventions:
 
 ## Testing
 
-- Setup file: `@src/test/setup.ts` (extends matchers via `@testing-library/jest-dom`).
-- Place test files in `src/test/` or co-locate as `*.test.ts(x)`.
 - Run a single test: `npx vitest run src/test/smoke.test.ts`
 
 ## Commit Conventions
 
-Commits: `type(scope): msg`. Allowed types: `feat`, `docs`, `init`. No trailing period.
+Allowed commit types: `feat`, `docs`, `init` only. No trailing period.
 
 ## Environment & Secrets
 
