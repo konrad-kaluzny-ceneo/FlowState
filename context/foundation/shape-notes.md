@@ -4,8 +4,8 @@ context_type: greenfield
 created: 2026-05-23
 updated: 2026-05-23
 checkpoint:
-  current_phase: 4.5
-  phases_completed: [1, 2, 3]
+  current_phase: 6
+  phases_completed: [1, 2, 3, 4, 5]
   gray_areas_resolved:
     - topic: "pain category"
       decision: "workflow friction + decision paralysis + coordination overhead"
@@ -25,8 +25,7 @@ checkpoint:
       decision: "user is prompted to choose: pick next task and continue cycle, or take a break now"
     - topic: "task completion celebration"
       decision: "full surprise animation — distinct, delightful, unexpected (nice-to-have)"
-  frs_drafted: 15
-  frs_drafted: 0
+  frs_drafted: 22
   quality_check_status: pending
 ---
 
@@ -72,30 +71,61 @@ Acknowledged on 2026-05-23: 6-week MVP (hard deadline 2026-07-05) requires susta
 ### Authentication
 
 - FR-001: User can register an account. Priority: must-have
+  > Socrates: Counter-argument considered: "registration adds friction before value." Resolution: kept; registration is required for data isolation.
 - FR-002: User can log in to their account. Priority: must-have
+  > Socrates: Counter-argument considered: "login is mechanically implied by registration." Resolution: kept; login is the gate to user data.
 - FR-003: User can log out. Priority: must-have
+  > Socrates: Counter-argument considered: "nobody logs out on a personal device." Resolution: kept; required for session security.
 
 ### Task List
 
 - FR-004: User can add a task to their list. Priority: must-have
+  > Socrates: Counter-argument considered: "tasks could be imported from existing tools instead." Resolution: kept; user needs to name what they're working on, task list is the minimal shape.
 - FR-005: User can edit a task. Priority: must-have
+  > Socrates: No counter-argument; stands as written — core task management logic.
 - FR-006: User can delete a task. Priority: must-have
+  > Socrates: No counter-argument; stands as written — core task management logic.
 - FR-007: User can mark a task as completed. Priority: must-have
+  > Socrates: No counter-argument; stands as written — core task management logic.
 - FR-008: User can view active tasks and completed tasks in separate, clearly distinguished lists. Priority: must-have
+  > Socrates: No counter-argument; stands as written — core task management logic.
 - FR-009: User can select a task to focus on before starting a Pomodoro cycle. Priority: must-have
+  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
 
 ### Pomodoro
 
 - FR-010: User can configure the work cycle duration. Priority: must-have
+  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
 - FR-011: User can configure the break cycle duration. Priority: must-have
+  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
 - FR-012: User can start a Pomodoro cycle linked to the selected task. Priority: must-have
+  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
 - FR-013: User receives an in-browser audio signal and a UI prompt when a work cycle ends. Priority: must-have
+  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
 - FR-014: User confirms the transition to the next cycle (work → break → work). Priority: must-have
+  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
 - FR-015: When a user marks a task done mid-cycle, the system prompts them to choose: pick the next task and continue the current cycle, or end the cycle and take a break now. Priority: must-have
+  > Socrates: No counter-argument; stands as written — core Pomodoro logic.
 
 ### Delight
 
 - FR-016: User sees a full surprise animation when they complete a task. Priority: nice-to-have
+  > Socrates: Counter-argument considered: "delight features only land when the core loop is already smooth — shipping this before the Pomodoro cycle feels rock-solid risks polishing a broken experience." Resolution: kept as nice-to-have; explicitly deferred until core loop is solid.
+
+### Adaptive Focus (scoring + mindful transitions)
+
+- FR-017: User can assign a work type (deep work / admin / reactive) to a task. Priority: must-have
+  > Socrates: No counter-argument; stands as written — required input for scoring rule.
+- FR-018: User can assign a weight/urgency (1–3 scale) to a task. Priority: must-have
+  > Socrates: No counter-argument; stands as written — required input for scoring rule.
+- FR-019: System tracks session context (cycles completed, interruptions count, time of day). Priority: must-have
+  > Socrates: No counter-argument; stands as written — required input for scoring rule.
+- FR-020: After each cycle, user completes a mindful check-in (declares current energy/readiness state). Priority: must-have
+  > Socrates: No counter-argument; stands as written — core mindfulness mechanic.
+- FR-021: System suggests the next task based on scoring (weight × work type fit × session context). Priority: must-have
+  > Socrates: No counter-argument; stands as written — the domain rule made concrete.
+- FR-022: User can accept the suggestion or manually override with a different task. Priority: must-have
+  > Socrates: No counter-argument; stands as written — user autonomy preserved.
 
 ## User Stories
 
@@ -110,4 +140,34 @@ Acknowledged on 2026-05-23: 6-week MVP (hard deadline 2026-07-05) requires susta
 - The audio signal plays and a UI prompt appears at cycle end — the timer does not auto-transition
 - Completed tasks move to the completed list immediately on marking; they do not disappear
 - A user who refreshes the page mid-session does not lose their task list or cycle configuration
+
+## Business Logic
+
+FlowState observes the user's session state (interruption count, completed cycles, time of day, declared energy at each transition) and suggests which task to work on next — matching work type to current focus capacity while enforcing mindful transitions between cycles.
+
+**Inputs the rule consumes (user-facing):**
+- Task weight/urgency (1–3 scale, set by user at task creation)
+- Task work type (deep work / admin / reactive, set by user at task creation)
+- Mindful check-in response (energy/readiness declaration after each cycle)
+
+**Inputs the rule consumes (session-derived):**
+- Number of Pomodoro cycles completed in the current session
+- Number of interruptions (task switches, mid-cycle completions) in the current session
+- Time of day
+
+**Output:**
+A ranked suggestion of which task to work on next. The suggestion favors high-weight tasks when the user declares high energy and session context supports deep work; it shifts toward lighter admin/reactive tasks when energy is low, interruptions are high, or the session is late in the day.
+
+**How the user encounters it:**
+After every cycle-end check-in, the system presents a suggested next task with a brief rationale ("deep work — you're fresh and uninterrupted" or "light admin — energy dipping after 4 cycles"). The user can accept with one click or override by selecting any other task from their list. The override is not penalized — it feeds back into the session context for the next suggestion.
+
+## Non-Functional Requirements
+
+- User sees acknowledgement of any action (task add, cycle start, check-in) within 200ms. Operations requiring longer processing (suggestion generation) provide continuous visible feedback if they exceed 1s.
+- A configured Pomodoro cycle does not drift by more than ±2 seconds from the set duration, regardless of whether the browser tab is active or in the background.
+- A browser crash, page refresh, or connection loss does not cause loss of: task list, cycle configuration, or current session state. The user returns to the state before the interruption.
+- One user's data (tasks, session history, check-ins) is never visible to another user. No query returns cross-account data.
+- Mental state data (check-in responses, energy patterns) does not leave the system in a form that enables user identification. It is not shared with third parties or used for purposes other than generating suggestions for the same user.
+- The product works correctly on the two latest major versions of Chrome, Firefox, Safari, and Edge (desktop).
+- Session history (completed cycles, check-ins, suggestions) remains accessible to the user for a minimum of 90 days. After that period it may be archived but not deleted without warning.
 
