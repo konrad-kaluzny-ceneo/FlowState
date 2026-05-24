@@ -78,7 +78,7 @@ This plan integrates Neon Auth into the FlowState Next.js application, covering 
 - [ ] 5. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Add userId column to tasks table and update task router
+- [x] 6. Add userId column to tasks table and update task router
   - [x] 6.1 Add `userId` column and index to the tasks schema in `src/server/db/schema.ts`
     - Add `userId: varchar("user_id", { length: 255 }).notNull()` to the tasks table
     - Add `index("task_user_id_idx").on(t.userId)` to the table indexes
@@ -94,17 +94,17 @@ This plan integrates Neon Auth into the FlowState Next.js application, covering 
     - **delete**: Add `and(eq(tasks.id, id), eq(tasks.userId, ctx.session.user.id))` to the where clause; throw `NOT_FOUND` if no rows affected
     - _Requirements: 9.2, 9.3, 9.4, 9.5, 9.6_
 
-  - [ ] 6.3 Write property tests for task creation ownership
+  - [x] 6.3 Write property tests for task creation ownership
     - **Property 9: Task creation ownership**
     - **Validates: Requirements 9.2**
     - Use fast-check to generate user IDs and task titles, verify the created task always has the correct userId
 
-  - [ ] 6.4 Write property tests for task query isolation
+  - [x] 6.4 Write property tests for task query isolation
     - **Property 10: Task query isolation**
     - **Validates: Requirements 9.3**
     - Use fast-check to generate multi-user task sets, verify each user only sees their own tasks
 
-  - [ ] 6.5 Write property tests for task mutation ownership
+  - [x] 6.5 Write property tests for task mutation ownership
     - **Property 11: Task mutation ownership with NOT_FOUND on failure**
     - **Validates: Requirements 9.4, 9.5**
     - Use fast-check to generate user/task ownership combinations, verify success only when userId matches and NOT_FOUND otherwise
@@ -113,7 +113,7 @@ This plan integrates Neon Auth into the FlowState Next.js application, covering 
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 8. Implement auth UI pages
-  - [ ] 8.1 Create sign-up page at `src/app/auth/sign-up/page.tsx` with server action
+  - [x] 8.1 Create sign-up page at `src/app/auth/sign-up/page.tsx` with server action
     - Create a form with name (1–100 chars), email (valid format, max 254 chars), and password (8–128 chars) fields
     - Use `useActionState` (React 19) for pending state and error handling
     - Implement client-side Zod validation: reject empty/whitespace-only names, invalid emails, and passwords outside 8–128 chars
@@ -124,7 +124,7 @@ This plan integrates Neon Auth into the FlowState Next.js application, covering 
     - Use Tailwind CSS, responsive from 320px to 1920px
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 10.2, 10.3, 10.4, 10.5, 10.6_
 
-  - [ ] 8.2 Create sign-in page at `src/app/auth/sign-in/page.tsx` with server action
+  - [x] 8.2 Create sign-in page at `src/app/auth/sign-in/page.tsx` with server action
     - Create a form with email (max 254 chars) and password (max 128 chars) fields
     - Use `useActionState` (React 19) for pending state and error handling
     - Implement client-side validation: reject empty email or password fields
@@ -135,23 +135,23 @@ This plan integrates Neon Auth into the FlowState Next.js application, covering 
     - Use Tailwind CSS, responsive from 320px to 1920px
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 10.1, 10.3, 10.4, 10.5, 10.6_
 
-  - [ ] 8.3 Write property tests for sign-up client-side validation
+  - [-] 8.3 Write property tests for sign-up client-side validation
     - **Property 4: Sign-up client-side validation rejects invalid input**
     - **Validates: Requirements 4.4**
     - Use fast-check to generate invalid names (empty/whitespace) and invalid emails, verify form shows errors and does not submit
 
-  - [ ] 8.4 Write property tests for password length boundary validation
+  - [-] 8.4 Write property tests for password length boundary validation
     - **Property 5: Password length boundary validation**
     - **Validates: Requirements 4.5**
     - Use fast-check to generate passwords of varying lengths, verify rejection below 8 and above 128, acceptance between 8–128
 
-  - [ ] 8.5 Write property tests for sign-in client-side validation
+  - [-] 8.5 Write property tests for sign-in client-side validation
     - **Property 6: Sign-in client-side validation rejects empty fields**
     - **Validates: Requirements 5.6**
     - Use fast-check to generate empty/non-empty field combinations, verify validation behavior
 
 - [ ] 9. Implement sign-out functionality
-  - [ ] 9.1 Create a sign-out UI component and wire into the app layout
+  - [-] 9.1 Create a sign-out UI component and wire into the app layout
     - Create a `UserMenu` component (or similar) that displays the user's name and a sign-out button
     - On sign-out click, call `authClient.signOut()` from the client SDK
     - On success: clear React Query cache, redirect to `/auth/sign-in`

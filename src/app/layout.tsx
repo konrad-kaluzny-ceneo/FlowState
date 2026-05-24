@@ -3,7 +3,9 @@ import "~/styles/globals.css";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 
+import { auth } from "~/lib/auth/server";
 import { TRPCReactProvider } from "~/trpc/react";
+import { UserMenu } from "./_components/user-menu";
 
 export const metadata: Metadata = {
 	title: "Create T3 App",
@@ -16,13 +18,31 @@ const geist = Geist({
 	variable: "--font-geist-sans",
 });
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
 }: Readonly<{ children: React.ReactNode }>) {
+	let userName: string | null = null;
+
+	try {
+		const result = await auth.getSession();
+		if (result.data?.user?.name) {
+			userName = result.data.user.name;
+		}
+	} catch {
+		userName = null;
+	}
+
 	return (
 		<html className={`${geist.variable}`} lang="en">
 			<body>
-				<TRPCReactProvider>{children}</TRPCReactProvider>
+				<TRPCReactProvider>
+					{userName && (
+						<header className="fixed top-0 right-0 z-50 p-4">
+							<UserMenu userName={userName} />
+						</header>
+					)}
+					{children}
+				</TRPCReactProvider>
 			</body>
 		</html>
 	);

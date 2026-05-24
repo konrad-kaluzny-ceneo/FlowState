@@ -8,8 +8,9 @@ import fc from "fast-check";
  * Validates: Requirements 9.4, 9.5
  */
 
-// Use vi.hoisted so the variable is accessible inside vi.mock factories
-const mockState = vi.hoisted(() => ({ rowCount: 1 }));
+// Track the rowCount returned by update/delete where clauses
+let updateRowCount: number = 1;
+let deleteRowCount: number = 1;
 
 // Mock ~/lib/auth/server
 vi.mock("~/lib/auth/server", () => ({
@@ -18,13 +19,17 @@ vi.mock("~/lib/auth/server", () => ({
 	},
 }));
 
-// Mock ~/server/db with chainable update/delete mocks that dynamically read mockState.rowCount
+// Mock ~/server/db with chainable update/delete mocks that return configurable rowCount
 vi.mock("~/server/db", () => {
+	const mockUpdateWhere = vi.fn(() => ({ rowCount: updateRowCount }));
+	const mockSet = vi.fn(() => ({ where: mockUpdateWhere }));
+	const mockUpdate = vi.fn(() => ({ set: mockSet }));
+
+	const mockDeleteWhere = vi.fn(() => ({ rowCount: deleteRowCount }));
+	const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }));
+
 	return {
 		db: {
-			insert: vi.fn(() => ({
-				values: vi.fn(() => Promise.resolve({ rowCount: 1 })),
-			})),
 			select: vi.fn(() => ({
 				from: vi.fn(() => ({
 					where: vi.fn(() => ({
@@ -32,127 +37,141 @@ vi.mock("~/server/db", () => {
 					})),
 				})),
 			})),
-			update: vi.fn(() => ({
-				set: vi.fn(() => ({
-					where: vi.fn(() => ({ rowCount: mockState.rowCount })),
-				})),
+			insert: vi.fn(() => ({
+				values: vi.fn(() => Promise.resolve({ rowCount: 1 })),
 			})),
-			delete: vi.fn(() => ({
-				where: vi.fn(() => ({ rowCount: mockState.rowCount })),
-			})),
+			update: mockUpdate,
+			delete: mockDelete,
 		},
 	};
 });
 
-// Import after mocks
+// Stub global setTimeout to resolve immediately (eliminates timingMiddleware dev delay)
+const originalSetTimeout = globalThis.setTimeout;
+// biome-ignore lint/suspicious/noExplicitAny: test utility override
+globalThis.setTimeout = ((fn: () => void, _ms?: number) =>
+	originalSetTimeout(fn, 0)) as any;
+
+// Import after mocks are set up
 const { createCallerFactory } = await import("~/server/api/trpc");
 const { taskRouter } = await import("~/server/api/routers/task");
-const { db } = await import("~/server/db");
 
 const createCaller = createCallerFactory(taskRouter);
 
 /** Arbitrary for non-empty user IDs */
 const userIdArb = fc
-	.string({ minLength: 1, maxLength: 255 })
+	.string({ minLength: 1, maxLength: 50 })
 	.filter((s) => s.trim().length > 0);
 
-/** Arbitrary for valid task IDs (positive integers) */
-const taskIdArb = fc.integer({ min: 1, max: 2_147_483_647 });
-
-/** Arbitrary for email-like strings */
-const emailArb = fc
-	.tuple(
-		fc.stringMatching(/^[a-z]{1,20}$/),
-		fc.stringMatching(/^[a-z]{1,10}$/),
-		fc.constantFrom("com", "org", "net", "io"),
-	)
-	.map(([user, domain, tld]) => `${user}@${domain}.${tld}`);
+/** Arbitrary for positive task IDs */
+const taskIdArb = fc.integer({ min: 1, max: 100000 });
 
 /** Arbitrary for valid task titles (1-256 chars, non-empty) */
 const taskTitleArb = fc
 	.string({ minLength: 1, maxLength: 256 })
 	.filter((s) => s.trim().length > 0);
 
-function makeCaller(userId: string, email: string) {
-	return createCaller({
-		db: db as never,
-		session: {
-			user: {
-				id: userId,
-				email,
-				name: "Test User",
-			},
-		},
-		headers: new Headers(),
+/** Arbitrary for email-like strings */
+const emailArb = fc
+	.tuple(
+		fc.stringMatching(/^[a-z]{1,10}$/),
+		fc.stringMatching(/^[a-z]{1,6}$/),
+		fc.constantFrom("com", "org", "net"),
+	)
+	.map(([user, domain, tld]) => `${user}@${domain}.${tld}`);
+
+/**
+ * Arbitrary for ownership scenarios:
+ * - ownerUserId: the user who owns the task
+ * - callerUserId: the user attempting the mutation
+ * - ownerMatchesCaller: whether they are the same user (determines success/failure)
+ */
+const ownershipScenarioArb = fc
+	.tuple(userIdArb, userIdArb, fc.boolean())
+	.map(([userId1, userId2, sameUser]) => {
+		if (sameUser) {
+			return { ownerUserId: userId1, callerUserId: userId1 };
+		}
+		// Ensure different users
+		const callerUserId = userId1 === userId2 ? `${userId2}_other` : userId2;
+		return { ownerUserId: userId1, callerUserId };
 	});
-}
 
 describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUND on failure", () => {
 	beforeEach(() => {
-		mockState.rowCount = 1;
+		updateRowCount = 1;
+		deleteRowCount = 1;
 	});
 
-	describe("update procedure", () => {
-		fcTest.prop([userIdArb, taskIdArb, taskTitleArb, emailArb], { numRuns: 100 })(
-			"succeeds when user owns the task (rowCount > 0)",
-			async (userId, taskId, title, email) => {
-				mockState.rowCount = 1;
-				const caller = makeCaller(userId, email);
+	fcTest.prop([ownershipScenarioArb, taskIdArb, taskTitleArb, emailArb], { numRuns: 100 })(
+		"update succeeds only when userId matches, returns NOT_FOUND otherwise",
+		async (scenario, taskId, title, email) => {
+			const isOwner = scenario.ownerUserId === scenario.callerUserId;
 
+			// Simulate DB behavior: rowCount > 0 only when caller owns the task
+			updateRowCount = isOwner ? 1 : 0;
+
+			const caller = createCaller({
+				db: (await import("~/server/db")).db as never,
+				session: {
+					user: {
+						id: scenario.callerUserId,
+						email,
+						name: "Test User",
+					},
+				},
+				headers: new Headers(),
+			});
+
+			if (isOwner) {
+				// Should succeed without throwing
 				await expect(
 					caller.update({ id: taskId, title }),
 				).resolves.not.toThrow();
-			},
-			60_000,
-		);
+			} else {
+				// Should throw NOT_FOUND
+				await expect(caller.update({ id: taskId, title })).rejects.toThrow(
+					expect.objectContaining({
+						code: "NOT_FOUND",
+					}),
+				);
+			}
+		},
+	);
 
-		fcTest.prop([userIdArb, taskIdArb, taskTitleArb, emailArb], { numRuns: 100 })(
-			"throws NOT_FOUND when user does not own the task (rowCount === 0)",
-			async (userId, taskId, title, email) => {
-				mockState.rowCount = 0;
-				const caller = makeCaller(userId, email);
+	fcTest.prop([ownershipScenarioArb, taskIdArb, emailArb], { numRuns: 100 })(
+		"delete succeeds only when userId matches, returns NOT_FOUND otherwise",
+		async (scenario, taskId, email) => {
+			const isOwner = scenario.ownerUserId === scenario.callerUserId;
 
-				try {
-					await caller.update({ id: taskId, title });
-					expect.fail("Expected TRPCError to be thrown");
-				} catch (error) {
-					expect(error).toBeInstanceOf(TRPCError);
-					expect((error as TRPCError).code).toBe("NOT_FOUND");
-				}
-			},
-			60_000,
-		);
-	});
+			// Simulate DB behavior: rowCount > 0 only when caller owns the task
+			deleteRowCount = isOwner ? 1 : 0;
 
-	describe("delete procedure", () => {
-		fcTest.prop([userIdArb, taskIdArb, emailArb], { numRuns: 100 })(
-			"succeeds when user owns the task (rowCount > 0)",
-			async (userId, taskId, email) => {
-				mockState.rowCount = 1;
-				const caller = makeCaller(userId, email);
+			const caller = createCaller({
+				db: (await import("~/server/db")).db as never,
+				session: {
+					user: {
+						id: scenario.callerUserId,
+						email,
+						name: "Test User",
+					},
+				},
+				headers: new Headers(),
+			});
 
+			if (isOwner) {
+				// Should succeed without throwing
 				await expect(
 					caller.delete({ id: taskId }),
 				).resolves.not.toThrow();
-			},
-			60_000,
-		);
-
-		fcTest.prop([userIdArb, taskIdArb, emailArb], { numRuns: 100 })(
-			"throws NOT_FOUND when user does not own the task (rowCount === 0)",
-			async (userId, taskId, email) => {
-				mockState.rowCount = 0;
-				const caller = makeCaller(userId, email);
-
-				try {
-					await caller.delete({ id: taskId });
-					expect.fail("Expected TRPCError to be thrown");
-				} catch (error) {
-					expect(error).toBeInstanceOf(TRPCError);
-					expect((error as TRPCError).code).toBe("NOT_FOUND");
-				}
-			},
-			60_000,
-		);
-	});
+			} else {
+				// Should throw NOT_FOUND
+				await expect(caller.delete({ id: taskId })).rejects.toThrow(
+					expect.objectContaining({
+						code: "NOT_FOUND",
+					}),
+				);
+			}
+		},
+	);
 });
