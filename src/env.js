@@ -15,6 +15,13 @@ export const env = createEnv({
 			(val) => val.startsWith("postgresql://") || val.startsWith("postgres://"),
 			{ message: "DATABASE_URL_UNPOOLED must be a postgresql:// or postgres:// connection string" },
 		),
+		NEON_AUTH_BASE_URL: z.string().url().refine(
+			(val) => val.startsWith("https://"),
+			{ message: "NEON_AUTH_BASE_URL must start with https://" },
+		),
+		NEON_AUTH_COOKIE_SECRET: z.string().min(32, {
+			message: "NEON_AUTH_COOKIE_SECRET must be at least 32 characters",
+		}),
 		NODE_ENV: z
 			.enum(["development", "test", "production"])
 			.default("development"),
@@ -36,6 +43,8 @@ export const env = createEnv({
 	runtimeEnv: {
 		DATABASE_URL: process.env.DATABASE_URL,
 		DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED,
+		NEON_AUTH_BASE_URL: process.env.NEON_AUTH_BASE_URL,
+		NEON_AUTH_COOKIE_SECRET: process.env.NEON_AUTH_COOKIE_SECRET,
 		NODE_ENV: process.env.NODE_ENV,
 		// NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 	},

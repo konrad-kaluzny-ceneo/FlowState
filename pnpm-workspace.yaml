@@ -13,6 +13,7 @@ onlyBuiltDependencies:
 
 # Packages approved to run build scripts (managed by `pnpm approve-builds`)
 allowBuilds:
+  core-js: true
   esbuild: true
   sharp: true
 

@@ -22,6 +22,7 @@ export const tasks = createTable(
 		id: serial("id").primaryKey(),
 		title: varchar("title", { length: 256 }).notNull(),
 		status: varchar("status", { length: 20 }).notNull().default("active"),
+		userId: varchar("user_id", { length: 255 }).notNull(),
 		createdAt: timestamp("createdAt", { withTimezone: true })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.notNull(),
@@ -29,5 +30,8 @@ export const tasks = createTable(
 			() => new Date(),
 		),
 	},
-	(t) => [index("task_status_idx").on(t.status)],
+	(t) => [
+		index("task_status_idx").on(t.status),
+		index("task_user_id_idx").on(t.userId),
+	],
 );
