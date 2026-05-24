@@ -48,6 +48,16 @@ Allowed commit types: `feat`, `docs`, `init` only. No trailing period.
 - If auth fails, run `gh auth switch --user konrad-kaluzny-ceneo` before retrying.
 - Full usage guide: see `.kiro/steering/github-cli.md`.
 
+## Neon Database CLI & MCP
+
+- **Project:** `flow-state` (ID: `hidden-hall-84768725`), region `aws-eu-central-1`, Postgres 18.
+- CLI: `neonctl` installed globally. Always pass `--project-id hidden-hall-84768725` and `--output json`.
+- Use Drizzle (`pnpm db:generate` + `pnpm db:migrate`) for app schema changes. Use Neon MCP/CLI only for exploration or out-of-band fixes.
+- Test DDL on a temporary branch first — never run untested schema changes on main.
+- Never run destructive SQL without explicit user confirmation.
+- Connection strings are secrets — reference by env var name (`DATABASE_URL`), never echo values.
+- Full usage guide: see `.kiro/steering/neon.md`.
+
 ## Vercel CLI & MCP
 
 - **Account:** `konradkaluzny-3520` (team: `konrads-projects`). Vercel CLI is installed globally.
