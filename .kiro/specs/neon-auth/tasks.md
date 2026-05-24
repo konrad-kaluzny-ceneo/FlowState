@@ -75,7 +75,7 @@ This plan integrates Neon Auth into the FlowState Next.js application, covering 
     - **Validates: Requirements 8.1, 8.2, 8.3, 8.4**
     - Use fast-check to generate context states with various session shapes and verify allow/throw behavior
 
-- [ ] 5. Checkpoint - Ensure all tests pass
+- [x] 5. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 6. Add userId column to tasks table and update task router
@@ -109,10 +109,10 @@ This plan integrates Neon Auth into the FlowState Next.js application, covering 
     - **Validates: Requirements 9.4, 9.5**
     - Use fast-check to generate user/task ownership combinations, verify success only when userId matches and NOT_FOUND otherwise
 
-- [ ] 7. Checkpoint - Ensure all tests pass
+- [x] 7. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 8. Implement auth UI pages
+- [x] 8. Implement auth UI pages
   - [x] 8.1 Create sign-up page at `src/app/auth/sign-up/page.tsx` with server action
     - Create a form with name (1–100 chars), email (valid format, max 254 chars), and password (8–128 chars) fields
     - Use `useActionState` (React 19) for pending state and error handling
@@ -135,23 +135,23 @@ This plan integrates Neon Auth into the FlowState Next.js application, covering 
     - Use Tailwind CSS, responsive from 320px to 1920px
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 10.1, 10.3, 10.4, 10.5, 10.6_
 
-  - [-] 8.3 Write property tests for sign-up client-side validation
+  - [x] 8.3 Write property tests for sign-up client-side validation
     - **Property 4: Sign-up client-side validation rejects invalid input**
     - **Validates: Requirements 4.4**
     - Use fast-check to generate invalid names (empty/whitespace) and invalid emails, verify form shows errors and does not submit
 
-  - [-] 8.4 Write property tests for password length boundary validation
+  - [x] 8.4 Write property tests for password length boundary validation
     - **Property 5: Password length boundary validation**
     - **Validates: Requirements 4.5**
     - Use fast-check to generate passwords of varying lengths, verify rejection below 8 and above 128, acceptance between 8–128
 
-  - [-] 8.5 Write property tests for sign-in client-side validation
+  - [x] 8.5 Write property tests for sign-in client-side validation
     - **Property 6: Sign-in client-side validation rejects empty fields**
     - **Validates: Requirements 5.6**
     - Use fast-check to generate empty/non-empty field combinations, verify validation behavior
 
-- [ ] 9. Implement sign-out functionality
-  - [-] 9.1 Create a sign-out UI component and wire into the app layout
+- [x] 9. Implement sign-out functionality
+  - [x] 9.1 Create a sign-out UI component and wire into the app layout
     - Create a `UserMenu` component (or similar) that displays the user's name and a sign-out button
     - On sign-out click, call `authClient.signOut()` from the client SDK
     - On success: clear React Query cache, redirect to `/auth/sign-in`
@@ -159,12 +159,12 @@ This plan integrates Neon Auth into the FlowState Next.js application, covering 
     - Render the component in the app layout for all protected routes
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-  - [ ] 9.2 Write property tests for error clearing on new submission
+  - [x] 9.2 Write property tests for error clearing on new submission
     - **Property 12: Error clearing on new submission**
     - **Validates: Requirements 10.5**
     - Use fast-check to generate error states and new submissions, verify all previous errors are cleared
 
-- [ ] 10. Final checkpoint - Ensure all tests pass
+- [x] 10. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
