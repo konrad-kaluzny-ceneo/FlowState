@@ -1,6 +1,7 @@
 # Repository Guidelines
 
 - Critical **Tech Stack:** Next.js 15, React 19, TypeScript, Vite, Drizzle, tRPC + Tanstack React Query + Zod, Tailwind CSS.
+- **Package Manager:** pnpm (strict isolated `node_modules`, no hoisting). Use `pnpm` for all install/run commands. Never use `npm` or `yarn`.
 - Rest of Stack: see `@package.json`.
 
 ## Project Structure
@@ -19,7 +20,7 @@
 ## Database
 
 - Drizzle tables must use the `createTable` helper from `@src/server/db/schema.ts` (prefixes tables with `.bootstrap-scaffold_`). Raw `sqliteTable` calls break the naming convention.
-- Drizzle migrations must be generated with `npx drizzle-kit generate` before `npx drizzle-kit migrate`. Running migrate without a pending generation silently does nothing.
+- Drizzle migrations must be generated with `pnpm drizzle-kit generate` before `pnpm drizzle-kit migrate`. Running migrate without a pending generation silently does nothing.
 - Don't write SQL migration files by hand - always use CLI to generate migration files.
 
 ## tRPC
@@ -29,7 +30,7 @@
 
 ## Testing
 
-- Run all unit tests after each milestone: `npm run test`
+- Run all unit tests after each milestone: `pnpm test`
 
 ## Commit Conventions
 

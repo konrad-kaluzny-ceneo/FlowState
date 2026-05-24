@@ -205,6 +205,9 @@ x86/
 # Built Visual Studio Code Extensions
 *.vsix
 
+# pnpm
+pnpm-debug.log*
+
 # from t3
 /.pnp
 .pnp.js

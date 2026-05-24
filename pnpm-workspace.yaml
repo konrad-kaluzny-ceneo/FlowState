@@ -1,0 +1,36 @@
+# pnpm workspace & safety configuration
+# Docs: https://pnpm.io/settings
+
+# --- Security: only allow explicitly listed packages to run lifecycle scripts ---
+# Prevents supply-chain attacks via malicious postinstall scripts.
+strictDepBuilds: true
+
+onlyBuiltDependencies:
+  - "@biomejs/biome"
+  - "@libsql/client"
+  - esbuild
+  - sharp
+
+# Packages approved to run build scripts (managed by `pnpm approve-builds`)
+allowBuilds:
+  esbuild: true
+  sharp: true
+
+# --- Supply-chain: reject packages published less than 1 day ago (pnpm 11 default) ---
+# minimumReleaseAge: 1440
+
+# --- Peer dependency handling ---
+autoInstallPeers: true
+strictPeerDependencies: true
+
+# --- Lockfile safety ---
+lockfileIncludeTarballUrl: true
+
+# --- Hoisting (strict — no phantom dependencies) ---
+# pnpm's default isolated node_modules is the safest option.
+nodeLinker: isolated
+hoistPattern: []
+publicHoistPattern: []
+
+# --- Side effects cache for faster rebuilds ---
+sideEffectsCache: true
