@@ -48,6 +48,16 @@ Allowed commit types: `feat`, `docs`, `init` only. No trailing period.
 - If auth fails, run `gh auth switch --user konrad-kaluzny-ceneo` before retrying.
 - Full usage guide: see `.kiro/steering/github-cli.md`.
 
+## Vercel CLI & MCP
+
+- **Account:** `konradkaluzny-3520` (team: `konrads-projects`). Vercel CLI is installed globally.
+- Deploy preview first (`vercel --yes`), verify, then production (`vercel --prod --yes`).
+- Use `vercel env ls/add/rm` for environment variables — always specify target environment.
+- Use `vercel logs <url>` to debug deployment issues.
+- Never delete production deployments without explicit user confirmation.
+- Vercel MCP is available for structured queries (deployments, build logs, runtime logs, domains).
+- Full usage guide: see `.kiro/steering/vercel.md`.
+
 ## Environment & Secrets
 
 - Never commit secrets

@@ -1,0 +1,16 @@
+---
+description: Vercel CLI and deployment rules for this project
+globs:
+alwaysApply: true
+---
+
+## Vercel CLI & MCP
+
+- This project is deployed on Vercel. Account: `konradkaluzny-3520` (team: `konrads-projects`).
+- Vercel CLI is installed globally. Use it for deployments, env vars, logs, and domain management.
+- Always deploy to preview first (`vercel --yes`), verify, then promote to production (`vercel --prod --yes`).
+- Use `--yes` flag to skip confirmation prompts.
+- Never delete production deployments without explicit user confirmation.
+- For environment variable changes, always specify the environment (`production`, `preview`, `development`).
+- Use `vercel logs <url>` to debug deployment issues.
+- Vercel MCP is configured at `.cursor/mcp.json` — use it for structured queries when available.
