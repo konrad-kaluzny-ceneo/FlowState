@@ -1,14 +1,7 @@
 # Repository Guidelines
 
-Stack: see `@package.json`. Scaffolded via create-t3-app (v7.40.0).
-
-## Tripwires
-
-- All env vars must be declared in `@src/env.js` (Zod schema). Build fails on missing vars unless `SKIP_ENV_VALIDATION=1`.
-- Every tRPC router must be registered in `@src/server/api/root.ts` — unregistered routers are silently unreachable.
-- Drizzle tables must use the `createTable` helper from `@src/server/db/schema.ts` (prefixes tables with `.bootstrap-scaffold_`). Raw `sqliteTable` calls break the naming convention.
-- Drizzle migrations must be generated with `npx drizzle-kit generate` before `npx drizzle-kit migrate`. Running migrate without a pending generation silently does nothing.
-- tRPC middleware runs in declaration order — auth middleware must come before any procedure that reads `ctx.session`.
+- Critical **Tech Stack:** Next.js 15, React 19, TypeScript, Vite, Drizzle, tRPC + Tanstack React Query + Zod, Tailwind CSS.
+- Rest of Stack: see `@package.json`.
 
 ## Project Structure
 
@@ -23,9 +16,20 @@ Stack: see `@package.json`. Scaffolded via create-t3-app (v7.40.0).
 - Tailwind class sorting enforced via Biome's `useSortedClasses` rule (utility functions: `clsx`, `cva`, `cn`).
 - Path alias: `~/` maps to `src/`. Use it for all intra-project imports.
 
+## Database
+
+- Drizzle tables must use the `createTable` helper from `@src/server/db/schema.ts` (prefixes tables with `.bootstrap-scaffold_`). Raw `sqliteTable` calls break the naming convention.
+- Drizzle migrations must be generated with `npx drizzle-kit generate` before `npx drizzle-kit migrate`. Running migrate without a pending generation silently does nothing.
+- Don't write SQL migration files by hand - always use CLI to generate migration files.
+
+## tRPC
+
+- Every tRPC router must be registered in `@src/server/api/root.ts` — unregistered routers are silently unreachable.
+- tRPC middleware runs in declaration order — auth middleware must come before any procedure that reads `ctx.session`.
+
 ## Testing
 
-- Run a single test: `npx vitest run src/test/smoke.test.ts`
+- Run all unit tests after each milestone: `npm run test`
 
 ## Commit Conventions
 
@@ -33,4 +37,5 @@ Allowed commit types: `feat`, `docs`, `init` only. No trailing period.
 
 ## Environment & Secrets
 
-- Currently required: `DATABASE_URL` (SQLite file path, e.g. `file:./db.sqlite`).
+- Never commit secrets
+- All env vars must be declared in `@src/env.js` (Zod schema).
