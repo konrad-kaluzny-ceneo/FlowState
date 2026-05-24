@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { type SignUpFormState, signUpAction } from "./actions";
+import { signUpAction } from "./actions";
+import type { SignUpFormState } from "./schema";
 
 const initialState: SignUpFormState = {
 	errors: {},
