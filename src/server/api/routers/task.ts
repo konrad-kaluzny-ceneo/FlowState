@@ -1,21 +1,28 @@
-import { eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { tasks } from "~/server/db/schema";
 
 export const taskRouter = createTRPCRouter({
-	list: publicProcedure.query(async ({ ctx }) => {
-		return ctx.db.select().from(tasks).orderBy(tasks.createdAt);
+	list: protectedProcedure.query(async ({ ctx }) => {
+		return ctx.db
+			.select()
+			.from(tasks)
+			.where(eq(tasks.userId, ctx.session.user.id))
+			.orderBy(tasks.createdAt);
 	}),
 
-	create: publicProcedure
+	create: protectedProcedure
 		.input(z.object({ title: z.string().min(1).max(256) }))
 		.mutation(async ({ ctx, input }) => {
-			await ctx.db.insert(tasks).values({ title: input.title });
+			await ctx.db
+				.insert(tasks)
+				.values({ title: input.title, userId: ctx.session.user.id });
 		}),
 
-	update: publicProcedure
+	update: protectedProcedure
 		.input(
 			z.object({
 				id: z.number(),
@@ -25,12 +32,27 @@ export const taskRouter = createTRPCRouter({
 		)
 		.mutation(async ({ ctx, input }) => {
 			const { id, ...data } = input;
-			await ctx.db.update(tasks).set(data).where(eq(tasks.id, id));
+			const result = await ctx.db
+				.update(tasks)
+				.set(data)
+				.where(and(eq(tasks.id, id), eq(tasks.userId, ctx.session.user.id)));
+
+			if (result.rowCount === 0) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
 		}),
 
-	delete: publicProcedure
+	delete: protectedProcedure
 		.input(z.object({ id: z.number() }))
 		.mutation(async ({ ctx, input }) => {
-			await ctx.db.delete(tasks).where(eq(tasks.id, input.id));
+			const result = await ctx.db
+				.delete(tasks)
+				.where(
+					and(eq(tasks.id, input.id), eq(tasks.userId, ctx.session.user.id)),
+				);
+
+			if (result.rowCount === 0) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
 		}),
 });

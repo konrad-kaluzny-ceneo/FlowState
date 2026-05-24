@@ -237,3 +237,5 @@ yarn-error.log*
 
 # idea files
 .idea
+
+.vercel

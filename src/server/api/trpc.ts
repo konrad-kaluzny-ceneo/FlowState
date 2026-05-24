@@ -6,10 +6,11 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
+import { TRPCError, initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
+import { auth } from "~/lib/auth/server";
 import { db } from "~/server/db";
 
 /**
@@ -25,8 +26,31 @@ import { db } from "~/server/db";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
+	let session: { user: { id: string; email: string; name: string } } | null =
+		null;
+
+	try {
+		const result = await auth.getSession();
+		if (
+			result.data?.user?.id &&
+			result.data.user.email &&
+			result.data.user.name
+		) {
+			session = {
+				user: {
+					id: result.data.user.id,
+					email: result.data.user.email,
+					name: result.data.user.name,
+				},
+			};
+		}
+	} catch {
+		session = null;
+	}
+
 	return {
 		db,
+		session,
 		...opts,
 	};
 };
@@ -104,3 +128,36 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+/**
+ * Protected (authenticated) procedure
+ *
+ * This guarantees that the user is authenticated before the procedure handler executes.
+ * The context is narrowed so that `ctx.session.user` properties (id, email, name) are
+ * typed as non-nullable strings.
+ */
+const enforceAuth = t.middleware(async ({ ctx, next }) => {
+	if (
+		!ctx.session?.user?.id ||
+		!ctx.session?.user?.email ||
+		!ctx.session?.user?.name
+	) {
+		throw new TRPCError({ code: "UNAUTHORIZED" });
+	}
+
+	return next({
+		ctx: {
+			session: {
+				user: {
+					id: ctx.session.user.id,
+					email: ctx.session.user.email,
+					name: ctx.session.user.name,
+				},
+			},
+		},
+	});
+});
+
+export const protectedProcedure = t.procedure
+	.use(timingMiddleware)
+	.use(enforceAuth);
