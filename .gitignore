@@ -216,6 +216,7 @@ pnpm-debug.log*
 /prisma/db.sqlite
 /prisma/db.sqlite-journal
 db.sqlite
+test.db
 
 # next.js (additional)
 next-env.d.ts
