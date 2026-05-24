@@ -1,6 +1,6 @@
 ---
-project: .bootstrap-scaffold
-checked_at: 2026-05-23T12:00:00Z
+project: flow-state
+checked_at: 2026-05-24T09:40:00Z
 health_status: healthy
 context_type: brownfield
 language_family: js
@@ -15,7 +15,7 @@ checks_run:
 audit_findings:
   critical: 0
   high: 0
-  moderate: 6
+  moderate: 2
   low: 0
 test_runner_detected: true
 ci_provider: null
@@ -27,28 +27,26 @@ recommended_fixes: 5
 ### Lockfile
 
 ```
-Status: present (package-lock.json)
-Package manager: npm
+Status: present (pnpm-lock.yaml)
+Package manager: pnpm
 ```
+
+Lockfile is present and managed by pnpm 11.2.2. Dependency versions are pinned — builds are reproducible.
 
 ### Security Audit
 
 ```
-Tool: npm audit --json
-Summary: 0 CRITICAL, 0 HIGH, 6 MODERATE, 0 LOW
-Direct vs transitive: 2 direct, 4 transitive
+Tool: pnpm audit --json
+Summary: 0 CRITICAL, 0 HIGH, 2 MODERATE, 0 LOW
+Direct vs transitive: 1 transitive (production), 1 transitive (dev)
 ```
 
 #### MODERATE findings
 
-- **esbuild** <=0.24.2 (transitive, via drizzle-kit) — GHSA-67mh-4wv8-2f99: development server allows any website to send requests and read responses (CVSS 5.3). Fix available: update drizzle-kit to 0.18.1 (semver-major).
-- **@esbuild-kit/core-utils** (transitive, via drizzle-kit) — inherits esbuild vulnerability. Fix: same as above.
-- **@esbuild-kit/esm-loader** (transitive, via drizzle-kit) — inherits esbuild vulnerability. Fix: same as above.
-- **drizzle-kit** (direct) — pulls in vulnerable esbuild chain. Fix available at 0.18.1 but is a semver-major downgrade — verify compatibility.
-- **postcss** <8.5.10 (transitive, via next) — GHSA-qx2v-qp2m-jg93: XSS via unescaped `</style>` in CSS stringify output (CVSS 6.1). Fix available: update next (semver-major).
-- **next** (direct) — inherits postcss vulnerability. Fix available at next@9.3.3 per npm but this is a false downgrade — wait for next@15 patch or next@16 which bundles postcss >=8.5.10.
+- **esbuild** 0.18.20 — GHSA-67mh-4wv8-2f99: Development server allows any website to send requests and read responses (CWE-346). Transitive via `drizzle-kit > @esbuild-kit/esm-loader`. Dev-only dependency — no production exposure. Fix: update `drizzle-kit` when a patched version is available.
+- **postcss** 8.4.31 — GHSA-qx2v-qp2m-jg93: XSS via unescaped `</style>` in CSS stringify output (CWE-79). Transitive via `next > postcss`. Fix: will resolve when `next` updates its bundled postcss to ≥8.5.10.
 
-All 6 findings are MODERATE severity. The esbuild issue only affects the dev server (not production). The postcss XSS requires user-controlled CSS input to exploit. Neither is blocking for agent-assisted development.
+Both findings are transitive and moderate severity. Neither is directly exploitable in the application's runtime context (one is dev-only, the other requires attacker-controlled CSS input to the build pipeline).
 
 ### Outdated Dependencies
 
@@ -56,26 +54,24 @@ All 6 findings are MODERATE severity. The esbuild issue only affects the dev ser
 Packages with major version gaps: 3
 ```
 
-- **next**: 15.5.18 → 16.2.6 (1 major version behind)
-- **typescript**: 5.9.3 → 6.0.3 (1 major version behind)
-- **zod**: 3.25.76 → 4.4.3 (1 major version behind)
+- **@types/node**: 20.19.41 → 25.9.1 (5 major versions behind) — type definitions only, low risk
+- **typescript**: 5.9.3 → 6.0.3 (1 major version behind) — TypeScript 6 is recent; evaluate when ecosystem stabilizes
+- **zod**: 3.25.76 → 4.4.3 (1 major version behind) — Zod 4 has breaking API changes; migration requires schema review
 
-Additional minor gaps (not major): @libsql/client (0.14→0.17), @t3-oss/env-nextjs (0.12→0.13), @types/node (20→25).
+Additional minor gaps (not urgent): `next` 15 → 16, `@libsql/client` 0.14 → 0.17, `@t3-oss/env-nextjs` 0.12 → 0.13.
 
 ## Test Suite
 
 ```
 Test runner: Vitest
-Tests found: 1 test in 1 suite
+Tests found: 1 test (1 file)
 Test execution: passing
 ```
 
 Configuration: `vitest.config.ts`
-Framework: Vitest 4.x with @vitejs/plugin-react, jsdom environment
-Setup file: `src/test/setup.ts`
-Testing libraries: @testing-library/react, @testing-library/jest-dom
+Framework: Vitest 4.1.7 with jsdom environment, React plugin, Testing Library setup
 
-Note: Only 1 smoke test exists. Test coverage is minimal but the infrastructure is fully configured and working.
+The test runner is functional. Test coverage is minimal (1 test) but the infrastructure is in place — the agent can run `pnpm test` to verify changes.
 
 ## CI/CD
 
@@ -84,7 +80,7 @@ Provider: not detected
 Configuration: not found
 ```
 
-ℹ No CI/CD configuration detected. You'll set this up in the infrastructure and deployment lesson.
+ℹ No CI/CD configuration detected. You'll set this up in [Sprint Zero z Agentem: infrastruktura, walking skeleton i pierwszy deploy (M1L5)](https://platforma.przeprogramowani.pl/external/10xdevs-3/m1-l5).
 For now, a local test runner is sufficient for agent collaboration.
 
 ## Configuration
@@ -93,12 +89,12 @@ All expected configuration files present. No gaps detected.
 
 | File | Status | Notes |
 |------|--------|-------|
-| `.editorconfig` | ✓ | Present |
-| `biome.jsonc` | ✓ | Formatter + linter configured (replaces ESLint + Prettier) |
+| `.editorconfig` | ✓ | Tabs, LF, UTF-8 configured |
+| `biome.jsonc` | ✓ | Linter + formatter (replaces ESLint/Prettier) |
 | `tsconfig.json` | ✓ | `strict: true`, `noUncheckedIndexedAccess: true` |
-| `.gitignore` | ✓ | Present |
-| `.env.example` | ✓ | Environment variable documentation present |
-| `AGENTS.md` | — | Category B — covered in agent onboarding |
+| `.gitignore` | ✓ | Comprehensive exclusions |
+| `.env.example` | ✓ | Documents required env vars |
+| `AGENTS.md` | ✓ | Agent instruction file present |
 
 ## Stack Assessment Cross-Reference
 
@@ -108,55 +104,46 @@ No stack-assessment.md found. Run /10x-stack-assess for quality-gate analysis.
 
 ### Fix before agent work (Category A)
 
-### 1. Expand test coverage beyond the smoke test
+### 1. Expand test coverage
 
-**Impact**: The agent can run tests (Vitest works), but with only 1 smoke test it cannot meaningfully verify changes to application logic. Adding tests for existing tRPC routers and utilities gives the agent a feedback loop.
+**Impact**: With only 1 test, the agent has minimal ability to verify its changes don't break existing functionality. As features are added, untested code paths become silent regression risks.
 **Severity**: medium
-**Effort**: moderate (15–30 min)
-
+**Effort**: moderate (15–30 min per feature area)
 **Fix**:
 
 ```bash
-# Add a test for the post router as a starting point:
-# Create src/server/api/routers/post.test.ts with basic CRUD tests
-# The test infrastructure is already configured — just add test files.
+# Add tests for existing tRPC routers — start with the post router:
+# Create src/server/api/routers/post.test.ts
+# Test each procedure (getLatest, create) with mocked DB context
+pnpm test
 ```
 
-### 2. Address outdated dependencies with major version gaps
+### 2. Update transitive dependency (postcss via next)
 
-**Impact**: When the agent generates code, it references the installed version's API. Major version gaps mean online documentation and training data may describe newer APIs that don't match your installed versions, causing subtle errors.
+**Impact**: Moderate XSS advisory in the build pipeline. Low practical risk but shows up in every audit scan, creating noise.
 **Severity**: low
-**Effort**: moderate (15–30 min per package)
-
+**Effort**: quick (< 5 min)
 **Fix**:
 
 ```bash
-# Review each major upgrade individually:
-# next: 15 → 16 (check Next.js 16 migration guide)
-npm install next@latest
-
-# typescript: 5 → 6 (check breaking changes)
-npm install -D typescript@latest
-
-# zod: 3 → 4 (significant API changes — review migration guide)
-npm install zod@latest
+# Check if a newer next patch resolves the transitive postcss:
+pnpm update next --latest
+pnpm audit
 ```
 
-Note: Do these one at a time, running `npm run typecheck` and `npm run test` after each to catch breakage early.
+### 3. Evaluate Zod 4 migration path
 
-### 3. Review moderate audit findings in drizzle-kit
-
-**Impact**: The esbuild vulnerability in drizzle-kit only affects the dev server, not production. Low urgency, but worth tracking for when drizzle-kit ships a compatible fix.
+**Impact**: Zod 4 has breaking changes. Staying on 3.x is fine for now, but the gap will widen. The agent generates Zod schemas frequently — knowing which version to target avoids mixed patterns.
 **Severity**: low
-**Effort**: quick (< 5 min to check for updates)
-
+**Effort**: significant (> 1 hour — requires reviewing all schema definitions)
 **Fix**:
 
 ```bash
-# Check if a newer drizzle-kit resolves the issue:
-npm info drizzle-kit version
-# If a newer minor/patch is available:
-npm update drizzle-kit
+# When ready to migrate:
+# 1. Read Zod 4 migration guide
+# 2. Update: pnpm update zod@latest
+# 3. Fix breaking changes in src/env.js and tRPC input schemas
+# Not urgent — Zod 3.x is fully supported and stable.
 ```
 
 ### Addressed in upcoming lessons (Category B)
@@ -164,17 +151,17 @@ npm update drizzle-kit
 ### No CI/CD pipeline
 
 **Lesson**: [Sprint Zero z Agentem: infrastruktura, walking skeleton i pierwszy deploy (M1L5)](https://platforma.przeprogramowani.pl/external/10xdevs-3/m1-l5)
-**What you'll do there**: Set up GitHub Actions (or equivalent) with lint, type-check, test, and build stages to catch regressions automatically.
+**What you'll do there**: Set up GitHub Actions (or equivalent) with lint, typecheck, test, and build stages to catch regressions before merge.
 
-### No AI assistant instruction files (AGENTS.md)
+### No stack assessment on file
 
-**Lesson**: [Agent Onboarding: Agents.md, AI Rules i feedback loops (M1L4)](https://platforma.przeprogramowani.pl/external/10xdevs-3/m1-l4)
-**What you'll do there**: Generate a structured AGENTS.md that teaches the agent your project's conventions, architecture, and constraints — so it produces code that fits without constant correction.
+**Lesson**: This is optional upstream context from /10x-stack-assess. Running it would provide quality-gate scoring for each stack component and identify compensation strategies.
+**What you'll do there**: Evaluate how well your stack (Next.js, Drizzle, tRPC, Tailwind) supports agent workflows against the four quality gates (typed, convention-based, popular in training data, well-documented).
 
 ## Summary
 
 Health status: **healthy**
 
-The project has a solid foundation for agent-assisted development: TypeScript strict mode is enabled, Biome handles formatting and linting with a single tool, Vitest is configured and passing, and dependencies are locked. The main gap is test coverage — only a smoke test exists, which limits the agent's ability to verify non-trivial changes. All 6 audit findings are MODERATE severity with no production impact.
+The project is in good shape for agent-assisted development. Dependencies are locked and free of critical vulnerabilities (2 moderate transitive findings, both low practical risk). TypeScript strict mode is enforced, Biome handles linting and formatting, and Vitest is configured and passing. The main gap is thin test coverage — expanding tests as features land will give the agent a stronger verification loop.
 
-Next step: Address the test coverage gap (Category A #1) to give the agent a meaningful verification loop, then proceed to agent onboarding.
+Next step: proceed to agent onboarding. The project has the operational foundations an agent needs — reproducible builds, a working test runner, strict types, and consistent formatting.

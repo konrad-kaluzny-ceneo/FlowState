@@ -4,6 +4,10 @@
 - **Package Manager:** pnpm (strict isolated `node_modules`, no hoisting). Use `pnpm` for all install/run commands. Never use `npm` or `yarn`.
 - Rest of Stack: see `@package.json`.
 
+## Terminal Commands
+
+- Agent AI commands are always runned in Windows OS. Use always Windows compatibile commands.
+
 ## Project Structure
 
 - Page-level components go in `_components/` co-located with their route.

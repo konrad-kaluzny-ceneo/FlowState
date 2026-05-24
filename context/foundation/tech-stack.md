@@ -1,6 +1,6 @@
 ---
 starter_id: t3
-package_manager: npm
+package_manager: pnpm
 project_name: flow-state
 hints:
   language_family: js
@@ -26,4 +26,4 @@ hints:
 
 ## Why this stack
 
-Solo builder shipping a Pomodoro + adaptive-focus web-app with auth on a 6-week after-hours timeline. T3 (Next.js + tRPC + Drizzle + NextAuth + Tailwind) delivers type-safe contracts from database to UI with zero assembly for auth and data layer — the three load-bearing factors are verified bootstrapper confidence, all four agent-friendly gates passing, and batteries-included auth matching the PRD's FR-001 through FR-003a. Vercel is the native deployment target; GitHub Actions with auto-deploy-on-merge is the default CI shape. Monorepo structure (Turborepo + pnpm) layers on top for repository clarity without changing the starter's core scaffold.
+Solo builder shipping a Pomodoro + adaptive-focus web-app with auth on a 6-week after-hours timeline. T3 (Next.js + tRPC + Drizzle + Tailwind) delivers type-safe contracts from database to UI with zero assembly — the three load-bearing factors are verified bootstrapper confidence, all four agent-friendly gates passing, and a clear path to adding NextAuth when auth implementation begins (PRD FR-001 through FR-003a). Vercel is the native deployment target; GitHub Actions with auto-deploy-on-merge is the default CI shape. pnpm strict-isolated workspace provides dependency safety without changing the starter's core scaffold.
