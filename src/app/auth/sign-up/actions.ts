@@ -35,6 +35,7 @@ export async function signUpAction(
 
 		if (response.error) {
 			const errorMessage = response.error.message ?? "";
+			console.error("[sign-up] Auth error response:", JSON.stringify(response.error));
 
 			if (
 				errorMessage.toLowerCase().includes("already") ||
@@ -54,7 +55,8 @@ export async function signUpAction(
 				values: { name, email },
 			};
 		}
-	} catch {
+	} catch (err) {
+		console.error("[sign-up] Unexpected exception:", err);
 		return {
 			errors: { form: "Could not complete the request. Please try again." },
 			values: { name, email },
