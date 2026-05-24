@@ -2,7 +2,13 @@
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
 import { sql } from "drizzle-orm";
-import { index, sqliteTableCreator } from "drizzle-orm/sqlite-core";
+import {
+	index,
+	pgTableCreator,
+	serial,
+	timestamp,
+	varchar,
+} from "drizzle-orm/pg-core";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -10,20 +16,21 @@ import { index, sqliteTableCreator } from "drizzle-orm/sqlite-core";
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = sqliteTableCreator(
+export const createTable = pgTableCreator(
 	(name) => `.bootstrap-scaffold_${name}`,
 );
 
 export const posts = createTable(
 	"post",
 	(d) => ({
-		id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
-		name: d.text({ length: 256 }),
-		createdAt: d
-			.integer({ mode: "timestamp" })
-			.default(sql`(unixepoch())`)
+		id: serial("id").primaryKey(),
+		name: varchar("name", { length: 256 }),
+		createdAt: timestamp("createdAt", { withTimezone: true })
+			.default(sql`CURRENT_TIMESTAMP`)
 			.notNull(),
-		updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
+		updatedAt: timestamp("updatedAt", { withTimezone: true }).$onUpdate(
+			() => new Date(),
+		),
 	}),
 	(t) => [index("name_idx").on(t.name)],
 );

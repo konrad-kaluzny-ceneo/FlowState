@@ -4,12 +4,13 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"build": "next build",
+		"build": "drizzle-kit migrate && next build",
 		"check": "biome check .",
 		"check:unsafe": "biome check --write --unsafe .",
 		"check:write": "biome check --write .",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
+		"db:migrate:prod": "drizzle-kit migrate",
 		"db:push": "drizzle-kit push",
 		"db:studio": "drizzle-kit studio",
 		"dev": "next dev --turbo",
@@ -20,7 +21,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@libsql/client": "^0.17.3",
+		"@neondatabase/serverless": "^1.1.0",
 		"@t3-oss/env-nextjs": "^0.13.11",
 		"@tanstack/react-query": "^5.69.0",
 		"@trpc/client": "^11.0.0",
@@ -44,6 +45,7 @@
 		"@types/react-dom": "^19.0.0",
 		"@vitejs/plugin-react": "^6.0.2",
 		"drizzle-kit": "^0.31.10",
+		"fast-check": "^4.8.0",
 		"jsdom": "^29.1.1",
 		"postcss": "^8.5.3",
 		"tailwindcss": "^4.0.15",

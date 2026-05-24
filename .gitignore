@@ -213,9 +213,8 @@ pnpm-debug.log*
 .pnp.js
 
 # database
-/prisma/db.sqlite
-/prisma/db.sqlite-journal
-db.sqlite
+*.sqlite
+*.sqlite-journal
 test.db
 
 # next.js (additional)

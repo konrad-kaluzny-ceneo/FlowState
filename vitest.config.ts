@@ -10,7 +10,8 @@ export default defineConfig({
 		setupFiles: ["./src/test/setup.ts"],
 		env: {
 			SKIP_ENV_VALIDATION: "1",
-			DATABASE_URL: "file::memory:",
+			DATABASE_URL: "postgresql://test:test@localhost:5432/test",
+			DATABASE_URL_UNPOOLED: "postgresql://test:test@localhost:5432/test",
 			NODE_ENV: "test",
 		},
 	},
