@@ -8,5 +8,5 @@ export default {
 	dbCredentials: {
 		url: env.DATABASE_URL_UNPOOLED,
 	},
-	tablesFilter: [".bootstrap-scaffold_*"],
+	tablesFilter: ["flow_state_*"],
 } satisfies Config;

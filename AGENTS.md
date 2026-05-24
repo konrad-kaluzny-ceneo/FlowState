@@ -23,7 +23,7 @@
 
 ## Database
 
-- Drizzle tables must use the `createTable` helper from `@src/server/db/schema.ts` (prefixes tables with `.bootstrap-scaffold_`). Raw `sqliteTable` calls break the naming convention.
+- Drizzle tables must use the `createTable` helper from `@src/server/db/schema.ts` (prefixes tables with `flow_state_`). Raw `pgTable` calls break the naming convention.
 - Drizzle migrations must be generated with `pnpm drizzle-kit generate` before `pnpm drizzle-kit migrate`. Running migrate without a pending generation silently does nothing.
 - Don't write SQL migration files by hand - always use CLI to generate migration files.
 

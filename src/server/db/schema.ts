@@ -8,12 +8,12 @@ import {
 } from "drizzle-orm/pg-core";
 
 /**
- * Multi-project schema helper — prefixes all table names with `.bootstrap-scaffold_`.
+ * Multi-project schema helper — prefixes all table names with `flow_state_`.
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
 export const createTable = pgTableCreator(
-	(name) => `.bootstrap-scaffold_${name}`,
+	(name) => `flow_state_${name}`,
 );
 
 export const tasks = createTable(

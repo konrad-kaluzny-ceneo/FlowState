@@ -1,11 +1,11 @@
 {
-  "id": "cfbfddd0-9336-4dfd-b571-91fd53c0007a",
+  "id": "e857475e-d1c1-4c11-bcc8-45836cdc5346",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public..bootstrap-scaffold_task": {
-      "name": ".bootstrap-scaffold_task",
+    "public.flow_state_task": {
+      "name": "flow_state_task",
       "schema": "",
       "columns": {
         "id": {
