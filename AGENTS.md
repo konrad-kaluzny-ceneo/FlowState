@@ -40,6 +40,14 @@
 
 Allowed commit types: `feat`, `docs`, `init` only. No trailing period.
 
+## GitHub CLI (`gh`)
+
+- `gh` is installed and authenticated with account `konrad-kaluzny-ceneo`. Always use this account.
+- Use `gh` for all GitHub operations (PRs, issues, releases, workflows). Prefer non-interactive flags (`--yes`, `--title`, `--body`).
+- Use `--json` flag when parsing output (e.g., `gh pr list --json number,title,state`).
+- If auth fails, run `gh auth switch --user konrad-kaluzny-ceneo` before retrying.
+- Full usage guide: see `.kiro/steering/github-cli.md`.
+
 ## Environment & Secrets
 
 - Never commit secrets

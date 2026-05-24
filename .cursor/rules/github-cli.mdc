@@ -1,0 +1,15 @@
+---
+description: GitHub CLI usage rules for this project
+globs:
+alwaysApply: true
+---
+
+## GitHub CLI (`gh`)
+
+- `gh` is installed and authenticated with account `konrad-kaluzny-ceneo`. Always use this account.
+- Use `gh` for all GitHub operations (PRs, issues, releases, workflows) instead of the web UI or raw API calls.
+- Always push to a new branch before creating a PR — never push directly to `main`.
+- Prefer non-interactive flags (`--yes`, `--title`, `--body`, `--fill`) since the agent cannot handle interactive prompts.
+- Use `--json` flag for structured output when parsing is needed (e.g., `gh pr list --json number,title,state`).
+- For draft PRs use `gh pr create --draft`.
+- If auth fails, run `gh auth switch --user konrad-kaluzny-ceneo` before retrying.
