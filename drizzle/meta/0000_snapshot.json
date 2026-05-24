@@ -1,11 +1,11 @@
 {
-  "id": "e20a37b1-8481-4fdd-9fc8-98f8340fa93e",
+  "id": "cfbfddd0-9336-4dfd-b571-91fd53c0007a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public..bootstrap-scaffold_post": {
-      "name": ".bootstrap-scaffold_post",
+    "public..bootstrap-scaffold_task": {
+      "name": ".bootstrap-scaffold_task",
       "schema": "",
       "columns": {
         "id": {
@@ -14,11 +14,18 @@
           "primaryKey": true,
           "notNull": true
         },
-        "name": {
-          "name": "name",
+        "title": {
+          "name": "title",
           "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
         },
         "createdAt": {
           "name": "createdAt",
@@ -35,11 +42,11 @@
         }
       },
       "indexes": {
-        "name_idx": {
-          "name": "name_idx",
+        "task_status_idx": {
+          "name": "task_status_idx",
           "columns": [
             {
-              "expression": "name",
+              "expression": "status",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
