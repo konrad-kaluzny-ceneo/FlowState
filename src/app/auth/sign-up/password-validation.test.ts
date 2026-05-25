@@ -67,7 +67,7 @@ describe("Feature: neon-auth, Property 5: Password length boundary validation", 
 		if (!result.success) {
 			const passwordErrors = result.error.flatten().fieldErrors.password;
 			expect(passwordErrors).toBeDefined();
-			expect(passwordErrors![0]).toContain("at least 8 characters");
+			expect(passwordErrors?.[0]).toContain("at least 8 characters");
 		}
 	});
 
@@ -84,7 +84,7 @@ describe("Feature: neon-auth, Property 5: Password length boundary validation", 
 		if (!result.success) {
 			const passwordErrors = result.error.flatten().fieldErrors.password;
 			expect(passwordErrors).toBeDefined();
-			expect(passwordErrors![0]).toContain("128 characters or less");
+			expect(passwordErrors?.[0]).toContain("128 characters or less");
 		}
 	});
 

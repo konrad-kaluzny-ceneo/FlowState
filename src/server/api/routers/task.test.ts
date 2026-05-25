@@ -89,8 +89,8 @@ describe("Feature: neon-auth, Property 9: Task creation ownership", () => {
 			await caller.create({ title });
 
 			expect(capturedData).not.toBeNull();
-			expect(capturedData!.userId).toBe(userId);
-			expect(capturedData!.title).toBe(title);
+			expect(capturedData?.userId).toBe(userId);
+			expect(capturedData?.title).toBe(title);
 		},
 	);
 });

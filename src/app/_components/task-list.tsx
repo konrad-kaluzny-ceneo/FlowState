@@ -108,7 +108,6 @@ export function TaskList() {
 								/>
 								{editingId === task.id ? (
 									<input
-										autoFocus
 										className="flex-1 rounded bg-white/10 px-2 py-1 text-white focus:outline-none"
 										onBlur={() => saveEdit(task.id)}
 										onChange={(e) => setEditTitle(e.target.value)}

@@ -77,7 +77,7 @@ describe("Feature: neon-auth, Property 4: Sign-up client-side validation rejects
 			if (!result.success) {
 				const fieldErrors = result.error.flatten().fieldErrors;
 				expect(fieldErrors.name).toBeDefined();
-				expect(fieldErrors.name!.length).toBeGreaterThan(0);
+				expect(fieldErrors.name?.length).toBeGreaterThan(0);
 			}
 		},
 	);
@@ -99,7 +99,7 @@ describe("Feature: neon-auth, Property 4: Sign-up client-side validation rejects
 		if (!result.success) {
 			const fieldErrors = result.error.flatten().fieldErrors;
 			expect(fieldErrors.name).toBeDefined();
-			expect(fieldErrors.name!.length).toBeGreaterThan(0);
+			expect(fieldErrors.name?.length).toBeGreaterThan(0);
 		}
 	});
 
@@ -121,7 +121,7 @@ describe("Feature: neon-auth, Property 4: Sign-up client-side validation rejects
 			if (!result.success) {
 				const fieldErrors = result.error.flatten().fieldErrors;
 				expect(fieldErrors.email).toBeDefined();
-				expect(fieldErrors.email!.length).toBeGreaterThan(0);
+				expect(fieldErrors.email?.length).toBeGreaterThan(0);
 			}
 		},
 	);
@@ -134,7 +134,7 @@ describe("Feature: neon-auth, Property 4: Sign-up client-side validation rejects
 			if (!result.success) {
 				const fieldErrors = result.error.flatten().fieldErrors;
 				expect(fieldErrors.email).toBeDefined();
-				expect(fieldErrors.email!.length).toBeGreaterThan(0);
+				expect(fieldErrors.email?.length).toBeGreaterThan(0);
 			}
 		},
 	);

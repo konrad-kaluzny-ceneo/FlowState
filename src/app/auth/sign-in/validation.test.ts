@@ -115,7 +115,7 @@ describe("Feature: neon-auth, Property 6: Sign-in client-side validation rejects
 		"does not return validation error when both email and password are non-empty",
 		async (email, password) => {
 			authMock.signIn.email.mockResolvedValue({ error: null });
-			const result = await signInAction(
+			const _result = await signInAction(
 				prevState,
 				makeFormData(email, password),
 			);
