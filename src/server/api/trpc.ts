@@ -30,16 +30,15 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 		null;
 
 	try {
-		const result = await auth.getSession();
-		const userId = result.data?.user?.id;
-		const userEmail = result.data?.user?.email;
-		if (userId && userEmail) {
-			const rawName = String(result.data?.user?.name ?? "");
+		const { data } = await auth.getSession();
+		const user = data?.user;
+
+		if (user?.id && user.email) {
 			session = {
 				user: {
-					id: userId,
-					email: userEmail,
-					name: rawName || userEmail.split("@").at(0) || userEmail,
+					id: user.id,
+					email: user.email,
+					name: user.name || user.email.split("@")[0]!,
 				},
 			};
 		}

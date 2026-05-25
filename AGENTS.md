@@ -35,6 +35,7 @@
 ## Testing
 
 - Run all unit tests after each milestone: `pnpm test`
+- **Critical:** Always run `pnpm test` at the end of every work cycle before presenting results.
 
 ## Commit Conventions
 
