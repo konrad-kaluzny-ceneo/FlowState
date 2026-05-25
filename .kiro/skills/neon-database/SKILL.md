@@ -62,6 +62,29 @@ Use MCP for migrations (out-of-band), schema inspection, and performance. Use CL
 3. **No destructive SQL** without explicit user confirmation: `DROP`, `DELETE` without `WHERE`, `TRUNCATE`.
 4. **Secrets** — reference `DATABASE_URL` by name only; never log or paste connection strings.
 
+## Neon Auth — Trusted Origins for Vercel Preview Deploys
+
+Neon Auth validates the `Origin` header on every sign-in/sign-up request. Vercel generates a unique branch alias URL for each new branch on first push (e.g. `https://flow-state-git-<branch>-konrads-projects.vercel.app`). This URL is **not** automatically trusted by Neon Auth — you must register it manually.
+
+**On first push of a new branch to GitHub:**
+
+1. Note the stable branch alias URL from Vercel (visible in the deployment details or PR comment):
+   `https://flow-state-git-<branch-name>-konrads-projects.vercel.app`
+2. Add it as a trusted origin in Neon Auth using MCP:
+   ```
+   configure_neon_auth(operation: "add_trusted_origin", projectId: "hidden-hall-84768725", trusted_origin: "https://flow-state-git-<branch-name>-konrads-projects.vercel.app")
+   ```
+   Or via the Neon Console → Project → Auth → Trusted Origins.
+3. Auth flows (sign-up, sign-in, OAuth callbacks) will now work on that preview deploy.
+
+**Currently registered trusted origins:**
+- `https://flow-state-ecru-ten.vercel.app` (production)
+- `https://flow-state-git-features-neon-auth-konrads-projects.vercel.app` (feature branch)
+- `https://flow-state-konrads-projects.vercel.app` (project alias)
+- `localhost` (allowed via `allow_localhost: true`)
+
+**Important:** Per-deployment URLs (e.g. `flow-state-50m1ope0s-konrads-projects.vercel.app`) change on every push. Always use the stable branch alias instead.
+
 ## Schema change workflow
 
 ```

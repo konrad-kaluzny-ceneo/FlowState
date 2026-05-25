@@ -57,6 +57,7 @@ Before calling MCP tools, read the tool schema under the Vercel MCP server descr
 4. **Never delete production deployments** without explicit user confirmation.
 5. **Env var changes** — always specify target: `production`, `preview`, or `development`.
 6. **Secrets** — never echo tokens or connection strings; reference env var names only.
+7. **New branch → register Neon Auth trusted origin** — on first push of a new branch, add the stable branch alias URL (`https://flow-state-git-<branch>-konrads-projects.vercel.app`) to Neon Auth trusted origins via `configure_neon_auth` MCP tool or Neon Console. Without this, auth flows (sign-up/sign-in) will fail with "Invalid origin" on preview deploys. See [neon-database SKILL](../neon-database/SKILL.md) for details.
 
 ## Related context
 

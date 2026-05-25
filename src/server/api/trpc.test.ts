@@ -75,10 +75,6 @@ const invalidSessionResultArb = fc.oneof(
 	fc.tuple(nonEmptyStringArb, nonEmptyStringArb).map(([id, name]) => ({
 		data: { user: { id, email: null, name } },
 	})),
-	// result with user missing name
-	fc.tuple(nonEmptyStringArb, emailArb).map(([id, email]) => ({
-		data: { user: { id, email, name: null } },
-	})),
 	// result with empty string id
 	fc.tuple(emailArb, nonEmptyStringArb).map(([email, name]) => ({
 		data: { user: { id: "", email, name } },
@@ -87,12 +83,20 @@ const invalidSessionResultArb = fc.oneof(
 	fc.tuple(nonEmptyStringArb, nonEmptyStringArb).map(([id, name]) => ({
 		data: { user: { id, email: "", name } },
 	})),
+	// result with undefined user
+	fc.constant({ data: { user: undefined } }),
+);
+
+/** Arbitrary for session results with missing name but valid id and email — should still produce a session */
+const missingNameSessionResultArb = fc.oneof(
+	// result with user missing name (null)
+	fc.tuple(nonEmptyStringArb, emailArb).map(([id, email]) => ({
+		data: { user: { id, email, name: null } },
+	})),
 	// result with empty string name
 	fc.tuple(nonEmptyStringArb, emailArb).map(([id, email]) => ({
 		data: { user: { id, email, name: "" } },
 	})),
-	// result with undefined user
-	fc.constant({ data: { user: undefined } }),
 );
 
 describe("Feature: neon-auth, Property 7: tRPC context session mapping", () => {
@@ -126,6 +130,24 @@ describe("Feature: neon-auth, Property 7: tRPC context session mapping", () => {
 			const ctx = await createTRPCContext({ headers: new Headers() });
 
 			expect(ctx.session).toBeNull();
+		},
+	);
+
+	fcTest.prop([missingNameSessionResultArb], { numRuns: 100 })(
+		"maps session with missing name to ctx.session with email-derived name",
+		async (sessionResult) => {
+			mockGetSession.mockResolvedValue(sessionResult);
+
+			const ctx = await createTRPCContext({ headers: new Headers() });
+
+			expect(ctx.session).not.toBeNull();
+			expect(ctx.session).toEqual({
+				user: {
+					id: sessionResult.data.user.id,
+					email: sessionResult.data.user.email,
+					name: sessionResult.data.user.email.split("@")[0],
+				},
+			});
 		},
 	);
 

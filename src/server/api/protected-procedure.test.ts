@@ -95,10 +95,6 @@ const invalidSessionResultArb = fc.oneof(
 	fc.tuple(nonEmptyStringArb, nonEmptyStringArb).map(([id, name]) => ({
 		data: { user: { id, email: null, name } },
 	})),
-	// result with user missing name
-	fc.tuple(nonEmptyStringArb, emailArb).map(([id, email]) => ({
-		data: { user: { id, email, name: null } },
-	})),
 	// result with empty string id
 	fc.tuple(emailArb, nonEmptyStringArb).map(([email, name]) => ({
 		data: { user: { id: "", email, name } },
@@ -106,10 +102,6 @@ const invalidSessionResultArb = fc.oneof(
 	// result with empty string email
 	fc.tuple(nonEmptyStringArb, nonEmptyStringArb).map(([id, name]) => ({
 		data: { user: { id, email: "", name } },
-	})),
-	// result with empty string name
-	fc.tuple(nonEmptyStringArb, emailArb).map(([id, email]) => ({
-		data: { user: { id, email, name: "" } },
 	})),
 	// result with undefined user
 	fc.constant({ data: { user: undefined } }),
