@@ -18,6 +18,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			"~": resolve(__dirname, "./src"),
+			"@prisma/generated": resolve(__dirname, "./generated/prisma/client"),
 		},
 	},
 });

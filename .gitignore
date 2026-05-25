@@ -220,6 +220,9 @@ test.db
 # next.js (additional)
 next-env.d.ts
 
+# Prisma generated client
+/generated
+
 # production
 /build
 

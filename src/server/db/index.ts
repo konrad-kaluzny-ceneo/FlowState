@@ -1,18 +1,21 @@
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
-
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaClient } from "@prisma/generated";
 import { env } from "~/env";
-import * as schema from "./schema";
 
 /**
- * Cache the database connection in development. This avoids creating a new connection on every HMR
+ * Cache the Prisma client in development. This avoids creating a new connection on every HMR
  * update.
  */
-const globalForDb = globalThis as unknown as {
-	client: ReturnType<typeof neon> | undefined;
+const globalForPrisma = globalThis as unknown as {
+	prisma: PrismaClient | undefined;
 };
 
-export const client = globalForDb.client ?? neon(env.DATABASE_URL);
-if (env.NODE_ENV !== "production") globalForDb.client = client;
+function createPrismaClient() {
+	const adapter = new PrismaNeon({
+		connectionString: env.DATABASE_URL,
+	});
+	return new PrismaClient({ adapter });
+}
 
-export const db = drizzle(client, { schema });
+export const db = globalForPrisma.prisma ?? createPrismaClient();
+if (env.NODE_ENV !== "production") globalForPrisma.prisma = db;

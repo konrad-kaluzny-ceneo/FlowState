@@ -1,6 +1,6 @@
-import { describe, expect, vi, beforeEach } from "vitest";
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
+import { beforeEach, describe, expect, vi } from "vitest";
 
 /**
  * Feature: neon-auth, Property 10: Task query isolation
@@ -24,56 +24,42 @@ vi.mock("~/lib/auth/server", () => ({
 	},
 }));
 
-// Mock ~/server/db with a chainable select mock that simulates where filtering
-vi.mock("~/server/db", () => {
-	const mockOrderBy = vi.fn(() => {
-		// Return the filtered tasks (set by mockWhere)
-		return filteredTasks;
-	});
+// Mock ~/server/db/index with Prisma-style API
+vi.mock("~/server/db/index", () => {
+	const mockFindMany = vi.fn(
+		(args: { where?: { userId?: string }; orderBy?: unknown }) => {
+			const userId = args?.where?.userId;
+			return Promise.resolve(
+				userId ? allTasks.filter((t) => t.userId === userId) : allTasks,
+			);
+		},
+	);
 
-	let filteredTasks: typeof allTasks = [];
-
-	const mockWhere = vi.fn((condition: unknown) => {
-		// The condition is a Drizzle eq() expression. We can't easily evaluate it,
-		// so we intercept the call and simulate filtering based on the captured userId.
-		// Instead, we'll use a different approach: capture what the router passes
-		// and verify it filters correctly by inspecting the mock calls.
-		filteredTasks = capturedFilterFn
-			? allTasks.filter(capturedFilterFn)
-			: allTasks;
-		return { orderBy: mockOrderBy };
-	});
-
-	const mockFrom = vi.fn(() => ({
-		where: mockWhere,
-	}));
-
-	const mockSelect = vi.fn(() => ({
-		from: mockFrom,
-	}));
+	const mockCreate = vi.fn(() => Promise.resolve({ id: 1 }));
+	const mockFindFirst = vi.fn(
+		(args: { where?: { id?: number; userId?: string } }) => {
+			return Promise.resolve(
+				allTasks.find(
+					(t) => t.id === args?.where?.id && t.userId === args?.where?.userId,
+				) ?? null,
+			);
+		},
+	);
+	const mockUpdate = vi.fn(() => Promise.resolve({ id: 1 }));
+	const mockDelete = vi.fn(() => Promise.resolve({ id: 1 }));
 
 	return {
 		db: {
-			select: mockSelect,
-			insert: vi.fn(() => ({
-				values: vi.fn(() => Promise.resolve({ rowCount: 1 })),
-			})),
-			update: vi.fn(() => ({
-				set: vi.fn(() => ({
-					where: vi.fn(() => ({ rowCount: 1 })),
-				})),
-			})),
-			delete: vi.fn(() => ({
-				where: vi.fn(() => ({ rowCount: 1 })),
-			})),
+			task: {
+				findMany: mockFindMany,
+				create: mockCreate,
+				findFirst: mockFindFirst,
+				update: mockUpdate,
+				delete: mockDelete,
+			},
 		},
 	};
 });
-
-// We need a way to simulate the Drizzle where clause filtering.
-// The router calls: .where(eq(tasks.userId, ctx.session.user.id))
-// We'll intercept by replacing the mock implementation per-test to filter allTasks by the userId.
-let capturedFilterFn: ((task: (typeof allTasks)[0]) => boolean) | null = null;
 
 // Stub global setTimeout to resolve immediately (eliminates timingMiddleware dev delay)
 const originalSetTimeout = globalThis.setTimeout;
@@ -84,7 +70,7 @@ globalThis.setTimeout = ((fn: () => void, _ms?: number) =>
 // Import after mocks are set up
 const { createCallerFactory } = await import("~/server/api/trpc");
 const { taskRouter } = await import("~/server/api/routers/task");
-const { db } = await import("~/server/db");
+const { db } = await import("~/server/db/index");
 
 const createCaller = createCallerFactory(taskRouter);
 
@@ -93,27 +79,9 @@ const userIdArb = fc
 	.stringMatching(/^[a-zA-Z0-9]{1,50}$/)
 	.filter((s) => s.length > 0);
 
-/** Arbitrary for valid task titles */
-const taskTitleArb = fc
-	.string({ minLength: 1, maxLength: 100 })
-	.filter((s) => s.trim().length > 0);
-
-/** Arbitrary for a single task record */
-const taskRecordArb = (userIds: string[]) =>
-	fc
-		.record({
-			id: fc.nat({ max: 100000 }),
-			title: taskTitleArb,
-			status: fc.constantFrom("active", "completed"),
-			userId: fc.constantFrom(...userIds),
-			createdAt: fc.date({ min: new Date("2020-01-01"), max: new Date() }),
-		})
-		.map((t) => ({ ...t, updatedAt: null }));
-
 describe("Feature: neon-auth, Property 10: Task query isolation", () => {
 	beforeEach(() => {
 		allTasks = [];
-		capturedFilterFn = null;
 		vi.clearAllMocks();
 	});
 
@@ -134,13 +102,7 @@ describe("Feature: neon-auth, Property 10: Task query isolation", () => {
 			const querierIdx = querierSeed % userIds.length;
 			const querierId = userIds[querierIdx]!;
 
-			// Generate a set of tasks distributed across all users
-			const tasksForAllUsers = await fc.sample(
-				taskRecordArb(userIds),
-				{ numRuns: 1, seed: querierSeed },
-			);
-
-			// Generate between 5 and 20 tasks
+			// Generate between 5 and 20 tasks distributed across all users
 			const taskCount = 5 + (querierSeed % 16);
 			const generatedTasks = [];
 			for (let i = 0; i < taskCount; i++) {
@@ -159,19 +121,6 @@ describe("Feature: neon-auth, Property 10: Task query isolation", () => {
 
 			// Expected: only tasks belonging to the querying user
 			const expectedTasks = allTasks.filter((t) => t.userId === querierId);
-
-			// Set up the filter function that simulates what Drizzle's eq() would do
-			capturedFilterFn = (task) => task.userId === querierId;
-
-			// Override the db.select mock to use our filtering logic
-			const mockOrderBy = vi.fn(() => {
-				return allTasks.filter((t) => t.userId === querierId);
-			});
-			const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy }));
-			const mockFrom = vi.fn(() => ({ where: mockWhere }));
-			(db.select as ReturnType<typeof vi.fn>).mockReturnValue({
-				from: mockFrom,
-			});
 
 			const caller = createCaller({
 				db: db as never,
@@ -194,9 +143,6 @@ describe("Feature: neon-auth, Property 10: Task query isolation", () => {
 
 			// Property: result contains ALL tasks belonging to the querying user
 			expect(result).toHaveLength(expectedTasks.length);
-
-			// Verify the where clause was called (the router does filter)
-			expect(mockWhere).toHaveBeenCalled();
 		},
 	);
 
@@ -208,53 +154,40 @@ describe("Feature: neon-auth, Property 10: Task query isolation", () => {
 			fc.nat(),
 		],
 		{ numRuns: 100 },
-	)(
-		"a user with no tasks gets an empty result",
-		async (userIds, seed) => {
-			// Assign all tasks to users OTHER than the querying user
-			const querierId = userIds[0]!;
-			const otherUserIds = userIds.slice(1);
+	)("a user with no tasks gets an empty result", async (userIds, seed) => {
+		// Assign all tasks to users OTHER than the querying user
+		const querierId = userIds[0]!;
+		const otherUserIds = userIds.slice(1);
 
-			const taskCount = 3 + (seed % 10);
-			allTasks = [];
-			for (let i = 0; i < taskCount; i++) {
-				const ownerId = otherUserIds[i % otherUserIds.length]!;
-				allTasks.push({
-					id: i + 1,
-					title: `Task ${i}`,
-					status: "active",
-					userId: ownerId,
-					createdAt: new Date(2024, 0, i + 1),
-					updatedAt: null,
-				});
-			}
-
-			// The querying user has no tasks — result should be empty
-			const mockOrderBy = vi.fn(() => {
-				return allTasks.filter((t) => t.userId === querierId);
+		const taskCount = 3 + (seed % 10);
+		allTasks = [];
+		for (let i = 0; i < taskCount; i++) {
+			const ownerId = otherUserIds[i % otherUserIds.length]!;
+			allTasks.push({
+				id: i + 1,
+				title: `Task ${i}`,
+				status: "active",
+				userId: ownerId,
+				createdAt: new Date(2024, 0, i + 1),
+				updatedAt: null,
 			});
-			const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy }));
-			const mockFrom = vi.fn(() => ({ where: mockWhere }));
-			(db.select as ReturnType<typeof vi.fn>).mockReturnValue({
-				from: mockFrom,
-			});
+		}
 
-			const caller = createCaller({
-				db: db as never,
-				session: {
-					user: {
-						id: querierId,
-						email: "test@example.com",
-						name: "Test User",
-					},
+		const caller = createCaller({
+			db: db as never,
+			session: {
+				user: {
+					id: querierId,
+					email: "test@example.com",
+					name: "Test User",
 				},
-				headers: new Headers(),
-			});
+			},
+			headers: new Headers(),
+		});
 
-			const result = await caller.list();
+		const result = await caller.list();
 
-			// Property: empty array when user owns no tasks
-			expect(result).toHaveLength(0);
-		},
-	);
+		// Property: empty array when user owns no tasks
+		expect(result).toHaveLength(0);
+	});
 });

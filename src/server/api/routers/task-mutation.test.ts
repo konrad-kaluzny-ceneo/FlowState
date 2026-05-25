@@ -1,16 +1,14 @@
-import { TRPCError } from "@trpc/server";
-import { describe, expect, vi, beforeEach } from "vitest";
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
+import { beforeEach, describe, expect, vi } from "vitest";
 
 /**
  * Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUND on failure
  * Validates: Requirements 9.4, 9.5
  */
 
-// Track the rowCount returned by update/delete where clauses
-let updateRowCount: number = 1;
-let deleteRowCount: number = 1;
+// Track whether findFirst returns a task (simulates ownership)
+let findFirstResult: Record<string, unknown> | null = null;
 
 // Mock ~/lib/auth/server
 vi.mock("~/lib/auth/server", () => ({
@@ -19,29 +17,19 @@ vi.mock("~/lib/auth/server", () => ({
 	},
 }));
 
-// Mock ~/server/db with chainable update/delete mocks that return configurable rowCount
-vi.mock("~/server/db", () => {
-	const mockUpdateWhere = vi.fn(() => ({ rowCount: updateRowCount }));
-	const mockSet = vi.fn(() => ({ where: mockUpdateWhere }));
-	const mockUpdate = vi.fn(() => ({ set: mockSet }));
-
-	const mockDeleteWhere = vi.fn(() => ({ rowCount: deleteRowCount }));
-	const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }));
-
+// Mock ~/server/db/index with Prisma-style API
+vi.mock("~/server/db/index", () => {
 	return {
 		db: {
-			select: vi.fn(() => ({
-				from: vi.fn(() => ({
-					where: vi.fn(() => ({
-						orderBy: vi.fn(() => []),
-					})),
-				})),
-			})),
-			insert: vi.fn(() => ({
-				values: vi.fn(() => Promise.resolve({ rowCount: 1 })),
-			})),
-			update: mockUpdate,
-			delete: mockDelete,
+			task: {
+				findMany: vi.fn(() => Promise.resolve([])),
+				create: vi.fn((args: { data: Record<string, unknown> }) =>
+					Promise.resolve({ id: 1, ...args.data }),
+				),
+				findFirst: vi.fn(() => Promise.resolve(findFirstResult)),
+				update: vi.fn(() => Promise.resolve({ id: 1 })),
+				delete: vi.fn(() => Promise.resolve({ id: 1 })),
+			},
 		},
 	};
 });
@@ -84,7 +72,6 @@ const emailArb = fc
  * Arbitrary for ownership scenarios:
  * - ownerUserId: the user who owns the task
  * - callerUserId: the user attempting the mutation
- * - ownerMatchesCaller: whether they are the same user (determines success/failure)
  */
 const ownershipScenarioArb = fc
 	.tuple(userIdArb, userIdArb, fc.boolean())
@@ -99,20 +86,30 @@ const ownershipScenarioArb = fc
 
 describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUND on failure", () => {
 	beforeEach(() => {
-		updateRowCount = 1;
-		deleteRowCount = 1;
+		findFirstResult = null;
 	});
 
-	fcTest.prop([ownershipScenarioArb, taskIdArb, taskTitleArb, emailArb], { numRuns: 100 })(
+	fcTest.prop([ownershipScenarioArb, taskIdArb, taskTitleArb, emailArb], {
+		numRuns: 100,
+	})(
 		"update succeeds only when userId matches, returns NOT_FOUND otherwise",
 		async (scenario, taskId, title, email) => {
 			const isOwner = scenario.ownerUserId === scenario.callerUserId;
 
-			// Simulate DB behavior: rowCount > 0 only when caller owns the task
-			updateRowCount = isOwner ? 1 : 0;
+			// Simulate DB behavior: findFirst returns a task only when caller owns it
+			findFirstResult = isOwner
+				? {
+						id: taskId,
+						title: "Original",
+						status: "active",
+						userId: scenario.callerUserId,
+						createdAt: new Date(),
+						updatedAt: null,
+					}
+				: null;
 
 			const caller = createCaller({
-				db: (await import("~/server/db")).db as never,
+				db: (await import("~/server/db/index")).db as never,
 				session: {
 					user: {
 						id: scenario.callerUserId,
@@ -144,11 +141,20 @@ describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUN
 		async (scenario, taskId, email) => {
 			const isOwner = scenario.ownerUserId === scenario.callerUserId;
 
-			// Simulate DB behavior: rowCount > 0 only when caller owns the task
-			deleteRowCount = isOwner ? 1 : 0;
+			// Simulate DB behavior: findFirst returns a task only when caller owns it
+			findFirstResult = isOwner
+				? {
+						id: taskId,
+						title: "Task",
+						status: "active",
+						userId: scenario.callerUserId,
+						createdAt: new Date(),
+						updatedAt: null,
+					}
+				: null;
 
 			const caller = createCaller({
-				db: (await import("~/server/db")).db as never,
+				db: (await import("~/server/db/index")).db as never,
 				session: {
 					user: {
 						id: scenario.callerUserId,
@@ -161,9 +167,7 @@ describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUN
 
 			if (isOwner) {
 				// Should succeed without throwing
-				await expect(
-					caller.delete({ id: taskId }),
-				).resolves.not.toThrow();
+				await expect(caller.delete({ id: taskId })).resolves.not.toThrow();
 			} else {
 				// Should throw NOT_FOUND
 				await expect(caller.delete({ id: taskId })).rejects.toThrow(

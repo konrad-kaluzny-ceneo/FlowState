@@ -1,6 +1,6 @@
-import { describe, expect } from "vitest";
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
+import { describe, expect } from "vitest";
 import { z } from "zod";
 
 /**

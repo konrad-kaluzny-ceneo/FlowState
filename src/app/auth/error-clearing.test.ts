@@ -1,6 +1,6 @@
-import { describe, expect, vi, beforeEach } from "vitest";
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
+import { beforeEach, describe, expect, vi } from "vitest";
 
 /**
  * Feature: neon-auth, Property 12: Error clearing on new submission
@@ -62,10 +62,18 @@ describe("Feature: neon-auth, Property 12: Error clearing on new submission", ()
 	/** Arbitrary for sign-up error states with at least one error */
 	const signUpErrorStateArb = fc
 		.record({
-			name: fc.option(fc.string({ minLength: 1, maxLength: 50 }), { nil: undefined }),
-			email: fc.option(fc.string({ minLength: 1, maxLength: 50 }), { nil: undefined }),
-			password: fc.option(fc.string({ minLength: 1, maxLength: 50 }), { nil: undefined }),
-			form: fc.option(fc.string({ minLength: 1, maxLength: 100 }), { nil: undefined }),
+			name: fc.option(fc.string({ minLength: 1, maxLength: 50 }), {
+				nil: undefined,
+			}),
+			email: fc.option(fc.string({ minLength: 1, maxLength: 50 }), {
+				nil: undefined,
+			}),
+			password: fc.option(fc.string({ minLength: 1, maxLength: 50 }), {
+				nil: undefined,
+			}),
+			form: fc.option(fc.string({ minLength: 1, maxLength: 100 }), {
+				nil: undefined,
+			}),
 		})
 		.filter(
 			(errors) =>
@@ -91,11 +99,19 @@ describe("Feature: neon-auth, Property 12: Error clearing on new submission", ()
 	const validSignUpFormDataArb = fc
 		.record({
 			name: fc
-				.string({ minLength: 1, maxLength: 50, unit: fc.constantFrom("a", "b", "c", "d", "e", "f") })
+				.string({
+					minLength: 1,
+					maxLength: 50,
+					unit: fc.constantFrom("a", "b", "c", "d", "e", "f"),
+				})
 				.filter((s) => s.trim().length > 0),
 			email: fc
 				.tuple(
-					fc.string({ minLength: 1, maxLength: 10, unit: fc.constantFrom("a", "b", "c", "d", "e") }),
+					fc.string({
+						minLength: 1,
+						maxLength: 10,
+						unit: fc.constantFrom("a", "b", "c", "d", "e"),
+					}),
 					fc.constantFrom("example.com", "test.org", "mail.io"),
 				)
 				.map(([local, domain]) => `${local}@${domain}`),
@@ -118,7 +134,11 @@ describe("Feature: neon-auth, Property 12: Error clearing on new submission", ()
 		.record({
 			email: fc
 				.tuple(
-					fc.string({ minLength: 1, maxLength: 10, unit: fc.constantFrom("a", "b", "c", "d", "e") }),
+					fc.string({
+						minLength: 1,
+						maxLength: 10,
+						unit: fc.constantFrom("a", "b", "c", "d", "e"),
+					}),
 					fc.constantFrom("example.com", "test.org", "mail.io"),
 				)
 				.map(([local, domain]) => `${local}@${domain}`),
@@ -146,9 +166,11 @@ describe("Feature: neon-auth, Property 12: Error clearing on new submission", ()
 			// The action will call redirect on success, which throws in the mock
 			// We need to handle the redirect mock behavior
 			const { redirect } = await import("next/navigation");
-			(redirect as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => {
-				throw new Error("NEXT_REDIRECT");
-			});
+			(redirect as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+				() => {
+					throw new Error("NEXT_REDIRECT");
+				},
+			);
 
 			let result: Awaited<ReturnType<typeof signUpAction>> | null = null;
 			try {
@@ -216,9 +238,11 @@ describe("Feature: neon-auth, Property 12: Error clearing on new submission", ()
 			authMock.signIn.email.mockResolvedValue({ error: null });
 
 			const { redirect } = await import("next/navigation");
-			(redirect as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => {
-				throw new Error("NEXT_REDIRECT");
-			});
+			(redirect as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+				() => {
+					throw new Error("NEXT_REDIRECT");
+				},
+			);
 
 			let result: Awaited<ReturnType<typeof signInAction>> | null = null;
 			try {

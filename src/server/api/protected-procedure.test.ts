@@ -1,7 +1,7 @@
-import { describe, expect, vi, beforeEach } from "vitest";
 import { test as fcTest } from "@fast-check/vitest";
-import fc from "fast-check";
 import { TRPCError } from "@trpc/server";
+import fc from "fast-check";
+import { beforeEach, describe, expect, vi } from "vitest";
 
 /**
  * Feature: neon-auth, Property 8: protectedProcedure enforcement
@@ -28,8 +28,12 @@ globalThis.setTimeout = ((fn: () => void, _ms?: number) =>
 	originalSetTimeout(fn, 0)) as any;
 
 // Import after mocks are set up
-const { createCallerFactory, createTRPCContext, createTRPCRouter, protectedProcedure } =
-	await import("~/server/api/trpc");
+const {
+	createCallerFactory,
+	createTRPCContext,
+	createTRPCRouter,
+	protectedProcedure,
+} = await import("~/server/api/trpc");
 
 // Create a test router with a protectedProcedure that returns the session user
 const testRouter = createTRPCRouter({
