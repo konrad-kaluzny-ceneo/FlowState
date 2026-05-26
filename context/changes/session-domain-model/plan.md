@@ -433,28 +433,28 @@ F-01 introduces no hot paths. The new tables are write-rare (one session per use
 
 #### Automated
 
-- [x] 2.1 Type checks pass: `pnpm typecheck`
-- [x] 2.2 Linter passes: `pnpm check`
-- [x] 2.3 New isolation test passes: `pnpm test src/server/api/routers/session-isolation.test.ts`
-- [x] 2.4 Full test suite stays green: `pnpm test`
+- [x] 2.1 Type checks pass: `pnpm typecheck` — 0ba7d96
+- [x] 2.2 Linter passes: `pnpm check` — 0ba7d96
+- [x] 2.3 New isolation test passes: `pnpm test src/server/api/routers/session-isolation.test.ts` — 0ba7d96
+- [x] 2.4 Full test suite stays green: `pnpm test` — 0ba7d96
 
 #### Manual
 
-- [x] 2.5 sessionRouter visually matches taskRouter pattern
-- [x] 2.6 session-isolation test visually matches task-isolation test structure
+- [x] 2.5 sessionRouter visually matches taskRouter pattern — 0ba7d96
+- [x] 2.6 session-isolation test visually matches task-isolation test structure — 0ba7d96
 
 ### Phase 3: cycleRouter + checkInRouter + isolation tests
 
 #### Automated
 
-- [ ] 3.1 Type checks pass: `pnpm typecheck`
-- [ ] 3.2 Linter passes: `pnpm check`
-- [ ] 3.3 Both new isolation tests pass: `pnpm test src/server/api/routers/cycle-isolation.test.ts src/server/api/routers/check-in-isolation.test.ts`
-- [ ] 3.4 Full test suite stays green: `pnpm test`
+- [x] 3.1 Type checks pass: `pnpm typecheck`
+- [x] 3.2 Linter passes: `pnpm check`
+- [x] 3.3 Both new isolation tests pass: `pnpm test src/server/api/routers/cycle-isolation.test.ts src/server/api/routers/check-in-isolation.test.ts`
+- [x] 3.4 Full test suite stays green: `pnpm test`
 
 #### Manual
 
-- [ ] 3.5 cycleRouter and check-inRouter side-by-side with sessionRouter — patterns identical
+- [x] 3.5 cycleRouter and check-inRouter side-by-side with sessionRouter — patterns identical
 
 ### Phase 4: Wire routers into root and verify zero regression
 
