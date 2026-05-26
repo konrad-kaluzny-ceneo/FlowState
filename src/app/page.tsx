@@ -1,10 +1,20 @@
+import { redirect } from "next/navigation";
+
 import { TaskList } from "~/app/_components/task-list";
+import { auth } from "~/lib/auth/server";
 import { api, HydrateClient } from "~/trpc/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-	void api.task.list.prefetch();
+	const { data } = await auth.getSession();
+	const user = data?.user;
+
+	if (!user?.id || !user.email) {
+		redirect("/auth/sign-in");
+	}
+
+	await api.task.list.prefetch();
 
 	return (
 		<HydrateClient>

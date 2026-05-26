@@ -1,8 +1,14 @@
+import type { NextRequest } from "next/server";
+
 import { auth } from "./src/lib/auth/server";
 
-export default auth.middleware({
+const runAuthProxy = auth.middleware({
 	loginUrl: "/auth/sign-in",
 });
+
+export function proxy(request: NextRequest) {
+	return runAuthProxy(request);
+}
 
 export const config = {
 	matcher: [
