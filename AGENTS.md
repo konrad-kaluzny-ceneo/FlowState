@@ -39,6 +39,8 @@
 
 - Run all unit tests after each milestone: `pnpm test`
 - **Critical:** Always run `pnpm test` at the end of every work cycle before presenting results.
+- **E2E vs integration:** A direct DB query or server-side tRPC caller is an integration test, not e2e. True e2e requires a browser with an authenticated session hitting the running app. Do not claim "e2e verified" unless a real browser flow (with auth) was exercised.
+- **Test pyramid:** All changes must include unit and integration tests. Code must be testable at each level of the pyramid (unit → integration → e2e). Do not ship code without covering the appropriate test levels for the change.
 
 ## Commit Conventions
 

@@ -33,13 +33,14 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
 |---|---|---|---|---|---|
 | F-01 | session-domain-model | (foundation) Pomodoro session domain wired in Prisma + tRPC: Task gains workType + weight; Session, Cycle, CheckIn entities and routers exist with strict per-user isolation | — | NFR (data isolation), NFR (no silent data loss), NFR (90-day retention), FR-017, FR-018, FR-019, FR-020 | ready |
-| S-01 | first-pomodoro-cycle | start one configurable work cycle on a selected task, hear the audio prompt at cycle end, confirm transition, and return to the same state after a refresh | F-01 | US-01, FR-009, FR-010, FR-012, FR-013, FR-014, NFR (timer drift ≤ ±2s), NFR (crash/refresh recovery), NFR (200ms acknowledgement) | proposed |
+| F-02 | e2e-test-infra | (foundation) Playwright installed with authenticated test user flow; agent and CI can run browser-based e2e tests against the real app | — | NFR (crash/refresh recovery), NFR (200ms acknowledgement), NFR (timer drift ≤ ±2s) | ready |
+| S-01 | first-pomodoro-cycle | start one configurable work cycle on a selected task, hear the audio prompt at cycle end, confirm transition, and return to the same state after a refresh | F-01, F-02 | US-01, FR-009, FR-010, FR-012, FR-013, FR-014, NFR (timer drift ≤ ±2s), NFR (crash/refresh recovery), NFR (200ms acknowledgement) | proposed |
 | S-02 | full-session-with-breaks | complete a multi-cycle session with short and long breaks, see configured break durations applied, and end the session explicitly or after 4h inactivity | S-01 | US-01, FR-011, FR-014, FR-019, NFR (session retention 90 days) | proposed |
 | S-03 | mid-cycle-completion-prompt | mark a task done mid-cycle and choose between picking the next task to keep the cycle running or ending the cycle to take a break now | S-01 | FR-015, FR-009a (revert path consistency) | proposed |
-| S-04 | task-attributes-for-scoring | tag tasks with work type (deep work / admin / reactive) and weight (1–3) at creation and during edit, with values surfaced in the task list | F-01 | FR-005 (extend), FR-017, FR-018 | proposed |
+| S-04 | task-attributes-for-scoring | tag tasks with work type (deep work / admin / reactive) and weight (1–3) at creation and during edit, with values surfaced in the task list | F-01, F-02 | FR-005 (extend), FR-017, FR-018 | proposed |
 | S-05 | end-of-cycle-checkin | declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session | S-01 | FR-020, NFR (mental-state data privacy) | proposed |
 | S-06 | adaptive-task-suggestion | after each check-in, see a suggested next task with a one-line rationale and accept it or override by picking any other task | S-04, S-05 | FR-021, FR-022, NFR (suggestion feedback ≥1s visible) | proposed |
-| S-07 | account-recovery-flow | reset a forgotten password and recover access without losing existing tasks or session history | — | FR-003a, NFR (auth must not lock user out of own data) | ready |
+| S-07 | account-recovery-flow | reset a forgotten password and recover access without losing existing tasks or session history | F-02 | FR-003a, NFR (auth must not lock user out of own data) | ready |
 
 ## Streams
 
@@ -47,10 +48,10 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 
 | Stream | Theme | Chain | Note |
 |---|---|---|---|
-| A | Core loop (north-star path) | `F-01` → `S-01` → `S-02` → `S-03` | Shortest path to PRD §Success Criteria.Primary; hosts the validation milestone. Bias from `main_goal: speed`. |
-| B | Scoring substrate | `S-04` (parallel with `S-01`/`S-02`) | Adds task attributes. Independent of timer mechanics; safe to fan out alongside Stream A once `F-01` lands. |
+| A | Core loop (north-star path) | `F-01` → `F-02` → `S-01` → `S-02` → `S-03` | Shortest path to PRD §Success Criteria.Primary; hosts the validation milestone. F-02 gates all UI-facing slices. Bias from `main_goal: speed`. |
+| B | Scoring substrate | `S-04` (parallel with `S-01`/`S-02`, requires `F-02`) | Adds task attributes. Independent of timer mechanics; safe to fan out alongside Stream A once `F-01` + `F-02` land. |
 | C | Wedge convergence | `S-05` → `S-06` | Joins Stream A at `S-01` (needs cycle-end hook) and Stream B at `S-04` (needs scoring inputs). Wedge — the differentiating mechanic — lands here. |
-| D | Auth hardening | `S-07` | Standalone slice; no Prerequisites; closes a guardrail gap from PRD §Success Criteria.Guardrails inherited by the existing baseline auth. |
+| D | Auth hardening | `S-07` (requires `F-02`) | Standalone slice; requires e2e infra to verify recovery flow end-to-end in a browser. |
 
 
 ## Baseline
@@ -63,6 +64,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Data:** partial — Prisma 7 + `@prisma/adapter-neon` wired; one `Task` model (`prisma/schema.prisma`) with `id / title / status / userId / timestamps`; one initial migration. Missing: `workType`, `weight` columns on Task; `Session`, `Cycle`, `CheckIn` entities. This is what `F-01` adds.
 - **Auth:** present — Neon Auth wired end-to-end: `proxy.ts` middleware, `src/app/auth/sign-in` + `sign-up` routes, `src/app/api/auth/[...path]/route.ts`, `src/lib/auth/{client,server}.ts`. FR-001/FR-002/FR-003 covered. FR-003a (recovery) **technically supported by Neon Auth** but UI surface not verified end-to-end — `S-07` validates and exposes it.
 - **Deploy / infra:** present (Vercel) / partial (CI) — Vercel project linked (`.vercel/`); auto-deploy via Vercel's GitHub integration. No `.github/workflows/` for parallel CI yet — out of MVP scope under `main_goal: speed`.
+- **E2E testing:** absent — no Playwright, no headless browser, no test auth bypass. Unit/integration tests exist (Vitest + fast-check) but cannot verify UI behavior in a browser. This is what `F-02` adds.
 - **Observability:** absent — Vercel default request logs only; no Sentry / OTel / log drains. Out of MVP scope; revisit post-launch.
 
 ## Foundations
@@ -81,6 +83,21 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Status:** ready
 
 
+### F-02: E2E test infrastructure (Playwright + test auth)
+
+- **Outcome:** (foundation) Playwright is installed and configured with a programmatic test-user authentication flow (bypassing interactive login); a single smoke test proves the pipeline works by signing in, loading the task list, and asserting DOM content. Agent and CI can run `pnpm test:e2e` to verify any UI-facing behavior in a real browser.
+- **Change ID:** e2e-test-infra
+- **PRD refs:** NFR (crash/refresh recovery), NFR (200ms acknowledgement), NFR (timer drift ≤ ±2s) — all require browser-level verification
+- **Unlocks:** S-01 (cycle UI verifiable e2e), S-02 (session lifecycle e2e), S-03 (mid-cycle prompt e2e), S-04 (task attribute UI e2e), S-05 (check-in UI e2e), S-06 (suggestion UI e2e), S-07 (recovery flow e2e). Every slice with user-visible behavior depends on this to be properly verified.
+- **Prerequisites:** —
+- **Parallel with:** F-01, S-07 (planning only — S-07 implementation requires F-02)
+- **Blockers:** —
+- **Unknowns:**
+  - How to authenticate a test user programmatically with Neon Auth — direct API call to get a session cookie, or a test-only auth bypass route? Owner: implementer (downstream `/10x-plan`). Block: no — both approaches are well-documented patterns.
+- **Risk:** Without this, every UI-facing slice ships without real e2e confidence. The risk of NOT doing this is compounding: each slice adds manual verification debt that cannot be automated retroactively without this foundation. The risk of doing it is minimal — Playwright setup is well-understood and the scope is bounded to "auth + one smoke test".
+- **Status:** ready
+
+
 ## Slices
 
 ### S-01: First Pomodoro cycle on an existing task (north star)
@@ -88,7 +105,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Outcome:** user can pick one existing task, start a configurable work cycle bound to it, hear an audio signal and see a UI prompt at cycle end, and confirm the transition; refreshing the page mid-cycle returns to the same state.
 - **Change ID:** first-pomodoro-cycle
 - **PRD refs:** US-01, FR-009, FR-010, FR-012, FR-013, FR-014, NFR (timer drift ≤ ±2s on background tabs), NFR (crash/refresh recovery of cycle config and current cycle), NFR (200ms acknowledgement on actions)
-- **Prerequisites:** F-01
+- **Prerequisites:** F-01, F-02
 - **Parallel with:** S-04, S-07
 - **Blockers:** —
 - **Unknowns:**
@@ -127,7 +144,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Outcome:** user can set a work type (deep work / admin / reactive) and a weight (1–3) on a task at creation and during edit; both attributes are visible on the task in the active list.
 - **Change ID:** task-attributes-for-scoring
 - **PRD refs:** FR-005 (extended), FR-017, FR-018
-- **Prerequisites:** F-01
+- **Prerequisites:** F-01, F-02
 - **Parallel with:** S-01, S-02, S-03 (no runtime coupling to the cycle; touches Task UI and `taskRouter` only)
 - **Blockers:** —
 - **Unknowns:** —
@@ -166,7 +183,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Outcome:** user can request a password reset from the sign-in screen, follow the recovery email, set a new password, and sign in — without losing any existing tasks or session history.
 - **Change ID:** account-recovery-flow
 - **PRD refs:** FR-003a, NFR (auth must not lock a user out of their own data)
-- **Prerequisites:** —
+- **Prerequisites:** F-02
 - **Parallel with:** F-01, S-01, S-02, S-03, S-04, S-05, S-06
 - **Blockers:** —
 - **Unknowns:**
@@ -179,13 +196,14 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
 |---|---|---|---|---|
 | F-01 | session-domain-model | FlowState — wire Pomodoro session domain (Task attrs + Session/Cycle/CheckIn) | yes | Run `/10x-plan session-domain-model` |
-| S-01 | first-pomodoro-cycle | FlowState — first Pomodoro cycle on a selected task (north star) | no | Unblocks once F-01 lands; this is the validation milestone |
+| F-02 | e2e-test-infra | FlowState — Playwright e2e test infrastructure with authenticated test user | yes | Run `/10x-plan e2e-test-infra`; gates all UI-facing slices |
+| S-01 | first-pomodoro-cycle | FlowState — first Pomodoro cycle on a selected task (north star) | no | Unblocks once F-01 + F-02 land; this is the validation milestone |
 | S-02 | full-session-with-breaks | FlowState — multi-cycle session with short/long breaks and explicit end | no | Unblocks after S-01 |
 | S-03 | mid-cycle-completion-prompt | FlowState — mid-cycle completion prompt (continue or break) | no | Unblocks after S-01; can run parallel to S-02 |
-| S-04 | task-attributes-for-scoring | FlowState — task work-type and weight attributes | no | Unblocks once F-01 lands; runs parallel to S-01/S-02/S-03 |
+| S-04 | task-attributes-for-scoring | FlowState — task work-type and weight attributes | no | Unblocks once F-01 + F-02 land; runs parallel to S-01/S-02/S-03 |
 | S-05 | end-of-cycle-checkin | FlowState — end-of-cycle mindful check-in | no | Unblocks after S-01 |
 | S-06 | adaptive-task-suggestion | FlowState — adaptive next-task suggestion with override (wedge) | no | Unblocks after S-04 + S-05; carries the v1 scoring formula |
-| S-07 | account-recovery-flow | FlowState — verify and expose password recovery flow | yes | Run `/10x-plan account-recovery-flow` whenever capacity opens; can run alongside F-01 |
+| S-07 | account-recovery-flow | FlowState — verify and expose password recovery flow | no | Requires F-02 for browser-based verification of recovery flow |
 
 ## Open Roadmap Questions
 
