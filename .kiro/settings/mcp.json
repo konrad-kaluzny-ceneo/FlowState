@@ -1,0 +1,53 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "resolve-library-id",
+        "query-docs"
+      ]
+    },
+    "vercel": {
+      "url": "https://mcp.vercel.com",
+      "autoApprove": [
+        "list_deployments",
+        "get_deployment_build_logs",
+        "get_deployment",
+        "get_runtime_logs"
+      ]
+    },
+    "linear": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.linear.app/mcp"]
+    }
+  },
+  "powers": {
+    "mcpServers": {
+      "power-context7-context7": {
+        "url": "https://mcp.context7.com/mcp"
+      },
+      "power-snyk-secure-at-inception-Snyk": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "snyk@latest",
+          "mcp",
+          "-t",
+          "stdio"
+        ]
+      },
+      "power-neon-Neon": {
+        "url": "https://mcp.neon.tech/mcp",
+        "disabled": false,
+        "disabledTools": [
+          "compare_database_schema"
+        ]
+      }
+    }
+  }
+}
