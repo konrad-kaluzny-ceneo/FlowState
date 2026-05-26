@@ -6,15 +6,16 @@ runner_up: Railway
 context_type: mvp
 tech_stack:
   language: TypeScript
-  framework: Next.js 15
+  framework: Next.js 16
   runtime: Node.js
+  orm: Prisma 7
 ---
 
 ## Recommendation
 
 **Deploy on Vercel.**
 
-Vercel is the native deployment target for Next.js 15 — zero-config deploys, Fluid Compute (GA since April 2025) for server-like concurrency, and a $0 Hobby tier that comfortably handles 10k–100k monthly requests. The developer's existing Vercel + Neon familiarity eliminates onboarding friction, and the Vercel Marketplace provides integrated Neon Postgres provisioning with automatic `DATABASE_URL` injection. The platform scored Pass on 4/5 agent-friendly criteria (CLI-first, managed/serverless, agent-readable docs, stable deploy API) with a Partial on MCP integration (public beta).
+Vercel is the native deployment target for Next.js 16 — zero-config deploys, Fluid Compute (GA since April 2025) for server-like concurrency, and a $0 Hobby tier that comfortably handles 10k–100k monthly requests. The developer's existing Vercel + Neon familiarity eliminates onboarding friction, and the Vercel Marketplace provides integrated Neon Postgres provisioning with automatic `DATABASE_URL` injection. The platform scored Pass on 4/5 agent-friendly criteria (CLI-first, managed/serverless, agent-readable docs, stable deploy API) with a Partial on MCP integration (public beta).
 
 ## Platform Comparison
 
@@ -49,7 +50,7 @@ Full-stack PaaS with co-located Postgres, Redis, and MySQL — one-click provisi
 
 #### 3. Cloudflare Workers + Pages
 
-Best-in-class agent tooling: GA MCP server, `llms.txt` on every docs page, `wrangler` CLI with full operational coverage. D1 (SQLite-based) with EU jurisdiction would be a natural fit for the current Drizzle/SQLite schema. Free tier is generous (100k requests/day). Critical gap: the `@opennextjs/cloudflare` adapter for Next.js 15 is **beta (1.0.0-beta, April 2025)** — deploying a T3 stack through a beta adapter on a 6-week timeline introduces unacceptable risk of breaking changes and debugging time.
+Best-in-class agent tooling: GA MCP server, `llms.txt` on every docs page, `wrangler` CLI with full operational coverage. D1 (SQLite-based) with EU jurisdiction would be a natural fit for the current Drizzle/SQLite schema. Free tier is generous (100k requests/day). Critical gap: the `@opennextjs/cloudflare` adapter for Next.js 16 is **beta** — deploying a T3 stack through a beta adapter on a 6-week timeline introduces unacceptable risk of breaking changes and debugging time.
 
 ## Anti-Bias Cross-Check: Vercel
 
@@ -91,9 +92,9 @@ The developer deployed FlowState to Vercel Hobby with Neon Postgres via Marketpl
 |---|---|---|---|---|
 | tRPC procedures hit 10s timeout on Hobby | Devil's advocate | M | H | Keep procedures lean; split complex scoring into multiple calls; monitor execution time; budget for Pro upgrade ($20/mo) if needed |
 | Neon cold-start latency after 25-min Pomodoro idle | Unknown unknowns | H | L | Use Neon's serverless driver with connection pooling; accept ~300ms first-request penalty (acceptable for non-real-time app) |
-| SQLite → Postgres migration blocks first deploy | Devil's advocate | H | M | Plan migration as first implementation task: swap `@libsql/client` for `@neondatabase/serverless`, change Drizzle dialect to `postgresql`, regenerate migrations |
+| ~~SQLite → Postgres migration~~ | Devil's advocate | — | — | **Resolved.** Migrated to Prisma 7 + Neon Postgres (May 2026). |
 | Preview deploys expose test data publicly | Devil's advocate | L | M | Use seed data only in preview; never put real user data in preview branches; consider Vercel Authentication add-on if sensitive |
-| Next.js major version upgrade pressure mid-timeline | Pre-mortem | L | H | Pin Next.js to ^15.5.x in package.json; ignore upgrade prompts until MVP ships; test upgrades in a separate branch |
+| Next.js major version upgrade pressure mid-timeline | Pre-mortem | L | H | Already upgraded to Next.js 16. Pin to ^16.x; test future upgrades in a separate branch |
 | Neon free tier connection limits under concurrent tabs | Pre-mortem | L | M | Use Neon's serverless HTTP driver (stateless, no connection pooling needed); limit concurrent DB calls per request |
 | Build cache region mismatch (US cache, PL developer) | Unknown unknowns | M | L | Accept slightly slower first builds; incremental builds are fast regardless of cache region |
 
@@ -105,7 +106,7 @@ The developer deployed FlowState to Vercel Hobby with Neon Postgres via Marketpl
 
 3. **Provision Neon Postgres via Marketplace**: In the Vercel dashboard → Storage tab → Add Database → select Neon. Choose `eu-central-1` (Frankfurt) as the region. The `DATABASE_URL` and `DATABASE_URL_UNPOOLED` env vars are injected automatically.
 
-4. **Migrate from SQLite to Postgres**: Update `drizzle.config.ts` to use `dialect: "postgresql"`. Replace `@libsql/client` with `@neondatabase/serverless` in dependencies. Update `src/server/db/index.ts` to use the Neon serverless driver. Change schema from `sqliteTable` to `pgTable`. Run `pnpm db:generate` then `pnpm db:migrate`.
+4. **Database schema**: The project uses Prisma 7 with `@prisma/adapter-neon`. Schema is defined in `prisma/schema.prisma`. Run `pnpm prisma migrate dev` for local development migrations. The Vercel build runs `prisma generate` only (no migrations at build time — run migrations separately via `pnpm db:migrate:prod`).
 
 5. **Deploy**: `vercel --prod` for production, or just push to `main` with GitHub integration enabled (auto-deploy-on-merge per your CI config).
 

@@ -11,6 +11,10 @@
 		},
 		"neon": {
 			"url": "https://mcp.neon.tech/sse"
+		},
+		"linear": {
+			"command": "npx",
+			"args": ["-y", "mcp-remote", "https://mcp.linear.app/mcp"]
 		}
 	}
 }

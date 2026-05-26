@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-- Critical **Tech Stack:** Next.js 15, React 19, TypeScript, Vite, Drizzle, tRPC + Tanstack React Query + Zod, Tailwind CSS.
+- Critical **Tech Stack:** Next.js 16, React 19, TypeScript 6, Prisma 7, tRPC + Tanstack React Query + Zod 4, Tailwind CSS 4.
 - **Package Manager:** pnpm (strict isolated `node_modules`, no hoisting). Use `pnpm` for all install/run commands. Never use `npm` or `yarn`.
 - Rest of Stack: see `@package.json`.
 
@@ -23,9 +23,12 @@
 
 ## Database
 
-- Drizzle tables must use the `createTable` helper from `@src/server/db/schema.ts` (prefixes tables with `flow_state_`). Raw `pgTable` calls break the naming convention.
-- Drizzle migrations must be generated with `pnpm drizzle-kit generate` before `pnpm drizzle-kit migrate`. Running migrate without a pending generation silently does nothing.
-- Don't write SQL migration files by hand - always use CLI to generate migration files.
+- ORM: **Prisma 7** with `@prisma/adapter-neon` for serverless Neon connectivity.
+- Schema defined in `prisma/schema.prisma`. All tables use `@@map("flow_state_<name>")` to maintain the `flow_state_` prefix convention.
+- Prisma client generated to `./generated/prisma/client` (gitignored). Import via `@prisma/generated` path alias.
+- Migrations: `pnpm prisma migrate dev` (local), `pnpm db:migrate:prod` (production). Never write migration SQL by hand.
+- Config: `prisma.config.ts` at project root (loads `.env` automatically for CLI commands).
+- Build script runs `prisma generate` only — migrations are NOT run at build time on Vercel.
 
 ## tRPC
 
@@ -53,7 +56,7 @@ Allowed commit types: `feat`, `docs`, `init` only. No trailing period.
 
 - **Project:** `flow-state` (ID: `hidden-hall-84768725`), region `aws-eu-central-1`, Postgres 18.
 - CLI: `neonctl` installed globally. Always pass `--project-id hidden-hall-84768725` and `--output json`.
-- Use Drizzle (`pnpm db:generate` + `pnpm db:migrate`) for app schema changes. Use Neon MCP/CLI only for exploration or out-of-band fixes.
+- Use Prisma (`pnpm prisma migrate dev`) for app schema changes. Use Neon MCP/CLI only for exploration or out-of-band fixes.
 - Test DDL on a temporary branch first — never run untested schema changes on main.
 - Never run destructive SQL without explicit user confirmation.
 - Connection strings are secrets — reference by env var name (`DATABASE_URL`), never echo values.
