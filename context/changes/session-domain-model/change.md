@@ -1,7 +1,7 @@
 ---
 change_id: session-domain-model
 title: Wire Pomodoro session domain (Task attrs + Session/Cycle/CheckIn)
-status: implementing
+status: implemented
 created: 2026-05-26
 updated: 2026-05-26
 roadmap_ref: F-01

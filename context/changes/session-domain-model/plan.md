@@ -460,13 +460,13 @@ F-01 introduces no hot paths. The new tables are write-rare (one session per use
 
 #### Automated
 
-- [x] 4.1 Type checks pass: `pnpm typecheck`
-- [x] 4.2 Linter passes: `pnpm check`
-- [x] 4.3 Full test suite passes: `pnpm test`
-- [x] 4.4 Build succeeds: `pnpm build`
+- [x] 4.1 Type checks pass: `pnpm typecheck` — 02d78e5
+- [x] 4.2 Linter passes: `pnpm check` — 02d78e5
+- [x] 4.3 Full test suite passes: `pnpm test` — 02d78e5
+- [x] 4.4 Build succeeds: `pnpm build` — 02d78e5
 
 #### Manual
 
-- [x] 4.5 UI smoke — task list renders, CRUD works, zero regression
-- [x] 4.6 task.list response includes new workType and weight fields
-- [x] 4.7 (Optional) Prisma Studio session insert — session.list returns it
+- [x] 4.5 UI smoke — task list renders, CRUD works, zero regression — 02d78e5
+- [x] 4.6 task.list response includes new workType and weight fields — 02d78e5
+- [x] 4.7 (Optional) Prisma Studio session insert — session.list returns it — 02d78e5
