@@ -12,10 +12,21 @@ export const taskRouter = createTRPCRouter({
 	}),
 
 	create: protectedProcedure
-		.input(z.object({ title: z.string().min(1).max(256) }))
+		.input(
+			z.object({
+				title: z.string().min(1).max(256),
+				workType: z.enum(["DEEP_WORK", "ADMIN", "REACTIVE"]).optional(),
+				weight: z.number().int().min(1).max(3).optional(),
+			}),
+		)
 		.mutation(async ({ ctx, input }) => {
 			await ctx.db.task.create({
-				data: { title: input.title, userId: ctx.session.user.id },
+				data: {
+					title: input.title,
+					userId: ctx.session.user.id,
+					...(input.workType != null ? { workType: input.workType } : {}),
+					...(input.weight != null ? { weight: input.weight } : {}),
+				},
 			});
 		}),
 
@@ -25,6 +36,8 @@ export const taskRouter = createTRPCRouter({
 				id: z.number(),
 				title: z.string().min(1).max(256).optional(),
 				status: z.enum(["active", "completed"]).optional(),
+				workType: z.enum(["DEEP_WORK", "ADMIN", "REACTIVE"]).optional(),
+				weight: z.number().int().min(1).max(3).optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {

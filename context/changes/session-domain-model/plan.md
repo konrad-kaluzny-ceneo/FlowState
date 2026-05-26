@@ -447,26 +447,26 @@ F-01 introduces no hot paths. The new tables are write-rare (one session per use
 
 #### Automated
 
-- [x] 3.1 Type checks pass: `pnpm typecheck`
-- [x] 3.2 Linter passes: `pnpm check`
-- [x] 3.3 Both new isolation tests pass: `pnpm test src/server/api/routers/cycle-isolation.test.ts src/server/api/routers/check-in-isolation.test.ts`
-- [x] 3.4 Full test suite stays green: `pnpm test`
+- [x] 3.1 Type checks pass: `pnpm typecheck` — 10c72f9
+- [x] 3.2 Linter passes: `pnpm check` — 10c72f9
+- [x] 3.3 Both new isolation tests pass: `pnpm test src/server/api/routers/cycle-isolation.test.ts src/server/api/routers/check-in-isolation.test.ts` — 10c72f9
+- [x] 3.4 Full test suite stays green: `pnpm test` — 10c72f9
 
 #### Manual
 
-- [x] 3.5 cycleRouter and check-inRouter side-by-side with sessionRouter — patterns identical
+- [x] 3.5 cycleRouter and check-inRouter side-by-side with sessionRouter — patterns identical — 10c72f9
 
 ### Phase 4: Wire routers into root and verify zero regression
 
 #### Automated
 
-- [ ] 4.1 Type checks pass: `pnpm typecheck`
-- [ ] 4.2 Linter passes: `pnpm check`
-- [ ] 4.3 Full test suite passes: `pnpm test`
-- [ ] 4.4 Build succeeds: `pnpm build`
+- [x] 4.1 Type checks pass: `pnpm typecheck`
+- [x] 4.2 Linter passes: `pnpm check`
+- [x] 4.3 Full test suite passes: `pnpm test`
+- [x] 4.4 Build succeeds: `pnpm build`
 
 #### Manual
 
-- [ ] 4.5 UI smoke — task list renders, CRUD works, zero regression
-- [ ] 4.6 task.list response includes new workType and weight fields
-- [ ] 4.7 (Optional) Prisma Studio session insert — session.list returns it
+- [x] 4.5 UI smoke — task list renders, CRUD works, zero regression
+- [x] 4.6 task.list response includes new workType and weight fields
+- [x] 4.7 (Optional) Prisma Studio session insert — session.list returns it
