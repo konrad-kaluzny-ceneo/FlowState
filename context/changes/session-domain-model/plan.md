@@ -433,15 +433,15 @@ F-01 introduces no hot paths. The new tables are write-rare (one session per use
 
 #### Automated
 
-- [ ] 2.1 Type checks pass: `pnpm typecheck`
-- [ ] 2.2 Linter passes: `pnpm check`
-- [ ] 2.3 New isolation test passes: `pnpm test src/server/api/routers/session-isolation.test.ts`
-- [ ] 2.4 Full test suite stays green: `pnpm test`
+- [x] 2.1 Type checks pass: `pnpm typecheck`
+- [x] 2.2 Linter passes: `pnpm check`
+- [x] 2.3 New isolation test passes: `pnpm test src/server/api/routers/session-isolation.test.ts`
+- [x] 2.4 Full test suite stays green: `pnpm test`
 
 #### Manual
 
-- [ ] 2.5 sessionRouter visually matches taskRouter pattern
-- [ ] 2.6 session-isolation test visually matches task-isolation test structure
+- [x] 2.5 sessionRouter visually matches taskRouter pattern
+- [x] 2.6 session-isolation test visually matches task-isolation test structure
 
 ### Phase 3: cycleRouter + checkInRouter + isolation tests
 
