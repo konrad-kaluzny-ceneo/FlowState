@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
 import Link from "next/link";
+import { useActionState } from "react";
 import { signInAction } from "./action";
 
 export interface SignInFormState {
@@ -30,9 +30,9 @@ export default function SignInPage() {
 				<form action={formAction} className="flex flex-col gap-4" noValidate>
 					{state.error && (
 						<div
-							role="alert"
 							aria-live="assertive"
 							className="rounded-md bg-red-500/10 p-3 text-red-300 text-sm"
+							role="alert"
 						>
 							{state.error}
 						</div>
@@ -40,50 +40,50 @@ export default function SignInPage() {
 
 					<div className="flex flex-col gap-1.5">
 						<label
-							htmlFor="email"
 							className="font-medium text-sm text-white/80"
+							htmlFor="email"
 						>
 							Email
 						</label>
 						<input
-							id="email"
-							name="email"
-							type="email"
-							maxLength={254}
-							required
-							autoComplete="email"
-							defaultValue={state.email}
 							aria-required="true"
+							autoComplete="email"
 							className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+							defaultValue={state.email}
+							id="email"
+							maxLength={254}
+							name="email"
 							placeholder="you@example.com"
+							required
+							type="email"
 						/>
 					</div>
 
 					<div className="flex flex-col gap-1.5">
 						<label
-							htmlFor="password"
 							className="font-medium text-sm text-white/80"
+							htmlFor="password"
 						>
 							Password
 						</label>
 						<input
-							id="password"
-							name="password"
-							type="password"
-							maxLength={128}
-							required
-							autoComplete="current-password"
 							aria-required="true"
+							autoComplete="current-password"
 							className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+							id="password"
+							maxLength={128}
+							name="password"
 							placeholder="••••••••"
+							required
+							type="password"
 						/>
 					</div>
 
 					<button
-						type="submit"
-						disabled={isPending}
 						aria-disabled={isPending}
 						className="mt-2 rounded-md bg-blue-600 px-4 py-2.5 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+						disabled={isPending}
+						type="submit"
 					>
 						{isPending ? "Signing in…" : "Sign in"}
 					</button>
@@ -92,8 +92,8 @@ export default function SignInPage() {
 				<p className="mt-6 text-center text-sm text-white/60">
 					Don&apos;t have an account?{" "}
 					<Link
-						href="/auth/sign-up"
 						className="text-blue-400 underline-offset-2 hover:underline"
+						href="/auth/sign-up"
 					>
 						Sign up
 					</Link>

@@ -1,6 +1,6 @@
-import { describe, expect, vi, beforeEach } from "vitest";
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
+import { beforeEach, describe, expect, vi } from "vitest";
 
 /**
  * Feature: neon-auth, Property 7: tRPC context session mapping
@@ -24,9 +24,9 @@ vi.mock("~/lib/auth/server", () => ({
 const { createTRPCContext } = await import("~/server/api/trpc");
 
 /** Arbitrary for non-empty strings (simulating user id, email, name) */
-const nonEmptyStringArb = fc.string({ minLength: 1, maxLength: 100 }).filter(
-	(s) => s.trim().length > 0,
-);
+const nonEmptyStringArb = fc
+	.string({ minLength: 1, maxLength: 100 })
+	.filter((s) => s.trim().length > 0);
 
 /** Arbitrary for valid email-like strings */
 const emailArb = fc
@@ -152,7 +152,14 @@ describe("Feature: neon-auth, Property 7: tRPC context session mapping", () => {
 	);
 
 	fcTest.prop(
-		[fc.constantFrom("Network error", "Timeout", "Internal error", "ECONNREFUSED")],
+		[
+			fc.constantFrom(
+				"Network error",
+				"Timeout",
+				"Internal error",
+				"ECONNREFUSED",
+			),
+		],
 		{ numRuns: 100 },
 	)(
 		"maps thrown errors from getSession() to ctx.session = null",

@@ -7,14 +7,19 @@ strictDepBuilds: true
 
 onlyBuiltDependencies:
   - "@biomejs/biome"
-  - "@libsql/client"
+  - "@prisma/client"
+  - "@prisma/engines"
   - esbuild
+  - prisma
   - sharp
 
 # Packages approved to run build scripts (managed by `pnpm approve-builds`)
 allowBuilds:
+  "@prisma/client": true
+  "@prisma/engines": true
   core-js: true
   esbuild: true
+  prisma: true
   sharp: true
 
 # --- Supply-chain: reject packages published less than 1 day ago (pnpm 11 default) ---

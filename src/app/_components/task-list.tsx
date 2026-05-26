@@ -4,8 +4,17 @@ import { useState } from "react";
 
 import { api } from "~/trpc/react";
 
+interface Task {
+	id: number;
+	title: string;
+	status: string;
+	userId: string;
+	createdAt: Date;
+	updatedAt: Date | null;
+}
+
 export function TaskList() {
-	const [tasks] = api.task.list.useSuspenseQuery();
+	const [tasks] = api.task.list.useSuspenseQuery() as unknown as [Task[]];
 	const utils = api.useUtils();
 
 	const [newTitle, setNewTitle] = useState("");
@@ -99,7 +108,6 @@ export function TaskList() {
 								/>
 								{editingId === task.id ? (
 									<input
-										autoFocus
 										className="flex-1 rounded bg-white/10 px-2 py-1 text-white focus:outline-none"
 										onBlur={() => saveEdit(task.id)}
 										onChange={(e) => setEditTitle(e.target.value)}
@@ -115,8 +123,7 @@ export function TaskList() {
 										className="flex-1 cursor-pointer text-white"
 										onClick={() => startEditing(task.id, task.title)}
 										onKeyDown={(e) => {
-											if (e.key === "Enter")
-												startEditing(task.id, task.title);
+											if (e.key === "Enter") startEditing(task.id, task.title);
 										}}
 										role="button"
 										tabIndex={0}

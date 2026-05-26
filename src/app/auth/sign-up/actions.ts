@@ -35,7 +35,10 @@ export async function signUpAction(
 
 		if (response.error) {
 			const errorMessage = response.error.message ?? "";
-			console.error("[sign-up] Auth error response:", JSON.stringify(response.error));
+			console.error(
+				"[sign-up] Auth error response:",
+				JSON.stringify(response.error),
+			);
 
 			if (
 				errorMessage.toLowerCase().includes("already") ||

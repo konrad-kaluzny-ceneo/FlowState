@@ -1,8 +1,8 @@
 "use server";
 
+import { NEON_AUTH_NETWORK_ERROR_CODES } from "@neondatabase/auth/next/server";
 import { redirect } from "next/navigation";
 import { auth } from "~/lib/auth/server";
-import { NEON_AUTH_NETWORK_ERROR_CODES } from "@neondatabase/auth/next/server";
 import type { SignInFormState } from "./page";
 
 export async function signInAction(

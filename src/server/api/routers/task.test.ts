@@ -1,14 +1,14 @@
-import { describe, expect, vi, beforeEach } from "vitest";
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
+import { beforeEach, describe, expect, vi } from "vitest";
 
 /**
  * Feature: neon-auth, Property 9: Task creation ownership
  * Validates: Requirements 9.2
  */
 
-// Capture values passed to insert().values()
-let capturedValues: Record<string, unknown> | null = null;
+// Capture values passed to task.create()
+let capturedData: Record<string, unknown> | null = null;
 
 // Mock ~/lib/auth/server
 vi.mock("~/lib/auth/server", () => ({
@@ -17,33 +17,20 @@ vi.mock("~/lib/auth/server", () => ({
 	},
 }));
 
-// Mock ~/server/db with a chainable insert mock that captures values
-vi.mock("~/server/db", () => {
-	const mockValues = vi.fn((vals: Record<string, unknown>) => {
-		capturedValues = vals;
-		return Promise.resolve({ rowCount: 1 });
-	});
-	const mockInsert = vi.fn(() => ({
-		values: mockValues,
-	}));
+// Mock ~/server/db/index with Prisma-style API
+vi.mock("~/server/db/index", () => {
 	return {
 		db: {
-			insert: mockInsert,
-			select: vi.fn(() => ({
-				from: vi.fn(() => ({
-					where: vi.fn(() => ({
-						orderBy: vi.fn(() => []),
-					})),
-				})),
-			})),
-			update: vi.fn(() => ({
-				set: vi.fn(() => ({
-					where: vi.fn(() => ({ rowCount: 1 })),
-				})),
-			})),
-			delete: vi.fn(() => ({
-				where: vi.fn(() => ({ rowCount: 1 })),
-			})),
+			task: {
+				findMany: vi.fn(() => Promise.resolve([])),
+				create: vi.fn((args: { data: Record<string, unknown> }) => {
+					capturedData = args.data;
+					return Promise.resolve({ id: 1, ...args.data });
+				}),
+				findFirst: vi.fn(() => Promise.resolve(null)),
+				update: vi.fn(() => Promise.resolve({ id: 1 })),
+				delete: vi.fn(() => Promise.resolve({ id: 1 })),
+			},
 		},
 	};
 });
@@ -81,14 +68,14 @@ const emailArb = fc
 
 describe("Feature: neon-auth, Property 9: Task creation ownership", () => {
 	beforeEach(() => {
-		capturedValues = null;
+		capturedData = null;
 	});
 
 	fcTest.prop([userIdArb, taskTitleArb, emailArb], { numRuns: 100 })(
 		"created task always has userId matching the authenticated user's ID",
 		async (userId, title, email) => {
 			const caller = createCaller({
-				db: (await import("~/server/db")).db as never,
+				db: (await import("~/server/db/index")).db as never,
 				session: {
 					user: {
 						id: userId,
@@ -101,9 +88,9 @@ describe("Feature: neon-auth, Property 9: Task creation ownership", () => {
 
 			await caller.create({ title });
 
-			expect(capturedValues).not.toBeNull();
-			expect(capturedValues!.userId).toBe(userId);
-			expect(capturedValues!.title).toBe(title);
+			expect(capturedData).not.toBeNull();
+			expect(capturedData?.userId).toBe(userId);
+			expect(capturedData?.title).toBe(title);
 		},
 	);
 });

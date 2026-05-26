@@ -7,18 +7,32 @@ export const env = createEnv({
 	 * isn't built with invalid env vars.
 	 */
 	server: {
-		DATABASE_URL: z.string().refine(
-			(val) => val.startsWith("postgresql://") || val.startsWith("postgres://"),
-			{ message: "DATABASE_URL must be a postgresql:// or postgres:// connection string" },
-		),
-		DATABASE_URL_UNPOOLED: z.string().refine(
-			(val) => val.startsWith("postgresql://") || val.startsWith("postgres://"),
-			{ message: "DATABASE_URL_UNPOOLED must be a postgresql:// or postgres:// connection string" },
-		),
-		NEON_AUTH_BASE_URL: z.string().url().refine(
-			(val) => val.startsWith("https://"),
-			{ message: "NEON_AUTH_BASE_URL must start with https://" },
-		),
+		DATABASE_URL: z
+			.string()
+			.refine(
+				(val) =>
+					val.startsWith("postgresql://") || val.startsWith("postgres://"),
+				{
+					message:
+						"DATABASE_URL must be a postgresql:// or postgres:// connection string",
+				},
+			),
+		DATABASE_URL_UNPOOLED: z
+			.string()
+			.refine(
+				(val) =>
+					val.startsWith("postgresql://") || val.startsWith("postgres://"),
+				{
+					message:
+						"DATABASE_URL_UNPOOLED must be a postgresql:// or postgres:// connection string",
+				},
+			),
+		NEON_AUTH_BASE_URL: z
+			.string()
+			.url()
+			.refine((val) => val.startsWith("https://"), {
+				message: "NEON_AUTH_BASE_URL must start with https://",
+			}),
 		NEON_AUTH_COOKIE_SECRET: z.string().min(32, {
 			message: "NEON_AUTH_COOKIE_SECRET must be at least 32 characters",
 		}),

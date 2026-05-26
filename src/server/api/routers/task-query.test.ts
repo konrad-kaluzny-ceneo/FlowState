@@ -1,6 +1,6 @@
-import { describe, expect, vi, beforeEach } from "vitest";
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
+import { beforeEach, describe, expect, vi } from "vitest";
 
 /**
  * Feature: neon-auth, Property 10: Task query isolation
@@ -25,36 +25,37 @@ vi.mock("~/lib/auth/server", () => ({
 	},
 }));
 
-// Mock ~/server/db with a chainable select mock that filters by captured userId
-vi.mock("~/server/db", () => {
-	const mockOrderBy = vi.fn(() => {
-		// Simulate DB filtering: return only tasks matching the captured userId
-		return allTasks.filter((t) => t.userId === capturedWhereUserId);
-	});
-	const mockWhere = vi.fn(() => {
-		return { orderBy: mockOrderBy };
-	});
-	const mockFrom = vi.fn(() => ({
-		where: mockWhere,
-	}));
-	const mockSelect = vi.fn(() => ({
-		from: mockFrom,
-	}));
+// Mock ~/server/db/index with Prisma-style chainable mock
+vi.mock("~/server/db/index", () => {
+	const mockFindMany = vi.fn(
+		(args: { where?: { userId?: string }; orderBy?: unknown }) => {
+			const userId = args?.where?.userId ?? capturedWhereUserId;
+			return Promise.resolve(allTasks.filter((t) => t.userId === userId));
+		},
+	);
+
+	const mockCreate = vi.fn(() => Promise.resolve({ id: 1 }));
+	const mockFindFirst = vi.fn(
+		(args: { where?: { id?: number; userId?: string } }) => {
+			return Promise.resolve(
+				allTasks.find(
+					(t) => t.id === args?.where?.id && t.userId === args?.where?.userId,
+				) ?? null,
+			);
+		},
+	);
+	const mockUpdate = vi.fn(() => Promise.resolve({ id: 1 }));
+	const mockDelete = vi.fn(() => Promise.resolve({ id: 1 }));
 
 	return {
 		db: {
-			select: mockSelect,
-			insert: vi.fn(() => ({
-				values: vi.fn(() => Promise.resolve({ rowCount: 1 })),
-			})),
-			update: vi.fn(() => ({
-				set: vi.fn(() => ({
-					where: vi.fn(() => ({ rowCount: 1 })),
-				})),
-			})),
-			delete: vi.fn(() => ({
-				where: vi.fn(() => ({ rowCount: 1 })),
-			})),
+			task: {
+				findMany: mockFindMany,
+				create: mockCreate,
+				findFirst: mockFindFirst,
+				update: mockUpdate,
+				delete: mockDelete,
+			},
 		},
 	};
 });
@@ -117,9 +118,7 @@ const queryScenarioArb = fc
 
 		return fc
 			.tuple(
-				fc.tuple(
-					...(taskArbs as [typeof taskArbs[0], ...typeof taskArbs]),
-				),
+				fc.tuple(...(taskArbs as [(typeof taskArbs)[0], ...typeof taskArbs])),
 				queryingUserArb,
 			)
 			.map(([taskArrays, queryingUser]) => ({
@@ -152,7 +151,7 @@ describe("Feature: neon-auth, Property 10: Task query isolation", () => {
 			capturedWhereUserId = scenario.queryingUser;
 
 			const caller = createCaller({
-				db: (await import("~/server/db")).db as never,
+				db: (await import("~/server/db/index")).db as never,
 				session: {
 					user: {
 						id: scenario.queryingUser,
@@ -181,7 +180,9 @@ describe("Feature: neon-auth, Property 10: Task query isolation", () => {
 				(t) => t.userId !== scenario.queryingUser,
 			);
 			for (const otherTask of otherUserTasks) {
-				expect(result.find((r) => r.id === otherTask.id)).toBeUndefined();
+				expect(
+					result.find((r: { id: number }) => r.id === otherTask.id),
+				).toBeUndefined();
 			}
 		},
 	);

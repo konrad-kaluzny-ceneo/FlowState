@@ -1,25 +1,22 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { tasks } from "~/server/db/schema";
 
 export const taskRouter = createTRPCRouter({
 	list: protectedProcedure.query(async ({ ctx }) => {
-		return ctx.db
-			.select()
-			.from(tasks)
-			.where(eq(tasks.userId, ctx.session.user.id))
-			.orderBy(tasks.createdAt);
+		return ctx.db.task.findMany({
+			where: { userId: ctx.session.user.id },
+			orderBy: { createdAt: "asc" },
+		});
 	}),
 
 	create: protectedProcedure
 		.input(z.object({ title: z.string().min(1).max(256) }))
 		.mutation(async ({ ctx, input }) => {
-			await ctx.db
-				.insert(tasks)
-				.values({ title: input.title, userId: ctx.session.user.id });
+			await ctx.db.task.create({
+				data: { title: input.title, userId: ctx.session.user.id },
+			});
 		}),
 
 	update: protectedProcedure
@@ -32,27 +29,33 @@ export const taskRouter = createTRPCRouter({
 		)
 		.mutation(async ({ ctx, input }) => {
 			const { id, ...data } = input;
-			const result = await ctx.db
-				.update(tasks)
-				.set(data)
-				.where(and(eq(tasks.id, id), eq(tasks.userId, ctx.session.user.id)));
+			const existing = await ctx.db.task.findFirst({
+				where: { id, userId: ctx.session.user.id },
+			});
 
-			if (result.rowCount === 0) {
+			if (!existing) {
 				throw new TRPCError({ code: "NOT_FOUND" });
 			}
+
+			await ctx.db.task.update({
+				where: { id },
+				data,
+			});
 		}),
 
 	delete: protectedProcedure
 		.input(z.object({ id: z.number() }))
 		.mutation(async ({ ctx, input }) => {
-			const result = await ctx.db
-				.delete(tasks)
-				.where(
-					and(eq(tasks.id, input.id), eq(tasks.userId, ctx.session.user.id)),
-				);
+			const existing = await ctx.db.task.findFirst({
+				where: { id: input.id, userId: ctx.session.user.id },
+			});
 
-			if (result.rowCount === 0) {
+			if (!existing) {
 				throw new TRPCError({ code: "NOT_FOUND" });
 			}
+
+			await ctx.db.task.delete({
+				where: { id: input.id },
+			});
 		}),
 });

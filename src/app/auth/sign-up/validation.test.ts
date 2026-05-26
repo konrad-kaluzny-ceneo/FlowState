@@ -1,6 +1,6 @@
-import { describe, expect } from "vitest";
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
+import { describe, expect } from "vitest";
 import { z } from "zod";
 
 // Replicate the exact schema from src/app/auth/sign-up/actions.ts for isolated testing
@@ -45,7 +45,9 @@ describe("Feature: neon-auth, Property 4: Sign-up client-side validation rejects
 			fc.string({
 				minLength: 1,
 				maxLength: 20,
-				unit: fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz0123456789".split("")),
+				unit: fc.constantFrom(
+					..."abcdefghijklmnopqrstuvwxyz0123456789".split(""),
+				),
 			}),
 			fc.string({
 				minLength: 1,
@@ -57,13 +59,15 @@ describe("Feature: neon-auth, Property 4: Sign-up client-side validation rejects
 		.map(([local, domain, tld]) => `${local}@${domain}.${tld}`);
 
 	/** Valid name arbitrary for use when testing email validation */
-	const validNameArb = fc.string({
-		minLength: 1,
-		maxLength: 100,
-		unit: fc.constantFrom(
-			..."abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ".split(""),
-		),
-	}).filter((s) => s.trim().length > 0);
+	const validNameArb = fc
+		.string({
+			minLength: 1,
+			maxLength: 100,
+			unit: fc.constantFrom(
+				..."abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ".split(""),
+			),
+		})
+		.filter((s) => s.trim().length > 0);
 
 	fcTest.prop([validEmailArb, validPasswordArb], { numRuns: 100 })(
 		"rejects empty name",
@@ -73,35 +77,31 @@ describe("Feature: neon-auth, Property 4: Sign-up client-side validation rejects
 			if (!result.success) {
 				const fieldErrors = result.error.flatten().fieldErrors;
 				expect(fieldErrors.name).toBeDefined();
-				expect(fieldErrors.name!.length).toBeGreaterThan(0);
+				expect(fieldErrors.name?.length).toBeGreaterThan(0);
 			}
 		},
 	);
 
 	fcTest.prop(
 		[
-			fc
-				.string({
-					minLength: 1,
-					maxLength: 100,
-					unit: fc.constantFrom(" ", "\t", "\n", "\r"),
-				}),
+			fc.string({
+				minLength: 1,
+				maxLength: 100,
+				unit: fc.constantFrom(" ", "\t", "\n", "\r"),
+			}),
 			validEmailArb,
 			validPasswordArb,
 		],
 		{ numRuns: 100 },
-	)(
-		"rejects whitespace-only names",
-		(name, email, password) => {
-			const result = signUpSchema.safeParse({ name, email, password });
-			expect(result.success).toBe(false);
-			if (!result.success) {
-				const fieldErrors = result.error.flatten().fieldErrors;
-				expect(fieldErrors.name).toBeDefined();
-				expect(fieldErrors.name!.length).toBeGreaterThan(0);
-			}
-		},
-	);
+	)("rejects whitespace-only names", (name, email, password) => {
+		const result = signUpSchema.safeParse({ name, email, password });
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			const fieldErrors = result.error.flatten().fieldErrors;
+			expect(fieldErrors.name).toBeDefined();
+			expect(fieldErrors.name?.length).toBeGreaterThan(0);
+		}
+	});
 
 	fcTest.prop(
 		[
@@ -121,7 +121,7 @@ describe("Feature: neon-auth, Property 4: Sign-up client-side validation rejects
 			if (!result.success) {
 				const fieldErrors = result.error.flatten().fieldErrors;
 				expect(fieldErrors.email).toBeDefined();
-				expect(fieldErrors.email!.length).toBeGreaterThan(0);
+				expect(fieldErrors.email?.length).toBeGreaterThan(0);
 			}
 		},
 	);
@@ -134,12 +134,14 @@ describe("Feature: neon-auth, Property 4: Sign-up client-side validation rejects
 			if (!result.success) {
 				const fieldErrors = result.error.flatten().fieldErrors;
 				expect(fieldErrors.email).toBeDefined();
-				expect(fieldErrors.email!.length).toBeGreaterThan(0);
+				expect(fieldErrors.email?.length).toBeGreaterThan(0);
 			}
 		},
 	);
 
-	fcTest.prop([validNameArb, validEmailArb, validPasswordArb], { numRuns: 100 })(
+	fcTest.prop([validNameArb, validEmailArb, validPasswordArb], {
+		numRuns: 100,
+	})(
 		"accepts valid name, email, and password combinations",
 		(name, email, password) => {
 			const result = signUpSchema.safeParse({ name, email, password });

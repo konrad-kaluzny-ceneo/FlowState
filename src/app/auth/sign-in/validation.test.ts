@@ -1,6 +1,6 @@
-import { describe, expect, vi, beforeEach } from "vitest";
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
+import { beforeEach, describe, expect, vi } from "vitest";
 
 /**
  * Feature: neon-auth, Property 6: Sign-in client-side validation rejects empty fields
@@ -23,7 +23,13 @@ vi.mock("next/navigation", () => ({
 
 // Mock @neondatabase/auth/next/server for the NEON_AUTH_NETWORK_ERROR_CODES import
 vi.mock("@neondatabase/auth/next/server", () => ({
-	NEON_AUTH_NETWORK_ERROR_CODES: ["NETWORK_DNS", "NETWORK_REFUSED", "NETWORK_TIMEOUT", "NETWORK_TLS", "NETWORK_RESET"],
+	NEON_AUTH_NETWORK_ERROR_CODES: [
+		"NETWORK_DNS",
+		"NETWORK_REFUSED",
+		"NETWORK_TIMEOUT",
+		"NETWORK_TLS",
+		"NETWORK_RESET",
+	],
 }));
 
 describe("Feature: neon-auth, Property 6: Sign-in client-side validation rejects empty fields", () => {
@@ -71,7 +77,10 @@ describe("Feature: neon-auth, Property 6: Sign-in client-side validation rejects
 	fcTest.prop([emptyStringArb, nonEmptyPasswordArb], { numRuns: 100 })(
 		"returns error when email is empty (regardless of password)",
 		async (email, password) => {
-			const result = await signInAction(prevState, makeFormData(email, password));
+			const result = await signInAction(
+				prevState,
+				makeFormData(email, password),
+			);
 			expect(result.error).not.toBeNull();
 			expect(result.error).toContain("email");
 			// Should NOT call auth.signIn.email
@@ -106,7 +115,10 @@ describe("Feature: neon-auth, Property 6: Sign-in client-side validation rejects
 		"does not return validation error when both email and password are non-empty",
 		async (email, password) => {
 			authMock.signIn.email.mockResolvedValue({ error: null });
-			const result = await signInAction(prevState, makeFormData(email, password));
+			const _result = await signInAction(
+				prevState,
+				makeFormData(email, password),
+			);
 			// When both fields are non-empty, auth.signIn.email should be called
 			expect(authMock.signIn.email).toHaveBeenCalledWith({
 				email: email.trim(),

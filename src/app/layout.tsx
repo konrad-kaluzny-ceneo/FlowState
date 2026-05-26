@@ -25,8 +25,11 @@ export default async function RootLayout({
 
 	try {
 		const result = await auth.getSession();
-		if (result.data?.user?.name) {
-			userName = result.data.user.name;
+		const user = result.data?.user;
+		if (user?.name) {
+			userName = user.name;
+		} else if (user?.email) {
+			userName = user.email.split("@")[0] ?? null;
 		}
 	} catch {
 		userName = null;

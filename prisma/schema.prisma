@@ -1,0 +1,21 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+model Task {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(256)
+  status    String   @default("active") @db.VarChar(20)
+  userId    String   @map("user_id") @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("createdAt") @db.Timestamptz
+  updatedAt DateTime? @updatedAt @map("updatedAt") @db.Timestamptz
+
+  @@index([status], name: "task_status_idx")
+  @@index([userId], name: "task_user_id_idx")
+  @@map("flow_state_task")
+}
