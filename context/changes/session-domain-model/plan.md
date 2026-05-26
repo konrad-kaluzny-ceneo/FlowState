@@ -417,17 +417,17 @@ F-01 introduces no hot paths. The new tables are write-rare (one session per use
 
 #### Automated
 
-- [ ] 1.1 Schema is valid: `pnpm prisma validate`
-- [ ] 1.2 Migration generates without errors: `pnpm prisma migrate dev --name session_domain_model`
-- [ ] 1.3 Generated client compiles: `pnpm db:generate`
-- [ ] 1.4 TypeScript compiles: `pnpm typecheck`
-- [ ] 1.5 Linter passes: `pnpm check`
+- [x] 1.1 Schema is valid: `pnpm prisma validate`
+- [x] 1.2 Migration generates without errors: `pnpm prisma migrate dev --name session_domain_model`
+- [x] 1.3 Generated client compiles: `pnpm db:generate`
+- [x] 1.4 TypeScript compiles: `pnpm typecheck`
+- [x] 1.5 Linter passes: `pnpm check`
 
 #### Manual
 
-- [ ] 1.6 Inspect generated migration SQL — Task ALTER carries DEFAULT, partial unique index present
-- [ ] 1.7 Prisma Studio shows backfilled Task rows and three new empty tables
-- [ ] 1.8 Existing app loads with task list and zero console errors
+- [x] 1.6 Inspect generated migration SQL — Task ALTER carries DEFAULT, partial unique index present
+- [x] 1.7 Prisma Studio shows backfilled Task rows and three new empty tables
+- [x] 1.8 Existing app loads with task list and zero console errors
 
 ### Phase 2: sessionRouter + isolation test
 
