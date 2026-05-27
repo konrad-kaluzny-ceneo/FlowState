@@ -54,6 +54,13 @@ Allowed commit types: `feat`, `docs`, `init` only. No trailing period.
 - If auth fails, run `gh auth switch --user konrad-kaluzny-ceneo` before retrying.
 - Full usage guide: see `.kiro/steering/github-cli.md`.
 
+## Roadmap, Linear & GitHub (issue tracking)
+
+- **Map:** `@context/foundation/roadmap.md` links roadmap IDs (`F-01`…`S-07`) ↔ Linear `FLO-*` ↔ GitHub `#*` on `konrad-kaluzny-ceneo/FlowState`.
+- **Linear ↔ GitHub:** two-way sync enabled — edit status in one place, then **verify the pair** on the other (not instant).
+- **On ship:** PR with `Fixes #N`, close issue (either side), verify sync, update roadmap `Status`.
+- **Full workflow:** invoke skill **`update-status`** (`.cursor/skills/update-status/`, `.kiro/skills/update-status/`). Uses **`github-cli`** for `gh`.
+
 ## Neon Database CLI & MCP
 
 - **Project:** `flow-state` (ID: `hidden-hall-84768725`), region `aws-eu-central-1`, Postgres 18.

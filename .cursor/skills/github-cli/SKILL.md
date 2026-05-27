@@ -52,6 +52,10 @@ gh pr create --title "Short title" --body "## Summary
 
 On Windows PowerShell, prefer `--body-file path.md` or a quoted `--body` string if heredoc syntax is unavailable.
 
+## Related skills
+
+- [update-status](../update-status/SKILL.md) — roadmap + Linear + GitHub status sync and verify
+
 ## Additional reference
 
 Source steering doc: [.kiro/steering/github-cli.md](.kiro/steering/github-cli.md)

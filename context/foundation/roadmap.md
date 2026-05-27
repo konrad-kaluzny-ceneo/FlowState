@@ -3,7 +3,7 @@ project: FlowState
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-05-26
+updated: 2026-05-27
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -14,6 +14,7 @@ top_blocker: time
 > Derived from `context/foundation/prd.md` (v1) + auto-researched codebase baseline.
 > Edit-in-place; archive when superseded.
 > Slices below are listed in dependency order. The "At a glance" table is the index.
+> **Issue tracking:** each roadmap item is mirrored in Linear (team `FLO`) and GitHub Issues on `konrad-kaluzny-ceneo/FlowState`; IDs are in the tables below and in each slice section.
 
 ## Vision recap
 
@@ -30,17 +31,17 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 
 ## At a glance
 
-| ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
-|---|---|---|---|---|---|
-| F-01 | session-domain-model | (foundation) Pomodoro session domain wired in Prisma + tRPC: Task gains workType + weight; Session, Cycle, CheckIn entities and routers exist with strict per-user isolation | — | NFR (data isolation), NFR (no silent data loss), NFR (90-day retention), FR-017, FR-018, FR-019, FR-020 | ready |
-| F-02 | e2e-test-infra | (foundation) Playwright installed with authenticated test user flow; agent and CI can run browser-based e2e tests against the real app | — | NFR (crash/refresh recovery), NFR (200ms acknowledgement), NFR (timer drift ≤ ±2s) | ready |
-| S-01 | first-pomodoro-cycle | start one configurable work cycle on a selected task, hear the audio prompt at cycle end, confirm transition, and return to the same state after a refresh | F-01, F-02 | US-01, FR-009, FR-010, FR-012, FR-013, FR-014, NFR (timer drift ≤ ±2s), NFR (crash/refresh recovery), NFR (200ms acknowledgement) | proposed |
-| S-02 | full-session-with-breaks | complete a multi-cycle session with short and long breaks, see configured break durations applied, and end the session explicitly or after 4h inactivity | S-01 | US-01, FR-011, FR-014, FR-019, NFR (session retention 90 days) | proposed |
-| S-03 | mid-cycle-completion-prompt | mark a task done mid-cycle and choose between picking the next task to keep the cycle running or ending the cycle to take a break now | S-01 | FR-015, FR-009a (revert path consistency) | proposed |
-| S-04 | task-attributes-for-scoring | tag tasks with work type (deep work / admin / reactive) and weight (1–3) at creation and during edit, with values surfaced in the task list | F-01, F-02 | FR-005 (extend), FR-017, FR-018 | proposed |
-| S-05 | end-of-cycle-checkin | declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session | S-01 | FR-020, NFR (mental-state data privacy) | proposed |
-| S-06 | adaptive-task-suggestion | after each check-in, see a suggested next task with a one-line rationale and accept it or override by picking any other task | S-04, S-05 | FR-021, FR-022, NFR (suggestion feedback ≥1s visible) | proposed |
-| S-07 | account-recovery-flow | reset a forgotten password and recover access without losing existing tasks or session history | F-02 | FR-003a, NFR (auth must not lock user out of own data) | ready |
+| ID | Change ID | Linear | GitHub | Outcome (user can …) | Prerequisites | PRD refs | Status |
+|---|---|---|---|---|---|---|---|
+| F-01 | session-domain-model | [FLO-6](https://linear.app/flowstate-10xdev/issue/FLO-6) | [#5](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/5) (closed) | (foundation) Pomodoro session domain wired in Prisma + tRPC: Task gains workType + weight; Session, Cycle, CheckIn entities and routers exist with strict per-user isolation | — | NFR (data isolation), NFR (no silent data loss), NFR (90-day retention), FR-017, FR-018, FR-019, FR-020 | done |
+| F-02 | e2e-test-infra | [FLO-14](https://linear.app/flowstate-10xdev/issue/FLO-14) | [#6](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/6) | (foundation) Playwright installed with authenticated test user flow; agent and CI can run browser-based e2e tests against the real app | — | NFR (crash/refresh recovery), NFR (200ms acknowledgement), NFR (timer drift ≤ ±2s) | ready |
+| S-01 | first-pomodoro-cycle | [FLO-8](https://linear.app/flowstate-10xdev/issue/FLO-8) | [#7](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/7) | start one configurable work cycle on a selected task, hear the audio prompt at cycle end, confirm transition, and return to the same state after a refresh | F-01, F-02 | US-01, FR-009, FR-010, FR-012, FR-013, FR-014, NFR (timer drift ≤ ±2s), NFR (crash/refresh recovery), NFR (200ms acknowledgement) | proposed |
+| S-02 | full-session-with-breaks | [FLO-10](https://linear.app/flowstate-10xdev/issue/FLO-10) | [#10](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/10) | complete a multi-cycle session with short and long breaks, see configured break durations applied, and end the session explicitly or after 4h inactivity | S-01 | US-01, FR-011, FR-014, FR-019, NFR (session retention 90 days) | proposed |
+| S-03 | mid-cycle-completion-prompt | [FLO-11](https://linear.app/flowstate-10xdev/issue/FLO-11) | [#11](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/11) | mark a task done mid-cycle and choose between picking the next task to keep the cycle running or ending the cycle to take a break now | S-01 | FR-015, FR-009a (revert path consistency) | proposed |
+| S-04 | task-attributes-for-scoring | [FLO-9](https://linear.app/flowstate-10xdev/issue/FLO-9) | [#8](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/8) | tag tasks with work type (deep work / admin / reactive) and weight (1–3) at creation and during edit, with values surfaced in the task list | F-01, F-02 | FR-005 (extend), FR-017, FR-018 | proposed |
+| S-05 | end-of-cycle-checkin | [FLO-12](https://linear.app/flowstate-10xdev/issue/FLO-12) | [#12](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/12) | declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session | S-01 | FR-020, NFR (mental-state data privacy) | proposed |
+| S-06 | adaptive-task-suggestion | [FLO-13](https://linear.app/flowstate-10xdev/issue/FLO-13) | [#13](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/13) | after each check-in, see a suggested next task with a one-line rationale and accept it or override by picking any other task | S-04, S-05 | FR-021, FR-022, NFR (suggestion feedback ≥1s visible) | proposed |
+| S-07 | account-recovery-flow | [FLO-7](https://linear.app/flowstate-10xdev/issue/FLO-7) | [#9](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/9) | reset a forgotten password and recover access without losing existing tasks or session history | F-02 | FR-003a, NFR (auth must not lock user out of own data) | ready |
 
 ## Streams
 
@@ -73,6 +74,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Outcome:** (foundation) Pomodoro session domain is expressible: Task carries `workType` and `weight`; `Session`, `Cycle`, and `CheckIn` exist as Prisma models with strict per-user isolation; matching tRPC routers are registered in `~/server/api/root.ts`. No user-visible UI changes from this foundation alone.
 - **Change ID:** session-domain-model
+- **Linear:** [FLO-6](https://linear.app/flowstate-10xdev/issue/FLO-6)
+- **GitHub:** [#5](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/5) (closed)
 - **PRD refs:** NFR (data isolation), NFR (no silent data loss), NFR (90-day session retention), FR-017, FR-018, FR-019, FR-020
 - **Unlocks:** S-01 (cycle entity to start), S-02 (session lifecycle), S-03 (mid-cycle decision recorded), S-04 (Task attribute columns), S-05 (CheckIn entity), S-06 (scoring inputs queryable). Also unlocks the `## Open Roadmap Questions` Q1 work (formula calibration depends on durable session+check-in data).
 - **Prerequisites:** —
@@ -80,13 +83,15 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Sequenced first because every other slice (except S-07) has a runtime dependency on it. The risk is over-reach — designing the schema for post-MVP features (analytics, ML scoring) instead of just the must-have FRs. Mitigation: schema scope is bounded by the FR list cited above; anything not on that list is out.
-- **Status:** ready
+- **Status:** done
 
 
 ### F-02: E2E test infrastructure (Playwright + test auth)
 
 - **Outcome:** (foundation) Playwright is installed and configured with a programmatic test-user authentication flow (bypassing interactive login); a single smoke test proves the pipeline works by signing in, loading the task list, and asserting DOM content. Agent and CI can run `pnpm test:e2e` to verify any UI-facing behavior in a real browser.
 - **Change ID:** e2e-test-infra
+- **Linear:** [FLO-14](https://linear.app/flowstate-10xdev/issue/FLO-14)
+- **GitHub:** [#6](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/6)
 - **PRD refs:** NFR (crash/refresh recovery), NFR (200ms acknowledgement), NFR (timer drift ≤ ±2s) — all require browser-level verification
 - **Unlocks:** S-01 (cycle UI verifiable e2e), S-02 (session lifecycle e2e), S-03 (mid-cycle prompt e2e), S-04 (task attribute UI e2e), S-05 (check-in UI e2e), S-06 (suggestion UI e2e), S-07 (recovery flow e2e). Every slice with user-visible behavior depends on this to be properly verified.
 - **Prerequisites:** —
@@ -104,6 +109,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Outcome:** user can pick one existing task, start a configurable work cycle bound to it, hear an audio signal and see a UI prompt at cycle end, and confirm the transition; refreshing the page mid-cycle returns to the same state.
 - **Change ID:** first-pomodoro-cycle
+- **Linear:** [FLO-8](https://linear.app/flowstate-10xdev/issue/FLO-8)
+- **GitHub:** [#7](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/7)
 - **PRD refs:** US-01, FR-009, FR-010, FR-012, FR-013, FR-014, NFR (timer drift ≤ ±2s on background tabs), NFR (crash/refresh recovery of cycle config and current cycle), NFR (200ms acknowledgement on actions)
 - **Prerequisites:** F-01, F-02
 - **Parallel with:** S-04, S-07
@@ -117,6 +124,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Outcome:** user can run multiple consecutive cycles separated by short breaks, with a long break after every 4 cycles, end the session explicitly, and have the session also end after 4 hours of inactivity.
 - **Change ID:** full-session-with-breaks
+- **Linear:** [FLO-10](https://linear.app/flowstate-10xdev/issue/FLO-10)
+- **GitHub:** [#10](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/10)
 - **PRD refs:** US-01, FR-011, FR-014, FR-019, NFR (session retention 90 days)
 - **Prerequisites:** S-01
 - **Parallel with:** S-04
@@ -130,6 +139,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Outcome:** user can mark a task done while a cycle is running and choose between picking the next task to keep the cycle going, or ending the cycle to take a break now; if no active tasks remain, the only option offered is "end cycle and take a break".
 - **Change ID:** mid-cycle-completion-prompt
+- **Linear:** [FLO-11](https://linear.app/flowstate-10xdev/issue/FLO-11)
+- **GitHub:** [#11](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/11)
 - **PRD refs:** FR-015, FR-009a (consistency — revert path must not silently bypass this prompt)
 - **Prerequisites:** S-01
 - **Parallel with:** S-04
@@ -143,6 +154,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Outcome:** user can set a work type (deep work / admin / reactive) and a weight (1–3) on a task at creation and during edit; both attributes are visible on the task in the active list.
 - **Change ID:** task-attributes-for-scoring
+- **Linear:** [FLO-9](https://linear.app/flowstate-10xdev/issue/FLO-9)
+- **GitHub:** [#8](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/8)
 - **PRD refs:** FR-005 (extended), FR-017, FR-018
 - **Prerequisites:** F-01, F-02
 - **Parallel with:** S-01, S-02, S-03 (no runtime coupling to the cycle; touches Task UI and `taskRouter` only)
@@ -155,6 +168,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Outcome:** at the end of every work cycle, before transitioning, user picks one of three energy states ("Focused" / "Steady" / "Fading"); the response is stored against the active session and visible in the immediate next-task suggestion (consumed by S-06).
 - **Change ID:** end-of-cycle-checkin
+- **Linear:** [FLO-12](https://linear.app/flowstate-10xdev/issue/FLO-12)
+- **GitHub:** [#12](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/12)
 - **PRD refs:** FR-020, NFR (mental-state data privacy — no third-party export, no cross-purpose use)
 - **Prerequisites:** S-01
 - **Parallel with:** S-02, S-03, S-04
@@ -168,6 +183,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Outcome:** after the check-in, user sees a suggested next task with a one-line rationale ("deep work — fresh and uninterrupted" / "light admin — energy dipping after 4 cycles"); user can accept it with one click or override by selecting any other task; the override is recorded as a session-context input for the next suggestion.
 - **Change ID:** adaptive-task-suggestion
+- **Linear:** [FLO-13](https://linear.app/flowstate-10xdev/issue/FLO-13)
+- **GitHub:** [#13](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/13)
 - **PRD refs:** FR-021, FR-022, NFR (suggestion feedback ≥1s visible; ≤200ms acknowledgement)
 - **Prerequisites:** S-04, S-05
 - **Parallel with:** S-07
@@ -182,6 +199,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Outcome:** user can request a password reset from the sign-in screen, follow the recovery email, set a new password, and sign in — without losing any existing tasks or session history.
 - **Change ID:** account-recovery-flow
+- **Linear:** [FLO-7](https://linear.app/flowstate-10xdev/issue/FLO-7)
+- **GitHub:** [#9](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/9)
 - **PRD refs:** FR-003a, NFR (auth must not lock a user out of their own data)
 - **Prerequisites:** F-02
 - **Parallel with:** F-01, S-01, S-02, S-03, S-04, S-05, S-06
@@ -193,17 +212,17 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
-|---|---|---|---|---|
-| F-01 | session-domain-model | FlowState — wire Pomodoro session domain (Task attrs + Session/Cycle/CheckIn) | yes | Run `/10x-plan session-domain-model` |
-| F-02 | e2e-test-infra | FlowState — Playwright e2e test infrastructure with authenticated test user | yes | Run `/10x-plan e2e-test-infra`; gates all UI-facing slices |
-| S-01 | first-pomodoro-cycle | FlowState — first Pomodoro cycle on a selected task (north star) | no | Unblocks once F-01 + F-02 land; this is the validation milestone |
-| S-02 | full-session-with-breaks | FlowState — multi-cycle session with short/long breaks and explicit end | no | Unblocks after S-01 |
-| S-03 | mid-cycle-completion-prompt | FlowState — mid-cycle completion prompt (continue or break) | no | Unblocks after S-01; can run parallel to S-02 |
-| S-04 | task-attributes-for-scoring | FlowState — task work-type and weight attributes | no | Unblocks once F-01 + F-02 land; runs parallel to S-01/S-02/S-03 |
-| S-05 | end-of-cycle-checkin | FlowState — end-of-cycle mindful check-in | no | Unblocks after S-01 |
-| S-06 | adaptive-task-suggestion | FlowState — adaptive next-task suggestion with override (wedge) | no | Unblocks after S-04 + S-05; carries the v1 scoring formula |
-| S-07 | account-recovery-flow | FlowState — verify and expose password recovery flow | no | Requires F-02 for browser-based verification of recovery flow |
+| Roadmap ID | Change ID | Linear | GitHub | Suggested issue title | Ready for `/10x-plan` | Notes |
+|---|---|---|---|---|---|---|
+| F-01 | session-domain-model | FLO-6 | #5 | FlowState — wire Pomodoro session domain (Task attrs + Session/Cycle/CheckIn) | yes | Implemented; GitHub closed, Linear Done |
+| F-02 | e2e-test-infra | FLO-14 | #6 | FlowState — Playwright e2e test infrastructure with authenticated test user | yes | Run `/10x-plan e2e-test-infra`; gates all UI-facing slices |
+| S-01 | first-pomodoro-cycle | FLO-8 | #7 | FlowState — first Pomodoro cycle on a selected task (north star) | no | Unblocks once F-01 + F-02 land; this is the validation milestone |
+| S-02 | full-session-with-breaks | FLO-10 | #10 | FlowState — multi-cycle session with short/long breaks and explicit end | no | Unblocks after S-01 |
+| S-03 | mid-cycle-completion-prompt | FLO-11 | #11 | FlowState — mid-cycle completion prompt (continue or break) | no | Unblocks after S-01; can run parallel to S-02 |
+| S-04 | task-attributes-for-scoring | FLO-9 | #8 | FlowState — task work-type and weight attributes | no | Unblocks once F-01 + F-02 land; runs parallel to S-01/S-02/S-03 |
+| S-05 | end-of-cycle-checkin | FLO-12 | #12 | FlowState — end-of-cycle mindful check-in | no | Unblocks after S-01 |
+| S-06 | adaptive-task-suggestion | FLO-13 | #13 | FlowState — adaptive next-task suggestion with override (wedge) | no | Unblocks after S-04 + S-05; carries the v1 scoring formula |
+| S-07 | account-recovery-flow | FLO-7 | #9 | FlowState — verify and expose password recovery flow | no | Requires F-02 for browser-based verification of recovery flow |
 
 ## Open Roadmap Questions
 
