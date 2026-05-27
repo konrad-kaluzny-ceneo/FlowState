@@ -64,6 +64,13 @@ Allowed commit types: `feat`, `docs`, `init` only. No trailing period.
 - **On ship:** PR with `Fixes #N`, close issue (either side), verify sync, update roadmap `Status`.
 - **Full workflow:** invoke skill **`update-status`** (`.cursor/skills/update-status/`, `.kiro/skills/update-status/`). Uses **`github-cli`** for `gh`.
 
+## Research-gated tasks (`needs-research`)
+
+- Issues labeled `needs-research` (Linear + GitHub) are complex and **must not be planned without prior research**.
+- Before running `/10x-plan` on these tasks, generate `context/changes/<change-id>/research.md` using `/10x-research` (internal codebase research) **and** external research (exa.ai for web search, Context7 for library docs).
+- Research targets per task are listed in `context/foundation/roadmap.md` § "Research requirements".
+- Tasks **without** this label are straightforward implementations on the existing stack — proceed directly to `/10x-plan`.
+
 ## Neon Database CLI & MCP
 
 - **Project:** `flow-state` (ID: `hidden-hall-84768725`), region `aws-eu-central-1`, Postgres 18.
