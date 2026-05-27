@@ -234,7 +234,7 @@ describe("Feature: session domain model, Property: Cycle query isolation", () =>
 			await expect(
 				caller.create({
 					sessionId: 1,
-					kind: "work",
+					kind: "WORK",
 					configuredDurationSec: 1500 + (seed % 100),
 				}),
 			).rejects.toThrow(/NOT_FOUND/);

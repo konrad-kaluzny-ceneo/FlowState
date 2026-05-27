@@ -29,6 +29,7 @@
 - Migrations: `pnpm prisma migrate dev` (local), `pnpm db:migrate:prod` (production). Never write migration SQL by hand.
 - Config: `prisma.config.ts` at project root (loads `.env` automatically for CLI commands).
 - Build script runs `prisma generate` only — migrations are NOT run at build time on Vercel.
+- Prefer Prisma `enum` over `String @db.VarChar` for columns with a fixed set of values — enums give DB-level enforcement and end-to-end type safety without runtime Zod ↔ string mapping.
 
 ## tRPC
 

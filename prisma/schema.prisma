@@ -33,6 +33,12 @@ enum CycleState {
   INTERRUPTED
 }
 
+enum CycleKind {
+  WORK
+  SHORT_BREAK
+  LONG_BREAK
+}
+
 // --- Models ---
 
 model Task {
@@ -75,7 +81,7 @@ model Cycle {
   sessionId            Int        @map("session_id")
   userId               String     @map("user_id") @db.VarChar(255)
   taskId               Int?       @map("task_id")
-  kind                 String     @db.VarChar(10)
+  kind                 CycleKind
   state                CycleState @default(RUNNING)
   configuredDurationSec Int       @map("configured_duration_sec")
   startedAt            DateTime   @default(now()) @map("started_at") @db.Timestamptz

@@ -22,7 +22,7 @@ export const cycleRouter = createTRPCRouter({
 		.input(
 			z.object({
 				sessionId: z.number().int(),
-				kind: z.enum(["work", "short_break", "long_break"]),
+				kind: z.enum(["WORK", "SHORT_BREAK", "LONG_BREAK"]),
 				configuredDurationSec: z
 					.number()
 					.int()
