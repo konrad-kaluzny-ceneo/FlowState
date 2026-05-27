@@ -48,7 +48,9 @@
         "save_milestone",
         "save_document",
         "list_cycles",
-        "save_comment"
+        "save_comment",
+        "list_teams",
+        "list_projects"
       ]
     }
   },
