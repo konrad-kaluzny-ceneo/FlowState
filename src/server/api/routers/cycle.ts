@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const cycleRouter = createTRPCRouter({
@@ -13,6 +14,7 @@ export const cycleRouter = createTRPCRouter({
 					...(input.sessionId != null ? { sessionId: input.sessionId } : {}),
 				},
 				orderBy: { startedAt: "desc" },
+				take: DEFAULT_LIST_LIMIT,
 			});
 		}),
 

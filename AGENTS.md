@@ -34,6 +34,8 @@
 
 - Every tRPC router must be registered in `@src/server/api/root.ts` — unregistered routers are silently unreachable.
 - tRPC middleware runs in declaration order — auth middleware must come before any procedure that reads `ctx.session`.
+- All `create` mutations must `return` the created entity so clients can use it without a refetch.
+- All `list` queries must use `take: DEFAULT_LIST_LIMIT` (from `~/server/api/config`) to prevent unbounded result sets.
 
 ## Testing
 

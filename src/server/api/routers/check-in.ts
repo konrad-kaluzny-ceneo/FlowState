@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const checkInRouter = createTRPCRouter({
@@ -8,6 +9,7 @@ export const checkInRouter = createTRPCRouter({
 		return ctx.db.checkIn.findMany({
 			where: { userId: ctx.session.user.id },
 			orderBy: { respondedAt: "desc" },
+			take: DEFAULT_LIST_LIMIT,
 		});
 	}),
 
