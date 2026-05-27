@@ -1,9 +1,9 @@
 ---
 change_id: session-domain-model
 title: Wire Pomodoro session domain (Task attrs + Session/Cycle/CheckIn)
-status: implemented
+status: impl_reviewed
 created: 2026-05-26
-updated: 2026-05-26
+updated: 2026-05-27
 roadmap_ref: F-01
 prd_refs:
   - "NFR (data isolation)"

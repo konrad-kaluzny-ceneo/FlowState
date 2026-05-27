@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 
+import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const sessionRouter = createTRPCRouter({
@@ -7,6 +8,7 @@ export const sessionRouter = createTRPCRouter({
 		return ctx.db.session.findMany({
 			where: { userId: ctx.session.user.id, archivedAt: null },
 			orderBy: { startedAt: "desc" },
+			take: DEFAULT_LIST_LIMIT,
 		});
 	}),
 
