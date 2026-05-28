@@ -67,7 +67,6 @@ export default function SignInPage() {
 							Password
 						</label>
 						<input
-							aria-required="true"
 							autoComplete="current-password"
 							className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
 							id="password"

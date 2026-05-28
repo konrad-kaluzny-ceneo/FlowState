@@ -119,17 +119,13 @@ export function TaskList() {
 										value={editTitle}
 									/>
 								) : (
-									<span
-										className="flex-1 cursor-pointer text-white"
+									<button
+										className="flex-1 cursor-pointer text-left text-white"
 										onClick={() => startEditing(task.id, task.title)}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") startEditing(task.id, task.title);
-										}}
-										role="button"
-										tabIndex={0}
+										type="button"
 									>
 										{task.title}
-									</span>
+									</button>
 								)}
 								<button
 									aria-label="Delete task"
