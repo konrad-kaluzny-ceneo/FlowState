@@ -276,11 +276,11 @@ Write the smoke test that proves the full pipeline: authenticated browser naviga
 
 #### Automated
 
-- [ ] 1.1 `pnpm install` succeeds with Playwright in devDependencies
-- [ ] 1.2 `pnpm exec playwright install chromium --with-deps` completes without error
-- [ ] 1.3 `pnpm exec playwright test --list` runs without config errors
-- [ ] 1.4 `pnpm typecheck` passes with `playwright.config.ts` included
-- [ ] 1.5 `pnpm check` passes on new/modified files
+- [x] 1.1 `pnpm install` succeeds with Playwright in devDependencies
+- [x] 1.2 `pnpm exec playwright install chromium --with-deps` completes without error
+- [x] 1.3 `pnpm exec playwright test --list` runs without config errors
+- [x] 1.4 `pnpm typecheck` passes with `playwright.config.ts` included
+- [x] 1.5 `pnpm check` passes on new/modified files
 
 #### Manual
 
