@@ -276,16 +276,16 @@ Write the smoke test that proves the full pipeline: authenticated browser naviga
 
 #### Automated
 
-- [x] 1.1 `pnpm install` succeeds with Playwright in devDependencies
-- [x] 1.2 `pnpm exec playwright install chromium --with-deps` completes without error
-- [x] 1.3 `pnpm exec playwright test --list` runs without config errors
-- [x] 1.4 `pnpm typecheck` passes with `playwright.config.ts` included
-- [x] 1.5 `pnpm check` passes on new/modified files
+- [x] 1.1 `pnpm install` succeeds with Playwright in devDependencies — cb2ab82
+- [x] 1.2 `pnpm exec playwright install chromium --with-deps` completes without error — cb2ab82
+- [x] 1.3 `pnpm exec playwright test --list` runs without config errors — cb2ab82
+- [x] 1.4 `pnpm typecheck` passes with `playwright.config.ts` included — cb2ab82
+- [x] 1.5 `pnpm check` passes on new/modified files — cb2ab82
 
 #### Manual
 
-- [ ] 1.6 `playwright.config.ts` is readable and matches intended structure
-- [ ] 1.7 `.gitignore` entries are present
+- [x] 1.6 `playwright.config.ts` is readable and matches intended structure — cb2ab82
+- [x] 1.7 `.gitignore` entries are present — cb2ab82
 
 ### Phase 2: Auth Setup Infrastructure
 
