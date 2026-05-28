@@ -6,6 +6,6 @@ test("authenticated user sees app shell with task list", async ({ page }) => {
 	// App heading is visible
 	await expect(page.getByRole("heading", { name: "FlowState" })).toBeVisible();
 
-	// Task list section rendered (Active heading proves TaskList loaded)
-	await expect(page.getByRole("heading", { name: /Active/ })).toBeVisible();
+	// Task list container rendered (proves TaskList component loaded)
+	await expect(page.getByTestId("task-list")).toBeVisible();
 });

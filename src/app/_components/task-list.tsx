@@ -57,7 +57,7 @@ export function TaskList() {
 	}
 
 	return (
-		<div className="w-full max-w-lg space-y-6">
+		<div className="w-full max-w-lg space-y-6" data-testid="task-list">
 			{/* Add task form */}
 			<form
 				className="flex gap-2"

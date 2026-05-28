@@ -1,4 +1,4 @@
-import { expect, test as setup } from "@playwright/test";
+import { test as setup } from "@playwright/test";
 
 const authFile = "playwright/.auth/user.json";
 
@@ -16,7 +16,12 @@ setup("authenticate", async ({ request }) => {
 		data: { email, password },
 	});
 
-	expect(response.ok()).toBeTruthy();
+	if (!response.ok()) {
+		const body = await response.text();
+		throw new Error(
+			`Auth sign-in failed: ${response.status()} ${response.statusText()} — ${body}`,
+		);
+	}
 
 	// Persist authenticated state (cookies) to disk
 	await request.storageState({ path: authFile });

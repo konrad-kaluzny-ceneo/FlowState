@@ -7,6 +7,12 @@ import type { FullConfig } from "@playwright/test";
 async function globalSetup(config: FullConfig) {
 	const baseURL = config.projects[0]?.use?.baseURL ?? "http://localhost:3000";
 
+	if (!baseURL.includes("localhost") && !baseURL.includes("127.0.0.1")) {
+		throw new Error(
+			`E2E tests must not run against non-localhost. baseURL: ${baseURL}`,
+		);
+	}
+
 	const email = process.env.E2E_TEST_EMAIL;
 	const password = process.env.E2E_TEST_PASSWORD;
 	const name = process.env.E2E_TEST_NAME;
@@ -34,21 +40,21 @@ async function globalSetup(config: FullConfig) {
 
 	const body = await response.text();
 
-	// "already exists" variants from Better Auth
+	// 409/422 are canonical "conflict / already exists" signals
+	if (response.status === 409 || response.status === 422) {
+		console.log(
+			`[global-setup] Test user provisioning returned ${response.status} — treating as exists.`,
+		);
+		return;
+	}
+
+	// Fallback: check body text for "already exists" variants from Better Auth
 	if (
 		body.toLowerCase().includes("already") ||
 		body.toLowerCase().includes("exists") ||
 		body.toLowerCase().includes("registered")
 	) {
 		console.log("[global-setup] Test user already exists — OK.");
-		return;
-	}
-
-	// 422 with user-exists error code is also acceptable
-	if (response.status === 422 || response.status === 409) {
-		console.log(
-			`[global-setup] Test user provisioning returned ${response.status} — treating as exists.`,
-		);
 		return;
 	}
 
