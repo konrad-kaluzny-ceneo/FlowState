@@ -46,6 +46,21 @@
 - **E2E vs integration:** A direct DB query or server-side tRPC caller is an integration test, not e2e. True e2e requires a browser with an authenticated session hitting the running app. Do not claim "e2e verified" unless a real browser flow (with auth) was exercised.
 - **Test pyramid:** All changes must include unit and integration tests. Code must be testable at each level of the pyramid (unit → integration → e2e). Do not ship code without covering the appropriate test levels for the change.
 
+## Manual verification (agent-owned when possible)
+
+Plan steps and `/10x-implement` gates labeled **Manual Verification** must be executed by the agent whenever feasible — do not routinely defer them to the human.
+
+**Preferred order (use the shallowest layer that proves the behavior):**
+
+1. **Automated checks already in the plan** — run `pnpm test`, `pnpm typecheck`, `pnpm check` and cite results.
+2. **Ad-hoc scripts** — `tsx` one-offs, server-side `createCaller` integration, `renderHook` / component smoke tests in Vitest for hooks and workers without UI.
+3. **Playwright E2E** — `pnpm test:e2e` with the authenticated fixture from F-02 when the flow is user-visible or needs a real browser context.
+4. **Running app / browser** — `pnpm dev` plus Playwright, or another automated browser pass; use interactive clicking only when automation cannot cover the check (e.g. subjective audio UX across engines).
+
+**Phase without UI yet (e.g. server-only or hook-only):** satisfy manual items via integration callers and hook/worker unit tests — not by asking the user to use React DevTools or Prisma Studio unless the agent is blocked (missing env, auth, or hardware).
+
+**When asking the human:** state what was already run, what gap remains, and the minimal human action (e.g. "confirm chime is audible in Chrome"). Do not treat manual gates as a default handoff.
+
 ## Commit Conventions
 
 Allowed commit types: `feat`, `docs`, `init` only. No trailing period.

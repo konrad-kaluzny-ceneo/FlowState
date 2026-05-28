@@ -504,27 +504,27 @@ Write comprehensive tests across the test pyramid: unit tests for procedures and
 
 #### Automated
 
-- [x] 1.1 All existing tests pass (`pnpm test`)
-- [x] 1.2 Type checking passes (`pnpm typecheck`)
-- [x] 1.3 Linting passes (`pnpm check`)
-- [x] 1.4 Unit tests for cycle.getActive, cycle.complete, cycle.interrupt pass
-- [x] 1.5 Unit test for session.getOrCreateActive passes
-- [x] 1.6 Integration test: create → getActive → complete → getActive returns null
+- [x] 1.1 All existing tests pass (`pnpm test`) — 2a1965a
+- [x] 1.2 Type checking passes (`pnpm typecheck`) — 2a1965a
+- [x] 1.3 Linting passes (`pnpm check`) — 2a1965a
+- [x] 1.4 Unit tests for cycle.getActive, cycle.complete, cycle.interrupt pass — 2a1965a
+- [x] 1.5 Unit test for session.getOrCreateActive passes — 2a1965a
+- [x] 1.6 Integration test: create → getActive → complete → getActive returns null — 2a1965a
 
 #### Manual
 
-- [ ] 1.7 tRPC procedures callable and state transitions verified via dev tools
+- [x] 1.7 tRPC procedures callable and state transitions verified via dev tools — 2a1965a
 
 ### Phase 2: Timer Engine
 
 #### Automated
 
-- [ ] 2.1 All existing tests pass (`pnpm test`)
-- [ ] 2.2 Type checking passes (`pnpm typecheck`)
-- [ ] 2.3 Linting passes (`pnpm check`)
-- [ ] 2.4 Timer worker unit test passes (tick/complete/stop)
-- [ ] 2.5 Audio manager unit test passes (unlock/preload/play)
-- [ ] 2.6 usePomodoroCycle hook unit test passes (state transitions)
+- [x] 2.1 All existing tests pass (`pnpm test`)
+- [x] 2.2 Type checking passes (`pnpm typecheck`)
+- [x] 2.3 Linting passes (`pnpm check`)
+- [x] 2.4 Timer worker unit test passes (tick/complete/stop)
+- [x] 2.5 Audio manager unit test passes (unlock/preload/play)
+- [x] 2.6 usePomodoroCycle hook unit test passes (state transitions)
 
 #### Manual
 
