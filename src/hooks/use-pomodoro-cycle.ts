@@ -244,7 +244,7 @@ export function usePomodoroCycle() {
 
 	const selectTask = useCallback(
 		(taskId: number, task?: FocusedTask) => {
-			if (state === "running") {
+			if (state === "running" || state === "completed") {
 				return;
 			}
 			setError(null);
@@ -255,7 +255,7 @@ export function usePomodoroCycle() {
 	);
 
 	const clearTask = useCallback(() => {
-		if (state === "running") {
+		if (state === "running" || state === "completed") {
 			return;
 		}
 		setFocusedTaskId(null);
@@ -265,6 +265,13 @@ export function usePomodoroCycle() {
 	const start = useCallback(
 		async (durationSec: number) => {
 			setError(null);
+
+			if (state !== "idle") {
+				setError(
+					"Finish or dismiss the current cycle before starting another.",
+				);
+				return;
+			}
 
 			if (focusedTaskId == null) {
 				setError("Select a task before starting a cycle.");
@@ -302,6 +309,7 @@ export function usePomodoroCycle() {
 			}
 		},
 		[
+			state,
 			focusedTaskId,
 			focusedTask,
 			getOrCreateSession,

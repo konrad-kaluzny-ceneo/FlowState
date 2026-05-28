@@ -180,6 +180,36 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.state).toBe("completed");
 	});
 
+	it("does not start another cycle while state is completed", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		await act(async () => {
+			await result.current.start(60);
+		});
+
+		const worker = fakeWorkers[fakeWorkers.length - 1];
+		act(() => {
+			worker?.onmessage?.({ data: { type: "complete" } } as MessageEvent);
+		});
+
+		expect(result.current.state).toBe("completed");
+
+		mutateCreate.mockClear();
+
+		await act(async () => {
+			await result.current.start(60);
+		});
+
+		expect(mutateCreate).not.toHaveBeenCalled();
+		expect(result.current.error).toMatch(/Finish or dismiss/);
+	});
+
 	it("resumes running state from getActive on mount", async () => {
 		const startedAt = new Date();
 		getActiveData = {

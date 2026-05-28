@@ -1,7 +1,7 @@
 ---
 id: first-pomodoro-cycle
 title: "First Pomodoro cycle on a selected task (north star)"
-status: implemented
+status: impl_reviewed
 created: 2026-05-28
 updated: 2026-05-28
 ---

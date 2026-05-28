@@ -57,6 +57,10 @@ export function TimerPanel({
 		return null;
 	}
 
+	if (state === "completed") {
+		return null;
+	}
+
 	if (state === "running") {
 		return (
 			<section

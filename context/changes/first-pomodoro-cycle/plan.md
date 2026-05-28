@@ -485,6 +485,18 @@ Write comprehensive tests across the test pyramid: unit tests for procedures and
 - `cycle.create` input schema changes (sessionId becomes optional) — existing callers (if any) still work since they pass sessionId explicitly
 - No breaking changes to existing UI — TaskList gains a Focus button but existing functionality unchanged
 
+## Implementation addendum (2026-05-28)
+
+Supporting modules added during implementation (not in original phase file lists):
+
+| File | Purpose |
+|------|---------|
+| `src/server/api/lib/active-session.ts` | Shared `findOrCreateActiveSession` for `session.getOrCreateActive` and `cycle.create` |
+| `src/workers/timer-worker-logic.ts` | Extracted tick math (unit-tested without loading the Worker entry) |
+| `src/lib/format-remaining.ts` | `mm:ss` countdown formatting for `timer-panel` |
+
+**Deferred:** `requestAnimationFrame` for visible-tab display polish (plan Performance Considerations) — Worker + server-authoritative `endTime` meets the ±2s drift NFR; rAF can land in a UX polish slice if needed.
+
 ## References
 
 - Research: `context/changes/first-pomodoro-cycle/research.md`

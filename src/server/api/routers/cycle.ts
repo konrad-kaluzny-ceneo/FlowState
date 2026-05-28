@@ -24,6 +24,7 @@ export const cycleRouter = createTRPCRouter({
 				userId: ctx.session.user.id,
 				state: "RUNNING",
 			},
+			orderBy: { startedAt: "desc" },
 			include: { task: true },
 		});
 	}),
@@ -62,6 +63,17 @@ export const cycleRouter = createTRPCRouter({
 				if (!task) {
 					throw new TRPCError({ code: "NOT_FOUND" });
 				}
+			}
+
+			const existingRunning = await ctx.db.cycle.findFirst({
+				where: { userId: ctx.session.user.id, state: "RUNNING" },
+			});
+
+			if (existingRunning) {
+				throw new TRPCError({
+					code: "CONFLICT",
+					message: "A cycle is already running",
+				});
 			}
 
 			try {
@@ -119,7 +131,7 @@ export const cycleRouter = createTRPCRouter({
 
 				if (input.markTaskDone && cycle.taskId != null) {
 					await tx.task.update({
-						where: { id: cycle.taskId },
+						where: { id: cycle.taskId, userId: ctx.session.user.id },
 						data: { status: "completed" },
 					});
 				}

@@ -391,6 +391,31 @@ describe("cycle router lifecycle", () => {
 		expect(after).toBeNull();
 	});
 
+	it("create throws CONFLICT when user already has RUNNING cycle", async () => {
+		sessions = [{ id: 1, userId: USER_ID, state: "ACTIVE", archivedAt: null }];
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
+
+		await expect(
+			caller().create({
+				sessionId: 1,
+				kind: "WORK",
+				configuredDurationSec: 1500,
+			}),
+		).rejects.toMatchObject({ code: "CONFLICT" });
+	});
+
 	it("create without sessionId auto-creates active session", async () => {
 		tasks = [{ id: 3, title: "Task", status: "active", userId: USER_ID }];
 
