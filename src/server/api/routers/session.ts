@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 
+import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
@@ -30,5 +31,9 @@ export const sessionRouter = createTRPCRouter({
 			}
 			throw error;
 		}
+	}),
+
+	getOrCreateActive: protectedProcedure.mutation(async ({ ctx }) => {
+		return findOrCreateActiveSession(ctx.db, ctx.session.user.id);
 	}),
 });

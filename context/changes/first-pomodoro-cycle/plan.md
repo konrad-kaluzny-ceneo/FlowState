@@ -504,12 +504,12 @@ Write comprehensive tests across the test pyramid: unit tests for procedures and
 
 #### Automated
 
-- [ ] 1.1 All existing tests pass (`pnpm test`)
-- [ ] 1.2 Type checking passes (`pnpm typecheck`)
-- [ ] 1.3 Linting passes (`pnpm check`)
-- [ ] 1.4 Unit tests for cycle.getActive, cycle.complete, cycle.interrupt pass
-- [ ] 1.5 Unit test for session.getOrCreateActive passes
-- [ ] 1.6 Integration test: create → getActive → complete → getActive returns null
+- [x] 1.1 All existing tests pass (`pnpm test`)
+- [x] 1.2 Type checking passes (`pnpm typecheck`)
+- [x] 1.3 Linting passes (`pnpm check`)
+- [x] 1.4 Unit tests for cycle.getActive, cycle.complete, cycle.interrupt pass
+- [x] 1.5 Unit test for session.getOrCreateActive passes
+- [x] 1.6 Integration test: create → getActive → complete → getActive returns null
 
 #### Manual
 

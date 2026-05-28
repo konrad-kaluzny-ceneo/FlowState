@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
@@ -18,10 +19,20 @@ export const cycleRouter = createTRPCRouter({
 			});
 		}),
 
+	getActive: protectedProcedure.query(async ({ ctx }) => {
+		return ctx.db.cycle.findFirst({
+			where: {
+				userId: ctx.session.user.id,
+				state: "RUNNING",
+			},
+			include: { task: true },
+		});
+	}),
+
 	create: protectedProcedure
 		.input(
 			z.object({
-				sessionId: z.number().int(),
+				sessionId: z.number().int().optional(),
 				kind: z.enum(["WORK", "SHORT_BREAK", "LONG_BREAK"]),
 				configuredDurationSec: z
 					.number()
@@ -32,16 +43,20 @@ export const cycleRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			// Verify caller owns the session
+			const sessionId =
+				input.sessionId ??
+				(
+					await findOrCreateActiveSession(ctx.db, ctx.session.user.id)
+				).id;
+
 			const session = await ctx.db.session.findFirst({
-				where: { id: input.sessionId, userId: ctx.session.user.id },
+				where: { id: sessionId, userId: ctx.session.user.id },
 			});
 
 			if (!session) {
 				throw new TRPCError({ code: "NOT_FOUND" });
 			}
 
-			// If taskId provided, verify caller owns the task
 			if (input.taskId != null) {
 				const task = await ctx.db.task.findFirst({
 					where: { id: input.taskId, userId: ctx.session.user.id },
@@ -55,7 +70,7 @@ export const cycleRouter = createTRPCRouter({
 			try {
 				return await ctx.db.cycle.create({
 					data: {
-						sessionId: input.sessionId,
+						sessionId,
 						userId: ctx.session.user.id,
 						kind: input.kind,
 						configuredDurationSec: input.configuredDurationSec,
@@ -72,5 +87,71 @@ export const cycleRouter = createTRPCRouter({
 				}
 				throw error;
 			}
+		}),
+
+	complete: protectedProcedure
+		.input(
+			z.object({
+				cycleId: z.number().int(),
+				markTaskDone: z.boolean().optional(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const cycle = await ctx.db.cycle.findFirst({
+				where: { id: input.cycleId, userId: ctx.session.user.id },
+			});
+
+			if (!cycle) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			if (cycle.state !== "RUNNING") {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Cycle is not running",
+				});
+			}
+
+			const endedAt = new Date();
+
+			return ctx.db.$transaction(async (tx) => {
+				const updated = await tx.cycle.update({
+					where: { id: input.cycleId },
+					data: { state: "COMPLETED", endedAt },
+				});
+
+				if (input.markTaskDone && cycle.taskId != null) {
+					await tx.task.update({
+						where: { id: cycle.taskId },
+						data: { status: "completed" },
+					});
+				}
+
+				return updated;
+			});
+		}),
+
+	interrupt: protectedProcedure
+		.input(z.object({ cycleId: z.number().int() }))
+		.mutation(async ({ ctx, input }) => {
+			const cycle = await ctx.db.cycle.findFirst({
+				where: { id: input.cycleId, userId: ctx.session.user.id },
+			});
+
+			if (!cycle) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			if (cycle.state !== "RUNNING") {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Cycle is not running",
+				});
+			}
+
+			return ctx.db.cycle.update({
+				where: { id: input.cycleId },
+				data: { state: "INTERRUPTED", endedAt: new Date() },
+			});
 		}),
 });
