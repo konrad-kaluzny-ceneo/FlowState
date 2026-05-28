@@ -1,7 +1,7 @@
 ---
 change_id: e2e-test-infra
 title: Playwright e2e test infrastructure with authenticated test user
-status: researched
+status: planned
 created: 2026-05-28
 updated: 2026-05-28
 roadmap_ref: F-02
