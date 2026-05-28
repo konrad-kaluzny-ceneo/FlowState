@@ -528,25 +528,25 @@ Write comprehensive tests across the test pyramid: unit tests for procedures and
 
 #### Manual
 
-- [ ] 2.7 Hook exercised via test component — Worker ticks arrive correctly
+- [x] 2.7 Hook exercised via test component — Worker ticks arrive correctly
 
 ### Phase 3: UI Components
 
 #### Automated
 
-- [ ] 3.1 All existing tests pass (`pnpm test`)
-- [ ] 3.2 Type checking passes (`pnpm typecheck`)
-- [ ] 3.3 Linting passes (`pnpm check`)
-- [ ] 3.4 Component render tests pass without errors
+- [x] 3.1 All existing tests pass (`pnpm test`)
+- [x] 3.2 Type checking passes (`pnpm typecheck`)
+- [x] 3.3 Linting passes (`pnpm check`)
+- [x] 3.4 Component render tests pass without errors
 
 #### Manual
 
-- [ ] 3.5 Task focus selection works (highlight visible)
-- [ ] 3.6 Duration picker + Start Cycle flow works
-- [ ] 3.7 Countdown ticks visually
-- [ ] 3.8 Audio plays at cycle end
-- [ ] 3.9 Completion overlay appears with both buttons functional
-- [ ] 3.10 "Done" marks task complete; "Continue later" keeps task active
+- [x] 3.5 Task focus selection works (highlight visible)
+- [x] 3.6 Duration picker + Start Cycle flow works
+- [x] 3.7 Countdown ticks visually
+- [x] 3.8 Audio plays at cycle end
+- [x] 3.9 Completion overlay appears with both buttons functional
+- [x] 3.10 "Done" marks task complete; "Continue later" keeps task active
 
 ### Phase 4: Recovery & Polish
 

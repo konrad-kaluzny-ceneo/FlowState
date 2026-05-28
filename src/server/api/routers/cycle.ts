@@ -1,8 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-
-import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
+import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const cycleRouter = createTRPCRouter({
@@ -45,9 +44,7 @@ export const cycleRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			const sessionId =
 				input.sessionId ??
-				(
-					await findOrCreateActiveSession(ctx.db, ctx.session.user.id)
-				).id;
+				(await findOrCreateActiveSession(ctx.db, ctx.session.user.id)).id;
 
 			const session = await ctx.db.session.findFirst({
 				where: { id: sessionId, userId: ctx.session.user.id },

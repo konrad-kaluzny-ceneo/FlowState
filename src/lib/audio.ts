@@ -58,7 +58,8 @@ export function createAudioManager(): {
 			const existing = document.querySelector<HTMLAudioElement>(
 				ALARM_FALLBACK_SELECTOR,
 			);
-			const audio = fallbackAudio ?? existing ?? (alarmUrl ? new Audio(alarmUrl) : null);
+			const audio =
+				fallbackAudio ?? existing ?? (alarmUrl ? new Audio(alarmUrl) : null);
 			if (!audio) {
 				return;
 			}

@@ -5,12 +5,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createAudioManager } from "~/lib/audio";
 import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
-import type { TimerWorkerInbound, TimerWorkerOutbound } from "~/workers/timer-worker-logic";
+import type {
+	TimerWorkerInbound,
+	TimerWorkerOutbound,
+} from "~/workers/timer-worker-logic";
 
 export const POMODORO_ALARM_URL = "/sounds/pomodoro-complete.mp3";
 
 type ActiveCycle = RouterOutputs["cycle"]["getActive"];
-type FocusedTask = NonNullable<ActiveCycle>["task"];
+
+export type FocusedTask = { id: number; title: string } | null;
 
 export type PomodoroCycleState = "idle" | "running" | "completed";
 
@@ -38,43 +42,42 @@ export function usePomodoroCycle() {
 	const interruptCycle = api.cycle.interrupt.useMutation();
 
 	const stopWorker = useCallback(() => {
-		workerRef.current?.postMessage({ type: "stop" } satisfies TimerWorkerInbound);
+		workerRef.current?.postMessage({
+			type: "stop",
+		} satisfies TimerWorkerInbound);
 	}, []);
 
-	const startWorker = useCallback(
-		(endTime: number) => {
-			endTimeRef.current = endTime;
-			setRemainingMs(Math.max(0, endTime - Date.now()));
+	const startWorker = useCallback((endTime: number) => {
+		endTimeRef.current = endTime;
+		setRemainingMs(Math.max(0, endTime - Date.now()));
 
-			if (workerRef.current == null && typeof Worker !== "undefined") {
-				workerRef.current = new Worker(
-					new URL("../workers/timer-worker.ts", import.meta.url),
-					{ type: "module" },
-				);
-				workerRef.current.onmessage = (
-					event: MessageEvent<TimerWorkerOutbound>,
-				) => {
-					const message = event.data;
-					if (message.type === "tick") {
-						setRemainingMs(message.remaining);
-						return;
-					}
-					if (message.type === "complete") {
-						endTimeRef.current = null;
-						setRemainingMs(0);
-						setState("completed");
-						void audioRef.current.playAlarm();
-					}
-				};
-			}
+		if (workerRef.current == null && typeof Worker !== "undefined") {
+			workerRef.current = new Worker(
+				new URL("../workers/timer-worker.ts", import.meta.url),
+				{ type: "module" },
+			);
+			workerRef.current.onmessage = (
+				event: MessageEvent<TimerWorkerOutbound>,
+			) => {
+				const message = event.data;
+				if (message.type === "tick") {
+					setRemainingMs(message.remaining);
+					return;
+				}
+				if (message.type === "complete") {
+					endTimeRef.current = null;
+					setRemainingMs(0);
+					setState("completed");
+					void audioRef.current.playAlarm();
+				}
+			};
+		}
 
-			workerRef.current?.postMessage({
-				type: "start",
-				endTime,
-			} satisfies TimerWorkerInbound);
-		},
-		[],
-	);
+		workerRef.current?.postMessage({
+			type: "start",
+			endTime,
+		} satisfies TimerWorkerInbound);
+	}, []);
 
 	const handleCycleExpired = useCallback(() => {
 		stopWorker();
@@ -193,7 +196,10 @@ export function usePomodoroCycle() {
 			const endTime =
 				cycle.startedAt.getTime() + cycle.configuredDurationSec * 1000;
 
-			setActiveCycle({ ...cycle, task: focusedTask });
+			setActiveCycle({
+				...cycle,
+				task: focusedTask,
+			} as NonNullable<ActiveCycle>);
 			setState("running");
 			startWorker(endTime);
 
@@ -250,7 +256,13 @@ export function usePomodoroCycle() {
 				utils.task.list.invalidate(),
 			]);
 		},
-		[activeCycle, completeCycle, stopWorker, utils.cycle.getActive, utils.task.list],
+		[
+			activeCycle,
+			completeCycle,
+			stopWorker,
+			utils.cycle.getActive,
+			utils.task.list,
+		],
 	);
 
 	return {

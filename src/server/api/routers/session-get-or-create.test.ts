@@ -30,10 +30,7 @@ vi.mock("~/server/db/index", () => ({
 								return false;
 							if (args.where.state != null && s.state !== args.where.state)
 								return false;
-							if (
-								args.where.archivedAt === null &&
-								s.archivedAt !== null
-							) {
+							if (args.where.archivedAt === null && s.archivedAt !== null) {
 								return false;
 							}
 							return true;

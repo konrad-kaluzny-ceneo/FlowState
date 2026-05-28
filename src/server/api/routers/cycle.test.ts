@@ -25,7 +25,12 @@ type TaskRecord = {
 
 let cycles: CycleRecord[] = [];
 let tasks: TaskRecord[] = [];
-let sessions: Array<{ id: number; userId: string; state: string; archivedAt: null }>;
+let sessions: Array<{
+	id: number;
+	userId: string;
+	state: string;
+	archivedAt: null;
+}>;
 let nextCycleId = 1;
 let nextSessionId = 1;
 
@@ -115,10 +120,7 @@ vi.mock("~/server/db/index", () => {
 									return false;
 								if (args.where.state != null && s.state !== args.where.state)
 									return false;
-								if (
-									args.where.archivedAt === null &&
-									s.archivedAt !== null
-								) {
+								if (args.where.archivedAt === null && s.archivedAt !== null) {
 									return false;
 								}
 								return true;
@@ -142,8 +144,7 @@ vi.mock("~/server/db/index", () => {
 					(args: { where: { id?: number; userId?: string } }) => {
 						return Promise.resolve(
 							tasks.find(
-								(t) =>
-									t.id === args.where.id && t.userId === args.where.userId,
+								(t) => t.id === args.where.id && t.userId === args.where.userId,
 							) ?? null,
 						);
 					},
@@ -204,7 +205,9 @@ describe("cycle router lifecycle", () => {
 	});
 
 	it("getActive returns running cycle with task", async () => {
-		tasks = [{ id: 10, title: "Focus task", status: "active", userId: USER_ID }];
+		tasks = [
+			{ id: 10, title: "Focus task", status: "active", userId: USER_ID },
+		];
 		cycles = [
 			{
 				id: 1,

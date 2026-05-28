@@ -13,7 +13,17 @@ interface Task {
 	updatedAt: Date | null;
 }
 
-export function TaskList() {
+type TaskListProps = {
+	focusedTaskId: number | null;
+	onFocusTask: (taskId: number, task: Task) => void;
+	cycleState: "idle" | "running" | "completed";
+};
+
+export function TaskList({
+	focusedTaskId,
+	onFocusTask,
+	cycleState,
+}: TaskListProps) {
 	const [tasks] = api.task.list.useSuspenseQuery() as unknown as [Task[]];
 	const utils = api.useUtils();
 
@@ -95,7 +105,9 @@ export function TaskList() {
 					<ul className="space-y-2">
 						{activeTasks.map((task) => (
 							<li
-								className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-3"
+								className={`flex items-center gap-2 rounded-lg bg-white/10 px-4 py-3 ${
+									focusedTaskId === task.id ? "ring-2 ring-purple-500" : ""
+								}`}
 								key={task.id}
 							>
 								<button
@@ -127,6 +139,18 @@ export function TaskList() {
 										{task.title}
 									</button>
 								)}
+								<button
+									className={`shrink-0 rounded-lg px-2 py-1 font-medium text-xs transition ${
+										focusedTaskId === task.id
+											? "bg-purple-600 text-white"
+											: "bg-white/10 text-white/80 hover:bg-white/20"
+									}`}
+									disabled={cycleState === "running"}
+									onClick={() => onFocusTask(task.id, task)}
+									type="button"
+								>
+									{focusedTaskId === task.id ? "Focused" : "Focus"}
+								</button>
 								<button
 									aria-label="Delete task"
 									className="shrink-0 text-white/40 transition hover:text-red-400"
