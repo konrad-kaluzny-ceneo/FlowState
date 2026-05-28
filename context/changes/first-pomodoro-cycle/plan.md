@@ -218,9 +218,16 @@ Build the visible UI: task focus selection button, timer panel with duration pic
 
 **Intent**: Provide a short (1–2 second) bell/chime audio file for the cycle-end alarm. This is a manual step — the implementer must source a royalty-free MP3 file and place it here.
 
-**Contract**: MP3 format, ≤100KB, 1–2 seconds duration, pleasant bell/chime tone. Suggested sources: freesound.org (CC0 license), mixkit.co (free license), or generate via a tone generator. The file must exist at this path before audio features work.
+**Contract**: MP3 format, ≤100KB, 1–2 seconds duration, pleasant bell/chime tone. The file must exist at this path before audio features work.
 
-> ⚠️ **Manual action required**: Source a royalty-free alarm sound and save it to `public/sounds/pomodoro-complete.mp3`. Suggested search: "bell chime notification" on freesound.org (filter by CC0 license).
+> ⚠️ **Manual action required**: Source a royalty-free alarm sound and save it to `public/sounds/pomodoro-complete.mp3`.
+>
+> **Suggested sources (CC0 / no-attribution):**
+> - **freesound.org** — filter by license "Creative Commons 0", search: "bell chime notification short". Example: search `bell notification` → sort by duration (shortest first) → pick 1–2s clip → download MP3.
+> - **mixkit.co/free-sound-effects/** — category "Alerts & Notifications", all free for commercial use without attribution.
+> - **pixabay.com/sound-effects/** — all sounds are Pixabay Content License (free, no attribution required), search: "notification bell" or "chime alert".
+>
+> **Requirements:** MP3 format, ≤100KB, 1–2 seconds, pleasant non-jarring tone (bell, chime, or soft gong — avoid harsh buzzer sounds that would break the mindfulness UX).
 
 #### 2. Task focus selection
 
