@@ -47,7 +47,9 @@ export function usePomodoroCycle() {
 	);
 	const audioRef = useRef(createAudioManager());
 	const recoveredRef = useRef(false);
-	const useWorkerRef = useRef(true);
+	const useWorkerRef = useRef(
+		process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER !== "1",
+	);
 
 	const utils = api.useUtils();
 

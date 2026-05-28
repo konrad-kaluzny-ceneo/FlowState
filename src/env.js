@@ -47,7 +47,8 @@ export const env = createEnv({
 	 * `NEXT_PUBLIC_`.
 	 */
 	client: {
-		// NEXT_PUBLIC_CLIENTVAR: z.string(),
+		/** Set to "1" in Playwright webServer so fake timers advance the countdown. */
+		NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: z.enum(["1"]).optional(),
 	},
 
 	/**
@@ -60,7 +61,8 @@ export const env = createEnv({
 		NEON_AUTH_BASE_URL: process.env.NEON_AUTH_BASE_URL,
 		NEON_AUTH_COOKIE_SECRET: process.env.NEON_AUTH_COOKIE_SECRET,
 		NODE_ENV: process.env.NODE_ENV,
-		// NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+		NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER:
+			process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER,
 	},
 	/**
 	 * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

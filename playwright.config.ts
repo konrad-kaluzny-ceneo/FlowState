@@ -9,6 +9,9 @@ dotenv.config({
 	override: true,
 });
 
+const e2ePort = process.env.E2E_PORT ?? "3001";
+const e2eBaseUrl = `http://localhost:${e2ePort}`;
+
 export default defineConfig({
 	globalSetup: "./e2e/global.setup.ts",
 	testDir: "./e2e",
@@ -18,7 +21,7 @@ export default defineConfig({
 	workers: process.env.CI ? 1 : undefined,
 	reporter: "html",
 	use: {
-		baseURL: "http://localhost:3000",
+		baseURL: e2eBaseUrl,
 		trace: "on-first-retry",
 	},
 	projects: [
@@ -36,8 +39,13 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: "pnpm dev",
-		url: "http://localhost:3000",
-		reuseExistingServer: true,
+		command: `pnpm build && pnpm exec next start -p ${e2ePort}`,
+		url: e2eBaseUrl,
+		reuseExistingServer: !!process.env.E2E_REUSE_SERVER,
+		timeout: 300_000,
+		env: {
+			...process.env,
+			NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: "1",
+		},
 	},
 });

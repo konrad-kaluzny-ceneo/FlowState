@@ -63,40 +63,56 @@ const { db } = await import("~/server/db/index");
 const createCaller = createCallerFactory(sessionRouter);
 const USER_ID = "user-session-test";
 
-describe("session.getOrCreateActive", () => {
+function sessionCaller() {
+	return createCaller({
+		db: db as never,
+		session: {
+			user: { id: USER_ID, email: "t@example.com", name: "Test" },
+		},
+		headers: new Headers(),
+	});
+}
+
+describe("session router", () => {
 	beforeEach(() => {
 		sessions = [];
 		nextId = 1;
 		vi.clearAllMocks();
 	});
 
-	it("creates a session when none exists", async () => {
-		const session = await createCaller({
-			db: db as never,
-			session: {
-				user: { id: USER_ID, email: "t@example.com", name: "Test" },
-			},
-			headers: new Headers(),
-		}).getOrCreateActive();
+	describe("getOrCreateActive", () => {
+		it("creates a session when none exists", async () => {
+			const session = await sessionCaller().getOrCreateActive();
 
-		expect(session.userId).toBe(USER_ID);
-		expect(session.state).toBe("ACTIVE");
-		expect(sessions).toHaveLength(1);
-	});
-
-	it("returns existing active session on second call", async () => {
-		const caller = createCaller({
-			db: db as never,
-			session: {
-				user: { id: USER_ID, email: "t@example.com", name: "Test" },
-			},
-			headers: new Headers(),
+			expect(session.userId).toBe(USER_ID);
+			expect(session.state).toBe("ACTIVE");
+			expect(sessions).toHaveLength(1);
 		});
 
-		const first = await caller.getOrCreateActive();
-		const second = await caller.getOrCreateActive();
+		it("returns existing active session on second call (idempotent)", async () => {
+			const caller = sessionCaller();
 
-		expect(second.id).toBe(first.id);
-		expect(sessions).toHaveLength(1);
+			const first = await caller.getOrCreateActive();
+			const second = await caller.getOrCreateActive();
+
+			expect(second.id).toBe(first.id);
+			expect(sessions).toHaveLength(1);
+		});
+
+		it("creates new session when only archived sessions exist", async () => {
+			sessions = [
+				{
+					id: 99,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: new Date(),
+				},
+			];
+
+			const session = await sessionCaller().getOrCreateActive();
+
+			expect(session.id).not.toBe(99);
+			expect(sessions).toHaveLength(2);
+		});
 	});
 });

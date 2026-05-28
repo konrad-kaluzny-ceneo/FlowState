@@ -287,6 +287,69 @@ describe("cycle router lifecycle", () => {
 		expect(updated.endedAt).not.toBeNull();
 	});
 
+	it("interrupt throws NOT_FOUND for another user's cycle", async () => {
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: "other-user",
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
+
+		await expect(caller().interrupt({ cycleId: 1 })).rejects.toMatchObject({
+			code: "NOT_FOUND",
+		});
+	});
+
+	it("complete throws BAD_REQUEST when cycle is not RUNNING", async () => {
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "COMPLETED",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: new Date(),
+			},
+		];
+
+		await expect(caller().complete({ cycleId: 1 })).rejects.toMatchObject({
+			code: "BAD_REQUEST",
+		});
+	});
+
+	it("integration: complete without markTaskDone leaves task active", async () => {
+		tasks = [
+			{ id: 8, title: "Keep active", status: "active", userId: USER_ID },
+		];
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: 8,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
+
+		await caller().complete({ cycleId: 1, markTaskDone: false });
+		expect(tasks[0]?.status).toBe("active");
+		expect(cycles[0]?.state).toBe("COMPLETED");
+	});
+
 	it("complete throws NOT_FOUND for another user's cycle", async () => {
 		cycles = [
 			{

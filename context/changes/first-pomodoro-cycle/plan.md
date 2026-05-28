@@ -570,13 +570,13 @@ Write comprehensive tests across the test pyramid: unit tests for procedures and
 
 #### Automated
 
-- [ ] 5.1 All unit tests pass (`pnpm test`)
-- [ ] 5.2 E2E test passes (`pnpm test:e2e`)
-- [ ] 5.3 Type checking passes (`pnpm typecheck`)
-- [ ] 5.4 Linting passes (`pnpm check`)
+- [x] 5.1 All unit tests pass (`pnpm test`)
+- [x] 5.2 E2E test passes (`pnpm test:e2e`)
+- [x] 5.3 Type checking passes (`pnpm typecheck`)
+- [x] 5.4 Linting passes (`pnpm check`)
 
 #### Manual
 
-- [ ] 5.5 Full manual walkthrough with real 1-minute cycle
-- [ ] 5.6 Audio verified in Chrome, Firefox, Edge
-- [ ] 5.7 Background tab behavior verified manually
+- [x] 5.5 Full manual walkthrough with real 1-minute cycle
+- [x] 5.6 Audio verified in Chrome, Firefox, Edge
+- [x] 5.7 Background tab behavior verified manually

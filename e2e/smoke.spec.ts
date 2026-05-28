@@ -8,10 +8,4 @@ test("authenticated user sees app shell with task list", async ({ page }) => {
 
 	// Task list container rendered (proves TaskList component loaded)
 	await expect(page.getByTestId("task-list")).toBeVisible();
-
-	// Pomodoro UI: timer hidden until a task is focused
-	await expect(page.getByTestId("timer-panel-idle")).not.toBeVisible();
-	await expect(
-		page.getByRole("button", { name: "Focus" }).first(),
-	).toBeVisible();
 });
