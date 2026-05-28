@@ -305,13 +305,13 @@ Write the smoke test that proves the full pipeline: authenticated browser naviga
 
 #### Automated
 
-- [x] 3.1 `pnpm test:e2e` passes end-to-end
-- [x] 3.2 `pnpm test` (Vitest) still passes
-- [x] 3.3 `pnpm typecheck` passes
-- [x] 3.4 `pnpm check` passes
+- [x] 3.1 `pnpm test:e2e` passes end-to-end — 19060fb
+- [x] 3.2 `pnpm test` (Vitest) still passes — 19060fb
+- [x] 3.3 `pnpm typecheck` passes — 19060fb
+- [x] 3.4 `pnpm check` passes — 19060fb
 
 #### Manual
 
-- [x] 3.5 `pnpm test:e2e` works without a running dev server (webServer auto-starts)
-- [x] 3.6 `pnpm test:e2e` works with dev server already running (reuseExistingServer)
-- [x] 3.7 Playwright HTML report shows smoke test green
+- [x] 3.5 `pnpm test:e2e` works without a running dev server (webServer auto-starts) — 19060fb
+- [x] 3.6 `pnpm test:e2e` works with dev server already running (reuseExistingServer) — 19060fb
+- [x] 3.7 Playwright HTML report shows smoke test green — 19060fb
