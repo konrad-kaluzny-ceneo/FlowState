@@ -552,19 +552,19 @@ Write comprehensive tests across the test pyramid: unit tests for procedures and
 
 #### Automated
 
-- [ ] 4.1 All existing tests pass (`pnpm test`)
-- [ ] 4.2 Type checking passes (`pnpm typecheck`)
-- [ ] 4.3 Linting passes (`pnpm check`)
-- [ ] 4.4 Recovery unit test: running cycle resumes correctly
-- [ ] 4.5 Recovery unit test: expired cycle shows completion immediately
-- [ ] 4.6 localStorage duration persistence test passes
+- [x] 4.1 All existing tests pass (`pnpm test`)
+- [x] 4.2 Type checking passes (`pnpm typecheck`)
+- [x] 4.3 Linting passes (`pnpm check`)
+- [x] 4.4 Recovery unit test: running cycle resumes correctly
+- [x] 4.5 Recovery unit test: expired cycle shows completion immediately
+- [x] 4.6 localStorage duration persistence test passes
 
 #### Manual
 
-- [ ] 4.7 Refresh mid-cycle → countdown resumes
-- [ ] 4.8 Close tab → reopen → correct state restored
-- [ ] 4.9 Background tab → return → display correct
-- [ ] 4.10 Background tab past expiry → return → completion overlay + audio
+- [x] 4.7 Refresh mid-cycle → countdown resumes
+- [x] 4.8 Close tab → reopen → correct state restored
+- [x] 4.9 Background tab → return → display correct
+- [x] 4.10 Background tab past expiry → return → completion overlay + audio
 
 ### Phase 5: Testing
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createAudioManager } from "~/lib/audio";
+import { setLastDuration } from "~/lib/duration-storage";
 import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 import type {
@@ -18,19 +19,41 @@ export type FocusedTask = { id: number; title: string } | null;
 
 export type PomodoroCycleState = "idle" | "running" | "completed";
 
+async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {
+	try {
+		return await fn();
+	} catch (firstError) {
+		try {
+			return await fn();
+		} catch {
+			throw firstError;
+		}
+	}
+}
+
 export function usePomodoroCycle() {
 	const [state, setState] = useState<PomodoroCycleState>("idle");
 	const [remainingMs, setRemainingMs] = useState(0);
 	const [focusedTaskId, setFocusedTaskId] = useState<number | null>(null);
 	const [focusedTask, setFocusedTask] = useState<FocusedTask>(null);
 	const [activeCycle, setActiveCycle] = useState<ActiveCycle>(null);
+	const [error, setError] = useState<string | null>(null);
 
+	const stateRef = useRef(state);
 	const endTimeRef = useRef<number | null>(null);
 	const workerRef = useRef<Worker | null>(null);
+	const fallbackIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+		null,
+	);
 	const audioRef = useRef(createAudioManager());
 	const recoveredRef = useRef(false);
+	const useWorkerRef = useRef(true);
 
 	const utils = api.useUtils();
+
+	useEffect(() => {
+		stateRef.current = state;
+	}, [state]);
 
 	const { data: activeCycleQuery } = api.cycle.getActive.useQuery(undefined, {
 		staleTime: 30_000,
@@ -41,45 +64,24 @@ export function usePomodoroCycle() {
 	const completeCycle = api.cycle.complete.useMutation();
 	const interruptCycle = api.cycle.interrupt.useMutation();
 
+	const stopFallbackTimer = useCallback(() => {
+		if (fallbackIntervalRef.current != null) {
+			clearInterval(fallbackIntervalRef.current);
+			fallbackIntervalRef.current = null;
+		}
+	}, []);
+
 	const stopWorker = useCallback(() => {
 		workerRef.current?.postMessage({
 			type: "stop",
 		} satisfies TimerWorkerInbound);
-	}, []);
-
-	const startWorker = useCallback((endTime: number) => {
-		endTimeRef.current = endTime;
-		setRemainingMs(Math.max(0, endTime - Date.now()));
-
-		if (workerRef.current == null && typeof Worker !== "undefined") {
-			workerRef.current = new Worker(
-				new URL("../workers/timer-worker.ts", import.meta.url),
-				{ type: "module" },
-			);
-			workerRef.current.onmessage = (
-				event: MessageEvent<TimerWorkerOutbound>,
-			) => {
-				const message = event.data;
-				if (message.type === "tick") {
-					setRemainingMs(message.remaining);
-					return;
-				}
-				if (message.type === "complete") {
-					endTimeRef.current = null;
-					setRemainingMs(0);
-					setState("completed");
-					void audioRef.current.playAlarm();
-				}
-			};
-		}
-
-		workerRef.current?.postMessage({
-			type: "start",
-			endTime,
-		} satisfies TimerWorkerInbound);
-	}, []);
+		stopFallbackTimer();
+	}, [stopFallbackTimer]);
 
 	const handleCycleExpired = useCallback(() => {
+		if (stateRef.current !== "running") {
+			return;
+		}
 		stopWorker();
 		endTimeRef.current = null;
 		setRemainingMs(0);
@@ -87,7 +89,84 @@ export function usePomodoroCycle() {
 		void audioRef.current.playAlarm();
 	}, [stopWorker]);
 
+	const attachWorkerHandlers = useCallback(
+		(worker: Worker) => {
+			worker.onmessage = (event: MessageEvent<TimerWorkerOutbound>) => {
+				const message = event.data;
+				if (message.type === "tick") {
+					setRemainingMs(message.remaining);
+					return;
+				}
+				if (message.type === "complete") {
+					handleCycleExpired();
+				}
+			};
+		},
+		[handleCycleExpired],
+	);
+
+	const startFallbackTimer = useCallback(
+		(endTime: number) => {
+			stopFallbackTimer();
+			endTimeRef.current = endTime;
+
+			const tick = () => {
+				if (endTimeRef.current !== endTime) {
+					return;
+				}
+				const remaining = endTime - Date.now();
+				if (remaining <= 0) {
+					stopFallbackTimer();
+					handleCycleExpired();
+					return;
+				}
+				setRemainingMs(remaining);
+			};
+
+			tick();
+			fallbackIntervalRef.current = setInterval(tick, 1000);
+		},
+		[handleCycleExpired, stopFallbackTimer],
+	);
+
+	const startWorker = useCallback(
+		(endTime: number) => {
+			endTimeRef.current = endTime;
+			setRemainingMs(Math.max(0, endTime - Date.now()));
+
+			if (useWorkerRef.current && typeof Worker !== "undefined") {
+				try {
+					if (workerRef.current == null) {
+						workerRef.current = new Worker(
+							new URL("../workers/timer-worker.ts", import.meta.url),
+							{ type: "module" },
+						);
+						attachWorkerHandlers(workerRef.current);
+					}
+
+					stopFallbackTimer();
+					workerRef.current.postMessage({
+						type: "start",
+						endTime,
+					} satisfies TimerWorkerInbound);
+					return;
+				} catch {
+					useWorkerRef.current = false;
+					workerRef.current?.terminate();
+					workerRef.current = null;
+				}
+			}
+
+			startFallbackTimer(endTime);
+		},
+		[attachWorkerHandlers, startFallbackTimer, stopFallbackTimer],
+	);
+
 	const recalculateFromEndTime = useCallback(() => {
+		if (stateRef.current !== "running") {
+			return;
+		}
+
 		const endTime = endTimeRef.current;
 		if (endTime == null) {
 			return;
@@ -107,7 +186,11 @@ export function usePomodoroCycle() {
 			const endTime =
 				cycle.startedAt.getTime() + cycle.configuredDurationSec * 1000;
 			setActiveCycle(cycle);
-			setFocusedTask(cycle.task);
+			setFocusedTask(
+				cycle.task != null
+					? { id: cycle.task.id, title: cycle.task.title }
+					: null,
+			);
 			setFocusedTaskId(cycle.taskId);
 
 			if (endTime <= Date.now()) {
@@ -162,6 +245,7 @@ export function usePomodoroCycle() {
 			if (state === "running") {
 				return;
 			}
+			setError(null);
 			setFocusedTaskId(taskId);
 			setFocusedTask(task ?? null);
 		},
@@ -178,32 +262,42 @@ export function usePomodoroCycle() {
 
 	const start = useCallback(
 		async (durationSec: number) => {
+			setError(null);
+
 			if (focusedTaskId == null) {
-				throw new Error("Select a task before starting a cycle");
+				setError("Select a task before starting a cycle.");
+				return;
 			}
 
-			await audioRef.current.unlock();
-			await audioRef.current.preload(POMODORO_ALARM_URL);
+			try {
+				await audioRef.current.unlock();
+				await audioRef.current.preload(POMODORO_ALARM_URL);
 
-			await getOrCreateSession.mutateAsync();
+				await getOrCreateSession.mutateAsync();
 
-			const cycle = await createCycle.mutateAsync({
-				kind: "WORK",
-				configuredDurationSec: durationSec,
-				taskId: focusedTaskId,
-			});
+				const cycle = await createCycle.mutateAsync({
+					kind: "WORK",
+					configuredDurationSec: durationSec,
+					taskId: focusedTaskId,
+				});
 
-			const endTime =
-				cycle.startedAt.getTime() + cycle.configuredDurationSec * 1000;
+				const endTime =
+					cycle.startedAt.getTime() + cycle.configuredDurationSec * 1000;
 
-			setActiveCycle({
-				...cycle,
-				task: focusedTask,
-			} as NonNullable<ActiveCycle>);
-			setState("running");
-			startWorker(endTime);
+				setActiveCycle({
+					...cycle,
+					task: focusedTask,
+				} as NonNullable<ActiveCycle>);
+				setState("running");
+				startWorker(endTime);
+				setLastDuration(durationSec);
 
-			await utils.cycle.getActive.invalidate();
+				await utils.cycle.getActive.invalidate();
+			} catch {
+				setError(
+					"Could not start the cycle. Check your connection and try again.",
+				);
+			}
 		},
 		[
 			focusedTaskId,
@@ -220,16 +314,21 @@ export function usePomodoroCycle() {
 			return;
 		}
 
+		setError(null);
 		stopWorker();
 		endTimeRef.current = null;
 
-		await interruptCycle.mutateAsync({ cycleId: activeCycle.id });
+		try {
+			await interruptCycle.mutateAsync({ cycleId: activeCycle.id });
 
-		setState("idle");
-		setRemainingMs(0);
-		setActiveCycle(null);
+			setState("idle");
+			setRemainingMs(0);
+			setActiveCycle(null);
 
-		await utils.cycle.getActive.invalidate();
+			await utils.cycle.getActive.invalidate();
+		} catch {
+			setError("Could not interrupt the cycle. Try again.");
+		}
 	}, [activeCycle, interruptCycle, stopWorker, utils.cycle.getActive]);
 
 	const confirmComplete = useCallback(
@@ -238,10 +337,21 @@ export function usePomodoroCycle() {
 				return;
 			}
 
-			await completeCycle.mutateAsync({
-				cycleId: activeCycle.id,
-				markTaskDone,
-			});
+			setError(null);
+
+			try {
+				await retryOnce(() =>
+					completeCycle.mutateAsync({
+						cycleId: activeCycle.id,
+						markTaskDone,
+					}),
+				);
+			} catch {
+				setError(
+					"Could not save cycle completion. Check your connection and try again.",
+				);
+				return;
+			}
 
 			stopWorker();
 			endTimeRef.current = null;
@@ -265,16 +375,22 @@ export function usePomodoroCycle() {
 		],
 	);
 
+	const clearError = useCallback(() => {
+		setError(null);
+	}, []);
+
 	return {
 		state,
 		remainingMs,
 		focusedTask,
 		focusedTaskId,
 		activeCycle,
+		error,
 		selectTask,
 		clearTask,
 		start,
 		interrupt,
 		confirmComplete,
+		clearError,
 	};
 }

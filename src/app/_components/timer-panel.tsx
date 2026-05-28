@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import type { PomodoroCycleState } from "~/hooks/use-pomodoro-cycle";
+import { getLastDuration } from "~/lib/duration-storage";
 import { formatRemainingMs } from "~/lib/format-remaining";
 
 const DURATION_PRESETS_SEC = [
@@ -14,7 +15,14 @@ const DURATION_PRESETS_SEC = [
 
 const MIN_DURATION_SEC = 5 * 60;
 const MAX_DURATION_SEC = 90 * 60;
-const DEFAULT_DURATION_SEC = 25 * 60;
+
+function initialDurationState() {
+	const sec = getLastDuration();
+	return {
+		selectedSec: sec,
+		customMinutes: String(Math.round(sec / 60)),
+	};
+}
 
 type FocusedTask = {
 	id: number;
@@ -38,8 +46,12 @@ export function TimerPanel({
 	onInterrupt,
 	isStarting = false,
 }: TimerPanelProps) {
-	const [selectedSec, setSelectedSec] = useState(DEFAULT_DURATION_SEC);
-	const [customMinutes, setCustomMinutes] = useState("25");
+	const [selectedSec, setSelectedSec] = useState(
+		() => initialDurationState().selectedSec,
+	);
+	const [customMinutes, setCustomMinutes] = useState(
+		() => initialDurationState().customMinutes,
+	);
 
 	if (focusedTask == null && state !== "running") {
 		return null;

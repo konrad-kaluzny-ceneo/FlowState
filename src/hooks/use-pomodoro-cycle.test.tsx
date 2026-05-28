@@ -24,7 +24,7 @@ const fakeWorkers: FakeWorker[] = [];
 
 class FakeWorker {
 	onmessage: ((event: MessageEvent) => void) | null = null;
-	private endTime: number | null = null;
+	endTime: number | null = null;
 	private stopped = false;
 
 	constructor() {
@@ -45,7 +45,7 @@ class FakeWorker {
 	}
 
 	emitTick() {
-		if (this.stopped || this.endTime == null || !this.onmessage) {
+		if (this.stopped || this.endTime === null || !this.onmessage) {
 			return;
 		}
 		const remaining = this.endTime - Date.now();
@@ -263,5 +263,100 @@ describe("usePomodoroCycle", () => {
 		});
 		expect(result.current.state).toBe("idle");
 		expect(invalidateTaskList).toHaveBeenCalled();
+	});
+
+	it("shows completed when recovered cycle already expired", async () => {
+		getActiveData = {
+			id: 99,
+			startedAt: new Date(Date.now() - 120_000),
+			configuredDurationSec: 60,
+			taskId: 3,
+			task: { id: 3, title: "Late" },
+		};
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("completed");
+		});
+	});
+
+	it("starts worker with correct endTime when resuming active cycle", async () => {
+		const startedAt = new Date(Date.now() - 30_000);
+		const durationSec = 120;
+		getActiveData = {
+			id: 99,
+			startedAt,
+			configuredDurationSec: durationSec,
+			taskId: 3,
+			task: { id: 3, title: "Resume me" },
+		};
+
+		renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(fakeWorkers.length).toBeGreaterThan(0);
+		});
+
+		const worker = fakeWorkers[0];
+		const expectedEnd = startedAt.getTime() + durationSec * 1000;
+		expect(worker?.endTime).toBe(expectedEnd);
+	});
+
+	it("sets error when start fails", async () => {
+		mutateCreate.mockRejectedValueOnce(new Error("network"));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		await act(async () => {
+			await result.current.start(60);
+		});
+
+		expect(result.current.error).toMatch(/Could not start/);
+		expect(result.current.state).toBe("idle");
+	});
+
+	it("uses fallback timer when Worker constructor throws", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+
+		vi.useFakeTimers();
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Tests" });
+		});
+
+		await act(async () => {
+			await result.current.start(60);
+		});
+
+		expect(result.current.state).toBe("running");
+
+		await act(async () => {
+			vi.advanceTimersByTime(61_000);
+		});
+
+		expect(result.current.state).toBe("completed");
+		vi.useRealTimers();
+		vi.stubGlobal("Worker", FakeWorker);
 	});
 });

@@ -25,6 +25,23 @@ function PomodoroDashboardInner() {
 
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8">
+			{pomodoro.error != null && (
+				<div
+					className="w-full rounded-lg border border-red-400/40 bg-red-500/20 px-4 py-3 text-red-100 text-sm"
+					data-testid="pomodoro-error"
+					role="alert"
+				>
+					{pomodoro.error}
+					<button
+						className="ml-3 underline hover:text-white"
+						onClick={pomodoro.clearError}
+						type="button"
+					>
+						Dismiss
+					</button>
+				</div>
+			)}
+
 			{showTimer && (
 				<TimerPanel
 					focusedTask={pomodoro.focusedTask}
