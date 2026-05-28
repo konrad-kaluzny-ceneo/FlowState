@@ -60,7 +60,7 @@ test("isolated user test", async ({ request, browser }) => {
 
 ## File Structure
 
-```
+```text
 e2e/
 ├── README.md           # This file
 ├── global.setup.ts     # Test user provisioning (runs once before all tests)

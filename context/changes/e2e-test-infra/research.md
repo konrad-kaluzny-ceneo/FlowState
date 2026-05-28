@@ -191,7 +191,7 @@ The `proxy.ts` Turbopack manifest bug means dev-server e2e may pass while produc
 
 From [microsoft/playwright#32072](https://github.com/microsoft/playwright/issues/32072), the maintainer-confirmed working sequence under pnpm:
 
-```
+```bash
 pnpm install
 pnpm exec playwright install --with-deps
 ```

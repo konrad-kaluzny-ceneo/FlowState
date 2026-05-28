@@ -49,7 +49,7 @@ Running `pnpm test:e2e` provisions a test user (idempotent), signs in via API, s
 
 ## Architecture / Approach
 
-```
+```text
 pnpm test:e2e
   → globalSetup: POST /api/auth/sign-up/email (idempotent user provisioning)
   → auth-setup project: POST /api/auth/sign-in/email → storageState saved

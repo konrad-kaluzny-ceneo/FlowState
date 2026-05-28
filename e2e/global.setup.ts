@@ -7,7 +7,9 @@ import type { FullConfig } from "@playwright/test";
 async function globalSetup(config: FullConfig) {
 	const baseURL = config.projects[0]?.use?.baseURL ?? "http://localhost:3000";
 
-	if (!baseURL.includes("localhost") && !baseURL.includes("127.0.0.1")) {
+	const { hostname } = new URL(baseURL);
+	const allowedHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+	if (!allowedHosts.has(hostname)) {
 		throw new Error(
 			`E2E tests must not run against non-localhost. baseURL: ${baseURL}`,
 		);
