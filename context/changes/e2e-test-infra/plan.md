@@ -291,15 +291,15 @@ Write the smoke test that proves the full pipeline: authenticated browser naviga
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec playwright test --project=auth-setup` passes
-- [ ] 2.2 `playwright/.auth/user.json` is created with cookie entries
-- [ ] 2.3 `pnpm typecheck` passes with all new `e2e/` files
-- [ ] 2.4 `pnpm check` passes on new files
+- [x] 2.1 `pnpm exec playwright test --project=auth-setup` passes
+- [x] 2.2 `playwright/.auth/user.json` is created with cookie entries
+- [x] 2.3 `pnpm typecheck` passes with all new `e2e/` files
+- [x] 2.4 `pnpm check` passes on new files
 
 #### Manual
 
-- [ ] 2.5 `playwright/.auth/user.json` contains `__Secure-neon-auth.session_token` cookie
-- [ ] 2.6 Test user exists in Neon Auth
+- [x] 2.5 `playwright/.auth/user.json` contains `__Secure-neon-auth.session_token` cookie
+- [x] 2.6 Test user exists in Neon Auth
 
 ### Phase 3: Smoke Test & Verification
 
