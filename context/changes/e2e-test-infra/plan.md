@@ -291,27 +291,27 @@ Write the smoke test that proves the full pipeline: authenticated browser naviga
 
 #### Automated
 
-- [x] 2.1 `pnpm exec playwright test --project=auth-setup` passes
-- [x] 2.2 `playwright/.auth/user.json` is created with cookie entries
-- [x] 2.3 `pnpm typecheck` passes with all new `e2e/` files
-- [x] 2.4 `pnpm check` passes on new files
+- [x] 2.1 `pnpm exec playwright test --project=auth-setup` passes — 2d6b0b1
+- [x] 2.2 `playwright/.auth/user.json` is created with cookie entries — 2d6b0b1
+- [x] 2.3 `pnpm typecheck` passes with all new `e2e/` files — 2d6b0b1
+- [x] 2.4 `pnpm check` passes on new files — 2d6b0b1
 
 #### Manual
 
-- [x] 2.5 `playwright/.auth/user.json` contains `__Secure-neon-auth.session_token` cookie
-- [x] 2.6 Test user exists in Neon Auth
+- [x] 2.5 `playwright/.auth/user.json` contains `__Secure-neon-auth.session_token` cookie — 2d6b0b1
+- [x] 2.6 Test user exists in Neon Auth — 2d6b0b1
 
 ### Phase 3: Smoke Test & Verification
 
 #### Automated
 
-- [ ] 3.1 `pnpm test:e2e` passes end-to-end
-- [ ] 3.2 `pnpm test` (Vitest) still passes
-- [ ] 3.3 `pnpm typecheck` passes
-- [ ] 3.4 `pnpm check` passes
+- [x] 3.1 `pnpm test:e2e` passes end-to-end
+- [x] 3.2 `pnpm test` (Vitest) still passes
+- [x] 3.3 `pnpm typecheck` passes
+- [x] 3.4 `pnpm check` passes
 
 #### Manual
 
-- [ ] 3.5 `pnpm test:e2e` works without a running dev server (webServer auto-starts)
-- [ ] 3.6 `pnpm test:e2e` works with dev server already running (reuseExistingServer)
-- [ ] 3.7 Playwright HTML report shows smoke test green
+- [x] 3.5 `pnpm test:e2e` works without a running dev server (webServer auto-starts)
+- [x] 3.6 `pnpm test:e2e` works with dev server already running (reuseExistingServer)
+- [x] 3.7 Playwright HTML report shows smoke test green
