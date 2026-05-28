@@ -20,6 +20,7 @@
 - No ESLint or Prettier — Biome is the sole linter/formatter. Do not add either.
 - Tailwind class sorting enforced via Biome's `useSortedClasses` rule (utility functions: `clsx`, `cva`, `cn`).
 - Path alias: `~/` maps to `src/`. Use it for all intra-project imports.
+- **Critical:** Run `pnpm check` (Biome) after each iteration of changes. All errors must be resolved before presenting results or moving to the next task.
 
 ## Database
 

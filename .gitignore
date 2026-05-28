@@ -242,3 +242,9 @@ yarn-error.log*
 .idea
 
 .vercel
+
+# Playwright
+playwright/.auth/
+playwright-report/
+test-results/
+/blob-report/
