@@ -21,10 +21,11 @@ function mapSnapshotToTasks(): DomainTask[] {
 
 let cachedStorageValue: string | null | undefined;
 let cachedTasks: DomainTask[] = [];
+const emptyGuestTasks: DomainTask[] = [];
 
 function getGuestTasksSnapshot(): DomainTask[] {
 	if (typeof window === "undefined") {
-		return [];
+		return emptyGuestTasks;
 	}
 
 	const storageValue = localStorage.getItem(GUEST_STORAGE_KEY);
@@ -37,6 +38,10 @@ function getGuestTasksSnapshot(): DomainTask[] {
 	return cachedTasks;
 }
 
+function getGuestTasksServerSnapshot(): DomainTask[] {
+	return emptyGuestTasks;
+}
+
 export function useGuestDomainTasks(): {
 	tasks: DomainTask[];
 	refresh: () => Promise<void>;
@@ -44,7 +49,7 @@ export function useGuestDomainTasks(): {
 	const tasks = useSyncExternalStore(
 		subscribeGuestStore,
 		getGuestTasksSnapshot,
-		() => [],
+		getGuestTasksServerSnapshot,
 	);
 
 	return {
