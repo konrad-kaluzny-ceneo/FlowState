@@ -22,12 +22,11 @@ pnpm exec playwright install chromium --with-deps
 ## Running Tests
 
 ```bash
-# Run all e2e tests (starts dev server automatically if not running)
+# Run all e2e tests (builds app, starts on port 3001 with E2E timer flags)
 pnpm test:e2e
 
-# Run with dev server already running (faster iteration)
-pnpm dev  # in one terminal
-pnpm test:e2e  # in another
+# Pomodoro flow only
+pnpm exec playwright test e2e/pomodoro-cycle.spec.ts
 
 # Run only the auth setup (useful for debugging auth issues)
 pnpm exec playwright test --project=auth-setup
@@ -66,12 +65,15 @@ e2e/
 ├── global.setup.ts     # Test user provisioning (runs once before all tests)
 ├── auth.setup.ts       # Sign-in + storageState (runs before browser tests)
 ├── smoke.spec.ts       # Smoke test proving the pipeline works
+├── pomodoro-cycle.spec.ts  # S-01: focus → start → clock → overlay → complete
 └── helpers/
     └── user.ts         # Per-test user creation/sign-in utilities
 ```
 
 ## Notes
 
-- Tests run against `http://localhost:3000` (dev server). The `__Secure-` cookie constraint is sidestepped by using `APIRequestContext` for sign-in (not a browser).
+- Tests run against `http://localhost:3001` by default (`E2E_PORT` overrides). Playwright runs `pnpm build && next start` with `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` so `page.clock` advances the countdown (Web Workers are not clock-mocked).
+- Pomodoro specs reset stray cycles in `beforeEach` (interrupt / dismiss overlay) so **Focus** is not disabled by a leftover `RUNNING` cycle.
+- The `__Secure-` cookie constraint is sidestepped by using `APIRequestContext` for sign-in (not a browser).
 - `playwright/.auth/` is gitignored — auth state is regenerated on each run.
 - Vitest (`pnpm test`) and Playwright (`pnpm test:e2e`) are fully isolated — different configs, different directories, different scripts.

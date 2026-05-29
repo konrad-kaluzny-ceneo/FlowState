@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { TaskList } from "~/app/_components/task-list";
+import { PomodoroDashboard } from "~/app/_components/pomodoro-dashboard";
 import { auth } from "~/lib/auth/server";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -14,7 +14,7 @@ export default async function Home() {
 		redirect("/auth/sign-in");
 	}
 
-	await api.task.list.prefetch();
+	await Promise.all([api.task.list.prefetch(), api.cycle.getActive.prefetch()]);
 
 	return (
 		<HydrateClient>
@@ -22,7 +22,7 @@ export default async function Home() {
 				<div className="container flex flex-col items-center justify-center gap-8 px-4 py-16">
 					<h1 className="font-bold text-4xl tracking-tight">FlowState</h1>
 					<p className="text-white/60">Manage your tasks. Stay in flow.</p>
-					<TaskList />
+					<PomodoroDashboard />
 				</div>
 			</main>
 		</HydrateClient>

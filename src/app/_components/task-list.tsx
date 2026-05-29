@@ -13,7 +13,17 @@ interface Task {
 	updatedAt: Date | null;
 }
 
-export function TaskList() {
+type TaskListProps = {
+	focusedTaskId: number | null;
+	onFocusTask: (taskId: number, task: Task) => void;
+	cycleState: "idle" | "running" | "completed";
+};
+
+export function TaskList({
+	focusedTaskId,
+	onFocusTask,
+	cycleState,
+}: TaskListProps) {
 	const [tasks] = api.task.list.useSuspenseQuery() as unknown as [Task[]];
 	const utils = api.useUtils();
 
@@ -44,6 +54,7 @@ export function TaskList() {
 
 	const activeTasks = tasks.filter((t) => t.status === "active");
 	const completedTasks = tasks.filter((t) => t.status === "completed");
+	const cycleLocked = cycleState === "running" || cycleState === "completed";
 
 	function startEditing(id: number, title: string) {
 		setEditingId(id);
@@ -95,12 +106,15 @@ export function TaskList() {
 					<ul className="space-y-2">
 						{activeTasks.map((task) => (
 							<li
-								className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-3"
+								className={`flex items-center gap-2 rounded-lg bg-white/10 px-4 py-3 ${
+									focusedTaskId === task.id ? "ring-2 ring-purple-500" : ""
+								}`}
 								key={task.id}
 							>
 								<button
 									aria-label="Mark complete"
-									className="h-5 w-5 shrink-0 rounded border-2 border-white/40 transition hover:border-green-400 hover:bg-green-400/20"
+									className="h-5 w-5 shrink-0 rounded border-2 border-white/40 transition hover:border-green-400 hover:bg-green-400/20 disabled:cursor-not-allowed disabled:opacity-40"
+									disabled={cycleLocked}
 									onClick={() =>
 										updateTask.mutate({ id: task.id, status: "completed" })
 									}
@@ -120,7 +134,8 @@ export function TaskList() {
 									/>
 								) : (
 									<button
-										className="flex-1 cursor-pointer text-left text-white"
+										className="flex-1 cursor-pointer text-left text-white disabled:cursor-default disabled:opacity-70"
+										disabled={cycleLocked}
 										onClick={() => startEditing(task.id, task.title)}
 										type="button"
 									>
@@ -128,8 +143,21 @@ export function TaskList() {
 									</button>
 								)}
 								<button
+									className={`shrink-0 rounded-lg px-2 py-1 font-medium text-xs transition ${
+										focusedTaskId === task.id
+											? "bg-purple-600 text-white"
+											: "bg-white/10 text-white/80 hover:bg-white/20"
+									}`}
+									disabled={cycleLocked}
+									onClick={() => onFocusTask(task.id, task)}
+									type="button"
+								>
+									{focusedTaskId === task.id ? "Focused" : "Focus"}
+								</button>
+								<button
 									aria-label="Delete task"
-									className="shrink-0 text-white/40 transition hover:text-red-400"
+									className="shrink-0 text-white/40 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+									disabled={cycleLocked}
 									onClick={() => deleteTask.mutate({ id: task.id })}
 									type="button"
 								>
@@ -155,7 +183,8 @@ export function TaskList() {
 							>
 								<button
 									aria-label="Revert to active"
-									className="h-5 w-5 shrink-0 rounded border-2 border-green-400 bg-green-400/30 transition hover:border-white/40 hover:bg-transparent"
+									className="h-5 w-5 shrink-0 rounded border-2 border-green-400 bg-green-400/30 transition hover:border-white/40 hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
+									disabled={cycleLocked}
 									onClick={() =>
 										updateTask.mutate({ id: task.id, status: "active" })
 									}
@@ -166,7 +195,8 @@ export function TaskList() {
 								</span>
 								<button
 									aria-label="Delete task"
-									className="shrink-0 text-white/40 transition hover:text-red-400"
+									className="shrink-0 text-white/40 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+									disabled={cycleLocked}
 									onClick={() => deleteTask.mutate({ id: task.id })}
 									type="button"
 								>
