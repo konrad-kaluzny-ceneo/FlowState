@@ -3,7 +3,7 @@ project: FlowState
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-05-29
+updated: 2026-05-30
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -42,6 +42,8 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-05 | end-of-cycle-checkin | [FLO-12](https://linear.app/flowstate-10xdev/issue/FLO-12) | [#12](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/12) | declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session | S-01 | FR-020, NFR (mental-state data privacy) | proposed |
 | S-06 | adaptive-task-suggestion | [FLO-13](https://linear.app/flowstate-10xdev/issue/FLO-13) | [#13](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/13) | after each check-in, see a suggested next task with a one-line rationale and accept it or override by picking any other task | S-04, S-05 | FR-021, FR-022, NFR (suggestion feedback ≥1s visible) | proposed |
 | S-07 | account-recovery-flow | [FLO-7](https://linear.app/flowstate-10xdev/issue/FLO-7) | [#9](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/9) | reset a forgotten password and recover access without losing existing tasks or session history | F-02 | FR-003a, NFR (auth must not lock user out of own data) | ready |
+| S-08 | guest-local-storage-merge | — | — | use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account | S-01, F-02 | NFR (no silent data loss), FR-004–FR-009 | proposed |
+| S-09 | optimistic-task-mutations | — | — | see task list and task actions update immediately while logged in (optimistic UI), with rollback on server error — matching perceived speed of local guest storage | S-01, F-02 | NFR (200ms acknowledgement), FR-004–FR-008 | proposed |
 
 ## Streams
 
@@ -53,6 +55,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | B | Scoring substrate | `S-04` (parallel with `S-01`/`S-02`, requires `F-02`) | Adds task attributes. Independent of timer mechanics; safe to fan out alongside Stream A once `F-01` + `F-02` land. |
 | C | Wedge convergence | `S-05` → `S-06` | Joins Stream A at `S-01` (needs cycle-end hook) and Stream B at `S-04` (needs scoring inputs). Wedge — the differentiating mechanic — lands here. |
 | D | Auth hardening | `S-07` (requires `F-02`) | Standalone slice; requires e2e infra to verify recovery flow end-to-end in a browser. |
+| E | UX responsiveness | `S-09` (requires `S-01`, `F-02`) | TanStack Query optimistic updates on authenticated task (and optionally cycle) mutations. Pairs with guest trial (`S-08` when shipped) so login does not feel slower than try-before-signup. |
 
 
 ## Baseline
@@ -210,6 +213,34 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Standalone hardening slice. Risk is leaving a guardrail gap (forgotten password = permanent lockout) silently inherited from baseline. Sequenced as `ready` and parallel because it has zero coupling to the Pomodoro domain.
 - **Status:** ready
 
+### S-08: Guest trial and merge on login
+
+- **Outcome:** visitor uses `/` without an account to manage tasks and run a work cycle (local persistence + refresh recovery); after sign-in or sign-up, guest data imports into the account; logged-in sessions use server data only (no guest blob reads).
+- **Change ID:** guest-local-storage-merge
+- **Linear:** —
+- **GitHub:** —
+- **PRD refs:** NFR (no silent data loss), FR-004–FR-009 (trial path; account still required for durable cross-device use)
+- **Prerequisites:** S-01, F-02
+- **Parallel with:** S-02, S-07, S-09
+- **Blockers:** —
+- **Unknowns:** Neon Auth middleware configuration for optional session on `/` — owner: `/10x-implement` Phase 4. Block: no.
+- **Risk:** Dual-store complexity and merge edge cases (title collision, active cycle). Plan: `context/changes/guest-local-storage-merge/plan.md`.
+- **Status:** proposed
+
+### S-09: Optimistic task mutations (authenticated UX)
+
+- **Outcome:** while logged in, task create / update / delete / status changes reflect in the UI immediately (optimistic cache updates via TanStack Query); on mutation failure the UI rolls back and shows an error — no silent loss. Optionally extends to cycle start/complete if scoped in `/10x-plan`.
+- **Change ID:** optimistic-task-mutations
+- **Linear:** —
+- **GitHub:** —
+- **PRD refs:** NFR (200ms acknowledgement), FR-004, FR-005, FR-006, FR-007, FR-008, FR-009a
+- **Prerequisites:** S-01, F-02
+- **Parallel with:** S-02, S-03, S-04, S-07, S-08 (guest-local-storage-merge — recommended after or alongside S-08 so post-login UX matches guest perceived speed)
+- **Blockers:** —
+- **Unknowns:** Whether cycle mutations (`cycle.create`, `complete`, `interrupt`) belong in the same slice or a follow-up — owner: `/10x-plan`. Block: no — task list alone satisfies the slice outcome.
+- **Risk:** Optimistic state can diverge from server truth on race or double-submit; mitigation: `onMutate` / rollback pattern, invalidate on settle, tests for failed mutation. Out of scope for `guest-local-storage-merge` (separate change-id per plan brief).
+- **Status:** proposed
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID | Linear | GitHub | Suggested issue title | Ready for `/10x-plan` | Notes |
@@ -223,6 +254,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-05 | end-of-cycle-checkin | FLO-12 | #12 | FlowState — end-of-cycle mindful check-in | no | Unblocks after S-01 |
 | S-06 | adaptive-task-suggestion | FLO-13 | #13 | FlowState — adaptive next-task suggestion with override (wedge) | no | Unblocks after S-04 + S-05; carries the v1 scoring formula |
 | S-07 | account-recovery-flow | FLO-7 | #9 | FlowState — verify and expose password recovery flow | no | Requires F-02 for browser-based verification of recovery flow |
+| S-08 | guest-local-storage-merge | — | — | FlowState — guest trial (localStorage) and merge on login | no | Plan at `context/changes/guest-local-storage-merge/` |
+| S-09 | optimistic-task-mutations | — | — | FlowState — optimistic TanStack Query updates for authenticated task mutations | no | Unblocks after S-01; best after S-08 if guest trial ships first |
 
 ## Research requirements <!-- needs-research -->
 
@@ -235,7 +268,7 @@ Items tagged `needs-research` are non-trivial — they require external research
 | S-06 | adaptive-task-suggestion | 🟡 Medium | Weighted scoring / task-prioritization algorithms; Pomodoro technique research on task-energy matching; deterministic formula design patterns |
 | S-07 | account-recovery-flow | 🟢 Low | Neon Auth password reset/recovery API surface (quick lookup) |
 
-**Not requiring research** (straightforward implementation on existing stack): S-02, S-03, S-04, S-05.
+**Not requiring research** (straightforward implementation on existing stack): S-02, S-03, S-04, S-05, S-09.
 
 ## Open Roadmap Questions
 
