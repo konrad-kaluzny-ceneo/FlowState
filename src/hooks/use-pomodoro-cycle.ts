@@ -88,7 +88,7 @@ export function usePomodoroCycle() {
 		endTimeRef.current = null;
 		setRemainingMs(0);
 		setState("completed");
-		void audioRef.current.playAlarm();
+		void audioRef.current.playAlarm().catch(() => {});
 	}, [stopWorker]);
 
 	const attachWorkerHandlers = useCallback(
@@ -199,7 +199,7 @@ export function usePomodoroCycle() {
 
 			if (endTime <= Date.now()) {
 				setState("completed");
-				void audioRef.current.playAlarm();
+				void audioRef.current.playAlarm().catch(() => {});
 				return;
 			}
 

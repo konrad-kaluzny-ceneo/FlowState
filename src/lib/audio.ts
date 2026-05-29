@@ -1,5 +1,26 @@
 const ALARM_FALLBACK_SELECTOR = "audio[data-pomodoro-alarm]";
 
+function isPlaybackBlocked(error: unknown): boolean {
+	return (
+		error instanceof DOMException &&
+		(error.name === "NotAllowedError" || error.name === "AbortError")
+	);
+}
+
+async function primeHtmlAudioElement(audio: HTMLAudioElement): Promise<void> {
+	const previousMuted = audio.muted;
+	audio.muted = true;
+	try {
+		await audio.play();
+		audio.pause();
+		audio.currentTime = 0;
+	} catch {
+		// Autoplay policy may still block until a user gesture; playAlarm handles that.
+	} finally {
+		audio.muted = previousMuted;
+	}
+}
+
 export function createAudioManager(): {
 	unlock(): Promise<void>;
 	preload(url: string): Promise<void>;
@@ -19,7 +40,17 @@ export function createAudioManager(): {
 
 			context ??= new AudioContext();
 			if (context.state === "suspended") {
-				await context.resume();
+				try {
+					await context.resume();
+				} catch {
+					// Best-effort; playAlarm retries resume.
+				}
+			}
+
+			if (alarmUrl) {
+				fallbackAudio ??= new Audio(alarmUrl);
+				fallbackAudio.preload = "auto";
+				await primeHtmlAudioElement(fallbackAudio);
 			}
 		},
 
@@ -30,16 +61,25 @@ export function createAudioManager(): {
 				return;
 			}
 
-			if (context) {
-				const response = await fetch(url);
-				const arrayBuffer = await response.arrayBuffer();
-				buffer = await context.decodeAudioData(arrayBuffer);
+			await this.unlock();
+
+			if (!context) {
 				return;
 			}
 
-			fallbackAudio = new Audio(url);
-			fallbackAudio.preload = "auto";
-			await fallbackAudio.load();
+			try {
+				const response = await fetch(url);
+				const arrayBuffer = await response.arrayBuffer();
+				buffer = await context.decodeAudioData(arrayBuffer);
+			} catch {
+				fallbackAudio ??= new Audio(url);
+				fallbackAudio.preload = "auto";
+				try {
+					await fallbackAudio.load();
+				} catch {
+					// Decode/load failures fall back to play-time HTML audio.
+				}
+			}
 		},
 
 		async playAlarm() {
@@ -47,25 +87,37 @@ export function createAudioManager(): {
 				return;
 			}
 
-			if (context && buffer) {
-				const source = context.createBufferSource();
-				source.buffer = buffer;
-				source.connect(context.destination);
-				source.start(0);
-				return;
-			}
+			try {
+				if (context) {
+					if (context.state === "suspended") {
+						await context.resume();
+					}
 
-			const existing = document.querySelector<HTMLAudioElement>(
-				ALARM_FALLBACK_SELECTOR,
-			);
-			const audio =
-				fallbackAudio ?? existing ?? (alarmUrl ? new Audio(alarmUrl) : null);
-			if (!audio) {
-				return;
-			}
+					if (buffer) {
+						const source = context.createBufferSource();
+						source.buffer = buffer;
+						source.connect(context.destination);
+						source.start(0);
+						return;
+					}
+				}
 
-			audio.currentTime = 0;
-			await audio.play();
+				const existing = document.querySelector<HTMLAudioElement>(
+					ALARM_FALLBACK_SELECTOR,
+				);
+				const audio =
+					fallbackAudio ?? existing ?? (alarmUrl ? new Audio(alarmUrl) : null);
+				if (!audio) {
+					return;
+				}
+
+				audio.currentTime = 0;
+				await audio.play();
+			} catch (error) {
+				if (!isPlaybackBlocked(error)) {
+					throw error;
+				}
+			}
 		},
 
 		dispose() {

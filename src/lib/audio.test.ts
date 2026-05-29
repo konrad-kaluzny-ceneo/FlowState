@@ -72,23 +72,63 @@ describe("createAudioManager", () => {
 		manager.dispose();
 	});
 
-	it("falls back to HTMLAudioElement when no AudioContext buffer", async () => {
+	it("falls back to HTMLAudioElement when decode fails", async () => {
 		const play = vi.fn().mockResolvedValue(undefined);
 		const load = vi.fn().mockResolvedValue(undefined);
 
 		class MockAudio {
+			muted = false;
 			preload = "";
 			currentTime = 0;
 			play = play;
 			load = load;
+			pause = vi.fn();
+		}
+
+		class MockAudioContext {
+			state = "running";
+			destination = {};
+			resume = vi.fn().mockResolvedValue(undefined);
+			close = vi.fn().mockResolvedValue(undefined);
+			decodeAudioData = vi.fn().mockRejectedValue(new Error("decode failed"));
+		}
+
+		vi.stubGlobal("Audio", MockAudio);
+		vi.stubGlobal("AudioContext", MockAudioContext);
+		vi.stubGlobal(
+			"fetch",
+			vi.fn().mockResolvedValue({
+				arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
+			}),
+		);
+
+		const manager = createAudioManager();
+		await manager.unlock();
+		await manager.preload("/sounds/pomodoro-complete.mp3");
+		await manager.playAlarm();
+
+		expect(play).toHaveBeenCalled();
+	});
+
+	it("swallows autoplay NotAllowedError on HTML fallback", async () => {
+		const play = vi
+			.fn()
+			.mockRejectedValue(new DOMException("blocked", "NotAllowedError"));
+
+		class MockAudio {
+			muted = false;
+			preload = "";
+			currentTime = 0;
+			play = play;
+			load = vi.fn().mockResolvedValue(undefined);
+			pause = vi.fn();
 		}
 
 		vi.stubGlobal("Audio", MockAudio);
 
 		const manager = createAudioManager();
 		await manager.preload("/sounds/pomodoro-complete.mp3");
-		await manager.playAlarm();
 
-		expect(play).toHaveBeenCalled();
+		await expect(manager.playAlarm()).resolves.toBeUndefined();
 	});
 });
