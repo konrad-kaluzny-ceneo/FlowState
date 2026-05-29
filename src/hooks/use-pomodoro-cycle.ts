@@ -1,10 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-
 import { createAudioManager } from "~/lib/audio";
+import {
+	useDataMode,
+	useRepositories,
+} from "~/lib/data-mode/data-mode-context";
+import type {
+	DomainActiveCycle,
+	DomainTaskId,
+	FocusedTask,
+} from "~/lib/data-mode/types";
 import { setLastDuration } from "~/lib/duration-storage";
-import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 import type {
 	TimerWorkerInbound,
@@ -13,11 +20,16 @@ import type {
 
 export const POMODORO_ALARM_URL = "/sounds/pomodoro-complete.mp3";
 
-type ActiveCycle = RouterOutputs["cycle"]["getActive"];
-
-export type FocusedTask = { id: number; title: string } | null;
+export type { FocusedTask };
 
 export type PomodoroCycleState = "idle" | "running" | "completed";
+
+let activeCycleRecoveryFetched = false;
+
+/** Test-only reset for module-level recovery guard. */
+export function resetActiveCycleRecoveryForTests(): void {
+	activeCycleRecoveryFetched = false;
+}
 
 async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {
 	try {
@@ -32,11 +44,17 @@ async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 export function usePomodoroCycle() {
+	const mode = useDataMode();
+	const { cycles, sessions, refreshGuest } = useRepositories();
+	const utils = api.useUtils();
+
 	const [state, setState] = useState<PomodoroCycleState>("idle");
 	const [remainingMs, setRemainingMs] = useState(0);
-	const [focusedTaskId, setFocusedTaskId] = useState<number | null>(null);
+	const [focusedTaskId, setFocusedTaskId] = useState<DomainTaskId | null>(null);
 	const [focusedTask, setFocusedTask] = useState<FocusedTask>(null);
-	const [activeCycle, setActiveCycle] = useState<ActiveCycle>(null);
+	const [activeCycle, setActiveCycle] = useState<DomainActiveCycle | null>(
+		null,
+	);
 	const [error, setError] = useState<string | null>(null);
 
 	const stateRef = useRef(state);
@@ -51,20 +69,17 @@ export function usePomodoroCycle() {
 		process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER !== "1",
 	);
 
-	const utils = api.useUtils();
-
 	useEffect(() => {
 		stateRef.current = state;
 	}, [state]);
 
-	const { data: activeCycleQuery } = api.cycle.getActive.useQuery(undefined, {
-		staleTime: 30_000,
-	});
-
-	const getOrCreateSession = api.session.getOrCreateActive.useMutation();
-	const createCycle = api.cycle.create.useMutation();
-	const completeCycle = api.cycle.complete.useMutation();
-	const interruptCycle = api.cycle.interrupt.useMutation();
+	const invalidateServerCycle = useCallback(async () => {
+		if (mode === "authenticated") {
+			await utils.cycle.getActive.invalidate();
+		} else {
+			refreshGuest();
+		}
+	}, [mode, refreshGuest, utils.cycle.getActive]);
 
 	const stopFallbackTimer = useCallback(() => {
 		if (fallbackIntervalRef.current != null) {
@@ -184,7 +199,7 @@ export function usePomodoroCycle() {
 	}, [handleCycleExpired]);
 
 	const resumeFromActiveCycle = useCallback(
-		(cycle: NonNullable<ActiveCycle>) => {
+		(cycle: DomainActiveCycle) => {
 			const endTime =
 				cycle.startedAt.getTime() + cycle.configuredDurationSec * 1000;
 			setActiveCycle(cycle);
@@ -209,17 +224,24 @@ export function usePomodoroCycle() {
 		[startWorker],
 	);
 
-	useEffect(() => {
-		if (recoveredRef.current || activeCycleQuery === undefined) {
+	const recoverActiveCycle = useCallback(async () => {
+		if (activeCycleRecoveryFetched || recoveredRef.current) {
 			return;
 		}
 
 		recoveredRef.current = true;
+		activeCycleRecoveryFetched = true;
 
-		if (activeCycleQuery) {
-			resumeFromActiveCycle(activeCycleQuery);
+		const active = await cycles.getActive();
+
+		if (active != null) {
+			resumeFromActiveCycle(active);
 		}
-	}, [activeCycleQuery, resumeFromActiveCycle]);
+	}, [cycles, resumeFromActiveCycle]);
+
+	useEffect(() => {
+		void recoverActiveCycle();
+	}, [recoverActiveCycle]);
 
 	useEffect(() => {
 		const onVisibilityChange = () => {
@@ -245,7 +267,7 @@ export function usePomodoroCycle() {
 	}, [stopWorker]);
 
 	const selectTask = useCallback(
-		(taskId: number, task?: FocusedTask) => {
+		(taskId: DomainTaskId, task?: FocusedTask) => {
 			if (state === "running" || state === "completed") {
 				return;
 			}
@@ -288,9 +310,9 @@ export function usePomodoroCycle() {
 					// Audio is best-effort; cycle start must not depend on it.
 				}
 
-				await getOrCreateSession.mutateAsync();
+				await sessions.getOrCreateActive();
 
-				const cycle = await createCycle.mutateAsync({
+				const cycle = await cycles.create({
 					kind: "WORK",
 					configuredDurationSec: durationSec,
 					taskId: focusedTaskId,
@@ -302,12 +324,12 @@ export function usePomodoroCycle() {
 				setActiveCycle({
 					...cycle,
 					task: focusedTask,
-				} as NonNullable<ActiveCycle>);
+				});
 				setState("running");
 				startWorker(endTime);
 				setLastDuration(durationSec);
 
-				await utils.cycle.getActive.invalidate();
+				await invalidateServerCycle();
 			} catch {
 				setError(
 					"Could not start the cycle. Check your connection and try again.",
@@ -318,10 +340,10 @@ export function usePomodoroCycle() {
 			state,
 			focusedTaskId,
 			focusedTask,
-			getOrCreateSession,
-			createCycle,
+			sessions,
+			cycles,
 			startWorker,
-			utils.cycle.getActive,
+			invalidateServerCycle,
 		],
 	);
 
@@ -335,17 +357,17 @@ export function usePomodoroCycle() {
 		endTimeRef.current = null;
 
 		try {
-			await interruptCycle.mutateAsync({ cycleId: activeCycle.id });
+			await cycles.interrupt({ cycleId: activeCycle.id });
 
 			setState("idle");
 			setRemainingMs(0);
 			setActiveCycle(null);
 
-			await utils.cycle.getActive.invalidate();
+			await invalidateServerCycle();
 		} catch {
 			setError("Could not interrupt the cycle. Try again.");
 		}
-	}, [activeCycle, interruptCycle, stopWorker, utils.cycle.getActive]);
+	}, [activeCycle, cycles, invalidateServerCycle, stopWorker]);
 
 	const confirmComplete = useCallback(
 		async (markTaskDone: boolean) => {
@@ -357,7 +379,7 @@ export function usePomodoroCycle() {
 
 			try {
 				await retryOnce(() =>
-					completeCycle.mutateAsync({
+					cycles.complete({
 						cycleId: activeCycle.id,
 						markTaskDone,
 					}),
@@ -378,17 +400,11 @@ export function usePomodoroCycle() {
 			setFocusedTask(null);
 
 			await Promise.all([
-				utils.cycle.getActive.invalidate(),
+				invalidateServerCycle(),
 				utils.task.list.invalidate(),
 			]);
 		},
-		[
-			activeCycle,
-			completeCycle,
-			stopWorker,
-			utils.cycle.getActive,
-			utils.task.list,
-		],
+		[activeCycle, cycles, invalidateServerCycle, stopWorker, utils.task.list],
 	);
 
 	const clearError = useCallback(() => {

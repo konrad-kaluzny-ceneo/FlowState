@@ -436,10 +436,10 @@ No DB migration. Existing users unaffected. Guest blob is device-local; clearing
 
 #### Automated
 
-- [ ] 6.1 `pnpm test`
-- [ ] 6.2 `pnpm test:e2e` — smoke + guest-trial
-- [ ] 6.3 `pnpm check`
-- [ ] 6.4 `pnpm typecheck`
+- [x] 6.1 `pnpm test`
+- [x] 6.2 `pnpm test:e2e` — smoke + guest-trial
+- [x] 6.3 `pnpm check`
+- [x] 6.4 `pnpm typecheck`
 
 #### Manual
 

@@ -6,11 +6,18 @@ import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { TaskList } from "~/app/_components/task-list";
 import { TimerPanel } from "~/app/_components/timer-panel";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
+import { useDataMode } from "~/lib/data-mode/data-mode-context";
+import { useGuestDomainTasks } from "~/lib/data-mode/use-domain-tasks";
 import { api } from "~/trpc/react";
 
-function PomodoroDashboardInner() {
+function PomodoroDashboardBody({
+	tasks,
+	refreshTasks,
+}: {
+	tasks: ReturnType<typeof useGuestDomainTasks>["tasks"];
+	refreshTasks: () => Promise<void>;
+}) {
 	const pomodoro = usePomodoroCycle();
-	const [tasks] = api.task.list.useSuspenseQuery();
 
 	const activeTaskIds = useMemo(
 		() => new Set(tasks.filter((t) => t.status === "active").map((t) => t.id)),
@@ -59,6 +66,8 @@ function PomodoroDashboardInner() {
 				onFocusTask={(taskId, task) => {
 					pomodoro.selectTask(taskId, task);
 				}}
+				onRefresh={refreshTasks}
+				tasks={tasks}
 			/>
 
 			<CycleCompleteOverlay
@@ -71,7 +80,33 @@ function PomodoroDashboardInner() {
 	);
 }
 
+function AuthenticatedPomodoroDashboard() {
+	const [tasks] = api.task.list.useSuspenseQuery();
+	const utils = api.useUtils();
+
+	return (
+		<PomodoroDashboardBody
+			refreshTasks={async () => {
+				await utils.task.list.invalidate();
+			}}
+			tasks={tasks}
+		/>
+	);
+}
+
+function GuestPomodoroDashboard() {
+	const { tasks, refresh } = useGuestDomainTasks();
+
+	return <PomodoroDashboardBody refreshTasks={refresh} tasks={tasks} />;
+}
+
 export function PomodoroDashboard() {
+	const mode = useDataMode();
+
+	if (mode === "guest") {
+		return <GuestPomodoroDashboard />;
+	}
+
 	return (
 		<Suspense
 			fallback={
@@ -80,7 +115,7 @@ export function PomodoroDashboard() {
 				</p>
 			}
 		>
-			<PomodoroDashboardInner />
+			<AuthenticatedPomodoroDashboard />
 		</Suspense>
 	);
 }

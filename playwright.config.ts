@@ -18,7 +18,7 @@ export default defineConfig({
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: 0,
-	workers: process.env.CI ? 1 : undefined,
+	workers: 1,
 	reporter: "html",
 	use: {
 		baseURL: e2eBaseUrl,
@@ -31,11 +31,20 @@ export default defineConfig({
 		},
 		{
 			name: "chromium",
+			fullyParallel: false,
 			use: {
 				...devices["Desktop Chrome"],
 				storageState: "playwright/.auth/user.json",
 			},
 			dependencies: ["auth-setup"],
+			testIgnore: /guest-trial\.spec\.ts/,
+		},
+		{
+			name: "guest-chromium",
+			use: {
+				...devices["Desktop Chrome"],
+			},
+			testMatch: /guest-trial\.spec\.ts/,
 		},
 	],
 	webServer: {

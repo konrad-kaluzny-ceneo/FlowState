@@ -1,28 +1,17 @@
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
-import { describe, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+
+import { isGuestPublicPath } from "~/lib/auth/public-paths";
 
 /**
  * Feature: neon-auth, Property 3: Middleware route exclusion
  * Validates: Requirements 3.4
  */
 
-/**
- * The middleware matcher regex from src/middleware.ts:
- * /((?!_next/static|_next/image|favicon.ico|api/auth|auth/).*)
- *
- * This is a Next.js matcher pattern. It matches paths that do NOT start with
- * the excluded prefixes. Paths starting with excluded prefixes bypass middleware.
- *
- * Next.js matcher behavior:
- * - The leading `/` matches the path separator
- * - The negative lookahead `(?!...)` excludes paths starting with those prefixes
- * - Excluded paths: _next/static, _next/image, favicon.ico, api/auth, auth/
- */
 const MIDDLEWARE_MATCHER =
 	/^\/((?!_next\/static|_next\/image|favicon\.ico|api\/auth|auth\/).*)$/;
 
-/** Generates a random path suffix (segments like /foo/bar/baz) */
 const pathSuffixArb = fc
 	.array(fc.stringMatching(/^[a-z0-9._-]{1,20}$/), {
 		minLength: 0,
@@ -113,4 +102,15 @@ describe("Feature: neon-auth, Property 3: Middleware route exclusion", () => {
 			expect(MIDDLEWARE_MATCHER.test(path)).toBe(true);
 		},
 	);
+});
+
+describe("guest public path (S-08)", () => {
+	it("allows unauthenticated access to home", () => {
+		expect(isGuestPublicPath("/")).toBe(true);
+	});
+
+	it("does not treat other paths as guest-public", () => {
+		expect(isGuestPublicPath("/settings")).toBe(false);
+		expect(isGuestPublicPath("/auth/sign-in")).toBe(false);
+	});
 });

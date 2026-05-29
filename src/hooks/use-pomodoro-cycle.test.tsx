@@ -3,22 +3,18 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { DomainActiveCycle } from "~/lib/data-mode/types";
 import type { TimerWorkerInbound } from "~/workers/timer-worker-logic";
 
-const mutateGetOrCreate = vi.fn();
-const mutateCreate = vi.fn();
-const mutateComplete = vi.fn();
-const mutateInterrupt = vi.fn();
+const getOrCreateSession = vi.fn();
+const createCycle = vi.fn();
+const completeCycle = vi.fn();
+const interruptCycle = vi.fn();
+const getActiveCycle = vi.fn();
 const invalidateGetActive = vi.fn();
 const invalidateTaskList = vi.fn();
 
-let getActiveData: {
-	id: number;
-	startedAt: Date;
-	configuredDurationSec: number;
-	taskId: number | null;
-	task: { id: number; title: string } | null;
-} | null = null;
+let activeCycleData: DomainActiveCycle | null = null;
 
 const fakeWorkers: FakeWorker[] = [];
 
@@ -70,37 +66,36 @@ vi.mock("~/lib/audio", () => ({
 	}),
 }));
 
+vi.mock("~/lib/data-mode/data-mode-context", () => ({
+	useDataMode: () => "authenticated",
+	useRepositories: () => ({
+		cycles: {
+			getActive: getActiveCycle,
+			create: createCycle,
+			complete: completeCycle,
+			interrupt: interruptCycle,
+		},
+		sessions: {
+			getOrCreateActive: getOrCreateSession,
+		},
+		refreshGuest: vi.fn(),
+	}),
+}));
+
 vi.mock("~/trpc/react", () => ({
 	api: {
 		useUtils: () => ({
 			cycle: { getActive: { invalidate: invalidateGetActive } },
 			task: { list: { invalidate: invalidateTaskList } },
 		}),
-		cycle: {
-			getActive: {
-				useQuery: () => ({ data: getActiveData }),
-			},
-			create: {
-				useMutation: () => ({ mutateAsync: mutateCreate }),
-			},
-			complete: {
-				useMutation: () => ({ mutateAsync: mutateComplete }),
-			},
-			interrupt: {
-				useMutation: () => ({ mutateAsync: mutateInterrupt }),
-			},
-		},
-		session: {
-			getOrCreateActive: {
-				useMutation: () => ({ mutateAsync: mutateGetOrCreate }),
-			},
-		},
 	},
 }));
 
 vi.stubGlobal("Worker", FakeWorker);
 
-const { usePomodoroCycle } = await import("~/hooks/use-pomodoro-cycle");
+const { usePomodoroCycle, resetActiveCycleRecoveryForTests } = await import(
+	"~/hooks/use-pomodoro-cycle"
+);
 
 function createWrapper() {
 	const queryClient = new QueryClient({
@@ -114,21 +109,46 @@ function createWrapper() {
 	};
 }
 
+function makeActiveCycle(
+	overrides: Partial<DomainActiveCycle> = {},
+): DomainActiveCycle {
+	return {
+		id: 99,
+		sessionId: 1,
+		userId: "user-1",
+		taskId: 3,
+		kind: "WORK",
+		state: "RUNNING",
+		configuredDurationSec: 120,
+		startedAt: new Date(),
+		endedAt: null,
+		task: { id: 3, title: "Resume me" },
+		...overrides,
+	};
+}
+
 describe("usePomodoroCycle", () => {
 	beforeEach(() => {
-		getActiveData = null;
+		resetActiveCycleRecoveryForTests();
+		activeCycleData = null;
 		fakeWorkers.length = 0;
 		vi.clearAllMocks();
-		mutateGetOrCreate.mockResolvedValue({ id: 1 });
-		mutateCreate.mockImplementation(async () => ({
+		getActiveCycle.mockImplementation(async () => activeCycleData);
+		getOrCreateSession.mockResolvedValue({ id: 1 });
+		createCycle.mockImplementation(async () => ({
 			id: 42,
-			startedAt: new Date(),
-			configuredDurationSec: 60,
+			sessionId: 1,
+			userId: "user-1",
 			taskId: 7,
+			kind: "WORK",
 			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: { id: 7, title: "Write tests" },
+			configuredDurationSec: 60,
 		}));
-		mutateComplete.mockResolvedValue({ id: 42, state: "COMPLETED" });
-		mutateInterrupt.mockResolvedValue({ id: 42, state: "INTERRUPTED" });
+		completeCycle.mockResolvedValue(undefined);
+		interruptCycle.mockResolvedValue(undefined);
 	});
 
 	it("starts idle and transitions to running on start()", async () => {
@@ -148,8 +168,8 @@ describe("usePomodoroCycle", () => {
 			await result.current.start(60);
 		});
 
-		expect(mutateGetOrCreate).toHaveBeenCalled();
-		expect(mutateCreate).toHaveBeenCalledWith({
+		expect(getOrCreateSession).toHaveBeenCalled();
+		expect(createCycle).toHaveBeenCalledWith({
 			kind: "WORK",
 			configuredDurationSec: 60,
 			taskId: 7,
@@ -200,25 +220,18 @@ describe("usePomodoroCycle", () => {
 
 		expect(result.current.state).toBe("completed");
 
-		mutateCreate.mockClear();
+		createCycle.mockClear();
 
 		await act(async () => {
 			await result.current.start(60);
 		});
 
-		expect(mutateCreate).not.toHaveBeenCalled();
+		expect(createCycle).not.toHaveBeenCalled();
 		expect(result.current.error).toMatch(/Finish or dismiss/);
 	});
 
 	it("resumes running state from getActive on mount", async () => {
-		const startedAt = new Date();
-		getActiveData = {
-			id: 99,
-			startedAt,
-			configuredDurationSec: 120,
-			taskId: 3,
-			task: { id: 3, title: "Resume me" },
-		};
+		activeCycleData = makeActiveCycle();
 
 		const { result } = renderHook(() => usePomodoroCycle(), {
 			wrapper: createWrapper(),
@@ -235,14 +248,13 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.remainingMs).toBeGreaterThan(0);
 	});
 
-	it("calls interrupt mutation and returns to idle", async () => {
-		getActiveData = {
+	it("calls interrupt and returns to idle", async () => {
+		activeCycleData = makeActiveCycle({
 			id: 10,
-			startedAt: new Date(),
 			configuredDurationSec: 300,
 			taskId: 2,
 			task: { id: 2, title: "Focus" },
-		};
+		});
 
 		const { result } = renderHook(() => usePomodoroCycle(), {
 			wrapper: createWrapper(),
@@ -256,18 +268,17 @@ describe("usePomodoroCycle", () => {
 			await result.current.interrupt();
 		});
 
-		expect(mutateInterrupt).toHaveBeenCalledWith({ cycleId: 10 });
+		expect(interruptCycle).toHaveBeenCalledWith({ cycleId: 10 });
 		expect(result.current.state).toBe("idle");
 	});
 
-	it("confirmComplete calls complete mutation and resets to idle", async () => {
-		getActiveData = {
+	it("confirmComplete calls complete and resets to idle", async () => {
+		activeCycleData = makeActiveCycle({
 			id: 11,
-			startedAt: new Date(),
 			configuredDurationSec: 300,
 			taskId: 4,
 			task: { id: 4, title: "Ship" },
-		};
+		});
 
 		const { result } = renderHook(() => usePomodoroCycle(), {
 			wrapper: createWrapper(),
@@ -287,7 +298,7 @@ describe("usePomodoroCycle", () => {
 			await result.current.confirmComplete(true);
 		});
 
-		expect(mutateComplete).toHaveBeenCalledWith({
+		expect(completeCycle).toHaveBeenCalledWith({
 			cycleId: 11,
 			markTaskDone: true,
 		});
@@ -296,13 +307,11 @@ describe("usePomodoroCycle", () => {
 	});
 
 	it("shows completed when recovered cycle already expired", async () => {
-		getActiveData = {
-			id: 99,
+		activeCycleData = makeActiveCycle({
 			startedAt: new Date(Date.now() - 120_000),
 			configuredDurationSec: 60,
-			taskId: 3,
 			task: { id: 3, title: "Late" },
-		};
+		});
 
 		const { result } = renderHook(() => usePomodoroCycle(), {
 			wrapper: createWrapper(),
@@ -316,13 +325,10 @@ describe("usePomodoroCycle", () => {
 	it("starts worker with correct endTime when resuming active cycle", async () => {
 		const startedAt = new Date(Date.now() - 30_000);
 		const durationSec = 120;
-		getActiveData = {
-			id: 99,
+		activeCycleData = makeActiveCycle({
 			startedAt,
 			configuredDurationSec: durationSec,
-			taskId: 3,
-			task: { id: 3, title: "Resume me" },
-		};
+		});
 
 		renderHook(() => usePomodoroCycle(), {
 			wrapper: createWrapper(),
@@ -338,7 +344,7 @@ describe("usePomodoroCycle", () => {
 	});
 
 	it("sets error when start fails", async () => {
-		mutateCreate.mockRejectedValueOnce(new Error("network"));
+		createCycle.mockRejectedValueOnce(new Error("network"));
 
 		const { result } = renderHook(() => usePomodoroCycle(), {
 			wrapper: createWrapper(),

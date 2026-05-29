@@ -69,6 +69,13 @@ A developer, analyst, or team contributor whose workday is genuinely interrupt-d
 - FR-003a: User can reset a forgotten password or recover account access. Priority: must-have
   > Socrates: Counter-argument considered: "recovery flow is complex and rarely used in MVP." Resolution: kept; without it, a forgotten password = permanent lockout, violating the guardrail that auth must not lock a user out of their own data.
 
+### Guest trial (try before signup)
+
+- FR-003b: A visitor without an account can open `/`, manage tasks, and run a work Pomodoro cycle with data stored in device-local storage (single versioned blob). Priority: must-have
+  > Socrates: Counter-argument considered: "guest mode weakens registration-first and complicates the data model." Resolution: kept; reduces onboarding friction while accounts remain required for durable, cross-device data. Guest scope is intentionally narrower than the logged-in product (no check-ins, break cycles, or scoring in the guest slice).
+- FR-003c: After sign-in or sign-up, guest tasks and cycles import into the user's account in one transactional merge; on title collision with an existing account task, the imported task receives a numbered suffix (` (2)`, ` (3)`, …). Priority: must-have
+  > Socrates: Counter-argument considered: "silent merge could overwrite server data." Resolution: kept; additive merge with explicit suffix policy satisfies the no-silent-data-loss guardrail. Guest blob is cleared after successful import.
+
 ### Task List
 
 - FR-004: User can add a task to their list. Priority: must-have
@@ -153,7 +160,7 @@ After every cycle-end check-in, the system presents a suggested next task with a
 
 ## Access Control
 
-Authentication: login required (email + password, OAuth, or passwordless — exact mechanism is downstream). Each user authenticates to access their own data.
+Authentication: login required for account-backed, cross-device data (email + password, OAuth, or passwordless — exact mechanism is downstream). Each authenticated user accesses only their own server data. Optional guest trial on `/` uses device-local storage only until the user registers or signs in and imports guest work into their account (FR-003b, FR-003c).
 
 Role model: flat — every logged-in user has identical capabilities. No admin surface, no role-based permission boundaries in the MVP.
 

@@ -1,11 +1,9 @@
 "use client";
 
-import type { PomodoroCycleState } from "~/hooks/use-pomodoro-cycle";
-
-type FocusedTask = {
-	id: number;
-	title: string;
-} | null;
+import type {
+	FocusedTask,
+	PomodoroCycleState,
+} from "~/hooks/use-pomodoro-cycle";
 
 type CycleCompleteOverlayProps = {
 	state: PomodoroCycleState;

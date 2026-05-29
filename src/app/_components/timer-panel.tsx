@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 
-import type { PomodoroCycleState } from "~/hooks/use-pomodoro-cycle";
+import type {
+	FocusedTask,
+	PomodoroCycleState,
+} from "~/hooks/use-pomodoro-cycle";
 import { getLastDuration } from "~/lib/duration-storage";
 import { formatRemainingMs } from "~/lib/format-remaining";
 
@@ -23,11 +26,6 @@ function initialDurationState() {
 		customMinutes: String(Math.round(sec / 60)),
 	};
 }
-
-type FocusedTask = {
-	id: number;
-	title: string;
-} | null;
 
 type TimerPanelProps = {
 	state: PomodoroCycleState;

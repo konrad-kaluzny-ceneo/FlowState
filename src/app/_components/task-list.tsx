@@ -2,81 +2,76 @@
 
 import { useState } from "react";
 
-import { api } from "~/trpc/react";
-
-interface Task {
-	id: number;
-	title: string;
-	status: string;
-	userId: string;
-	createdAt: Date;
-	updatedAt: Date | null;
-}
+import { useRepositories } from "~/lib/data-mode/data-mode-context";
+import type { DomainTask, DomainTaskId } from "~/lib/data-mode/types";
 
 type TaskListProps = {
-	focusedTaskId: number | null;
-	onFocusTask: (taskId: number, task: Task) => void;
+	tasks: DomainTask[];
+	onRefresh: () => Promise<void>;
+	focusedTaskId: DomainTaskId | null;
+	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void;
 	cycleState: "idle" | "running" | "completed";
 };
 
 export function TaskList({
+	tasks,
+	onRefresh,
 	focusedTaskId,
 	onFocusTask,
 	cycleState,
 }: TaskListProps) {
-	const [tasks] = api.task.list.useSuspenseQuery() as unknown as [Task[]];
-	const utils = api.useUtils();
+	const { tasks: taskRepo } = useRepositories();
 
 	const [newTitle, setNewTitle] = useState("");
-	const [editingId, setEditingId] = useState<number | null>(null);
+	const [editingId, setEditingId] = useState<DomainTaskId | null>(null);
 	const [editTitle, setEditTitle] = useState("");
-
-	const createTask = api.task.create.useMutation({
-		onSuccess: async () => {
-			await utils.task.list.invalidate();
-			setNewTitle("");
-		},
-	});
-
-	const updateTask = api.task.update.useMutation({
-		onSuccess: async () => {
-			await utils.task.list.invalidate();
-			setEditingId(null);
-			setEditTitle("");
-		},
-	});
-
-	const deleteTask = api.task.delete.useMutation({
-		onSuccess: async () => {
-			await utils.task.list.invalidate();
-		},
-	});
+	const [isPending, setIsPending] = useState(false);
 
 	const activeTasks = tasks.filter((t) => t.status === "active");
 	const completedTasks = tasks.filter((t) => t.status === "completed");
 	const cycleLocked = cycleState === "running" || cycleState === "completed";
 
-	function startEditing(id: number, title: string) {
+	function startEditing(id: DomainTaskId, title: string) {
 		setEditingId(id);
 		setEditTitle(title);
 	}
 
-	function saveEdit(id: number) {
-		if (editTitle.trim()) {
-			updateTask.mutate({ id, title: editTitle.trim() });
+	async function saveEdit(id: DomainTaskId) {
+		if (!editTitle.trim()) {
+			return;
+		}
+
+		setIsPending(true);
+		try {
+			await taskRepo.update({ id, title: editTitle.trim() });
+			await onRefresh();
+			setEditingId(null);
+			setEditTitle("");
+		} finally {
+			setIsPending(false);
 		}
 	}
 
 	return (
 		<div className="w-full max-w-lg space-y-6" data-testid="task-list">
-			{/* Add task form */}
 			<form
 				className="flex gap-2"
 				onSubmit={(e) => {
 					e.preventDefault();
-					if (newTitle.trim()) {
-						createTask.mutate({ title: newTitle.trim() });
+					if (!newTitle.trim()) {
+						return;
 					}
+
+					void (async () => {
+						setIsPending(true);
+						try {
+							await taskRepo.create({ title: newTitle.trim() });
+							await onRefresh();
+							setNewTitle("");
+						} finally {
+							setIsPending(false);
+						}
+					})();
 				}}
 			>
 				<input
@@ -88,14 +83,13 @@ export function TaskList({
 				/>
 				<button
 					className="rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
-					disabled={createTask.isPending || !newTitle.trim()}
+					disabled={isPending || !newTitle.trim()}
 					type="submit"
 				>
-					{createTask.isPending ? "Adding..." : "Add"}
+					{isPending ? "Adding..." : "Add"}
 				</button>
 			</form>
 
-			{/* Active tasks */}
 			<section>
 				<h2 className="mb-2 font-semibold text-lg text-white/80">
 					Active ({activeTasks.length})
@@ -109,24 +103,35 @@ export function TaskList({
 								className={`flex items-center gap-2 rounded-lg bg-white/10 px-4 py-3 ${
 									focusedTaskId === task.id ? "ring-2 ring-purple-500" : ""
 								}`}
-								key={task.id}
+								key={String(task.id)}
 							>
 								<button
 									aria-label="Mark complete"
 									className="h-5 w-5 shrink-0 rounded border-2 border-white/40 transition hover:border-green-400 hover:bg-green-400/20 disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={cycleLocked}
-									onClick={() =>
-										updateTask.mutate({ id: task.id, status: "completed" })
-									}
+									disabled={cycleLocked || isPending}
+									onClick={() => {
+										void (async () => {
+											setIsPending(true);
+											try {
+												await taskRepo.update({
+													id: task.id,
+													status: "completed",
+												});
+												await onRefresh();
+											} finally {
+												setIsPending(false);
+											}
+										})();
+									}}
 									type="button"
 								/>
 								{editingId === task.id ? (
 									<input
 										className="flex-1 rounded bg-white/10 px-2 py-1 text-white focus:outline-none"
-										onBlur={() => saveEdit(task.id)}
+										onBlur={() => void saveEdit(task.id)}
 										onChange={(e) => setEditTitle(e.target.value)}
 										onKeyDown={(e) => {
-											if (e.key === "Enter") saveEdit(task.id);
+											if (e.key === "Enter") void saveEdit(task.id);
 											if (e.key === "Escape") setEditingId(null);
 										}}
 										type="text"
@@ -157,8 +162,18 @@ export function TaskList({
 								<button
 									aria-label="Delete task"
 									className="shrink-0 text-white/40 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={cycleLocked}
-									onClick={() => deleteTask.mutate({ id: task.id })}
+									disabled={cycleLocked || isPending}
+									onClick={() => {
+										void (async () => {
+											setIsPending(true);
+											try {
+												await taskRepo.delete({ id: task.id });
+												await onRefresh();
+											} finally {
+												setIsPending(false);
+											}
+										})();
+									}}
 									type="button"
 								>
 									✕
@@ -169,7 +184,6 @@ export function TaskList({
 				)}
 			</section>
 
-			{/* Completed tasks */}
 			{completedTasks.length > 0 && (
 				<section>
 					<h2 className="mb-2 font-semibold text-lg text-white/80">
@@ -179,15 +193,26 @@ export function TaskList({
 						{completedTasks.map((task) => (
 							<li
 								className="flex items-center gap-2 rounded-lg bg-white/5 px-4 py-3"
-								key={task.id}
+								key={String(task.id)}
 							>
 								<button
 									aria-label="Revert to active"
 									className="h-5 w-5 shrink-0 rounded border-2 border-green-400 bg-green-400/30 transition hover:border-white/40 hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={cycleLocked}
-									onClick={() =>
-										updateTask.mutate({ id: task.id, status: "active" })
-									}
+									disabled={cycleLocked || isPending}
+									onClick={() => {
+										void (async () => {
+											setIsPending(true);
+											try {
+												await taskRepo.update({
+													id: task.id,
+													status: "active",
+												});
+												await onRefresh();
+											} finally {
+												setIsPending(false);
+											}
+										})();
+									}}
 									type="button"
 								/>
 								<span className="flex-1 text-white/50 line-through">
@@ -196,8 +221,18 @@ export function TaskList({
 								<button
 									aria-label="Delete task"
 									className="shrink-0 text-white/40 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={cycleLocked}
-									onClick={() => deleteTask.mutate({ id: task.id })}
+									disabled={cycleLocked || isPending}
+									onClick={() => {
+										void (async () => {
+											setIsPending(true);
+											try {
+												await taskRepo.delete({ id: task.id });
+												await onRefresh();
+											} finally {
+												setIsPending(false);
+											}
+										})();
+									}}
 									type="button"
 								>
 									✕

@@ -1,5 +1,6 @@
 import { checkInRouter } from "~/server/api/routers/check-in";
 import { cycleRouter } from "~/server/api/routers/cycle";
+import { guestRouter } from "~/server/api/routers/guest";
 import { sessionRouter } from "~/server/api/routers/session";
 import { taskRouter } from "~/server/api/routers/task";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
 	session: sessionRouter,
 	cycle: cycleRouter,
 	checkIn: checkInRouter,
+	guest: guestRouter,
 });
 
 // export type definition of API
