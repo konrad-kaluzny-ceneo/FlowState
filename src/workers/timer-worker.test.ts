@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getTimerTickResult } from "./timer-worker-logic";
+import { getTimerTickResult } from "~/workers/timer-worker-logic";
 
 describe("timer worker logic", () => {
 	beforeEach(() => {

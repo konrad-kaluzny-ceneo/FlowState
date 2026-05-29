@@ -114,26 +114,38 @@ export const cycleRouter = createTRPCRouter({
 				throw new TRPCError({ code: "NOT_FOUND" });
 			}
 
-			if (cycle.state !== "RUNNING") {
-				throw new TRPCError({
-					code: "BAD_REQUEST",
-					message: "Cycle is not running",
-				});
-			}
-
 			const endedAt = new Date();
 
 			return ctx.db.$transaction(async (tx) => {
-				const updated = await tx.cycle.update({
-					where: { id: input.cycleId },
+				const { count } = await tx.cycle.updateMany({
+					where: {
+						id: input.cycleId,
+						userId: ctx.session.user.id,
+						state: "RUNNING",
+					},
 					data: { state: "COMPLETED", endedAt },
 				});
+
+				if (count === 0) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "Cycle is not running",
+					});
+				}
 
 				if (input.markTaskDone && cycle.taskId != null) {
 					await tx.task.update({
 						where: { id: cycle.taskId, userId: ctx.session.user.id },
 						data: { status: "completed" },
 					});
+				}
+
+				const updated = await tx.cycle.findFirst({
+					where: { id: input.cycleId },
+				});
+
+				if (!updated) {
+					throw new TRPCError({ code: "NOT_FOUND" });
 				}
 
 				return updated;
@@ -151,16 +163,30 @@ export const cycleRouter = createTRPCRouter({
 				throw new TRPCError({ code: "NOT_FOUND" });
 			}
 
-			if (cycle.state !== "RUNNING") {
+			const { count } = await ctx.db.cycle.updateMany({
+				where: {
+					id: input.cycleId,
+					userId: ctx.session.user.id,
+					state: "RUNNING",
+				},
+				data: { state: "INTERRUPTED", endedAt: new Date() },
+			});
+
+			if (count === 0) {
 				throw new TRPCError({
 					code: "BAD_REQUEST",
 					message: "Cycle is not running",
 				});
 			}
 
-			return ctx.db.cycle.update({
+			const updated = await ctx.db.cycle.findFirst({
 				where: { id: input.cycleId },
-				data: { state: "INTERRUPTED", endedAt: new Date() },
 			});
+
+			if (!updated) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			return updated;
 		}),
 });

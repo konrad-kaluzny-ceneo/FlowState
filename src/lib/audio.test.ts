@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createAudioManager } from "./audio";
+import { createAudioManager } from "~/lib/audio";
 
 describe("createAudioManager", () => {
 	beforeEach(() => {

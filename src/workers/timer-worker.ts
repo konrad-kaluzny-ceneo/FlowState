@@ -2,7 +2,7 @@ import {
 	getTimerTickResult,
 	type TimerWorkerInbound,
 	type TimerWorkerOutbound,
-} from "./timer-worker-logic";
+} from "~/workers/timer-worker-logic";
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 let activeEndTime: number | null = null;
@@ -38,7 +38,9 @@ function startTimer(endTime: number): void {
 	stopTimer();
 	activeEndTime = endTime;
 	tick();
-	intervalId = setInterval(tick, 1000);
+	if (activeEndTime === endTime) {
+		intervalId = setInterval(tick, 1000);
+	}
 }
 
 self.onmessage = (event: MessageEvent<TimerWorkerInbound>) => {

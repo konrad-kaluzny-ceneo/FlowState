@@ -100,7 +100,7 @@ vi.mock("~/trpc/react", () => ({
 
 vi.stubGlobal("Worker", FakeWorker);
 
-const { usePomodoroCycle } = await import("./use-pomodoro-cycle");
+const { usePomodoroCycle } = await import("~/hooks/use-pomodoro-cycle");
 
 function createWrapper() {
 	const queryClient = new QueryClient({

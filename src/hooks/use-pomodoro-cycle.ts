@@ -195,6 +195,8 @@ export function usePomodoroCycle() {
 			);
 			setFocusedTaskId(cycle.taskId);
 
+			void audioRef.current.preload(POMODORO_ALARM_URL).catch(() => {});
+
 			if (endTime <= Date.now()) {
 				setState("completed");
 				void audioRef.current.playAlarm();
@@ -279,8 +281,12 @@ export function usePomodoroCycle() {
 			}
 
 			try {
-				await audioRef.current.unlock();
-				await audioRef.current.preload(POMODORO_ALARM_URL);
+				try {
+					await audioRef.current.unlock();
+					await audioRef.current.preload(POMODORO_ALARM_URL);
+				} catch {
+					// Audio is best-effort; cycle start must not depend on it.
+				}
 
 				await getOrCreateSession.mutateAsync();
 

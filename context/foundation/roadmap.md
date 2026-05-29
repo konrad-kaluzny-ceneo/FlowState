@@ -118,7 +118,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - How is the cycle clock kept authoritative across background tabs and refreshes? Owner: implementer (downstream `/10x-plan`). Block: no — directional answer (server-recorded `cycle.startedAt` + client polls/derives) is sufficient at roadmap level.
 - **Risk:** This is the validation milestone; if the cycle isn't trustworthy, no later slice has value. The biggest concrete failure mode is the NFR timer-drift requirement — naive client-only `setInterval` cannot satisfy ≤2s drift on background tabs. Sequenced here so the timing pattern is forced into discussion in `/10x-plan` before any session/check-in/scoring work compounds on top of it.
-- **Status:** active
+- **Status:** active — implementation + impl review complete (2026-05-28); pending PR with `Fixes #7` on branch `features/first-pomodoro-cycle`
 
 ### S-02: Full session with breaks and explicit end
 

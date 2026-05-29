@@ -101,6 +101,29 @@ vi.mock("~/server/db/index", () => {
 						return Promise.resolve(cycle);
 					},
 				),
+				updateMany: vi.fn(
+					(args: {
+						where: {
+							id?: number;
+							userId?: string;
+							state?: string;
+						};
+						data: Partial<Pick<CycleRecord, "state" | "endedAt">>;
+					}) => {
+						const matching = cycles.filter((c) => {
+							if (args.where.id != null && c.id !== args.where.id) return false;
+							if (args.where.userId != null && c.userId !== args.where.userId)
+								return false;
+							if (args.where.state != null && c.state !== args.where.state)
+								return false;
+							return true;
+						});
+						for (const cycle of matching) {
+							Object.assign(cycle, args.data);
+						}
+						return Promise.resolve({ count: matching.length });
+					},
+				),
 			},
 			session: {
 				findFirst: vi.fn(

@@ -4,6 +4,7 @@ title: "First Pomodoro cycle on a selected task (north star)"
 status: impl_reviewed
 created: 2026-05-28
 updated: 2026-05-28
+status_note: impl reviewed; pending PR (Fixes #7)
 ---
 
 # first-pomodoro-cycle
