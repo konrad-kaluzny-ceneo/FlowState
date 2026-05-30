@@ -7,6 +7,7 @@ import type { DomainActiveCycle } from "~/lib/data-mode/types";
 import type { TimerWorkerInbound } from "~/workers/timer-worker-logic";
 
 const getOrCreateSession = vi.fn();
+const endSession = vi.fn();
 const createCycle = vi.fn();
 const completeCycle = vi.fn();
 const interruptCycle = vi.fn();
@@ -77,6 +78,7 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 		},
 		sessions: {
 			getOrCreateActive: getOrCreateSession,
+			end: endSession,
 		},
 		refreshGuest: vi.fn(),
 	}),
@@ -135,6 +137,7 @@ describe("usePomodoroCycle", () => {
 		vi.clearAllMocks();
 		getActiveCycle.mockImplementation(async () => activeCycleData);
 		getOrCreateSession.mockResolvedValue({ id: 1 });
+		endSession.mockResolvedValue({ id: 1, state: "ENDED_BY_USER" });
 		createCycle.mockImplementation(async () => ({
 			id: 42,
 			sessionId: 1,
@@ -544,5 +547,105 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.state).toBe("completed");
 		vi.useRealTimers();
 		vi.stubGlobal("Worker", FakeWorker);
+	});
+
+	it("endSession calls sessions.end and resets state", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		await act(async () => {
+			await result.current.start(60);
+		});
+
+		expect(result.current.hasActiveSession).toBe(true);
+		expect(result.current.state).toBe("running");
+
+		// Interrupt to get to idle state (endSession requires non-running or handles it)
+		await act(async () => {
+			await result.current.interrupt();
+		});
+
+		expect(result.current.state).toBe("idle");
+		expect(result.current.hasActiveSession).toBe(true);
+
+		await act(async () => {
+			await result.current.endSession();
+		});
+
+		expect(endSession).toHaveBeenCalled();
+		expect(result.current.state).toBe("idle");
+		expect(result.current.hasActiveSession).toBe(false);
+		expect(result.current.focusedTask).toBeNull();
+	});
+
+	it("endSession interrupts running cycle before ending session", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 50,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.endSession();
+		});
+
+		expect(interruptCycle).toHaveBeenCalledWith({ cycleId: 50 });
+		expect(endSession).toHaveBeenCalled();
+		expect(result.current.state).toBe("idle");
+		expect(result.current.hasActiveSession).toBe(false);
+	});
+
+	it("hasActiveSession is true after first cycle start, false after endSession", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		expect(result.current.hasActiveSession).toBe(false);
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		await act(async () => {
+			await result.current.start(60);
+		});
+
+		expect(result.current.hasActiveSession).toBe(true);
+
+		// Interrupt to get back to idle
+		await act(async () => {
+			await result.current.interrupt();
+		});
+
+		// Still has active session after interrupt
+		expect(result.current.hasActiveSession).toBe(true);
+
+		await act(async () => {
+			await result.current.endSession();
+		});
+
+		expect(result.current.hasActiveSession).toBe(false);
 	});
 });

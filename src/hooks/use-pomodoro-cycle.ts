@@ -67,6 +67,7 @@ export function usePomodoroCycle() {
 	const [_activeSessionId, setActiveSessionId] = useState<DomainTaskId | null>(
 		null,
 	);
+	const [hasActiveSession, setHasActiveSession] = useState(false);
 
 	const stateRef = useRef(state);
 	const endTimeRef = useRef<number | null>(null);
@@ -216,6 +217,7 @@ export function usePomodoroCycle() {
 			setActiveCycle(cycle);
 			setCycleKind(cycle.kind);
 			setActiveSessionId(cycle.sessionId);
+			setHasActiveSession(true);
 			setFocusedTask(
 				cycle.task != null
 					? { id: cycle.task.id, title: cycle.task.title }
@@ -325,6 +327,7 @@ export function usePomodoroCycle() {
 
 				const session = await sessions.getOrCreateActive();
 				setActiveSessionId(session.id);
+				setHasActiveSession(true);
 
 				const cycle = await cycles.create({
 					kind: "WORK",
@@ -476,6 +479,48 @@ export function usePomodoroCycle() {
 		],
 	);
 
+	const endSession = useCallback(async () => {
+		setError(null);
+
+		// If a cycle is running, interrupt it first
+		if (activeCycle != null && state === "running") {
+			stopWorker();
+			endTimeRef.current = null;
+			try {
+				await cycles.interrupt({ cycleId: activeCycle.id });
+			} catch {
+				// Best effort — continue ending session
+			}
+		}
+
+		try {
+			await sessions.end();
+		} catch {
+			setError("Could not end the session. Try again.");
+			return;
+		}
+
+		setState("idle");
+		setRemainingMs(0);
+		setActiveCycle(null);
+		setCycleKind(null);
+		setFocusedTaskId(null);
+		setFocusedTask(null);
+		setHasActiveSession(false);
+		setCompletedWorkCycles(0);
+		setActiveSessionId(null);
+
+		await Promise.all([invalidateServerCycle(), utils.task.list.invalidate()]);
+	}, [
+		activeCycle,
+		state,
+		cycles,
+		sessions,
+		stopWorker,
+		invalidateServerCycle,
+		utils.task.list,
+	]);
+
 	const clearError = useCallback(() => {
 		setError(null);
 	}, []);
@@ -487,12 +532,14 @@ export function usePomodoroCycle() {
 		focusedTaskId,
 		activeCycle,
 		cycleKind,
+		hasActiveSession,
 		error,
 		selectTask,
 		clearTask,
 		start,
 		interrupt,
 		confirmComplete,
+		endSession,
 		clearError,
 	};
 }

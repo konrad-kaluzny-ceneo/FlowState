@@ -80,6 +80,18 @@ function PomodoroDashboardBody({
 				onConfirm={pomodoro.confirmComplete}
 				state={pomodoro.state}
 			/>
+
+			{pomodoro.hasActiveSession && (
+				<button
+					className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white/60 transition hover:border-red-400/40 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"
+					data-testid="end-session-btn"
+					disabled={pomodoro.state === "running"}
+					onClick={() => void pomodoro.endSession()}
+					type="button"
+				>
+					End session
+				</button>
+			)}
 		</div>
 	);
 }
