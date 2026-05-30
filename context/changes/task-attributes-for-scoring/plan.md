@@ -293,14 +293,14 @@ None significant. The badges are pure render logic on data already fetched. No a
 
 #### Automated
 
-- [x] 4.1 Type checking passes: `pnpm typecheck`
-- [x] 4.2 Linting passes: `pnpm check`
-- [x] 4.3 Existing tests pass: `pnpm test`
+- [x] 4.1 Type checking passes: `pnpm typecheck` — 147a3e8
+- [x] 4.2 Linting passes: `pnpm check` — 147a3e8
+- [x] 4.3 Existing tests pass: `pnpm test` — 147a3e8
 
 #### Manual
 
-- [x] 4.4 Edit mode shows current work type and weight pre-selected
-- [x] 4.5 Changing attributes and saving persists new values
-- [x] 4.6 Badges update immediately after save
-- [x] 4.7 Escape cancels without saving attribute changes
-- [x] 4.8 Edit mode works in both authenticated and guest modes
+- [x] 4.4 Edit mode shows current work type and weight pre-selected — 147a3e8
+- [x] 4.5 Changing attributes and saving persists new values — 147a3e8
+- [x] 4.6 Badges update immediately after save — 147a3e8
+- [x] 4.7 Escape cancels without saving attribute changes — 147a3e8
+- [x] 4.8 Edit mode works in both authenticated and guest modes — 147a3e8
