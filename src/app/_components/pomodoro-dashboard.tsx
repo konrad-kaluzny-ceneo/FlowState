@@ -28,7 +28,9 @@ function PomodoroDashboardBody({
 		pomodoro.focusedTaskId != null && activeTaskIds.has(pomodoro.focusedTaskId);
 
 	const showTimer =
-		pomodoro.focusedTask != null || pomodoro.state === "running";
+		pomodoro.focusedTask != null ||
+		pomodoro.state === "running" ||
+		pomodoro.state === "completed";
 
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8">
@@ -51,6 +53,7 @@ function PomodoroDashboardBody({
 
 			{showTimer && (
 				<TimerPanel
+					cycleKind={pomodoro.cycleKind}
 					focusedTask={pomodoro.focusedTask}
 					isStarting={false}
 					onInterrupt={pomodoro.interrupt}
@@ -72,6 +75,7 @@ function PomodoroDashboardBody({
 
 			<CycleCompleteOverlay
 				canMarkTaskDone={canMarkTaskDone}
+				cycleKind={pomodoro.cycleKind}
 				focusedTask={pomodoro.focusedTask}
 				onConfirm={pomodoro.confirmComplete}
 				state={pomodoro.state}

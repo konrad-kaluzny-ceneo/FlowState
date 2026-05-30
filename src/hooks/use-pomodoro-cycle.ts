@@ -11,7 +11,11 @@ import type {
 	DomainTaskId,
 	FocusedTask,
 } from "~/lib/data-mode/types";
-import { setLastDuration } from "~/lib/duration-storage";
+import {
+	getLongBreakDuration,
+	getShortBreakDuration,
+	setLastDuration,
+} from "~/lib/duration-storage";
 import { api } from "~/trpc/react";
 import type {
 	TimerWorkerInbound,
@@ -23,6 +27,8 @@ export const POMODORO_ALARM_URL = "/sounds/pomodoro-complete.mp3";
 export type { FocusedTask };
 
 export type PomodoroCycleState = "idle" | "running" | "completed";
+
+export type CycleKind = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 
 let activeCycleRecoveryFetched = false;
 
@@ -56,6 +62,11 @@ export function usePomodoroCycle() {
 		null,
 	);
 	const [error, setError] = useState<string | null>(null);
+	const [cycleKind, setCycleKind] = useState<CycleKind | null>(null);
+	const [completedWorkCycles, setCompletedWorkCycles] = useState(0);
+	const [_activeSessionId, setActiveSessionId] = useState<DomainTaskId | null>(
+		null,
+	);
 
 	const stateRef = useRef(state);
 	const endTimeRef = useRef<number | null>(null);
@@ -203,6 +214,8 @@ export function usePomodoroCycle() {
 			const endTime =
 				cycle.startedAt.getTime() + cycle.configuredDurationSec * 1000;
 			setActiveCycle(cycle);
+			setCycleKind(cycle.kind);
+			setActiveSessionId(cycle.sessionId);
 			setFocusedTask(
 				cycle.task != null
 					? { id: cycle.task.id, title: cycle.task.title }
@@ -310,7 +323,8 @@ export function usePomodoroCycle() {
 					// Audio is best-effort; cycle start must not depend on it.
 				}
 
-				await sessions.getOrCreateActive();
+				const session = await sessions.getOrCreateActive();
+				setActiveSessionId(session.id);
 
 				const cycle = await cycles.create({
 					kind: "WORK",
@@ -325,6 +339,7 @@ export function usePomodoroCycle() {
 					...cycle,
 					task: focusedTask,
 				});
+				setCycleKind("WORK");
 				setState("running");
 				startWorker(endTime);
 				setLastDuration(durationSec);
@@ -362,6 +377,7 @@ export function usePomodoroCycle() {
 			setState("idle");
 			setRemainingMs(0);
 			setActiveCycle(null);
+			setCycleKind(null);
 
 			await invalidateServerCycle();
 		} catch {
@@ -376,6 +392,8 @@ export function usePomodoroCycle() {
 			}
 
 			setError(null);
+
+			const currentKind = activeCycle.kind;
 
 			try {
 				await retryOnce(() =>
@@ -393,18 +411,69 @@ export function usePomodoroCycle() {
 
 			stopWorker();
 			endTimeRef.current = null;
-			setState("idle");
-			setRemainingMs(0);
-			setActiveCycle(null);
-			setFocusedTaskId(null);
-			setFocusedTask(null);
 
-			await Promise.all([
-				invalidateServerCycle(),
-				utils.task.list.invalidate(),
-			]);
+			if (currentKind === "WORK") {
+				// Work cycle completed — auto-start a break
+				const newCount = completedWorkCycles + 1;
+				setCompletedWorkCycles(newCount);
+
+				const breakKind: CycleKind =
+					newCount % 4 === 0 ? "LONG_BREAK" : "SHORT_BREAK";
+				const breakDuration =
+					breakKind === "LONG_BREAK"
+						? getLongBreakDuration()
+						: getShortBreakDuration();
+
+				try {
+					const breakCycle = await cycles.create({
+						kind: breakKind,
+						configuredDurationSec: breakDuration,
+					});
+
+					const endTime =
+						breakCycle.startedAt.getTime() +
+						breakCycle.configuredDurationSec * 1000;
+
+					setActiveCycle({ ...breakCycle, task: null });
+					setCycleKind(breakKind);
+					setState("running");
+					startWorker(endTime);
+
+					await invalidateServerCycle();
+				} catch {
+					// Break could not start — acceptable degradation
+					setError("Break could not start. Your work cycle was saved.");
+					setState("idle");
+					setRemainingMs(0);
+					setActiveCycle(null);
+					setCycleKind(null);
+					setFocusedTaskId(null);
+					setFocusedTask(null);
+				}
+			} else {
+				// Break cycle completed — return to idle
+				setState("idle");
+				setRemainingMs(0);
+				setActiveCycle(null);
+				setCycleKind(null);
+				setFocusedTaskId(null);
+				setFocusedTask(null);
+
+				await Promise.all([
+					invalidateServerCycle(),
+					utils.task.list.invalidate(),
+				]);
+			}
 		},
-		[activeCycle, cycles, invalidateServerCycle, stopWorker, utils.task.list],
+		[
+			activeCycle,
+			cycles,
+			completedWorkCycles,
+			invalidateServerCycle,
+			stopWorker,
+			startWorker,
+			utils.task.list,
+		],
 	);
 
 	const clearError = useCallback(() => {
@@ -417,6 +486,7 @@ export function usePomodoroCycle() {
 		focusedTask,
 		focusedTaskId,
 		activeCycle,
+		cycleKind,
 		error,
 		selectTask,
 		clearTask,

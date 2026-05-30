@@ -1,6 +1,7 @@
 "use client";
 
 import type {
+	CycleKind,
 	FocusedTask,
 	PomodoroCycleState,
 } from "~/hooks/use-pomodoro-cycle";
@@ -11,6 +12,7 @@ type CycleCompleteOverlayProps = {
 	canMarkTaskDone: boolean;
 	onConfirm: (markTaskDone: boolean) => Promise<void>;
 	isConfirming?: boolean;
+	cycleKind?: CycleKind | null;
 };
 
 export function CycleCompleteOverlay({
@@ -19,9 +21,42 @@ export function CycleCompleteOverlay({
 	canMarkTaskDone,
 	onConfirm,
 	isConfirming = false,
+	cycleKind = null,
 }: CycleCompleteOverlayProps) {
 	if (state !== "completed") {
 		return null;
+	}
+
+	const isBreak = cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
+
+	if (isBreak) {
+		return (
+			<div
+				className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+				data-testid="cycle-complete-overlay"
+			>
+				<div className="w-full max-w-md rounded-xl border border-teal-400/30 bg-[#1a2e2e] p-8 text-center shadow-xl">
+					<h2 className="font-bold text-2xl text-teal-100">
+						Break&apos;s over!
+					</h2>
+					<p className="mt-2 text-teal-200/70">
+						{cycleKind === "LONG_BREAK" ? "Long break" : "Short break"} complete
+						— ready for the next cycle.
+					</p>
+					<div className="mt-8">
+						<button
+							className="w-full rounded-lg bg-teal-600 py-3 font-semibold text-white transition hover:bg-teal-500 disabled:opacity-50"
+							data-testid="break-continue-btn"
+							disabled={isConfirming}
+							onClick={() => void onConfirm(false)}
+							type="button"
+						>
+							Continue
+						</button>
+					</div>
+				</div>
+			</div>
+		);
 	}
 
 	return (

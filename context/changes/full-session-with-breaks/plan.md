@@ -380,36 +380,36 @@ No schema migration required — all needed enums and fields already exist from 
 
 #### Automated
 
-- [x] 2.1 Unit tests for break duration storage functions (defaults, clamping, invalid input)
-- [x] 2.2 `pnpm typecheck` passes
-- [x] 2.3 `pnpm check` passes
-- [x] 2.4 `pnpm test` passes
+- [x] 2.1 Unit tests for break duration storage functions (defaults, clamping, invalid input) — 45bb6f3
+- [x] 2.2 `pnpm typecheck` passes — 45bb6f3
+- [x] 2.3 `pnpm check` passes — 45bb6f3
+- [x] 2.4 `pnpm test` passes — 45bb6f3
 
 #### Manual
 
-- [x] 2.5 Break duration controls visible in timer panel when idle with focused task
-- [x] 2.6 Values persist across page refresh
-- [x] 2.7 Values clamped to 1–30 min range
+- [x] 2.5 Break duration controls visible in timer panel when idle with focused task — 45bb6f3
+- [x] 2.6 Values persist across page refresh — 45bb6f3
+- [x] 2.7 Values clamped to 1–30 min range — 45bb6f3
 
 ### Phase 3: Client — break transition state machine
 
 #### Automated
 
-- [ ] 3.1 Unit test: work cycle complete → break auto-starts with correct kind and duration
-- [ ] 3.2 Unit test: after 4th work cycle, break kind is LONG_BREAK
-- [ ] 3.3 Unit test: break complete → returns to idle
-- [ ] 3.4 Unit test: break creation failure after work complete → error message + idle reset
-- [ ] 3.5 `pnpm typecheck` passes
-- [ ] 3.6 `pnpm check` passes
-- [ ] 3.7 `pnpm test` passes
+- [x] 3.1 Unit test: work cycle complete → break auto-starts with correct kind and duration
+- [x] 3.2 Unit test: after 4th work cycle, break kind is LONG_BREAK
+- [x] 3.3 Unit test: break complete → returns to idle
+- [x] 3.4 Unit test: break creation failure after work complete → error message + idle reset
+- [x] 3.5 `pnpm typecheck` passes
+- [x] 3.6 `pnpm check` passes
+- [x] 3.7 `pnpm test` passes
 
 #### Manual
 
-- [ ] 3.8 Work cycle complete → break timer starts automatically
-- [ ] 3.9 Break timer shows calming color and correct label
-- [ ] 3.10 After 4 work cycles, long break triggers
-- [ ] 3.11 Break end → audio + overlay → confirm → idle
-- [ ] 3.12 Refresh during break → timer recovers
+- [x] 3.8 Work cycle complete → break timer starts automatically
+- [x] 3.9 Break timer shows calming color and correct label
+- [x] 3.10 After 4 work cycles, long break triggers
+- [x] 3.11 Break end → audio + overlay → confirm → idle
+- [x] 3.12 Refresh during break → timer recovers
 
 ### Phase 4: Session end UI and timeout handling
 

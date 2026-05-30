@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import type {
+	CycleKind,
 	FocusedTask,
 	PomodoroCycleState,
 } from "~/hooks/use-pomodoro-cycle";
@@ -40,6 +41,7 @@ type TimerPanelProps = {
 	onStart: (durationSec: number) => Promise<void>;
 	onInterrupt: () => Promise<void>;
 	isStarting?: boolean;
+	cycleKind?: CycleKind | null;
 };
 
 export function TimerPanel({
@@ -49,6 +51,7 @@ export function TimerPanel({
 	onStart,
 	onInterrupt,
 	isStarting = false,
+	cycleKind = null,
 }: TimerPanelProps) {
 	const [selectedSec, setSelectedSec] = useState(
 		() => initialDurationState().selectedSec,
@@ -64,7 +67,7 @@ export function TimerPanel({
 	);
 	const [showBreakSettings, setShowBreakSettings] = useState(false);
 
-	if (focusedTask == null && state !== "running") {
+	if (focusedTask == null && state !== "running" && state !== "completed") {
 		return null;
 	}
 
@@ -73,17 +76,31 @@ export function TimerPanel({
 	}
 
 	if (state === "running") {
+		const isBreak = cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
+		const breakLabel =
+			cycleKind === "LONG_BREAK" ? "Long Break" : "Short Break";
+
 		return (
 			<section
-				className="w-full max-w-lg rounded-xl border border-white/20 bg-white/10 p-6 text-center"
+				className={`w-full max-w-lg rounded-xl border p-6 text-center ${
+					isBreak
+						? "border-teal-400/30 bg-teal-900/20"
+						: "border-white/20 bg-white/10"
+				}`}
 				data-testid="timer-panel-running"
 			>
-				<p className="text-sm text-white/60">Focusing on</p>
-				<p className="mt-1 font-medium text-lg text-white">
-					{focusedTask?.title ?? "Task"}
+				<p className="text-sm text-white/60">
+					{isBreak ? breakLabel : "Focusing on"}
 				</p>
+				{!isBreak && (
+					<p className="mt-1 font-medium text-lg text-white">
+						{focusedTask?.title ?? "Task"}
+					</p>
+				)}
 				<p
-					className="mt-4 font-bold font-mono text-6xl tabular-nums tracking-tight"
+					className={`mt-4 font-bold font-mono text-6xl tabular-nums tracking-tight ${
+						isBreak ? "text-teal-200" : ""
+					}`}
 					data-testid="timer-countdown"
 				>
 					{formatRemainingMs(remainingMs)}
@@ -93,7 +110,7 @@ export function TimerPanel({
 					onClick={() => void onInterrupt()}
 					type="button"
 				>
-					Interrupt
+					{isBreak ? "End break early" : "Interrupt"}
 				</button>
 			</section>
 		);
