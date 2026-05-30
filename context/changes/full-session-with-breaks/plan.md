@@ -364,12 +364,12 @@ No schema migration required — all needed enums and fields already exist from 
 
 #### Automated
 
-- [ ] 1.1 `pnpm typecheck` passes with new SessionRepository.end() method
-- [ ] 1.2 `pnpm check` (Biome) passes
-- [ ] 1.3 Unit tests for session.end mutation (happy path + NOT_FOUND)
-- [ ] 1.4 Unit tests for lastActivityAt update on cycle create/complete/interrupt
-- [ ] 1.5 Unit test for inactivity timeout in findOrCreateActiveSession
-- [ ] 1.6 Existing cycle and session tests pass: `pnpm test`
+- [x] 1.1 `pnpm typecheck` passes with new SessionRepository.end() method
+- [x] 1.2 `pnpm check` (Biome) passes
+- [x] 1.3 Unit tests for session.end mutation (happy path + NOT_FOUND)
+- [x] 1.4 Unit tests for lastActivityAt update on cycle create/complete/interrupt
+- [x] 1.5 Unit test for inactivity timeout in findOrCreateActiveSession
+- [x] 1.6 Existing cycle and session tests pass: `pnpm test`
 
 #### Manual
 

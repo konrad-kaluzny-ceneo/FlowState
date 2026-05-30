@@ -35,4 +35,29 @@ export const sessionRouter = createTRPCRouter({
 	getOrCreateActive: protectedProcedure.mutation(async ({ ctx }) => {
 		return findOrCreateActiveSession(ctx.db, ctx.session.user.id);
 	}),
+
+	end: protectedProcedure.mutation(async ({ ctx }) => {
+		const active = await ctx.db.session.findFirst({
+			where: {
+				userId: ctx.session.user.id,
+				state: "ACTIVE",
+				archivedAt: null,
+			},
+		});
+
+		if (!active) {
+			throw new TRPCError({
+				code: "NOT_FOUND",
+				message: "No active session to end",
+			});
+		}
+
+		return ctx.db.session.update({
+			where: { id: active.id },
+			data: {
+				state: "ENDED_BY_USER",
+				endedAt: new Date(),
+			},
+		});
+	}),
 });

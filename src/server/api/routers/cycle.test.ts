@@ -30,6 +30,7 @@ let sessions: Array<{
 	userId: string;
 	state: string;
 	archivedAt: null;
+	lastActivityAt: Date;
 }>;
 let nextCycleId = 1;
 let nextSessionId = 1;
@@ -157,10 +158,22 @@ vi.mock("~/server/db/index", () => {
 						userId: args.data.userId,
 						state: "ACTIVE",
 						archivedAt: null as null,
+						lastActivityAt: new Date(),
 					};
 					sessions.push(session);
 					return Promise.resolve(session);
 				}),
+				update: vi.fn(
+					(args: {
+						where: { id: number };
+						data: { lastActivityAt: Date };
+					}) => {
+						const session = sessions.find((s) => s.id === args.where.id);
+						if (!session) throw new Error("session not found");
+						Object.assign(session, args.data);
+						return Promise.resolve(session);
+					},
+				),
 			},
 			task: {
 				findFirst: vi.fn(
@@ -251,6 +264,15 @@ describe("cycle router lifecycle", () => {
 	});
 
 	it("complete transitions cycle to COMPLETED", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+			},
+		];
 		cycles = [
 			{
 				id: 1,
@@ -271,6 +293,15 @@ describe("cycle router lifecycle", () => {
 	});
 
 	it("complete with markTaskDone updates task status", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+			},
+		];
 		tasks = [{ id: 5, title: "Done task", status: "active", userId: USER_ID }];
 		cycles = [
 			{
@@ -291,6 +322,15 @@ describe("cycle router lifecycle", () => {
 	});
 
 	it("interrupt sets INTERRUPTED state", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+			},
+		];
 		cycles = [
 			{
 				id: 1,
@@ -351,6 +391,15 @@ describe("cycle router lifecycle", () => {
 	});
 
 	it("integration: complete without markTaskDone leaves task active", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+			},
+		];
 		tasks = [
 			{ id: 8, title: "Keep active", status: "active", userId: USER_ID },
 		];
@@ -394,7 +443,15 @@ describe("cycle router lifecycle", () => {
 	});
 
 	it("integration: create → getActive → complete → getActive null", async () => {
-		sessions = [{ id: 1, userId: USER_ID, state: "ACTIVE", archivedAt: null }];
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+			},
+		];
 		tasks = [{ id: 2, title: "Task", status: "active", userId: USER_ID }];
 
 		const c = caller();
@@ -415,7 +472,15 @@ describe("cycle router lifecycle", () => {
 	});
 
 	it("create throws CONFLICT when user already has RUNNING cycle", async () => {
-		sessions = [{ id: 1, userId: USER_ID, state: "ACTIVE", archivedAt: null }];
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+			},
+		];
 		cycles = [
 			{
 				id: 1,
@@ -451,5 +516,94 @@ describe("cycle router lifecycle", () => {
 		expect(created.sessionId).toBe(1);
 		expect(sessions).toHaveLength(1);
 		expect(sessions[0]?.userId).toBe(USER_ID);
+	});
+
+	describe("lastActivityAt updates", () => {
+		it("create updates session lastActivityAt", async () => {
+			const oldDate = new Date("2026-01-01T00:00:00Z");
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: oldDate,
+				},
+			];
+
+			await caller().create({
+				sessionId: 1,
+				kind: "WORK",
+				configuredDurationSec: 1500,
+			});
+
+			expect(sessions[0]?.lastActivityAt.getTime()).toBeGreaterThan(
+				oldDate.getTime(),
+			);
+		});
+
+		it("complete updates session lastActivityAt", async () => {
+			const oldDate = new Date("2026-01-01T00:00:00Z");
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: oldDate,
+				},
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			await caller().complete({ cycleId: 1 });
+
+			expect(sessions[0]?.lastActivityAt.getTime()).toBeGreaterThan(
+				oldDate.getTime(),
+			);
+		});
+
+		it("interrupt updates session lastActivityAt", async () => {
+			const oldDate = new Date("2026-01-01T00:00:00Z");
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: oldDate,
+				},
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			await caller().interrupt({ cycleId: 1 });
+
+			expect(sessions[0]?.lastActivityAt.getTime()).toBeGreaterThan(
+				oldDate.getTime(),
+			);
+		});
 	});
 });

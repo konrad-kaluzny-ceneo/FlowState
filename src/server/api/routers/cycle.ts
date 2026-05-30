@@ -77,7 +77,7 @@ export const cycleRouter = createTRPCRouter({
 			}
 
 			try {
-				return await ctx.db.cycle.create({
+				const cycle = await ctx.db.cycle.create({
 					data: {
 						sessionId,
 						userId: ctx.session.user.id,
@@ -86,6 +86,13 @@ export const cycleRouter = createTRPCRouter({
 						taskId: input.taskId ?? null,
 					},
 				});
+
+				await ctx.db.session.update({
+					where: { id: sessionId },
+					data: { lastActivityAt: new Date() },
+				});
+
+				return cycle;
 			} catch (error) {
 				if (
 					error instanceof Error &&
@@ -140,6 +147,11 @@ export const cycleRouter = createTRPCRouter({
 					});
 				}
 
+				await tx.session.update({
+					where: { id: cycle.sessionId },
+					data: { lastActivityAt: new Date() },
+				});
+
 				const updated = await tx.cycle.findFirst({
 					where: { id: input.cycleId },
 				});
@@ -178,6 +190,11 @@ export const cycleRouter = createTRPCRouter({
 					message: "Cycle is not running",
 				});
 			}
+
+			await ctx.db.session.update({
+				where: { id: cycle.sessionId },
+				data: { lastActivityAt: new Date() },
+			});
 
 			const updated = await ctx.db.cycle.findFirst({
 				where: { id: input.cycleId },

@@ -49,6 +49,7 @@ type TrpcClient = {
 	};
 	session: {
 		getOrCreateActive: { mutate: () => Promise<DomainSession> };
+		end: { mutate: () => Promise<DomainSession> };
 	};
 };
 
@@ -92,5 +93,6 @@ export function createServerSessionRepository(
 ): SessionRepository {
 	return {
 		getOrCreateActive: () => client.session.getOrCreateActive.mutate(),
+		end: () => client.session.end.mutate(),
 	};
 }

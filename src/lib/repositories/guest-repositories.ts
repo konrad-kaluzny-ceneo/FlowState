@@ -178,6 +178,39 @@ export function createGuestSessionRepository(): SessionRepository {
 				interruptionCount: session.interruptionCount,
 			};
 		},
+
+		async end() {
+			const snapshot = loadSnapshot();
+			const active = snapshot.sessions.find((s) => s.state === "ACTIVE");
+
+			if (active == null) {
+				throw new Error("No active session to end");
+			}
+
+			const now = new Date();
+			const { error } = mutateSnapshot((current) => ({
+				...current,
+				sessions: current.sessions.map((s) =>
+					s.id === active.id
+						? { ...s, state: "ENDED_BY_USER" as const, endedAt: now }
+						: s,
+				),
+			}));
+
+			if (error != null) {
+				throw new Error(error);
+			}
+
+			return {
+				id: active.id,
+				userId: GUEST_USER_ID,
+				state: "ENDED_BY_USER" as const,
+				startedAt: active.startedAt,
+				endedAt: now,
+				lastActivityAt: active.lastActivityAt,
+				interruptionCount: active.interruptionCount,
+			};
+		},
 	};
 }
 
