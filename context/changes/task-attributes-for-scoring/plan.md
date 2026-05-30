@@ -256,23 +256,23 @@ None significant. The badges are pure render logic on data already fetched. No a
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `pnpm typecheck`
-- [x] 1.2 Linting passes: `pnpm check`
-- [x] 1.3 Existing tests pass: `pnpm test`
+- [x] 1.1 Type checking passes: `pnpm typecheck` — 82aec77
+- [x] 1.2 Linting passes: `pnpm check` — 82aec77
+- [x] 1.3 Existing tests pass: `pnpm test` — 82aec77
 
 ### Phase 2: Task Attribute Display (Badges)
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `pnpm typecheck`
-- [ ] 2.2 Linting passes: `pnpm check`
-- [ ] 2.3 Existing tests pass: `pnpm test`
+- [x] 2.1 Type checking passes: `pnpm typecheck`
+- [x] 2.2 Linting passes: `pnpm check`
+- [x] 2.3 Existing tests pass: `pnpm test`
 
 #### Manual
 
-- [ ] 2.4 Active tasks display colored work type pill and weight badge
-- [ ] 2.5 Completed tasks display dimmed badges
-- [ ] 2.6 Badges don't overflow on max-w-lg container
+- [x] 2.4 Active tasks display colored work type pill and weight badge
+- [x] 2.5 Completed tasks display dimmed badges
+- [x] 2.6 Badges don't overflow on max-w-lg container
 
 ### Phase 3: Create Form with Expandable Details
 

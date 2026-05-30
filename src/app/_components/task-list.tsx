@@ -5,6 +5,78 @@ import { useState } from "react";
 import { useRepositories } from "~/lib/data-mode/data-mode-context";
 import type { DomainTask, DomainTaskId } from "~/lib/data-mode/types";
 
+const TASK_DEFAULTS = { workType: "ADMIN" as const, weight: 2 } as const;
+
+const WORK_TYPE_CONFIG = {
+	DEEP_WORK: { label: "Deep", bg: "bg-blue-500/20", text: "text-blue-300" },
+	ADMIN: { label: "Admin", bg: "bg-amber-500/20", text: "text-amber-300" },
+	REACTIVE: { label: "Reactive", bg: "bg-rose-500/20", text: "text-rose-300" },
+} as const;
+
+function TaskBadges({
+	workType,
+	weight,
+	dimmed = false,
+}: {
+	workType: "DEEP_WORK" | "ADMIN" | "REACTIVE";
+	weight: number;
+	dimmed?: boolean;
+}) {
+	const config = WORK_TYPE_CONFIG[workType];
+	return (
+		<span
+			className={`flex shrink-0 items-center gap-1 ${dimmed ? "opacity-50" : ""}`}
+		>
+			<span
+				className={`rounded-full px-2 py-0.5 font-medium text-xs ${config.bg} ${config.text}`}
+			>
+				{config.label}
+			</span>
+			<span className="rounded-full bg-white/10 px-2 py-0.5 font-medium text-white/70 text-xs">
+				W{weight}
+			</span>
+		</span>
+	);
+}
+
+type SegmentedControlProps<T extends string | number> = {
+	options: { value: T; label: string }[];
+	value: T;
+	onChange: (value: T) => void;
+	colorMap?: Record<string, string>;
+};
+
+function SegmentedControl<T extends string | number>({
+	options,
+	value,
+	onChange,
+	colorMap,
+}: SegmentedControlProps<T>) {
+	return (
+		<div className="flex gap-1">
+			{options.map((opt) => {
+				const isActive = opt.value === value;
+				const activeColor =
+					colorMap?.[String(opt.value)] ?? "bg-purple-600 text-white";
+				return (
+					<button
+						className={`rounded-md px-2 py-1 font-medium text-xs transition ${
+							isActive
+								? activeColor
+								: "bg-white/10 text-white/60 hover:bg-white/20"
+						}`}
+						key={String(opt.value)}
+						onClick={() => onChange(opt.value)}
+						type="button"
+					>
+						{opt.label}
+					</button>
+				);
+			})}
+		</div>
+	);
+}
+
 type TaskListProps = {
 	tasks: DomainTask[];
 	onRefresh: () => Promise<void>;
@@ -147,6 +219,10 @@ export function TaskList({
 										{task.title}
 									</button>
 								)}
+								<TaskBadges
+									weight={task.weight ?? TASK_DEFAULTS.weight}
+									workType={task.workType ?? TASK_DEFAULTS.workType}
+								/>
 								<button
 									className={`shrink-0 rounded-lg px-2 py-1 font-medium text-xs transition ${
 										focusedTaskId === task.id
@@ -218,6 +294,11 @@ export function TaskList({
 								<span className="flex-1 text-white/50 line-through">
 									{task.title}
 								</span>
+								<TaskBadges
+									dimmed
+									weight={task.weight ?? TASK_DEFAULTS.weight}
+									workType={task.workType ?? TASK_DEFAULTS.workType}
+								/>
 								<button
 									aria-label="Delete task"
 									className="shrink-0 text-white/40 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
