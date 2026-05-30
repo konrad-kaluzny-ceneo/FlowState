@@ -364,32 +364,32 @@ No schema migration required — all needed enums and fields already exist from 
 
 #### Automated
 
-- [x] 1.1 `pnpm typecheck` passes with new SessionRepository.end() method
-- [x] 1.2 `pnpm check` (Biome) passes
-- [x] 1.3 Unit tests for session.end mutation (happy path + NOT_FOUND)
-- [x] 1.4 Unit tests for lastActivityAt update on cycle create/complete/interrupt
-- [x] 1.5 Unit test for inactivity timeout in findOrCreateActiveSession
-- [x] 1.6 Existing cycle and session tests pass: `pnpm test`
+- [x] 1.1 `pnpm typecheck` passes with new SessionRepository.end() method — 08013bc
+- [x] 1.2 `pnpm check` (Biome) passes — 08013bc
+- [x] 1.3 Unit tests for session.end mutation (happy path + NOT_FOUND) — 08013bc
+- [x] 1.4 Unit tests for lastActivityAt update on cycle create/complete/interrupt — 08013bc
+- [x] 1.5 Unit test for inactivity timeout in findOrCreateActiveSession — 08013bc
+- [x] 1.6 Existing cycle and session tests pass: `pnpm test` — 08013bc
 
 #### Manual
 
-- [ ] 1.7 Verify session.end via tRPC caller integration test
-- [ ] 1.8 Verify inactivity timeout creates new session (integration test with mocked time)
+- [x] 1.7 Verify session.end via tRPC caller integration test — 08013bc
+- [x] 1.8 Verify inactivity timeout creates new session (integration test with mocked time) — 08013bc
 
 ### Phase 2: Break duration configuration
 
 #### Automated
 
-- [ ] 2.1 Unit tests for break duration storage functions (defaults, clamping, invalid input)
-- [ ] 2.2 `pnpm typecheck` passes
-- [ ] 2.3 `pnpm check` passes
-- [ ] 2.4 `pnpm test` passes
+- [x] 2.1 Unit tests for break duration storage functions (defaults, clamping, invalid input)
+- [x] 2.2 `pnpm typecheck` passes
+- [x] 2.3 `pnpm check` passes
+- [x] 2.4 `pnpm test` passes
 
 #### Manual
 
-- [ ] 2.5 Break duration controls visible in timer panel when idle with focused task
-- [ ] 2.6 Values persist across page refresh
-- [ ] 2.7 Values clamped to 1–30 min range
+- [x] 2.5 Break duration controls visible in timer panel when idle with focused task
+- [x] 2.6 Values persist across page refresh
+- [x] 2.7 Values clamped to 1–30 min range
 
 ### Phase 3: Client — break transition state machine
 
