@@ -95,6 +95,11 @@ export function TaskList({
 	const { tasks: taskRepo } = useRepositories();
 
 	const [newTitle, setNewTitle] = useState("");
+	const [showDetails, setShowDetails] = useState(false);
+	const [newWorkType, setNewWorkType] = useState<
+		"DEEP_WORK" | "ADMIN" | "REACTIVE"
+	>("ADMIN");
+	const [newWeight, setNewWeight] = useState<1 | 2 | 3>(2);
 	const [editingId, setEditingId] = useState<DomainTaskId | null>(null);
 	const [editTitle, setEditTitle] = useState("");
 	const [isPending, setIsPending] = useState(false);
@@ -127,7 +132,7 @@ export function TaskList({
 	return (
 		<div className="w-full max-w-lg space-y-6" data-testid="task-list">
 			<form
-				className="flex gap-2"
+				className="space-y-2"
 				onSubmit={(e) => {
 					e.preventDefault();
 					if (!newTitle.trim()) {
@@ -137,29 +142,78 @@ export function TaskList({
 					void (async () => {
 						setIsPending(true);
 						try {
-							await taskRepo.create({ title: newTitle.trim() });
+							await taskRepo.create({
+								title: newTitle.trim(),
+								workType: newWorkType,
+								weight: newWeight,
+							});
 							await onRefresh();
 							setNewTitle("");
+							setShowDetails(false);
+							setNewWorkType("ADMIN");
+							setNewWeight(2);
 						} finally {
 							setIsPending(false);
 						}
 					})();
 				}}
 			>
-				<input
-					className="flex-1 rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none"
-					onChange={(e) => setNewTitle(e.target.value)}
-					placeholder="Add a new task..."
-					type="text"
-					value={newTitle}
-				/>
+				<div className="flex gap-2">
+					<input
+						className="flex-1 rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none"
+						onChange={(e) => setNewTitle(e.target.value)}
+						placeholder="Add a new task..."
+						type="text"
+						value={newTitle}
+					/>
+					<button
+						className="rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
+						disabled={isPending || !newTitle.trim()}
+						type="submit"
+					>
+						{isPending ? "Adding..." : "Add"}
+					</button>
+				</div>
 				<button
-					className="rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
-					disabled={isPending || !newTitle.trim()}
-					type="submit"
+					className="text-white/50 text-xs transition hover:text-white/80"
+					onClick={() => setShowDetails(!showDetails)}
+					type="button"
 				>
-					{isPending ? "Adding..." : "Add"}
+					{showDetails ? "− Details" : "+ Details"}
 				</button>
+				{showDetails && (
+					<div className="space-y-2 rounded-lg border border-white/10 bg-white/5 p-3">
+						<div className="flex items-center gap-2">
+							<span className="w-16 text-white/60 text-xs">Type</span>
+							<SegmentedControl
+								colorMap={{
+									DEEP_WORK: "bg-blue-500/30 text-blue-300",
+									ADMIN: "bg-amber-500/30 text-amber-300",
+									REACTIVE: "bg-rose-500/30 text-rose-300",
+								}}
+								onChange={setNewWorkType}
+								options={[
+									{ value: "DEEP_WORK" as const, label: "Deep" },
+									{ value: "ADMIN" as const, label: "Admin" },
+									{ value: "REACTIVE" as const, label: "Reactive" },
+								]}
+								value={newWorkType}
+							/>
+						</div>
+						<div className="flex items-center gap-2">
+							<span className="w-16 text-white/60 text-xs">Weight</span>
+							<SegmentedControl
+								onChange={(v) => setNewWeight(v as 1 | 2 | 3)}
+								options={[
+									{ value: 1 as const, label: "1" },
+									{ value: 2 as const, label: "2" },
+									{ value: 3 as const, label: "3" },
+								]}
+								value={newWeight}
+							/>
+						</div>
+					</div>
+				)}
 			</form>
 
 			<section>

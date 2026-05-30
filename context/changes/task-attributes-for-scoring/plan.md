@@ -264,30 +264,30 @@ None significant. The badges are pure render logic on data already fetched. No a
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `pnpm typecheck`
-- [x] 2.2 Linting passes: `pnpm check`
-- [x] 2.3 Existing tests pass: `pnpm test`
+- [x] 2.1 Type checking passes: `pnpm typecheck` — a071a79
+- [x] 2.2 Linting passes: `pnpm check` — a071a79
+- [x] 2.3 Existing tests pass: `pnpm test` — a071a79
 
 #### Manual
 
-- [x] 2.4 Active tasks display colored work type pill and weight badge
-- [x] 2.5 Completed tasks display dimmed badges
-- [x] 2.6 Badges don't overflow on max-w-lg container
+- [x] 2.4 Active tasks display colored work type pill and weight badge — a071a79
+- [x] 2.5 Completed tasks display dimmed badges — a071a79
+- [x] 2.6 Badges don't overflow on max-w-lg container — a071a79
 
 ### Phase 3: Create Form with Expandable Details
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `pnpm typecheck`
-- [ ] 3.2 Linting passes: `pnpm check`
-- [ ] 3.3 Existing tests pass: `pnpm test`
+- [x] 3.1 Type checking passes: `pnpm typecheck`
+- [x] 3.2 Linting passes: `pnpm check`
+- [x] 3.3 Existing tests pass: `pnpm test`
 
 #### Manual
 
-- [ ] 3.4 Details section collapsed by default, defaults applied on create
-- [ ] 3.5 Expanding shows work type and weight selectors
-- [ ] 3.6 Non-default attributes show correct badges after creation
-- [ ] 3.7 Details section resets after successful creation
+- [x] 3.4 Details section collapsed by default, defaults applied on create
+- [x] 3.5 Expanding shows work type and weight selectors
+- [x] 3.6 Non-default attributes show correct badges after creation
+- [x] 3.7 Details section resets after successful creation
 
 ### Phase 4: Inline Attribute Editing
 
