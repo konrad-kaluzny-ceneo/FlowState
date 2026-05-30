@@ -45,6 +45,16 @@ Verification: create a task with non-default attributes, confirm pills render co
 
 Bottom-up: fix the repository interface gap first (Phase 1), then build display (Phase 2), then creation UI (Phase 3), then editing UI (Phase 4). Each phase is independently testable and leaves the app in a working state.
 
+### Display Defaults
+
+Tasks created before this feature (or without expanding the details section) may have `workType` and `weight` as `undefined` on the `DomainTask` object. All rendering and edit initialization must fall back to schema defaults:
+
+```ts
+const TASK_DEFAULTS = { workType: "ADMIN" as const, weight: 2 } as const;
+```
+
+Use `task.workType ?? TASK_DEFAULTS.workType` everywhere badges render or edit state initializes.
+
 ## Phase 1: Repository & Type Plumbing
 
 ### Overview
@@ -99,13 +109,19 @@ Add compact colored badge/pill rendering for work type and weight on active and 
 
 ### Changes Required:
 
-#### 1. Badge rendering in task list items
+#### 1. Badge rendering helpers
+
+**File**: `src/app/_components/task-list.tsx`
+
+**Intent**: Extract a `TaskBadges` render helper (inline function or small component) that takes `workType` and `weight` and returns the badge group JSX. Also extract a `SegmentedControl` helper for the 3-button selector pattern reused in Phases 3 and 4. This keeps the main component readable as state grows.
+
+#### 2. Badge rendering in task list items
 
 **File**: `src/app/_components/task-list.tsx`
 
 **Intent**: Render work type as a small colored pill (e.g., "Deep", "Admin", "Reactive") and weight as a numeric indicator (e.g., "W3") between the task title and the Focus button on active tasks. Use distinct background colors per work type for scannability.
 
-**Contract**: Each `<li>` in the active tasks list gains a badge group element after the title/edit area. Color mapping: DEEP_WORK → blue-ish (`bg-blue-500/20 text-blue-300`), ADMIN → amber-ish (`bg-amber-500/20 text-amber-300`), REACTIVE → rose-ish (`bg-rose-500/20 text-rose-300`). Weight badge uses neutral styling (`bg-white/10 text-white/70`). Badges are `text-xs rounded-full px-2 py-0.5 font-medium`.
+**Contract**: Each `<li>` in the active tasks list gains a badge group element after the title/edit area. Use `task.workType ?? TASK_DEFAULTS.workType` and `task.weight ?? TASK_DEFAULTS.weight` for rendering — never show "unknown" or empty badges. Color mapping: DEEP_WORK → blue-ish (`bg-blue-500/20 text-blue-300`), ADMIN → amber-ish (`bg-amber-500/20 text-amber-300`), REACTIVE → rose-ish (`bg-rose-500/20 text-rose-300`). Weight badge uses neutral styling (`bg-white/10 text-white/70`). Badges are `text-xs rounded-full px-2 py-0.5 font-medium`.
 
 #### 2. Dimmed badges on completed tasks
 
@@ -178,7 +194,7 @@ Expand the existing edit mode (triggered by clicking the task title) to include 
 
 **Intent**: When `editingId === task.id`, render work type and weight selectors below the title input (same segmented controls as the create form). Track `editWorkType` and `editWeight` in state, initialized from the task's current values when entering edit mode. On save, pass all changed fields to `taskRepo.update()`.
 
-**Contract**: New state: `editWorkType: "DEEP_WORK" | "ADMIN" | "REACTIVE"`, `editWeight: 1 | 2 | 3`. The `startEditing` function initializes these from the task. The `saveEdit` function passes `workType` and `weight` to `taskRepo.update()` alongside `title`. The edit area becomes a vertical stack: title input on top, attribute selectors below, matching the create form's details layout.
+**Contract**: New state: `editWorkType: "DEEP_WORK" | "ADMIN" | "REACTIVE"`, `editWeight: 1 | 2 | 3`. The `startEditing` function initializes these from the task using `task.workType ?? TASK_DEFAULTS.workType` and `task.weight ?? TASK_DEFAULTS.weight` (handles pre-existing tasks with undefined attributes). The `saveEdit` function passes `workType` and `weight` to `taskRepo.update()` alongside `title`. The edit area becomes a vertical stack: title input on top, attribute selectors below, matching the create form's details layout.
 
 ### Success Criteria:
 

@@ -139,7 +139,7 @@ Extend the localStorage-based duration config to include short break and long br
 
 **Intent**: Add `getShortBreakDuration()` / `setShortBreakDuration(sec)` and `getLongBreakDuration()` / `setLongBreakDuration(sec)` following the same pattern as the existing work duration functions. Defaults: 5 min short, 15 min long. Range: 1–30 min (60–1800 sec).
 
-**Contract**: Same API shape as existing `getLastDuration` / `setLastDuration` — reads/writes localStorage with clamping and fallback to defaults. Export `DEFAULT_SHORT_BREAK_SEC = 5 * 60` and `DEFAULT_LONG_BREAK_SEC = 15 * 60`.
+**Contract**: Same API shape as existing `getLastDuration` / `setLastDuration` — reads/writes localStorage with clamping and fallback to defaults. Export `DEFAULT_SHORT_BREAK_SEC = 5 * 60` and `DEFAULT_LONG_BREAK_SEC = 15 * 60`. Note: the client range (1–30 min / 60–1800 sec) is intentionally stricter than the server's `configuredDurationSec` validation (1–90 min / 60–5400 sec). The server validation acts as a safety net; the client enforces the tighter UX constraint.
 
 #### 2. Break duration UI controls
 
@@ -178,21 +178,26 @@ Evolve `usePomodoroCycle` from a single-cycle hook into a session-aware state ma
 
 **File**: `src/hooks/use-pomodoro-cycle.ts`
 
-**Intent**: Add state to track: (a) whether the current running cycle is a break (`isBreak` / cycle kind), (b) the number of completed work cycles in the current session (for long-break logic). After `confirmComplete` on a WORK cycle, auto-create a break cycle (SHORT_BREAK or LONG_BREAK based on count % 4). After a break cycle completes, show the "completed" state (which triggers the overlay).
+**Intent**: Add state to track: (a) whether the current running cycle is a break (`isBreak` / cycle kind), (b) the number of completed work cycles in the current session (for long-break logic), (c) the active `sessionId` for explicit passing to break cycle creation. Restructure `confirmComplete` into a two-path flow: WORK completion auto-starts a break; BREAK completion resets to idle.
 
 **Contract**: 
 - New exported state: `cycleKind: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null` (derived from `activeCycle.kind`)
-- `confirmComplete` behavior change: when completing a WORK cycle, instead of resetting to idle, create a break cycle (`SHORT_BREAK` if `completedWorkCycles % 4 !== 0`, else `LONG_BREAK`) with the appropriate duration from `duration-storage`, no `taskId`. Then start the timer for it.
+- The hook must store the active `sessionId` (captured from the initial `getOrCreateActive()` call in `start()`, or from `activeCycle.sessionId` on recovery) and pass it explicitly to `cycles.create()` for break cycles. This prevents the inactivity timeout race identified in Open Risks.
+- `confirmComplete` two-path restructure:
+  - **WORK cycle path**: call `cycles.complete()`, then IMMEDIATELY (before any state reset) call `cycles.create({ kind: breakKind, sessionId: storedSessionId, configuredDurationSec: breakDuration })`. Set `activeCycle` to the new break cycle and `state` to "running" in one update. Do NOT reset to idle. Start the worker timer for the break.
+  - **BREAK cycle path**: call `cycles.complete()`, then reset to idle (`setState("idle")`, `setActiveCycle(null)`, `setFocusedTaskId(null)`, `setFocusedTask(null)`).
+  - **Error handling for break auto-start failure**: if break `cycles.create()` fails after work cycle is already marked complete, call `setError("Break could not start. Your work cycle was saved.")` and reset to idle. This is acceptable degradation.
+- Break kind determination: `SHORT_BREAK` if `completedWorkCycles % 4 !== 0`, else `LONG_BREAK`. The count is derived from the cycle list for the active session (see §2 below).
 - When a break cycle's timer expires → state becomes "completed" → overlay shows → user confirms → state resets to idle (ready to pick next task).
-- `completedWorkCycles` count: query completed WORK cycles in the active session. For authenticated mode, add a `cycle.countCompleted` query. For guest mode, count from localStorage snapshot.
+- `completedWorkCycles` count: filter the existing `cycle.list` query (which accepts optional `sessionId`) client-side: `cycles.filter(c => c.kind === "WORK" && c.state === "COMPLETED").length`. No new server endpoint needed — the dataset is tiny (≤8 cycles per session).
 
-#### 2. Add cycle.countCompleted query
+#### 2. Derive completed work cycle count from existing cycle.list
 
-**File**: `src/server/api/routers/cycle.ts`
+**File**: `src/hooks/use-pomodoro-cycle.ts`
 
-**Intent**: Add a query that returns the count of COMPLETED WORK cycles in the user's active session. Used by the client to determine short vs long break.
+**Intent**: Determine the break kind (short vs long) by counting completed WORK cycles in the active session. Uses the existing `cycle.list` query filtered by `sessionId` — no new server endpoint needed.
 
-**Contract**: `cycle.countCompleted` — input: `{ sessionId: z.number().int() }`. Returns `{ count: number }`. Counts cycles where `sessionId = input, kind = WORK, state = COMPLETED, userId = ctx.user.id`.
+**Contract**: After storing `sessionId` in the hook (see §1), fetch cycles via the existing list query with `{ sessionId }` and filter client-side: `cycles.filter(c => c.kind === "WORK" && c.state === "COMPLETED").length`. The cycle list for a single session is at most ~8 entries (4 work + 4 breaks), so client-side filtering is negligible cost. This avoids introducing a new count-style query pattern that doesn't exist elsewhere in the codebase.
 
 #### 3. Break-end overlay variant
 
@@ -311,7 +316,8 @@ Add the "End session" button, handle the UI reset when a session ends, and surfa
 - Inactivity timeout in `findOrCreateActiveSession` (mock Date.now)
 - Break duration storage: defaults, clamping, persistence
 - Break transition logic in hook: work→short break, 4th cycle→long break
-- `cycle.countCompleted` query
+- Break creation failure after work complete: error message + idle reset
+- Completed work cycle count derivation from cycle list
 - `endSession` action: state reset, interrupt-then-end flow
 - Break-end overlay rendering (break variant vs work variant)
 
@@ -392,7 +398,7 @@ No schema migration required — all needed enums and fields already exist from 
 - [ ] 3.1 Unit test: work cycle complete → break auto-starts with correct kind and duration
 - [ ] 3.2 Unit test: after 4th work cycle, break kind is LONG_BREAK
 - [ ] 3.3 Unit test: break complete → returns to idle
-- [ ] 3.4 cycle.countCompleted query test
+- [ ] 3.4 Unit test: break creation failure after work complete → error message + idle reset
 - [ ] 3.5 `pnpm typecheck` passes
 - [ ] 3.6 `pnpm check` passes
 - [ ] 3.7 `pnpm test` passes
