@@ -256,9 +256,9 @@ None significant. The badges are pure render logic on data already fetched. No a
 
 #### Automated
 
-- [ ] 1.1 Type checking passes: `pnpm typecheck`
-- [ ] 1.2 Linting passes: `pnpm check`
-- [ ] 1.3 Existing tests pass: `pnpm test`
+- [x] 1.1 Type checking passes: `pnpm typecheck`
+- [x] 1.2 Linting passes: `pnpm check`
+- [x] 1.3 Existing tests pass: `pnpm test`
 
 ### Phase 2: Task Attribute Display (Badges)
 

@@ -17,6 +17,8 @@ type UpdateTaskInput = {
 	id: number;
 	title?: string;
 	status?: "active" | "completed";
+	workType?: "DEEP_WORK" | "ADMIN" | "REACTIVE";
+	weight?: number;
 };
 
 type CreateCycleInput = {

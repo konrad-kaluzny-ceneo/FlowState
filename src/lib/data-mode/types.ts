@@ -49,6 +49,8 @@ export interface TaskRepository {
 		id: DomainTaskId;
 		title?: string;
 		status?: "active" | "completed";
+		workType?: "DEEP_WORK" | "ADMIN" | "REACTIVE";
+		weight?: number;
 	}): Promise<void>;
 	delete(input: { id: DomainTaskId }): Promise<void>;
 }

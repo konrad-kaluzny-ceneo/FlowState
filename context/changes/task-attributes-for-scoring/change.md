@@ -1,7 +1,7 @@
 ---
 id: task-attributes-for-scoring
 title: Task work-type and weight attributes
-status: plan_reviewed
+status: implementing
 created: 2026-05-30
 updated: 2026-05-30
 roadmap_id: S-04

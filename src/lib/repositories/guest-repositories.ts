@@ -108,6 +108,8 @@ export function createGuestTaskRepository(): TaskRepository {
 						...task,
 						...(input.title != null ? { title: input.title } : {}),
 						...(input.status != null ? { status: input.status } : {}),
+						...(input.workType != null ? { workType: input.workType } : {}),
+						...(input.weight != null ? { weight: input.weight } : {}),
 						updatedAt: new Date(),
 					};
 				}),
