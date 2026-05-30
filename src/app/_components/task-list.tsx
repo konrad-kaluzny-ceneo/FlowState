@@ -102,15 +102,21 @@ export function TaskList({
 	const [newWeight, setNewWeight] = useState<1 | 2 | 3>(2);
 	const [editingId, setEditingId] = useState<DomainTaskId | null>(null);
 	const [editTitle, setEditTitle] = useState("");
+	const [editWorkType, setEditWorkType] = useState<
+		"DEEP_WORK" | "ADMIN" | "REACTIVE"
+	>("ADMIN");
+	const [editWeight, setEditWeight] = useState<1 | 2 | 3>(2);
 	const [isPending, setIsPending] = useState(false);
 
 	const activeTasks = tasks.filter((t) => t.status === "active");
 	const completedTasks = tasks.filter((t) => t.status === "completed");
 	const cycleLocked = cycleState === "running" || cycleState === "completed";
 
-	function startEditing(id: DomainTaskId, title: string) {
-		setEditingId(id);
-		setEditTitle(title);
+	function startEditing(task: DomainTask) {
+		setEditingId(task.id);
+		setEditTitle(task.title);
+		setEditWorkType(task.workType ?? TASK_DEFAULTS.workType);
+		setEditWeight((task.weight ?? TASK_DEFAULTS.weight) as 1 | 2 | 3);
 	}
 
 	async function saveEdit(id: DomainTaskId) {
@@ -120,7 +126,12 @@ export function TaskList({
 
 		setIsPending(true);
 		try {
-			await taskRepo.update({ id, title: editTitle.trim() });
+			await taskRepo.update({
+				id,
+				title: editTitle.trim(),
+				workType: editWorkType,
+				weight: editWeight,
+			});
 			await onRefresh();
 			setEditingId(null);
 			setEditTitle("");
@@ -252,22 +263,53 @@ export function TaskList({
 									type="button"
 								/>
 								{editingId === task.id ? (
-									<input
-										className="flex-1 rounded bg-white/10 px-2 py-1 text-white focus:outline-none"
-										onBlur={() => void saveEdit(task.id)}
-										onChange={(e) => setEditTitle(e.target.value)}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") void saveEdit(task.id);
-											if (e.key === "Escape") setEditingId(null);
-										}}
-										type="text"
-										value={editTitle}
-									/>
+									<div className="flex-1 space-y-2">
+										<input
+											className="w-full rounded bg-white/10 px-2 py-1 text-white focus:outline-none"
+											onBlur={() => void saveEdit(task.id)}
+											onChange={(e) => setEditTitle(e.target.value)}
+											onKeyDown={(e) => {
+												if (e.key === "Enter") void saveEdit(task.id);
+												if (e.key === "Escape") setEditingId(null);
+											}}
+											type="text"
+											value={editTitle}
+										/>
+										<div className="flex items-center gap-2">
+											<span className="w-16 text-white/60 text-xs">Type</span>
+											<SegmentedControl
+												colorMap={{
+													DEEP_WORK: "bg-blue-500/30 text-blue-300",
+													ADMIN: "bg-amber-500/30 text-amber-300",
+													REACTIVE: "bg-rose-500/30 text-rose-300",
+												}}
+												onChange={setEditWorkType}
+												options={[
+													{ value: "DEEP_WORK" as const, label: "Deep" },
+													{ value: "ADMIN" as const, label: "Admin" },
+													{ value: "REACTIVE" as const, label: "Reactive" },
+												]}
+												value={editWorkType}
+											/>
+										</div>
+										<div className="flex items-center gap-2">
+											<span className="w-16 text-white/60 text-xs">Weight</span>
+											<SegmentedControl
+												onChange={(v) => setEditWeight(v as 1 | 2 | 3)}
+												options={[
+													{ value: 1 as const, label: "1" },
+													{ value: 2 as const, label: "2" },
+													{ value: 3 as const, label: "3" },
+												]}
+												value={editWeight}
+											/>
+										</div>
+									</div>
 								) : (
 									<button
 										className="flex-1 cursor-pointer text-left text-white disabled:cursor-default disabled:opacity-70"
 										disabled={cycleLocked}
-										onClick={() => startEditing(task.id, task.title)}
+										onClick={() => startEditing(task)}
 										type="button"
 									>
 										{task.title}

@@ -278,29 +278,29 @@ None significant. The badges are pure render logic on data already fetched. No a
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `pnpm typecheck`
-- [x] 3.2 Linting passes: `pnpm check`
-- [x] 3.3 Existing tests pass: `pnpm test`
+- [x] 3.1 Type checking passes: `pnpm typecheck` — b60197c
+- [x] 3.2 Linting passes: `pnpm check` — b60197c
+- [x] 3.3 Existing tests pass: `pnpm test` — b60197c
 
 #### Manual
 
-- [x] 3.4 Details section collapsed by default, defaults applied on create
-- [x] 3.5 Expanding shows work type and weight selectors
-- [x] 3.6 Non-default attributes show correct badges after creation
-- [x] 3.7 Details section resets after successful creation
+- [x] 3.4 Details section collapsed by default, defaults applied on create — b60197c
+- [x] 3.5 Expanding shows work type and weight selectors — b60197c
+- [x] 3.6 Non-default attributes show correct badges after creation — b60197c
+- [x] 3.7 Details section resets after successful creation — b60197c
 
 ### Phase 4: Inline Attribute Editing
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `pnpm typecheck`
-- [ ] 4.2 Linting passes: `pnpm check`
-- [ ] 4.3 Existing tests pass: `pnpm test`
+- [x] 4.1 Type checking passes: `pnpm typecheck`
+- [x] 4.2 Linting passes: `pnpm check`
+- [x] 4.3 Existing tests pass: `pnpm test`
 
 #### Manual
 
-- [ ] 4.4 Edit mode shows current work type and weight pre-selected
-- [ ] 4.5 Changing attributes and saving persists new values
-- [ ] 4.6 Badges update immediately after save
-- [ ] 4.7 Escape cancels without saving attribute changes
-- [ ] 4.8 Edit mode works in both authenticated and guest modes
+- [x] 4.4 Edit mode shows current work type and weight pre-selected
+- [x] 4.5 Changing attributes and saving persists new values
+- [x] 4.6 Badges update immediately after save
+- [x] 4.7 Escape cancels without saving attribute changes
+- [x] 4.8 Edit mode works in both authenticated and guest modes
