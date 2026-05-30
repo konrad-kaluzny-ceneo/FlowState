@@ -1,7 +1,7 @@
 ---
 id: full-session-with-breaks
 title: Full session with breaks and explicit end
-status: implementing
+status: implemented
 created: 2026-05-30
 updated: 2026-05-30
 roadmap: S-02

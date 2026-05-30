@@ -415,17 +415,17 @@ No schema migration required — all needed enums and fields already exist from 
 
 #### Automated
 
-- [x] 4.1 Unit test: endSession() calls sessions.end() and resets state
-- [x] 4.2 Unit test: endSession() interrupts running cycle before ending
-- [x] 4.3 Unit test: hasActiveSession lifecycle
-- [x] 4.4 Integration test: end session → new cycle → new session created
-- [x] 4.5 `pnpm typecheck` passes
-- [x] 4.6 `pnpm check` passes
-- [x] 4.7 `pnpm test` passes
+- [x] 4.1 Unit test: endSession() calls sessions.end() and resets state — daea25b
+- [x] 4.2 Unit test: endSession() interrupts running cycle before ending — daea25b
+- [x] 4.3 Unit test: hasActiveSession lifecycle — daea25b
+- [x] 4.4 Integration test: end session → new cycle → new session created — daea25b
+- [x] 4.5 `pnpm typecheck` passes — daea25b
+- [x] 4.6 `pnpm check` passes — daea25b
+- [x] 4.7 `pnpm test` passes — daea25b
 
 #### Manual
 
-- [x] 4.8 "End session" button visible after first cycle start
-- [x] 4.9 "End session" disabled during running cycle
-- [x] 4.10 Clicking "End session" returns to clean state
-- [x] 4.11 After 4h inactivity, next cycle creates new session
+- [x] 4.8 "End session" button visible after first cycle start — daea25b
+- [x] 4.9 "End session" disabled during running cycle — daea25b
+- [x] 4.10 Clicking "End session" returns to clean state — daea25b
+- [x] 4.11 After 4h inactivity, next cycle creates new session — daea25b
