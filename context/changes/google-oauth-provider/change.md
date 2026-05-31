@@ -1,7 +1,7 @@
 ---
 change_id: google-oauth-provider
 title: "Google OAuth social login"
-status: planned
+status: implementing
 created: 2026-05-31
 updated: 2026-05-31
 ---

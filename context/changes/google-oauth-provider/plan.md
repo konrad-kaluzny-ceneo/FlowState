@@ -236,10 +236,10 @@ Use `page.waitForURL()` with a pattern that excludes the current auth page URL t
 
 #### Automated
 
-- [ ] 1.1 Type checking passes: `pnpm typecheck`
-- [ ] 1.2 Linting passes: `pnpm check`
-- [ ] 1.3 Existing unit tests pass: `pnpm test`
-- [ ] 1.4 No regressions in existing e2e smoke test: `pnpm test:e2e`
+- [x] 1.1 Type checking passes: `pnpm typecheck`
+- [x] 1.2 Linting passes: `pnpm check`
+- [x] 1.3 Existing unit tests pass: `pnpm test`
+- [x] 1.4 No regressions in existing e2e smoke test: `pnpm test:e2e`
 
 #### Manual
 

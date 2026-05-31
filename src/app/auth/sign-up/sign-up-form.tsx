@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useActionState } from "react";
+import { AuthDivider } from "../_components/auth-divider";
+import { GoogleSignInButton } from "../_components/google-sign-in-button";
 import { signUpAction } from "./actions";
 import type { SignUpFormState } from "./schema";
 
@@ -15,9 +18,36 @@ export function SignUpForm() {
 		signUpAction,
 		initialState,
 	);
+	const searchParams = useSearchParams();
+	const router = useRouter();
+	const oauthError = searchParams.get("error");
+
+	function dismissOAuthError() {
+		router.replace("/auth/sign-up");
+	}
 
 	return (
 		<form action={formAction} className="flex w-full flex-col gap-4" noValidate>
+			{oauthError && (
+				<div
+					className="flex items-center justify-between rounded-md bg-red-500/10 px-4 py-3 text-red-400 text-sm"
+					role="alert"
+				>
+					<span>
+						Could not sign up with Google. Please try again or use email and
+						password.
+					</span>
+					<button
+						aria-label="Dismiss error"
+						className="ml-2 text-red-400 hover:text-red-300"
+						onClick={dismissOAuthError}
+						type="button"
+					>
+						✕
+					</button>
+				</div>
+			)}
+
 			{state.errors.form && (
 				<div
 					className="rounded-md bg-red-500/10 px-4 py-3 text-red-400 text-sm"
@@ -106,6 +136,17 @@ export function SignUpForm() {
 			>
 				{isPending ? "Creating account..." : "Create account"}
 			</button>
+
+			<div className="mt-2">
+				<AuthDivider />
+			</div>
+
+			<div className="mt-2">
+				<GoogleSignInButton
+					errorCallbackURL="/auth/sign-up?error=oauth_failed"
+					mode="sign-up"
+				/>
+			</div>
 
 			<p className="mt-2 text-center text-sm text-white/60">
 				Already have an account?{" "}
