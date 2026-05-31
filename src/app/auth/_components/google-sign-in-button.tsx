@@ -22,7 +22,7 @@ export function GoogleSignInButton({
 		try {
 			await authClient.signIn.social({
 				provider: "google",
-				callbackURL: "/",
+				callbackURL: window.location.origin,
 				errorCallbackURL,
 			});
 		} catch {

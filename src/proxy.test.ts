@@ -2,7 +2,11 @@ import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
-import { isGuestPublicPath } from "~/lib/auth/public-paths";
+import {
+	isGuestPublicPath,
+	NEON_AUTH_SESSION_VERIFIER_PARAM,
+	shouldBypassAuthMiddleware,
+} from "~/lib/auth/public-paths";
 
 /**
  * Feature: neon-auth, Property 3: Middleware route exclusion
@@ -112,5 +116,16 @@ describe("guest public path (S-08)", () => {
 	it("does not treat other paths as guest-public", () => {
 		expect(isGuestPublicPath("/settings")).toBe(false);
 		expect(isGuestPublicPath("/auth/sign-in")).toBe(false);
+	});
+
+	it("bypasses auth middleware on guest home without OAuth verifier", () => {
+		expect(shouldBypassAuthMiddleware("/", new URLSearchParams())).toBe(true);
+	});
+
+	it("runs auth middleware on guest home when OAuth verifier is present", () => {
+		const params = new URLSearchParams({
+			[NEON_AUTH_SESSION_VERIFIER_PARAM]: "abc123",
+		});
+		expect(shouldBypassAuthMiddleware("/", params)).toBe(false);
 	});
 });

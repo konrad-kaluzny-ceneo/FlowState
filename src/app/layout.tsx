@@ -5,7 +5,10 @@ import { Geist } from "next/font/google";
 
 import { auth } from "~/lib/auth/server";
 import { TRPCReactProvider } from "~/trpc/react";
+import { OAuthSessionVerifier } from "./_components/oauth-session-verifier";
 import { UserMenu } from "./_components/user-menu";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
 	title: "Create T3 App",
@@ -39,6 +42,7 @@ export default async function RootLayout({
 		<html className={`${geist.variable}`} lang="en">
 			<body>
 				<TRPCReactProvider>
+					<OAuthSessionVerifier />
 					{userName && (
 						<header className="fixed top-0 right-0 z-50 p-4">
 							<UserMenu userName={userName} />

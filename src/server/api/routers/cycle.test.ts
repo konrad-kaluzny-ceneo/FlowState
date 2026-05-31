@@ -164,10 +164,7 @@ vi.mock("~/server/db/index", () => {
 					return Promise.resolve(session);
 				}),
 				update: vi.fn(
-					(args: {
-						where: { id: number };
-						data: { lastActivityAt: Date };
-					}) => {
+					(args: { where: { id: number }; data: { lastActivityAt: Date } }) => {
 						const session = sessions.find((s) => s.id === args.where.id);
 						if (!session) throw new Error("session not found");
 						Object.assign(session, args.data);

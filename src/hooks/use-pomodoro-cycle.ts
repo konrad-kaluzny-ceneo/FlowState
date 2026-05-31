@@ -255,10 +255,9 @@ export function usePomodoroCycle() {
 			// Derive completed work cycle count from server for correct break cadence
 			try {
 				if (mode === "authenticated") {
-					const count =
-						await utils.client.cycle.countCompletedWork.query({
-							sessionId: Number(active.sessionId),
-						});
+					const count = await utils.client.cycle.countCompletedWork.query({
+						sessionId: Number(active.sessionId),
+					});
 					setCompletedWorkCycles(count);
 				} else {
 					const { loadSnapshot } = await import("~/lib/guest/store");
@@ -278,7 +277,12 @@ export function usePomodoroCycle() {
 			// No active cycle — session may have timed out server-side; reset counter
 			setCompletedWorkCycles(0);
 		}
-	}, [cycles, resumeFromActiveCycle, mode, utils.client.cycle.countCompletedWork]);
+	}, [
+		cycles,
+		resumeFromActiveCycle,
+		mode,
+		utils.client.cycle.countCompletedWork,
+	]);
 
 	useEffect(() => {
 		// When mode changes (e.g. guest → authenticated on login), allow re-recovery

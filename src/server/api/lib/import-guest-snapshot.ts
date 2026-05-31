@@ -32,6 +32,12 @@ export async function importGuestSnapshot(
 	}
 
 	return db.$transaction(async (tx) => {
+		// Avoid duplicate RUNNING cycles when import is retried after a partial client failure.
+		await tx.cycle.updateMany({
+			where: { userId, state: "RUNNING" },
+			data: { state: "COMPLETED", endedAt: new Date() },
+		});
+
 		const existingTasks = await tx.task.findMany({
 			where: { userId },
 			select: { title: true },

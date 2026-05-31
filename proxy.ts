@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { isGuestPublicPath } from "./src/lib/auth/public-paths";
+import { shouldBypassAuthMiddleware } from "./src/lib/auth/public-paths";
 import { auth } from "./src/lib/auth/server";
 
 /**
@@ -16,7 +16,12 @@ const runAuthProxy = auth.middleware({
 });
 
 export function proxy(request: NextRequest) {
-	if (isGuestPublicPath(request.nextUrl.pathname)) {
+	if (
+		shouldBypassAuthMiddleware(
+			request.nextUrl.pathname,
+			request.nextUrl.searchParams,
+		)
+	) {
 		return NextResponse.next();
 	}
 

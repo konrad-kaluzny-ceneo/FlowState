@@ -1,50 +1,78 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
+import { importGuestSnapshotAction } from "~/app/_actions/import-guest-snapshot";
 import { useRepositories } from "~/lib/data-mode/data-mode-context";
 import {
-	clearGuestSnapshot,
-	hasGuestData,
-	loadSnapshot,
-} from "~/lib/guest/store";
+	loadGuestSnapshotForImport,
+	markGuestImportAttempted,
+	markGuestImportDone,
+	shouldRunGuestImport,
+} from "~/lib/guest/import-guard";
+import { clearGuestSnapshot } from "~/lib/guest/store";
 import { api } from "~/trpc/react";
-
-const IMPORT_DONE_KEY = "flowstate:guest-import-done";
 
 export function GuestImportOnMount() {
 	const { mode } = useRepositories();
-	const importMutation = api.guest.import.useMutation();
 	const utils = api.useUtils();
+	const router = useRouter();
 	const startedRef = useRef(false);
+	const utilsRef = useRef(utils);
+	const routerRef = useRef(router);
+	const [importError, setImportError] = useState<string | null>(null);
+
+	utilsRef.current = utils;
+	routerRef.current = router;
 
 	useEffect(() => {
-		if (mode !== "authenticated" || startedRef.current || !hasGuestData()) {
-			return;
-		}
-
-		const snapshot = loadSnapshot();
-		const snapshotKey = JSON.stringify(snapshot);
-		if (sessionStorage.getItem(IMPORT_DONE_KEY) === snapshotKey) {
+		if (
+			mode !== "authenticated" ||
+			startedRef.current ||
+			!shouldRunGuestImport()
+		) {
 			return;
 		}
 
 		startedRef.current = true;
+		markGuestImportAttempted();
 
 		void (async () => {
-			try {
-				await importMutation.mutateAsync(snapshot);
-				sessionStorage.setItem(IMPORT_DONE_KEY, snapshotKey);
-				clearGuestSnapshot();
-				await Promise.all([
-					utils.task.list.invalidate(),
-					utils.cycle.getActive.invalidate(),
-				]);
-			} catch {
-				startedRef.current = false;
-			}
-		})();
-	}, [importMutation, mode, utils.cycle.getActive, utils.task.list]);
+			const snapshot = loadGuestSnapshotForImport();
+			const result = await importGuestSnapshotAction(snapshot);
 
-	return null;
+			if (!result.ok) {
+				setImportError(
+					result.error === "UNAUTHORIZED"
+						? "Could not import your guest tasks because you are not signed in. Try refreshing the page."
+						: "Could not import your guest tasks. Your local copy is still saved in this browser.",
+				);
+				return;
+			}
+
+			markGuestImportDone();
+			clearGuestSnapshot();
+			setImportError(null);
+			await Promise.all([
+				utilsRef.current.task.list.invalidate(),
+				utilsRef.current.cycle.getActive.invalidate(),
+			]);
+			routerRef.current.refresh();
+		})();
+	}, [mode]);
+
+	if (importError == null) {
+		return null;
+	}
+
+	return (
+		<div
+			className="fixed top-16 right-4 z-50 max-w-sm rounded-lg border border-amber-400/40 bg-amber-500/20 px-4 py-3 text-amber-50 text-sm shadow-lg"
+			data-testid="guest-import-error"
+			role="alert"
+		>
+			{importError}
+		</div>
+	);
 }

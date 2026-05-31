@@ -56,6 +56,7 @@ vi.mock("~/server/db/index", () => ({
 					}),
 				},
 				cycle: {
+					updateMany: vi.fn(() => Promise.resolve({ count: 0 })),
 					create: vi.fn((args: { data: Omit<CycleRow, "id"> }) => {
 						const row: CycleRow = { id: nextCycleId++, ...args.data };
 						cycles.push(row);

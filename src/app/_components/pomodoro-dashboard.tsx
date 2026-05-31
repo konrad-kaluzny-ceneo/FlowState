@@ -101,8 +101,7 @@ function AuthenticatedPomodoroDashboard() {
 	const utils = api.useUtils();
 
 	const domainTasks = useMemo(
-		() =>
-			tasks.map((t) => ({ ...t, weight: t.weight as 1 | 2 | 3 })),
+		() => tasks.map((t) => ({ ...t, weight: t.weight as 1 | 2 | 3 })),
 		[tasks],
 	);
 
