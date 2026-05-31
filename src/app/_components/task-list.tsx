@@ -7,9 +7,11 @@ import type { DomainTask, DomainTaskId } from "~/lib/data-mode/types";
 
 const WORK_TYPE_CONFIG = {
 	DEEP_WORK: { label: "Deep", bg: "bg-blue-500/20", text: "text-blue-300" },
-	ADMIN: { label: "Admin", bg: "bg-amber-500/20", text: "text-amber-300" },
+	ADMIN: { label: "Ops", bg: "bg-amber-500/20", text: "text-amber-300" },
 	REACTIVE: { label: "Reactive", bg: "bg-rose-500/20", text: "text-rose-300" },
 } as const;
+
+const WEIGHT_LABELS = { 1: "Light", 2: "Medium", 3: "Heavy" } as const;
 
 function TaskBadges({
 	workType,
@@ -31,7 +33,7 @@ function TaskBadges({
 				{config.label}
 			</span>
 			<span className="rounded-full bg-white/10 px-2 py-0.5 font-medium text-white/70 text-xs">
-				W{weight}
+				{WEIGHT_LABELS[weight]}
 			</span>
 		</span>
 	);
@@ -205,7 +207,7 @@ export function TaskList({
 								onChange={setNewWorkType}
 								options={[
 									{ value: "DEEP_WORK" as const, label: "Deep" },
-									{ value: "ADMIN" as const, label: "Admin" },
+									{ value: "ADMIN" as const, label: "Ops" },
 									{ value: "REACTIVE" as const, label: "Reactive" },
 								]}
 								value={newWorkType}
@@ -216,9 +218,9 @@ export function TaskList({
 							<SegmentedControl
 								onChange={(v) => setNewWeight(v as 1 | 2 | 3)}
 								options={[
-									{ value: 1 as const, label: "1" },
-									{ value: 2 as const, label: "2" },
-									{ value: 3 as const, label: "3" },
+									{ value: 1 as const, label: "Light" },
+									{ value: 2 as const, label: "Medium" },
+									{ value: 3 as const, label: "Heavy" },
 								]}
 								value={newWeight}
 							/>
@@ -286,7 +288,7 @@ export function TaskList({
 												onChange={setEditWorkType}
 												options={[
 													{ value: "DEEP_WORK" as const, label: "Deep" },
-													{ value: "ADMIN" as const, label: "Admin" },
+													{ value: "ADMIN" as const, label: "Ops" },
 													{ value: "REACTIVE" as const, label: "Reactive" },
 												]}
 												value={editWorkType}
@@ -297,9 +299,9 @@ export function TaskList({
 											<SegmentedControl
 												onChange={(v) => setEditWeight(v as 1 | 2 | 3)}
 												options={[
-													{ value: 1 as const, label: "1" },
-													{ value: 2 as const, label: "2" },
-													{ value: 3 as const, label: "3" },
+													{ value: 1 as const, label: "Light" },
+													{ value: 2 as const, label: "Medium" },
+													{ value: 3 as const, label: "Heavy" },
 												]}
 												value={editWeight}
 											/>
