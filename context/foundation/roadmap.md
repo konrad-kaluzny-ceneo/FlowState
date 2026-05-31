@@ -4,6 +4,7 @@ version: 1
 status: draft
 created: 2026-05-26
 updated: 2026-05-31
+active_slices: [S-03, S-05]
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -37,13 +38,14 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | F-02 | e2e-test-infra | [FLO-14](https://linear.app/flowstate-10xdev/issue/FLO-14) | [#6](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/6) | (foundation) Playwright installed with authenticated test user flow; agent and CI can run browser-based e2e tests against the real app | — | NFR (crash/refresh recovery), NFR (200ms acknowledgement), NFR (timer drift ≤ ±2s) | done |
 | S-01 | first-pomodoro-cycle | [FLO-8](https://linear.app/flowstate-10xdev/issue/FLO-8) | [#7](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/7) (closed) | start one configurable work cycle on a selected task, hear the audio prompt at cycle end, confirm transition, and return to the same state after a refresh | F-01, F-02 | US-01, FR-009, FR-010, FR-012, FR-013, FR-014, NFR (timer drift ≤ ±2s), NFR (crash/refresh recovery), NFR (200ms acknowledgement) | done |
 | S-02 | full-session-with-breaks | [FLO-10](https://linear.app/flowstate-10xdev/issue/FLO-10) | [#10](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/10) | complete a multi-cycle session with short and long breaks, see configured break durations applied, and end the session explicitly or after 4h inactivity | S-01 | US-01, FR-011, FR-014, FR-019, NFR (session retention 90 days) | done |
-| S-03 | mid-cycle-completion-prompt | [FLO-11](https://linear.app/flowstate-10xdev/issue/FLO-11) | [#11](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/11) | mark a task done mid-cycle and choose between picking the next task to keep the cycle running or ending the cycle to take a break now | S-01 | FR-015, FR-009a (revert path consistency) | proposed |
+| S-03 | mid-cycle-completion-prompt | [FLO-11](https://linear.app/flowstate-10xdev/issue/FLO-11) | [#11](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/11) | mark a task done mid-cycle and choose between picking the next task to keep the cycle running or ending the cycle to take a break now | S-01 | FR-015, FR-009a (revert path consistency) | active |
 | S-04 | task-attributes-for-scoring | [FLO-9](https://linear.app/flowstate-10xdev/issue/FLO-9) | [#8](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/8) | tag tasks with work type (deep work / admin / reactive) and weight (1–3) at creation and during edit, with values surfaced in the task list | F-01, F-02 | FR-005 (extend), FR-017, FR-018 | done |
-| S-05 | end-of-cycle-checkin | [FLO-12](https://linear.app/flowstate-10xdev/issue/FLO-12) | [#12](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/12) | declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session | S-01 | FR-020, NFR (mental-state data privacy) | proposed |
+| S-05 | end-of-cycle-checkin | [FLO-12](https://linear.app/flowstate-10xdev/issue/FLO-12) | [#12](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/12) | declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session | S-01 | FR-020, NFR (mental-state data privacy) | active |
 | S-06 | adaptive-task-suggestion | [FLO-13](https://linear.app/flowstate-10xdev/issue/FLO-13) | [#13](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/13) | after each check-in, see a suggested next task with a one-line rationale and accept it or override by picking any other task | S-04, S-05 | FR-021, FR-022, NFR (suggestion feedback ≥1s visible) | proposed |
 | S-07 | account-recovery-flow | [FLO-7](https://linear.app/flowstate-10xdev/issue/FLO-7) | [#9](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/9) | reset a forgotten password and recover access without losing existing tasks or session history | F-02 | FR-003a, NFR (auth must not lock user out of own data) | ready |
 | S-08 | guest-local-storage-merge | — | — | use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account | S-01, F-02 | NFR (no silent data loss), FR-004–FR-009 | proposed |
 | S-09 | optimistic-task-mutations | — | — | see task list and task actions update immediately while logged in (optimistic UI), with rollback on server error — matching perceived speed of local guest storage | S-01, F-02 | NFR (200ms acknowledgement), FR-004–FR-008 | proposed |
+| S-10 | google-oauth-provider | [FLO-20](https://linear.app/flowstate-10xdev/issue/FLO-20) | [#20](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/20) | sign in or sign up with a Google account in one click, alongside the existing email/password flow | F-02 | FR-001, FR-002 | in-progress |
 
 ## Streams
 
@@ -54,7 +56,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | A | Core loop (north-star path) | `F-01` → `F-02` → `S-01` → `S-02` → `S-03` | Shortest path to PRD §Success Criteria.Primary; hosts the validation milestone. F-02 gates all UI-facing slices. Bias from `main_goal: speed`. |
 | B | Scoring substrate | `S-04` (parallel with `S-01`/`S-02`, requires `F-02`) | Adds task attributes. Independent of timer mechanics; safe to fan out alongside Stream A once `F-01` + `F-02` land. |
 | C | Wedge convergence | `S-05` → `S-06` | Joins Stream A at `S-01` (needs cycle-end hook) and Stream B at `S-04` (needs scoring inputs). Wedge — the differentiating mechanic — lands here. |
-| D | Auth hardening | `S-07` (requires `F-02`) | Standalone slice; requires e2e infra to verify recovery flow end-to-end in a browser. |
+| D | Auth hardening | `S-07` (requires `F-02`), `S-10` (requires `F-02`) | Standalone slices; require e2e infra to verify auth flows end-to-end in a browser. |
 | E | UX responsiveness | `S-09` (requires `S-01`, `F-02`) | TanStack Query optimistic updates on authenticated task (and optionally cycle) mutations. Pairs with guest trial (`S-08` when shipped) so login does not feel slower than try-before-signup. |
 
 
@@ -150,7 +152,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** This is a mindfulness control point — its absence regresses the wedge. Sequenced after S-01 so the cycle has a real "in-flight" state to interrupt. Smaller than S-02 but logically peer to it.
-- **Status:** proposed
+- **Status:** active
 
 
 ### S-04: Task attributes for scoring
@@ -180,7 +182,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Should the check-in block the transition or be skippable? Owner: user (product call). Block: no — PRD §FR-020 phrasing ("user completes a mindful check-in") implies blocking; treat as non-skippable in MVP and revisit if check-in fatigue surfaces.
 - **Risk:** Adds a UI step in the cycle-end transition that S-01 already owns. Risk is regression of S-01's confirm-flow ergonomics. Mitigation: check-in lives between work-end-prompt and break-start, not in front of the audio signal.
-- **Status:** proposed
+- **Status:** active
 
 ### S-06: Adaptive task suggestion with override
 
@@ -241,6 +243,26 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Optimistic state can diverge from server truth on race or double-submit; mitigation: `onMutate` / rollback pattern, invalidate on settle, tests for failed mutation. Out of scope for `guest-local-storage-merge` (separate change-id per plan brief).
 - **Status:** proposed
 
+### S-10: Google OAuth social login
+
+- **Outcome:** user can sign in or sign up with their Google account in one click from the sign-in and sign-up pages; the OAuth flow is handled entirely by Neon Auth — no new backend routes or schema changes required.
+- **Change ID:** google-oauth-provider
+- **Linear:** [FLO-20](https://linear.app/flowstate-10xdev/issue/FLO-20)
+- **GitHub:** [#20](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/20)
+- **PRD refs:** FR-001, FR-002 (registration and login — OAuth is an additional mechanism)
+- **Prerequisites:** F-02 (e2e verification of the OAuth flow in a browser)
+- **Parallel with:** S-03, S-05, S-06, S-07, S-08, S-09 (no coupling to Pomodoro domain)
+- **Blockers:** —
+- **Unknowns:**
+  - Whether the existing custom sign-in pages should use `authClient.signIn.social()` directly or switch to Neon Auth UI components (`NeonAuthUIProvider` + pre-built forms). Owner: implementer (`/10x-plan`). Block: no — both approaches are documented; direct `signIn.social()` call is simpler and preserves the existing custom UI.
+- **Risk:** Minimal. Google OAuth is enabled by default with shared credentials in Neon Auth dev environments — no setup needed to test. Production requires a Google Cloud OAuth client + credentials in Neon Console + trusted domains. The main risk is a misconfigured redirect URI causing `redirect_uri_mismatch` in production; mitigation: document the exact URI pattern (`{NEON_AUTH_BASE_URL}/callback/google`) in the plan.
+- **Implementation sketch:**
+  1. Add a "Sign in with Google" button to `/auth/sign-in` and `/auth/sign-up` calling `authClient.signIn.social({ provider: "google", callbackURL: "/" })`.
+  2. Verify the flow works in dev (shared credentials — no config needed).
+  3. For production: create Google Cloud OAuth client, paste Client ID + Secret into Neon Console (branch → Auth), register redirect URI, add trusted domains.
+  4. Add e2e test verifying the Google button renders and the OAuth redirect initiates.
+- **Status:** in-progress
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID | Linear | GitHub | Suggested issue title | Ready for `/10x-plan` | Notes |
@@ -256,6 +278,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-07 | account-recovery-flow | FLO-7 | #9 | FlowState — verify and expose password recovery flow | no | Requires F-02 for browser-based verification of recovery flow |
 | S-08 | guest-local-storage-merge | — | — | FlowState — guest trial (localStorage) and merge on login | no | Plan at `context/changes/guest-local-storage-merge/` |
 | S-09 | optimistic-task-mutations | — | — | FlowState — optimistic TanStack Query updates for authenticated task mutations | no | Unblocks after S-01; best after S-08 if guest trial ships first |
+| S-10 | google-oauth-provider | FLO-20 | #20 | FlowState — Google OAuth social login (one-click sign-in) | yes | Neon Auth supports Google OAuth natively; minimal UI addition |
 
 ## Research requirements <!-- needs-research -->
 
@@ -268,7 +291,7 @@ Items tagged `needs-research` are non-trivial — they require external research
 | S-06 | adaptive-task-suggestion | 🟡 Medium | Weighted scoring / task-prioritization algorithms; Pomodoro technique research on task-energy matching; deterministic formula design patterns |
 | S-07 | account-recovery-flow | 🟢 Low | Neon Auth password reset/recovery API surface (quick lookup) |
 
-**Not requiring research** (straightforward implementation on existing stack): S-02, S-03, S-04, S-05, S-09.
+**Not requiring research** (straightforward implementation on existing stack): S-02, S-03, S-04, S-05, S-09, S-10.
 
 ## Open Roadmap Questions
 

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { SignUpForm } from "./sign-up-form";
 
 export default function SignUpPage() {
@@ -12,7 +13,9 @@ export default function SignUpPage() {
 						Sign up to start using FlowState
 					</p>
 				</div>
-				<SignUpForm />
+				<Suspense>
+					<SignUpForm />
+				</Suspense>
 			</div>
 		</main>
 	);
