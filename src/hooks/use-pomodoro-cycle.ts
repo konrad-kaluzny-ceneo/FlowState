@@ -30,11 +30,11 @@ export type PomodoroCycleState = "idle" | "running" | "completed";
 
 export type CycleKind = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 
-let activeCycleRecoveryFetched = false;
+let activeCycleRecoveredForMode: string | null = null;
 
 /** Test-only reset for module-level recovery guard. */
 export function resetActiveCycleRecoveryForTests(): void {
-	activeCycleRecoveryFetched = false;
+	activeCycleRecoveredForMode = null;
 }
 
 async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {
@@ -240,19 +240,52 @@ export function usePomodoroCycle() {
 	);
 
 	const recoverActiveCycle = useCallback(async () => {
-		if (activeCycleRecoveryFetched || recoveredRef.current) {
+		if (activeCycleRecoveredForMode === mode || recoveredRef.current) {
 			return;
 		}
 
 		recoveredRef.current = true;
-		activeCycleRecoveryFetched = true;
+		activeCycleRecoveredForMode = mode;
 
 		const active = await cycles.getActive();
 
 		if (active != null) {
 			resumeFromActiveCycle(active);
+
+			// Derive completed work cycle count from server for correct break cadence
+			try {
+				if (mode === "authenticated") {
+					const sessionCycles = await utils.client.cycle.list.query({
+						sessionId: Number(active.sessionId),
+					});
+					const count = sessionCycles.filter(
+						(c) => c.kind === "WORK" && c.state === "COMPLETED",
+					).length;
+					setCompletedWorkCycles(count);
+				} else {
+					const { loadSnapshot } = await import("~/lib/guest/store");
+					const snapshot = loadSnapshot();
+					const count = snapshot.cycles.filter(
+						(c) =>
+							c.sessionId === active.sessionId &&
+							c.kind === "WORK" &&
+							c.state === "COMPLETED",
+					).length;
+					setCompletedWorkCycles(count);
+				}
+			} catch {
+				// Best effort — counter stays at 0, worst case is wrong break type
+			}
+		} else {
+			// No active cycle — session may have timed out server-side; reset counter
+			setCompletedWorkCycles(0);
 		}
-	}, [cycles, resumeFromActiveCycle]);
+	}, [cycles, resumeFromActiveCycle, mode, utils.client.cycle.list]);
+
+	useEffect(() => {
+		// When mode changes (e.g. guest → authenticated on login), allow re-recovery
+		recoveredRef.current = false;
+	}, [mode]);
 
 	useEffect(() => {
 		void recoverActiveCycle();

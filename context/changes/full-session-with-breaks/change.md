@@ -1,9 +1,9 @@
 ---
 id: full-session-with-breaks
 title: Full session with breaks and explicit end
-status: implemented
+status: impl_reviewed
 created: 2026-05-30
-updated: 2026-05-30
+updated: 2026-05-31
 roadmap: S-02
 linear: FLO-10
 github: "#10"

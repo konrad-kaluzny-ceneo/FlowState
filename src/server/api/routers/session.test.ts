@@ -61,6 +61,29 @@ vi.mock("~/server/db/index", () => ({
 					return Promise.resolve(session);
 				},
 			),
+			updateMany: vi.fn(
+				(args: {
+					where: {
+						userId?: string;
+						state?: string;
+						archivedAt?: null;
+					};
+					data: Record<string, unknown>;
+				}) => {
+					let count = 0;
+					for (const s of sessions) {
+						if (args.where.userId != null && s.userId !== args.where.userId)
+							continue;
+						if (args.where.state != null && s.state !== args.where.state)
+							continue;
+						if (args.where.archivedAt === null && s.archivedAt !== null)
+							continue;
+						Object.assign(s, args.data);
+						count++;
+					}
+					return Promise.resolve({ count });
+				},
+			),
 		},
 	},
 }));

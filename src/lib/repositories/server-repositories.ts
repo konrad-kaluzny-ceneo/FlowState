@@ -3,9 +3,18 @@ import type {
 	DomainActiveCycle,
 	DomainSession,
 	DomainTask,
+	DomainTaskId,
 	SessionRepository,
 	TaskRepository,
 } from "~/lib/data-mode/types";
+
+function toNumericId(id: DomainTaskId): number {
+	const num = Number(id);
+	if (!Number.isFinite(num)) {
+		throw new Error(`Invalid numeric ID: ${String(id)}`);
+	}
+	return num;
+}
 
 type CreateTaskInput = {
 	title: string;
@@ -60,9 +69,9 @@ export function createServerTaskRepository(client: TrpcClient): TaskRepository {
 		update: (input) =>
 			client.task.update.mutate({
 				...input,
-				id: Number(input.id),
+				id: toNumericId(input.id),
 			}),
-		delete: (input) => client.task.delete.mutate({ id: Number(input.id) }),
+		delete: (input) => client.task.delete.mutate({ id: toNumericId(input.id) }),
 	};
 }
 
@@ -74,16 +83,18 @@ export function createServerCycleRepository(
 		create: (input) =>
 			client.cycle.create.mutate({
 				...input,
-				taskId: input.taskId != null ? Number(input.taskId) : undefined,
+				taskId: input.taskId != null ? toNumericId(input.taskId) : undefined,
 			}),
 		complete: async (input) => {
 			await client.cycle.complete.mutate({
-				cycleId: Number(input.cycleId),
+				cycleId: toNumericId(input.cycleId),
 				markTaskDone: input.markTaskDone,
 			});
 		},
 		interrupt: async (input) => {
-			await client.cycle.interrupt.mutate({ cycleId: Number(input.cycleId) });
+			await client.cycle.interrupt.mutate({
+				cycleId: toNumericId(input.cycleId),
+			});
 		},
 	};
 }
