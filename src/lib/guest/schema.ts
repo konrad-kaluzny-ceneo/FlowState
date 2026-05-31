@@ -6,7 +6,9 @@ export const guestTaskSchema = z.object({
 	id: z.string().uuid(),
 	title: z.string().min(1).max(256),
 	status: z.enum(["active", "completed"]),
-	workType: z.enum(["DEEP_WORK", "ADMIN", "REACTIVE"]).default("ADMIN"),
+	workType: z
+		.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"])
+		.default("OPERATIONAL"),
 	weight: z.number().int().min(1).max(3).default(2),
 	createdAt: z.coerce.date(),
 	updatedAt: z.coerce.date().nullable(),

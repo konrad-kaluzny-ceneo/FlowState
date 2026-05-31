@@ -11,7 +11,7 @@ generator client {
 
 enum WorkType {
   DEEP_WORK
-  ADMIN
+  OPERATIONAL
   REACTIVE
 }
 
@@ -46,7 +46,7 @@ model Task {
   title     String    @db.VarChar(256)
   status    String    @default("active") @db.VarChar(20)
   userId    String    @map("user_id") @db.VarChar(255)
-  workType  WorkType  @default(ADMIN) @map("work_type")
+  workType  WorkType  @default(OPERATIONAL) @map("work_type")
   weight    Int       @default(2) @db.SmallInt
   createdAt DateTime  @default(now()) @map("createdAt") @db.Timestamptz
   updatedAt DateTime? @updatedAt @map("updatedAt") @db.Timestamptz

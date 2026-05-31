@@ -9,7 +9,7 @@ import type {
 
 type CreateTaskInput = {
 	title: string;
-	workType?: "DEEP_WORK" | "ADMIN" | "REACTIVE";
+	workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight?: 1 | 2 | 3;
 };
 
@@ -17,7 +17,7 @@ type UpdateTaskInput = {
 	id: number;
 	title?: string;
 	status?: "active" | "completed";
-	workType?: "DEEP_WORK" | "ADMIN" | "REACTIVE";
+	workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight?: 1 | 2 | 3;
 };
 
@@ -32,7 +32,7 @@ type TrpcTaskRow = {
 	userId: string;
 	title: string;
 	status: string;
-	workType: "DEEP_WORK" | "ADMIN" | "REACTIVE";
+	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: number;
 	createdAt: Date;
 	updatedAt: Date | null;
@@ -72,7 +72,8 @@ function toDomainTask(row: TrpcTaskRow): DomainTask {
 export function createServerTaskRepository(client: TrpcClient): TaskRepository {
 	return {
 		list: async () => (await client.task.list.fetch()).map(toDomainTask),
-		create: async (input) => toDomainTask(await client.task.create.mutate(input)),
+		create: async (input) =>
+			toDomainTask(await client.task.create.mutate(input)),
 		update: (input) =>
 			client.task.update.mutate({
 				...input,

@@ -17,7 +17,7 @@ function toDomainTask(task: {
 	id: string;
 	title: string;
 	status: string;
-	workType: "DEEP_WORK" | "ADMIN" | "REACTIVE";
+	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: number;
 	createdAt: Date;
 	updatedAt: Date | null;
@@ -79,7 +79,7 @@ export function createGuestTaskRepository(): TaskRepository {
 				id: newGuestId(),
 				title: input.title,
 				status: "active" as const,
-				workType: input.workType ?? "ADMIN",
+				workType: input.workType ?? "OPERATIONAL",
 				weight: Math.min(3, Math.max(1, rawWeight)) as 1 | 2 | 3,
 				createdAt: now,
 				updatedAt: null,

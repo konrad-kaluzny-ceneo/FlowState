@@ -7,7 +7,7 @@ import type { DomainTask, DomainTaskId } from "~/lib/data-mode/types";
 
 const WORK_TYPE_CONFIG = {
 	DEEP_WORK: { label: "Deep", bg: "bg-blue-500/20", text: "text-blue-300" },
-	ADMIN: { label: "Ops", bg: "bg-amber-500/20", text: "text-amber-300" },
+	OPERATIONAL: { label: "Ops", bg: "bg-amber-500/20", text: "text-amber-300" },
 	REACTIVE: { label: "Reactive", bg: "bg-rose-500/20", text: "text-rose-300" },
 } as const;
 
@@ -18,7 +18,7 @@ function TaskBadges({
 	weight,
 	dimmed = false,
 }: {
-	workType: "DEEP_WORK" | "ADMIN" | "REACTIVE";
+	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: 1 | 2 | 3;
 	dimmed?: boolean;
 }) {
@@ -99,14 +99,14 @@ export function TaskList({
 	const [newTitle, setNewTitle] = useState("");
 	const [showDetails, setShowDetails] = useState(false);
 	const [newWorkType, setNewWorkType] = useState<
-		"DEEP_WORK" | "ADMIN" | "REACTIVE"
-	>("ADMIN");
+		"DEEP_WORK" | "OPERATIONAL" | "REACTIVE"
+	>("OPERATIONAL");
 	const [newWeight, setNewWeight] = useState<1 | 2 | 3>(2);
 	const [editingId, setEditingId] = useState<DomainTaskId | null>(null);
 	const [editTitle, setEditTitle] = useState("");
 	const [editWorkType, setEditWorkType] = useState<
-		"DEEP_WORK" | "ADMIN" | "REACTIVE"
-	>("ADMIN");
+		"DEEP_WORK" | "OPERATIONAL" | "REACTIVE"
+	>("OPERATIONAL");
 	const [editWeight, setEditWeight] = useState<1 | 2 | 3>(2);
 	const [isPending, setIsPending] = useState(false);
 
@@ -163,7 +163,7 @@ export function TaskList({
 							await onRefresh();
 							setNewTitle("");
 							setShowDetails(false);
-							setNewWorkType("ADMIN");
+							setNewWorkType("OPERATIONAL");
 							setNewWeight(2);
 						} finally {
 							setIsPending(false);
@@ -201,13 +201,13 @@ export function TaskList({
 							<SegmentedControl
 								colorMap={{
 									DEEP_WORK: "bg-blue-500/30 text-blue-300",
-									ADMIN: "bg-amber-500/30 text-amber-300",
+									OPERATIONAL: "bg-amber-500/30 text-amber-300",
 									REACTIVE: "bg-rose-500/30 text-rose-300",
 								}}
 								onChange={setNewWorkType}
 								options={[
 									{ value: "DEEP_WORK" as const, label: "Deep" },
-									{ value: "ADMIN" as const, label: "Ops" },
+									{ value: "OPERATIONAL" as const, label: "Ops" },
 									{ value: "REACTIVE" as const, label: "Reactive" },
 								]}
 								value={newWorkType}
@@ -282,13 +282,13 @@ export function TaskList({
 											<SegmentedControl
 												colorMap={{
 													DEEP_WORK: "bg-blue-500/30 text-blue-300",
-													ADMIN: "bg-amber-500/30 text-amber-300",
+													OPERATIONAL: "bg-amber-500/30 text-amber-300",
 													REACTIVE: "bg-rose-500/30 text-rose-300",
 												}}
 												onChange={setEditWorkType}
 												options={[
 													{ value: "DEEP_WORK" as const, label: "Deep" },
-													{ value: "ADMIN" as const, label: "Ops" },
+													{ value: "OPERATIONAL" as const, label: "Ops" },
 													{ value: "REACTIVE" as const, label: "Reactive" },
 												]}
 												value={editWorkType}
