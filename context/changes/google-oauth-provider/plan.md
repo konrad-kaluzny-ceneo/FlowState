@@ -64,11 +64,13 @@ Create the reusable button component with Google branding and wire it into both 
 
 #### 3. Sign-In Page Integration
 
-**File**: `src/app/auth/sign-in/page.tsx`
+**File**: `src/app/auth/sign-in/page.tsx` → refactored to `page.tsx` (server) + `sign-in-form.tsx` (client)
 
 **Intent**: Add the Google button and divider below the existing email/password form, inside the card container. Also read `?error` search param to display an OAuth error banner.
 
 **Contract**: Import and render `AuthDivider` + `GoogleSignInButton` after the `</form>` and before the "Don't have an account?" link. The `errorCallbackURL` is `/auth/sign-in?error=oauth_failed`. Read `useSearchParams()` to detect `?error=oauth_failed` and display an error banner using the same `role="alert"` pattern as the existing `state.error` display.
+
+**Addendum (impl-review 2026-05-31)**: The sign-in page was refactored from a monolithic client component into a server wrapper (`page.tsx` with `<Suspense>`) + client form (`sign-in-form.tsx`), mirroring the sign-up page's existing architecture. This is required by Next.js App Router when using `useSearchParams()` in a client component rendered from a server component. The `SignInFormState` type moved to `sign-in-form.tsx`, and `action.ts` import was updated accordingly. All functional contracts are met in the new file structure.
 
 #### 4. Sign-Up Page Integration
 
@@ -230,16 +232,16 @@ Use `page.waitForURL()` with a pattern that excludes the current auth page URL t
 
 ## Progress
 
-> Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
+> Convention: `- [ ]` pending, `- [x]` done. Append `— <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
 
 ### Phase 1: Google OAuth Button Component
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `pnpm typecheck`
-- [x] 1.2 Linting passes: `pnpm check`
-- [x] 1.3 Existing unit tests pass: `pnpm test`
-- [x] 1.4 No regressions in existing e2e smoke test: `pnpm test:e2e`
+- [x] 1.1 Type checking passes: `pnpm typecheck` — f66b770
+- [x] 1.2 Linting passes: `pnpm check` — f66b770
+- [x] 1.3 Existing unit tests pass: `pnpm test` — f66b770
+- [x] 1.4 No regressions in existing e2e smoke test: `pnpm test:e2e` — f66b770
 
 #### Manual
 
@@ -250,11 +252,13 @@ Use `page.waitForURL()` with a pattern that excludes the current auth page URL t
 
 ### Phase 2: OAuth Error Handling
 
+> **Note (impl-review 2026-05-31):** Phase 2 error handling was implemented alongside Phase 1 in commit f66b770. Automated checks already pass; manual items still require browser verification.
+
 #### Automated
 
-- [ ] 2.1 Type checking passes: `pnpm typecheck`
-- [ ] 2.2 Linting passes: `pnpm check`
-- [ ] 2.3 Existing tests pass: `pnpm test`
+- [x] 2.1 Type checking passes: `pnpm typecheck` — f66b770
+- [x] 2.2 Linting passes: `pnpm check` — f66b770
+- [x] 2.3 Existing tests pass: `pnpm test` — f66b770
 
 #### Manual
 

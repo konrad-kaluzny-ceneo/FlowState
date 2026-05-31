@@ -19,11 +19,15 @@ export function GoogleSignInButton({
 
 	async function handleClick() {
 		setIsLoading(true);
-		await authClient.signIn.social({
-			provider: "google",
-			callbackURL: "/",
-			errorCallbackURL,
-		});
+		try {
+			await authClient.signIn.social({
+				provider: "google",
+				callbackURL: "/",
+				errorCallbackURL,
+			});
+		} catch {
+			setIsLoading(false);
+		}
 	}
 
 	return (

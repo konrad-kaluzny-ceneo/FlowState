@@ -4,6 +4,7 @@ version: 1
 status: draft
 created: 2026-05-26
 updated: 2026-05-31
+active_slices: [S-03, S-05]
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -37,9 +38,9 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | F-02 | e2e-test-infra | [FLO-14](https://linear.app/flowstate-10xdev/issue/FLO-14) | [#6](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/6) | (foundation) Playwright installed with authenticated test user flow; agent and CI can run browser-based e2e tests against the real app | — | NFR (crash/refresh recovery), NFR (200ms acknowledgement), NFR (timer drift ≤ ±2s) | done |
 | S-01 | first-pomodoro-cycle | [FLO-8](https://linear.app/flowstate-10xdev/issue/FLO-8) | [#7](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/7) (closed) | start one configurable work cycle on a selected task, hear the audio prompt at cycle end, confirm transition, and return to the same state after a refresh | F-01, F-02 | US-01, FR-009, FR-010, FR-012, FR-013, FR-014, NFR (timer drift ≤ ±2s), NFR (crash/refresh recovery), NFR (200ms acknowledgement) | done |
 | S-02 | full-session-with-breaks | [FLO-10](https://linear.app/flowstate-10xdev/issue/FLO-10) | [#10](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/10) | complete a multi-cycle session with short and long breaks, see configured break durations applied, and end the session explicitly or after 4h inactivity | S-01 | US-01, FR-011, FR-014, FR-019, NFR (session retention 90 days) | done |
-| S-03 | mid-cycle-completion-prompt | [FLO-11](https://linear.app/flowstate-10xdev/issue/FLO-11) | [#11](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/11) | mark a task done mid-cycle and choose between picking the next task to keep the cycle running or ending the cycle to take a break now | S-01 | FR-015, FR-009a (revert path consistency) | proposed |
+| S-03 | mid-cycle-completion-prompt | [FLO-11](https://linear.app/flowstate-10xdev/issue/FLO-11) | [#11](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/11) | mark a task done mid-cycle and choose between picking the next task to keep the cycle running or ending the cycle to take a break now | S-01 | FR-015, FR-009a (revert path consistency) | active |
 | S-04 | task-attributes-for-scoring | [FLO-9](https://linear.app/flowstate-10xdev/issue/FLO-9) | [#8](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/8) | tag tasks with work type (deep work / admin / reactive) and weight (1–3) at creation and during edit, with values surfaced in the task list | F-01, F-02 | FR-005 (extend), FR-017, FR-018 | done |
-| S-05 | end-of-cycle-checkin | [FLO-12](https://linear.app/flowstate-10xdev/issue/FLO-12) | [#12](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/12) | declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session | S-01 | FR-020, NFR (mental-state data privacy) | proposed |
+| S-05 | end-of-cycle-checkin | [FLO-12](https://linear.app/flowstate-10xdev/issue/FLO-12) | [#12](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/12) | declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session | S-01 | FR-020, NFR (mental-state data privacy) | active |
 | S-06 | adaptive-task-suggestion | [FLO-13](https://linear.app/flowstate-10xdev/issue/FLO-13) | [#13](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/13) | after each check-in, see a suggested next task with a one-line rationale and accept it or override by picking any other task | S-04, S-05 | FR-021, FR-022, NFR (suggestion feedback ≥1s visible) | proposed |
 | S-07 | account-recovery-flow | [FLO-7](https://linear.app/flowstate-10xdev/issue/FLO-7) | [#9](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/9) | reset a forgotten password and recover access without losing existing tasks or session history | F-02 | FR-003a, NFR (auth must not lock user out of own data) | ready |
 | S-08 | guest-local-storage-merge | — | — | use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account | S-01, F-02 | NFR (no silent data loss), FR-004–FR-009 | proposed |
@@ -151,7 +152,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** This is a mindfulness control point — its absence regresses the wedge. Sequenced after S-01 so the cycle has a real "in-flight" state to interrupt. Smaller than S-02 but logically peer to it.
-- **Status:** proposed
+- **Status:** active
 
 
 ### S-04: Task attributes for scoring
@@ -181,7 +182,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Should the check-in block the transition or be skippable? Owner: user (product call). Block: no — PRD §FR-020 phrasing ("user completes a mindful check-in") implies blocking; treat as non-skippable in MVP and revisit if check-in fatigue surfaces.
 - **Risk:** Adds a UI step in the cycle-end transition that S-01 already owns. Risk is regression of S-01's confirm-flow ergonomics. Mitigation: check-in lives between work-end-prompt and break-start, not in front of the audio signal.
-- **Status:** proposed
+- **Status:** active
 
 ### S-06: Adaptive task suggestion with override
 

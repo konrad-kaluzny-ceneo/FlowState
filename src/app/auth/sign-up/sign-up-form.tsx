@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useActionState } from "react";
-import { AuthDivider } from "../_components/auth-divider";
-import { GoogleSignInButton } from "../_components/google-sign-in-button";
+import { AuthDivider } from "~/app/auth/_components/auth-divider";
+import { GoogleSignInButton } from "~/app/auth/_components/google-sign-in-button";
 import { signUpAction } from "./actions";
 import type { SignUpFormState } from "./schema";
 
