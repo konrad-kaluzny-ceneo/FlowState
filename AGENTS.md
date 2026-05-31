@@ -43,6 +43,13 @@
 
 - Run all unit tests after each milestone: `pnpm test`
 - **Critical:** Always run `pnpm test` at the end of every work cycle before presenting results.
+- **E2E (Playwright):** Never run bare `pnpm test:e2e` — the default `html` reporter starts an interactive server ("Press Ctrl+C to quit") that blocks the terminal indefinitely. Always run with `CI=true` to suppress interactive prompts:
+  ```
+  set CI=true && pnpm test:e2e
+  ```
+  This ensures Playwright uses the `list` reporter fallback and exits cleanly after all tests complete. The `webServer` block in `playwright.config.ts` builds and starts the app automatically on port 3001 (timeout 5 min), so no manual server startup is needed.
+  - To run a single spec: `set CI=true && pnpm exec playwright test e2e/my-spec.spec.ts`
+  - To reuse an already-running dev server (faster iteration): `set E2E_REUSE_SERVER=1 && set CI=true && pnpm test:e2e` (start `pnpm dev` on port 3001 separately first).
 - **E2E vs integration:** A direct DB query or server-side tRPC caller is an integration test, not e2e. True e2e requires a browser with an authenticated session hitting the running app. Do not claim "e2e verified" unless a real browser flow (with auth) was exercised.
 - **Test pyramid:** All changes must include unit and integration tests. Code must be testable at each level of the pyramid (unit → integration → e2e). Do not ship code without covering the appropriate test levels for the change.
 
