@@ -17,7 +17,7 @@ function TaskBadges({
 	dimmed = false,
 }: {
 	workType: "DEEP_WORK" | "ADMIN" | "REACTIVE";
-	weight: number;
+	weight: 1 | 2 | 3;
 	dimmed?: boolean;
 }) {
 	const config = WORK_TYPE_CONFIG[workType];
@@ -58,6 +58,7 @@ function SegmentedControl<T extends string | number>({
 					colorMap?.[String(opt.value)] ?? "bg-purple-600 text-white";
 				return (
 					<button
+						aria-pressed={isActive}
 						className={`rounded-md px-2 py-1 font-medium text-xs transition ${
 							isActive
 								? activeColor
@@ -115,7 +116,7 @@ export function TaskList({
 		setEditingId(task.id);
 		setEditTitle(task.title);
 		setEditWorkType(task.workType);
-		setEditWeight(task.weight as 1 | 2 | 3);
+		setEditWeight(task.weight);
 	}
 
 	async function saveEdit(id: DomainTaskId) {

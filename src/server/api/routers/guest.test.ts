@@ -12,7 +12,7 @@ type TaskRow = {
 	status: string;
 	userId: string;
 	workType: "DEEP_WORK" | "ADMIN" | "REACTIVE";
-	weight: number;
+	weight: 1 | 2 | 3;
 };
 
 type CycleRow = {

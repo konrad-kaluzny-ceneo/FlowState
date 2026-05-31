@@ -8,7 +8,7 @@ export type DomainTask = {
 	createdAt: Date;
 	updatedAt: Date | null;
 	workType: "DEEP_WORK" | "ADMIN" | "REACTIVE";
-	weight: number;
+	weight: 1 | 2 | 3;
 };
 
 export type DomainActiveCycle = {
@@ -43,14 +43,14 @@ export interface TaskRepository {
 	create(input: {
 		title: string;
 		workType?: "DEEP_WORK" | "ADMIN" | "REACTIVE";
-		weight?: number;
+		weight?: 1 | 2 | 3;
 	}): Promise<DomainTask>;
 	update(input: {
 		id: DomainTaskId;
 		title?: string;
 		status?: "active" | "completed";
 		workType?: "DEEP_WORK" | "ADMIN" | "REACTIVE";
-		weight?: number;
+		weight?: 1 | 2 | 3;
 	}): Promise<void>;
 	delete(input: { id: DomainTaskId }): Promise<void>;
 }
