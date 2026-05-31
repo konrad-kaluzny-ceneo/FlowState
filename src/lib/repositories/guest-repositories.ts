@@ -17,7 +17,7 @@ function toDomainTask(task: {
 	id: string;
 	title: string;
 	status: string;
-	workType: "DEEP_WORK" | "ADMIN" | "REACTIVE";
+	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: number;
 	createdAt: Date;
 	updatedAt: Date | null;
@@ -30,7 +30,7 @@ function toDomainTask(task: {
 		createdAt: task.createdAt,
 		updatedAt: task.updatedAt,
 		workType: task.workType,
-		weight: task.weight,
+		weight: task.weight as 1 | 2 | 3,
 	};
 }
 
@@ -74,12 +74,13 @@ export function createGuestTaskRepository(): TaskRepository {
 
 		async create(input) {
 			const now = new Date();
+			const rawWeight = input.weight ?? 2;
 			const task = {
 				id: newGuestId(),
 				title: input.title,
 				status: "active" as const,
-				workType: input.workType ?? "ADMIN",
-				weight: input.weight ?? 2,
+				workType: input.workType ?? "OPERATIONAL",
+				weight: Math.min(3, Math.max(1, rawWeight)) as 1 | 2 | 3,
 				createdAt: now,
 				updatedAt: null,
 			};
@@ -108,6 +109,10 @@ export function createGuestTaskRepository(): TaskRepository {
 						...task,
 						...(input.title != null ? { title: input.title } : {}),
 						...(input.status != null ? { status: input.status } : {}),
+						...(input.workType != null ? { workType: input.workType } : {}),
+						...(input.weight != null
+							? { weight: Math.min(3, Math.max(1, input.weight)) as 1 | 2 | 3 }
+							: {}),
 						updatedAt: new Date(),
 					};
 				}),
