@@ -5,8 +5,6 @@ import { useState } from "react";
 import { useRepositories } from "~/lib/data-mode/data-mode-context";
 import type { DomainTask, DomainTaskId } from "~/lib/data-mode/types";
 
-const TASK_DEFAULTS = { workType: "ADMIN" as const, weight: 2 } as const;
-
 const WORK_TYPE_CONFIG = {
 	DEEP_WORK: { label: "Deep", bg: "bg-blue-500/20", text: "text-blue-300" },
 	ADMIN: { label: "Admin", bg: "bg-amber-500/20", text: "text-amber-300" },
@@ -67,6 +65,7 @@ function SegmentedControl<T extends string | number>({
 						}`}
 						key={String(opt.value)}
 						onClick={() => onChange(opt.value)}
+						onMouseDown={(e) => e.preventDefault()}
 						type="button"
 					>
 						{opt.label}
@@ -115,8 +114,8 @@ export function TaskList({
 	function startEditing(task: DomainTask) {
 		setEditingId(task.id);
 		setEditTitle(task.title);
-		setEditWorkType(task.workType ?? TASK_DEFAULTS.workType);
-		setEditWeight((task.weight ?? TASK_DEFAULTS.weight) as 1 | 2 | 3);
+		setEditWorkType(task.workType);
+		setEditWeight(task.weight as 1 | 2 | 3);
 	}
 
 	async function saveEdit(id: DomainTaskId) {
@@ -315,10 +314,7 @@ export function TaskList({
 										{task.title}
 									</button>
 								)}
-								<TaskBadges
-									weight={task.weight ?? TASK_DEFAULTS.weight}
-									workType={task.workType ?? TASK_DEFAULTS.workType}
-								/>
+								<TaskBadges weight={task.weight} workType={task.workType} />
 								<button
 									className={`shrink-0 rounded-lg px-2 py-1 font-medium text-xs transition ${
 										focusedTaskId === task.id
@@ -392,8 +388,8 @@ export function TaskList({
 								</span>
 								<TaskBadges
 									dimmed
-									weight={task.weight ?? TASK_DEFAULTS.weight}
-									workType={task.workType ?? TASK_DEFAULTS.workType}
+									weight={task.weight}
+									workType={task.workType}
 								/>
 								<button
 									aria-label="Delete task"

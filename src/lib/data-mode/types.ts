@@ -7,8 +7,8 @@ export type DomainTask = {
 	userId: string;
 	createdAt: Date;
 	updatedAt: Date | null;
-	workType?: "DEEP_WORK" | "ADMIN" | "REACTIVE";
-	weight?: number;
+	workType: "DEEP_WORK" | "ADMIN" | "REACTIVE";
+	weight: number;
 };
 
 export type DomainActiveCycle = {

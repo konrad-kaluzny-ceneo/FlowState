@@ -109,7 +109,9 @@ export function createGuestTaskRepository(): TaskRepository {
 						...(input.title != null ? { title: input.title } : {}),
 						...(input.status != null ? { status: input.status } : {}),
 						...(input.workType != null ? { workType: input.workType } : {}),
-						...(input.weight != null ? { weight: input.weight } : {}),
+						...(input.weight != null
+							? { weight: Math.min(3, Math.max(1, input.weight)) }
+							: {}),
 						updatedAt: new Date(),
 					};
 				}),
