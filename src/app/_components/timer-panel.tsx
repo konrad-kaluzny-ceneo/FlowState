@@ -3,10 +3,17 @@
 import { useState } from "react";
 
 import type {
+	CycleKind,
 	FocusedTask,
 	PomodoroCycleState,
 } from "~/hooks/use-pomodoro-cycle";
-import { getLastDuration } from "~/lib/duration-storage";
+import {
+	getLastDuration,
+	getLongBreakDuration,
+	getShortBreakDuration,
+	setLongBreakDuration,
+	setShortBreakDuration,
+} from "~/lib/duration-storage";
 import { formatRemainingMs } from "~/lib/format-remaining";
 
 const DURATION_PRESETS_SEC = [
@@ -34,6 +41,7 @@ type TimerPanelProps = {
 	onStart: (durationSec: number) => Promise<void>;
 	onInterrupt: () => Promise<void>;
 	isStarting?: boolean;
+	cycleKind?: CycleKind | null;
 };
 
 export function TimerPanel({
@@ -43,6 +51,7 @@ export function TimerPanel({
 	onStart,
 	onInterrupt,
 	isStarting = false,
+	cycleKind = null,
 }: TimerPanelProps) {
 	const [selectedSec, setSelectedSec] = useState(
 		() => initialDurationState().selectedSec,
@@ -50,8 +59,15 @@ export function TimerPanel({
 	const [customMinutes, setCustomMinutes] = useState(
 		() => initialDurationState().customMinutes,
 	);
+	const [shortBreakMin, setShortBreakMin] = useState(() =>
+		Math.round(getShortBreakDuration() / 60),
+	);
+	const [longBreakMin, setLongBreakMin] = useState(() =>
+		Math.round(getLongBreakDuration() / 60),
+	);
+	const [showBreakSettings, setShowBreakSettings] = useState(false);
 
-	if (focusedTask == null && state !== "running") {
+	if (focusedTask == null && state !== "running" && state !== "completed") {
 		return null;
 	}
 
@@ -60,17 +76,31 @@ export function TimerPanel({
 	}
 
 	if (state === "running") {
+		const isBreak = cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
+		const breakLabel =
+			cycleKind === "LONG_BREAK" ? "Long Break" : "Short Break";
+
 		return (
 			<section
-				className="w-full max-w-lg rounded-xl border border-white/20 bg-white/10 p-6 text-center"
+				className={`w-full max-w-lg rounded-xl border p-6 text-center ${
+					isBreak
+						? "border-teal-400/30 bg-teal-900/20"
+						: "border-white/20 bg-white/10"
+				}`}
 				data-testid="timer-panel-running"
 			>
-				<p className="text-sm text-white/60">Focusing on</p>
-				<p className="mt-1 font-medium text-lg text-white">
-					{focusedTask?.title ?? "Task"}
+				<p className="text-sm text-white/60">
+					{isBreak ? breakLabel : "Focusing on"}
 				</p>
+				{!isBreak && (
+					<p className="mt-1 font-medium text-lg text-white">
+						{focusedTask?.title ?? "Task"}
+					</p>
+				)}
 				<p
-					className="mt-4 font-bold font-mono text-6xl tabular-nums tracking-tight"
+					className={`mt-4 font-bold font-mono text-6xl tabular-nums tracking-tight ${
+						isBreak ? "text-teal-200" : ""
+					}`}
 					data-testid="timer-countdown"
 				>
 					{formatRemainingMs(remainingMs)}
@@ -80,7 +110,7 @@ export function TimerPanel({
 					onClick={() => void onInterrupt()}
 					type="button"
 				>
-					Interrupt
+					{isBreak ? "End break early" : "Interrupt"}
 				</button>
 			</section>
 		);
@@ -145,6 +175,67 @@ export function TimerPanel({
 			>
 				{isStarting ? "Starting..." : "Start Cycle"}
 			</button>
+
+			<div className="mt-4 border-white/10 border-t pt-4">
+				<button
+					className="w-full text-center text-sm text-white/50 transition hover:text-white/70"
+					data-testid="break-settings-toggle"
+					onClick={() => setShowBreakSettings(!showBreakSettings)}
+					type="button"
+				>
+					{showBreakSettings ? "Hide break settings ▲" : "Break settings ▼"}
+				</button>
+
+				{showBreakSettings && (
+					<div
+						className="mt-3 flex flex-col gap-3"
+						data-testid="break-settings-panel"
+					>
+						<label className="flex items-center justify-between text-sm text-white/70">
+							Short break
+							<div className="flex items-center gap-1">
+								<input
+									className="w-14 rounded border border-white/20 bg-white/10 px-2 py-1 text-center text-white"
+									data-testid="short-break-input"
+									max={30}
+									min={1}
+									onChange={(e) => {
+										const val = Number.parseInt(e.target.value, 10);
+										setShortBreakMin(val || 1);
+										if (Number.isFinite(val) && val >= 1 && val <= 30) {
+											setShortBreakDuration(val * 60);
+										}
+									}}
+									type="number"
+									value={shortBreakMin}
+								/>
+								<span className="text-white/50">min</span>
+							</div>
+						</label>
+						<label className="flex items-center justify-between text-sm text-white/70">
+							Long break
+							<div className="flex items-center gap-1">
+								<input
+									className="w-14 rounded border border-white/20 bg-white/10 px-2 py-1 text-center text-white"
+									data-testid="long-break-input"
+									max={30}
+									min={1}
+									onChange={(e) => {
+										const val = Number.parseInt(e.target.value, 10);
+										setLongBreakMin(val || 1);
+										if (Number.isFinite(val) && val >= 1 && val <= 30) {
+											setLongBreakDuration(val * 60);
+										}
+									}}
+									type="number"
+									value={longBreakMin}
+								/>
+								<span className="text-white/50">min</span>
+							</div>
+						</label>
+					</div>
+				)}
+			</div>
 		</section>
 	);
 }

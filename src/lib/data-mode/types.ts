@@ -73,6 +73,7 @@ export interface CycleRepository {
 
 export interface SessionRepository {
 	getOrCreateActive(): Promise<DomainSession>;
+	end(): Promise<DomainSession>;
 }
 
 export type Repositories = {

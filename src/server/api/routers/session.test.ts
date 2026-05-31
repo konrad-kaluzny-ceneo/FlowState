@@ -9,6 +9,8 @@ let sessions: Array<{
 	userId: string;
 	state: string;
 	archivedAt: Date | null;
+	lastActivityAt: Date;
+	endedAt: Date | null;
 }> = [];
 let nextId = 1;
 
@@ -39,15 +41,49 @@ vi.mock("~/server/db/index", () => ({
 				},
 			),
 			create: vi.fn((args: { data: { userId: string } }) => {
+				const now = new Date();
 				const session = {
 					id: nextId++,
 					userId: args.data.userId,
 					state: "ACTIVE",
 					archivedAt: null,
+					lastActivityAt: now,
+					endedAt: null,
 				};
 				sessions.push(session);
 				return Promise.resolve(session);
 			}),
+			update: vi.fn(
+				(args: { where: { id: number }; data: Record<string, unknown> }) => {
+					const session = sessions.find((s) => s.id === args.where.id);
+					if (!session) throw new Error("not found");
+					Object.assign(session, args.data);
+					return Promise.resolve(session);
+				},
+			),
+			updateMany: vi.fn(
+				(args: {
+					where: {
+						userId?: string;
+						state?: string;
+						archivedAt?: null;
+					};
+					data: Record<string, unknown>;
+				}) => {
+					let count = 0;
+					for (const s of sessions) {
+						if (args.where.userId != null && s.userId !== args.where.userId)
+							continue;
+						if (args.where.state != null && s.state !== args.where.state)
+							continue;
+						if (args.where.archivedAt === null && s.archivedAt !== null)
+							continue;
+						Object.assign(s, args.data);
+						count++;
+					}
+					return Promise.resolve({ count });
+				},
+			),
 		},
 	},
 }));
@@ -106,6 +142,8 @@ describe("session router", () => {
 					userId: USER_ID,
 					state: "ACTIVE",
 					archivedAt: new Date(),
+					lastActivityAt: new Date(),
+					endedAt: null,
 				},
 			];
 
@@ -113,6 +151,90 @@ describe("session router", () => {
 
 			expect(session.id).not.toBe(99);
 			expect(sessions).toHaveLength(2);
+		});
+
+		it("ends stale session and creates new one when lastActivityAt > 4h", async () => {
+			const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
+			sessions = [
+				{
+					id: 50,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: fiveHoursAgo,
+					endedAt: null,
+				},
+			];
+
+			const session = await sessionCaller().getOrCreateActive();
+
+			expect(session.id).not.toBe(50);
+			expect(sessions[0]?.state).toBe("ENDED_BY_TIMEOUT");
+			expect(sessions[0]?.endedAt).not.toBeNull();
+			expect(session.state).toBe("ACTIVE");
+			expect(sessions).toHaveLength(2);
+		});
+
+		it("returns existing session when lastActivityAt < 4h", async () => {
+			const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+			sessions = [
+				{
+					id: 60,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: oneHourAgo,
+					endedAt: null,
+				},
+			];
+
+			const session = await sessionCaller().getOrCreateActive();
+
+			expect(session.id).toBe(60);
+			expect(sessions).toHaveLength(1);
+		});
+	});
+
+	describe("end", () => {
+		it("ends the active session", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			const result = await sessionCaller().end();
+
+			expect(result.state).toBe("ENDED_BY_USER");
+			expect(result.endedAt).not.toBeNull();
+		});
+
+		it("throws NOT_FOUND when no active session exists", async () => {
+			await expect(sessionCaller().end()).rejects.toMatchObject({
+				code: "NOT_FOUND",
+			});
+		});
+
+		it("throws NOT_FOUND when session is already ended", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ENDED_BY_USER",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					endedAt: new Date(),
+				},
+			];
+
+			await expect(sessionCaller().end()).rejects.toMatchObject({
+				code: "NOT_FOUND",
+			});
 		});
 	});
 });

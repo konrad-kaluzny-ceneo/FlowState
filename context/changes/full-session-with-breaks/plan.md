@@ -364,68 +364,68 @@ No schema migration required — all needed enums and fields already exist from 
 
 #### Automated
 
-- [ ] 1.1 `pnpm typecheck` passes with new SessionRepository.end() method
-- [ ] 1.2 `pnpm check` (Biome) passes
-- [ ] 1.3 Unit tests for session.end mutation (happy path + NOT_FOUND)
-- [ ] 1.4 Unit tests for lastActivityAt update on cycle create/complete/interrupt
-- [ ] 1.5 Unit test for inactivity timeout in findOrCreateActiveSession
-- [ ] 1.6 Existing cycle and session tests pass: `pnpm test`
+- [x] 1.1 `pnpm typecheck` passes with new SessionRepository.end() method — 08013bc
+- [x] 1.2 `pnpm check` (Biome) passes — 08013bc
+- [x] 1.3 Unit tests for session.end mutation (happy path + NOT_FOUND) — 08013bc
+- [x] 1.4 Unit tests for lastActivityAt update on cycle create/complete/interrupt — 08013bc
+- [x] 1.5 Unit test for inactivity timeout in findOrCreateActiveSession — 08013bc
+- [x] 1.6 Existing cycle and session tests pass: `pnpm test` — 08013bc
 
 #### Manual
 
-- [ ] 1.7 Verify session.end via tRPC caller integration test
-- [ ] 1.8 Verify inactivity timeout creates new session (integration test with mocked time)
+- [x] 1.7 Verify session.end via tRPC caller integration test — 08013bc
+- [x] 1.8 Verify inactivity timeout creates new session (integration test with mocked time) — 08013bc
 
 ### Phase 2: Break duration configuration
 
 #### Automated
 
-- [ ] 2.1 Unit tests for break duration storage functions (defaults, clamping, invalid input)
-- [ ] 2.2 `pnpm typecheck` passes
-- [ ] 2.3 `pnpm check` passes
-- [ ] 2.4 `pnpm test` passes
+- [x] 2.1 Unit tests for break duration storage functions (defaults, clamping, invalid input) — 45bb6f3
+- [x] 2.2 `pnpm typecheck` passes — 45bb6f3
+- [x] 2.3 `pnpm check` passes — 45bb6f3
+- [x] 2.4 `pnpm test` passes — 45bb6f3
 
 #### Manual
 
-- [ ] 2.5 Break duration controls visible in timer panel when idle with focused task
-- [ ] 2.6 Values persist across page refresh
-- [ ] 2.7 Values clamped to 1–30 min range
+- [x] 2.5 Break duration controls visible in timer panel when idle with focused task — 45bb6f3
+- [x] 2.6 Values persist across page refresh — 45bb6f3
+- [x] 2.7 Values clamped to 1–30 min range — 45bb6f3
 
 ### Phase 3: Client — break transition state machine
 
 #### Automated
 
-- [ ] 3.1 Unit test: work cycle complete → break auto-starts with correct kind and duration
-- [ ] 3.2 Unit test: after 4th work cycle, break kind is LONG_BREAK
-- [ ] 3.3 Unit test: break complete → returns to idle
-- [ ] 3.4 Unit test: break creation failure after work complete → error message + idle reset
-- [ ] 3.5 `pnpm typecheck` passes
-- [ ] 3.6 `pnpm check` passes
-- [ ] 3.7 `pnpm test` passes
+- [x] 3.1 Unit test: work cycle complete → break auto-starts with correct kind and duration — 566f0f6
+- [x] 3.2 Unit test: after 4th work cycle, break kind is LONG_BREAK — 566f0f6
+- [x] 3.3 Unit test: break complete → returns to idle — 566f0f6
+- [x] 3.4 Unit test: break creation failure after work complete → error message + idle reset — 566f0f6
+- [x] 3.5 `pnpm typecheck` passes — 566f0f6
+- [x] 3.6 `pnpm check` passes — 566f0f6
+- [x] 3.7 `pnpm test` passes — 566f0f6
 
 #### Manual
 
-- [ ] 3.8 Work cycle complete → break timer starts automatically
-- [ ] 3.9 Break timer shows calming color and correct label
-- [ ] 3.10 After 4 work cycles, long break triggers
-- [ ] 3.11 Break end → audio + overlay → confirm → idle
-- [ ] 3.12 Refresh during break → timer recovers
+- [x] 3.8 Work cycle complete → break timer starts automatically — 566f0f6
+- [x] 3.9 Break timer shows calming color and correct label — 566f0f6
+- [x] 3.10 After 4 work cycles, long break triggers — 566f0f6
+- [x] 3.11 Break end → audio + overlay → confirm → idle — 566f0f6
+- [x] 3.12 Refresh during break → timer recovers — 566f0f6
 
 ### Phase 4: Session end UI and timeout handling
 
 #### Automated
 
-- [ ] 4.1 Unit test: endSession() calls sessions.end() and resets state
-- [ ] 4.2 Unit test: endSession() interrupts running cycle before ending
-- [ ] 4.3 Unit test: hasActiveSession lifecycle
-- [ ] 4.4 Integration test: end session → new cycle → new session created
-- [ ] 4.5 `pnpm typecheck` passes
-- [ ] 4.6 `pnpm check` passes
-- [ ] 4.7 `pnpm test` passes
+- [x] 4.1 Unit test: endSession() calls sessions.end() and resets state — daea25b
+- [x] 4.2 Unit test: endSession() interrupts running cycle before ending — daea25b
+- [x] 4.3 Unit test: hasActiveSession lifecycle — daea25b
+- [x] 4.4 Integration test: end session → new cycle → new session created — daea25b
+- [x] 4.5 `pnpm typecheck` passes — daea25b
+- [x] 4.6 `pnpm check` passes — daea25b
+- [x] 4.7 `pnpm test` passes — daea25b
 
 #### Manual
 
-- [ ] 4.8 "End session" button visible after first cycle start
-- [ ] 4.9 "End session" disabled during running cycle
-- [ ] 4.10 Clicking "End session" returns to clean state
-- [ ] 4.11 After 4h inactivity, next cycle creates new session
+- [x] 4.8 "End session" button visible after first cycle start — daea25b
+- [x] 4.9 "End session" disabled during running cycle — daea25b
+- [x] 4.10 Clicking "End session" returns to clean state — daea25b
+- [x] 4.11 After 4h inactivity, next cycle creates new session — daea25b

@@ -11,7 +11,11 @@ import type {
 	DomainTaskId,
 	FocusedTask,
 } from "~/lib/data-mode/types";
-import { setLastDuration } from "~/lib/duration-storage";
+import {
+	getLongBreakDuration,
+	getShortBreakDuration,
+	setLastDuration,
+} from "~/lib/duration-storage";
 import { api } from "~/trpc/react";
 import type {
 	TimerWorkerInbound,
@@ -24,11 +28,13 @@ export type { FocusedTask };
 
 export type PomodoroCycleState = "idle" | "running" | "completed";
 
-let activeCycleRecoveryFetched = false;
+export type CycleKind = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
+
+let activeCycleRecoveredForMode: string | null = null;
 
 /** Test-only reset for module-level recovery guard. */
 export function resetActiveCycleRecoveryForTests(): void {
-	activeCycleRecoveryFetched = false;
+	activeCycleRecoveredForMode = null;
 }
 
 async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {
@@ -56,6 +62,12 @@ export function usePomodoroCycle() {
 		null,
 	);
 	const [error, setError] = useState<string | null>(null);
+	const [cycleKind, setCycleKind] = useState<CycleKind | null>(null);
+	const [completedWorkCycles, setCompletedWorkCycles] = useState(0);
+	const [_activeSessionId, setActiveSessionId] = useState<DomainTaskId | null>(
+		null,
+	);
+	const [hasActiveSession, setHasActiveSession] = useState(false);
 
 	const stateRef = useRef(state);
 	const endTimeRef = useRef<number | null>(null);
@@ -203,6 +215,9 @@ export function usePomodoroCycle() {
 			const endTime =
 				cycle.startedAt.getTime() + cycle.configuredDurationSec * 1000;
 			setActiveCycle(cycle);
+			setCycleKind(cycle.kind);
+			setActiveSessionId(cycle.sessionId);
+			setHasActiveSession(true);
 			setFocusedTask(
 				cycle.task != null
 					? { id: cycle.task.id, title: cycle.task.title }
@@ -225,19 +240,50 @@ export function usePomodoroCycle() {
 	);
 
 	const recoverActiveCycle = useCallback(async () => {
-		if (activeCycleRecoveryFetched || recoveredRef.current) {
+		if (activeCycleRecoveredForMode === mode || recoveredRef.current) {
 			return;
 		}
 
 		recoveredRef.current = true;
-		activeCycleRecoveryFetched = true;
+		activeCycleRecoveredForMode = mode;
 
 		const active = await cycles.getActive();
 
 		if (active != null) {
 			resumeFromActiveCycle(active);
+
+			// Derive completed work cycle count from server for correct break cadence
+			try {
+				if (mode === "authenticated") {
+					const count =
+						await utils.client.cycle.countCompletedWork.query({
+							sessionId: Number(active.sessionId),
+						});
+					setCompletedWorkCycles(count);
+				} else {
+					const { loadSnapshot } = await import("~/lib/guest/store");
+					const snapshot = loadSnapshot();
+					const count = snapshot.cycles.filter(
+						(c) =>
+							c.sessionId === active.sessionId &&
+							c.kind === "WORK" &&
+							c.state === "COMPLETED",
+					).length;
+					setCompletedWorkCycles(count);
+				}
+			} catch {
+				// Best effort — counter stays at 0, worst case is wrong break type
+			}
+		} else {
+			// No active cycle — session may have timed out server-side; reset counter
+			setCompletedWorkCycles(0);
 		}
-	}, [cycles, resumeFromActiveCycle]);
+	}, [cycles, resumeFromActiveCycle, mode, utils.client.cycle.countCompletedWork]);
+
+	useEffect(() => {
+		// When mode changes (e.g. guest → authenticated on login), allow re-recovery
+		recoveredRef.current = false;
+	}, [mode]);
 
 	useEffect(() => {
 		void recoverActiveCycle();
@@ -310,7 +356,15 @@ export function usePomodoroCycle() {
 					// Audio is best-effort; cycle start must not depend on it.
 				}
 
-				await sessions.getOrCreateActive();
+				const session = await sessions.getOrCreateActive();
+
+				// Reset completed count when server assigns a different session
+				if (session.id !== _activeSessionId) {
+					setCompletedWorkCycles(0);
+				}
+
+				setActiveSessionId(session.id);
+				setHasActiveSession(true);
 
 				const cycle = await cycles.create({
 					kind: "WORK",
@@ -325,6 +379,7 @@ export function usePomodoroCycle() {
 					...cycle,
 					task: focusedTask,
 				});
+				setCycleKind("WORK");
 				setState("running");
 				startWorker(endTime);
 				setLastDuration(durationSec);
@@ -340,6 +395,7 @@ export function usePomodoroCycle() {
 			state,
 			focusedTaskId,
 			focusedTask,
+			_activeSessionId,
 			sessions,
 			cycles,
 			startWorker,
@@ -362,6 +418,7 @@ export function usePomodoroCycle() {
 			setState("idle");
 			setRemainingMs(0);
 			setActiveCycle(null);
+			setCycleKind(null);
 
 			await invalidateServerCycle();
 		} catch {
@@ -376,6 +433,8 @@ export function usePomodoroCycle() {
 			}
 
 			setError(null);
+
+			const currentKind = activeCycle.kind;
 
 			try {
 				await retryOnce(() =>
@@ -393,19 +452,112 @@ export function usePomodoroCycle() {
 
 			stopWorker();
 			endTimeRef.current = null;
-			setState("idle");
-			setRemainingMs(0);
-			setActiveCycle(null);
-			setFocusedTaskId(null);
-			setFocusedTask(null);
 
-			await Promise.all([
-				invalidateServerCycle(),
-				utils.task.list.invalidate(),
-			]);
+			if (currentKind === "WORK") {
+				// Work cycle completed — auto-start a break
+				const newCount = completedWorkCycles + 1;
+				setCompletedWorkCycles(newCount);
+
+				const breakKind: CycleKind =
+					newCount % 4 === 0 ? "LONG_BREAK" : "SHORT_BREAK";
+				const breakDuration =
+					breakKind === "LONG_BREAK"
+						? getLongBreakDuration()
+						: getShortBreakDuration();
+
+				try {
+					const breakCycle = await cycles.create({
+						kind: breakKind,
+						configuredDurationSec: breakDuration,
+					});
+
+					const endTime =
+						breakCycle.startedAt.getTime() +
+						breakCycle.configuredDurationSec * 1000;
+
+					setActiveCycle({ ...breakCycle, task: null });
+					setCycleKind(breakKind);
+					setState("running");
+					startWorker(endTime);
+
+					await invalidateServerCycle();
+				} catch {
+					// Break could not start — acceptable degradation
+					setError("Break could not start. Your work cycle was saved.");
+					setState("idle");
+					setRemainingMs(0);
+					setActiveCycle(null);
+					setCycleKind(null);
+					setFocusedTaskId(null);
+					setFocusedTask(null);
+				}
+			} else {
+				// Break cycle completed — return to idle
+				setState("idle");
+				setRemainingMs(0);
+				setActiveCycle(null);
+				setCycleKind(null);
+				setFocusedTaskId(null);
+				setFocusedTask(null);
+
+				await Promise.all([
+					invalidateServerCycle(),
+					utils.task.list.invalidate(),
+				]);
+			}
 		},
-		[activeCycle, cycles, invalidateServerCycle, stopWorker, utils.task.list],
+		[
+			activeCycle,
+			cycles,
+			completedWorkCycles,
+			invalidateServerCycle,
+			stopWorker,
+			startWorker,
+			utils.task.list,
+		],
 	);
+
+	const endSession = useCallback(async () => {
+		setError(null);
+
+		// If a cycle is running, interrupt it first
+		if (activeCycle != null && state === "running") {
+			stopWorker();
+			endTimeRef.current = null;
+			try {
+				await cycles.interrupt({ cycleId: activeCycle.id });
+			} catch {
+				// Best effort — continue ending session
+			}
+		}
+
+		try {
+			await sessions.end();
+		} catch {
+			setError("Could not end the session. Try again.");
+			return;
+		}
+
+		setState("idle");
+		setRemainingMs(0);
+		setActiveCycle(null);
+		setCycleKind(null);
+		setFocusedTaskId(null);
+		setFocusedTask(null);
+		setHasActiveSession(false);
+		setCompletedWorkCycles(0);
+		setActiveSessionId(null);
+
+		await Promise.all([invalidateServerCycle(), utils.task.list.invalidate()]);
+	}, [
+		activeCycle,
+		state,
+		cycles,
+		sessions,
+		stopWorker,
+		invalidateServerCycle,
+		utils.task.list,
+	]);
 
 	const clearError = useCallback(() => {
 		setError(null);
@@ -417,12 +569,15 @@ export function usePomodoroCycle() {
 		focusedTask,
 		focusedTaskId,
 		activeCycle,
+		cycleKind,
+		hasActiveSession,
 		error,
 		selectTask,
 		clearTask,
 		start,
 		interrupt,
 		confirmComplete,
+		endSession,
 		clearError,
 	};
 }
