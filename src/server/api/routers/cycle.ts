@@ -18,6 +18,19 @@ export const cycleRouter = createTRPCRouter({
 			});
 		}),
 
+	countCompletedWork: protectedProcedure
+		.input(z.object({ sessionId: z.number().int() }))
+		.query(async ({ ctx, input }) => {
+			return ctx.db.cycle.count({
+				where: {
+					userId: ctx.session.user.id,
+					sessionId: input.sessionId,
+					kind: "WORK",
+					state: "COMPLETED",
+				},
+			});
+		}),
+
 	getActive: protectedProcedure.query(async ({ ctx }) => {
 		return ctx.db.cycle.findFirst({
 			where: {
