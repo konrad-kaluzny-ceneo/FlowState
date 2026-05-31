@@ -121,6 +121,10 @@ export function TimerPanel({
 		Number.isFinite(customSec) &&
 		customSec >= MIN_DURATION_SEC &&
 		customSec <= MAX_DURATION_SEC;
+	const customTouched =
+		customMinutes !== "" &&
+		!DURATION_PRESETS_SEC.some((p) => p.sec === customSec);
+	const showCustomError = customTouched && !customValid;
 
 	return (
 		<section
@@ -155,7 +159,11 @@ export function TimerPanel({
 			<label className="mt-4 flex items-center justify-center gap-2 text-sm text-white/70">
 				Custom (5–90 min)
 				<input
-					className="w-16 rounded border border-white/20 bg-white/10 px-2 py-1 text-center text-white"
+					className={`w-16 rounded border bg-white/10 px-2 py-1 text-center text-white ${
+						showCustomError
+							? "border-red-400 outline outline-1 outline-red-400/50"
+							: "border-white/20"
+					}`}
 					max={90}
 					min={5}
 					onChange={(e) => setCustomMinutes(e.target.value)}
@@ -163,10 +171,15 @@ export function TimerPanel({
 					value={customMinutes}
 				/>
 			</label>
+			{showCustomError && (
+				<p className="mt-1 text-center text-red-400 text-xs">
+					Must be between 5 and 90 minutes
+				</p>
+			)}
 
 			<button
 				className="mt-6 w-full rounded-lg bg-purple-600 py-3 font-semibold text-white transition hover:bg-purple-500 disabled:opacity-50"
-				disabled={isStarting}
+				disabled={isStarting || showCustomError}
 				onClick={() => {
 					const durationSec = customValid ? customSec : selectedSec;
 					void onStart(durationSec);

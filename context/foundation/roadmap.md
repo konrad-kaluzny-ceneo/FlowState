@@ -45,7 +45,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-07 | account-recovery-flow | [FLO-7](https://linear.app/flowstate-10xdev/issue/FLO-7) | [#9](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/9) | reset a forgotten password and recover access without losing existing tasks or session history | F-02 | FR-003a, NFR (auth must not lock user out of own data) | ready |
 | S-08 | guest-local-storage-merge | — | — | use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account | S-01, F-02 | NFR (no silent data loss), FR-004–FR-009 | proposed |
 | S-09 | optimistic-task-mutations | — | — | see task list and task actions update immediately while logged in (optimistic UI), with rollback on server error — matching perceived speed of local guest storage | S-01, F-02 | NFR (200ms acknowledgement), FR-004–FR-008 | proposed |
-| S-10 | google-oauth-provider | [FLO-20](https://linear.app/flowstate-10xdev/issue/FLO-20) | [#20](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/20) | sign in or sign up with a Google account in one click, alongside the existing email/password flow | F-02 | FR-001, FR-002 | in-progress |
+| S-10 | google-oauth-provider | [FLO-20](https://linear.app/flowstate-10xdev/issue/FLO-20) | [#20](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/20) (closed) | sign in or sign up with a Google account in one click, alongside the existing email/password flow | F-02 | FR-001, FR-002 | done |
 
 ## Streams
 
@@ -261,7 +261,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   2. Verify the flow works in dev (shared credentials — no config needed).
   3. For production: create Google Cloud OAuth client, paste Client ID + Secret into Neon Console (branch → Auth), register redirect URI, add trusted domains.
   4. Add e2e test verifying the Google button renders and the OAuth redirect initiates.
-- **Status:** in-progress
+- **Status:** done — shipped via [PR #21](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/21) (merge 2026-05-31)
 
 ## Backlog Handoff
 
