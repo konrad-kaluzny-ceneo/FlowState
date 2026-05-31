@@ -15,7 +15,7 @@ export const taskRouter = createTRPCRouter({
 		.input(
 			z.object({
 				title: z.string().min(1).max(256),
-				workType: z.enum(["DEEP_WORK", "ADMIN", "REACTIVE"]).optional(),
+				workType: z.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"]).optional(),
 				weight: z.number().int().min(1).max(3).optional(),
 			}),
 		)
@@ -36,7 +36,7 @@ export const taskRouter = createTRPCRouter({
 				id: z.number(),
 				title: z.string().min(1).max(256).optional(),
 				status: z.enum(["active", "completed"]).optional(),
-				workType: z.enum(["DEEP_WORK", "ADMIN", "REACTIVE"]).optional(),
+				workType: z.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"]).optional(),
 				weight: z.number().int().min(1).max(3).optional(),
 			}),
 		)

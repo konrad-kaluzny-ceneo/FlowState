@@ -100,12 +100,18 @@ function AuthenticatedPomodoroDashboard() {
 	const [tasks] = api.task.list.useSuspenseQuery();
 	const utils = api.useUtils();
 
+	const domainTasks = useMemo(
+		() =>
+			tasks.map((t) => ({ ...t, weight: t.weight as 1 | 2 | 3 })),
+		[tasks],
+	);
+
 	return (
 		<PomodoroDashboardBody
 			refreshTasks={async () => {
 				await utils.task.list.invalidate();
 			}}
-			tasks={tasks}
+			tasks={domainTasks}
 		/>
 	);
 }

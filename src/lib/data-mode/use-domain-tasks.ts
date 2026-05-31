@@ -15,7 +15,7 @@ function mapSnapshotToTasks(): DomainTask[] {
 		createdAt: task.createdAt,
 		updatedAt: task.updatedAt,
 		workType: task.workType,
-		weight: task.weight,
+		weight: task.weight as 1 | 2 | 3,
 	}));
 }
 

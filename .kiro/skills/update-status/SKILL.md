@@ -1,6 +1,6 @@
 ---
 name: update-status
-description: Keeps FlowState roadmap.md, Linear (FLO team), and GitHub Issues in sync when starting, shipping, or rescoping work. Verifies two-way Linear-GitHub integration after status changes. Use when updating issue status, closing slices, syncing Linear and GitHub, editing roadmap.md, or after merge/PR with Fixes #N.
+description: Keeps FlowState roadmap.md, Linear (FLO team), and GitHub Issues in sync when starting, shipping, or rescoping work. Manually propagates status to both Linear and GitHub after changes. Use when updating issue status, closing slices, syncing Linear and GitHub, editing roadmap.md, or after merge/PR with Fixes #N.
 ---
 
 # Update status (roadmap + Linear + GitHub)
@@ -15,7 +15,7 @@ Use with [@github-cli](../github-cli/SKILL.md) for `gh` auth and PR commands. Al
 | Linear | `FLO-*`, team `FLO`, project FlowState MVP | Linear MCP or app |
 | GitHub | `#*` on `konrad-kaluzny-ceneo/FlowState` | `gh issue …` |
 
-`roadmap.md` maps all three (At a glance + slice sections). Do not duplicate issues — **two-way Linear ↔ GitHub** sync is enabled.
+`roadmap.md` maps all three (At a glance + slice sections). Do not duplicate issues.
 
 ## Account (GitHub)
 
@@ -25,24 +25,19 @@ Use with [@github-cli](../github-cli/SKILL.md) for `gh` auth and PR commands. Al
 | Verify | `gh auth status` |
 | Switch | `gh auth switch --user konrad-kaluzny-ceneo` |
 
-## Verify sync (after any status/title change)
+## Propagating status
 
-Look up `FLO-*` ↔ `#*` in `roadmap.md`, then compare **title**, **state** (open/closed vs Linear status/Done), and GitHub link on the Linear issue. Sync can lag 1–2 minutes.
+There is **no automatic sync** between Linear and GitHub. When closing or updating an issue, you must update **both** sides manually:
 
-| Changed in | Check with |
-|------------|------------|
-| Linear | `gh issue view <N> --json number,title,state` |
-| GitHub | Linear MCP `get_issue` id=`FLO-*` |
+1. Close/update on GitHub: `gh issue close <N>` or `gh issue edit <N> --add-label done`
+2. Close/update on Linear: Linear MCP `save_issue` with state=Done (or appropriate status)
+3. Verify both match after propagation
 
-```powershell
-gh issue view 7 --json number,title,state
-```
-
-```text
-Linear MCP: get_issue id=FLO-8
-```
-
-If still mismatched: refresh UIs; confirm GitHub attachment on Linear issue; re-apply change on the **source** system once. Manual patch on the other side only if integration is broken — comment on both. Update `roadmap.md` **Status** only when roadmap scope/state changes, not for every field sync.
+| Action | GitHub | Linear |
+|--------|--------|--------|
+| Close issue | `gh issue close <N>` | `save_issue` id=`FLO-*` state=Done |
+| Reopen issue | `gh issue reopen <N>` | `save_issue` id=`FLO-*` state=In Progress |
+| Verify state | `gh issue view <N> --json number,title,state` | `get_issue` id=`FLO-*` |
 
 ## Workflows
 
@@ -56,8 +51,9 @@ If still mismatched: refresh UIs; confirm GitHub attachment on Linear issue; re-
 
 ```
 - [ ] PR to main with Fixes #N (or linked issue)
-- [ ] Close/move issue in Linear OR GitHub (one side)
-- [ ] Verify sync (table above)
+- [ ] Close issue on GitHub: gh issue close <N>
+- [ ] Close issue on Linear: save_issue state=Done
+- [ ] Verify both sides match
 - [ ] roadmap.md: Status + slice **Status:** + frontmatter updated
 - [ ] Optional: append roadmap ## Done on /10x-archive
 ```
@@ -65,8 +61,8 @@ If still mismatched: refresh UIs; confirm GitHub attachment on Linear issue; re-
 ### New scope
 
 1. Add row to `roadmap.md` first.
-2. Create issue in Linear **or** GitHub (mirror auto-created).
-3. **Verify pair** (`FLO-*` ↔ `#*`), then add IDs to roadmap tables/sections.
+2. Create issue in Linear **and** GitHub (no auto-mirror).
+3. Add IDs to roadmap tables/sections.
 
 ## Tools
 
@@ -82,7 +78,7 @@ Linear MCP server: `project-0-FlowState-linear` (Cursor). Use project filter `Fl
 
 - Never leave roadmap `done` while linked Linear or GitHub issue is still open.
 - Do not track MVP work without a roadmap row.
-- One status edit surface per change; verify the mirror, don't maintain two divergent truths.
+- Always propagate status changes to both GitHub and Linear manually.
 
 ## Reference
 

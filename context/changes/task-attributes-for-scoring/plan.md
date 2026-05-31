@@ -256,51 +256,51 @@ None significant. The badges are pure render logic on data already fetched. No a
 
 #### Automated
 
-- [ ] 1.1 Type checking passes: `pnpm typecheck`
-- [ ] 1.2 Linting passes: `pnpm check`
-- [ ] 1.3 Existing tests pass: `pnpm test`
+- [x] 1.1 Type checking passes: `pnpm typecheck` — 82aec77
+- [x] 1.2 Linting passes: `pnpm check` — 82aec77
+- [x] 1.3 Existing tests pass: `pnpm test` — 82aec77
 
 ### Phase 2: Task Attribute Display (Badges)
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `pnpm typecheck`
-- [ ] 2.2 Linting passes: `pnpm check`
-- [ ] 2.3 Existing tests pass: `pnpm test`
+- [x] 2.1 Type checking passes: `pnpm typecheck` — a071a79
+- [x] 2.2 Linting passes: `pnpm check` — a071a79
+- [x] 2.3 Existing tests pass: `pnpm test` — a071a79
 
 #### Manual
 
-- [ ] 2.4 Active tasks display colored work type pill and weight badge
-- [ ] 2.5 Completed tasks display dimmed badges
-- [ ] 2.6 Badges don't overflow on max-w-lg container
+- [x] 2.4 Active tasks display colored work type pill and weight badge — a071a79
+- [x] 2.5 Completed tasks display dimmed badges — a071a79
+- [x] 2.6 Badges don't overflow on max-w-lg container — a071a79
 
 ### Phase 3: Create Form with Expandable Details
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `pnpm typecheck`
-- [ ] 3.2 Linting passes: `pnpm check`
-- [ ] 3.3 Existing tests pass: `pnpm test`
+- [x] 3.1 Type checking passes: `pnpm typecheck` — b60197c
+- [x] 3.2 Linting passes: `pnpm check` — b60197c
+- [x] 3.3 Existing tests pass: `pnpm test` — b60197c
 
 #### Manual
 
-- [ ] 3.4 Details section collapsed by default, defaults applied on create
-- [ ] 3.5 Expanding shows work type and weight selectors
-- [ ] 3.6 Non-default attributes show correct badges after creation
-- [ ] 3.7 Details section resets after successful creation
+- [x] 3.4 Details section collapsed by default, defaults applied on create — b60197c
+- [x] 3.5 Expanding shows work type and weight selectors — b60197c
+- [x] 3.6 Non-default attributes show correct badges after creation — b60197c
+- [x] 3.7 Details section resets after successful creation — b60197c
 
 ### Phase 4: Inline Attribute Editing
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `pnpm typecheck`
-- [ ] 4.2 Linting passes: `pnpm check`
-- [ ] 4.3 Existing tests pass: `pnpm test`
+- [x] 4.1 Type checking passes: `pnpm typecheck` — 147a3e8
+- [x] 4.2 Linting passes: `pnpm check` — 147a3e8
+- [x] 4.3 Existing tests pass: `pnpm test` — 147a3e8
 
 #### Manual
 
-- [ ] 4.4 Edit mode shows current work type and weight pre-selected
-- [ ] 4.5 Changing attributes and saving persists new values
-- [ ] 4.6 Badges update immediately after save
-- [ ] 4.7 Escape cancels without saving attribute changes
-- [ ] 4.8 Edit mode works in both authenticated and guest modes
+- [x] 4.4 Edit mode shows current work type and weight pre-selected — 147a3e8
+- [x] 4.5 Changing attributes and saving persists new values — 147a3e8
+- [x] 4.6 Badges update immediately after save — 147a3e8
+- [x] 4.7 Escape cancels without saving attribute changes — 147a3e8
+- [x] 4.8 Edit mode works in both authenticated and guest modes — 147a3e8

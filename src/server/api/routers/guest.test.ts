@@ -11,8 +11,8 @@ type TaskRow = {
 	title: string;
 	status: string;
 	userId: string;
-	workType: "DEEP_WORK" | "ADMIN" | "REACTIVE";
-	weight: number;
+	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+	weight: 1 | 2 | 3;
 };
 
 type CycleRow = {
@@ -81,7 +81,7 @@ describe("guest.import", () => {
 				title: "Foo",
 				status: "active",
 				userId: "user-1",
-				workType: "ADMIN",
+				workType: "OPERATIONAL",
 				weight: 2,
 			},
 		];
@@ -100,7 +100,7 @@ describe("guest.import", () => {
 					id: "550e8400-e29b-41d4-a716-446655440001",
 					title: "Foo",
 					status: "active",
-					workType: "ADMIN",
+					workType: "OPERATIONAL",
 					weight: 2,
 					createdAt: new Date("2026-05-29T10:00:00.000Z"),
 					updatedAt: null,
