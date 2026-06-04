@@ -135,12 +135,12 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.3 Adding an e2e test
 
-- **Location**: `e2e/*.spec.ts`; shared countdown oracle in `e2e/helpers/countdown.ts` (wraps `src/test-utils/countdown-tolerance.ts`).
-- **Auth mid-cycle reload**: `e2e/pomodoro-cycle.spec.ts` — start 15 min preset, `page.clock.runFor` (~30s), `page.reload()`, re-wait for `cycle.getActive`, assert `timer-panel-running` + countdown within ±2s of pre-reload text (persisted `startedAt` + duration).
-- **Guest reload**: `e2e/guest-trial.spec.ts` — same pattern; guest banner still visible.
-- **Clock note**: install `page.clock` before start; if fake time does not survive `reload`, compare post-reload countdown to pre-reload capture or derive from 15 min preset minus elapsed — do not assume clock offset persists.
-- **Run locally**: `set CI=true && pnpm test:e2e` (never bare `pnpm test:e2e` — interactive reporter blocks). Single spec: `set CI=true && pnpm exec playwright test e2e/pomodoro-cycle.spec.ts`.
-- **Limitation**: e2e uses `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` — does not exercise production Worker path; Risk #2 background throttle is covered by hook unit tests (see §6.6).
+- **Location**: `e2e/*.spec.ts`.
+- **Auth mid-cycle reload (Risk #1 UI)**: `e2e/pomodoro-cycle.spec.ts` — start 15 min preset, `page.reload()`, re-wait for `cycle.getActive`, assert task row + `timer-panel-running` (no ±2s countdown oracle — fake `page.clock` does not survive reload; timer accuracy is hook/unit).
+- **Guest reload**: `e2e/guest-trial.spec.ts` — same UI assertions; guest banner still visible.
+- **±2s tolerance**: use `src/test-utils/countdown-tolerance.ts` in Vitest only, not Playwright reload specs.
+- **Run locally**: `set CI=true && pnpm test:e2e` (never bare `pnpm test:e2e` — interactive reporter blocks). Faster iteration: `set E2E_REUSE_SERVER=1 && set CI=true && pnpm test:e2e` with `pnpm dev` on port 3001.
+- **Limitation**: e2e uses `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` — does not exercise production Worker path; Risk #2 is covered by hook/unit tests (see §6.6).
 
 ### 6.4 Adding a test for a new tRPC procedure
 
@@ -158,7 +158,7 @@ the relevant rollout phase ships; before that, the sub-section reads
 **Phase 1 — Critical-path persistence & timer** (shipped 2026-06-04, change `testing-critical-path-persistence-timer`)
 
 - Risks covered: **#1** (refresh/crash recovery), **#2** (background-tab timer drift ≤ ±2s).
-- Layers: unit tick math + countdown oracle; integration `getActive` + guest snapshot; hook visibility recalc (fallback path) + guest/auth recovery; auth + guest e2e `reload` with countdown tolerance.
+- Layers: unit tick math + countdown oracle (Vitest); integration `getActive` + guest snapshot; hook visibility recalc (fallback path) + guest/auth recovery; auth + guest e2e `reload` asserts task list + `timer-panel-running` only.
 - **Explicit limitation**: no Playwright project without `E2E_MAIN_THREAD_TIMER` — Worker throttle in production is validated via `getTimerTickResult` + hook `visibilitychange` / fallback recalc, not browser Worker e2e.
 - **Deferred**: session-timeout + stale RUNNING cycle (Phase 3); dedicated Worker e2e project (cost × signal).
 
