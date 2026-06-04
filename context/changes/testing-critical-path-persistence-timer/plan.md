@@ -68,7 +68,7 @@ Introduce reusable countdown assertions and extend unit, integration, and hook t
 
 **Intent**: Centralize parsing of `timer-countdown` mm:ss text and asserting remaining seconds within ±2s of an expected deadline derived from `startedAt` + `configuredDurationSec` (or explicit `endTime`).
 
-**Contract**: Export `parseCountdownToSeconds(text: string): number`, `expectedRemainingSec(endTimeMs: number, nowMs?: number): number`, `assertCountdownWithinTolerance(actualText, endTimeMs, toleranceSec = 2)` for Vitest; export a thin Playwright wrapper in `e2e/helpers/countdown.ts` that reads `data-testid="timer-countdown"` and applies the same math.
+**Contract**: Export `parseCountdownToSeconds(text: string): number`, `expectedRemainingSec(endTimeMs: number, nowMs?: number): number`, `assertCountdownWithinTolerance(actualText, endTimeMs, toleranceSec = 2)` for Vitest; export a thin Playwright wrapper in `e2e/helpers/countdown.ts` that reads `data-testid="timer-countdown"` and applies the same math. **Display vs wall clock:** `formatRemainingMs` uses `Math.ceil(ms/1000)` — hook tests assert `result.current.remainingMs` with ms tolerance (±2000ms), not parsed mm:ss from the hook return value. E2e/countdown-text assertions either use tolerance ≥3s or compute expected display via the same ceil rule as `formatRemainingMs` so boundary flakes do not false-fail.
 
 #### 2. Timer tick math edge cases
 
@@ -84,7 +84,7 @@ Introduce reusable countdown assertions and extend unit, integration, and hook t
 
 **Intent**: Prove authenticated `getActive` returns the RUNNING cycle **with** linked task after `create`, matching what recovery needs — user-visible data shape, not Prisma internals.
 
-**Contract**: New test: `create` cycle on owned task → `getActive` returns matching `taskId`, `task.title`, `startedAt`, `configuredDurationSec`, `state: RUNNING`.
+**Contract**: **Extend** the existing `integration: create → getActive → complete` test (~line 442) with full recovery-field assertions (`taskId`, `task.title`, `startedAt`, `configuredDurationSec`, `state: RUNNING`) — do **not** add a second seeded-only `getActive` test; `getActive returns running cycle with task` (~240) already covers the seeded shape.
 
 #### 4. Guest snapshot recovery edge cases
 
@@ -100,7 +100,7 @@ Introduce reusable countdown assertions and extend unit, integration, and hook t
 
 **Intent**: Prove `recalculateFromEndTime` runs when tab becomes visible: after simulating background time advance on **fallback** path (`Worker` throws), remaining ms jumps to within ±2s of true deadline; optionally assert transition to `completed` when past `endTime`.
 
-**Contract**: `document.dispatchEvent(new Event("visibilitychange"))` with `document.visibilityState` stubbed to `"visible"`; use existing `vi.useFakeTimers()` + fallback path test pattern (`uses fallback timer when Worker constructor throws`).
+**Contract**: `document.dispatchEvent(new Event("visibilitychange"))` with `document.visibilityState` stubbed to `"visible"`; use existing `vi.useFakeTimers()` + fallback path test pattern (`uses fallback timer when Worker constructor throws`). Assert `result.current.remainingMs` within ±2000ms of `endTimeRef` deadline after simulated background advance — not parsed mm:ss (avoids `formatRemainingMs` ceil noise). Keep Worker constructor throwing so worker ticks do not race recalc.
 
 #### 6. Hook — guest mode recovery (Risk #1 parity)
 
@@ -108,7 +108,7 @@ Introduce reusable countdown assertions and extend unit, integration, and hook t
 
 **Intent**: Render hook in guest data mode (repositories from snapshot) and assert recovery sets running state + countdown within tolerance after seeded localStorage.
 
-**Contract**: Reuse `resetActiveCycleRecoveryForTests()`; seed `flowstate:guest-v1` before render; assert `timer-panel-running` equivalent state (`state === "running"`) and remaining via helper.
+**Contract**: Replace the hardcoded `useDataMode: () => "authenticated"` mock with `guest` + `useRepositories: () => createGuestRepositories()` (see `guest-repositories.test.ts`). Seed `flowstate:guest-v1` via `createGuestRepositories()` / snapshot helpers **before** `renderHook` so `cycles.getActive()` reads real guest storage — seeding alone does nothing while the mock still returns authenticated repos. Stub `api.useUtils` only if guest `countCompletedWork` / invalidate paths need it. Reuse `resetActiveCycleRecoveryForTests()`; assert `state === "running"` and remaining via helper (`remainingMs` or tolerance helper).
 
 #### 7. Hook — expired while closed (Risk #1 edge)
 
@@ -146,9 +146,9 @@ Add authenticated mid-cycle reload e2e with countdown tolerance; extend guest re
 
 **File**: `e2e/pomodoro-cycle.spec.ts` (extend) **or** `e2e/persistence-reload.spec.ts` (new, same auth project)
 
-**Intent**: Start 15 min cycle, advance clock slightly (e.g. 30s), `page.reload()`, wait for `cycle.getActive`, assert task row visible, `timer-panel-running`, and `timer-countdown` within ±2s of expected remaining.
+**Intent**: Start 15 min cycle, advance clock slightly (e.g. 30s), `page.reload()`, wait for `cycle.getActive`, assert task row visible, `timer-panel-running`, and `timer-countdown` within ±2s of expected remaining. **Clock/reload caveat:** install `page.clock` before start; if fake time does not survive `reload`, derive expected remaining from persisted cycle semantics (15 min preset minus elapsed) via the countdown helper rather than assuming clock offset persists — implementer validates once and documents chosen pattern in spec comments.
 
-**Contract**: Uses authenticated storage state from F-02 fixture; `ensureIdleCycle` in `beforeEach`; capture `endTime` proxy via known `startedAt` from 15 min preset minus elapsed clock advance; use `e2e/helpers/countdown.ts`.
+**Contract**: Uses authenticated storage state from F-02 fixture; `ensureIdleCycle` in `beforeEach`; capture `endTime` proxy via known `startedAt` from 15 min preset minus elapsed clock advance; use `e2e/helpers/countdown.ts`. After `page.reload()`, **re-wait** for a successful `cycle.getActive` network response (do not rely on `beforeEach`'s best-effort wait — it uses `.catch(() => {})`) before asserting `timer-panel-running` / countdown.
 
 #### 2. Guest reload countdown
 
