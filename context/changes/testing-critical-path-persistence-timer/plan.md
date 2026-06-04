@@ -286,28 +286,28 @@ None — test-only change.
 
 #### Automated
 
-- [ ] 1.1 `pnpm check` passes
-- [ ] 1.2 `pnpm typecheck` passes
-- [ ] 1.3 `pnpm test` passes (unit, integration, hook extensions)
+- [x] 1.1 `pnpm check` passes
+- [x] 1.2 `pnpm typecheck` passes
+- [x] 1.3 `pnpm test` passes (unit, integration, hook extensions)
 
 #### Manual
 
-- [ ] 1.4 Visibility test fails when `recalculateFromEndTime` is broken (local sanity check, reverted)
+- [x] 1.4 Visibility test fails when `recalculateFromEndTime` is broken (local sanity check, reverted)
 
 ### Phase 2: Browser Proofs (Risk #1)
 
 #### Automated
 
-- [ ] 2.1 `set CI=true && pnpm test:e2e` passes (reload specs)
-- [ ] 2.2 `pnpm test` passes (no regressions)
+- [x] 2.1 `set CI=true && pnpm test:e2e` passes (reload specs)
+- [x] 2.2 `pnpm test` passes (no regressions)
 
 ### Phase 3: Cookbook & Closure
 
 #### Automated
 
-- [ ] 3.1 Full verification: `pnpm check`, `pnpm typecheck`, `pnpm test`, `set CI=true && pnpm test:e2e`
-- [ ] 3.2 `test-plan.md` §6.1 / §6.2 / §6.3 / §6.6 updated (no Phase 1 TBD)
+- [x] 3.1 Full verification: `pnpm check`, `pnpm typecheck`, `pnpm test`, `set CI=true && pnpm test:e2e`
+- [x] 3.2 `test-plan.md` §6.1 / §6.2 / §6.3 / §6.6 updated (no Phase 1 TBD)
 
 #### Manual
 
-- [ ] 3.3 Cookbook spot-read — another dev could add a test from §6 alone
+- [x] 3.3 Cookbook spot-read — another dev could add a test from §6 alone

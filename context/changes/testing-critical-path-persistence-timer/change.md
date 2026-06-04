@@ -1,7 +1,7 @@
 ---
 change_id: testing-critical-path-persistence-timer
 title: Phase 1 test rollout — critical-path persistence and timer accuracy
-status: implementing
+status: implemented
 created: 2026-06-04
 updated: 2026-06-04
 archived_at: null

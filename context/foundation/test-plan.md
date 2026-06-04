@@ -67,7 +67,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
-| 1 | Critical-path persistence & timer | Prove refresh/crash recovery and background-tab timer accuracy at the cheapest layers that catch real regressions | #1, #2 | unit + integration + targeted e2e | change opened | testing-critical-path-persistence-timer |
+| 1 | Critical-path persistence & timer | Prove refresh/crash recovery and background-tab timer accuracy at the cheapest layers that catch real regressions | #1, #2 | unit + integration + targeted e2e | complete | testing-critical-path-persistence-timer |
 | 2 | Active-slice browser proofs | Browser-level proof for S-03 mid-cycle prompt and S-05 check-in gate before wedge work compounds | #3, #7 | Playwright e2e | not started | — |
 | 3 | Isolation, abuse & guest merge | Lock per-user isolation, IDOR rejection, and guest→account merge integrity | #4, #5, #6 | integration + e2e | not started | — |
 | 4 | Quality-gates wiring | Enforce lint, typecheck, unit/integration, and critical e2e in CI on every PR | cross-cutting | CI gates | not started | — |
@@ -136,10 +136,10 @@ the relevant rollout phase ships; before that, the sub-section reads
 ### 6.3 Adding an e2e test
 
 - **Location**: `e2e/*.spec.ts`.
-- **Auth mid-cycle reload (Risk #1 UI)**: `e2e/pomodoro-cycle.spec.ts` — start 15 min preset, `page.reload()`, re-wait for `cycle.getActive`, assert task row + `timer-panel-running` (no ±2s countdown oracle — fake `page.clock` does not survive reload; timer accuracy is hook/unit).
+- **Auth mid-cycle reload (Risk #1 UI)**: `e2e/persistence-reload.spec.ts` — start 15 min preset, `page.reload()`, re-wait for `cycle.getActive`, assert task row + `timer-panel-running` (no ±2s countdown oracle; timer accuracy is hook/unit). Shared idle reset: `e2e/helpers/idle-cycle.ts`.
 - **Guest reload**: `e2e/guest-trial.spec.ts` — same UI assertions; guest banner still visible.
 - **±2s tolerance**: use `src/test-utils/countdown-tolerance.ts` in Vitest only, not Playwright reload specs.
-- **Run locally**: `set CI=true && pnpm test:e2e` (never bare `pnpm test:e2e` — interactive reporter blocks). Faster iteration: `set E2E_REUSE_SERVER=1 && set CI=true && pnpm test:e2e` with `pnpm dev` on port 3001.
+- **Run locally**: `set CI=true && pnpm test:e2e` (starts `next dev` on 3001 — no full build). Fastest: `next dev --turbo -p 3001` with `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1`, then `set E2E_REUSE_SERVER=1 && set CI=true && pnpm test:e2e`. Prod parity: `set E2E_PRODUCTION_SERVER=1`.
 - **Limitation**: e2e uses `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` — does not exercise production Worker path; Risk #2 is covered by hook/unit tests (see §6.6).
 
 ### 6.4 Adding a test for a new tRPC procedure

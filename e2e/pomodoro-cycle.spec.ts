@@ -1,19 +1,6 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-async function ensureIdleCycle(page: Page) {
-	await expect(async () => {
-		if (await page.getByTestId("cycle-complete-overlay").isVisible()) {
-			await page.getByRole("button", { name: "Continue later" }).click();
-			throw new Error("cycle overlay dismissed — re-check idle");
-		}
-
-		const interrupt = page.getByRole("button", { name: "Interrupt" });
-		if (await interrupt.isVisible()) {
-			await interrupt.click();
-			throw new Error("cycle interrupted — re-check idle");
-		}
-	}).toPass({ timeout: 30_000 });
-}
+import { ensureIdleCycle } from "./helpers/idle-cycle";
 
 test.describe("Pomodoro cycle (S-01)", () => {
 	test.describe.configure({ mode: "serial" });
@@ -72,41 +59,6 @@ test.describe("Pomodoro cycle (S-01)", () => {
 			page.getByRole("listitem").filter({ hasText: taskTitle }),
 		).toBeVisible();
 		await expect(taskRow.getByRole("button", { name: "Focus" })).toBeVisible();
-	});
-
-	test("mid-cycle reload preserves task and running panel", async ({
-		page,
-	}) => {
-		test.setTimeout(60_000);
-
-		const taskTitle = `E2E Reload ${Date.now()}`;
-
-		await page.getByPlaceholder("Add a new task...").fill(taskTitle);
-		await page.getByRole("button", { name: "Add" }).click();
-		await expect(
-			page.getByRole("listitem").filter({ hasText: taskTitle }),
-		).toBeVisible();
-		await ensureIdleCycle(page);
-
-		const taskRow = page.getByRole("listitem").filter({ hasText: taskTitle });
-		await taskRow.getByRole("button", { name: "Focus" }).click();
-		await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
-
-		await page.getByRole("button", { name: "15 min" }).click();
-		await page.getByRole("button", { name: "Start Cycle" }).click();
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
-
-		const getActiveAfterReload = page.waitForResponse(
-			(response) => response.url().includes("cycle.getActive") && response.ok(),
-			{ timeout: 20_000 },
-		);
-		await page.reload();
-		await getActiveAfterReload;
-
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
-		await expect(
-			page.getByRole("listitem").filter({ hasText: taskTitle }),
-		).toBeVisible();
 	});
 
 	test("mark task done from completion overlay", async ({ page }) => {
