@@ -1,9 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import {
-	E2E_RELOAD_WORK_PRESET_LABEL,
-	startFocusedWorkCycle,
-} from "./helpers/fast-cycle";
+import { startFocusedWorkCycle } from "./helpers/work-cycle";
 
 test.describe("Guest trial (S-08)", () => {
 	test("guest task persists locally and survives refresh", async ({
@@ -22,7 +19,7 @@ test.describe("Guest trial (S-08)", () => {
 		await expect(page.getByTestId("guest-banner")).toBeVisible();
 		await expect(page.getByTestId("task-list")).toBeVisible();
 
-		await startFocusedWorkCycle(page, taskTitle, E2E_RELOAD_WORK_PRESET_LABEL);
+		await startFocusedWorkCycle(page, taskTitle, 30);
 
 		await page.reload();
 		// Guest recovery is localStorage-driven; UI oracles are enough (no reliable cycle.getActive on reload).

@@ -1,8 +1,8 @@
 import {
 	type APIRequestContext,
-	type Page,
 	test as base,
 	expect,
+	type Page,
 } from "@playwright/test";
 
 import { createTestUser, signInAsUser } from "./helpers/user";
@@ -35,8 +35,7 @@ export { expect };
 
 export async function waitForCycleGetActive(page: Page) {
 	await page.waitForResponse(
-		(response) =>
-			response.url().includes("cycle.getActive") && response.ok(),
+		(response) => response.url().includes("cycle.getActive") && response.ok(),
 		{ timeout: 20_000 },
 	);
 }

@@ -1,10 +1,9 @@
 import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { ensureIdleCycle } from "./helpers/idle-cycle";
 import {
 	advanceClockThroughFastWork,
-	E2E_FAST_WORK_PRESET_LABEL,
 	startFocusedWorkCycle,
-} from "./helpers/fast-cycle";
-import { ensureIdleCycle } from "./helpers/idle-cycle";
+} from "./helpers/work-cycle";
 
 test.describe("Pomodoro cycle (S-01)", () => {
 	test.beforeEach(async ({ page }) => {
@@ -19,7 +18,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 
 		const taskTitle = `E2E Pomodoro ${Date.now()}`;
 
-		await startFocusedWorkCycle(page, taskTitle, E2E_FAST_WORK_PRESET_LABEL);
+		await startFocusedWorkCycle(page, taskTitle, 1);
 		await advanceClockThroughFastWork(page);
 
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
@@ -44,7 +43,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 
 		const taskTitle = `E2E Done ${Date.now()}`;
 
-		await startFocusedWorkCycle(page, taskTitle, E2E_FAST_WORK_PRESET_LABEL);
+		await startFocusedWorkCycle(page, taskTitle, 1);
 		await advanceClockThroughFastWork(page);
 
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({

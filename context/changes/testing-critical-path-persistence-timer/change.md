@@ -10,6 +10,8 @@ archived_at: null
 ## Notes
 
 Rollout Phase 1 of context/foundation/test-plan.md: "Critical-path persistence & timer".
+
+**Phase 4 follow-up (product):** second-precision custom work duration (1–5400 sec) in TimerPanel; E2E sets duration via `work-duration-custom-sec` (no `E2E_FAST_DURATIONS` / env-only presets).
 Risks covered: #1 (page refresh/crash leaves missing or wrong task/cycle state), #2 (work cycle elapsed time drifts >±2s in backgrounded tab).
 Test types planned: unit + integration + targeted e2e.
 Risk response intent:

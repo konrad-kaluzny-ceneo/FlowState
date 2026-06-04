@@ -4,7 +4,7 @@
 
 Ship test coverage for test-plan Phase 1 (risks **#1** and **#2**): prove that an active Pomodoro survives page refresh with correct tasks, phase, and user-visible remaining time, and that timer drift stays within ±2s when the tab is backgrounded (via hook-level visibility recalc and tick math — not jsdom-only fake timers or the E2E main-thread timer bypass).
 
-This change adds **tests and cookbook documentation only** — no product behavior changes unless a test reveals a defect worth a follow-up change.
+Phase 1 shipped **tests and cookbook documentation**. **Phase 4 (follow-up)** adds product duration UX so E2E uses the same custom-seconds interface as users (no `E2E_FAST_DURATIONS` env).
 
 ## Current State Analysis
 
@@ -42,6 +42,7 @@ After this plan completes:
 - Session-timeout + stale RUNNING cycle (deferred to Phase 3)
 - Product fixes to `getActive` session semantics unless a test failure forces a separate change
 - Asserting internal save payloads or raw `setInterval` without worker/visibility path
+- Custom break duration in seconds (Phase 4 — work cycle only)
 
 ## Implementation Approach
 
@@ -146,9 +147,9 @@ Add authenticated mid-cycle reload e2e with countdown tolerance; extend guest re
 
 **File**: `e2e/pomodoro-cycle.spec.ts` (extend) **or** `e2e/persistence-reload.spec.ts` (new, same auth project)
 
-**Intent**: Start 15 min cycle, advance clock slightly (e.g. 30s), `page.reload()`, wait for `cycle.getActive`, assert task row visible, `timer-panel-running`, and `timer-countdown` within ±2s of expected remaining. **Clock/reload caveat:** install `page.clock` before start; if fake time does not survive `reload`, derive expected remaining from persisted cycle semantics (15 min preset minus elapsed) via the countdown helper rather than assuming clock offset persists — implementer validates once and documents chosen pattern in spec comments.
+**Intent**: Start a short work cycle via `work-duration-custom-sec` (e.g. 30s), `page.reload()`, wait for `cycle.getActive`, assert task row visible and `timer-panel-running`. Optional ±2s countdown oracle if scope re-opens (see scope-addendum).
 
-**Contract**: Uses authenticated storage state from F-02 fixture; `ensureIdleCycle` in `beforeEach`; capture `endTime` proxy via known `startedAt` from 15 min preset minus elapsed clock advance; use `e2e/helpers/countdown.ts`. After `page.reload()`, **re-wait** for a successful `cycle.getActive` network response (do not rely on `beforeEach`'s best-effort wait — it uses `.catch(() => {})`) before asserting `timer-panel-running` / countdown.
+**Contract**: Uses per-test auth (`e2e/fixtures.ts`); `ensureIdleCycle` in `beforeEach`; `e2e/helpers/work-cycle.ts` (`setWorkDurationSec`, `startFocusedWorkCycle(page, title, durationSec)`). After `page.reload()`, **re-wait** for a successful `cycle.getActive` network response before asserting `timer-panel-running`.
 
 #### 2. Guest reload countdown
 
@@ -156,7 +157,7 @@ Add authenticated mid-cycle reload e2e with countdown tolerance; extend guest re
 
 **Intent**: After `reload`, assert `timer-countdown` within tolerance (not only `timer-panel-running`).
 
-**Contract**: Same 15 min + short `page.clock.runFor` before reload as existing test; guest banner still visible.
+**Contract**: Same short custom duration (e.g. 30s) via `work-duration-custom-sec`; guest banner still visible after reload.
 
 ### Success Criteria:
 
@@ -264,11 +265,11 @@ Fill test-plan cookbook entries and mark Phase 1 rollout row ready for orchestra
 
 ## Performance Considerations
 
-New tests add negligible CI time; e2e reload specs reuse 15 min preset with `page.clock` — keep clock advance minimal (30s–2 min) to avoid timeout inflation.
+New tests add negligible CI time; e2e reload specs use 30–90s custom work duration (no 15 min + clock required).
 
 ## Migration Notes
 
-None — test-only change.
+Phase 1: test-only. **Phase 4:** API/UI min work duration 1s; remove `E2E_FAST_DURATIONS` / `NEXT_PUBLIC_E2E_FAST_DURATIONS`; E2E helpers use `e2e/helpers/work-cycle.ts` and `data-testid="work-duration-custom-sec"`.
 
 ## References
 
@@ -311,3 +312,12 @@ None — test-only change.
 #### Manual
 
 - [x] 3.3 Cookbook spot-read — another dev could add a test from §6 alone
+
+### Phase 4: Duration UX for E2E parity
+
+#### Product + E2E
+
+- [x] 4.1 `duration-bounds` / `timer-panel` — custom work duration in seconds (1–5400); standard presets only
+- [x] 4.2 Remove `E2E_FAST_DURATIONS` env; migrate `e2e/helpers/work-cycle.ts` and specs
+- [x] 4.3 `pnpm check`, `pnpm typecheck`, `pnpm test`, `set CI=true && pnpm test:e2e`
+- [x] 4.4 Update `test-plan.md` §6.3 / §6.6 and FR-010 in `prd.md`

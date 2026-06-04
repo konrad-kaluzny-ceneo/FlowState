@@ -1,11 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { env } from "~/env";
+import { getMinWorkDurationSec } from "~/lib/duration-bounds";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
-const minWorkCycleSec = env.E2E_FAST_DURATIONS === "1" ? 1 : 60;
+const minWorkCycleSec = getMinWorkDurationSec();
 
 export const cycleRouter = createTRPCRouter({
 	list: protectedProcedure

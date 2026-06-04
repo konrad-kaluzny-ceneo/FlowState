@@ -26,17 +26,30 @@ describe("duration-storage", () => {
 		expect(getLastDuration()).toBe(45 * 60);
 	});
 
+	it("round-trips 1 second minimum", () => {
+		setLastDuration(1);
+		expect(getLastDuration()).toBe(1);
+	});
+
 	it("returns default for corrupt stored values", () => {
 		localStorage.setItem("flowstate:lastDurationSec", "not-a-number");
 		expect(getLastDuration()).toBe(DEFAULT_DURATION_SEC);
 
-		localStorage.setItem("flowstate:lastDurationSec", "30");
+		localStorage.setItem("flowstate:lastDurationSec", "0");
 		expect(getLastDuration()).toBe(DEFAULT_DURATION_SEC);
+	});
+
+	it("reads sub-minute stored values", () => {
+		localStorage.setItem("flowstate:lastDurationSec", "30");
+		expect(getLastDuration()).toBe(30);
 	});
 
 	it("clamps out-of-range values on write", () => {
 		setLastDuration(60 * 60);
 		expect(getLastDuration()).toBe(60 * 60);
+
+		setLastDuration(0);
+		expect(getLastDuration()).toBe(1);
 
 		setLastDuration(10_000);
 		expect(getLastDuration()).toBe(90 * 60);

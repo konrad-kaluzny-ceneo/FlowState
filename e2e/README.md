@@ -82,6 +82,7 @@ e2e/
 ├── guest-trial.spec.ts   # Risk #1: guest reload
 └── helpers/
     ├── idle-cycle.ts   # Dismiss overlays / interrupt before tests
+    ├── work-cycle.ts   # setWorkDurationSec + startFocusedWorkCycle(durationSec)
     └── user.ts         # Per-test user creation/sign-in utilities
 ```
 
@@ -92,6 +93,7 @@ e2e/
 - **CI (GitHub Actions):** always production build + start.
 - `page.clock` advances the countdown in specs that use it (Web Workers are not clock-mocked in e2e).
 - Pomodoro specs reset stray cycles in `beforeEach` (interrupt / dismiss overlay) so **Focus** is not disabled by a leftover `RUNNING` cycle.
+- Short work cycles for fast specs: fill `work-duration-custom-sec` (1–5400 seconds) via `e2e/helpers/work-cycle.ts` — same UI as production; no separate E2E duration env vars.
 - The `__Secure-` cookie constraint is sidestepped by using `APIRequestContext` for sign-in (not a browser).
 - `playwright/.auth/` is gitignored — auth state is regenerated on each run.
 - Vitest (`pnpm test`) and Playwright (`pnpm test:e2e`) are fully isolated — different configs, different directories, different scripts.

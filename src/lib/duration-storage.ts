@@ -3,7 +3,6 @@ import {
 	getMaxWorkDurationSec,
 	getMinBreakDurationSec,
 	getMinWorkDurationSec,
-	isE2eFastDurationsEnabled,
 } from "~/lib/duration-bounds";
 
 export const DEFAULT_DURATION_SEC = 25 * 60;
@@ -15,16 +14,14 @@ const SHORT_BREAK_STORAGE_KEY = "flowstate:shortBreakDurationSec";
 const LONG_BREAK_STORAGE_KEY = "flowstate:longBreakDurationSec";
 
 export function getLastDuration(): number {
-	const defaultSec = isE2eFastDurationsEnabled() ? 1 : DEFAULT_DURATION_SEC;
-
 	if (typeof window === "undefined") {
-		return defaultSec;
+		return DEFAULT_DURATION_SEC;
 	}
 
 	try {
 		const raw = localStorage.getItem(STORAGE_KEY);
 		if (raw == null) {
-			return defaultSec;
+			return DEFAULT_DURATION_SEC;
 		}
 
 		const parsed = Number.parseInt(raw, 10);
@@ -33,12 +30,12 @@ export function getLastDuration(): number {
 			parsed < getMinWorkDurationSec() ||
 			parsed > getMaxWorkDurationSec()
 		) {
-			return defaultSec;
+			return DEFAULT_DURATION_SEC;
 		}
 
 		return parsed;
 	} catch {
-		return defaultSec;
+		return DEFAULT_DURATION_SEC;
 	}
 }
 
@@ -59,16 +56,14 @@ export function setLastDuration(sec: number): void {
 }
 
 export function getShortBreakDuration(): number {
-	const defaultSec = isE2eFastDurationsEnabled() ? 1 : DEFAULT_SHORT_BREAK_SEC;
-
 	if (typeof window === "undefined") {
-		return defaultSec;
+		return DEFAULT_SHORT_BREAK_SEC;
 	}
 
 	try {
 		const raw = localStorage.getItem(SHORT_BREAK_STORAGE_KEY);
 		if (raw == null) {
-			return defaultSec;
+			return DEFAULT_SHORT_BREAK_SEC;
 		}
 
 		const parsed = Number.parseInt(raw, 10);
@@ -77,12 +72,12 @@ export function getShortBreakDuration(): number {
 			parsed < getMinBreakDurationSec() ||
 			parsed > getMaxBreakDurationSec()
 		) {
-			return isE2eFastDurationsEnabled() ? 1 : DEFAULT_SHORT_BREAK_SEC;
+			return DEFAULT_SHORT_BREAK_SEC;
 		}
 
 		return parsed;
 	} catch {
-		return isE2eFastDurationsEnabled() ? 1 : DEFAULT_SHORT_BREAK_SEC;
+		return DEFAULT_SHORT_BREAK_SEC;
 	}
 }
 
@@ -119,12 +114,12 @@ export function getLongBreakDuration(): number {
 			parsed < getMinBreakDurationSec() ||
 			parsed > getMaxBreakDurationSec()
 		) {
-			return isE2eFastDurationsEnabled() ? 1 : DEFAULT_LONG_BREAK_SEC;
+			return DEFAULT_LONG_BREAK_SEC;
 		}
 
 		return parsed;
 	} catch {
-		return isE2eFastDurationsEnabled() ? 1 : DEFAULT_LONG_BREAK_SEC;
+		return DEFAULT_LONG_BREAK_SEC;
 	}
 }
 
