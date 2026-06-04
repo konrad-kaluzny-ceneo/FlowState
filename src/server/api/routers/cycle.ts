@@ -1,8 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { env } from "~/env";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+
+const minWorkCycleSec = env.E2E_FAST_DURATIONS === "1" ? 1 : 60;
 
 export const cycleRouter = createTRPCRouter({
 	list: protectedProcedure
@@ -50,7 +53,7 @@ export const cycleRouter = createTRPCRouter({
 				configuredDurationSec: z
 					.number()
 					.int()
-					.min(60)
+					.min(minWorkCycleSec)
 					.max(90 * 60),
 				taskId: z.number().int().optional(),
 			}),

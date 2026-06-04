@@ -58,12 +58,15 @@ export default defineConfig({
 	webServer: {
 		command: webServerCommand,
 		url: e2eBaseUrl,
-		// Local: reuse an existing dev server on E2E_PORT (e.g. manual pnpm dev -p 3001).
-		reuseExistingServer: !useProductionServer,
+		// Reuse only when E2E_REUSE_SERVER=1 (manual dev must set FAST_DURATIONS + MAIN_THREAD_TIMER).
+		reuseExistingServer:
+			process.env.E2E_REUSE_SERVER === "1" && !useProductionServer,
 		timeout: useProductionServer ? 300_000 : 120_000,
 		env: {
 			...process.env,
+			E2E_FAST_DURATIONS: "1",
 			NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: "1",
+			NEXT_PUBLIC_E2E_FAST_DURATIONS: "1",
 		},
 	},
 });

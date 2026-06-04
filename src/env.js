@@ -7,6 +7,8 @@ export const env = createEnv({
 	 * isn't built with invalid env vars.
 	 */
 	server: {
+		/** Set to "1" in Playwright webServer to allow 1s work/break cycles in API validation. */
+		E2E_FAST_DURATIONS: z.enum(["1"]).optional(),
 		DATABASE_URL: z
 			.string()
 			.refine(
@@ -49,6 +51,8 @@ export const env = createEnv({
 	client: {
 		/** Set to "1" in Playwright webServer so fake timers advance the countdown. */
 		NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: z.enum(["1"]).optional(),
+		/** Set to "1" with E2E_FAST_DURATIONS — shows 1 sec preset and relaxes min duration. */
+		NEXT_PUBLIC_E2E_FAST_DURATIONS: z.enum(["1"]).optional(),
 	},
 
 	/**
@@ -56,6 +60,7 @@ export const env = createEnv({
 	 * middlewares) or client-side so we need to destruct manually.
 	 */
 	runtimeEnv: {
+		E2E_FAST_DURATIONS: process.env.E2E_FAST_DURATIONS,
 		DATABASE_URL: process.env.DATABASE_URL,
 		DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED,
 		NEON_AUTH_BASE_URL: process.env.NEON_AUTH_BASE_URL,
@@ -63,6 +68,8 @@ export const env = createEnv({
 		NODE_ENV: process.env.NODE_ENV,
 		NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER:
 			process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER,
+		NEXT_PUBLIC_E2E_FAST_DURATIONS:
+			process.env.NEXT_PUBLIC_E2E_FAST_DURATIONS,
 	},
 	/**
 	 * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
 
+import {
+	E2E_FAST_WORK_PRESET_LABEL,
+	startFocusedWorkCycle,
+} from "./helpers/fast-cycle";
+
 test.describe("Guest trial (S-08)", () => {
 	test("guest task persists locally and survives refresh", async ({
 		page,
@@ -21,12 +26,7 @@ test.describe("Guest trial (S-08)", () => {
 			page.getByRole("listitem").filter({ hasText: taskTitle }),
 		).toBeVisible();
 
-		const taskRow = page.getByRole("listitem").filter({ hasText: taskTitle });
-		await taskRow.getByRole("button", { name: "Focus" }).click();
-
-		await page.getByRole("button", { name: "15 min" }).click();
-		await page.getByRole("button", { name: "Start Cycle" }).click();
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+		await startFocusedWorkCycle(page, taskTitle, E2E_FAST_WORK_PRESET_LABEL);
 
 		await page.reload();
 		// Guest recovery is localStorage-driven; UI oracles are enough (no reliable cycle.getActive on reload).

@@ -30,7 +30,7 @@ describe("duration-storage", () => {
 		localStorage.setItem("flowstate:lastDurationSec", "not-a-number");
 		expect(getLastDuration()).toBe(DEFAULT_DURATION_SEC);
 
-		localStorage.setItem("flowstate:lastDurationSec", "60");
+		localStorage.setItem("flowstate:lastDurationSec", "30");
 		expect(getLastDuration()).toBe(DEFAULT_DURATION_SEC);
 	});
 

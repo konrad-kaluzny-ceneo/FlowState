@@ -1,4 +1,9 @@
 import { expect, test, waitForCycleGetActive } from "./fixtures";
+import {
+	advanceClockThroughFastWork,
+	E2E_FAST_WORK_PRESET_LABEL,
+	startFocusedWorkCycle,
+} from "./helpers/fast-cycle";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 
 test.describe("Pomodoro cycle (S-01)", () => {
@@ -14,26 +19,8 @@ test.describe("Pomodoro cycle (S-01)", () => {
 
 		const taskTitle = `E2E Pomodoro ${Date.now()}`;
 
-		await page.getByPlaceholder("Add a new task...").fill(taskTitle);
-		await page.getByRole("button", { name: "Add" }).click();
-		await expect(
-			page.getByRole("listitem").filter({ hasText: taskTitle }),
-		).toBeVisible();
-		await ensureIdleCycle(page);
-
-		const taskRow = page.getByRole("listitem").filter({ hasText: taskTitle });
-		await taskRow.getByRole("button", { name: "Focus" }).click();
-		await expect(taskRow).toHaveClass(/ring-purple-500/);
-
-		await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
-		await page.getByRole("button", { name: "15 min" }).click();
-		await page.getByRole("button", { name: "Start Cycle" }).click();
-
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
-		await page.clock.install();
-		await expect(page.getByTestId("timer-countdown")).toBeVisible();
-
-		await page.clock.runFor(15 * 60 * 1000 + 2000);
+		await startFocusedWorkCycle(page, taskTitle, E2E_FAST_WORK_PRESET_LABEL);
+		await advanceClockThroughFastWork(page);
 
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
 			timeout: 15_000,
@@ -45,7 +32,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		await page.getByRole("button", { name: "Continue later" }).click();
 
 		await expect(page.getByTestId("cycle-complete-overlay")).not.toBeVisible();
-		await expect(page.getByTestId("timer-panel-running")).not.toBeVisible();
+		const taskRow = page.getByRole("listitem").filter({ hasText: taskTitle });
 		await expect(
 			page.getByRole("listitem").filter({ hasText: taskTitle }),
 		).toBeVisible();
@@ -57,34 +44,22 @@ test.describe("Pomodoro cycle (S-01)", () => {
 
 		const taskTitle = `E2E Done ${Date.now()}`;
 
-		await page.getByPlaceholder("Add a new task...").fill(taskTitle);
-		await page.getByRole("button", { name: "Add" }).click();
-		await ensureIdleCycle(page);
+		await startFocusedWorkCycle(page, taskTitle, E2E_FAST_WORK_PRESET_LABEL);
+		await advanceClockThroughFastWork(page);
 
-		const taskRow = page.getByRole("listitem").filter({ hasText: taskTitle });
-		await taskRow.getByRole("button", { name: "Focus" }).click();
-		await page.getByRole("button", { name: "15 min" }).click();
-		await page.getByRole("button", { name: "Start Cycle" }).click();
-
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
-		await page.clock.install();
-
+		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
+			timeout: 15_000,
+		});
 		const markDone = page.getByRole("button", {
 			name: "Done — mark task complete",
 		});
-		for (let minute = 0; minute < 16; minute += 1) {
-			await page.clock.runFor(60 * 1000);
-			if (await markDone.isVisible()) {
-				await expect(markDone).toBeEnabled();
-				await markDone.click();
-				break;
-			}
-		}
+		await expect(markDone).toBeEnabled();
+		await markDone.click();
 
 		await expect(page.getByTestId("cycle-complete-overlay")).not.toBeVisible();
-		await expect(
-			page.getByRole("heading", { name: /Completed/ }),
-		).toBeVisible({ timeout: 15_000 });
+		await expect(page.getByRole("heading", { name: /Completed/ })).toBeVisible({
+			timeout: 15_000,
+		});
 		await expect(
 			page.getByRole("listitem").filter({ hasText: taskTitle }),
 		).toHaveCount(1);

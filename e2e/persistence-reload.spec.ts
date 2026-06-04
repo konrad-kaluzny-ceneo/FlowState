@@ -1,4 +1,8 @@
 import { expect, test, waitForCycleGetActive } from "./fixtures";
+import {
+	E2E_FAST_WORK_PRESET_LABEL,
+	startFocusedWorkCycle,
+} from "./helpers/fast-cycle";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 
 test.describe("Persistence reload (Risk #1)", () => {
@@ -14,19 +18,7 @@ test.describe("Persistence reload (Risk #1)", () => {
 
 		const taskTitle = `E2E Reload ${Date.now()}`;
 
-		await page.getByPlaceholder("Add a new task...").fill(taskTitle);
-		await page.getByRole("button", { name: "Add" }).click();
-		await expect(
-			page.getByRole("listitem").filter({ hasText: taskTitle }),
-		).toBeVisible();
-
-		const taskRow = page.getByRole("listitem").filter({ hasText: taskTitle });
-		await taskRow.getByRole("button", { name: "Focus" }).click();
-		await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
-
-		await page.getByRole("button", { name: "15 min" }).click();
-		await page.getByRole("button", { name: "Start Cycle" }).click();
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+		await startFocusedWorkCycle(page, taskTitle, E2E_FAST_WORK_PRESET_LABEL);
 
 		const getActiveAfterReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),
