@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainActiveCycle } from "~/lib/data-mode/types";
+import { assertRemainingMsWithinTolerance } from "~/test-utils/countdown-tolerance";
 import type { TimerWorkerInbound } from "~/workers/timer-worker-logic";
 
 const getOrCreateSession = vi.fn();
@@ -58,11 +59,13 @@ class FakeWorker {
 	terminate() {}
 }
 
+const playAlarm = vi.fn().mockResolvedValue(undefined);
+
 vi.mock("~/lib/audio", () => ({
 	createAudioManager: () => ({
 		unlock: vi.fn().mockResolvedValue(undefined),
 		preload: vi.fn().mockResolvedValue(undefined),
-		playAlarm: vi.fn().mockResolvedValue(undefined),
+		playAlarm,
 		dispose: vi.fn(),
 	}),
 }));
@@ -136,6 +139,7 @@ describe("usePomodoroCycle", () => {
 		activeCycleData = null;
 		fakeWorkers.length = 0;
 		vi.clearAllMocks();
+		playAlarm.mockClear();
 		getActiveCycle.mockImplementation(async () => activeCycleData);
 		getOrCreateSession.mockResolvedValue({ id: 1 });
 		endSession.mockResolvedValue({ id: 1, state: "ENDED_BY_USER" });
@@ -474,6 +478,10 @@ describe("usePomodoroCycle", () => {
 		await waitFor(() => {
 			expect(result.current.state).toBe("completed");
 		});
+
+		expect(result.current.remainingMs).toBe(0);
+		expect(playAlarm).toHaveBeenCalled();
+		expect(fakeWorkers).toHaveLength(0);
 	});
 
 	it("starts worker with correct endTime when resuming active cycle", async () => {
@@ -546,6 +554,62 @@ describe("usePomodoroCycle", () => {
 		});
 
 		expect(result.current.state).toBe("completed");
+		vi.useRealTimers();
+		vi.stubGlobal("Worker", FakeWorker);
+	});
+
+	it("recalculates remaining within ±2s when tab becomes visible (fallback path)", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+
+		vi.useFakeTimers();
+		const startMs = Date.now();
+		const durationSec = 120;
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Tests" });
+		});
+
+		await act(async () => {
+			await result.current.start(durationSec);
+		});
+
+		const endTimeMs = startMs + durationSec * 1000;
+		await act(async () => {
+			vi.advanceTimersByTime(5_000);
+		});
+
+		const staleRemaining = result.current.remainingMs;
+		vi.setSystemTime(startMs + 45_000);
+
+		Object.defineProperty(document, "visibilityState", {
+			configurable: true,
+			get: () => "visible",
+		});
+
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		assertRemainingMsWithinTolerance(
+			result.current.remainingMs,
+			endTimeMs,
+			2000,
+			startMs + 45_000,
+		);
+		expect(result.current.remainingMs).toBeLessThan(staleRemaining);
+		expect(result.current.state).toBe("running");
+
 		vi.useRealTimers();
 		vi.stubGlobal("Worker", FakeWorker);
 	});

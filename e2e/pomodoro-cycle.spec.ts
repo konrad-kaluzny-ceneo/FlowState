@@ -1,5 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 
+import { parseCountdownToSeconds } from "../src/test-utils/countdown-tolerance";
+
 async function ensureIdleCycle(page: Page) {
 	await expect(async () => {
 		if (await page.getByTestId("cycle-complete-overlay").isVisible()) {
@@ -72,6 +74,56 @@ test.describe("Pomodoro cycle (S-01)", () => {
 			page.getByRole("listitem").filter({ hasText: taskTitle }),
 		).toBeVisible();
 		await expect(taskRow.getByRole("button", { name: "Focus" })).toBeVisible();
+	});
+
+	test("mid-cycle reload preserves task, running panel, and countdown", async ({
+		page,
+	}) => {
+		test.setTimeout(60_000);
+
+		const taskTitle = `E2E Reload ${Date.now()}`;
+
+		await page.getByPlaceholder("Add a new task...").fill(taskTitle);
+		await page.getByRole("button", { name: "Add" }).click();
+		await expect(
+			page.getByRole("listitem").filter({ hasText: taskTitle }),
+		).toBeVisible();
+		await ensureIdleCycle(page);
+
+		const taskRow = page.getByRole("listitem").filter({ hasText: taskTitle });
+		await taskRow.getByRole("button", { name: "Focus" }).click();
+
+		await page.clock.install();
+		await page.getByRole("button", { name: "15 min" }).click();
+		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+
+		const elapsedMs = 30_000;
+		await page.clock.runFor(elapsedMs);
+		const remainingBeforeReload =
+			(await page.getByTestId("timer-countdown").textContent()) ?? "";
+
+		const getActiveAfterReload = page.waitForResponse(
+			(response) =>
+				response.url().includes("cycle.getActive") && response.ok(),
+			{ timeout: 20_000 },
+		);
+		await page.reload();
+		await getActiveAfterReload;
+
+		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+		await expect(
+			page.getByRole("listitem").filter({ hasText: taskTitle }),
+		).toBeVisible();
+
+		const remainingAfterReload =
+			(await page.getByTestId("timer-countdown").textContent()) ?? "";
+		expect(
+			Math.abs(
+				parseCountdownToSeconds(remainingAfterReload) -
+					parseCountdownToSeconds(remainingBeforeReload),
+			),
+		).toBeLessThanOrEqual(2);
 	});
 
 	test("mark task done from completion overlay", async ({ page }) => {

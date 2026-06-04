@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-03
+> Last updated: 2026-06-04
 
 ## 1. Strategy
 
@@ -117,25 +117,30 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.1 Adding a unit test
 
-- **Location**: co-located next to source — `src/**/*.test.ts` or `*.test.tsx`.
+- **Location**: co-located next to source — `src/**/*.test.ts` or `*.test.tsx`; shared oracles in `src/test-utils/`.
 - **Naming**: `<module>.test.ts(x)` (existing convention).
-- **Reference test**: `src/workers/timer-worker.test.ts` (timer logic); `src/lib/format-remaining.test.ts` (pure helpers).
+- **Reference tests**: `src/workers/timer-worker.test.ts` (`getTimerTickResult` at `endTime ± 2s`); `src/test-utils/countdown-tolerance.test.ts` (mm:ss parse + tolerance); `src/lib/format-remaining.test.ts` (display ceil rule).
+- **Timer drift (Risk #2)**: assert hook `remainingMs` within ±2000ms of `endTime - now` — not parsed mm:ss from hook state (avoids `formatRemainingMs` ceil noise). Use `assertRemainingMsWithinTolerance` from `src/test-utils/countdown-tolerance.ts`.
+- **Refresh recovery math**: guest snapshot edge cases in `src/lib/repositories/guest-repositories.test.ts`; auth/guest hook recovery in `src/hooks/use-pomodoro-cycle.test.tsx` and `use-pomodoro-cycle-guest.test.tsx`.
 - **Run locally**: `pnpm test` or `pnpm exec vitest run src/path/to/module.test.ts`.
-
-TBD — see §3 Phase 1 for refresh-recovery and timer-drift patterns.
 
 ### 6.2 Adding a tRPC integration test
 
 - **Location**: co-located with router — `src/server/api/routers/<feature>.test.ts`.
 - **Mocking policy**: mock DB at Prisma boundary or use test fixtures; never skip auth/isolation when testing protected procedures.
-- **Reference test**: `src/server/api/routers/session-isolation.test.ts`, `src/server/api/routers/cycle-isolation.test.ts`.
+- **Reference tests**: `src/server/api/routers/session-isolation.test.ts`, `src/server/api/routers/cycle-isolation.test.ts`; active-cycle + task shape after `create` → `getActive` in `src/server/api/routers/cycle.test.ts` (`integration: create → getActive → complete`).
+- **Persistence (Risk #1)**: extend an existing integration flow with recovery-field assertions (`taskId`, `task.title`, `startedAt`, `configuredDurationSec`, `state: RUNNING`) — avoid a duplicate seeded-only `getActive` test when one already exists.
+- **Cross-user IDOR**: see Phase 3 rollout — `cycle-isolation.test.ts` patterns.
 - **Run locally**: `pnpm test`.
-
-TBD — see §3 Phase 3 for cross-user IDOR patterns.
 
 ### 6.3 Adding an e2e test
 
-- TBD — see §3 Phase 2 for mid-cycle completion prompt and check-in gate patterns.
+- **Location**: `e2e/*.spec.ts`; shared countdown oracle in `e2e/helpers/countdown.ts` (wraps `src/test-utils/countdown-tolerance.ts`).
+- **Auth mid-cycle reload**: `e2e/pomodoro-cycle.spec.ts` — start 15 min preset, `page.clock.runFor` (~30s), `page.reload()`, re-wait for `cycle.getActive`, assert `timer-panel-running` + countdown within ±2s of pre-reload text (persisted `startedAt` + duration).
+- **Guest reload**: `e2e/guest-trial.spec.ts` — same pattern; guest banner still visible.
+- **Clock note**: install `page.clock` before start; if fake time does not survive `reload`, compare post-reload countdown to pre-reload capture or derive from 15 min preset minus elapsed — do not assume clock offset persists.
+- **Run locally**: `set CI=true && pnpm test:e2e` (never bare `pnpm test:e2e` — interactive reporter blocks). Single spec: `set CI=true && pnpm exec playwright test e2e/pomodoro-cycle.spec.ts`.
+- **Limitation**: e2e uses `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` — does not exercise production Worker path; Risk #2 background throttle is covered by hook unit tests (see §6.6).
 
 ### 6.4 Adding a test for a new tRPC procedure
 
@@ -150,7 +155,12 @@ TBD — see §3 Phase 3 for cross-user IDOR patterns.
 
 ### 6.6 Per-rollout-phase notes
 
-(Filled in as phases complete.)
+**Phase 1 — Critical-path persistence & timer** (shipped 2026-06-04, change `testing-critical-path-persistence-timer`)
+
+- Risks covered: **#1** (refresh/crash recovery), **#2** (background-tab timer drift ≤ ±2s).
+- Layers: unit tick math + countdown oracle; integration `getActive` + guest snapshot; hook visibility recalc (fallback path) + guest/auth recovery; auth + guest e2e `reload` with countdown tolerance.
+- **Explicit limitation**: no Playwright project without `E2E_MAIN_THREAD_TIMER` — Worker throttle in production is validated via `getTimerTickResult` + hook `visibilitychange` / fallback recalc, not browser Worker e2e.
+- **Deferred**: session-timeout + stale RUNNING cycle (Phase 3); dedicated Worker e2e project (cost × signal).
 
 ## 7. What We Deliberately Don't Test
 
