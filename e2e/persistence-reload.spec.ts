@@ -1,6 +1,6 @@
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import {
-	E2E_FAST_WORK_PRESET_LABEL,
+	E2E_RELOAD_WORK_PRESET_LABEL,
 	startFocusedWorkCycle,
 } from "./helpers/fast-cycle";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
@@ -18,7 +18,7 @@ test.describe("Persistence reload (Risk #1)", () => {
 
 		const taskTitle = `E2E Reload ${Date.now()}`;
 
-		await startFocusedWorkCycle(page, taskTitle, E2E_FAST_WORK_PRESET_LABEL);
+		await startFocusedWorkCycle(page, taskTitle, E2E_RELOAD_WORK_PRESET_LABEL);
 
 		const getActiveAfterReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),

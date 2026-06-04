@@ -52,6 +52,7 @@ export function getWorkDurationPresets(): ReadonlyArray<{
 
 	return [
 		{ label: E2E_FAST_WORK_PRESET_LABEL, sec: E2E_FAST_WORK_PRESET_SEC },
+		{ label: "30 sec", sec: 30 },
 		...standard,
 	];
 }
