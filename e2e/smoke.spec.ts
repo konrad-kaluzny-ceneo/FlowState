@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("authenticated user sees app shell with task list", async ({ page }) => {
 	await page.goto("/");

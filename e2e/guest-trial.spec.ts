@@ -29,14 +29,10 @@ test.describe("Guest trial (S-08)", () => {
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await page.reload();
-		await page
-			.waitForResponse(
-				(response) =>
-					response.url().includes("cycle.getActive") && response.ok(),
-				{ timeout: 20_000 },
-			)
-			.catch(() => {});
-		await expect(page.getByTestId("guest-banner")).toBeVisible();
+		// Guest recovery is localStorage-driven; UI oracles are enough (no reliable cycle.getActive on reload).
+		await expect(page.getByTestId("guest-banner")).toBeVisible({
+			timeout: 20_000,
+		});
 		await expect(
 			page.getByRole("listitem").filter({ hasText: taskTitle }),
 		).toBeVisible();

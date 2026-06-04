@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 
 test.describe("Persistence reload (Risk #1)", () => {
@@ -10,13 +9,7 @@ test.describe("Persistence reload (Risk #1)", () => {
 
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
-		await page
-			.waitForResponse(
-				(response) =>
-					response.url().includes("cycle.getActive") && response.ok(),
-				{ timeout: 20_000 },
-			)
-			.catch(() => {});
+		await waitForCycleGetActive(page);
 		await ensureIdleCycle(page);
 
 		const taskTitle = `E2E Reload ${Date.now()}`;

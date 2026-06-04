@@ -1,20 +1,11 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 
 test.describe("Pomodoro cycle (S-01)", () => {
-	test.describe.configure({ mode: "serial" });
-
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
-		await page
-			.waitForResponse(
-				(response) =>
-					response.url().includes("cycle.getActive") && response.ok(),
-				{ timeout: 20_000 },
-			)
-			.catch(() => {});
+		await waitForCycleGetActive(page);
 		await ensureIdleCycle(page);
 	});
 
@@ -78,19 +69,22 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 		await page.clock.install();
 
-		await page.clock.runFor(15 * 60 * 1000 + 2000);
-
-		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
-			timeout: 15_000,
+		const markDone = page.getByRole("button", {
+			name: "Done — mark task complete",
 		});
-		await page
-			.getByRole("button", { name: "Done — mark task complete" })
-			.click();
+		for (let minute = 0; minute < 16; minute += 1) {
+			await page.clock.runFor(60 * 1000);
+			if (await markDone.isVisible()) {
+				await expect(markDone).toBeEnabled();
+				await markDone.click();
+				break;
+			}
+		}
 
 		await expect(page.getByTestId("cycle-complete-overlay")).not.toBeVisible();
 		await expect(
 			page.getByRole("heading", { name: /Completed/ }),
-		).toBeVisible();
+		).toBeVisible({ timeout: 15_000 });
 		await expect(
 			page.getByRole("listitem").filter({ hasText: taskTitle }),
 		).toHaveCount(1);

@@ -138,7 +138,8 @@ the relevant rollout phase ships; before that, the sub-section reads
 - **Location**: `e2e/*.spec.ts`.
 - **Auth mid-cycle reload (Risk #1 UI)**: `e2e/persistence-reload.spec.ts` — start 15 min preset, `page.reload()`, re-wait for `cycle.getActive`, assert task row + `timer-panel-running` (no ±2s countdown oracle; timer accuracy is hook/unit). Shared idle reset: `e2e/helpers/idle-cycle.ts`.
 - **Guest reload**: `e2e/guest-trial.spec.ts` — same UI assertions; guest banner still visible.
-- **±2s tolerance**: use `src/test-utils/countdown-tolerance.ts` in Vitest only, not Playwright reload specs.
+- **±2s tolerance**: use `src/test-utils/countdown-tolerance.ts` in Vitest only, not Playwright reload specs (scope addendum: `context/changes/testing-critical-path-persistence-timer/reviews/scope-addendum.md`).
+- **Auth isolation**: per-test API sign-up/sign-in via `e2e/fixtures.ts` (no shared `playwright/.auth/user.json`).
 - **Run locally**: `set CI=true && pnpm test:e2e` (starts `next dev` on 3001 — no full build). Fastest: `next dev --turbo -p 3001` with `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1`, then `set E2E_REUSE_SERVER=1 && set CI=true && pnpm test:e2e`. Prod parity: `set E2E_PRODUCTION_SERVER=1`.
 - **Limitation**: e2e uses `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` — does not exercise production Worker path; Risk #2 is covered by hook/unit tests (see §6.6).
 

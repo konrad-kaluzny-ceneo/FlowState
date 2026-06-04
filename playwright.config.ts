@@ -40,18 +40,11 @@ export default defineConfig({
 	},
 	projects: [
 		{
-			name: "auth-setup",
-			testMatch: /auth\.setup\.ts/,
-		},
-		{
 			name: "chromium",
-			// Shared auth storageState + one RUNNING cycle in DB — keep auth specs serial.
-			fullyParallel: false,
+			// Per-test API sign-up/sign-in via e2e/fixtures.ts — no shared storageState.
 			use: {
 				...devices["Desktop Chrome"],
-				storageState: "playwright/.auth/user.json",
 			},
-			dependencies: ["auth-setup"],
 			testIgnore: /guest-trial\.spec\.ts/,
 		},
 		{

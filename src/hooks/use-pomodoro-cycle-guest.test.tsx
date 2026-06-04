@@ -3,6 +3,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { GUEST_STORAGE_KEY } from "~/lib/guest/schema";
 import { createGuestRepositories } from "~/lib/repositories/guest-repositories";
 import { assertRemainingMsWithinTolerance } from "~/test-utils/countdown-tolerance";
 
@@ -101,7 +102,7 @@ describe("usePomodoroCycle guest recovery", () => {
 			taskId: task.id,
 		});
 
-		const snapshotKey = "flowstate:guest-v1";
+		const snapshotKey = GUEST_STORAGE_KEY;
 		const raw = localStorage.getItem(snapshotKey);
 		if (raw == null) {
 			throw new Error("expected guest snapshot in localStorage");
