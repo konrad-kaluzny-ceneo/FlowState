@@ -104,8 +104,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 			(await page.getByTestId("timer-countdown").textContent()) ?? "";
 
 		const getActiveAfterReload = page.waitForResponse(
-			(response) =>
-				response.url().includes("cycle.getActive") && response.ok(),
+			(response) => response.url().includes("cycle.getActive") && response.ok(),
 			{ timeout: 20_000 },
 		);
 		await page.reload();

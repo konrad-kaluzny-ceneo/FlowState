@@ -107,8 +107,12 @@ describe("guest repositories", () => {
 
 		expect(active?.state).toBe("RUNNING");
 		expect(active?.startedAt).toEqual(startedAt);
+		expect(active).not.toBeNull();
+		if (active == null) {
+			return;
+		}
 		expect(
-			active!.startedAt.getTime() + active!.configuredDurationSec * 1000,
+			active.startedAt.getTime() + active.configuredDurationSec * 1000,
 		).toBeLessThan(Date.now());
 	});
 

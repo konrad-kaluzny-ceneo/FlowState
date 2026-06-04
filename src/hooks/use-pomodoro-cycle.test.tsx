@@ -568,50 +568,49 @@ describe("usePomodoroCycle", () => {
 			},
 		);
 
-		vi.useFakeTimers();
-		const startMs = Date.now();
 		const durationSec = 120;
+		const startMs = Date.now() - 10_000;
+		activeCycleData = makeActiveCycle({
+			startedAt: new Date(startMs),
+			configuredDurationSec: durationSec,
+		});
 
 		const { result } = renderHook(() => usePomodoroCycle(), {
 			wrapper: createWrapper(),
 		});
 
-		act(() => {
-			result.current.selectTask(7, { id: 7, title: "Tests" });
-		});
-
-		await act(async () => {
-			await result.current.start(durationSec);
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
 		});
 
 		const endTimeMs = startMs + durationSec * 1000;
-		await act(async () => {
-			vi.advanceTimersByTime(5_000);
-		});
-
 		const staleRemaining = result.current.remainingMs;
+
+		vi.useFakeTimers();
 		vi.setSystemTime(startMs + 45_000);
 
-		Object.defineProperty(document, "visibilityState", {
-			configurable: true,
-			get: () => "visible",
-		});
+		try {
+			Object.defineProperty(document, "visibilityState", {
+				configurable: true,
+				get: () => "visible",
+			});
 
-		await act(async () => {
-			document.dispatchEvent(new Event("visibilitychange"));
-		});
+			await act(async () => {
+				document.dispatchEvent(new Event("visibilitychange"));
+			});
 
-		assertRemainingMsWithinTolerance(
-			result.current.remainingMs,
-			endTimeMs,
-			2000,
-			startMs + 45_000,
-		);
-		expect(result.current.remainingMs).toBeLessThan(staleRemaining);
-		expect(result.current.state).toBe("running");
-
-		vi.useRealTimers();
-		vi.stubGlobal("Worker", FakeWorker);
+			assertRemainingMsWithinTolerance(
+				result.current.remainingMs,
+				endTimeMs,
+				2000,
+				startMs + 45_000,
+			);
+			expect(result.current.remainingMs).toBeLessThan(staleRemaining);
+			expect(result.current.state).toBe("running");
+		} finally {
+			vi.useRealTimers();
+			vi.stubGlobal("Worker", FakeWorker);
+		}
 	});
 
 	it("endSession calls sessions.end and resets state", async () => {

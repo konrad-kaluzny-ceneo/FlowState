@@ -9,7 +9,9 @@ export function parseCountdownToSeconds(text: string): number {
 	if (match == null) {
 		throw new Error(`Invalid countdown format: "${text}"`);
 	}
-	return Number.parseInt(match[1]!, 10) * 60 + Number.parseInt(match[2]!, 10);
+	const minutes = match[1] ?? "0";
+	const seconds = match[2] ?? "0";
+	return Number.parseInt(minutes, 10) * 60 + Number.parseInt(seconds, 10);
 }
 
 export function expectedRemainingSec(

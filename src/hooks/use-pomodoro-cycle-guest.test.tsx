@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -103,8 +103,10 @@ describe("usePomodoroCycle guest recovery", () => {
 
 		const snapshotKey = "flowstate:guest-v1";
 		const raw = localStorage.getItem(snapshotKey);
-		expect(raw).not.toBeNull();
-		const snapshot = JSON.parse(raw!) as {
+		if (raw == null) {
+			throw new Error("expected guest snapshot in localStorage");
+		}
+		const snapshot = JSON.parse(raw) as {
 			cycles: Array<{ id: string; startedAt: string }>;
 		};
 		const startedAt = new Date(Date.now() - 120_000).toISOString();
