@@ -30,6 +30,31 @@ describe("timer worker logic", () => {
 		expect(getTimerTickResult(endTime - 1, now)).toEqual({ type: "complete" });
 	});
 
+	it("returns tick within ±2s boundary before end time", () => {
+		const endTime = Date.now() + 10_000;
+
+		const atTwoSecondsBefore = getTimerTickResult(endTime, endTime - 2000);
+		expect(atTwoSecondsBefore).toEqual({
+			type: "tick",
+			remaining: 2000,
+		});
+
+		const justBeforeEnd = getTimerTickResult(endTime, endTime - 1);
+		expect(justBeforeEnd.type).toBe("tick");
+		if (justBeforeEnd.type === "tick") {
+			expect(justBeforeEnd.remaining).toBe(1);
+		}
+	});
+
+	it("returns complete at endTime and up to 2s past end time", () => {
+		const endTime = Date.now() + 5_000;
+
+		expect(getTimerTickResult(endTime, endTime)).toEqual({ type: "complete" });
+		expect(getTimerTickResult(endTime, endTime + 2000)).toEqual({
+			type: "complete",
+		});
+	});
+
 	it("advances ticks until complete then stops on stop message", () => {
 		const messages: Array<{ type: string; remaining?: number }> = [];
 		let intervalId: ReturnType<typeof setInterval> | null = null;

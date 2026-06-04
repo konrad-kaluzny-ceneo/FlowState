@@ -12,31 +12,39 @@ dotenv.config({
 const e2ePort = process.env.E2E_PORT ?? "3001";
 const e2eBaseUrl = `http://localhost:${e2ePort}`;
 
+/** GitHub Actions / explicit E2E_PRODUCTION_SERVER=1 → build + next start. Otherwise next dev (fast local). */
+const useProductionServer =
+	process.env.E2E_PRODUCTION_SERVER === "1" || !!process.env.GITHUB_ACTIONS;
+
+const webServerCommand = useProductionServer
+	? `pnpm build && pnpm exec next start -p ${e2ePort}`
+	: `pnpm exec next dev --turbo -p ${e2ePort}`;
+
+const workerCount = process.env.E2E_WORKERS
+	? Number.parseInt(process.env.E2E_WORKERS, 10)
+	: process.env.CI
+		? 4
+		: undefined;
+
 export default defineConfig({
 	globalSetup: "./e2e/global.setup.ts",
 	testDir: "./e2e",
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: 0,
-	workers: 1,
-	reporter: "html",
+	workers: workerCount,
+	reporter: process.env.CI ? "list" : "html",
 	use: {
 		baseURL: e2eBaseUrl,
 		trace: "on-first-retry",
 	},
 	projects: [
 		{
-			name: "auth-setup",
-			testMatch: /auth\.setup\.ts/,
-		},
-		{
 			name: "chromium",
-			fullyParallel: false,
+			// Per-test API sign-up/sign-in via e2e/fixtures.ts — no shared storageState.
 			use: {
 				...devices["Desktop Chrome"],
-				storageState: "playwright/.auth/user.json",
 			},
-			dependencies: ["auth-setup"],
 			testIgnore: /guest-trial\.spec\.ts/,
 		},
 		{
@@ -48,10 +56,12 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: `pnpm build && pnpm exec next start -p ${e2ePort}`,
+		command: webServerCommand,
 		url: e2eBaseUrl,
-		reuseExistingServer: !!process.env.E2E_REUSE_SERVER,
-		timeout: 300_000,
+		// Reuse only when E2E_REUSE_SERVER=1 (manual dev must set MAIN_THREAD_TIMER).
+		reuseExistingServer:
+			process.env.E2E_REUSE_SERVER === "1" && !useProductionServer,
+		timeout: useProductionServer ? 300_000 : 120_000,
 		env: {
 			...process.env,
 			NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: "1",

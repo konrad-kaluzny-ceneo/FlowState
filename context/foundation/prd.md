@@ -95,7 +95,7 @@ A developer, analyst, or team contributor whose workday is genuinely interrupt-d
 
 ### Pomodoro
 
-- FR-010: User can configure the work cycle duration (default: 25 minutes; allowed range: 5–90 minutes). Priority: must-have
+- FR-010: User can configure the work cycle duration (default: 25 minutes; presets 15/25/45/60 minutes; custom range 1 second–90 minutes). Priority: must-have
   > Socrates: Counter-argument considered: "configurability adds UI complexity — a fixed 25-minute cycle is the Pomodoro standard and simpler to build." Resolution: kept; different work types (deep work vs. admin) benefit from different cycle lengths; configurability supports the adaptive focus rule.
 - FR-011: User can configure the break cycle duration (default: 5 minutes short break, 15 minutes long break every 4 cycles; allowed range: 1–30 minutes). Priority: must-have
   > Socrates: Counter-argument considered: "break duration could be auto-calculated from session fatigue instead of user-configured." Resolution: kept; auto-calculation is a post-MVP sophistication; user-set breaks are the minimal viable control.

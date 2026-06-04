@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { getMinWorkDurationSec } from "~/lib/duration-bounds";
+
 export const GUEST_STORAGE_KEY = "flowstate:guest-v1";
 
 export const guestTaskSchema = z.object({
@@ -34,7 +36,7 @@ export const guestCycleSchema = z.object({
 	configuredDurationSec: z
 		.number()
 		.int()
-		.min(60)
+		.min(getMinWorkDurationSec())
 		.max(90 * 60),
 	startedAt: z.coerce.date(),
 	endedAt: z.coerce.date().nullable(),

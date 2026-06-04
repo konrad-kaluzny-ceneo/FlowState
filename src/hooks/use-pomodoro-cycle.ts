@@ -484,7 +484,10 @@ export function usePomodoroCycle() {
 					setState("running");
 					startWorker(endTime);
 
-					await invalidateServerCycle();
+					await Promise.all([
+						invalidateServerCycle(),
+						...(markTaskDone ? [utils.task.list.invalidate()] : []),
+					]);
 				} catch {
 					// Break could not start — acceptable degradation
 					setError("Break could not start. Your work cycle was saved.");

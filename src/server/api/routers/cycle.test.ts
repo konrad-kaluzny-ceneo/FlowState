@@ -462,6 +462,14 @@ describe("cycle router lifecycle", () => {
 
 		const active = await c.getActive();
 		expect(active?.id).toBe(created.id);
+		expect(active).toMatchObject({
+			state: "RUNNING",
+			taskId: 2,
+			kind: "WORK",
+			configuredDurationSec: 1500,
+		});
+		expect(active?.task).toMatchObject({ id: 2, title: "Task" });
+		expect(active?.startedAt).toBeInstanceOf(Date);
 
 		await c.complete({ cycleId: created.id });
 		const after = await c.getActive();

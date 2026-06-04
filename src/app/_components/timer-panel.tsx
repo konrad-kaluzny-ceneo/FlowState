@@ -8,6 +8,11 @@ import type {
 	PomodoroCycleState,
 } from "~/hooks/use-pomodoro-cycle";
 import {
+	getMaxWorkDurationSec,
+	getMinCustomWorkDurationSec,
+	getWorkDurationPresets,
+} from "~/lib/duration-bounds";
+import {
 	getLastDuration,
 	getLongBreakDuration,
 	getShortBreakDuration,
@@ -16,22 +21,31 @@ import {
 } from "~/lib/duration-storage";
 import { formatRemainingMs } from "~/lib/format-remaining";
 
-const DURATION_PRESETS_SEC = [
-	{ label: "15 min", sec: 15 * 60 },
-	{ label: "25 min", sec: 25 * 60 },
-	{ label: "45 min", sec: 45 * 60 },
-	{ label: "60 min", sec: 60 * 60 },
-] as const;
+const DURATION_PRESETS_SEC = getWorkDurationPresets();
+const MIN_CUSTOM_DURATION_SEC = getMinCustomWorkDurationSec();
+const MAX_DURATION_SEC = getMaxWorkDurationSec();
 
-const MIN_DURATION_SEC = 5 * 60;
-const MAX_DURATION_SEC = 90 * 60;
+function presetToCustomSec(sec: number): string {
+	return String(sec);
+}
 
 function initialDurationState() {
 	const sec = getLastDuration();
 	return {
 		selectedSec: sec,
-		customMinutes: String(Math.round(sec / 60)),
+		customSec: presetToCustomSec(sec),
 	};
+}
+
+function parseCustomSecInput(value: string): number | null {
+	if (value.trim() === "") {
+		return null;
+	}
+	const parsed = Number.parseInt(value, 10);
+	if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+		return null;
+	}
+	return parsed;
 }
 
 type TimerPanelProps = {
@@ -56,8 +70,8 @@ export function TimerPanel({
 	const [selectedSec, setSelectedSec] = useState(
 		() => initialDurationState().selectedSec,
 	);
-	const [customMinutes, setCustomMinutes] = useState(
-		() => initialDurationState().customMinutes,
+	const [customSec, setCustomSec] = useState(
+		() => initialDurationState().customSec,
 	);
 	const [shortBreakMin, setShortBreakMin] = useState(() =>
 		Math.round(getShortBreakDuration() / 60),
@@ -116,14 +130,18 @@ export function TimerPanel({
 		);
 	}
 
-	const customSec = Number.parseInt(customMinutes, 10) * 60;
+	const parsedCustomSec = parseCustomSecInput(customSec);
 	const customValid =
-		Number.isFinite(customSec) &&
-		customSec >= MIN_DURATION_SEC &&
-		customSec <= MAX_DURATION_SEC;
+		parsedCustomSec != null &&
+		parsedCustomSec >= MIN_CUSTOM_DURATION_SEC &&
+		parsedCustomSec <= MAX_DURATION_SEC;
+	const presetMatch =
+		parsedCustomSec != null
+			? DURATION_PRESETS_SEC.find((p) => p.sec === parsedCustomSec)
+			: undefined;
+	const usingPreset = presetMatch != null && selectedSec === presetMatch.sec;
 	const customTouched =
-		customMinutes !== "" &&
-		!DURATION_PRESETS_SEC.some((p) => p.sec === customSec);
+		customSec !== "" && (parsedCustomSec == null || presetMatch == null);
 	const showCustomError = customTouched && !customValid;
 
 	return (
@@ -140,14 +158,14 @@ export function TimerPanel({
 				{DURATION_PRESETS_SEC.map((preset) => (
 					<button
 						className={`rounded-lg px-3 py-2 text-sm transition ${
-							selectedSec === preset.sec
+							usingPreset && presetMatch?.sec === preset.sec
 								? "bg-purple-600 text-white"
 								: "bg-white/10 text-white/80 hover:bg-white/20"
 						}`}
 						key={preset.sec}
 						onClick={() => {
 							setSelectedSec(preset.sec);
-							setCustomMinutes(String(preset.sec / 60));
+							setCustomSec(presetToCustomSec(preset.sec));
 						}}
 						type="button"
 					>
@@ -156,24 +174,36 @@ export function TimerPanel({
 				))}
 			</div>
 
-			<label className="mt-4 flex items-center justify-center gap-2 text-sm text-white/70">
-				Custom (5–90 min)
+			<label className="mt-4 flex flex-col items-center gap-1 text-sm text-white/70">
+				<span>Custom (1–{MAX_DURATION_SEC} sec, 90 min max)</span>
 				<input
-					className={`w-16 rounded border bg-white/10 px-2 py-1 text-center text-white ${
+					className={`w-24 rounded border bg-white/10 px-2 py-1 text-center text-white ${
 						showCustomError
 							? "border-red-400 outline outline-1 outline-red-400/50"
 							: "border-white/20"
 					}`}
-					max={90}
-					min={5}
-					onChange={(e) => setCustomMinutes(e.target.value)}
+					data-testid="work-duration-custom-sec"
+					max={MAX_DURATION_SEC}
+					min={MIN_CUSTOM_DURATION_SEC}
+					onChange={(e) => {
+						const next = e.target.value;
+						setCustomSec(next);
+						const parsed = parseCustomSecInput(next);
+						if (
+							parsed != null &&
+							DURATION_PRESETS_SEC.some((p) => p.sec === parsed)
+						) {
+							setSelectedSec(parsed);
+						}
+					}}
 					type="number"
-					value={customMinutes}
+					value={customSec}
 				/>
 			</label>
 			{showCustomError && (
 				<p className="mt-1 text-center text-red-400 text-xs">
-					Must be between 5 and 90 minutes
+					Must be between {MIN_CUSTOM_DURATION_SEC} and {MAX_DURATION_SEC}{" "}
+					seconds
 				</p>
 			)}
 
@@ -181,7 +211,11 @@ export function TimerPanel({
 				className="mt-6 w-full rounded-lg bg-purple-600 py-3 font-semibold text-white transition hover:bg-purple-500 disabled:opacity-50"
 				disabled={isStarting || showCustomError}
 				onClick={() => {
-					const durationSec = customValid ? customSec : selectedSec;
+					const durationSec = usingPreset
+						? selectedSec
+						: customValid && parsedCustomSec != null
+							? parsedCustomSec
+							: selectedSec;
 					void onStart(durationSec);
 				}}
 				type="button"

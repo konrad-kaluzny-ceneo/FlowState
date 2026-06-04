@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-03
+> Last updated: 2026-06-04
 
 ## 1. Strategy
 
@@ -67,7 +67,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
-| 1 | Critical-path persistence & timer | Prove refresh/crash recovery and background-tab timer accuracy at the cheapest layers that catch real regressions | #1, #2 | unit + integration + targeted e2e | change opened | testing-critical-path-persistence-timer |
+| 1 | Critical-path persistence & timer | Prove refresh/crash recovery and background-tab timer accuracy at the cheapest layers that catch real regressions | #1, #2 | unit + integration + targeted e2e | complete | testing-critical-path-persistence-timer |
 | 2 | Active-slice browser proofs | Browser-level proof for S-03 mid-cycle prompt and S-05 check-in gate before wedge work compounds | #3, #7 | Playwright e2e | not started | — |
 | 3 | Isolation, abuse & guest merge | Lock per-user isolation, IDOR rejection, and guest→account merge integrity | #4, #5, #6 | integration + e2e | not started | — |
 | 4 | Quality-gates wiring | Enforce lint, typecheck, unit/integration, and critical e2e in CI on every PR | cross-cutting | CI gates | not started | — |
@@ -117,25 +117,31 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.1 Adding a unit test
 
-- **Location**: co-located next to source — `src/**/*.test.ts` or `*.test.tsx`.
+- **Location**: co-located next to source — `src/**/*.test.ts` or `*.test.tsx`; shared oracles in `src/test-utils/`.
 - **Naming**: `<module>.test.ts(x)` (existing convention).
-- **Reference test**: `src/workers/timer-worker.test.ts` (timer logic); `src/lib/format-remaining.test.ts` (pure helpers).
+- **Reference tests**: `src/workers/timer-worker.test.ts` (`getTimerTickResult` at `endTime ± 2s`); `src/test-utils/countdown-tolerance.test.ts` (mm:ss parse + tolerance); `src/lib/format-remaining.test.ts` (display ceil rule).
+- **Timer drift (Risk #2)**: assert hook `remainingMs` within ±2000ms of `endTime - now` — not parsed mm:ss from hook state (avoids `formatRemainingMs` ceil noise). Use `assertRemainingMsWithinTolerance` from `src/test-utils/countdown-tolerance.ts`.
+- **Refresh recovery math**: guest snapshot edge cases in `src/lib/repositories/guest-repositories.test.ts`; auth/guest hook recovery in `src/hooks/use-pomodoro-cycle.test.tsx` and `use-pomodoro-cycle-guest.test.tsx`.
 - **Run locally**: `pnpm test` or `pnpm exec vitest run src/path/to/module.test.ts`.
-
-TBD — see §3 Phase 1 for refresh-recovery and timer-drift patterns.
 
 ### 6.2 Adding a tRPC integration test
 
 - **Location**: co-located with router — `src/server/api/routers/<feature>.test.ts`.
 - **Mocking policy**: mock DB at Prisma boundary or use test fixtures; never skip auth/isolation when testing protected procedures.
-- **Reference test**: `src/server/api/routers/session-isolation.test.ts`, `src/server/api/routers/cycle-isolation.test.ts`.
+- **Reference tests**: `src/server/api/routers/session-isolation.test.ts`, `src/server/api/routers/cycle-isolation.test.ts`; active-cycle + task shape after `create` → `getActive` in `src/server/api/routers/cycle.test.ts` (`integration: create → getActive → complete`).
+- **Persistence (Risk #1)**: extend an existing integration flow with recovery-field assertions (`taskId`, `task.title`, `startedAt`, `configuredDurationSec`, `state: RUNNING`) — avoid a duplicate seeded-only `getActive` test when one already exists.
+- **Cross-user IDOR**: see Phase 3 rollout — `cycle-isolation.test.ts` patterns.
 - **Run locally**: `pnpm test`.
-
-TBD — see §3 Phase 3 for cross-user IDOR patterns.
 
 ### 6.3 Adding an e2e test
 
-- TBD — see §3 Phase 2 for mid-cycle completion prompt and check-in gate patterns.
+- **Location**: `e2e/*.spec.ts`.
+- **Auth mid-cycle reload (Risk #1 UI)**: `e2e/persistence-reload.spec.ts` — set work duration via `work-duration-custom-sec` (e.g. 30s) using `setWorkDurationSec` in `e2e/helpers/work-cycle.ts`, `page.reload()`, re-wait for `cycle.getActive`, assert task row + `timer-panel-running` (no ±2s countdown oracle; timer accuracy is hook/unit). Shared idle reset: `e2e/helpers/idle-cycle.ts`.
+- **Guest reload**: `e2e/guest-trial.spec.ts` — same UI assertions; guest banner still visible.
+- **±2s tolerance**: use `src/test-utils/countdown-tolerance.ts` in Vitest only, not Playwright reload specs (scope addendum: `context/changes/testing-critical-path-persistence-timer/reviews/scope-addendum.md`).
+- **Auth isolation**: per-test API sign-up/sign-in via `e2e/fixtures.ts` (no shared `playwright/.auth/user.json`).
+- **Run locally**: `set CI=true && pnpm test:e2e` (starts `next dev` on 3001 — no full build). Fastest: `next dev --turbo -p 3001` with `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1`, then `set E2E_REUSE_SERVER=1 && set CI=true && pnpm test:e2e`. Prod parity: `set E2E_PRODUCTION_SERVER=1`.
+- **Limitation**: e2e uses `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` — does not exercise production Worker path; Risk #2 is covered by hook/unit tests (see §6.6).
 
 ### 6.4 Adding a test for a new tRPC procedure
 
@@ -150,7 +156,13 @@ TBD — see §3 Phase 3 for cross-user IDOR patterns.
 
 ### 6.6 Per-rollout-phase notes
 
-(Filled in as phases complete.)
+**Phase 1 — Critical-path persistence & timer** (shipped 2026-06-04, change `testing-critical-path-persistence-timer`)
+
+- Risks covered: **#1** (refresh/crash recovery), **#2** (background-tab timer drift ≤ ±2s).
+- Layers: unit tick math + countdown oracle (Vitest); integration `getActive` + guest snapshot; hook visibility recalc (fallback path) + guest/auth recovery; auth + guest e2e `reload` asserts task list + `timer-panel-running` only.
+- **Explicit limitation**: no Playwright project without `E2E_MAIN_THREAD_TIMER` — Worker throttle in production is validated via `getTimerTickResult` + hook `visibilitychange` / fallback recalc, not browser Worker e2e.
+- **E2E durations**: short work cycles use the same custom-seconds UI as users (`data-testid="work-duration-custom-sec"`); no `E2E_FAST_DURATIONS` env flag.
+- **Deferred**: session-timeout + stale RUNNING cycle (Phase 3); dedicated Worker e2e project (cost × signal).
 
 ## 7. What We Deliberately Don't Test
 

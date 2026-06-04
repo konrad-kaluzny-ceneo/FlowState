@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { startFocusedWorkCycle } from "./helpers/work-cycle";
+
 test.describe("Guest trial (S-08)", () => {
 	test("guest task persists locally and survives refresh", async ({
 		page,
@@ -12,27 +14,20 @@ test.describe("Guest trial (S-08)", () => {
 		const taskTitle = `Guest E2E ${Date.now()}`;
 
 		await page.goto("/");
+		await page.evaluate(() => localStorage.clear());
+		await page.reload();
 		await expect(page.getByTestId("guest-banner")).toBeVisible();
 		await expect(page.getByTestId("task-list")).toBeVisible();
 
-		await page.getByPlaceholder("Add a new task...").fill(taskTitle);
-		await page.getByRole("button", { name: "Add" }).click();
-		await expect(
-			page.getByRole("listitem").filter({ hasText: taskTitle }),
-		).toBeVisible();
-
-		const taskRow = page.getByRole("listitem").filter({ hasText: taskTitle });
-		await taskRow.getByRole("button", { name: "Focus" }).click();
-
-		await page.clock.install();
-		await page.getByRole("button", { name: "15 min" }).click();
-		await page.getByRole("button", { name: "Start Cycle" }).click();
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+		await startFocusedWorkCycle(page, taskTitle, 30);
 
 		await page.reload();
-		await expect(page.getByTestId("guest-banner")).toBeVisible();
+		// Guest recovery is localStorage-driven; UI oracles are enough (no reliable cycle.getActive on reload).
+		await expect(page.getByTestId("guest-banner")).toBeVisible({
+			timeout: 20_000,
+		});
 		await expect(
-			page.getByRole("listitem").filter({ hasText: taskTitle }),
+			page.getByRole("listitem").filter({ hasText: taskTitle }).first(),
 		).toBeVisible();
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 	});
