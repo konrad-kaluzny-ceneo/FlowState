@@ -52,7 +52,7 @@
 - **Location**: context/changes/testing-isolation-abuse-guest-merge/change.md:4
 - **Detail**: Plan Phase 4 item 5 expects `status: implemented` and `updated` stamp on ship. Progress marks all automated phases complete; test-plan §3 Phase 3 row is `complete`. Identity file still reads `implementing`.
 - **Fix**: Set `status: implemented` and refresh `updated: 2026-06-05` in `change.md`.
-- **Decision**: PENDING
+- **Decision**: FIXED
 
 ### F4 — Test implementation uncommitted (docs-only commit on branch)
 
@@ -66,7 +66,7 @@
   - Tradeoff: Should fix F1/F2 before commit to avoid landing failing format.
   - Confidence: HIGH — `git diff --stat HEAD` confirms uncommitted scope.
   - Blind spot: None significant.
-- **Decision**: PENDING
+- **Decision**: FIXED — tests landed in 8ef7de4; review follow-ups in 0ee5730
 
 ### F5 — `change.md` notes still mention post-integration guest e2e
 
@@ -76,7 +76,7 @@
 - **Location**: context/changes/testing-isolation-abuse-guest-merge/change.md:16
 - **Detail**: Notes say "integration (primary) + one targeted e2e for guest merge after integration passes." Plan and shipped §6.5 explicitly defer guest-merge e2e to a follow-up change. Implementation correctly deferred e2e; identity notes are stale.
 - **Fix**: Update Notes to match plan: integration-only in this change; guest-merge e2e deferred to follow-up.
-- **Decision**: PENDING
+- **Decision**: FIXED
 
 ### F6 — Manual cookbook spot-read (4.3) still pending
 
@@ -86,4 +86,4 @@
 - **Location**: context/changes/testing-isolation-abuse-guest-merge/plan.md:372
 - **Detail**: Progress item 4.3 `- [ ] Cookbook spot-read` unchecked. §6.2, §6.5, §6.6 content appears complete and references concrete test names; spot-read not recorded.
 - **Fix**: Contributor spot-reads §6.2/§6.5/§6.6 and checks 4.3, or leave pending if review session counts as spot-read.
-- **Decision**: PENDING
+- **Decision**: FIXED — spot-read in impl-review; 4.3 checked

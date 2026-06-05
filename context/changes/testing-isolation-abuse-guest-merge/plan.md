@@ -371,4 +371,4 @@ Test-only rollout. No database migrations. If stale RUNNING test reveals undesir
 
 #### Manual
 
-- [ ] 4.3 Cookbook spot-read — isolation/merge patterns clear from §6 alone
+- [x] 4.3 Cookbook spot-read — isolation/merge patterns clear from §6 alone
