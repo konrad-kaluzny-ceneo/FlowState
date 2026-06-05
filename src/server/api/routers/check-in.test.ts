@@ -83,9 +83,11 @@ vi.mock("~/server/db/index", () => ({
 	},
 }));
 
+// Stub global setTimeout to resolve immediately (eliminates timingMiddleware dev delay)
 const originalSetTimeout = globalThis.setTimeout;
+// biome-ignore lint/suspicious/noExplicitAny: test utility override
 globalThis.setTimeout = ((fn: () => void, _ms?: number) =>
-	originalSetTimeout(fn, 0)) as typeof setTimeout;
+	originalSetTimeout(fn, 0)) as any;
 
 const { createCallerFactory } = await import("~/server/api/trpc");
 const { checkInRouter } = await import("~/server/api/routers/check-in");
@@ -119,6 +121,7 @@ describe("checkIn router persistence", () => {
 		checkInCycleIds = new Set();
 		nextCheckInId = 1;
 		nextRespondedAtMs = Date.now();
+		vi.clearAllMocks();
 	});
 
 	it("create returns cycleId, userId, energy, and respondedAt", async () => {
@@ -180,6 +183,9 @@ describe("checkIn router persistence", () => {
 		expect(list).toHaveLength(2);
 		expect(list[0]?.cycleId).toBe(2);
 		expect(list[1]?.cycleId).toBe(1);
+		expect(list[0]?.respondedAt.getTime()).toBeGreaterThan(
+			list[1]?.respondedAt.getTime() ?? 0,
+		);
 	});
 
 	it(`list honors DEFAULT_LIST_LIMIT (${DEFAULT_LIST_LIMIT}) with newest-first ordering`, async () => {
