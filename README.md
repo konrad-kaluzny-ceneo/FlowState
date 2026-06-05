@@ -4,7 +4,7 @@ A Pomodoro-based productivity app that combines focused work sessions with adapt
 
 ## What it does
 
-- **Pomodoro timer** with configurable work/break durations (1 sec–90 min work, 1–30 min break)
+- **Pomodoro timer** with configurable work/break durations (1 sec–90 min work, 1 sec–30 min break)
 - **Task management** — add, edit, complete, and revert tasks with clear active/done separation
 - **Adaptive focus scoring** — suggests your next task based on energy level, work type, urgency, and session context
 - **Mindful check-ins** — after each cycle, declare your energy state (Focused / Steady / Fading) to guide suggestions

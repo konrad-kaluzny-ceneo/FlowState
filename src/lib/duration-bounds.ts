@@ -2,7 +2,7 @@
 
 export const MIN_WORK_DURATION_SEC = 1;
 export const MAX_WORK_DURATION_SEC = 90 * 60;
-export const MIN_BREAK_DURATION_SEC = 1 * 60;
+export const MIN_BREAK_DURATION_SEC = 1;
 export const MAX_BREAK_DURATION_SEC = 30 * 60;
 
 export function getMinWorkDurationSec(): number {
@@ -13,7 +13,7 @@ export function getMaxWorkDurationSec(): number {
 	return MAX_WORK_DURATION_SEC;
 }
 
-/** Minimum for the custom seconds field in TimerPanel (same as API min). */
+/** Minimum valid work duration (same as API min). */
 export function getMinCustomWorkDurationSec(): number {
 	return getMinWorkDurationSec();
 }
@@ -35,5 +35,27 @@ export function getWorkDurationPresets(): ReadonlyArray<{
 		{ label: "25 min", sec: 25 * 60 },
 		{ label: "45 min", sec: 45 * 60 },
 		{ label: "60 min", sec: 60 * 60 },
+	] as const;
+}
+
+export function getShortBreakPresets(): ReadonlyArray<{
+	label: string;
+	sec: number;
+}> {
+	return [
+		{ label: "3 min", sec: 3 * 60 },
+		{ label: "5 min", sec: 5 * 60 },
+		{ label: "10 min", sec: 10 * 60 },
+	] as const;
+}
+
+export function getLongBreakPresets(): ReadonlyArray<{
+	label: string;
+	sec: number;
+}> {
+	return [
+		{ label: "10 min", sec: 10 * 60 },
+		{ label: "15 min", sec: 15 * 60 },
+		{ label: "20 min", sec: 20 * 60 },
 	] as const;
 }

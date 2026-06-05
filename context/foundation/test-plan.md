@@ -136,7 +136,7 @@ the relevant rollout phase ships; before that, the sub-section reads
 ### 6.3 Adding an e2e test
 
 - **Location**: `e2e/*.spec.ts`.
-- **Auth mid-cycle reload (Risk #1 UI)**: `e2e/persistence-reload.spec.ts` — set work duration via `work-duration-custom-sec` (e.g. 30s) using `setWorkDurationSec` in `e2e/helpers/work-cycle.ts`, `page.reload()`, re-wait for `cycle.getActive`, assert task row + `timer-panel-running` (no ±2s countdown oracle; timer accuracy is hook/unit). Shared idle reset: `e2e/helpers/idle-cycle.ts`.
+- **Auth mid-cycle reload (Risk #1 UI)**: `e2e/persistence-reload.spec.ts` — set work duration via `work-duration-min` / `work-duration-sec` (e.g. 0 min 30 sec) using `setWorkDurationSec` in `e2e/helpers/work-cycle.ts`, `page.reload()`, re-wait for `cycle.getActive`, assert task row + `timer-panel-running` (no ±2s countdown oracle; timer accuracy is hook/unit). Shared idle reset: `e2e/helpers/idle-cycle.ts`.
 - **Guest reload**: `e2e/guest-trial.spec.ts` — same UI assertions; guest banner still visible.
 - **±2s tolerance**: use `src/test-utils/countdown-tolerance.ts` in Vitest only, not Playwright reload specs (scope addendum: `context/changes/testing-critical-path-persistence-timer/reviews/scope-addendum.md`).
 - **Auth isolation**: per-test API sign-up/sign-in via `e2e/fixtures.ts` (no shared `playwright/.auth/user.json`).
@@ -161,7 +161,7 @@ the relevant rollout phase ships; before that, the sub-section reads
 - Risks covered: **#1** (refresh/crash recovery), **#2** (background-tab timer drift ≤ ±2s).
 - Layers: unit tick math + countdown oracle (Vitest); integration `getActive` + guest snapshot; hook visibility recalc (fallback path) + guest/auth recovery; auth + guest e2e `reload` asserts task list + `timer-panel-running` only.
 - **Explicit limitation**: no Playwright project without `E2E_MAIN_THREAD_TIMER` — Worker throttle in production is validated via `getTimerTickResult` + hook `visibilitychange` / fallback recalc, not browser Worker e2e.
-- **E2E durations**: short work cycles use the same custom-seconds UI as users (`data-testid="work-duration-custom-sec"`); no `E2E_FAST_DURATIONS` env flag.
+- **E2E durations**: short work cycles use the same min+sec custom UI as users (`work-duration-min`, `work-duration-sec` via `setWorkDurationSec`); no `E2E_FAST_DURATIONS` env flag.
 - **Deferred**: session-timeout + stale RUNNING cycle (Phase 3); dedicated Worker e2e project (cost × signal).
 
 ## 7. What We Deliberately Don't Test
