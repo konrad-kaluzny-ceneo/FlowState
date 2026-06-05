@@ -1,9 +1,9 @@
 ---
 change_id: unified-duration-picker-ux
 title: Unified duration picker UX (work and breaks)
-status: planned
+status: plan_reviewed
 created: 2026-06-04
-updated: 2026-06-04
+updated: 2026-06-05
 archived_at: null
 ---
 

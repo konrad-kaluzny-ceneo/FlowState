@@ -102,11 +102,23 @@ No React imports — Vitest-only surface.
 
 **Contract**: Tests for `combineMinSecToSec(0, 30) === 30`, `splitSecToMinSec(1500) === { minutes: 25, seconds: 0 }`.
 
+#### 5. Storage tests
+
+**File**: `src/lib/duration-storage.test.ts`
+
+**Intent**: Update break read/write expectations after `MIN_BREAK_DURATION_SEC` drops from 60 to 1.
+
+**Contract**:
+- **Write-clamp**: `setShortBreakDuration(0)` / `setLongBreakDuration(0)` expect `1` (not `1 * 60`).
+- **Read-path**: stored `"30"` for short/long break keys returns `30` (valid sub-minute value; no longer falls back to default).
+- **Round-trip** (optional): `setShortBreakDuration(45)` / `getShortBreakDuration()` → `45` (mirrors work sub-minute test at `:42-44`).
+
 ### Success Criteria:
 
 #### Automated Verification:
 
 - `pnpm test` passes (new + updated unit tests)
+- `duration-storage.test.ts` break clamp expectations updated for 1s minimum
 - `pnpm check` passes
 - `pnpm typecheck` passes
 
@@ -140,6 +152,7 @@ Reusable controlled picker: presets + minutes + seconds (same for work and break
 
 Behavior:
 - Preset click: `onChangeSec(preset.sec)` and sync local min/sec display.
+- When `valueSec` changes (init or parent update), custom fields re-derive via `splitSecToMinSec(valueSec)`.
 - Custom change: recompute total; if in range, `onChangeSec(total)`; preset highlight follows `valueSec`.
 - Layout: preset row centered (match current work style); custom row with min + sec + unit labels (identical across all three instances).
 
@@ -231,11 +244,11 @@ Keep E2E fast-cycle ergonomics; update references to old testids.
 
 **Contract**: Public API unchanged (`seconds: number`). `startFocusedWorkCycle` callers need no edits.
 
-#### 2. E2E README & test-plan cookbook
+#### 2. E2E README, test-plan cookbook & root README
 
-**Files**: `e2e/README.md`, `context/foundation/test-plan.md`
+**Files**: `e2e/README.md`, `context/foundation/test-plan.md`, `README.md`
 
-**Intent**: Replace `work-duration-custom-sec` references with `work-duration-min` / `work-duration-sec` and note helper abstraction.
+**Intent**: Replace `work-duration-custom-sec` references with `work-duration-min` / `work-duration-sec` and note helper abstraction. Update root README break range to **1 second–30 minutes** (was minute-only wording).
 
 **Contract**: §6 cookbook entry for persistence-reload still documents 30s fast cycles via helper.
 
@@ -309,8 +322,9 @@ Negligible — local state only, no extra network calls. Three pickers on idle p
 #### Automated
 
 - [ ] 1.1 `pnpm test` passes (new + updated unit tests)
-- [ ] 1.2 `pnpm check` passes
-- [ ] 1.3 `pnpm typecheck` passes
+- [ ] 1.2 `duration-storage.test.ts` break clamp expectations updated for 1s minimum
+- [ ] 1.3 `pnpm check` passes
+- [ ] 1.4 `pnpm typecheck` passes
 
 ### Phase 2: `DurationPicker` component
 
@@ -329,7 +343,10 @@ Negligible — local state only, no extra network calls. Three pickers on idle p
 
 #### Manual
 
-- [ ] 3.4 Idle panel preset/custom/break behavior verified manually
+- [ ] 3.4 Idle panel: 25 min preset shows 25 min and 0 sec, not 1500
+- [ ] 3.5 Set 0 min 30 sec work → Start runs ~30s cycle
+- [ ] 3.6 Break settings: short/long presets and custom min+sec persist after reload
+- [ ] 3.7 Start Cycle disabled on invalid work duration
 
 ### Phase 4: E2E, docs & PRD alignment
 
