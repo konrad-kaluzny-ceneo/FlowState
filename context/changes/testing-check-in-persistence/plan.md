@@ -207,9 +207,9 @@ Test-only rollout. No database migrations.
 
 #### Automated
 
-- [x] 2.1 Full verification: `pnpm typecheck`, `pnpm test`
-- [x] 2.2 `test-plan.md` §6.2 and §6.6 updated
+- [x] 2.1 Full verification: `pnpm typecheck`, `pnpm test` — 82b5aa5
+- [x] 2.2 `test-plan.md` §6.2 and §6.6 updated — 82b5aa5
 
 #### Manual
 
-- [x] 2.3 Cookbook spot-read — check-in persistence pattern clear from §6 alone
+- [x] 2.3 Cookbook spot-read — check-in persistence pattern clear from §6 alone — 82b5aa5
