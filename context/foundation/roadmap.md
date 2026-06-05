@@ -3,7 +3,7 @@ project: FlowState
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-05-31
+updated: 2026-06-05
 active_slices: [S-03, S-05]
 prd_version: 1
 main_goal: speed
@@ -46,6 +46,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-08 | guest-local-storage-merge | — | — | use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account | S-01, F-02 | NFR (no silent data loss), FR-004–FR-009 | proposed |
 | S-09 | optimistic-task-mutations | — | — | see task list and task actions update immediately while logged in (optimistic UI), with rollback on server error — matching perceived speed of local guest storage | S-01, F-02 | NFR (200ms acknowledgement), FR-004–FR-008 | proposed |
 | S-10 | google-oauth-provider | [FLO-20](https://linear.app/flowstate-10xdev/issue/FLO-20) | [#20](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/20) (closed) | sign in or sign up with a Google account in one click, alongside the existing email/password flow | F-02 | FR-001, FR-002 | done |
+| F-03 | align-prisma-config | — | — | (foundation) `prisma.config.ts` aligned with Prisma 7: `dotenv/config`, `env()` helper, unpooled URL for CLI migrations; runtime adapter unchanged | — | — | proposed |
 
 ## Streams
 
@@ -106,6 +107,22 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - How to authenticate a test user programmatically with Neon Auth — direct API call to get a session cookie, or a test-only auth bypass route? Owner: implementer (downstream `/10x-plan`). Block: no — both approaches are well-documented patterns.
 - **Risk:** Without this, every UI-facing slice ships without real e2e confidence. The risk of NOT doing this is compounding: each slice adds manual verification debt that cannot be automated retroactively without this foundation. The risk of doing it is minimal — Playwright setup is well-understood and the scope is bounded to "auth + one smoke test".
 - **Status:** done
+
+
+### F-03: Align Prisma config with Prisma 7 conventions
+
+- **Outcome:** (foundation) `prisma.config.ts` matches the official Prisma 7 pattern: `import "dotenv/config"`, `env()` from `prisma/config`, relative schema/migrations paths; `DATABASE_URL_UNPOOLED` in `datasource.url` for CLI (migrate, db push, studio). Runtime stays on pooled `DATABASE_URL` via `@prisma/adapter-neon` in `src/server/db/index.ts`.
+- **Change ID:** align-prisma-config
+- **Linear:** —
+- **GitHub:** —
+- **PRD refs:** —
+- **Unlocks:** — (hygiene; reduces agent confusion when running Prisma CLI)
+- **Prerequisites:** —
+- **Parallel with:** any slice (no runtime dependency)
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Minimal — config-only; verify `pnpm prisma migrate status` and `pnpm db:generate` after change.
+- **Status:** proposed
 
 
 ## Slices
@@ -279,6 +296,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-08 | guest-local-storage-merge | — | — | FlowState — guest trial (localStorage) and merge on login | no | Plan at `context/changes/guest-local-storage-merge/` |
 | S-09 | optimistic-task-mutations | — | — | FlowState — optimistic TanStack Query updates for authenticated task mutations | no | Unblocks after S-01; best after S-08 if guest trial ships first |
 | S-10 | google-oauth-provider | FLO-20 | #20 | FlowState — Google OAuth social login (one-click sign-in) | yes | Neon Auth supports Google OAuth natively; minimal UI addition |
+| F-03 | align-prisma-config | — | — | FlowState — align prisma.config.ts with Prisma 7 conventions | yes | Run `/10x-plan align-prisma-config`; config-only, no user-visible behavior |
 
 ## Research requirements <!-- needs-research -->
 
@@ -291,7 +309,7 @@ Items tagged `needs-research` are non-trivial — they require external research
 | S-06 | adaptive-task-suggestion | 🟡 Medium | Weighted scoring / task-prioritization algorithms; Pomodoro technique research on task-energy matching; deterministic formula design patterns |
 | S-07 | account-recovery-flow | 🟢 Low | Neon Auth password reset/recovery API surface (quick lookup) |
 
-**Not requiring research** (straightforward implementation on existing stack): S-02, S-03, S-04, S-05, S-09, S-10.
+**Not requiring research** (straightforward implementation on existing stack): F-03, S-02, S-03, S-04, S-05, S-09, S-10.
 
 ## Open Roadmap Questions
 
