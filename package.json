@@ -10,7 +10,7 @@
 		"check:write": "biome check --write .",
 		"db:generate": "prisma generate",
 		"db:migrate": "prisma migrate dev",
-		"db:migrate:prod": "tsx scripts/migrate.ts",
+		"db:migrate:prod": "prisma migrate deploy",
 		"db:push": "prisma db push",
 		"db:studio": "prisma studio",
 		"dev": "prisma generate && next dev --turbo",

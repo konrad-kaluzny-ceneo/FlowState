@@ -324,7 +324,7 @@ Negligible — local state only, no extra network calls. Three pickers on idle p
 - [x] 1.1 `pnpm test` passes (new + updated unit tests)
 - [x] 1.2 `duration-storage.test.ts` break clamp expectations updated for 1s minimum
 - [x] 1.3 `pnpm check` passes
-- [ ] 1.4 `pnpm typecheck` passes
+- [x] 1.4 `pnpm typecheck` passes
 
 ### Phase 2: `DurationPicker` component
 
@@ -339,7 +339,7 @@ Negligible — local state only, no extra network calls. Three pickers on idle p
 
 - [x] 3.1 `pnpm test` passes
 - [x] 3.2 `pnpm check` passes
-- [ ] 3.3 `pnpm typecheck` passes
+- [x] 3.3 `pnpm typecheck` passes
 
 #### Manual
 
@@ -352,7 +352,7 @@ Negligible — local state only, no extra network calls. Three pickers on idle p
 
 #### Automated
 
-- [ ] 4.1 `set CI=true && pnpm test:e2e` passes (or targeted persistence/pomodoro/guest specs)
+- [x] 4.1 `set CI=true && pnpm test:e2e` passes (or targeted persistence/pomodoro/guest specs)
 - [x] 4.2 `pnpm test` passes (full suite)
 - [x] 4.3 `pnpm check` passes
 
