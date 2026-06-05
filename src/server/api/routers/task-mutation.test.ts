@@ -7,8 +7,15 @@ import { beforeEach, describe, expect, vi } from "vitest";
  * Validates: Requirements 9.4, 9.5
  */
 
-// Track whether findFirst returns a task (simulates ownership)
-let findFirstResult: Record<string, unknown> | null = null;
+// Stateful in-memory store; findFirst filters by { id, userId } like production
+let allTasks: Array<{
+	id: number;
+	title: string;
+	status: string;
+	userId: string;
+	createdAt: Date;
+	updatedAt: Date | null;
+}> = [];
 
 // Mock ~/lib/auth/server
 vi.mock("~/lib/auth/server", () => ({
@@ -26,7 +33,16 @@ vi.mock("~/server/db/index", () => {
 				create: vi.fn((args: { data: Record<string, unknown> }) =>
 					Promise.resolve({ id: 1, ...args.data }),
 				),
-				findFirst: vi.fn(() => Promise.resolve(findFirstResult)),
+				findFirst: vi.fn(
+					(args: { where?: { id?: number; userId?: string } }) => {
+						return Promise.resolve(
+							allTasks.find(
+								(t) =>
+									t.id === args?.where?.id && t.userId === args?.where?.userId,
+							) ?? null,
+						);
+					},
+				),
 				update: vi.fn(() => Promise.resolve({ id: 1 })),
 				delete: vi.fn(() => Promise.resolve({ id: 1 })),
 			},
@@ -86,7 +102,7 @@ const ownershipScenarioArb = fc
 
 describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUND on failure", () => {
 	beforeEach(() => {
-		findFirstResult = null;
+		allTasks = [];
 	});
 
 	fcTest.prop([ownershipScenarioArb, taskIdArb, taskTitleArb, emailArb], {
@@ -96,17 +112,17 @@ describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUN
 		async (scenario, taskId, title, email) => {
 			const isOwner = scenario.ownerUserId === scenario.callerUserId;
 
-			// Simulate DB behavior: findFirst returns a task only when caller owns it
-			findFirstResult = isOwner
-				? {
-						id: taskId,
-						title: "Original",
-						status: "active",
-						userId: scenario.callerUserId,
-						createdAt: new Date(),
-						updatedAt: null,
-					}
-				: null;
+			// Seed task owned by ownerUserId; findFirst with caller's userId only matches when owner === caller
+			allTasks = [
+				{
+					id: taskId,
+					title: "Original",
+					status: "active",
+					userId: scenario.ownerUserId,
+					createdAt: new Date(),
+					updatedAt: null,
+				},
+			];
 
 			const caller = createCaller({
 				db: (await import("~/server/db/index")).db as never,
@@ -121,12 +137,10 @@ describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUN
 			});
 
 			if (isOwner) {
-				// Should succeed without throwing
 				await expect(
 					caller.update({ id: taskId, title }),
 				).resolves.not.toThrow();
 			} else {
-				// Should throw NOT_FOUND
 				await expect(caller.update({ id: taskId, title })).rejects.toThrow(
 					expect.objectContaining({
 						code: "NOT_FOUND",
@@ -141,17 +155,16 @@ describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUN
 		async (scenario, taskId, email) => {
 			const isOwner = scenario.ownerUserId === scenario.callerUserId;
 
-			// Simulate DB behavior: findFirst returns a task only when caller owns it
-			findFirstResult = isOwner
-				? {
-						id: taskId,
-						title: "Task",
-						status: "active",
-						userId: scenario.callerUserId,
-						createdAt: new Date(),
-						updatedAt: null,
-					}
-				: null;
+			allTasks = [
+				{
+					id: taskId,
+					title: "Task",
+					status: "active",
+					userId: scenario.ownerUserId,
+					createdAt: new Date(),
+					updatedAt: null,
+				},
+			];
 
 			const caller = createCaller({
 				db: (await import("~/server/db/index")).db as never,
@@ -166,10 +179,8 @@ describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUN
 			});
 
 			if (isOwner) {
-				// Should succeed without throwing
 				await expect(caller.delete({ id: taskId })).resolves.not.toThrow();
 			} else {
-				// Should throw NOT_FOUND
 				await expect(caller.delete({ id: taskId })).rejects.toThrow(
 					expect.objectContaining({
 						code: "NOT_FOUND",

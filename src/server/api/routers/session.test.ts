@@ -98,15 +98,21 @@ const { db } = await import("~/server/db/index");
 
 const createCaller = createCallerFactory(sessionRouter);
 const USER_ID = "user-session-test";
+const VICTIM_ID = "victim-session-user";
+const ATTACKER_ID = "attacker-session-user";
 
-function sessionCaller() {
+function sessionCallerAs(userId: string = USER_ID) {
 	return createCaller({
 		db: db as never,
 		session: {
-			user: { id: USER_ID, email: "t@example.com", name: "Test" },
+			user: { id: userId, email: "t@example.com", name: "Test" },
 		},
 		headers: new Headers(),
 	});
+}
+
+function sessionCaller() {
+	return sessionCallerAs(USER_ID);
 }
 
 describe("session router", () => {
@@ -192,6 +198,32 @@ describe("session router", () => {
 
 			expect(session.id).toBe(60);
 			expect(sessions).toHaveLength(1);
+		});
+
+		it("does not reuse another user's active session", async () => {
+			const victimSessionId = 42;
+			sessions = [
+				{
+					id: victimSessionId,
+					userId: VICTIM_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			const attackerSession =
+				await sessionCallerAs(ATTACKER_ID).getOrCreateActive();
+
+			expect(attackerSession.userId).toBe(ATTACKER_ID);
+			expect(attackerSession.id).not.toBe(victimSessionId);
+			const victimRow = sessions.find((s) => s.id === victimSessionId);
+			expect(victimRow).toMatchObject({
+				id: victimSessionId,
+				userId: VICTIM_ID,
+				state: "ACTIVE",
+			});
 		});
 	});
 

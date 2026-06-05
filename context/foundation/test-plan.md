@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-04
+> Last updated: 2026-06-05
 
 ## 1. Strategy
 
@@ -69,7 +69,7 @@ orchestrator updates Status as artifacts appear on disk.
 |---|------------|-----------------|---------------|------------|--------|---------------|
 | 1 | Critical-path persistence & timer | Prove refresh/crash recovery and background-tab timer accuracy at the cheapest layers that catch real regressions | #1, #2 | unit + integration + targeted e2e | complete | testing-critical-path-persistence-timer |
 | 2 | Active-slice browser proofs | Browser-level proof for S-03 mid-cycle prompt and S-05 check-in gate before wedge work compounds | #3, #7 | Playwright e2e | not started | — |
-| 3 | Isolation, abuse & guest merge | Lock per-user isolation, IDOR rejection, and guest→account merge integrity | #4, #5, #6 | integration + e2e | not started | — |
+| 3 | Isolation, abuse & guest merge | Lock per-user isolation, IDOR rejection, and guest→account merge integrity | #4, #5, #6 | integration | complete | testing-isolation-abuse-guest-merge |
 | 4 | Quality-gates wiring | Enforce lint, typecheck, unit/integration, and critical e2e in CI on every PR | cross-cutting | CI gates | not started | — |
 
 ## 4. Stack
@@ -130,7 +130,8 @@ the relevant rollout phase ships; before that, the sub-section reads
 - **Mocking policy**: mock DB at Prisma boundary or use test fixtures; never skip auth/isolation when testing protected procedures.
 - **Reference tests**: `src/server/api/routers/session-isolation.test.ts`, `src/server/api/routers/cycle-isolation.test.ts`; active-cycle + task shape after `create` → `getActive` in `src/server/api/routers/cycle.test.ts` (`integration: create → getActive → complete`).
 - **Persistence (Risk #1)**: extend an existing integration flow with recovery-field assertions (`taskId`, `task.title`, `startedAt`, `configuredDurationSec`, `state: RUNNING`) — avoid a duplicate seeded-only `getActive` test when one already exists.
-- **Cross-user IDOR**: see Phase 3 rollout — `cycle-isolation.test.ts` patterns.
+- **Cross-user IDOR (Risks #4, #6)**: dual-user `createCaller` with `VICTIM_ID` / `ATTACKER_ID`; expect `NOT_FOUND` on mutations (not `FORBIDDEN`) and empty/`null`/`0` on scoped queries. Reference: `task-mutation.test.ts` (stateful `findFirst` by `{ id, userId }`), `task-isolation.test.ts` (list), `cycle.test.ts` (`getActive`, `countCompletedWork`, `list(sessionId)` cross-user cases), `cycle-isolation.test.ts` (FK injection on `sessionId` and `taskId`), `session.test.ts` (`getOrCreateActive` smoke), `check-in-isolation.test.ts` (list isolation, cross-user `cycleId`, duplicate `CONFLICT`).
+- **Check-in persistence (Risk #7, integration)**: imperative `create → list` round-trip in `check-in.test.ts` — assert `energy`/`cycleId`/`userId` on create return and list contents; mock `findMany` must honor `orderBy: { respondedAt: "desc" }` and `take: DEFAULT_LIST_LIMIT`. Reference tests: `create persists energy readable via list`, `round-trips energy FOCUSED/STEADY/FADING`, `list returns newest check-in first`, `list honors DEFAULT_LIST_LIMIT`. UI modal gate / skip prevention remains test-plan Phase 2 e2e.
 - **Run locally**: `pnpm test`.
 
 ### 6.3 Adding an e2e test
@@ -152,7 +153,17 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.5 Adding a guest/localStorage test
 
-- TBD — see §3 Phase 3 for guest merge and collision-suffix patterns.
+- **Location**: `src/server/api/routers/guest.test.ts` (router `import` procedure); core merge logic in `src/server/api/lib/import-guest-snapshot.ts`.
+- **Mocking policy**: mock `$transaction` with in-memory `tasks` / `sessions` / `cycles` arrays; `cycle.updateMany` must mutate the store (not no-op `{ count: 0 }`) when testing account RUNNING closure.
+- **Dual-user**: N/A for merge — caller is always the importing account; test pre-seeded account rows vs guest snapshot payload.
+- **Reference tests** (Risk #5):
+  - Title collision suffix + FK remap: `imports guest tasks with title suffix on collision and remaps cycle FKs`
+  - Account RUNNING closure before import: `closes account RUNNING cycles before importing guest snapshot`
+  - Expired guest RUNNING → COMPLETED: `normalizes expired guest RUNNING cycle to COMPLETED with endedAt` (use `startedAt` far enough in the past that `startedAt + configuredDurationSec * 1000 <= Date.now()`)
+  - Empty snapshot short-circuit: `returns zero counts for empty snapshot without DB writes`
+  - Unmapped cycle taskId: `sets taskId null when guest cycle references unmapped task UUID`
+- **Run locally**: `pnpm exec vitest run src/server/api/routers/guest.test.ts`
+- **Limitation**: browser guest→auth merge e2e deferred to a follow-up change; integration-only in Phase 3 rollout.
 
 ### 6.6 Per-rollout-phase notes
 
@@ -162,7 +173,22 @@ the relevant rollout phase ships; before that, the sub-section reads
 - Layers: unit tick math + countdown oracle (Vitest); integration `getActive` + guest snapshot; hook visibility recalc (fallback path) + guest/auth recovery; auth + guest e2e `reload` asserts task list + `timer-panel-running` only.
 - **Explicit limitation**: no Playwright project without `E2E_MAIN_THREAD_TIMER` — Worker throttle in production is validated via `getTimerTickResult` + hook `visibilitychange` / fallback recalc, not browser Worker e2e.
 - **E2E durations**: short work cycles use the same min+sec custom UI as users (`work-duration-min`, `work-duration-sec` via `setWorkDurationSec`); no `E2E_FAST_DURATIONS` env flag.
-- **Deferred**: session-timeout + stale RUNNING cycle (Phase 3); dedicated Worker e2e project (cost × signal).
+- **Deferred**: dedicated Worker e2e project (cost × signal).
+
+**Phase 3 — Isolation, abuse & guest merge** (shipped 2026-06-05, change `testing-isolation-abuse-guest-merge`)
+
+- Risks covered: **#4** (per-user isolation on reads/mutations), **#5** (guest→account merge integrity), **#6** (IDOR via resource IDs).
+- Layers: Vitest integration with in-memory Prisma mocks (`createCaller` + dual-user pattern); no real Neon/Postgres fixtures.
+- **Explicit limitation**: no Playwright guest→auth merge e2e in this change — integration merge matrix only; browser proof deferred.
+- **Stale RUNNING documented**: `cycle.test.ts` `documents getActive when session ended but cycle still RUNNING` asserts current `getActive` behavior (filters `userId` + `RUNNING` only — no session state join); product fix is a separate change if desired.
+- **Consolidation**: `task-query.test.ts` removed; `task-isolation.test.ts` is canonical for Property 10 list isolation.
+
+**Risk #7 integration — check-in persistence** (shipped 2026-06-05, change `testing-check-in-persistence`)
+
+- Risks covered: **#7** (energy check-in persists server-side and is readable via `checkIn.list` for future suggestion logic).
+- Layers: Vitest integration with in-memory Prisma mocks in `check-in.test.ts`; security/isolation properties remain in `check-in-isolation.test.ts`.
+- **Explicit limitation**: no Playwright check-in modal gate in this change — UI skip-prevention proof deferred to test-plan Phase 2 (e2e risks #3/#7).
+- **Not a §3 rollout row**: ad-hoc slice documented here; S-05 UI will add browser proof later.
 
 ## 7. What We Deliberately Don't Test
 

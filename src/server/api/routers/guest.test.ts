@@ -56,7 +56,31 @@ vi.mock("~/server/db/index", () => ({
 					}),
 				},
 				cycle: {
-					updateMany: vi.fn(() => Promise.resolve({ count: 0 })),
+					updateMany: vi.fn(
+						(args: {
+							where: { userId?: string; state?: string };
+							data: Partial<Pick<CycleRow, "state" | "endedAt">>;
+						}) => {
+							let count = 0;
+							for (const cycle of cycles) {
+								if (
+									args.where.userId != null &&
+									cycle.userId !== args.where.userId
+								) {
+									continue;
+								}
+								if (
+									args.where.state != null &&
+									cycle.state !== args.where.state
+								) {
+									continue;
+								}
+								Object.assign(cycle, args.data);
+								count++;
+							}
+							return Promise.resolve({ count });
+						},
+					),
 					create: vi.fn((args: { data: Omit<CycleRow, "id"> }) => {
 						const row: CycleRow = { id: nextCycleId++, ...args.data };
 						cycles.push(row);
@@ -73,6 +97,21 @@ const { guestRouter } = await import("~/server/api/routers/guest");
 const { db } = await import("~/server/db/index");
 
 const createCaller = createCallerFactory(guestRouter);
+const USER_ID = "user-1";
+
+function guestCaller() {
+	return createCaller({
+		db: db as never,
+		session: {
+			user: {
+				id: USER_ID,
+				email: "test@example.com",
+				name: "Test User",
+			},
+		},
+		headers: new Headers(),
+	});
+}
 
 describe("guest.import", () => {
 	beforeEach(() => {
@@ -140,19 +179,7 @@ describe("guest.import", () => {
 			],
 		};
 
-		const caller = createCaller({
-			db: db as never,
-			session: {
-				user: {
-					id: "user-1",
-					email: "test@example.com",
-					name: "Test User",
-				},
-			},
-			headers: new Headers(),
-		});
-
-		const result = await caller.import(snapshot);
+		const result = await guestCaller().import(snapshot);
 
 		expect(result.importedTasks).toBe(2);
 		expect(result.importedCycles).toBe(1);
@@ -163,5 +190,135 @@ describe("guest.import", () => {
 		]);
 		expect(cycles[0]?.taskId).toBe(3);
 		expect(cycles[0]?.state).toBe("RUNNING");
+	});
+
+	it("closes account RUNNING cycles before importing guest snapshot", async () => {
+		const preImportCycleId = 99;
+		cycles = [
+			{
+				id: preImportCycleId,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
+
+		const snapshot: GuestSnapshotV1 = {
+			version: 1,
+			tasks: [
+				{
+					id: "550e8400-e29b-41d4-a716-446655440010",
+					title: "Imported task",
+					status: "active",
+					workType: "OPERATIONAL",
+					weight: 2,
+					createdAt: new Date("2026-05-29T10:00:00.000Z"),
+					updatedAt: null,
+				},
+			],
+			sessions: [],
+			cycles: [],
+		};
+
+		const result = await guestCaller().import(snapshot);
+
+		expect(result).toEqual({ importedTasks: 1, importedCycles: 0 });
+		const closedCycle = cycles.find((c) => c.id === preImportCycleId);
+		expect(closedCycle?.state).toBe("COMPLETED");
+		expect(closedCycle?.endedAt).not.toBeNull();
+	});
+
+	it("normalizes expired guest RUNNING cycle to COMPLETED with endedAt", async () => {
+		const expiredStartedAt = new Date(Date.now() - 60 * 60 * 1000);
+		const snapshot: GuestSnapshotV1 = {
+			version: 1,
+			tasks: [],
+			sessions: [
+				{
+					id: "660e8400-e29b-41d4-a716-446655440099",
+					state: "ACTIVE",
+					startedAt: expiredStartedAt,
+					endedAt: null,
+					lastActivityAt: expiredStartedAt,
+					interruptionCount: 0,
+				},
+			],
+			cycles: [
+				{
+					id: "770e8400-e29b-41d4-a716-446655440099",
+					sessionId: "660e8400-e29b-41d4-a716-446655440099",
+					taskId: null,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 60,
+					startedAt: expiredStartedAt,
+					endedAt: null,
+				},
+			],
+		};
+
+		const result = await guestCaller().import(snapshot);
+
+		expect(result.importedCycles).toBe(1);
+		expect(cycles).toHaveLength(1);
+		expect(cycles[0]?.state).toBe("COMPLETED");
+		expect(cycles[0]?.endedAt).not.toBeNull();
+	});
+
+	it("returns zero counts for empty snapshot without DB writes", async () => {
+		const tasksBefore = tasks.length;
+		const cyclesBefore = cycles.length;
+		const sessionsBefore = sessions.length;
+
+		const result = await guestCaller().import({
+			version: 1,
+			tasks: [],
+			sessions: [],
+			cycles: [],
+		});
+
+		expect(result).toEqual({ importedTasks: 0, importedCycles: 0 });
+		expect(tasks).toHaveLength(tasksBefore);
+		expect(cycles).toHaveLength(cyclesBefore);
+		expect(sessions).toHaveLength(sessionsBefore);
+	});
+
+	it("sets taskId null when guest cycle references unmapped task UUID", async () => {
+		const snapshot: GuestSnapshotV1 = {
+			version: 1,
+			tasks: [],
+			sessions: [
+				{
+					id: "660e8400-e29b-41d4-a716-446655440088",
+					state: "ACTIVE",
+					startedAt: new Date("2026-05-29T10:00:00.000Z"),
+					endedAt: null,
+					lastActivityAt: new Date("2026-05-29T10:00:00.000Z"),
+					interruptionCount: 0,
+				},
+			],
+			cycles: [
+				{
+					id: "770e8400-e29b-41d4-a716-446655440088",
+					sessionId: "660e8400-e29b-41d4-a716-446655440088",
+					taskId: "550e8400-e29b-41d4-a716-446655440099",
+					kind: "WORK",
+					state: "COMPLETED",
+					configuredDurationSec: 900,
+					startedAt: new Date("2026-05-29T10:00:00.000Z"),
+					endedAt: new Date("2026-05-29T10:15:00.000Z"),
+				},
+			],
+		};
+
+		const result = await guestCaller().import(snapshot);
+
+		expect(result.importedCycles).toBe(1);
+		expect(cycles[0]?.taskId).toBeNull();
 	});
 });
