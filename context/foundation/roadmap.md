@@ -199,6 +199,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Should the check-in block the transition or be skippable? Owner: user (product call). Block: no — PRD §FR-020 phrasing ("user completes a mindful check-in") implies blocking; treat as non-skippable in MVP and revisit if check-in fatigue surfaces.
 - **Risk:** Adds a UI step in the cycle-end transition that S-01 already owns. Risk is regression of S-01's confirm-flow ergonomics. Mitigation: check-in lives between work-end-prompt and break-start, not in front of the audio signal.
+- **Test substrate (2026-06-05):** Risk #7 server persistence integration shipped via change `testing-check-in-persistence` — `check-in.test.ts` (create→list, energies, ordering, `DEFAULT_LIST_LIMIT`); isolation in `check-in-isolation.test.ts`. UI modal gate (FR-020) still pending; browser proof deferred to test-plan Phase 2 e2e.
 - **Status:** active
 
 ### S-06: Adaptive task suggestion with override
