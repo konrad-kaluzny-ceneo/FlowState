@@ -198,18 +198,18 @@ Test-only rollout. No database migrations.
 
 #### Automated
 
-- [ ] 1.1 `pnpm typecheck` passes
-- [ ] 1.2 Biome check passes on `check-in.test.ts`
-- [ ] 1.3 `pnpm exec vitest run src/server/api/routers/check-in.test.ts` passes
-- [ ] 1.4 Full `pnpm test` passes; isolation file unchanged
+- [x] 1.1 `pnpm typecheck` passes
+- [x] 1.2 Biome check passes on `check-in.test.ts`
+- [x] 1.3 `pnpm exec vitest run src/server/api/routers/check-in.test.ts` passes
+- [x] 1.4 Full `pnpm test` passes; isolation file unchanged
 
 ### Phase 2: Cookbook & Test-Plan Sync
 
 #### Automated
 
-- [ ] 2.1 Full verification: `pnpm typecheck`, `pnpm test`
-- [ ] 2.2 `test-plan.md` §6.2 and §6.6 updated
+- [x] 2.1 Full verification: `pnpm typecheck`, `pnpm test`
+- [x] 2.2 `test-plan.md` §6.2 and §6.6 updated
 
 #### Manual
 
-- [ ] 2.3 Cookbook spot-read — check-in persistence pattern clear from §6 alone
+- [x] 2.3 Cookbook spot-read — check-in persistence pattern clear from §6 alone
