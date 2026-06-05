@@ -249,6 +249,46 @@ describe("Feature: session domain model, Property: Cycle query isolation", () =>
 			fc.nat(),
 		],
 		{ numRuns: 100 },
+	)(
+		"cross-user FK injection: create with another user's taskId returns NOT_FOUND",
+		async (userIds, seed) => {
+			const attackerId = userIds[0]!;
+			const victimId = userIds[1]!;
+
+			allSessions = [{ id: 2, userId: attackerId, state: "ACTIVE" }];
+			allTasks = [{ id: 5, userId: victimId }];
+
+			const caller = createCaller({
+				db: db as never,
+				session: {
+					user: {
+						id: attackerId,
+						email: "attacker@example.com",
+						name: "Attacker",
+					},
+				},
+				headers: new Headers(),
+			});
+
+			await expect(
+				caller.create({
+					sessionId: 2,
+					kind: "WORK",
+					configuredDurationSec: 1500 + (seed % 100),
+					taskId: 5,
+				}),
+			).rejects.toThrow(/NOT_FOUND/);
+		},
+	);
+
+	fcTest.prop(
+		[
+			fc
+				.uniqueArray(userIdArb, { minLength: 2, maxLength: 5 })
+				.filter((arr) => arr.length >= 2),
+			fc.nat(),
+		],
+		{ numRuns: 100 },
 	)("a user with no cycles gets an empty result", async (userIds, seed) => {
 		const querierId = userIds[0]!;
 		const otherUserIds = userIds.slice(1);

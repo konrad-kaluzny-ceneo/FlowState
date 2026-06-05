@@ -75,7 +75,65 @@ vi.mock("~/server/db/index", () => {
 						return Promise.resolve(cycle);
 					},
 				),
-				findMany: vi.fn(() => Promise.resolve(cycles)),
+				findMany: vi.fn(
+					(args?: {
+						where?: {
+							userId?: string;
+							sessionId?: number;
+						};
+					}) => {
+						return Promise.resolve(
+							cycles.filter((c) => {
+								if (
+									args?.where?.userId != null &&
+									c.userId !== args.where.userId
+								) {
+									return false;
+								}
+								if (
+									args?.where?.sessionId != null &&
+									c.sessionId !== args.where.sessionId
+								) {
+									return false;
+								}
+								return true;
+							}),
+						);
+					},
+				),
+				count: vi.fn(
+					(args: {
+						where: {
+							userId?: string;
+							sessionId?: number;
+							kind?: string;
+							state?: string;
+						};
+					}) => {
+						const matching = cycles.filter((c) => {
+							if (
+								args.where.userId != null &&
+								c.userId !== args.where.userId
+							) {
+								return false;
+							}
+							if (
+								args.where.sessionId != null &&
+								c.sessionId !== args.where.sessionId
+							) {
+								return false;
+							}
+							if (args.where.kind != null && c.kind !== args.where.kind) {
+								return false;
+							}
+							if (args.where.state != null && c.state !== args.where.state) {
+								return false;
+							}
+							return true;
+						});
+						return Promise.resolve(matching.length);
+					},
+				),
 				create: vi.fn(
 					(args: {
 						data: Omit<CycleRecord, "id" | "state" | "startedAt" | "endedAt">;
@@ -211,15 +269,21 @@ const { db } = await import("~/server/db/index");
 const createCaller = createCallerFactory(cycleRouter);
 
 const USER_ID = "user-test-1";
+const VICTIM_ID = "victim-user";
+const ATTACKER_ID = "attacker-user";
 
-function caller() {
+function callerAs(userId: string = USER_ID) {
 	return createCaller({
 		db: db as never,
 		session: {
-			user: { id: USER_ID, email: "test@example.com", name: "Test" },
+			user: { id: userId, email: "test@example.com", name: "Test" },
 		},
 		headers: new Headers(),
 	});
+}
+
+function caller() {
+	return callerAs(USER_ID);
 }
 
 describe("cycle router lifecycle", () => {
@@ -609,6 +673,114 @@ describe("cycle router lifecycle", () => {
 			expect(sessions[0]?.lastActivityAt.getTime()).toBeGreaterThan(
 				oldDate.getTime(),
 			);
+		});
+	});
+
+	describe("cross-user IDOR isolation", () => {
+		it("getActive returns null when only another user has a RUNNING cycle", async () => {
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: VICTIM_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			const result = await callerAs(ATTACKER_ID).getActive();
+			expect(result).toBeNull();
+		});
+
+		it("countCompletedWork returns 0 for another user's sessionId", async () => {
+			sessions = [
+				{
+					id: 10,
+					userId: VICTIM_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+				},
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 10,
+					userId: VICTIM_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "COMPLETED",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: new Date(),
+				},
+			];
+
+			const count = await callerAs(ATTACKER_ID).countCompletedWork({
+				sessionId: 10,
+			});
+			expect(count).toBe(0);
+		});
+
+		it("list returns empty when querying another user's sessionId", async () => {
+			sessions = [
+				{
+					id: 20,
+					userId: VICTIM_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+				},
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 20,
+					userId: VICTIM_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "COMPLETED",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: new Date(),
+				},
+			];
+
+			const result = await callerAs(ATTACKER_ID).list({ sessionId: 20 });
+			expect(result).toEqual([]);
+		});
+
+		it("documents getActive when session ended but cycle still RUNNING", async () => {
+			// getActive filters userId + RUNNING only — no session state join (cycle.ts:37-45)
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ENDED",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+				},
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			const result = await caller().getActive();
+			expect(result).toMatchObject({ id: 1, state: "RUNNING" });
 		});
 	});
 });

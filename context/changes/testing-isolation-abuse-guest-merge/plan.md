@@ -339,33 +339,33 @@ Test-only rollout. No database migrations. If stale RUNNING test reveals undesir
 
 #### Automated
 
-- [ ] 1.1 `pnpm check` passes
-- [ ] 1.2 `pnpm typecheck` passes
-- [ ] 1.3 `pnpm test` passes for task mutation/isolation files
-- [ ] 1.4 `task-query.test.ts` consolidated — no duplicate Property 10 suite
+- [x] 1.1 `pnpm check` passes
+- [x] 1.2 `pnpm typecheck` passes
+- [x] 1.3 `pnpm test` passes for task mutation/isolation files
+- [x] 1.4 `task-query.test.ts` consolidated — no duplicate Property 10 suite
 
 ### Phase 2: Cycle & Session IDOR Matrix
 
 #### Automated
 
-- [ ] 2.1 `pnpm check` passes
-- [ ] 2.2 `pnpm typecheck` passes
-- [ ] 2.3 `pnpm test` passes for cycle and session test files
+- [x] 2.1 `pnpm check` passes
+- [x] 2.2 `pnpm typecheck` passes
+- [x] 2.3 `pnpm test` passes for cycle and session test files
 
 ### Phase 3: Guest Merge Integration
 
 #### Automated
 
-- [ ] 3.1 `pnpm check` passes
-- [ ] 3.2 `pnpm typecheck` passes
-- [ ] 3.3 `pnpm test` passes for guest merge test files
+- [x] 3.1 `pnpm check` passes
+- [x] 3.2 `pnpm typecheck` passes
+- [x] 3.3 `pnpm test` passes for guest merge test files
 
 ### Phase 4: Cookbook & Test-Plan Sync
 
 #### Automated
 
-- [ ] 4.1 Full verification: `pnpm check`, `pnpm typecheck`, `pnpm test`
-- [ ] 4.2 `test-plan.md` §6.5 / §6.2 / §6.6 updated; §3 Phase 3 row complete
+- [x] 4.1 Full verification: `pnpm check`, `pnpm typecheck`, `pnpm test`
+- [x] 4.2 `test-plan.md` §6.5 / §6.2 / §6.6 updated; §3 Phase 3 row complete
 
 #### Manual
 
