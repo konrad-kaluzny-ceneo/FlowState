@@ -130,7 +130,8 @@ the relevant rollout phase ships; before that, the sub-section reads
 - **Mocking policy**: mock DB at Prisma boundary or use test fixtures; never skip auth/isolation when testing protected procedures.
 - **Reference tests**: `src/server/api/routers/session-isolation.test.ts`, `src/server/api/routers/cycle-isolation.test.ts`; active-cycle + task shape after `create` → `getActive` in `src/server/api/routers/cycle.test.ts` (`integration: create → getActive → complete`).
 - **Persistence (Risk #1)**: extend an existing integration flow with recovery-field assertions (`taskId`, `task.title`, `startedAt`, `configuredDurationSec`, `state: RUNNING`) — avoid a duplicate seeded-only `getActive` test when one already exists.
-- **Cross-user IDOR (Risks #4, #6)**: dual-user `createCaller` with `VICTIM_ID` / `ATTACKER_ID`; expect `NOT_FOUND` on mutations (not `FORBIDDEN`) and empty/`null`/`0` on scoped queries. Reference: `task-mutation.test.ts` (stateful `findFirst` by `{ id, userId }`), `task-isolation.test.ts` (list), `cycle.test.ts` (`getActive`, `countCompletedWork`, `list(sessionId)` cross-user cases), `cycle-isolation.test.ts` (FK injection on `sessionId` and `taskId`), `session.test.ts` (`getOrCreateActive` smoke).
+- **Cross-user IDOR (Risks #4, #6)**: dual-user `createCaller` with `VICTIM_ID` / `ATTACKER_ID`; expect `NOT_FOUND` on mutations (not `FORBIDDEN`) and empty/`null`/`0` on scoped queries. Reference: `task-mutation.test.ts` (stateful `findFirst` by `{ id, userId }`), `task-isolation.test.ts` (list), `cycle.test.ts` (`getActive`, `countCompletedWork`, `list(sessionId)` cross-user cases), `cycle-isolation.test.ts` (FK injection on `sessionId` and `taskId`), `session.test.ts` (`getOrCreateActive` smoke), `check-in-isolation.test.ts` (list isolation, cross-user `cycleId`, duplicate `CONFLICT`).
+- **Check-in persistence (Risk #7, integration)**: imperative `create → list` round-trip in `check-in.test.ts` — assert `energy`/`cycleId`/`userId` on create return and list contents; mock `findMany` must honor `orderBy: { respondedAt: "desc" }` and `take: DEFAULT_LIST_LIMIT`. Reference tests: `create persists energy readable via list`, `round-trips energy FOCUSED/STEADY/FADING`, `list returns newest check-in first`, `list honors DEFAULT_LIST_LIMIT`. UI modal gate / skip prevention remains test-plan Phase 2 e2e.
 - **Run locally**: `pnpm test`.
 
 ### 6.3 Adding an e2e test
@@ -181,6 +182,13 @@ the relevant rollout phase ships; before that, the sub-section reads
 - **Explicit limitation**: no Playwright guest→auth merge e2e in this change — integration merge matrix only; browser proof deferred.
 - **Stale RUNNING documented**: `cycle.test.ts` `documents getActive when session ended but cycle still RUNNING` asserts current `getActive` behavior (filters `userId` + `RUNNING` only — no session state join); product fix is a separate change if desired.
 - **Consolidation**: `task-query.test.ts` removed; `task-isolation.test.ts` is canonical for Property 10 list isolation.
+
+**Risk #7 integration — check-in persistence** (shipped 2026-06-05, change `testing-check-in-persistence`)
+
+- Risks covered: **#7** (energy check-in persists server-side and is readable via `checkIn.list` for future suggestion logic).
+- Layers: Vitest integration with in-memory Prisma mocks in `check-in.test.ts`; security/isolation properties remain in `check-in-isolation.test.ts`.
+- **Explicit limitation**: no Playwright check-in modal gate in this change — UI skip-prevention proof deferred to test-plan Phase 2 (e2e risks #3/#7).
+- **Not a §3 rollout row**: ad-hoc slice documented here; S-05 UI will add browser proof later.
 
 ## 7. What We Deliberately Don't Test
 
