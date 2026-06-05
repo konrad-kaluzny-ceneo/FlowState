@@ -111,10 +111,7 @@ vi.mock("~/server/db/index", () => {
 						};
 					}) => {
 						const matching = cycles.filter((c) => {
-							if (
-								args.where.userId != null &&
-								c.userId !== args.where.userId
-							) {
+							if (args.where.userId != null && c.userId !== args.where.userId) {
 								return false;
 							}
 							if (

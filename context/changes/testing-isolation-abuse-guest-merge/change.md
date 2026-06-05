@@ -1,7 +1,7 @@
 ---
 change_id: testing-isolation-abuse-guest-merge
 title: Phase 3 test rollout — isolation, abuse & guest merge
-status: implementing
+status: implemented
 created: 2026-06-05
 updated: 2026-06-05
 archived_at: null

@@ -213,7 +213,8 @@ describe("session router", () => {
 				},
 			];
 
-			const attackerSession = await sessionCallerAs(ATTACKER_ID).getOrCreateActive();
+			const attackerSession =
+				await sessionCallerAs(ATTACKER_ID).getOrCreateActive();
 
 			expect(attackerSession.userId).toBe(ATTACKER_ID);
 			expect(attackerSession.id).not.toBe(victimSessionId);

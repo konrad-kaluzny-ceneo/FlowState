@@ -334,6 +334,8 @@ Test-only rollout. No database migrations. If stale RUNNING test reveals undesir
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
+>
+> **Check note (impl-review 2026-06-05):** Rollout-changed test files pass `biome check`. Full-repo `pnpm check` still fails on pre-existing issues outside this change (e.g. `.cursor/settings.json`, `src/lib/auth/server.ts`).
 
 ### Phase 1: Task Isolation Hardening
 
