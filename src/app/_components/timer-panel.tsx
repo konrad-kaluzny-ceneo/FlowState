@@ -8,10 +8,15 @@ import type {
 	PomodoroCycleState,
 } from "~/hooks/use-pomodoro-cycle";
 import {
+	getLongBreakPresets,
+	getMaxBreakDurationSec,
 	getMaxWorkDurationSec,
-	getMinCustomWorkDurationSec,
+	getMinBreakDurationSec,
+	getMinWorkDurationSec,
+	getShortBreakPresets,
 	getWorkDurationPresets,
 } from "~/lib/duration-bounds";
+import { isDurationSecInRange } from "~/lib/duration-input";
 import {
 	getLastDuration,
 	getLongBreakDuration,
@@ -21,32 +26,7 @@ import {
 } from "~/lib/duration-storage";
 import { formatRemainingMs } from "~/lib/format-remaining";
 
-const DURATION_PRESETS_SEC = getWorkDurationPresets();
-const MIN_CUSTOM_DURATION_SEC = getMinCustomWorkDurationSec();
-const MAX_DURATION_SEC = getMaxWorkDurationSec();
-
-function presetToCustomSec(sec: number): string {
-	return String(sec);
-}
-
-function initialDurationState() {
-	const sec = getLastDuration();
-	return {
-		selectedSec: sec,
-		customSec: presetToCustomSec(sec),
-	};
-}
-
-function parseCustomSecInput(value: string): number | null {
-	if (value.trim() === "") {
-		return null;
-	}
-	const parsed = Number.parseInt(value, 10);
-	if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
-		return null;
-	}
-	return parsed;
-}
+import { DurationPicker } from "./duration-picker";
 
 type TimerPanelProps = {
 	state: PomodoroCycleState;
@@ -67,19 +47,22 @@ export function TimerPanel({
 	isStarting = false,
 	cycleKind = null,
 }: TimerPanelProps) {
-	const [selectedSec, setSelectedSec] = useState(
-		() => initialDurationState().selectedSec,
+	const [workDurationSec, setWorkDurationSec] = useState(() =>
+		getLastDuration(),
 	);
-	const [customSec, setCustomSec] = useState(
-		() => initialDurationState().customSec,
+	const [shortBreakSec, setShortBreakSec] = useState(() =>
+		getShortBreakDuration(),
 	);
-	const [shortBreakMin, setShortBreakMin] = useState(() =>
-		Math.round(getShortBreakDuration() / 60),
+	const [longBreakSec, setLongBreakSec] = useState(() =>
+		getLongBreakDuration(),
 	);
-	const [longBreakMin, setLongBreakMin] = useState(() =>
-		Math.round(getLongBreakDuration() / 60),
-	);
+	const [workPickerInvalid, setWorkPickerInvalid] = useState(false);
 	const [showBreakSettings, setShowBreakSettings] = useState(false);
+
+	const workMinSec = getMinWorkDurationSec();
+	const workMaxSec = getMaxWorkDurationSec();
+	const breakMinSec = getMinBreakDurationSec();
+	const breakMaxSec = getMaxBreakDurationSec();
 
 	if (focusedTask == null && state !== "running" && state !== "completed") {
 		return null;
@@ -130,19 +113,11 @@ export function TimerPanel({
 		);
 	}
 
-	const parsedCustomSec = parseCustomSecInput(customSec);
-	const customValid =
-		parsedCustomSec != null &&
-		parsedCustomSec >= MIN_CUSTOM_DURATION_SEC &&
-		parsedCustomSec <= MAX_DURATION_SEC;
-	const presetMatch =
-		parsedCustomSec != null
-			? DURATION_PRESETS_SEC.find((p) => p.sec === parsedCustomSec)
-			: undefined;
-	const usingPreset = presetMatch != null && selectedSec === presetMatch.sec;
-	const customTouched =
-		customSec !== "" && (parsedCustomSec == null || presetMatch == null);
-	const showCustomError = customTouched && !customValid;
+	const workValid = isDurationSecInRange(
+		workDurationSec,
+		workMinSec,
+		workMaxSec,
+	);
 
 	return (
 		<section
@@ -154,70 +129,22 @@ export function TimerPanel({
 				{focusedTask?.title}
 			</p>
 
-			<div className="mt-4 flex flex-wrap justify-center gap-2">
-				{DURATION_PRESETS_SEC.map((preset) => (
-					<button
-						className={`rounded-lg px-3 py-2 text-sm transition ${
-							usingPreset && presetMatch?.sec === preset.sec
-								? "bg-purple-600 text-white"
-								: "bg-white/10 text-white/80 hover:bg-white/20"
-						}`}
-						key={preset.sec}
-						onClick={() => {
-							setSelectedSec(preset.sec);
-							setCustomSec(presetToCustomSec(preset.sec));
-						}}
-						type="button"
-					>
-						{preset.label}
-					</button>
-				))}
-			</div>
-
-			<label className="mt-4 flex flex-col items-center gap-1 text-sm text-white/70">
-				<span>Custom (1–{MAX_DURATION_SEC} sec, 90 min max)</span>
-				<input
-					className={`w-24 rounded border bg-white/10 px-2 py-1 text-center text-white ${
-						showCustomError
-							? "border-red-400 outline outline-1 outline-red-400/50"
-							: "border-white/20"
-					}`}
-					data-testid="work-duration-custom-sec"
-					max={MAX_DURATION_SEC}
-					min={MIN_CUSTOM_DURATION_SEC}
-					onChange={(e) => {
-						const next = e.target.value;
-						setCustomSec(next);
-						const parsed = parseCustomSecInput(next);
-						if (
-							parsed != null &&
-							DURATION_PRESETS_SEC.some((p) => p.sec === parsed)
-						) {
-							setSelectedSec(parsed);
-						}
-					}}
-					type="number"
-					value={customSec}
-				/>
-			</label>
-			{showCustomError && (
-				<p className="mt-1 text-center text-red-400 text-xs">
-					Must be between {MIN_CUSTOM_DURATION_SEC} and {MAX_DURATION_SEC}{" "}
-					seconds
-				</p>
-			)}
+			<p className="mt-4 text-center text-sm text-white/70">Work duration</p>
+			<DurationPicker
+				boundsLabel="1 s – 90 min"
+				maxSec={workMaxSec}
+				minSec={workMinSec}
+				onChangeSec={setWorkDurationSec}
+				onValidationChange={setWorkPickerInvalid}
+				presets={getWorkDurationPresets()}
+				testIdPrefix="work-duration"
+				valueSec={workDurationSec}
+			/>
 
 			<button
 				className="mt-6 w-full rounded-lg bg-purple-600 py-3 font-semibold text-white transition hover:bg-purple-500 disabled:opacity-50"
-				disabled={isStarting || showCustomError}
-				onClick={() => {
-					const durationSec = usingPreset
-						? selectedSec
-						: customValid && parsedCustomSec != null
-							? parsedCustomSec
-							: selectedSec;
-					void onStart(durationSec);
-				}}
+				disabled={isStarting || workPickerInvalid || !workValid}
+				onClick={() => void onStart(workDurationSec)}
 				type="button"
 			>
 				{isStarting ? "Starting..." : "Start Cycle"}
@@ -235,51 +162,43 @@ export function TimerPanel({
 
 				{showBreakSettings && (
 					<div
-						className="mt-3 flex flex-col gap-3"
+						className="mt-3 flex flex-col gap-4"
 						data-testid="break-settings-panel"
 					>
-						<label className="flex items-center justify-between text-sm text-white/70">
-							Short break
-							<div className="flex items-center gap-1">
-								<input
-									className="w-14 rounded border border-white/20 bg-white/10 px-2 py-1 text-center text-white"
-									data-testid="short-break-input"
-									max={30}
-									min={1}
-									onChange={(e) => {
-										const val = Number.parseInt(e.target.value, 10);
-										setShortBreakMin(val || 1);
-										if (Number.isFinite(val) && val >= 1 && val <= 30) {
-											setShortBreakDuration(val * 60);
-										}
-									}}
-									type="number"
-									value={shortBreakMin}
-								/>
-								<span className="text-white/50">min</span>
-							</div>
-						</label>
-						<label className="flex items-center justify-between text-sm text-white/70">
-							Long break
-							<div className="flex items-center gap-1">
-								<input
-									className="w-14 rounded border border-white/20 bg-white/10 px-2 py-1 text-center text-white"
-									data-testid="long-break-input"
-									max={30}
-									min={1}
-									onChange={(e) => {
-										const val = Number.parseInt(e.target.value, 10);
-										setLongBreakMin(val || 1);
-										if (Number.isFinite(val) && val >= 1 && val <= 30) {
-											setLongBreakDuration(val * 60);
-										}
-									}}
-									type="number"
-									value={longBreakMin}
-								/>
-								<span className="text-white/50">min</span>
-							</div>
-						</label>
+						<div>
+							<p className="mb-2 text-center text-sm text-white/70">
+								Short break
+							</p>
+							<DurationPicker
+								boundsLabel="1 s – 30 min"
+								maxSec={breakMaxSec}
+								minSec={breakMinSec}
+								onChangeSec={(sec) => {
+									setShortBreakSec(sec);
+									setShortBreakDuration(sec);
+								}}
+								presets={getShortBreakPresets()}
+								testIdPrefix="short-break-duration"
+								valueSec={shortBreakSec}
+							/>
+						</div>
+						<div>
+							<p className="mb-2 text-center text-sm text-white/70">
+								Long break
+							</p>
+							<DurationPicker
+								boundsLabel="1 s – 30 min"
+								maxSec={breakMaxSec}
+								minSec={breakMinSec}
+								onChangeSec={(sec) => {
+									setLongBreakSec(sec);
+									setLongBreakDuration(sec);
+								}}
+								presets={getLongBreakPresets()}
+								testIdPrefix="long-break-duration"
+								valueSec={longBreakSec}
+							/>
+						</div>
 					</div>
 				)}
 			</div>

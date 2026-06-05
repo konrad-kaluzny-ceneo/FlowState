@@ -75,8 +75,13 @@ describe("short break duration storage", () => {
 		expect(getShortBreakDuration()).toBe(DEFAULT_SHORT_BREAK_SEC);
 	});
 
-	it("returns default for out-of-range stored values", () => {
+	it("reads sub-minute stored values", () => {
 		localStorage.setItem("flowstate:shortBreakDurationSec", "30");
+		expect(getShortBreakDuration()).toBe(30);
+	});
+
+	it("returns default for out-of-range stored values", () => {
+		localStorage.setItem("flowstate:shortBreakDurationSec", "0");
 		expect(getShortBreakDuration()).toBe(DEFAULT_SHORT_BREAK_SEC);
 
 		localStorage.setItem("flowstate:shortBreakDurationSec", "3600");
@@ -85,10 +90,15 @@ describe("short break duration storage", () => {
 
 	it("clamps out-of-range values on write", () => {
 		setShortBreakDuration(0);
-		expect(getShortBreakDuration()).toBe(1 * 60);
+		expect(getShortBreakDuration()).toBe(1);
 
 		setShortBreakDuration(60 * 60);
 		expect(getShortBreakDuration()).toBe(30 * 60);
+	});
+
+	it("round-trips sub-minute short break duration", () => {
+		setShortBreakDuration(45);
+		expect(getShortBreakDuration()).toBe(45);
 	});
 });
 
@@ -111,8 +121,13 @@ describe("long break duration storage", () => {
 		expect(getLongBreakDuration()).toBe(DEFAULT_LONG_BREAK_SEC);
 	});
 
-	it("returns default for out-of-range stored values", () => {
+	it("reads sub-minute stored values", () => {
 		localStorage.setItem("flowstate:longBreakDurationSec", "30");
+		expect(getLongBreakDuration()).toBe(30);
+	});
+
+	it("returns default for out-of-range stored values", () => {
+		localStorage.setItem("flowstate:longBreakDurationSec", "0");
 		expect(getLongBreakDuration()).toBe(DEFAULT_LONG_BREAK_SEC);
 
 		localStorage.setItem("flowstate:longBreakDurationSec", "3600");
@@ -121,9 +136,14 @@ describe("long break duration storage", () => {
 
 	it("clamps out-of-range values on write", () => {
 		setLongBreakDuration(0);
-		expect(getLongBreakDuration()).toBe(1 * 60);
+		expect(getLongBreakDuration()).toBe(1);
 
 		setLongBreakDuration(60 * 60);
 		expect(getLongBreakDuration()).toBe(30 * 60);
+	});
+
+	it("round-trips sub-minute long break duration", () => {
+		setLongBreakDuration(45);
+		expect(getLongBreakDuration()).toBe(45);
 	});
 });

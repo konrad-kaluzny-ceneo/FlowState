@@ -1,10 +1,14 @@
 import { expect, type Page } from "@playwright/test";
 
+import { splitSecToMinSec } from "../../src/lib/duration-input";
+
 /** Advance fake clock through a 1s work cycle (+ buffer for completion tick). */
 export const FAST_WORK_CLOCK_MS = 2500;
 
 export async function setWorkDurationSec(page: Page, seconds: number) {
-	await page.getByTestId("work-duration-custom-sec").fill(String(seconds));
+	const { minutes, seconds: secs } = splitSecToMinSec(seconds);
+	await page.getByTestId("work-duration-min").fill(String(minutes));
+	await page.getByTestId("work-duration-sec").fill(String(secs));
 }
 
 export async function startFocusedWorkCycle(

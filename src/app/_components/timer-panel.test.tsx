@@ -21,7 +21,8 @@ describe("TimerPanel", () => {
 		render(<TimerPanel {...defaultProps} />);
 
 		expect(screen.getByTestId("timer-panel-idle")).toBeTruthy();
-		expect(screen.getByTestId("work-duration-custom-sec")).toBeTruthy();
+		expect(screen.getByTestId("work-duration-min")).toBeTruthy();
+		expect(screen.getByTestId("work-duration-sec")).toBeTruthy();
 		expect(screen.getByRole("button", { name: "Start Cycle" })).toBeTruthy();
 	});
 
@@ -37,10 +38,14 @@ describe("TimerPanel", () => {
 	it("shows error for custom duration below minimum", () => {
 		render(<TimerPanel {...defaultProps} />);
 
-		const input = screen.getByTestId("work-duration-custom-sec");
-		fireEvent.change(input, { target: { value: "0" } });
+		fireEvent.change(screen.getByTestId("work-duration-min"), {
+			target: { value: "0" },
+		});
+		fireEvent.change(screen.getByTestId("work-duration-sec"), {
+			target: { value: "0" },
+		});
 
-		expect(screen.getByText(/Must be between 1 and 5400 seconds/)).toBeTruthy();
+		expect(screen.getByText(/Must be within 1 s – 90 min/)).toBeTruthy();
 		expect(
 			(screen.getByRole("button", { name: "Start Cycle" }) as HTMLButtonElement)
 				.disabled,
@@ -50,10 +55,14 @@ describe("TimerPanel", () => {
 	it("shows error for custom duration above maximum", () => {
 		render(<TimerPanel {...defaultProps} />);
 
-		const input = screen.getByTestId("work-duration-custom-sec");
-		fireEvent.change(input, { target: { value: "5401" } });
+		fireEvent.change(screen.getByTestId("work-duration-min"), {
+			target: { value: "91" },
+		});
+		fireEvent.change(screen.getByTestId("work-duration-sec"), {
+			target: { value: "0" },
+		});
 
-		expect(screen.getByText(/Must be between 1 and 5400 seconds/)).toBeTruthy();
+		expect(screen.getByText(/Must be within 1 s – 90 min/)).toBeTruthy();
 		expect(
 			(screen.getByRole("button", { name: "Start Cycle" }) as HTMLButtonElement)
 				.disabled,
@@ -64,7 +73,10 @@ describe("TimerPanel", () => {
 		const onStart = vi.fn().mockResolvedValue(undefined);
 		render(<TimerPanel {...defaultProps} onStart={onStart} />);
 
-		fireEvent.change(screen.getByTestId("work-duration-custom-sec"), {
+		fireEvent.change(screen.getByTestId("work-duration-min"), {
+			target: { value: "0" },
+		});
+		fireEvent.change(screen.getByTestId("work-duration-sec"), {
 			target: { value: "90" },
 		});
 		fireEvent.click(screen.getByRole("button", { name: "Start Cycle" }));
