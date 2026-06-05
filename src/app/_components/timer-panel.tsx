@@ -179,7 +179,7 @@ export function TimerPanel({
 				<input
 					className={`w-24 rounded border bg-white/10 px-2 py-1 text-center text-white ${
 						showCustomError
-							? "border-red-400 outline outline-1 outline-red-400/50"
+							? "border-red-400 outline-1 outline-red-400/50"
 							: "border-white/20"
 					}`}
 					data-testid="work-duration-custom-sec"
