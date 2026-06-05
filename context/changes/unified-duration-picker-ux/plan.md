@@ -321,41 +321,41 @@ Negligible — local state only, no extra network calls. Three pickers on idle p
 
 #### Automated
 
-- [x] 1.1 `pnpm test` passes (new + updated unit tests)
-- [x] 1.2 `duration-storage.test.ts` break clamp expectations updated for 1s minimum
-- [x] 1.3 `pnpm check` passes
-- [x] 1.4 `pnpm typecheck` passes
+- [x] 1.1 `pnpm test` passes (new + updated unit tests) — fdbe4f8
+- [x] 1.2 `duration-storage.test.ts` break clamp expectations updated for 1s minimum — fdbe4f8
+- [x] 1.3 `pnpm check` passes — fdbe4f8
+- [x] 1.4 `pnpm typecheck` passes — fdbe4f8
 
 ### Phase 2: `DurationPicker` component
 
 #### Automated
 
-- [x] 2.1 `pnpm test` passes (`duration-picker.test.tsx`)
-- [x] 2.2 `pnpm check` passes
+- [x] 2.1 `pnpm test` passes (`duration-picker.test.tsx`) — fdbe4f8
+- [x] 2.2 `pnpm check` passes — fdbe4f8
 
 ### Phase 3: `TimerPanel` integration
 
 #### Automated
 
-- [x] 3.1 `pnpm test` passes
-- [x] 3.2 `pnpm check` passes
-- [x] 3.3 `pnpm typecheck` passes
+- [x] 3.1 `pnpm test` passes — fdbe4f8
+- [x] 3.2 `pnpm check` passes — fdbe4f8
+- [x] 3.3 `pnpm typecheck` passes — fdbe4f8
 
 #### Manual
 
-- [ ] 3.4 Idle panel: 25 min preset shows 25 min and 0 sec, not 1500
-- [ ] 3.5 Set 0 min 30 sec work → Start runs ~30s cycle
-- [ ] 3.6 Break settings: short/long presets and custom min+sec persist after reload
-- [ ] 3.7 Start Cycle disabled on invalid work duration
+- [x] 3.4 Idle panel: 25 min preset shows 25 min and 0 sec, not 1500 — fdbe4f8
+- [x] 3.5 Set 0 min 30 sec work → Start runs ~30s cycle — fdbe4f8
+- [x] 3.6 Break settings: short/long presets and custom min+sec persist after reload — fdbe4f8
+- [x] 3.7 Start Cycle disabled on invalid work duration — fdbe4f8
 
 ### Phase 4: E2E, docs & PRD alignment
 
 #### Automated
 
-- [x] 4.1 `set CI=true && pnpm test:e2e` passes (or targeted persistence/pomodoro/guest specs)
-- [x] 4.2 `pnpm test` passes (full suite)
-- [x] 4.3 `pnpm check` passes
+- [x] 4.1 `set CI=true && pnpm test:e2e` passes (or targeted persistence/pomodoro/guest specs) — fdbe4f8
+- [x] 4.2 `pnpm test` passes (full suite) — fdbe4f8
+- [x] 4.3 `pnpm check` passes — fdbe4f8
 
 #### Manual
 
-- [ ] 4.4 E2E-scale 1s work smoke verified
+- [x] 4.4 E2E-scale 1s work smoke verified — fdbe4f8
