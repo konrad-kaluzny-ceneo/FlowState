@@ -1,10 +1,38 @@
 import { randomUUID } from "node:crypto";
-import type { APIRequestContext } from "@playwright/test";
+import type { APIRequestContext, APIResponse } from "@playwright/test";
 
 interface TestUserCredentials {
 	email: string;
 	password: string;
 	name: string;
+}
+
+const AUTH_RATE_LIMIT_STATUSES = new Set([429, 503]);
+
+async function postAuthWithRetry(
+	request: APIRequestContext,
+	url: string,
+	data: Record<string, string>,
+): Promise<APIResponse> {
+	const maxAttempts = process.env.CI ? 6 : 3;
+	let lastResponse: APIResponse | undefined;
+
+	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+		const response = await request.post(url, { data });
+		if (!AUTH_RATE_LIMIT_STATUSES.has(response.status())) {
+			return response;
+		}
+		lastResponse = response;
+		if (attempt < maxAttempts) {
+			await new Promise((resolve) => setTimeout(resolve, attempt * 2_000));
+		}
+	}
+
+	if (!lastResponse) {
+		throw new Error(`Auth request to ${url} failed with no response`);
+	}
+
+	return lastResponse;
 }
 
 /**
@@ -22,12 +50,10 @@ export async function createTestUser(
 		name: overrides?.name ?? `E2E User ${id}`,
 	};
 
-	const response = await request.post("/api/auth/sign-up/email", {
-		data: {
-			email: credentials.email,
-			password: credentials.password,
-			name: credentials.name,
-		},
+	const response = await postAuthWithRetry(request, "/api/auth/sign-up/email", {
+		email: credentials.email,
+		password: credentials.password,
+		name: credentials.name,
 	});
 
 	if (!response.ok()) {
@@ -59,11 +85,9 @@ export async function signInAsUser(
 		localStorage: Array<{ name: string; value: string }>;
 	}>;
 }> {
-	const response = await request.post("/api/auth/sign-in/email", {
-		data: {
-			email: credentials.email,
-			password: credentials.password,
-		},
+	const response = await postAuthWithRetry(request, "/api/auth/sign-in/email", {
+		email: credentials.email,
+		password: credentials.password,
 	});
 
 	if (!response.ok()) {

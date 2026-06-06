@@ -356,7 +356,7 @@ No new Vitest tests — this change is infra/docs/CI. Existing `pnpm test` must 
 
 #### Manual
 
-- [ ] 3.3 GitHub secrets configured (4 Neon/Auth vars) — repo has none yet (`gh secret list` empty)
+- [x] 3.3 GitHub secrets configured (4 Neon/Auth vars)
 - [x] 3.4 Branch protection requires CI (optional recommended) — verified not enabled; optional follow-up after first green CI
 
 ### Phase 4: Test-Plan & Cookbook Sync
