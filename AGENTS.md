@@ -60,6 +60,7 @@ Shared scripts live in `scripts/agent-hooks/`; IDE configs only point at them.
 - **Cursor:** `.cursor/hooks.json` only — `afterFileEdit` → 3 scripts per edit. `.cursor/settings.json` disables `.github/hooks` and `.claude/settings.json` so hooks are not loaded twice. **Normal cost: 3 executions per `.ts` edit** (lint + typecheck + related-tests skip). Restart Cursor after hook changes if old paths linger in Execution Log.
 - **VS Code / Copilot:** `.github/hooks/quality.json` — same scripts via `PostToolUse`. `.vscode/settings.json` loads only `.github/hooks`. VS Code **ignores matchers**; scripts filter by `tool_name`. Verify in **GitHub Copilot Chat Hooks** output channel.
 - **Pre-commit:** `lefthook.yml` — lint + typecheck + `vitest related` on staged files. Lefthook lint runs `biome check --write` then `git add` on each staged file — **stage the whole file** before commit; unstaged hunks in the same file can otherwise be swept into the commit. **Scope asymmetry:** agent `related-tests` hook runs only on risk dirs (`scripts/agent-hooks/lib/risk-areas.mjs`); lefthook runs `vitest related` on **all** staged `*.{ts,tsx}` — stricter human gate at commit time.
+- **Pre-push:** `lefthook.yml` — full `pnpm check`, typecheck, and `pnpm test` before `git push` (parallel). Catches cross-file drift and regressions outside the staged diff.
 
 ## Mutation testing
 

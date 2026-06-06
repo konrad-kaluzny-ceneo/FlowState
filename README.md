@@ -84,6 +84,25 @@ A Pomodoro-based productivity app that combines focused work sessions with adapt
 | `pnpm db:migrate` | Apply pending migrations |
 | `pnpm db:studio` | Open Drizzle Studio (DB browser) |
 
+## Local quality gates
+
+Three local layers catch issues before code reaches the remote. CI is the fourth layer on merge.
+
+| Layer | When | What runs |
+|-------|------|-----------|
+| **Per-edit (agent hooks)** | After the AI agent edits a file | Biome on the edited file, project typecheck, `vitest related` only in [risk dirs](context/foundation/test-plan.md) (`src/hooks/`, `src/workers/`, routers, repositories, `_components/`) |
+| **Pre-commit** | `git commit` | Biome + typecheck + `vitest related` on **staged** files ([Lefthook](lefthook.yml)) |
+| **Pre-push** | `git push` | Full `pnpm check`, typecheck, and `pnpm test` ([Lefthook](lefthook.yml)) |
+
+**Setup:** `pnpm install` runs `lefthook install` via the `prepare` script and wires Git hooks automatically.
+
+**IDE config:**
+
+- **Cursor** — [`.cursor/hooks.json`](.cursor/hooks.json) (`afterFileEdit` → shared scripts in [`scripts/agent-hooks/`](scripts/agent-hooks/))
+- **VS Code / Copilot** — [`.github/hooks/quality.json`](.github/hooks/quality.json) (same scripts via `PostToolUse`)
+
+Hook scripts return exit code **2** on failure so the agent sees lint, type, or test output in context. See [`AGENTS.md`](AGENTS.md) for Windows paths, Copilot payload quirks, and staging notes for pre-commit lint.
+
 ## Project Structure
 
 ```
