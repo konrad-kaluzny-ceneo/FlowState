@@ -1,7 +1,7 @@
 ---
 change_id: testing-active-slice-browser-proofs
 title: Active-slice browser proofs for mid-cycle prompt and check-in gate
-status: implemented
+status: impl_reviewed
 created: 2026-06-06
 updated: 2026-06-06
 archived_at: null

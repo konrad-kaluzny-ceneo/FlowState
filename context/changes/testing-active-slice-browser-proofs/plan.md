@@ -322,6 +322,14 @@ Add Playwright specs for risks #3 and #7 and document Phase 2 patterns in the te
 - Spot-check mid-cycle continue path in headed browser
 - Confirm test-plan §6.3/§6.6 reads correctly and links match shipped files
 
+#### Addendum (impl-review 2026-06-06) — `check-in-gate.spec.ts` deferred
+
+Dedicated `e2e/check-in-gate.spec.ts` was **not shipped** in this change. Risk #7 is partially covered via S-01 regression in `e2e/pomodoro-cycle.spec.ts` and the `completeCheckIn` helper. Full deferral rationale and re-add criteria are documented in `context/foundation/test-plan.md` §6.6 (batched tRPC `httpBatchStreamLink` blocks `waitForRequest` / `response.json()` persistence oracles). **Follow-up:** add `check-in-gate.spec.ts` when e2e infra supports batched mutation oracles or a UI-only gate spec is accepted.
+
+#### Addendum (impl-review 2026-06-06) — collateral test-infra refactor
+
+Commit `83dc136` refactored `src/test-utils/*`, `src/lib/auth/server.ts`, `src/server/api/trpc.ts`, and several router isolation tests outside the phased file list. Benign prerequisite cleanup for new cycle/check-in tests; no product behavior change.
+
 ---
 
 ## Testing Strategy

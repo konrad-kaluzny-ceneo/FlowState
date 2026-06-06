@@ -114,12 +114,15 @@ function PomodoroDashboardBody({
 				/>
 			)}
 
-			{enableCheckInGate && pomodoro.awaitingCheckIn && (
-				<CheckInOverlay
-					isSubmitting={pomodoro.isConfirming}
-					onSubmit={pomodoro.submitCheckIn}
-				/>
-			)}
+			{enableCheckInGate &&
+				pomodoro.awaitingCheckIn &&
+				pomodoro.activeCycle != null && (
+					<CheckInOverlay
+						cycleId={Number(pomodoro.activeCycle.id)}
+						isSubmitting={pomodoro.isConfirming}
+						onSubmit={pomodoro.submitCheckIn}
+					/>
+				)}
 
 			{pomodoro.hasActiveSession && (
 				<button

@@ -1,4 +1,5 @@
 import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { completeCheckIn } from "./helpers/check-in";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 import {
 	markTaskCompleteMidCycle,
@@ -25,6 +26,8 @@ test.describe("Mid-cycle last task (Risk #3)", () => {
 		await expect(page.getByTestId("mid-cycle-end-break-btn")).toBeVisible();
 
 		await page.getByTestId("mid-cycle-end-break-btn").click();
+		await expect(page.getByText("Short Break")).toBeHidden();
+		await completeCheckIn(page, "steady");
 		await expect(page.getByText("Short Break")).toBeVisible();
 	});
 });

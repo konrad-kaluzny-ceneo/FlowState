@@ -669,41 +669,44 @@ export function usePomodoroCycle() {
 		setIsMidCycleSubmitting(true);
 		setError(null);
 
-		try {
-			await retryOnce(() =>
-				cycles.complete({
-					cycleId: activeCycle.id,
-					markTaskDone: true,
-				}),
-			);
-		} catch {
-			setError(
-				"Could not save cycle completion. Check your connection and try again.",
-			);
-			setIsMidCycleSubmitting(false);
-			return;
-		}
-
 		stopWorker();
 		endTimeRef.current = null;
 		setMidCyclePendingTask(null);
+		setState("completed");
+		setRemainingMs(0);
 
-		try {
-			await startBreakAfterWorkComplete(true);
-		} catch {
-			setError("Break could not start. Your work cycle was saved.");
-			setState("idle");
-			setRemainingMs(0);
-			setActiveCycle(null);
-			setCycleKind(null);
-			setFocusedTaskId(null);
-			setFocusedTask(null);
-		} finally {
-			setIsMidCycleSubmitting(false);
+		const currentKind = activeCycle.kind;
+
+		if (currentKind !== "WORK" || mode === "guest") {
+			try {
+				await retryOnce(() =>
+					cycles.complete({
+						cycleId: activeCycle.id,
+						markTaskDone: true,
+					}),
+				);
+				await startBreakAfterWorkComplete(true);
+			} catch {
+				setError("Break could not start. Your work cycle was saved.");
+				setState("idle");
+				setRemainingMs(0);
+				setActiveCycle(null);
+				setCycleKind(null);
+				setFocusedTaskId(null);
+				setFocusedTask(null);
+			} finally {
+				setIsMidCycleSubmitting(false);
+			}
+			return;
 		}
+
+		setPendingMarkTaskDone(true);
+		setAwaitingCheckIn(true);
+		setIsMidCycleSubmitting(false);
 	}, [
 		midCyclePendingTask,
 		activeCycle,
+		mode,
 		cycles,
 		startBreakAfterWorkComplete,
 		stopWorker,

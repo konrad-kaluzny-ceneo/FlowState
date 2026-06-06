@@ -885,13 +885,25 @@ describe("usePomodoroCycle", () => {
 			await result.current.onMidCycleEndCycleAndBreak();
 		});
 
+		expect(result.current.awaitingCheckIn).toBe(true);
+		expect(result.current.midCyclePendingTask).toBeNull();
+		expect(completeCycle).not.toHaveBeenCalled();
+
+		await act(async () => {
+			await result.current.submitCheckIn("STEADY");
+		});
+
+		expect(createCheckInMutate).toHaveBeenCalledWith({
+			cycleId: 61,
+			energy: "STEADY",
+		});
 		expect(completeCycle).toHaveBeenCalledWith({
 			cycleId: 61,
 			markTaskDone: true,
 		});
+		expect(result.current.awaitingCheckIn).toBe(false);
 		expect(result.current.state).toBe("running");
 		expect(result.current.cycleKind).toBe("SHORT_BREAK");
-		expect(result.current.midCyclePendingTask).toBeNull();
 	});
 
 	it("hasActiveSession is true after first cycle start, false after endSession", async () => {

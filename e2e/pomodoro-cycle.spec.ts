@@ -30,6 +30,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		).toBeVisible();
 
 		await page.getByRole("button", { name: "Continue later" }).click();
+		await expect(page.getByText("Short Break")).toBeHidden();
 		await completeCheckIn(page, "steady");
 
 		await expect(page.getByTestId("cycle-complete-overlay")).not.toBeVisible();
@@ -56,6 +57,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		});
 		await expect(markDone).toBeEnabled();
 		await markDone.click();
+		await expect(page.getByText("Short Break")).toBeHidden();
 		await completeCheckIn(page, "steady");
 
 		await expect(page.getByTestId("cycle-complete-overlay")).not.toBeVisible();

@@ -31,17 +31,20 @@ const ENERGY_OPTIONS: {
 ];
 
 type CheckInOverlayProps = {
+	cycleId: number;
 	onSubmit: (energy: CheckInEnergy) => Promise<void>;
 	isSubmitting?: boolean;
 };
 
 export function CheckInOverlay({
+	cycleId,
 	onSubmit,
 	isSubmitting = false,
 }: CheckInOverlayProps) {
 	return (
 		<div
 			className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+			data-cycle-id={cycleId}
 			data-testid="check-in-overlay"
 			role="dialog"
 		>
