@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-06
+> Last updated: 2026-06-06 (mutation baseline refresh)
 
 ## 1. Strategy
 
@@ -39,11 +39,11 @@ research's job, see §1 principle #3).
 
 | # | Risk (failure scenario) | Impact | Likelihood | Source (evidence — not anchor) |
 |---|-------------------------|--------|------------|--------------------------------|
-| 1 | Page refresh or crash during an active Pomodoro leaves the user with a missing or wrong task list or cycle state | High | High | PRD guardrail (no silent data loss); interview Q1; roadmap S-01 NFR (crash/refresh recovery) |
-| 2 | Work cycle elapsed time drifts beyond ±2 seconds when the browser tab is backgrounded | High | Medium | PRD NFR (timer drift ≤ ±2s); interview Q3; hot-spot dir `src/hooks/` (21 commits/30d); hot-spot dir `src/workers/` (5 commits/30d) |
-| 3 | Marking a task done mid-cycle offers wrong choices or skips the mindful break/end prompt | Medium | High | PRD FR-015; roadmap S-03 active; interview Q4 |
-| 4 | Authenticated user reads or mutates another user's tasks, sessions, or cycles | High | Medium | PRD guardrail (strict per-user isolation); PRD access control |
-| 5 | Guest trial tasks or cycles are lost or silently overwritten on sign-in merge | High | Medium | PRD FR-003c; roadmap S-08 proposed; PRD guardrail (no silent data loss) |
+| 1 | Page refresh or crash during an active Pomodoro leaves the user with a missing or wrong task list or cycle state | High | High | PRD guardrail (no silent data loss); interview Q1; roadmap S-01 NFR (crash/refresh recovery); Stryker 2026-06-06 — hot-spot dir `src/hooks/` (170 survived mutants on covered code); hot-spot dir `src/app/_components/` (359 no-coverage mutants) |
+| 2 | Work cycle elapsed time drifts beyond ±2 seconds when the browser tab is backgrounded | High | High | PRD NFR (timer drift ≤ ±2s); interview Q3; hot-spot dir `src/hooks/` (21 commits/30d; 170 survived mutants); hot-spot dir `src/workers/` (5 commits/30d; timer-worker-logic 100% mutation score) |
+| 3 | Marking a task done mid-cycle offers wrong choices or skips the mindful break/end prompt | Medium | High | PRD FR-015; roadmap S-03 active; interview Q4; Stryker 2026-06-06 — hot-spot dir `src/app/_components/` (359 no-coverage mutants including task-list UI) |
+| 4 | Authenticated user reads or mutates another user's tasks, sessions, or cycles | High | High | PRD guardrail (strict per-user isolation); PRD access control; Stryker 2026-06-06 — hot-spot dir `src/server/api/routers/` (~150 survived mutants despite Phase 3 integration) |
+| 5 | Guest trial tasks or cycles are lost or silently overwritten on sign-in merge | High | Medium | PRD FR-003c; roadmap S-08 proposed; PRD guardrail (no silent data loss); Stryker 2026-06-06 — hot-spot dir `src/lib/repositories/` (192 no-coverage mutants in guest persistence layer) |
 | 6 | Attacker with a valid session manipulates resource IDs to access another user's tasks or cycles (IDOR) | High | Medium | PRD access control (abuse lens — ownership not just authentication) |
 | 7 | End-of-cycle check-in can be skipped or declared energy fails to persist for the next suggestion | Medium | Medium | PRD FR-020; roadmap S-05 active |
 
@@ -51,11 +51,11 @@ research's job, see §1 principle #3).
 
 | Risk | What would prove protection | Must challenge | Context `/10x-research` must ground | Likely cheapest layer | Anti-pattern to avoid |
 |------|-----------------------------|----------------|--------------------------------------|-----------------------|-----------------------|
-| #1 | After refresh mid-active work cycle, user sees the same tasks and the cycle resumes at the correct phase and remaining time | "Hydration on mount" implies server and client state agree; empty task list on slow network is acceptable | Refresh entry point; persisted cycle + task state shape; guest vs authenticated persistence boundaries | Integration (server caller + DB fixture) before browser e2e | Asserting save-format fields copied from implementation rather than user-visible restored state |
-| #2 | At cycle end in a backgrounded tab, elapsed time is within ±2s of the configured work duration | Fake timers in jsdom prove throttled-tab behavior; client-only clock is authoritative | Clock authority (worker vs main thread vs server `startedAt`); visibility/throttle handling | Unit (timer worker) + hook integration with controlled time; e2e only if cheaper layers cannot simulate throttling | Testing raw `setInterval` without background-throttle or worker path |
+| #1 | After refresh mid-active work cycle, user sees the same tasks and the cycle resumes at the correct phase and remaining time | "Hydration on mount" implies server and client state agree; empty task list on slow network is acceptable | Refresh entry point; persisted cycle + task state shape; guest vs authenticated persistence boundaries | Integration (server caller + DB fixture) before browser e2e; hook tests must kill conditional/branch mutants on recovery paths | Asserting save-format fields copied from implementation rather than user-visible restored state; e2e reload alone while hook branches survive (Stryker: 170 survived in `src/hooks/`) |
+| #2 | At cycle end in a backgrounded tab, elapsed time is within ±2s of the configured work duration | Fake timers in jsdom prove throttled-tab behavior; client-only clock is authoritative | Clock authority (worker vs main thread vs server `startedAt`); visibility/throttle handling | Unit (timer worker) + hook integration with controlled time; e2e only if cheaper layers cannot simulate throttling | Testing raw `setInterval` without background-throttle or worker path; relying on worker unit tests while hook visibility/fallback branches survive |
 | #3 | Completing a task during an active cycle always surfaces FR-015 choices; with no active tasks left, only "end cycle and break" is offered | Happy-path completion without in-flight cycle state | Mid-cycle UI gate; cycle in-flight detection; task list empty edge case | Playwright e2e with authenticated fixture | Unit-testing prompt component in isolation without cycle-in-flight context |
-| #4 | No tRPC query or mutation returns another user's tasks, sessions, cycles, or check-ins | "Protected procedure" label implies row-level ownership checks on every read/write | Auth context injection; ownership filter on every list/get/mutate path | Integration (dual-user callers, expect forbidden/not-found) | Mocking auth middleware while skipping DB-level isolation assertions |
-| #5 | After sign-in, guest tasks and cycles appear in the account; title collisions get numbered suffixes; guest blob cleared only after successful merge | Merge test passes when guest blob is empty; suffix logic mirrors production string concat | Guest blob schema version; merge transaction boundary; collision suffix policy | Integration (merge procedure) + one browser merge e2e | Asserting suffix algorithm by copying production helper output as oracle |
+| #4 | No tRPC query or mutation returns another user's tasks, sessions, cycles, or check-ins | "Protected procedure" label implies row-level ownership checks on every read/write | Auth context injection; ownership filter on every list/get/mutate path | Integration (dual-user callers, expect forbidden/not-found); per-router mutation runs until survived count drops | Mocking auth middleware while skipping DB-level isolation assertions; happy-path-only router tests that pass when ownership checks are deleted (Stryker: ~150 survived in `src/server/api/routers/`) |
+| #5 | After sign-in, guest tasks and cycles appear in the account; title collisions get numbered suffixes; guest blob cleared only after successful merge | Merge test passes when guest blob is empty; suffix logic mirrors production string concat | Guest blob schema version; merge transaction boundary; collision suffix policy | Integration (merge procedure + repository layer) + one browser merge e2e | Asserting suffix algorithm by copying production helper output as oracle; integration-only merge while guest repository layer has 192 no-coverage mutants |
 | #6 | Mutating or fetching a task/cycle/session ID belonging to another user returns forbidden or not-found, not the foreign row | Logged-in user implies any ID is reachable if auth passes | ID parameters on mutations; ownership check before update/delete | Integration (cross-user ID swap on each router) | Only testing "unauthenticated → 401" without cross-user IDOR |
 | #7 | Every completed work cycle requires an energy check-in before transition; stored value is readable for the next suggestion | Check-in UI mount implies persistence; skipping modal via keyboard is acceptable UX | Cycle-end transition gate; check-in persistence model; S-05 vs S-06 boundary | Playwright e2e once S-05 UI lands; integration for persistence until then | Snapshot of check-in modal without asserting gate blocks transition |
 
@@ -71,6 +71,8 @@ orchestrator updates Status as artifacts appear on disk.
 | 2 | Active-slice browser proofs | Browser-level proof for S-03 mid-cycle prompt and S-05 check-in gate before wedge work compounds | #3, #7 | Playwright e2e | complete | testing-active-slice-browser-proofs |
 | 3 | Isolation, abuse & guest merge | Lock per-user isolation, IDOR rejection, and guest→account merge integrity | #4, #5, #6 | integration | complete | testing-isolation-abuse-guest-merge |
 | 4 | Quality-gates wiring | Enforce lint, typecheck, unit/integration, and critical e2e in CI on every PR | cross-cutting | CI gates | not started | — |
+| 5 | Mutation oracle hardening | Raise covered-code mutation score from ~58% by killing survived mutants in hooks and server routers — tests exist but assertions are too weak | #1, #2, #3, #4, #5, #6 | unit + integration (targeted Stryker runs) | not started | — |
+| 6 | Uncovered UI & auth paths | Exercise task-list, dashboard, and auth action paths so no-coverage mutants drop — largest score drag but narrower than Phase 5 per test | #1, #3, #5 | component smoke + integration | not started | — |
 
 ## 4. Stack
 
@@ -85,7 +87,22 @@ plus the MCP/tools actually exposed in the current session.
 | API / server integration | Vitest + tRPC createCaller | 4.1.7 | Router isolation tests pattern already in repo; exclude `e2e/` from Vitest |
 | e2e | Playwright | 1.60.0 | Authenticated fixture from F-02; always `set CI=true && pnpm test:e2e` per AGENTS.md |
 | property-based | fast-check | 4.8.0 | Via `@fast-check/vitest` where input spaces are wide |
+| mutation testing | Stryker + Vitest runner | 9.6.1 | `pnpm test:mutate`; HTML report at `reports/mutation/mutation.html`; thresholds high 80 / low 60 / break null |
 | accessibility | none yet | — | See Phase 2 if check-in/mid-cycle modals need axe — only if e2e misses a11y regressions |
+
+**Mutation baseline (Stryker full run, 2026-06-06):**
+
+| Metric | Value |
+|--------|------:|
+| Total mutants | 2,883 |
+| Mutation score (of total) | 33.1% |
+| Mutation score (of covered code) | 58.2% |
+| Killed | 951 |
+| Survived | 685 |
+| No coverage | 1,243 |
+| Runtime errors | 1 |
+
+Interpretation: the suite has **breadth** (Phase 1–3 shipped) but **shallow oracles** on covered paths and **large UI/auth gaps** on uncovered paths. Phase 5 targets survived mutants (cheapest signal); Phase 6 targets no-coverage clusters. Do not chase 100% — review survivors for user-visible bugs only (AGENTS.md).
 
 **Stack grounding tools (current session):**
 - Docs: Context7 MCP (`project-0-FlowState-context7`) — available for Vitest/Playwright/Next.js API verification during rollout phases; checked: 2026-06-03
@@ -107,6 +124,7 @@ phase lands; before that, the gate is `planned`.
 | unit + integration (`pnpm test`) | local | required | logic regressions in routers, hooks, workers |
 | e2e critical flows (`set CI=true && pnpm test:e2e`) | local + CI after Phase 4 | required after §3 Phase 4 | broken auth, cycle, and active-slice UI paths |
 | PR CI workflow | GitHub Actions | required after §3 Phase 4 | merges without test suite |
+| mutation score floor (covered code ≥ 60%) | local + optional CI after §3 Phase 5 | planned after §3 Phase 5 | tests that pass when logic is deleted; shallow oracles |
 | pre-prod smoke | Vercel preview | optional | environment-specific failures |
 
 ## 6. Cookbook Patterns
@@ -201,6 +219,23 @@ the relevant rollout phase ships; before that, the sub-section reads
 - **Deferred e2e — `check-in-gate.spec.ts` (Risk #7 dedicated gate oracle)**: UI path — complete 1s WORK cycle → S-01 overlay → "Continue later" → assert `check-in-overlay` visible and "Short Break" hidden until `completeCheckIn(page, "steady")` → assert break `timer-panel-running`. Network persistence oracle — match batched tRPC POST body on `/api/trpc` for `STEADY` + numeric `cycleId` (not `/api/trpc/checkIn.create` URL; app uses `httpBatchStreamLink`). Prior attempts failed on `waitForRequest` timeout and `response.json()` on batch stream. Re-add when e2e infra supports batched mutation oracles.
 - **Deferred**: guest-mode Playwright check-in/mid-cycle proofs; escape/refresh skip-vector e2e; server-side `cycle.complete` check-in prerequisite; `interruptionCount` increment; CI gate wiring (Phase 4 test-plan row).
 
+### 6.7 Mutation testing (Stryker)
+
+- **When to run**: after changing code under a test-plan risk; before closing a testing rollout phase; when reviewing survived mutants from the last baseline.
+- **Commands**: `pnpm test:mutate` (full `src/**` scope per `stryker.conf.json`); narrowed: `pnpm exec stryker run --mutate "src/hooks/use-pomodoro-cycle.ts"` or `--mutate "src/server/api/routers/task.ts"`.
+- **Report**: open `reports/mutation/mutation.html` — mutant view lists survived / no-coverage by file.
+- **Review rule**: each **survived** mutant is a candidate bug *or* a bad oracle — add an assertion only when breaking the mutant would catch a user-visible regression. Ignore no-coverage in UI-only files until Phase 6 unless the change touches that component.
+- **Phase 5 priority order** (survived mutants, highest ROI first):
+  1. `src/hooks/` — cycle state machine, recovery, visibility recalc (Risks #1–#3)
+  2. `src/server/api/routers/` — task, cycle, trpc middleware ownership branches (Risks #4, #6)
+  3. `src/server/api/lib/` — guest import snapshot edge cases (Risk #5)
+- **Phase 6 priority order** (no-coverage clusters):
+  1. `src/app/_components/` — task-list, pomodoro-dashboard (Risks #1, #3 UI)
+  2. `src/lib/repositories/` — guest persistence helpers (Risk #5)
+  3. `src/app/auth/` — sign-in/sign-up actions and schema validation (pre-S-08 merge flows)
+- **Strong areas** (use as oracle examples): `src/workers/timer-worker-logic.ts` (100%), `src/lib/duration-input.ts` (92%), `src/server/api/lib/active-session.ts` (92%).
+- **Known anomaly**: one RuntimeError in hook layer during full run — Vitest runner crash on a conditional mutant; investigate separately, not a coverage gap.
+
 ## 7. What We Deliberately Don't Test
 
 Exclusions agreed during the rollout (Phase 2 interview, Q5). Future
@@ -214,11 +249,14 @@ contributors should respect these unless the underlying assumption changes.
 - Strategy (§1–§5) last reviewed: 2026-06-06
 - Stack versions last verified: 2026-06-06
 - AI-native tool references last verified: 2026-06-06
-- **Next session:** §3 Phase 4 (Quality-gates wiring) — CI lint/typecheck/unit/e2e on every PR; change folder not yet opened
+- Mutation baseline last run: 2026-06-06 (`reports/mutation/mutation.html` — 33.1% total / 58.2% covered)
+- **Next session:** §3 Phase 4 (Quality-gates wiring) — CI lint/typecheck/unit/e2e on every PR; then Phase 5 (mutation oracle hardening) as highest product ROI
+- **Phase 5 change-id proposal:** `testing-mutation-oracle-hardening`
 
 Refresh (`/10x-test-plan --refresh`) when:
 
 - a new top-3 risk surfaces from the roadmap or archive,
 - a recommended tool's `checked:` date is older than three months,
 - the project's tech stack changes (new framework, new test runner),
-- §7 negative-space no longer matches what the team believes.
+- §7 negative-space no longer matches what the team believes,
+- a full Stryker run shifts covered-code score by more than 10 points vs the baseline above.
