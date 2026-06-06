@@ -1,9 +1,10 @@
 ---
 change_id: google-oauth-provider
 title: "Google OAuth social login"
-status: impl_reviewed
+status: archived
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-06-06
+archived_at: 2026-06-06T08:27:35Z
 ---
 
 # Google OAuth Social Login
