@@ -1,4 +1,5 @@
 import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { completeCheckIn } from "./helpers/check-in";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 import {
 	advanceClockThroughFastWork,
@@ -30,16 +31,9 @@ test.describe("Check-in gate (Risk #7)", () => {
 		await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 		await expect(page.getByText("Short Break")).toBeHidden();
 
-		const checkInResponse = page.waitForResponse(
-			(res) =>
-				res.request().method() === "POST" &&
-				res.url().includes("/api/trpc") &&
-				res.ok(),
-		);
-		await page.getByTestId("check-in-energy-steady").click();
-		expect((await checkInResponse).ok()).toBeTruthy();
+		await completeCheckIn(page, "steady");
 
-		await expect(page.getByTestId("check-in-overlay")).toBeHidden();
+		await expect(page.getByRole("alert")).toBeHidden();
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 		await expect(page.getByText("Short Break")).toBeVisible();
 	});
