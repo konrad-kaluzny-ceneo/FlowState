@@ -405,11 +405,11 @@ No schema migrations required — `CheckIn` model already exists. New `rebindTas
 
 #### Automated
 
-- [x] 4.1 `pnpm check` passes
-- [x] 4.2 `pnpm typecheck` passes
-- [x] 4.3 `pnpm test` passes
-- [x] 4.4 `set CI=true && pnpm test:e2e` passes (full suite)
+- [x] 4.1 `pnpm check` passes — 623447a
+- [x] 4.2 `pnpm typecheck` passes — 623447a
+- [x] 4.3 `pnpm test` passes — 623447a
+- [x] 4.4 `set CI=true && pnpm test:e2e` passes (full suite) — 623447a
 
 #### Manual
 
-- [x] 4.5 Mid-cycle continue path spot-check; test-plan §6.3/§6.6 review
+- [x] 4.5 Mid-cycle continue path spot-check; test-plan §6.3/§6.6 review — 623447a
