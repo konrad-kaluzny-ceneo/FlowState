@@ -250,3 +250,5 @@ test-results/
 /blob-report/
 .stryker-tmp
 reports
+.playwright-cli
+auth.json
