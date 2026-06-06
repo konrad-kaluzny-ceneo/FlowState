@@ -1,3 +1,8 @@
+/**
+ * Risk: S-01 / #7 — pomodoro cycle completion overlay, check-in gate, task done flow
+ * Modeled on: e2e/seed.spec.ts
+ * Spec role: risk proof (S-01 regression + check-in step)
+ */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
@@ -26,7 +31,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 			timeout: 15_000,
 		});
 		await expect(
-			page.getByRole("button", { name: "Continue later" }),
+			page.getByRole("button", { name: "DELIBERATE_BREAK_WRONG_BUTTON" }),
 		).toBeVisible();
 
 		await page.getByRole("button", { name: "Continue later" }).click();

@@ -1,13 +1,13 @@
 /**
  * Risk: #1 — authenticated mid-cycle reload preserves task and running timer panel
- * Modeled on: e2e/seed.spec.ts
- * Spec role: risk proof
+ * Seed for: every new E2E spec in this repo — model on this file + e2e/fixtures.ts helpers
+ * Anti-patterns avoided: UI login, waitForTimeout, CSS/XPath locators, shared storageState
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 import { startFocusedWorkCycle } from "./helpers/work-cycle";
 
-test.describe("Persistence reload (Risk #1)", () => {
+test.describe("Seed exemplar (Risk #1)", () => {
 	test("authenticated mid-cycle reload preserves task and running panel", async ({
 		page,
 	}) => {
@@ -18,7 +18,7 @@ test.describe("Persistence reload (Risk #1)", () => {
 		await waitForCycleGetActive(page);
 		await ensureIdleCycle(page);
 
-		const taskTitle = `E2E Reload ${Date.now()}`;
+		const taskTitle = `E2E Seed ${Date.now()}`;
 
 		await startFocusedWorkCycle(page, taskTitle, 30);
 

@@ -1,3 +1,8 @@
+/**
+ * Risk: #1 — guest local trial task and timer survive page reload
+ * Modeled on: e2e/seed.spec.ts
+ * Spec role: risk proof
+ */
 import { expect, test } from "@playwright/test";
 
 import { startFocusedWorkCycle } from "./helpers/work-cycle";

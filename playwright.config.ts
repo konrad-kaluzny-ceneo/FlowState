@@ -27,7 +27,6 @@ const workerCount = process.env.E2E_WORKERS
 		: undefined;
 
 export default defineConfig({
-	globalSetup: "./e2e/global.setup.ts",
 	testDir: "./e2e",
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,

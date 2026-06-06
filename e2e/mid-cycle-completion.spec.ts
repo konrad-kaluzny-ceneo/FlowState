@@ -1,3 +1,8 @@
+/**
+ * Risk: #3 — mid-cycle task completion shows correct prompt choices and break flow
+ * Modeled on: e2e/seed.spec.ts
+ * Spec role: risk proof
+ */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
