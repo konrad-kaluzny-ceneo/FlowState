@@ -44,14 +44,14 @@ export default defineConfig({
 			use: {
 				...devices["Desktop Chrome"],
 			},
-			testIgnore: /guest-trial\.spec\.ts/,
+			testIgnore: /guest-.*\.spec\.ts/,
 		},
 		{
 			name: "guest-chromium",
 			use: {
 				...devices["Desktop Chrome"],
 			},
-			testMatch: /guest-trial\.spec\.ts/,
+			testMatch: /guest-.*\.spec\.ts/,
 		},
 	],
 	webServer: {
