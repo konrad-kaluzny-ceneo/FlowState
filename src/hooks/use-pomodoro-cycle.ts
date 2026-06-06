@@ -287,8 +287,8 @@ export function usePomodoroCycle() {
 		utils.client.cycle.countCompletedWork,
 	]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: reset recovery guard when auth mode changes
 	useEffect(() => {
-		// When mode changes (e.g. guest → authenticated on login), allow re-recovery
 		recoveredRef.current = false;
 	}, [mode]);
 

@@ -89,11 +89,10 @@ vi.mock("~/server/db/index", () => {
 	};
 });
 
-// Stub global setTimeout to resolve immediately (eliminates timingMiddleware dev delay)
-const originalSetTimeout = globalThis.setTimeout;
-// biome-ignore lint/suspicious/noExplicitAny: test utility override
-globalThis.setTimeout = ((fn: () => void, _ms?: number) =>
-	originalSetTimeout(fn, 0)) as any;
+import { atModOrThrow, atOrThrow } from "~/test-utils/array-access";
+import { installImmediateSetTimeout } from "~/test-utils/immediate-set-timeout";
+
+installImmediateSetTimeout();
 
 // Import after mocks are set up
 const { createCallerFactory } = await import("~/server/api/trpc");
@@ -127,13 +126,13 @@ describe("Feature: session domain model, Property: CheckIn query isolation", () 
 		"each user only sees their own check-ins when querying",
 		async (userIds, querierSeed) => {
 			const querierIdx = querierSeed % userIds.length;
-			const querierId = userIds[querierIdx]!;
+			const querierId = atOrThrow(userIds, querierIdx);
 
 			// Generate check-ins distributed across users
 			const checkInCount = 5 + (querierSeed % 16);
 			const generatedCheckIns = [];
 			for (let i = 0; i < checkInCount; i++) {
-				const userId = userIds[i % userIds.length]!;
+				const userId = atModOrThrow(userIds, i);
 				generatedCheckIns.push({
 					id: i + 1,
 					cycleId: i + 1,
@@ -181,8 +180,8 @@ describe("Feature: session domain model, Property: CheckIn query isolation", () 
 	)(
 		"cross-user FK injection: create with another user's cycle returns NOT_FOUND",
 		async (userIds, _seed) => {
-			const attackerId = userIds[0]!;
-			const victimId = userIds[1]!;
+			const attackerId = atOrThrow(userIds, 0);
+			const victimId = atOrThrow(userIds, 1);
 
 			// Create a cycle owned by the victim
 			allCycles = [{ id: 1, userId: victimId }];
@@ -213,7 +212,7 @@ describe("Feature: session domain model, Property: CheckIn query isolation", () 
 		],
 		{ numRuns: 100 },
 	)("double-create on the same cycle returns CONFLICT", async (userIds) => {
-		const userId = userIds[0]!;
+		const userId = atOrThrow(userIds, 0);
 
 		// Create a cycle owned by the user
 		allCycles = [{ id: 1, userId }];
@@ -248,13 +247,13 @@ describe("Feature: session domain model, Property: CheckIn query isolation", () 
 		],
 		{ numRuns: 100 },
 	)("a user with no check-ins gets an empty result", async (userIds, seed) => {
-		const querierId = userIds[0]!;
+		const querierId = atOrThrow(userIds, 0);
 		const otherUserIds = userIds.slice(1);
 
 		const checkInCount = 3 + (seed % 10);
 		allCheckIns = [];
 		for (let i = 0; i < checkInCount; i++) {
-			const ownerId = otherUserIds[i % otherUserIds.length]!;
+			const ownerId = atModOrThrow(otherUserIds, i);
 			allCheckIns.push({
 				id: i + 1,
 				cycleId: i + 1,

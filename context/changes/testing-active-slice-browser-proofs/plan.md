@@ -370,14 +370,14 @@ No schema migrations required — `CheckIn` model already exists. New `rebindTas
 
 #### Automated
 
-- [ ] 1.1 `pnpm check` passes
+- [x] 1.1 `pnpm check` passes
 - [x] 1.2 `pnpm typecheck` passes
 - [x] 1.3 `pnpm test` passes (including new/extended cycle + hook + component tests)
 - [x] 1.4 `pnpm exec vitest run src/server/api/routers/cycle.test.ts` — rebindTask cases pass
 
 #### Manual
 
-- [ ] 1.5 Mid-cycle prompt UX verified (2-task and 1-task scenarios)
+- [x] 1.5 Mid-cycle prompt UX verified (2-task and 1-task scenarios)
 
 ### Phase 2: S-05 — End-of-Cycle Check-In Gate
 

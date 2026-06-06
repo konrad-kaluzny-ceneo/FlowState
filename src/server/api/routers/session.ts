@@ -64,6 +64,10 @@ export const sessionRouter = createTRPCRouter({
 			orderBy: { endedAt: "desc" },
 		});
 
-		return ended!;
+		if (ended == null) {
+			throw new TRPCError({ code: "NOT_FOUND" });
+		}
+
+		return ended;
 	}),
 });

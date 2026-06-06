@@ -263,9 +263,9 @@ vi.mock("~/server/db/index", () => {
 	};
 });
 
-const originalSetTimeout = globalThis.setTimeout;
-// biome-ignore lint/suspicious/noExplicitAny: test utility override
-globalThis.setTimeout = ((fn: () => void) => originalSetTimeout(fn, 0)) as any;
+import { installImmediateSetTimeout } from "~/test-utils/immediate-set-timeout";
+
+installImmediateSetTimeout();
 
 const { createCallerFactory } = await import("~/server/api/trpc");
 const { cycleRouter } = await import("~/server/api/routers/cycle");
