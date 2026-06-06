@@ -31,9 +31,9 @@ export function getProjectRoot(input) {
 		return normalizePath(roots[0]);
 	}
 	for (const key of ["CURSOR_PROJECT_DIR", "CLAUDE_PROJECT_DIR"]) {
-		if (process.env[key]) return process.env[key];
+		if (process.env[key]) return normalizePath(process.env[key]);
 	}
-	return process.cwd();
+	return normalizePath(process.cwd());
 }
 
 export function isFileEditTool(toolName) {
