@@ -1,0 +1,24 @@
+{
+	"hooks": {
+		"PostToolUse": [
+			{
+				"type": "command",
+				"matcher": "create_file|replace_string_in_file|editFiles|createFile|Write|Edit",
+				"command": "node scripts/agent-hooks/lint.mjs",
+				"timeout": 15
+			},
+			{
+				"type": "command",
+				"matcher": "create_file|replace_string_in_file|editFiles|createFile|Write|Edit",
+				"command": "node scripts/agent-hooks/typecheck.mjs",
+				"timeout": 60
+			},
+			{
+				"type": "command",
+				"matcher": "create_file|replace_string_in_file|editFiles|createFile|Write|Edit",
+				"command": "node scripts/agent-hooks/related-tests.mjs",
+				"timeout": 120
+			}
+		]
+	}
+}

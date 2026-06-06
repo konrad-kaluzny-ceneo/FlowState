@@ -20,7 +20,8 @@
 		"test:mutate": "stryker run",
 		"test:e2e": "playwright test",
 		"test:watch": "vitest",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"prepare": "lefthook install"
 	},
 	"dependencies": {
 		"@neondatabase/auth": "0.4.1-beta",
@@ -54,6 +55,7 @@
 		"dotenv": "^17.4.2",
 		"fast-check": "^4.8.0",
 		"jsdom": "^29.1.1",
+		"lefthook": "^2.1.9",
 		"prisma": "^7.8.0",
 		"tailwindcss": "^4.3.0",
 		"tsx": "^4.22.3",
