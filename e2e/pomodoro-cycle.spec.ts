@@ -31,7 +31,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 			timeout: 15_000,
 		});
 		await expect(
-			page.getByRole("button", { name: "DELIBERATE_BREAK_WRONG_BUTTON" }),
+			page.getByRole("button", { name: "Continue later" }),
 		).toBeVisible();
 
 		await page.getByRole("button", { name: "Continue later" }).click();

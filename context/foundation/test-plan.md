@@ -70,7 +70,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 1 | Critical-path persistence & timer | Prove refresh/crash recovery and background-tab timer accuracy at the cheapest layers that catch real regressions | #1, #2 | unit + integration + targeted e2e | complete | testing-critical-path-persistence-timer |
 | 2 | Active-slice browser proofs | Browser-level proof for S-03 mid-cycle prompt and S-05 check-in gate before wedge work compounds | #3, #7 | Playwright e2e | complete | testing-active-slice-browser-proofs |
 | 3 | Isolation, abuse & guest merge | Lock per-user isolation, IDOR rejection, and guest→account merge integrity | #4, #5, #6 | integration | complete | testing-isolation-abuse-guest-merge |
-| 4 | Quality-gates wiring | Enforce lint, typecheck, unit/integration, and critical e2e in CI on every PR | cross-cutting | CI gates | change opened | testing-quality-gates-wiring |
+| 4 | Quality-gates wiring | Enforce lint, typecheck, unit/integration, and critical e2e in CI on every PR | cross-cutting | CI gates | complete | testing-quality-gates-wiring |
 | 5 | Mutation oracle hardening | Raise covered-code mutation score from ~58% by killing survived mutants in hooks and server routers — tests exist but assertions are too weak | #1, #2, #3, #4, #5, #6 | unit + integration (targeted Stryker runs) | not started | — |
 | 6 | Uncovered UI & auth paths | Exercise task-list, dashboard, and auth action paths so no-coverage mutants drop — largest score drag but narrower than Phase 5 per test | #1, #3, #5 | component smoke + integration | not started | — |
 
@@ -122,8 +122,8 @@ phase lands; before that, the gate is `planned`.
 |------|-------|-----------|---------|
 | lint + typecheck (`pnpm check`, `pnpm typecheck`) | local | required | syntactic / type drift |
 | unit + integration (`pnpm test`) | local | required | logic regressions in routers, hooks, workers |
-| e2e critical flows (`set CI=true && pnpm test:e2e`) | local + CI after Phase 4 | required after §3 Phase 4 | broken auth, cycle, and active-slice UI paths |
-| PR CI workflow | GitHub Actions | required after §3 Phase 4 | merges without test suite |
+| e2e critical flows (`set CI=true && pnpm test:e2e`) | local + CI | required | broken auth, cycle, and active-slice UI paths |
+| PR CI workflow | GitHub Actions | required | merges without test suite |
 | mutation score floor (covered code ≥ 60%) | local + optional CI after §3 Phase 5 | planned after §3 Phase 5 | tests that pass when logic is deleted; shallow oracles |
 | pre-prod smoke | Vercel preview | optional | environment-specific failures |
 
@@ -154,6 +154,7 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.3 Adding an e2e test
 
+- **Generation exemplar**: `e2e/seed.spec.ts` — model every new spec on this file (provenance header, fixture auth, helpers, business-outcome assertions). Rules in `AGENTS.md` § E2E Testing Rules; run deliberate-break VERIFY and record in `e2e/DELIBERATE-BREAK.md` before merging critical specs.
 - **Location**: `e2e/*.spec.ts`.
 - **Helpers**: `e2e/helpers/work-cycle.ts` — `setWorkDurationSec`, `startFocusedWorkCycle`, `advanceClockThroughFastWork`, `addTask`, `addTasks`, `markTaskCompleteMidCycle`. `e2e/helpers/check-in.ts` — `completeCheckIn(page, "focused" | "steady" | "fading")` after S-01 overlay confirm on auth WORK cycles. `e2e/helpers/idle-cycle.ts` — `ensureIdleCycle` dismisses stranded check-in (default `steady`), mid-cycle prompt, cycle-complete overlay, running cycle, and enabled end-session.
 - **Auth mid-cycle reload (Risk #1 UI)**: `e2e/persistence-reload.spec.ts` — set work duration via `work-duration-min` / `work-duration-sec` (e.g. 0 min 30 sec) using `setWorkDurationSec` in `e2e/helpers/work-cycle.ts`, `page.reload()`, re-wait for `cycle.getActive`, assert task row + `timer-panel-running` (no ±2s countdown oracle; timer accuracy is hook/unit). Shared idle reset: `e2e/helpers/idle-cycle.ts`.
@@ -250,7 +251,8 @@ contributors should respect these unless the underlying assumption changes.
 - Stack versions last verified: 2026-06-06
 - AI-native tool references last verified: 2026-06-06
 - Mutation baseline last run: 2026-06-06 (`reports/mutation/mutation.html` — 33.1% total / 58.2% covered)
-- **Next session:** §3 Phase 4 (Quality-gates wiring) — CI lint/typecheck/unit/e2e on every PR; then Phase 5 (mutation oracle hardening) as highest product ROI
+- CI quality gates wired: 2026-06-06 (`.github/workflows/ci.yml` — lint, typecheck, Vitest, Playwright; `/10x-e2e` levers: `e2e/seed.spec.ts`, `AGENTS.md` E2E rules, `e2e/DELIBERATE-BREAK.md`)
+- **Next session:** §3 Phase 5 (Mutation oracle hardening) — highest product ROI after CI floor is locked
 - **Phase 5 change-id proposal:** `testing-mutation-oracle-hardening`
 
 Refresh (`/10x-test-plan --refresh`) when:

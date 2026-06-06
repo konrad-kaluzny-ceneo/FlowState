@@ -326,10 +326,10 @@ No new Vitest tests — this change is infra/docs/CI. Existing `pnpm test` must 
 
 #### Automated
 
-- [ ] 1.1 `pnpm check` passes after lever/hygiene changes
-- [ ] 1.2 `pnpm typecheck` passes
-- [ ] 1.3 `set CI=true && pnpm exec playwright test e2e/seed.spec.ts` passes
-- [ ] 1.4 `set CI=true && pnpm test:e2e` full suite passes
+- [x] 1.1 `pnpm check` passes after lever/hygiene changes
+- [x] 1.2 `pnpm typecheck` passes
+- [x] 1.3 `set CI=true && pnpm exec playwright test e2e/seed.spec.ts` passes
+- [x] 1.4 `set CI=true && pnpm test:e2e` full suite passes
 
 #### Manual
 
@@ -339,8 +339,8 @@ No new Vitest tests — this change is infra/docs/CI. Existing `pnpm test` must 
 
 #### Automated
 
-- [ ] 2.1 `set CI=true && pnpm test:e2e` passes after header/VERIFY fixes
-- [ ] 2.2 `pnpm test` passes
+- [x] 2.1 `set CI=true && pnpm test:e2e` passes after header/VERIFY fixes
+- [x] 2.2 `pnpm test` passes
 
 #### Manual
 
@@ -351,7 +351,7 @@ No new Vitest tests — this change is infra/docs/CI. Existing `pnpm test` must 
 
 #### Automated
 
-- [ ] 3.1 `.github/workflows/ci.yml` present and valid
+- [x] 3.1 `.github/workflows/ci.yml` present and valid
 - [ ] 3.2 CI green on PR (after secrets configured)
 
 #### Manual
@@ -363,7 +363,7 @@ No new Vitest tests — this change is infra/docs/CI. Existing `pnpm test` must 
 
 #### Automated
 
-- [ ] 4.1 Docs edits lint-clean
+- [x] 4.1 Docs edits lint-clean
 
 #### Manual
 
