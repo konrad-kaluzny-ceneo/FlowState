@@ -52,6 +52,17 @@
 - **E2E vs integration:** A direct DB query or server-side tRPC caller is an integration test, not e2e. True e2e requires a browser with an authenticated session hitting the running app. Do not claim "e2e verified" unless a real browser flow (with auth) was exercised.
 - **Test pyramid:** All changes must include unit and integration tests. Code must be testable at each level of the pyramid (unit → integration → e2e). Do not ship code without covering the appropriate test levels for the change.
 
+## Mutation testing
+
+Repo uses Stryker for selective mutation testing on risk-critical modules.
+Run it only for code covered by the current change or a risk from `@context/foundation/test-plan.md`,
+prefer narrowed scope with `--mutate "path/to/file.ts:start-end"`, and do not chase
+100% mutation score. Survived mutants should be reviewed one by one: add an
+assertion only when the mutant represents a user-visible or business-relevant bug.
+
+- Command: `pnpm test:mutate` (full scope) or `pnpm exec stryker run --mutate "src/lib/foo.ts"`.
+- Mutation score is not line coverage — do not treat a high score as a substitute for meaningful assertions.
+
 ## Manual verification (agent-owned when possible)
 
 Plan steps and `/10x-implement` gates labeled **Manual Verification** must be executed by the agent whenever feasible — do not routinely defer them to the human.

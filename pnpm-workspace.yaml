@@ -21,6 +21,7 @@ allowBuilds:
   esbuild: true
   prisma: true
   sharp: true
+  unrs-resolver: true
 
 # --- Supply-chain: reject packages published less than 1 day ago (pnpm 11 default) ---
 # minimumReleaseAge: 1440
