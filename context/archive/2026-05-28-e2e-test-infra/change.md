@@ -1,9 +1,10 @@
 ---
 change_id: e2e-test-infra
 title: Playwright e2e test infrastructure with authenticated test user
-status: impl_reviewed
+status: archived
 created: 2026-05-28
-updated: 2026-05-28
+updated: 2026-06-06
+archived_at: 2026-06-06T08:27:35Z
 roadmap_ref: F-02
 linear: FLO-14
 github: "#6"
