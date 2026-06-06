@@ -149,11 +149,19 @@ vi.mock("~/server/db/index", () => {
 				update: vi.fn(
 					(args: {
 						where: { id: number };
-						data: Partial<Pick<CycleRecord, "state" | "endedAt">>;
+						data: Partial<Pick<CycleRecord, "state" | "endedAt" | "taskId">>;
+						include?: { task: boolean };
 					}) => {
 						const cycle = cycles.find((c) => c.id === args.where.id);
 						if (!cycle) throw new Error("not found");
 						Object.assign(cycle, args.data);
+						if (args.include?.task) {
+							const task =
+								cycle.taskId != null
+									? (tasks.find((t) => t.id === cycle.taskId) ?? null)
+									: null;
+							return Promise.resolve({ ...cycle, task });
+						}
 						return Promise.resolve(cycle);
 					},
 				),
@@ -670,6 +678,56 @@ describe("cycle router lifecycle", () => {
 			expect(sessions[0]?.lastActivityAt.getTime()).toBeGreaterThan(
 				oldDate.getTime(),
 			);
+		});
+	});
+
+	describe("rebindTask", () => {
+		it("swaps taskId on a running WORK cycle", async () => {
+			tasks = [
+				{ id: 10, title: "First", status: "active", userId: USER_ID },
+				{ id: 11, title: "Second", status: "active", userId: USER_ID },
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: 10,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date("2026-06-06T10:00:00Z"),
+					endedAt: null,
+				},
+			];
+
+			const result = await caller().rebindTask({ cycleId: 1, taskId: 11 });
+			expect(result.taskId).toBe(11);
+			expect(result.task).toMatchObject({ id: 11, title: "Second" });
+			expect(result.startedAt).toEqual(new Date("2026-06-06T10:00:00Z"));
+			expect(result.configuredDurationSec).toBe(1500);
+			expect(cycles[0]?.taskId).toBe(11);
+		});
+
+		it("throws NOT_FOUND for another user's cycle", async () => {
+			tasks = [{ id: 10, title: "Mine", status: "active", userId: USER_ID }];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: VICTIM_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			await expect(
+				callerAs(ATTACKER_ID).rebindTask({ cycleId: 1, taskId: 10 }),
+			).rejects.toMatchObject({ code: "NOT_FOUND" });
 		});
 	});
 

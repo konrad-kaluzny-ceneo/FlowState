@@ -51,7 +51,7 @@ async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {
 
 export function usePomodoroCycle() {
 	const mode = useDataMode();
-	const { cycles, sessions, refreshGuest } = useRepositories();
+	const { cycles, sessions, tasks, refreshGuest } = useRepositories();
 	const utils = api.useUtils();
 
 	const [state, setState] = useState<PomodoroCycleState>("idle");
@@ -68,6 +68,9 @@ export function usePomodoroCycle() {
 		null,
 	);
 	const [hasActiveSession, setHasActiveSession] = useState(false);
+	const [midCyclePendingTask, setMidCyclePendingTask] =
+		useState<FocusedTask>(null);
+	const [isMidCycleSubmitting, setIsMidCycleSubmitting] = useState(false);
 
 	const stateRef = useRef(state);
 	const endTimeRef = useRef<number | null>(null);
@@ -430,6 +433,46 @@ export function usePomodoroCycle() {
 		}
 	}, [activeCycle, cycles, invalidateServerCycle, stopWorker]);
 
+	const startBreakAfterWorkComplete = useCallback(
+		async (markTaskDone: boolean) => {
+			const newCount = completedWorkCycles + 1;
+			setCompletedWorkCycles(newCount);
+
+			const breakKind: CycleKind =
+				newCount % 4 === 0 ? "LONG_BREAK" : "SHORT_BREAK";
+			const breakDuration =
+				breakKind === "LONG_BREAK"
+					? getLongBreakDuration()
+					: getShortBreakDuration();
+
+			const breakCycle = await cycles.create({
+				kind: breakKind,
+				configuredDurationSec: breakDuration,
+			});
+
+			const endTime =
+				breakCycle.startedAt.getTime() +
+				breakCycle.configuredDurationSec * 1000;
+
+			setActiveCycle({ ...breakCycle, task: null });
+			setCycleKind(breakKind);
+			setState("running");
+			startWorker(endTime);
+
+			await Promise.all([
+				invalidateServerCycle(),
+				...(markTaskDone ? [utils.task.list.invalidate()] : []),
+			]);
+		},
+		[
+			completedWorkCycles,
+			cycles,
+			invalidateServerCycle,
+			startWorker,
+			utils.task.list,
+		],
+	);
+
 	const confirmComplete = useCallback(
 		async (markTaskDone: boolean) => {
 			if (activeCycle == null) {
@@ -458,38 +501,9 @@ export function usePomodoroCycle() {
 			endTimeRef.current = null;
 
 			if (currentKind === "WORK") {
-				// Work cycle completed — auto-start a break
-				const newCount = completedWorkCycles + 1;
-				setCompletedWorkCycles(newCount);
-
-				const breakKind: CycleKind =
-					newCount % 4 === 0 ? "LONG_BREAK" : "SHORT_BREAK";
-				const breakDuration =
-					breakKind === "LONG_BREAK"
-						? getLongBreakDuration()
-						: getShortBreakDuration();
-
 				try {
-					const breakCycle = await cycles.create({
-						kind: breakKind,
-						configuredDurationSec: breakDuration,
-					});
-
-					const endTime =
-						breakCycle.startedAt.getTime() +
-						breakCycle.configuredDurationSec * 1000;
-
-					setActiveCycle({ ...breakCycle, task: null });
-					setCycleKind(breakKind);
-					setState("running");
-					startWorker(endTime);
-
-					await Promise.all([
-						invalidateServerCycle(),
-						...(markTaskDone ? [utils.task.list.invalidate()] : []),
-					]);
+					await startBreakAfterWorkComplete(markTaskDone);
 				} catch {
-					// Break could not start — acceptable degradation
 					setError("Break could not start. Your work cycle was saved.");
 					setState("idle");
 					setRemainingMs(0);
@@ -499,7 +513,6 @@ export function usePomodoroCycle() {
 					setFocusedTask(null);
 				}
 			} else {
-				// Break cycle completed — return to idle
 				setState("idle");
 				setRemainingMs(0);
 				setActiveCycle(null);
@@ -516,13 +529,118 @@ export function usePomodoroCycle() {
 		[
 			activeCycle,
 			cycles,
-			completedWorkCycles,
 			invalidateServerCycle,
+			startBreakAfterWorkComplete,
 			stopWorker,
-			startWorker,
 			utils.task.list,
 		],
 	);
+
+	const onMidCycleMarkComplete = useCallback(
+		(taskId: DomainTaskId, task: FocusedTask) => {
+			if (state !== "running" || cycleKind !== "WORK" || activeCycle == null) {
+				return;
+			}
+			setError(null);
+			setMidCyclePendingTask(task ?? { id: taskId, title: "" });
+		},
+		[state, cycleKind, activeCycle],
+	);
+
+	const onMidCycleContinueWithTask = useCallback(
+		async (nextTaskId: DomainTaskId, nextTask: FocusedTask) => {
+			if (midCyclePendingTask == null || activeCycle == null) {
+				return;
+			}
+
+			setIsMidCycleSubmitting(true);
+			setError(null);
+
+			try {
+				await tasks.update({
+					id: midCyclePendingTask.id,
+					status: "completed",
+				});
+				const rebound = await cycles.rebindTask({
+					cycleId: activeCycle.id,
+					taskId: nextTaskId,
+				});
+				setActiveCycle({
+					...activeCycle,
+					taskId: nextTaskId,
+					task: nextTask ?? rebound.task,
+				});
+				setFocusedTaskId(nextTaskId);
+				setFocusedTask(nextTask ?? rebound.task);
+				setMidCyclePendingTask(null);
+
+				await Promise.all([
+					invalidateServerCycle(),
+					utils.task.list.invalidate(),
+				]);
+			} catch {
+				setError("Could not switch tasks. Try again.");
+			} finally {
+				setIsMidCycleSubmitting(false);
+			}
+		},
+		[
+			midCyclePendingTask,
+			activeCycle,
+			tasks,
+			cycles,
+			invalidateServerCycle,
+			utils.task.list,
+		],
+	);
+
+	const onMidCycleEndCycleAndBreak = useCallback(async () => {
+		if (midCyclePendingTask == null || activeCycle == null) {
+			return;
+		}
+
+		setIsMidCycleSubmitting(true);
+		setError(null);
+
+		try {
+			await retryOnce(() =>
+				cycles.complete({
+					cycleId: activeCycle.id,
+					markTaskDone: true,
+				}),
+			);
+		} catch {
+			setError(
+				"Could not save cycle completion. Check your connection and try again.",
+			);
+			setIsMidCycleSubmitting(false);
+			return;
+		}
+
+		stopWorker();
+		endTimeRef.current = null;
+		setMidCyclePendingTask(null);
+
+		try {
+			await startBreakAfterWorkComplete(true);
+		} catch {
+			setError("Break could not start. Your work cycle was saved.");
+			setState("idle");
+			setRemainingMs(0);
+			setActiveCycle(null);
+			setCycleKind(null);
+			setFocusedTaskId(null);
+			setFocusedTask(null);
+		} finally {
+			setIsMidCycleSubmitting(false);
+		}
+	}, [
+		midCyclePendingTask,
+		activeCycle,
+		cycles,
+		startBreakAfterWorkComplete,
+		stopWorker,
+	]);
 
 	const endSession = useCallback(async () => {
 		setError(null);
@@ -579,11 +697,16 @@ export function usePomodoroCycle() {
 		cycleKind,
 		hasActiveSession,
 		error,
+		midCyclePendingTask,
+		isMidCycleSubmitting,
 		selectTask,
 		clearTask,
 		start,
 		interrupt,
 		confirmComplete,
+		onMidCycleMarkComplete,
+		onMidCycleContinueWithTask,
+		onMidCycleEndCycleAndBreak,
 		endSession,
 		clearError,
 	};

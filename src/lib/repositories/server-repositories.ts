@@ -68,6 +68,12 @@ type TrpcClient = {
 			}) => Promise<unknown>;
 		};
 		interrupt: { mutate: (input: { cycleId: number }) => Promise<unknown> };
+		rebindTask: {
+			mutate: (input: {
+				cycleId: number;
+				taskId: number;
+			}) => Promise<DomainActiveCycle>;
+		};
 	};
 	session: {
 		getOrCreateActive: { mutate: () => Promise<DomainSession> };
@@ -114,6 +120,11 @@ export function createServerCycleRepository(
 				cycleId: toNumericId(input.cycleId),
 			});
 		},
+		rebindTask: (input) =>
+			client.cycle.rebindTask.mutate({
+				cycleId: toNumericId(input.cycleId),
+				taskId: toNumericId(input.taskId),
+			}),
 	};
 }
 

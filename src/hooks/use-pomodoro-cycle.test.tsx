@@ -12,6 +12,8 @@ const endSession = vi.fn();
 const createCycle = vi.fn();
 const completeCycle = vi.fn();
 const interruptCycle = vi.fn();
+const rebindTask = vi.fn();
+const updateTask = vi.fn();
 const getActiveCycle = vi.fn();
 const invalidateGetActive = vi.fn();
 const invalidateTaskList = vi.fn();
@@ -78,6 +80,10 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 			create: createCycle,
 			complete: completeCycle,
 			interrupt: interruptCycle,
+			rebindTask,
+		},
+		tasks: {
+			update: updateTask,
 		},
 		sessions: {
 			getOrCreateActive: getOrCreateSession,
@@ -157,6 +163,19 @@ describe("usePomodoroCycle", () => {
 		}));
 		completeCycle.mockResolvedValue(undefined);
 		interruptCycle.mockResolvedValue(undefined);
+		updateTask.mockResolvedValue(undefined);
+		rebindTask.mockImplementation(async (input) => ({
+			id: 99,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: input.taskId,
+			kind: "WORK",
+			state: "RUNNING",
+			configuredDurationSec: 120,
+			startedAt: new Date(),
+			endedAt: null,
+			task: { id: input.taskId, title: "Next task" },
+		}));
 	});
 
 	it("starts idle and transitions to running on start()", async () => {
@@ -675,6 +694,92 @@ describe("usePomodoroCycle", () => {
 		expect(endSession).toHaveBeenCalled();
 		expect(result.current.state).toBe("idle");
 		expect(result.current.hasActiveSession).toBe(false);
+	});
+
+	it("mid-cycle continue preserves running state and rebinds task", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 60,
+			taskId: 4,
+			task: { id: 4, title: "Current" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		const remainingBefore = result.current.remainingMs;
+
+		act(() => {
+			result.current.onMidCycleMarkComplete(4, { id: 4, title: "Current" });
+		});
+
+		expect(result.current.midCyclePendingTask).toMatchObject({
+			id: 4,
+			title: "Current",
+		});
+
+		await act(async () => {
+			await result.current.onMidCycleContinueWithTask(8, {
+				id: 8,
+				title: "Next",
+			});
+		});
+
+		expect(updateTask).toHaveBeenCalledWith({ id: 4, status: "completed" });
+		expect(rebindTask).toHaveBeenCalledWith({ cycleId: 60, taskId: 8 });
+		expect(result.current.state).toBe("running");
+		expect(result.current.focusedTask).toMatchObject({ id: 8, title: "Next" });
+		expect(result.current.midCyclePendingTask).toBeNull();
+		expect(result.current.remainingMs).toBe(remainingBefore);
+	});
+
+	it("mid-cycle end-break completes work cycle and starts break", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 61,
+			taskId: 4,
+			task: { id: 4, title: "Done now" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 200,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		act(() => {
+			result.current.onMidCycleMarkComplete(4, { id: 4, title: "Done now" });
+		});
+
+		await act(async () => {
+			await result.current.onMidCycleEndCycleAndBreak();
+		});
+
+		expect(completeCycle).toHaveBeenCalledWith({
+			cycleId: 61,
+			markTaskDone: true,
+		});
+		expect(result.current.state).toBe("running");
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+		expect(result.current.midCyclePendingTask).toBeNull();
 	});
 
 	it("hasActiveSession is true after first cycle start, false after endSession", async () => {

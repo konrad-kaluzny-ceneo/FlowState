@@ -3,6 +3,7 @@
 import { Suspense, useMemo } from "react";
 
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
+import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
 import { TaskList } from "~/app/_components/task-list";
 import { TimerPanel } from "~/app/_components/timer-panel";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
@@ -26,6 +27,15 @@ function PomodoroDashboardBody({
 
 	const canMarkTaskDone =
 		pomodoro.focusedTaskId != null && activeTaskIds.has(pomodoro.focusedTaskId);
+
+	const midCycleOtherActiveTasks = useMemo(() => {
+		if (pomodoro.midCyclePendingTask == null) {
+			return [];
+		}
+		return tasks.filter(
+			(t) => t.status === "active" && t.id !== pomodoro.midCyclePendingTask?.id,
+		);
+	}, [tasks, pomodoro.midCyclePendingTask]);
 
 	const showTimer =
 		pomodoro.focusedTask != null ||
@@ -64,14 +74,31 @@ function PomodoroDashboardBody({
 			)}
 
 			<TaskList
+				cycleKind={pomodoro.cycleKind}
 				cycleState={pomodoro.state}
 				focusedTaskId={pomodoro.focusedTaskId}
 				onFocusTask={(taskId, task) => {
 					pomodoro.selectTask(taskId, task);
 				}}
+				onMidCycleMarkComplete={(taskId, task) => {
+					pomodoro.onMidCycleMarkComplete(taskId, task);
+				}}
 				onRefresh={refreshTasks}
 				tasks={tasks}
 			/>
+
+			{pomodoro.midCyclePendingTask != null && (
+				<MidCycleCompletionPrompt
+					isSubmitting={pomodoro.isMidCycleSubmitting}
+					onContinueWithTask={async (taskId) => {
+						const nextTask = tasks.find((t) => t.id === taskId);
+						await pomodoro.onMidCycleContinueWithTask(taskId, nextTask ?? null);
+					}}
+					onEndCycleAndBreak={pomodoro.onMidCycleEndCycleAndBreak}
+					otherActiveTasks={midCycleOtherActiveTasks}
+					pendingTask={pomodoro.midCyclePendingTask}
+				/>
+			)}
 
 			<CycleCompleteOverlay
 				canMarkTaskDone={canMarkTaskDone}

@@ -371,9 +371,9 @@ No schema migrations required — `CheckIn` model already exists. New `rebindTas
 #### Automated
 
 - [ ] 1.1 `pnpm check` passes
-- [ ] 1.2 `pnpm typecheck` passes
-- [ ] 1.3 `pnpm test` passes (including new/extended cycle + hook + component tests)
-- [ ] 1.4 `pnpm exec vitest run src/server/api/routers/cycle.test.ts` — rebindTask cases pass
+- [x] 1.2 `pnpm typecheck` passes
+- [x] 1.3 `pnpm test` passes (including new/extended cycle + hook + component tests)
+- [x] 1.4 `pnpm exec vitest run src/server/api/routers/cycle.test.ts` — rebindTask cases pass
 
 #### Manual
 

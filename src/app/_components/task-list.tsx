@@ -85,6 +85,8 @@ type TaskListProps = {
 	focusedTaskId: DomainTaskId | null;
 	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void;
 	cycleState: "idle" | "running" | "completed";
+	cycleKind?: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null;
+	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
 };
 
 export function TaskList({
@@ -93,6 +95,8 @@ export function TaskList({
 	focusedTaskId,
 	onFocusTask,
 	cycleState,
+	cycleKind = null,
+	onMidCycleMarkComplete,
 }: TaskListProps) {
 	const { tasks: taskRepo } = useRepositories();
 
@@ -113,6 +117,16 @@ export function TaskList({
 	const activeTasks = tasks.filter((t) => t.status === "active");
 	const completedTasks = tasks.filter((t) => t.status === "completed");
 	const cycleLocked = cycleState === "running" || cycleState === "completed";
+	const isBreakCycle =
+		cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
+	const markCompleteLocked =
+		cycleState === "completed" ||
+		isBreakCycle ||
+		(cycleState === "running" && cycleKind !== "WORK");
+	const canMidCycleMarkComplete =
+		cycleState === "running" &&
+		cycleKind === "WORK" &&
+		onMidCycleMarkComplete != null;
 
 	function startEditing(task: DomainTask) {
 		setEditingId(task.id);
@@ -247,8 +261,13 @@ export function TaskList({
 								<button
 									aria-label="Mark complete"
 									className="h-5 w-5 shrink-0 rounded border-2 border-white/40 transition hover:border-green-400 hover:bg-green-400/20 disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={cycleLocked || isPending}
+									disabled={markCompleteLocked || isPending}
 									onClick={() => {
+										if (canMidCycleMarkComplete) {
+											onMidCycleMarkComplete(task.id, task);
+											return;
+										}
+
 										void (async () => {
 											setIsPending(true);
 											try {
