@@ -1,9 +1,10 @@
 ---
 id: first-pomodoro-cycle
 title: "First Pomodoro cycle on a selected task (north star)"
-status: shipped
+status: archived
 created: 2026-05-28
-updated: 2026-05-29
+updated: 2026-06-06
+archived_at: 2026-06-06T08:27:35Z
 status_note: merged PR #16 (Fixes #7); FLO-8 Done
 ---
 
