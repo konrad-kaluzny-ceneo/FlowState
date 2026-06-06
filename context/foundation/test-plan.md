@@ -68,7 +68,7 @@ orchestrator updates Status as artifacts appear on disk.
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
 | 1 | Critical-path persistence & timer | Prove refresh/crash recovery and background-tab timer accuracy at the cheapest layers that catch real regressions | #1, #2 | unit + integration + targeted e2e | complete | testing-critical-path-persistence-timer |
-| 2 | Active-slice browser proofs | Browser-level proof for S-03 mid-cycle prompt and S-05 check-in gate before wedge work compounds | #3, #7 | Playwright e2e | not started | — |
+| 2 | Active-slice browser proofs | Browser-level proof for S-03 mid-cycle prompt and S-05 check-in gate before wedge work compounds | #3, #7 | Playwright e2e | change opened | testing-active-slice-browser-proofs |
 | 3 | Isolation, abuse & guest merge | Lock per-user isolation, IDOR rejection, and guest→account merge integrity | #4, #5, #6 | integration | complete | testing-isolation-abuse-guest-merge |
 | 4 | Quality-gates wiring | Enforce lint, typecheck, unit/integration, and critical e2e in CI on every PR | cross-cutting | CI gates | not started | — |
 
