@@ -71,6 +71,13 @@ export function usePomodoroCycle() {
 	const [midCyclePendingTask, setMidCyclePendingTask] =
 		useState<FocusedTask>(null);
 	const [isMidCycleSubmitting, setIsMidCycleSubmitting] = useState(false);
+	const [awaitingCheckIn, setAwaitingCheckIn] = useState(false);
+	const [pendingMarkTaskDone, setPendingMarkTaskDone] = useState<
+		boolean | null
+	>(null);
+	const [isConfirming, setIsConfirming] = useState(false);
+
+	const createCheckIn = api.checkIn.create.useMutation();
 
 	const stateRef = useRef(state);
 	const endTimeRef = useRef<number | null>(null);
@@ -594,6 +601,66 @@ export function usePomodoroCycle() {
 		],
 	);
 
+	const onCycleCompleteConfirm = useCallback(
+		async (markTaskDone: boolean) => {
+			if (activeCycle == null) {
+				return;
+			}
+
+			setError(null);
+
+			const currentKind = activeCycle.kind;
+
+			if (currentKind !== "WORK" || mode === "guest") {
+				setIsConfirming(true);
+				try {
+					await confirmComplete(markTaskDone);
+				} finally {
+					setIsConfirming(false);
+				}
+				return;
+			}
+
+			setPendingMarkTaskDone(markTaskDone);
+			setAwaitingCheckIn(true);
+		},
+		[activeCycle, mode, confirmComplete],
+	);
+
+	const submitCheckIn = useCallback(
+		async (energy: "FOCUSED" | "STEADY" | "FADING") => {
+			if (activeCycle == null || pendingMarkTaskDone === null) {
+				return;
+			}
+
+			setIsConfirming(true);
+			setError(null);
+
+			const markTaskDone = pendingMarkTaskDone;
+
+			try {
+				await createCheckIn.mutateAsync({
+					cycleId: Number(activeCycle.id),
+					energy,
+				});
+			} catch {
+				setError("Could not save check-in. Try again.");
+				setIsConfirming(false);
+				return;
+			}
+
+			setAwaitingCheckIn(false);
+			setPendingMarkTaskDone(null);
+
+			try {
+				await confirmComplete(markTaskDone);
+			} finally {
+				setIsConfirming(false);
+			}
+		},
+		[activeCycle, pendingMarkTaskDone, createCheckIn, confirmComplete],
+	);
+
 	const onMidCycleEndCycleAndBreak = useCallback(async () => {
 		if (midCyclePendingTask == null || activeCycle == null) {
 			return;
@@ -699,11 +766,15 @@ export function usePomodoroCycle() {
 		error,
 		midCyclePendingTask,
 		isMidCycleSubmitting,
+		awaitingCheckIn,
+		isConfirming,
 		selectTask,
 		clearTask,
 		start,
 		interrupt,
 		confirmComplete,
+		onCycleCompleteConfirm,
+		submitCheckIn,
 		onMidCycleMarkComplete,
 		onMidCycleContinueWithTask,
 		onMidCycleEndCycleAndBreak,

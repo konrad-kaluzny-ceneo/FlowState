@@ -28,6 +28,13 @@ vi.mock("~/trpc/react", () => ({
 			task: { list: { invalidate: vi.fn() } },
 			client: { cycle: { list: { query: vi.fn().mockResolvedValue([]) } } },
 		}),
+		checkIn: {
+			create: {
+				useMutation: () => ({
+					mutateAsync: vi.fn(),
+				}),
+			},
+		},
 	},
 }));
 

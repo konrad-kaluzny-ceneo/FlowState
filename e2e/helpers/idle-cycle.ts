@@ -1,13 +1,28 @@
 import { expect, type Page } from "@playwright/test";
 
+import { completeCheckIn } from "./check-in";
+
 export async function ensureIdleCycle(page: Page) {
 	await expect(async () => {
+		if (await page.getByTestId("check-in-overlay").isVisible()) {
+			await completeCheckIn(page, "steady");
+			throw new Error("check-in completed — re-check idle");
+		}
+
+		if (await page.getByTestId("mid-cycle-prompt-overlay").isVisible()) {
+			await page.getByTestId("mid-cycle-end-break-btn").click();
+			throw new Error("mid-cycle prompt dismissed — re-check idle");
+		}
+
 		if (await page.getByTestId("cycle-complete-overlay").isVisible()) {
 			const continueLater = page.getByRole("button", {
 				name: "Continue later",
 			});
 			if (await continueLater.isVisible()) {
 				await continueLater.click();
+				if (await page.getByTestId("check-in-overlay").isVisible()) {
+					await completeCheckIn(page, "steady");
+				}
 			} else {
 				await page.getByTestId("break-continue-btn").click();
 			}
@@ -31,6 +46,7 @@ export async function ensureIdleCycle(page: Page) {
 		}
 
 		await expect(page.getByTestId("timer-panel-running")).toBeHidden();
+		await expect(page.getByTestId("check-in-overlay")).toBeHidden();
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeHidden();
 		await expect(page.getByPlaceholder("Add a new task...")).toBeEnabled();
 	}).toPass({ timeout: 30_000 });

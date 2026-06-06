@@ -17,6 +17,7 @@ const updateTask = vi.fn();
 const getActiveCycle = vi.fn();
 const invalidateGetActive = vi.fn();
 const invalidateTaskList = vi.fn();
+const createCheckInMutate = vi.fn();
 
 let activeCycleData: DomainActiveCycle | null = null;
 
@@ -100,6 +101,13 @@ vi.mock("~/trpc/react", () => ({
 			task: { list: { invalidate: invalidateTaskList } },
 			client: { cycle: { list: { query: vi.fn().mockResolvedValue([]) } } },
 		}),
+		checkIn: {
+			create: {
+				useMutation: () => ({
+					mutateAsync: createCheckInMutate,
+				}),
+			},
+		},
 	},
 }));
 
@@ -164,6 +172,13 @@ describe("usePomodoroCycle", () => {
 		completeCycle.mockResolvedValue(undefined);
 		interruptCycle.mockResolvedValue(undefined);
 		updateTask.mockResolvedValue(undefined);
+		createCheckInMutate.mockResolvedValue({
+			id: 1,
+			cycleId: 11,
+			energy: "STEADY",
+			userId: "user-1",
+			respondedAt: new Date(),
+		});
 		rebindTask.mockImplementation(async (input) => ({
 			id: 99,
 			sessionId: 1,
@@ -694,6 +709,103 @@ describe("usePomodoroCycle", () => {
 		expect(endSession).toHaveBeenCalled();
 		expect(result.current.state).toBe("idle");
 		expect(result.current.hasActiveSession).toBe(false);
+	});
+
+	it("WORK cycle-end requires check-in before break starts", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 70,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 300,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		act(() => {
+			fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+				data: { type: "complete" },
+			} as MessageEvent);
+		});
+
+		expect(result.current.state).toBe("completed");
+
+		await act(async () => {
+			await result.current.onCycleCompleteConfirm(false);
+		});
+
+		expect(result.current.awaitingCheckIn).toBe(true);
+		expect(completeCycle).not.toHaveBeenCalled();
+
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		expect(createCheckInMutate).toHaveBeenCalledWith({
+			cycleId: 70,
+			energy: "FOCUSED",
+		});
+		expect(completeCycle).toHaveBeenCalledWith({
+			cycleId: 70,
+			markTaskDone: false,
+		});
+		expect(result.current.awaitingCheckIn).toBe(false);
+		expect(result.current.state).toBe("running");
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+	});
+
+	it("break cycle-end skips check-in gate", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 71,
+			kind: "SHORT_BREAK",
+			configuredDurationSec: 300,
+			taskId: null,
+			task: null,
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		act(() => {
+			fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+				data: { type: "complete" },
+			} as MessageEvent);
+		});
+
+		await act(async () => {
+			await result.current.onCycleCompleteConfirm(false);
+		});
+
+		expect(result.current.awaitingCheckIn).toBe(false);
+		expect(createCheckInMutate).not.toHaveBeenCalled();
+		expect(completeCycle).toHaveBeenCalledWith({
+			cycleId: 71,
+			markTaskDone: false,
+		});
+		expect(result.current.state).toBe("idle");
 	});
 
 	it("mid-cycle continue preserves running state and rebinds task", async () => {

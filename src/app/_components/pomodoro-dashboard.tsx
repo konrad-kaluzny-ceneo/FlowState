@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo } from "react";
 
+import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
 import { TaskList } from "~/app/_components/task-list";
@@ -14,9 +15,11 @@ import { api } from "~/trpc/react";
 function PomodoroDashboardBody({
 	tasks,
 	refreshTasks,
+	enableCheckInGate = false,
 }: {
 	tasks: ReturnType<typeof useGuestDomainTasks>["tasks"];
 	refreshTasks: () => Promise<void>;
+	enableCheckInGate?: boolean;
 }) {
 	const pomodoro = usePomodoroCycle();
 
@@ -100,13 +103,23 @@ function PomodoroDashboardBody({
 				/>
 			)}
 
-			<CycleCompleteOverlay
-				canMarkTaskDone={canMarkTaskDone}
-				cycleKind={pomodoro.cycleKind}
-				focusedTask={pomodoro.focusedTask}
-				onConfirm={pomodoro.confirmComplete}
-				state={pomodoro.state}
-			/>
+			{!pomodoro.awaitingCheckIn && (
+				<CycleCompleteOverlay
+					canMarkTaskDone={canMarkTaskDone}
+					cycleKind={pomodoro.cycleKind}
+					focusedTask={pomodoro.focusedTask}
+					isConfirming={pomodoro.isConfirming}
+					onConfirm={pomodoro.onCycleCompleteConfirm}
+					state={pomodoro.state}
+				/>
+			)}
+
+			{enableCheckInGate && pomodoro.awaitingCheckIn && (
+				<CheckInOverlay
+					isSubmitting={pomodoro.isConfirming}
+					onSubmit={pomodoro.submitCheckIn}
+				/>
+			)}
 
 			{pomodoro.hasActiveSession && (
 				<button
@@ -134,6 +147,7 @@ function AuthenticatedPomodoroDashboard() {
 
 	return (
 		<PomodoroDashboardBody
+			enableCheckInGate
 			refreshTasks={async () => {
 				await utils.task.list.invalidate();
 			}}

@@ -383,13 +383,13 @@ No schema migrations required — `CheckIn` model already exists. New `rebindTas
 
 #### Automated
 
-- [ ] 2.1 `pnpm check` passes
-- [ ] 2.2 `pnpm typecheck` passes
-- [ ] 2.3 `pnpm test` passes (extended hook tests)
+- [x] 2.1 `pnpm check` passes
+- [x] 2.2 `pnpm typecheck` passes
+- [x] 2.3 `pnpm test` passes (extended hook tests)
 
 #### Manual
 
-- [ ] 2.4 Check-in gate UX verified (WORK vs break vs guest)
+- [x] 2.4 Check-in gate UX verified (WORK vs break vs guest)
 
 ### Phase 3: E2e Infrastructure
 
