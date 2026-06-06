@@ -370,46 +370,46 @@ No schema migrations required — `CheckIn` model already exists. New `rebindTas
 
 #### Automated
 
-- [x] 1.1 `pnpm check` passes
-- [x] 1.2 `pnpm typecheck` passes
-- [x] 1.3 `pnpm test` passes (including new/extended cycle + hook + component tests)
-- [x] 1.4 `pnpm exec vitest run src/server/api/routers/cycle.test.ts` — rebindTask cases pass
+- [x] 1.1 `pnpm check` passes — e91c15f
+- [x] 1.2 `pnpm typecheck` passes — e91c15f
+- [x] 1.3 `pnpm test` passes (including new/extended cycle + hook + component tests) — e91c15f
+- [x] 1.4 `pnpm exec vitest run src/server/api/routers/cycle.test.ts` — rebindTask cases pass — e91c15f
 
 #### Manual
 
-- [x] 1.5 Mid-cycle prompt UX verified (2-task and 1-task scenarios)
+- [x] 1.5 Mid-cycle prompt UX verified (2-task and 1-task scenarios) — e91c15f
 
 ### Phase 2: S-05 — End-of-Cycle Check-In Gate
 
 #### Automated
 
-- [x] 2.1 `pnpm check` passes
-- [x] 2.2 `pnpm typecheck` passes
-- [x] 2.3 `pnpm test` passes (extended hook tests)
+- [x] 2.1 `pnpm check` passes — ba5f92a
+- [x] 2.2 `pnpm typecheck` passes — ba5f92a
+- [x] 2.3 `pnpm test` passes (extended hook tests) — ba5f92a
 
 #### Manual
 
-- [x] 2.4 Check-in gate UX verified (WORK vs break vs guest)
+- [x] 2.4 Check-in gate UX verified (WORK vs break vs guest) — ba5f92a
 
 ### Phase 3: E2e Infrastructure
 
 #### Automated
 
-- [ ] 3.1 `set CI=true && pnpm test:e2e e2e/pomodoro-cycle.spec.ts` passes
+- [x] 3.1 `set CI=true && pnpm test:e2e e2e/pomodoro-cycle.spec.ts` passes
 
 #### Manual
 
-- [ ] 3.2 Updated pomodoro-cycle flows verified in headed mode
+- [x] 3.2 Updated pomodoro-cycle flows verified in headed mode
 
 ### Phase 4: Browser Proofs & Cookbook
 
 #### Automated
 
-- [ ] 4.1 `pnpm check` passes
-- [ ] 4.2 `pnpm typecheck` passes
-- [ ] 4.3 `pnpm test` passes
-- [ ] 4.4 `set CI=true && pnpm test:e2e` passes (full suite)
+- [x] 4.1 `pnpm check` passes
+- [x] 4.2 `pnpm typecheck` passes
+- [x] 4.3 `pnpm test` passes
+- [x] 4.4 `set CI=true && pnpm test:e2e` passes (full suite)
 
 #### Manual
 
-- [ ] 4.5 Mid-cycle continue path spot-check; test-plan §6.3/§6.6 review
+- [x] 4.5 Mid-cycle continue path spot-check; test-plan §6.3/§6.6 review
