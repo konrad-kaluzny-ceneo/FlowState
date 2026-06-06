@@ -395,11 +395,11 @@ No schema migrations required — `CheckIn` model already exists. New `rebindTas
 
 #### Automated
 
-- [x] 3.1 `set CI=true && pnpm test:e2e e2e/pomodoro-cycle.spec.ts` passes
+- [x] 3.1 `set CI=true && pnpm test:e2e e2e/pomodoro-cycle.spec.ts` passes — c2b25fe
 
 #### Manual
 
-- [x] 3.2 Updated pomodoro-cycle flows verified in headed mode
+- [x] 3.2 Updated pomodoro-cycle flows verified in headed mode — c2b25fe
 
 ### Phase 4: Browser Proofs & Cookbook
 
