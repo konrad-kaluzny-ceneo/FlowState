@@ -3,18 +3,18 @@
 	"hooks": {
 		"afterFileEdit": [
 			{
-				"command": "node .cursor/hooks/lint.mjs",
-				"matcher": "Write",
+				"command": "node scripts/agent-hooks/lint.mjs",
+				"matcher": "Write|StrReplace",
 				"timeout": 15
 			},
 			{
-				"command": "node .cursor/hooks/typecheck.mjs",
-				"matcher": "Write",
+				"command": "node scripts/agent-hooks/typecheck.mjs",
+				"matcher": "Write|StrReplace",
 				"timeout": 60
 			},
 			{
-				"command": "node .cursor/hooks/related-tests.mjs",
-				"matcher": "Write",
+				"command": "node scripts/agent-hooks/related-tests.mjs",
+				"matcher": "Write|StrReplace",
 				"timeout": 120
 			}
 		]

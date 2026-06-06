@@ -51,7 +51,15 @@
  - To run a single spec: `set CI=true && pnpm exec playwright test e2e/my-spec.spec.ts`
 - **E2E vs integration:** A direct DB query or server-side tRPC caller is an integration test, not e2e. True e2e requires a browser with an authenticated session hitting the running app. Do not claim "e2e verified" unless a real browser flow (with auth) was exercised.
 - **Test pyramid:** All changes must include unit and integration tests. Code must be testable at each level of the pyramid (unit → integration → e2e). Do not ship code without covering the appropriate test levels for the change.
-- **Vitest agent output (`AI_AGENT=1`):** Vitest 4.1+ switches to compact output (failures only) when `AI_AGENT=1` is set. Use this in agent hooks and scoped test runs so hook feedback stays short and token-cheap — e.g. `set AI_AGENT=1 && pnpm exec vitest related src/hooks/foo.ts --run`. Per-edit hooks in `.cursor/hooks/related-tests.mjs` set this automatically; set it manually when invoking Vitest from shell scripts the agent will read.
+- **Vitest agent output (`AI_AGENT=1`):** Vitest 4.1+ switches to compact output (failures only) when `AI_AGENT=1` is set. Use this in agent hooks and scoped test runs so hook feedback stays short and token-cheap — e.g. `set AI_AGENT=1 && pnpm exec vitest related src/hooks/foo.ts --run`. Hooks in `scripts/agent-hooks/related-tests.mjs` set this automatically; set it manually when invoking Vitest from shell scripts the agent will read.
+
+## Agent hooks (Cursor + VS Code)
+
+Shared scripts live in `scripts/agent-hooks/`; IDE configs only point at them.
+
+- **Cursor:** `.cursor/hooks.json` only — `afterFileEdit` → 3 scripts per edit. `.cursor/settings.json` disables `.github/hooks` and `.claude/settings.json` so hooks are not loaded twice. **Normal cost: 3 executions per `.ts` edit** (lint + typecheck + related-tests skip). Debug log: `scripts/agent-hooks/run.log` (gitignored via `*.log`). Restart Cursor after hook changes if old paths linger in Execution Log.
+- **VS Code / Copilot:** `.github/hooks/quality.json` — same scripts via `PostToolUse`. `.vscode/settings.json` loads only `.github/hooks`. VS Code **ignores matchers**; scripts filter by `tool_name`. Verify in **GitHub Copilot Chat Hooks** output channel.
+- **Pre-commit:** `lefthook.yml` — lint + typecheck + `vitest related` on staged files.
 
 ## Mutation testing
 
