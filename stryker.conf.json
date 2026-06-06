@@ -1,0 +1,15 @@
+{
+	"$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+	"testRunner": "vitest",
+	"plugins": ["@stryker-mutator/vitest-runner"],
+	"mutate": [
+		"src/**/*.{ts,tsx}",
+		"!src/**/*.spec.ts",
+		"!src/**/*.test.ts",
+		"!src/**/*.spec.tsx",
+		"!src/**/*.test.tsx"
+	],
+	"reporters": ["progress", "clear-text", "html"],
+	"concurrency": 4,
+	"thresholds": { "high": 80, "low": 60, "break": null }
+}

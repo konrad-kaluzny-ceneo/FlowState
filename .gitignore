@@ -248,3 +248,5 @@ playwright/.auth/
 playwright-report/
 test-results/
 /blob-report/
+.stryker-tmp
+reports
