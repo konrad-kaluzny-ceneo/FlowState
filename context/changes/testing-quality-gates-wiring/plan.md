@@ -333,7 +333,7 @@ No new Vitest tests — this change is infra/docs/CI. Existing `pnpm test` must 
 
 #### Manual
 
-- [ ] 1.5 AGENTS.md E2E rules match fixtures API-auth pattern
+- [x] 1.5 AGENTS.md E2E rules match fixtures API-auth pattern
 
 ### Phase 2: Existing Suite Alignment & VERIFY Matrix
 
@@ -344,8 +344,8 @@ No new Vitest tests — this change is infra/docs/CI. Existing `pnpm test` must 
 
 #### Manual
 
-- [ ] 2.3 `e2e/DELIBERATE-BREAK.md` complete for critical specs
-- [ ] 2.4 Provenance headers spot-checked against test-plan risks
+- [x] 2.3 `e2e/DELIBERATE-BREAK.md` complete for critical specs
+- [x] 2.4 Provenance headers spot-checked against test-plan risks
 
 ### Phase 3: GitHub Actions CI Gate
 
@@ -356,8 +356,8 @@ No new Vitest tests — this change is infra/docs/CI. Existing `pnpm test` must 
 
 #### Manual
 
-- [ ] 3.3 GitHub secrets configured (4 Neon/Auth vars)
-- [ ] 3.4 Branch protection requires CI (optional recommended)
+- [ ] 3.3 GitHub secrets configured (4 Neon/Auth vars) — repo has none yet (`gh secret list` empty)
+- [x] 3.4 Branch protection requires CI (optional recommended) — verified not enabled; optional follow-up after first green CI
 
 ### Phase 4: Test-Plan & Cookbook Sync
 
@@ -367,5 +367,5 @@ No new Vitest tests — this change is infra/docs/CI. Existing `pnpm test` must 
 
 #### Manual
 
-- [ ] 4.2 test-plan §3 Phase 4 marked complete; §5 CI required
-- [ ] 4.3 `/10x-test-plan --status` shows Phase 4 complete
+- [x] 4.2 test-plan §3 Phase 4 marked complete; §5 CI required
+- [x] 4.3 `/10x-test-plan --status` shows Phase 4 complete
