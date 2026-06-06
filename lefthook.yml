@@ -1,0 +1,11 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.{ts,tsx,js,jsx,json,css,md,mdc}"
+      run: pnpm exec biome check --write {staged_files} && git add {staged_files}
+    typecheck:
+      run: pnpm typecheck
+    test:
+      glob: "*.{ts,tsx}"
+      run: pnpm exec vitest related {staged_files} --run

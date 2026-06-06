@@ -51,6 +51,7 @@
  - To run a single spec: `set CI=true && pnpm exec playwright test e2e/my-spec.spec.ts`
 - **E2E vs integration:** A direct DB query or server-side tRPC caller is an integration test, not e2e. True e2e requires a browser with an authenticated session hitting the running app. Do not claim "e2e verified" unless a real browser flow (with auth) was exercised.
 - **Test pyramid:** All changes must include unit and integration tests. Code must be testable at each level of the pyramid (unit → integration → e2e). Do not ship code without covering the appropriate test levels for the change.
+- **Vitest agent output (`AI_AGENT=1`):** Vitest 4.1+ switches to compact output (failures only) when `AI_AGENT=1` is set. Use this in agent hooks and scoped test runs so hook feedback stays short and token-cheap — e.g. `set AI_AGENT=1 && pnpm exec vitest related src/hooks/foo.ts --run`. Per-edit hooks in `.cursor/hooks/related-tests.mjs` set this automatically; set it manually when invoking Vitest from shell scripts the agent will read.
 
 ## Mutation testing
 

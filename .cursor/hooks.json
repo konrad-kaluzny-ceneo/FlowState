@@ -1,0 +1,22 @@
+{
+	"version": 1,
+	"hooks": {
+		"afterFileEdit": [
+			{
+				"command": "node .cursor/hooks/lint.mjs",
+				"matcher": "Write",
+				"timeout": 15
+			},
+			{
+				"command": "node .cursor/hooks/typecheck.mjs",
+				"matcher": "Write",
+				"timeout": 60
+			},
+			{
+				"command": "node .cursor/hooks/related-tests.mjs",
+				"matcher": "Write",
+				"timeout": 120
+			}
+		]
+	}
+}
