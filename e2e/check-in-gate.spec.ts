@@ -30,18 +30,23 @@ test.describe("Check-in gate (Risk #7)", () => {
 		await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 		await expect(page.getByText("Short Break")).toBeHidden();
 
+		const isCheckInMutation = (postData: string | null) =>
+			postData != null &&
+			postData.includes("STEADY") &&
+			/"cycleId":\s*\d+/.test(postData);
+
 		const [request, response] = await Promise.all([
 			page.waitForRequest(
 				(req) =>
 					req.method() === "POST" &&
 					req.url().includes("/api/trpc") &&
-					(req.postData()?.includes("checkIn.create") ?? false),
+					isCheckInMutation(req.postData()),
 			),
 			page.waitForResponse(
 				(res) =>
 					res.request().method() === "POST" &&
 					res.url().includes("/api/trpc") &&
-					(res.request().postData()?.includes("checkIn.create") ?? false) &&
+					isCheckInMutation(res.request().postData()) &&
 					res.ok(),
 			),
 			page.getByTestId("check-in-energy-steady").click(),
