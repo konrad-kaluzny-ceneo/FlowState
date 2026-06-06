@@ -1,4 +1,3 @@
-/** Formats remaining ms as mm:ss (ceil to whole seconds). */
 export function formatRemainingMs(ms: number): string {
 	const totalSec = Math.max(0, Math.ceil(ms / 1000));
 	const minutes = Math.floor(totalSec / 60);

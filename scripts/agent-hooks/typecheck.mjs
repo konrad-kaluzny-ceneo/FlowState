@@ -1,12 +1,12 @@
-import { spawnSync } from "node:child_process";
 import { finishCommand, finishSuccess } from "./lib/finish-hook.mjs";
-import { logHookRun } from "./lib/log-run.mjs";
 import {
 	getProjectRoot,
+	isUnderProjectRoot,
 	parseFilePaths,
 	readHookInput,
 	shouldRunForInput,
 } from "./lib/input.mjs";
+import { spawnPnpm } from "./lib/spawn-pnpm.mjs";
 
 const TYPECHECK_EXTENSIONS = /\.(ts|tsx|js|jsx|mts|cts)$/i;
 
@@ -18,16 +18,15 @@ if (!shouldRunForInput(input)) {
 const projectRoot = getProjectRoot(input);
 const paths = parseFilePaths(input);
 
-logHookRun("typecheck", { paths, projectRoot }, input);
-
-if (paths.length === 0 || !paths.some((p) => TYPECHECK_EXTENSIONS.test(p))) {
+if (
+	paths.length === 0 ||
+	!paths.some(
+		(p) => TYPECHECK_EXTENSIONS.test(p) && isUnderProjectRoot(p, projectRoot),
+	)
+) {
 	finishSuccess();
 }
 
-const result = spawnSync("pnpm", ["typecheck"], {
-	encoding: "utf8",
-	shell: true,
-	cwd: projectRoot,
-});
+const result = spawnPnpm(["typecheck"], { cwd: projectRoot });
 
 finishCommand(result);

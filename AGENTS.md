@@ -16,7 +16,7 @@
 
 ## Coding Style & Naming
 
-- Indentation: tabs (size 2). Line endings: LF. Enforced by Biome and `@.editorconfig`.
+- Indentation: tabs (size 2). Line endings: LF. Enforced by Biome, `@.editorconfig`, and `@.gitattributes` (`eol=lf` at commit).
 - No ESLint or Prettier — Biome is the sole linter/formatter. Do not add either.
 - Tailwind class sorting enforced via Biome's `useSortedClasses` rule (utility functions: `clsx`, `cva`, `cn`).
 - Path alias: `~/` maps to `src/`. Use it for all intra-project imports.
@@ -57,9 +57,9 @@
 
 Shared scripts live in `scripts/agent-hooks/`; IDE configs only point at them.
 
-- **Cursor:** `.cursor/hooks.json` only — `afterFileEdit` → 3 scripts per edit. `.cursor/settings.json` disables `.github/hooks` and `.claude/settings.json` so hooks are not loaded twice. **Normal cost: 3 executions per `.ts` edit** (lint + typecheck + related-tests skip). Debug log: `scripts/agent-hooks/run.log` (gitignored via `*.log`). Restart Cursor after hook changes if old paths linger in Execution Log.
+- **Cursor:** `.cursor/hooks.json` only — `afterFileEdit` → 3 scripts per edit. `.cursor/settings.json` disables `.github/hooks` and `.claude/settings.json` so hooks are not loaded twice. **Normal cost: 3 executions per `.ts` edit** (lint + typecheck + related-tests skip). Restart Cursor after hook changes if old paths linger in Execution Log.
 - **VS Code / Copilot:** `.github/hooks/quality.json` — same scripts via `PostToolUse`. `.vscode/settings.json` loads only `.github/hooks`. VS Code **ignores matchers**; scripts filter by `tool_name`. Verify in **GitHub Copilot Chat Hooks** output channel.
-- **Pre-commit:** `lefthook.yml` — lint + typecheck + `vitest related` on staged files.
+- **Pre-commit:** `lefthook.yml` — lint + typecheck + `vitest related` on staged files. Lefthook lint runs `biome check --write` then `git add` on each staged file — **stage the whole file** before commit; unstaged hunks in the same file can otherwise be swept into the commit. **Scope asymmetry:** agent `related-tests` hook runs only on risk dirs (`scripts/agent-hooks/lib/risk-areas.mjs`); lefthook runs `vitest related` on **all** staged `*.{ts,tsx}` — stricter human gate at commit time.
 
 ## Mutation testing
 

@@ -4,17 +4,17 @@
 		"afterFileEdit": [
 			{
 				"command": "node scripts/agent-hooks/lint.mjs",
-				"matcher": "Write|StrReplace",
+				"matcher": "Write|StrReplace|Edit",
 				"timeout": 15
 			},
 			{
 				"command": "node scripts/agent-hooks/typecheck.mjs",
-				"matcher": "Write|StrReplace",
+				"matcher": "Write|StrReplace|Edit",
 				"timeout": 60
 			},
 			{
 				"command": "node scripts/agent-hooks/related-tests.mjs",
-				"matcher": "Write|StrReplace",
+				"matcher": "Write|StrReplace|Edit",
 				"timeout": 120
 			}
 		]

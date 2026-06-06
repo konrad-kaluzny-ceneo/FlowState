@@ -88,7 +88,7 @@ export function isUnderProjectRoot(filePath, projectRoot) {
 }
 
 export function shouldLintFile(filePath, projectRoot) {
-	if (!/\.(ts|tsx|js|jsx|json|css|mdc)$/i.test(filePath)) return false;
+	if (!/\.(mjs|cjs|tsx?|jsx?|json|css|mdc)$/i.test(filePath)) return false;
 	if (
 		filePath.includes("node_modules") ||
 		filePath.includes("generated") ||
