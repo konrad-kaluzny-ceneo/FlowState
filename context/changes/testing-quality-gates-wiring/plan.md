@@ -352,7 +352,7 @@ No new Vitest tests — this change is infra/docs/CI. Existing `pnpm test` must 
 #### Automated
 
 - [x] 3.1 `.github/workflows/ci.yml` present and valid
-- [ ] 3.2 CI green on PR (after secrets configured)
+- [x] 3.2 CI green on PR (after secrets configured)
 
 #### Manual
 
