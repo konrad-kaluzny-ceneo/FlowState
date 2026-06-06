@@ -10,6 +10,7 @@
 		"!src/**/*.test.tsx"
 	],
 	"reporters": ["progress", "clear-text", "html"],
+	"ignoreStatic": true,
 	"concurrency": 4,
 	"thresholds": { "high": 80, "low": 60, "break": null }
 }
