@@ -21,11 +21,9 @@ vi.mock("~/lib/auth/server", () => ({
 	},
 }));
 
-// Stub global setTimeout to resolve immediately (eliminates timingMiddleware dev delay)
-const originalSetTimeout = globalThis.setTimeout;
-// biome-ignore lint/suspicious/noExplicitAny: test utility override
-globalThis.setTimeout = ((fn: () => void, _ms?: number) =>
-	originalSetTimeout(fn, 0)) as any;
+import { installImmediateSetTimeout } from "~/test-utils/immediate-set-timeout";
+
+installImmediateSetTimeout();
 
 // Import after mocks are set up
 const {

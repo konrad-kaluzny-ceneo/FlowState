@@ -69,6 +69,10 @@ export interface CycleRepository {
 		markTaskDone?: boolean;
 	}): Promise<void>;
 	interrupt(input: { cycleId: DomainTaskId }): Promise<void>;
+	rebindTask(input: {
+		cycleId: DomainTaskId;
+		taskId: DomainTaskId;
+	}): Promise<DomainActiveCycle>;
 }
 
 export interface SessionRepository {

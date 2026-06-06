@@ -118,11 +118,10 @@ vi.mock("~/server/db/index", () => {
 	};
 });
 
-// Stub global setTimeout to resolve immediately (eliminates timingMiddleware dev delay)
-const originalSetTimeout = globalThis.setTimeout;
-// biome-ignore lint/suspicious/noExplicitAny: test utility override
-globalThis.setTimeout = ((fn: () => void, _ms?: number) =>
-	originalSetTimeout(fn, 0)) as any;
+import { atModOrThrow, atOrThrow } from "~/test-utils/array-access";
+import { installImmediateSetTimeout } from "~/test-utils/immediate-set-timeout";
+
+installImmediateSetTimeout();
 
 // Import after mocks are set up
 const { createCallerFactory } = await import("~/server/api/trpc");
@@ -156,13 +155,13 @@ describe("Feature: session domain model, Property: Cycle query isolation", () =>
 		"each user only sees their own cycles when querying",
 		async (userIds, querierSeed) => {
 			const querierIdx = querierSeed % userIds.length;
-			const querierId = userIds[querierIdx]!;
+			const querierId = atOrThrow(userIds, querierIdx);
 
 			// Generate cycles distributed across users
 			const cycleCount = 5 + (querierSeed % 16);
 			const generatedCycles = [];
 			for (let i = 0; i < cycleCount; i++) {
-				const userId = userIds[i % userIds.length]!;
+				const userId = atModOrThrow(userIds, i);
 				generatedCycles.push({
 					id: i + 1,
 					sessionId: (i % 3) + 1,
@@ -213,8 +212,8 @@ describe("Feature: session domain model, Property: Cycle query isolation", () =>
 	)(
 		"cross-user FK injection: create with another user's session returns NOT_FOUND",
 		async (userIds, seed) => {
-			const attackerId = userIds[0]!;
-			const victimId = userIds[1]!;
+			const attackerId = atOrThrow(userIds, 0);
+			const victimId = atOrThrow(userIds, 1);
 
 			// Create a session owned by the victim
 			allSessions = [{ id: 1, userId: victimId, state: "ACTIVE" }];
@@ -252,8 +251,8 @@ describe("Feature: session domain model, Property: Cycle query isolation", () =>
 	)(
 		"cross-user FK injection: create with another user's taskId returns NOT_FOUND",
 		async (userIds, seed) => {
-			const attackerId = userIds[0]!;
-			const victimId = userIds[1]!;
+			const attackerId = atOrThrow(userIds, 0);
+			const victimId = atOrThrow(userIds, 1);
 
 			allSessions = [{ id: 2, userId: attackerId, state: "ACTIVE" }];
 			allTasks = [{ id: 5, userId: victimId }];
@@ -290,13 +289,13 @@ describe("Feature: session domain model, Property: Cycle query isolation", () =>
 		],
 		{ numRuns: 100 },
 	)("a user with no cycles gets an empty result", async (userIds, seed) => {
-		const querierId = userIds[0]!;
+		const querierId = atOrThrow(userIds, 0);
 		const otherUserIds = userIds.slice(1);
 
 		const cycleCount = 3 + (seed % 10);
 		allCycles = [];
 		for (let i = 0; i < cycleCount; i++) {
-			const ownerId = otherUserIds[i % otherUserIds.length]!;
+			const ownerId = atModOrThrow(otherUserIds, i);
 			allCycles.push({
 				id: i + 1,
 				sessionId: 1,

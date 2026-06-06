@@ -328,6 +328,43 @@ export function createGuestCycleRepository(): CycleRepository {
 				throw new Error(error);
 			}
 		},
+
+		async rebindTask(input) {
+			const { error } = mutateSnapshot((snapshot) => {
+				const cycle = snapshot.cycles.find((c) => c.id === input.cycleId);
+				if (
+					cycle == null ||
+					cycle.state !== "RUNNING" ||
+					cycle.kind !== "WORK"
+				) {
+					throw new Error("Only a running work cycle can rebind its task");
+				}
+
+				const task = snapshot.tasks.find((t) => t.id === input.taskId);
+				if (task == null) {
+					throw new Error("Task not found");
+				}
+
+				return {
+					...snapshot,
+					cycles: snapshot.cycles.map((c) =>
+						c.id === input.cycleId ? { ...c, taskId: String(input.taskId) } : c,
+					),
+				};
+			});
+
+			if (error != null) {
+				throw new Error(error);
+			}
+
+			const snapshot = loadSnapshot();
+			const cycle = snapshot.cycles.find((c) => c.id === input.cycleId);
+			if (cycle == null) {
+				throw new Error("Cycle not found");
+			}
+
+			return toDomainCycle(cycle, snapshot);
+		},
 	};
 }
 

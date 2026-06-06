@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-05
+> Last updated: 2026-06-06
 
 ## 1. Strategy
 
@@ -68,7 +68,7 @@ orchestrator updates Status as artifacts appear on disk.
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
 | 1 | Critical-path persistence & timer | Prove refresh/crash recovery and background-tab timer accuracy at the cheapest layers that catch real regressions | #1, #2 | unit + integration + targeted e2e | complete | testing-critical-path-persistence-timer |
-| 2 | Active-slice browser proofs | Browser-level proof for S-03 mid-cycle prompt and S-05 check-in gate before wedge work compounds | #3, #7 | Playwright e2e | not started | — |
+| 2 | Active-slice browser proofs | Browser-level proof for S-03 mid-cycle prompt and S-05 check-in gate before wedge work compounds | #3, #7 | Playwright e2e | change opened | testing-active-slice-browser-proofs |
 | 3 | Isolation, abuse & guest merge | Lock per-user isolation, IDOR rejection, and guest→account merge integrity | #4, #5, #6 | integration | complete | testing-isolation-abuse-guest-merge |
 | 4 | Quality-gates wiring | Enforce lint, typecheck, unit/integration, and critical e2e in CI on every PR | cross-cutting | CI gates | not started | — |
 
@@ -137,8 +137,10 @@ the relevant rollout phase ships; before that, the sub-section reads
 ### 6.3 Adding an e2e test
 
 - **Location**: `e2e/*.spec.ts`.
+- **Helpers**: `e2e/helpers/work-cycle.ts` — `setWorkDurationSec`, `startFocusedWorkCycle`, `advanceClockThroughFastWork`, `addTask`, `addTasks`, `markTaskCompleteMidCycle`. `e2e/helpers/check-in.ts` — `completeCheckIn(page, "focused" | "steady" | "fading")` after S-01 overlay confirm on auth WORK cycles. `e2e/helpers/idle-cycle.ts` — `ensureIdleCycle` dismisses stranded check-in (default `steady`), mid-cycle prompt, cycle-complete overlay, running cycle, and enabled end-session.
 - **Auth mid-cycle reload (Risk #1 UI)**: `e2e/persistence-reload.spec.ts` — set work duration via `work-duration-min` / `work-duration-sec` (e.g. 0 min 30 sec) using `setWorkDurationSec` in `e2e/helpers/work-cycle.ts`, `page.reload()`, re-wait for `cycle.getActive`, assert task row + `timer-panel-running` (no ±2s countdown oracle; timer accuracy is hook/unit). Shared idle reset: `e2e/helpers/idle-cycle.ts`.
 - **Guest reload**: `e2e/guest-trial.spec.ts` — same UI assertions; guest banner still visible.
+- **Phase 2 browser proofs (Risks #3, #7)**: `e2e/mid-cycle-completion.spec.ts`, `e2e/mid-cycle-last-task.spec.ts`; S-01 regression with check-in step in `e2e/pomodoro-cycle.spec.ts`. Dedicated `check-in-gate.spec.ts` deferred — see §6.6 Phase 2 deferred e2e.
 - **±2s tolerance**: use `src/test-utils/countdown-tolerance.ts` in Vitest only, not Playwright reload specs (scope addendum: `context/changes/testing-critical-path-persistence-timer/reviews/scope-addendum.md`).
 - **Auth isolation**: per-test API sign-up/sign-in via `e2e/fixtures.ts` (no shared `playwright/.auth/user.json`).
 - **Run locally**: `set CI=true && pnpm test:e2e` (starts `next dev` on 3001 — no full build). Fastest: `next dev --turbo -p 3001` with `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1`, then `set E2E_REUSE_SERVER=1 && set CI=true && pnpm test:e2e`. Prod parity: `set E2E_PRODUCTION_SERVER=1`.
@@ -189,6 +191,15 @@ the relevant rollout phase ships; before that, the sub-section reads
 - Layers: Vitest integration with in-memory Prisma mocks in `check-in.test.ts`; security/isolation properties remain in `check-in-isolation.test.ts`.
 - **Explicit limitation**: no Playwright check-in modal gate in this change — UI skip-prevention proof deferred to test-plan Phase 2 (e2e risks #3/#7).
 - **Not a §3 rollout row**: ad-hoc slice documented here; S-05 UI will add browser proof later.
+
+**Phase 2 — Active-slice browser proofs** (shipped 2026-06-06, change `testing-active-slice-browser-proofs`)
+
+- Risks covered: **#3** (mid-cycle FR-015 prompt — both choices vs end-break-only), **#7** (check-in gate blocks WORK→break until energy selected; `checkIn.create` oracle).
+- Product slices: S-03 (`MidCycleCompletionPrompt`, `cycles.rebindTask`), S-05 (`CheckInOverlay`, `onCycleCompleteConfirm` / `submitCheckIn` on auth WORK cycles only).
+- E2e specs: `e2e/mid-cycle-completion.spec.ts`, `e2e/mid-cycle-last-task.spec.ts`; updated `e2e/pomodoro-cycle.spec.ts` (check-in after S-01 confirm). Risk #7 gate partially covered via S-01 flows + `completeCheckIn` helper.
+- **Run**: `set CI=true && pnpm test:e2e` or targeted `pnpm test:e2e e2e/mid-cycle-completion.spec.ts`. Use `E2E_WORKERS=1` if per-test sign-up hits 429 under default CI parallelism.
+- **Deferred e2e — `check-in-gate.spec.ts` (Risk #7 dedicated gate oracle)**: UI path — complete 1s WORK cycle → S-01 overlay → "Continue later" → assert `check-in-overlay` visible and "Short Break" hidden until `completeCheckIn(page, "steady")` → assert break `timer-panel-running`. Network persistence oracle — match batched tRPC POST body on `/api/trpc` for `STEADY` + numeric `cycleId` (not `/api/trpc/checkIn.create` URL; app uses `httpBatchStreamLink`). Prior attempts failed on `waitForRequest` timeout and `response.json()` on batch stream. Re-add when e2e infra supports batched mutation oracles.
+- **Deferred**: guest-mode Playwright check-in/mid-cycle proofs; escape/refresh skip-vector e2e; server-side `cycle.complete` check-in prerequisite; `interruptionCount` increment; CI gate wiring (Phase 4 test-plan row).
 
 ## 7. What We Deliberately Don't Test
 

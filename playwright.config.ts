@@ -23,7 +23,7 @@ const webServerCommand = useProductionServer
 const workerCount = process.env.E2E_WORKERS
 	? Number.parseInt(process.env.E2E_WORKERS, 10)
 	: process.env.CI
-		? 4
+		? 1
 		: undefined;
 
 export default defineConfig({

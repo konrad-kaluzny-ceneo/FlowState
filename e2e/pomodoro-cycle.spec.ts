@@ -1,4 +1,5 @@
 import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { completeCheckIn } from "./helpers/check-in";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 import {
 	advanceClockThroughFastWork,
@@ -29,6 +30,8 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		).toBeVisible();
 
 		await page.getByRole("button", { name: "Continue later" }).click();
+		await expect(page.getByText("Short Break")).toBeHidden();
+		await completeCheckIn(page, "steady");
 
 		await expect(page.getByTestId("cycle-complete-overlay")).not.toBeVisible();
 		const taskRow = page.getByRole("listitem").filter({ hasText: taskTitle });
@@ -54,6 +57,8 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		});
 		await expect(markDone).toBeEnabled();
 		await markDone.click();
+		await expect(page.getByText("Short Break")).toBeHidden();
+		await completeCheckIn(page, "steady");
 
 		await expect(page.getByTestId("cycle-complete-overlay")).not.toBeVisible();
 		await expect(page.getByRole("heading", { name: /Completed/ })).toBeVisible({

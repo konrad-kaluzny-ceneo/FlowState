@@ -69,11 +69,10 @@ vi.mock("~/server/db/index", () => {
 	};
 });
 
-// Stub global setTimeout to resolve immediately (eliminates timingMiddleware dev delay)
-const originalSetTimeout = globalThis.setTimeout;
-// biome-ignore lint/suspicious/noExplicitAny: test utility override
-globalThis.setTimeout = ((fn: () => void, _ms?: number) =>
-	originalSetTimeout(fn, 0)) as any;
+import { atModOrThrow, atOrThrow } from "~/test-utils/array-access";
+import { installImmediateSetTimeout } from "~/test-utils/immediate-set-timeout";
+
+installImmediateSetTimeout();
 
 // Import after mocks are set up
 const { createCallerFactory } = await import("~/server/api/trpc");
@@ -108,13 +107,13 @@ describe("Feature: session domain model, Property: Session query isolation", () 
 		async (userIds, querierSeed) => {
 			// Pick the querying user
 			const querierIdx = querierSeed % userIds.length;
-			const querierId = userIds[querierIdx]!;
+			const querierId = atOrThrow(userIds, querierIdx);
 
 			// Generate between 5 and 20 sessions distributed across all users
 			const sessionCount = 5 + (querierSeed % 16);
 			const generatedSessions = [];
 			for (let i = 0; i < sessionCount; i++) {
-				const userId = userIds[i % userIds.length]!;
+				const userId = atModOrThrow(userIds, i);
 				generatedSessions.push({
 					id: i + 1,
 					userId,
@@ -168,13 +167,13 @@ describe("Feature: session domain model, Property: Session query isolation", () 
 		{ numRuns: 100 },
 	)("a user with no sessions gets an empty result", async (userIds, seed) => {
 		// Assign all sessions to users OTHER than the querying user
-		const querierId = userIds[0]!;
+		const querierId = atOrThrow(userIds, 0);
 		const otherUserIds = userIds.slice(1);
 
 		const sessionCount = 3 + (seed % 10);
 		allSessions = [];
 		for (let i = 0; i < sessionCount; i++) {
-			const ownerId = otherUserIds[i % otherUserIds.length]!;
+			const ownerId = atModOrThrow(otherUserIds, i);
 			allSessions.push({
 				id: i + 1,
 				userId: ownerId,

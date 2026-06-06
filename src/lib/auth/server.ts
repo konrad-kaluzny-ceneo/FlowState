@@ -1,9 +1,17 @@
 import { createNeonAuth } from "@neondatabase/auth/next/server";
 
+function requireEnv(name: string): string {
+	const value = process.env[name];
+	if (!value) {
+		throw new Error(`${name} is not set`);
+	}
+	return value;
+}
+
 export const auth = createNeonAuth({
-	baseUrl: process.env.NEON_AUTH_BASE_URL!,
+	baseUrl: requireEnv("NEON_AUTH_BASE_URL"),
 	cookies: {
-		secret: process.env.NEON_AUTH_COOKIE_SECRET!,
+		secret: requireEnv("NEON_AUTH_COOKIE_SECRET"),
 		sameSite: "lax",
 	},
 });

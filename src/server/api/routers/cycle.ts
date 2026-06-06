@@ -185,6 +185,44 @@ export const cycleRouter = createTRPCRouter({
 			});
 		}),
 
+	rebindTask: protectedProcedure
+		.input(
+			z.object({
+				cycleId: z.number().int(),
+				taskId: z.number().int(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const cycle = await ctx.db.cycle.findFirst({
+				where: { id: input.cycleId, userId: ctx.session.user.id },
+			});
+
+			if (!cycle) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			if (cycle.state !== "RUNNING" || cycle.kind !== "WORK") {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Only a running work cycle can rebind its task",
+				});
+			}
+
+			const task = await ctx.db.task.findFirst({
+				where: { id: input.taskId, userId: ctx.session.user.id },
+			});
+
+			if (!task) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			return ctx.db.cycle.update({
+				where: { id: input.cycleId },
+				data: { taskId: input.taskId },
+				include: { task: true },
+			});
+		}),
+
 	interrupt: protectedProcedure
 		.input(z.object({ cycleId: z.number().int() }))
 		.mutation(async ({ ctx, input }) => {

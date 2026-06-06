@@ -61,11 +61,10 @@ vi.mock("~/server/db/index", () => {
 	};
 });
 
-// Stub global setTimeout to resolve immediately (eliminates timingMiddleware dev delay)
-const originalSetTimeout = globalThis.setTimeout;
-// biome-ignore lint/suspicious/noExplicitAny: test utility override
-globalThis.setTimeout = ((fn: () => void, _ms?: number) =>
-	originalSetTimeout(fn, 0)) as any;
+import { atModOrThrow, atOrThrow } from "~/test-utils/array-access";
+import { installImmediateSetTimeout } from "~/test-utils/immediate-set-timeout";
+
+installImmediateSetTimeout();
 
 // Import after mocks are set up
 const { createCallerFactory } = await import("~/server/api/trpc");
@@ -100,13 +99,13 @@ describe("Feature: neon-auth, Property 10: Task query isolation", () => {
 		async (userIds, querierSeed) => {
 			// Pick the querying user
 			const querierIdx = querierSeed % userIds.length;
-			const querierId = userIds[querierIdx]!;
+			const querierId = atOrThrow(userIds, querierIdx);
 
 			// Generate between 5 and 20 tasks distributed across all users
 			const taskCount = 5 + (querierSeed % 16);
 			const generatedTasks = [];
 			for (let i = 0; i < taskCount; i++) {
-				const userId = userIds[i % userIds.length]!;
+				const userId = atModOrThrow(userIds, i);
 				generatedTasks.push({
 					id: i + 1,
 					title: `Task ${i}`,
@@ -156,13 +155,13 @@ describe("Feature: neon-auth, Property 10: Task query isolation", () => {
 		{ numRuns: 100 },
 	)("a user with no tasks gets an empty result", async (userIds, seed) => {
 		// Assign all tasks to users OTHER than the querying user
-		const querierId = userIds[0]!;
+		const querierId = atOrThrow(userIds, 0);
 		const otherUserIds = userIds.slice(1);
 
 		const taskCount = 3 + (seed % 10);
 		allTasks = [];
 		for (let i = 0; i < taskCount; i++) {
-			const ownerId = otherUserIds[i % otherUserIds.length]!;
+			const ownerId = atModOrThrow(otherUserIds, i);
 			allTasks.push({
 				id: i + 1,
 				title: `Task ${i}`,

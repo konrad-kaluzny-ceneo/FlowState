@@ -30,6 +30,29 @@ export async function startFocusedWorkCycle(
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 }
 
+export async function addTask(page: Page, title: string) {
+	await page.getByPlaceholder("Add a new task...").fill(title);
+	await page.getByRole("button", { name: "Add" }).click();
+	await expect(
+		page.getByRole("listitem").filter({ hasText: title }).first(),
+	).toBeVisible();
+}
+
+export async function addTasks(page: Page, titles: string[]) {
+	for (const title of titles) {
+		await addTask(page, title);
+	}
+}
+
+export async function markTaskCompleteMidCycle(page: Page, taskTitle: string) {
+	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+	const taskRow = page
+		.getByRole("listitem")
+		.filter({ hasText: taskTitle })
+		.first();
+	await taskRow.getByRole("button", { name: "Mark complete" }).click();
+}
+
 export async function advanceClockThroughFastWork(page: Page) {
 	await page.clock.install();
 	await page.clock.runFor(FAST_WORK_CLOCK_MS);

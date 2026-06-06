@@ -38,7 +38,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 				user: {
 					id: user.id,
 					email: user.email,
-					name: user.name || user.email.split("@")[0]!,
+					name: user.name || user.email.split("@")[0] || user.email,
 				},
 			};
 		}
