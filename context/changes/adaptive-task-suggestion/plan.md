@@ -430,10 +430,10 @@ Browser proof for FR-021/022 and document pattern in test-plan.
 
 #### Automated
 
-- [x] 4.1 `pnpm check` passes
-- [x] 4.2 `pnpm typecheck` passes
-- [x] 4.3 `pnpm test` passes
-- [x] 4.4 `set CI=true && pnpm test:e2e` passes
+- [x] 4.1 `pnpm check` passes - 17beae0
+- [x] 4.2 `pnpm typecheck` passes - 17beae0
+- [x] 4.3 `pnpm test` passes - 17beae0
+- [x] 4.4 `set CI=true && pnpm test:e2e` passes - 17beae0
 
 #### Manual
 
