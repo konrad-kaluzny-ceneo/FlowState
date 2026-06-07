@@ -1,196 +1,36 @@
 # Repository Guidelines
 
-- Critical **Tech Stack:** Next.js 16, React 19, TypeScript 6, Prisma 7, tRPC + Tanstack React Query + Zod 4, Tailwind CSS 4.
-- **Package Manager:** pnpm (strict isolated `node_modules`, no hoisting). Use `pnpm` for all install/run commands. Never use `npm` or `yarn`.
-- Rest of Stack: see `@package.json`.
+FlowState is a Next.js Pomodoro app on the T3-style stack. Agents run terminal commands in **Windows PowerShell**. Stack and scripts: `@package.json`, `@context/foundation/tech-stack.md`.
 
-## Terminal Commands
+## Hard rules
 
-- Agent AI commands are always runned in Windows OS. Use always Windows compatibile commands.
+- **Never** commit or push to `main`/`master`. All slice work on `features/<change-id>` (kebab-case Change ID from `@context/foundation/roadmap.md` or `context/changes/<change-id>/`).
+- Before the first edit for a change: `git switch main; git pull; git switch -c features/<change-id>` — or resume with `git switch features/<change-id>`.
+- **Two or more parallel slices:** one [git worktree](https://git-scm.com/docs/git-worktree) per slice at `../FlowState-<change-id>`; do not bounce `git switch` in one checkout. Single slice: the main clone is enough.
+- **pnpm only** — never `npm` or `yarn`.
+- Never commit secrets; declare env vars in `@src/env.js`.
+- After each code iteration: `pnpm check`. Before presenting results: `pnpm test`.
+- E2E: always `set CI=true && pnpm test:e2e` — bare `pnpm test:e2e` blocks the terminal (html reporter).
 
-## Project Structure
+## Commands
 
-- Page-level components go in `_components/` co-located with their route.
-- tRPC routers go in `src/server/api/routers/<feature>.ts`.
-- Foundation docs live in `context/foundation/` — see `@context/foundation/prd.md` for product requirements and `@context/foundation/tech-stack.md` for stack rationale.
+- `pnpm dev` — local dev server
+- `pnpm check` — Biome lint/format (sole linter; no ESLint/Prettier)
+- `pnpm typecheck` — TypeScript
+- `pnpm test` — Vitest unit/integration
+- `pnpm prisma migrate dev` — local schema migrations; never hand-write migration SQL
+- Pre-push gate: `@lefthook.yml` runs `check`, typecheck, and full `test`
 
-## Coding Style & Naming
+## Layout & conventions
 
-- Indentation: tabs (size 2). Line endings: LF. Enforced by Biome, `@.editorconfig`, and `@.gitattributes` (`eol=lf` at commit).
-- No ESLint or Prettier — Biome is the sole linter/formatter. Do not add either.
-- Tailwind class sorting enforced via Biome's `useSortedClasses` rule (utility functions: `clsx`, `cva`, `cn`).
-- Path alias: `~/` maps to `src/`. Use it for all intra-project imports.
-- **Critical:** Run `pnpm check` (Biome) after each iteration of changes. All errors must be resolved before presenting results or moving to the next task.
+- Page UI: `_components/` co-located with the route. tRPC routers: `src/server/api/routers/<feature>.ts` — every router must be registered in `@src/server/api/root.ts`.
+- Path alias `~/` → `src/`. Tabs (size 2), LF; enforced by `@biome.json`, `@.editorconfig`, `@.gitattributes`.
+- Prisma tables: `@@map("flow_state_<name>")`; import client via `@prisma/generated`. Product requirements: `@context/foundation/prd.md`.
 
-## Database
+## Testing & delivery
 
-- ORM: **Prisma 7** with `@prisma/adapter-neon` for serverless Neon connectivity.
-- Schema defined in `prisma/schema.prisma`. All tables use `@@map("flow_state_<name>")` to maintain the `flow_state_` prefix convention.
-- Prisma client generated to `./generated/prisma/client` (gitignored). Import via `@prisma/generated` path alias.
-- Migrations: `pnpm prisma migrate dev` (local), `pnpm db:migrate:prod` (production). Never write migration SQL by hand.
-- Config: `prisma.config.ts` at project root (loads `.env` automatically for CLI commands).
-- Build script runs `prisma generate` only — migrations are NOT run at build time on Vercel.
-- Prefer Prisma `enum` over `String @db.VarChar` for columns with a fixed set of values — enums give DB-level enforcement and end-to-end type safety without runtime Zod ↔ string mapping.
-
-## tRPC
-
-- Every tRPC router must be registered in `@src/server/api/root.ts` — unregistered routers are silently unreachable.
-- tRPC middleware runs in declaration order — auth middleware must come before any procedure that reads `ctx.session`.
-- All `create` mutations must `return` the created entity so clients can use it without a refetch.
-- All `list` queries must use `take: DEFAULT_LIST_LIMIT` (from `~/server/api/config`) to prevent unbounded result sets.
-
-## Testing
-
-- Run all unit tests after each milestone: `pnpm test`
-- **Critical:** Always run `pnpm test` at the end of every work cycle before presenting results.
-- **E2E (Playwright):** Never run bare `pnpm test:e2e` without `CI=true` — the `html` reporter blocks the terminal. Always use `CI=true` for the `list` reporter.
- ```
- set CI=true && pnpm test:e2e
- ```
- **Local speed:** Playwright starts `next dev --turbo` on port 3001 (no full build). Fastest loop: keep dev running with `set NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` and `pnpm exec next dev --turbo -p 3001`, then `set CI=true && set E2E_REUSE_SERVER=1 && pnpm test:e2e`. **Workers:** default `1` when `CI=true` (Neon Auth); ~50% CPU cores locally; override with `E2E_WORKERS`. **CI / prod parity:** `set E2E_PRODUCTION_SERVER=1` forces `build && next start` (GitHub Actions sets this automatically via `GITHUB_ACTIONS`).
- - To run a single spec: `set CI=true && pnpm exec playwright test e2e/my-spec.spec.ts`
-
-### E2E Testing Rules
-
-When adding or changing Playwright specs, follow `/10x-e2e` and model every new test on `@e2e/seed.spec.ts`. Risks and priorities live in `@context/foundation/test-plan.md`.
-
-- **Generation exemplar:** Read `e2e/seed.spec.ts` before writing a new spec — copy its structure (provenance header, fixture auth, helpers, business-outcome assertions).
-- **Authentication:** Use API sign-up/sign-in via `e2e/fixtures.ts` and `createTestUser` — never log in through the sign-in UI; do not use shared `storageState` / `playwright/.auth/user.json`.
-- **Locators:** Prefer `getByRole`, `getByLabel`, and `getByText`. Use `getByTestId` only for overlays and panels where roles are ambiguous (matches existing specs).
-- **Never** use CSS selectors, XPath, or DOM-structure locators.
-- **Isolation:** Each test must be independently runnable — unique data (`Date.now()` suffix), no ordering assumptions, no shared state between tests.
-- **Waits:** Never use `page.waitForTimeout()`. Wait for state: `expect(locator).toBeVisible()`, `page.waitForURL()`, `page.waitForResponse()`.
-- **Assertions:** Assert the business outcome from test-plan risk wording, not implementation details.
-- **VERIFY before merge:** Run a deliberate-break check on new critical specs; record results in `e2e/DELIBERATE-BREAK.md`.
-- **Eligibility:** Do not E2E what an integration test can prove (pure logic, single-endpoint contracts). E2E is for flows crossing auth → routing → API → DB or UI-only state.
-- **Workers:** Use `E2E_WORKERS=1` in CI to avoid Neon Auth rate limits (default when `CI=true`).
-
-- **E2E vs integration:** A direct DB query or server-side tRPC caller is an integration test, not e2e. True e2e requires a browser with an authenticated session hitting the running app. Do not claim "e2e verified" unless a real browser flow (with auth) was exercised.
-- **Test pyramid:** All changes must include unit and integration tests. Code must be testable at each level of the pyramid (unit → integration → e2e). Do not ship code without covering the appropriate test levels for the change.
-- **Vitest agent output (`AI_AGENT=1`):** Vitest 4.1+ switches to compact output (failures only) when `AI_AGENT=1` is set. Use this in agent hooks and scoped test runs so hook feedback stays short and token-cheap — e.g. `set AI_AGENT=1 && pnpm exec vitest related src/hooks/foo.ts --run`. Hooks in `scripts/agent-hooks/related-tests.mjs` set this automatically; set it manually when invoking Vitest from shell scripts the agent will read.
-
-## Agent hooks (Cursor + VS Code)
-
-Shared scripts live in `scripts/agent-hooks/`; IDE configs only point at them.
-
-- **Cursor:** `.cursor/hooks.json` only — `afterFileEdit` → 3 scripts per edit. `.cursor/settings.json` disables `.github/hooks` and `.claude/settings.json` so hooks are not loaded twice. **Normal cost: 3 executions per `.ts` edit** (lint + typecheck + related-tests skip). Restart Cursor after hook changes if old paths linger in Execution Log.
-- **VS Code / Copilot:** `.github/hooks/quality.json` — same scripts via `PostToolUse`. `.vscode/settings.json` loads only `.github/hooks`. VS Code **ignores matchers**; scripts filter by `tool_name`. Verify in **GitHub Copilot Chat Hooks** output channel.
-- **Pre-commit:** `lefthook.yml` — lint + typecheck + `vitest related` on staged files. Lefthook lint runs `biome check --write` then `git add` on each staged file — **stage the whole file** before commit; unstaged hunks in the same file can otherwise be swept into the commit. **Scope asymmetry:** agent `related-tests` hook runs only on risk dirs (`scripts/agent-hooks/lib/risk-areas.mjs`); lefthook runs `vitest related` on **all** staged `*.{ts,tsx}` — stricter human gate at commit time.
-- **Pre-push:** `lefthook.yml` — full `pnpm check`, typecheck, and `pnpm test` before `git push` (parallel). Catches cross-file drift and regressions outside the staged diff.
-
-## Mutation testing
-
-Repo uses Stryker for selective mutation testing on risk-critical modules.
-Run it only for code covered by the current change or a risk from `@context/foundation/test-plan.md`,
-prefer narrowed scope with `--mutate "path/to/file.ts:start-end"`, and do not chase
-100% mutation score. Survived mutants should be reviewed one by one: add an
-assertion only when the mutant represents a user-visible or business-relevant bug.
-
-- Command: `pnpm test:mutate` (full scope) or `pnpm exec stryker run --mutate "src/lib/foo.ts"`.
-- Mutation score is not line coverage — do not treat a high score as a substitute for meaningful assertions.
-
-## Manual verification (agent-owned when possible)
-
-Plan steps and `/10x-implement` gates labeled **Manual Verification** must be executed by the agent whenever feasible — do not routinely defer them to the human.
-
-**Preferred order (use the shallowest layer that proves the behavior):**
-
-1. **Automated checks already in the plan** — run `pnpm test`, `pnpm typecheck`, `pnpm check` and cite results.
-2. **Ad-hoc scripts** — `tsx` one-offs, server-side `createCaller` integration, `renderHook` / component smoke tests in Vitest for hooks and workers without UI.
-3. **Playwright E2E** — `pnpm test:e2e` with the authenticated fixture from F-02 when the flow is user-visible or needs a real browser context.
-4. **Running app / browser** — `pnpm dev` plus Playwright, or another automated browser pass; use interactive clicking only when automation cannot cover the check (e.g. subjective audio UX across engines).
-
-**Phase without UI yet (e.g. server-only or hook-only):** satisfy manual items via integration callers and hook/worker unit tests — not by asking the user to use React DevTools or Prisma Studio unless the agent is blocked (missing env, auth, or hardware).
-
-**When asking the human:** state what was already run, what gap remains, and the minimal human action (e.g. "confirm chime is audible in Chrome"). Do not treat manual gates as a default handoff.
-
-## Git workflow
-
-- **Critical:** Never commit or push directly to `main` (or `master`). All slice/change work happens on a feature branch.
-- **Start every change on a branch.** Before the first edit or commit for a slice, create and switch to a feature branch. Do this at the beginning of `/10x-new`, `/10x-research`, or any implementation task — not only when opening a PR.
-- **Branch naming:** `features/<change-id>` where `<change-id>` is the kebab-case Change ID from `context/foundation/roadmap.md` or `context/changes/<change-id>/` (e.g. `features/adaptive-task-suggestion`). If Linear suggests a git branch name for the issue, prefer that when it clearly maps to the same change.
-- **Create branch from up-to-date default:**
-
-```powershell
-git switch main; git pull; git switch -c features/<change-id>
-```
-
-If the default branch is not `main`, use whatever `git remote show origin` reports as HEAD.
-
-- **Already on the wrong branch?** If `git branch --show-current` is `main`, `master`, or a branch for a different change, stop and create/switch to the correct `features/<change-id>` before committing.
-- **Resume work:** If `features/<change-id>` already exists locally or on origin, switch to it instead of creating a duplicate: `git switch features/<change-id>` (pull if tracking remote).
-- **Context-only edits** under `context/changes/<change-id>/` follow the same rule — research and plan commits also belong on the feature branch, not on `main`.
-
-### Parallel slices — use git worktree
-
-When working on **two or more slices at the same time** (roadmap `Parallel with`, parallel agent sessions, or multiple open changes), use **[git worktree](https://git-scm.com/docs/git-worktree)** — one working directory per slice. Do **not** rely on `git switch` back and forth in a single checkout; that risks wrong-branch commits, stale builds, and port conflicts.
-
-- **One worktree per slice.** Each parallel slice gets its own directory and its own `features/<change-id>` branch checked out there.
-- **Worktree path:** sibling folder named after the change, e.g. `../FlowState-<change-id>` next to the main clone (`FlowState/` stays on `main` or the primary active slice).
-- **Add a worktree** (from the main repo root, branch must exist or use `-b`):
-
-```powershell
-cd D:\repos\10xdev\FlowState; git fetch origin
-git worktree add ..\FlowState-<change-id> -b features/<change-id> origin/main
-```
-
-If the branch already exists: `git worktree add ..\FlowState-<change-id> features/<change-id>`
-
-- **List / remove:** `git worktree list`; when a slice is merged and archived, `git worktree remove ..\FlowState-<change-id>` (directory clean first).
-- **Agent scope:** Run terminal commands and edits **inside the worktree** for that slice only. Do not mix files or commits across worktrees.
-- **Dev servers:** Each worktree needs a distinct port if running `pnpm dev` or Playwright locally (e.g. 3000 vs 3001) — see E2E section for port conventions.
-- **Shared config:** Copy or symlink `.env` into each worktree if needed; never commit secrets. Run `pnpm install` in a new worktree before building (isolated `node_modules` per checkout).
-
-Single-slice work can stay in the main clone with `git switch`; use worktrees when parallelism is intentional.
-
-## Commit Conventions
-
-Allowed commit types: `feat`, `docs`, `init` only. No trailing period.
-
-## GitHub CLI (`gh`)
-
-- **Branches:** See **Git workflow** above — never commit to `main`; push feature branches only.
-- `gh` is installed and authenticated with account `konrad-kaluzny-ceneo`. Always use this account.
-- Use `gh` for all GitHub operations (PRs, issues, releases, workflows). Prefer non-interactive flags (`--yes`, `--title`, `--body`).
-- Use `--json` flag when parsing output (e.g., `gh pr list --json number,title,state`).
-- If auth fails, run `gh auth switch --user konrad-kaluzny-ceneo` before retrying.
-- Full usage guide: see `.kiro/steering/github-cli.md`.
-
-## Roadmap, Linear & GitHub (issue tracking)
-
-- **Map:** `@context/foundation/roadmap.md` links roadmap IDs (`F-01`…`S-07`) ↔ Linear `FLO-*` ↔ GitHub `#*` on `konrad-kaluzny-ceneo/FlowState`.
-- **Linear ↔ GitHub:** two-way sync enabled — edit status in one place, then **verify the pair** on the other (not instant).
-- **On ship:** PR with `Fixes #N`, close issue (either side), verify sync, update roadmap `Status`.
-- **Full workflow:** invoke skill **`update-status`** (`.cursor/skills/update-status/`, `.kiro/skills/update-status/`). Uses **`github-cli`** for `gh`.
-
-## Research-gated tasks (`needs-research`)
-
-- Issues labeled `needs-research` (Linear + GitHub) are complex and **must not be planned without prior research**.
-- Before running `/10x-plan` on these tasks, generate `context/changes/<change-id>/research.md` using `/10x-research` (internal codebase research) **and** external research (exa.ai for web search, Context7 for library docs).
-- Research targets per task are listed in `context/foundation/roadmap.md` § "Research requirements".
-- Tasks **without** this label are straightforward implementations on the existing stack — proceed directly to `/10x-plan`.
-
-## Neon Database CLI & MCP
-
-- **Project:** `flow-state` (ID: `hidden-hall-84768725`), region `aws-eu-central-1`, Postgres 18.
-- CLI: `neonctl` installed globally. Always pass `--project-id hidden-hall-84768725` and `--output json`.
-- Use Prisma (`pnpm prisma migrate dev`) for app schema changes. Use Neon MCP/CLI only for exploration or out-of-band fixes.
-- Test DDL on a temporary branch first — never run untested schema changes on main.
-- Never run destructive SQL without explicit user confirmation.
-- Connection strings are secrets — reference by env var name (`DATABASE_URL`), never echo values.
-- Full usage guide: see `.kiro/steering/neon.md`.
-
-## Vercel CLI & MCP
-
-- **Account:** `konradkaluzny-3520` (team: `konrads-projects`). Vercel CLI is installed globally.
-- Deploy preview first (`vercel --yes`), verify, then production (`vercel --prod --yes`).
-- Use `vercel env ls/add/rm` for environment variables — always specify target environment.
-- Use `vercel logs <url>` to debug deployment issues.
-- Never delete production deployments without explicit user confirmation.
-- Vercel MCP is available for structured queries (deployments, build logs, runtime logs, domains).
-- Full usage guide: see `.kiro/steering/vercel.md`.
-
-## Environment & Secrets
-
-- Never commit secrets
-- All env vars must be declared in `@src/env.js` (Zod schema).
+- Model Playwright specs on `@e2e/seed.spec.ts`; risk priorities in `@context/foundation/test-plan.md`. Use `/10x-e2e` for browser-level tests.
+- Commit types: `feat`, `docs`, `init` only — no trailing period. Observed pattern: `feat(<change-id>): title (pN)`.
+- PRs from feature branches with `Fixes #N`. Issue sync (Linear `FLO-*` ↔ GitHub `#*`): `@.cursor/skills/update-status/SKILL.md`. `gh` account `konrad-kaluzny-ceneo`: `@.cursor/skills/github-cli/SKILL.md`.
+- Neon DB, Vercel deploy, agent hooks: `@.cursor/skills/neon-database/SKILL.md`, `@.cursor/skills/vercel/SKILL.md`, `@.cursor/hooks.json`.
+- `needs-research` tasks: research before `/10x-plan` — see `@context/foundation/roadmap.md`.
