@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 import { splitSecToMinSec } from "../../src/lib/duration-input";
 import { completeCheckIn } from "./check-in";
@@ -8,6 +8,10 @@ export const FAST_WORK_CLOCK_MS = 2500;
 
 /** Advance fake clock through a 1s break (+ buffer for completion tick). */
 export const FAST_BREAK_CLOCK_MS = 2500;
+
+async function waitForTaskCreateSettled(addButton: Locator) {
+	await expect(addButton).not.toHaveText("Adding...", { timeout: 15_000 });
+}
 
 export async function setWorkDurationSec(page: Page, seconds: number) {
 	const { minutes, seconds: secs } = splitSecToMinSec(seconds);
@@ -27,6 +31,7 @@ export async function startFocusedWorkCycle(
 		.filter({ hasText: taskTitle })
 		.first();
 	await expect(taskRow).toBeVisible();
+	await waitForTaskCreateSettled(page.getByRole("button", { name: "Add" }));
 	await taskRow.getByRole("button", { name: "Focus" }).click();
 	await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
 	await setWorkDurationSec(page, durationSec);
@@ -35,11 +40,13 @@ export async function startFocusedWorkCycle(
 }
 
 export async function addTask(page: Page, title: string) {
+	const addButton = page.getByRole("button", { name: "Add" });
 	await page.getByPlaceholder("Add a new task...").fill(title);
-	await page.getByRole("button", { name: "Add" }).click();
+	await addButton.click();
 	await expect(
 		page.getByRole("listitem").filter({ hasText: title }).first(),
 	).toBeVisible();
+	await waitForTaskCreateSettled(addButton);
 }
 
 export async function addTasks(page: Page, titles: string[]) {
@@ -93,10 +100,12 @@ export async function addTaskWithAttributes(
 	await addForm.getByRole("button", { name: workType }).click();
 	await addForm.getByRole("button", { name: weight }).click();
 	await page.getByPlaceholder("Add a new task...").fill(title);
-	await addForm.getByRole("button", { name: "Add" }).click();
+	const addButton = addForm.getByRole("button", { name: "Add" });
+	await addButton.click();
 	await expect(
 		page.getByRole("listitem").filter({ hasText: title }).first(),
 	).toBeVisible();
+	await waitForTaskCreateSettled(addButton);
 }
 
 export async function focusTask(page: Page, taskTitle: string) {

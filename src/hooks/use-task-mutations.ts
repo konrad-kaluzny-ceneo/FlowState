@@ -7,6 +7,7 @@ import {
 	useDataMode,
 	useRepositories,
 } from "~/lib/data-mode/data-mode-context";
+import type { DomainTaskId } from "~/lib/data-mode/types";
 import { api, type RouterInputs, type RouterOutputs } from "~/trpc/react";
 
 export type TaskListData = RouterOutputs["task"]["list"];
@@ -14,6 +15,9 @@ export type TaskListData = RouterOutputs["task"]["list"];
 type CreateTaskInput = RouterInputs["task"]["create"];
 type UpdateTaskInput = RouterInputs["task"]["update"];
 type DeleteTaskInput = RouterInputs["task"]["delete"];
+
+type UpdateTaskArgs = Omit<UpdateTaskInput, "id"> & { id: DomainTaskId };
+type DeleteTaskArgs = { id: DomainTaskId };
 
 type TaskListItem = TaskListData[number];
 
@@ -31,6 +35,13 @@ function formatTaskMutationError(err: unknown): string {
 
 function isTempTaskId(id: number): boolean {
 	return id < 0;
+}
+
+let nextTempTaskId = 0;
+
+function allocateTempTaskId(): number {
+	nextTempTaskId -= 1;
+	return nextTempTaskId;
 }
 
 function buildOptimisticCreateRow(
@@ -109,7 +120,7 @@ export function useTaskMutations() {
 		onMutate: async (input) => {
 			await utils.task.list.cancel();
 			const previousTasks = utils.task.list.getData();
-			const tempId = -Date.now();
+			const tempId = allocateTempTaskId();
 			const optimisticRow = buildOptimisticCreateRow(
 				input,
 				tempId,
@@ -175,7 +186,7 @@ export function useTaskMutations() {
 	);
 
 	const updateTask = useCallback(
-		async (input: UpdateTaskInput) => {
+		async (input: UpdateTaskArgs) => {
 			clearError();
 			if (mode === "guest") {
 				return taskRepo.update({
@@ -183,24 +194,24 @@ export function useTaskMutations() {
 					weight: input.weight as 1 | 2 | 3 | undefined,
 				});
 			}
-			if (isTempTaskId(input.id)) {
+			if (typeof input.id !== "number" || isTempTaskId(input.id)) {
 				return;
 			}
-			return updateMutation.mutateAsync(input);
+			return updateMutation.mutateAsync(input as UpdateTaskInput);
 		},
 		[mode, taskRepo, updateMutation, clearError],
 	);
 
 	const deleteTask = useCallback(
-		async (input: DeleteTaskInput) => {
+		async (input: DeleteTaskArgs) => {
 			clearError();
 			if (mode === "guest") {
 				return taskRepo.delete(input);
 			}
-			if (isTempTaskId(input.id)) {
+			if (typeof input.id !== "number" || isTempTaskId(input.id)) {
 				return;
 			}
-			return deleteMutation.mutateAsync(input);
+			return deleteMutation.mutateAsync(input as DeleteTaskInput);
 		},
 		[mode, taskRepo, deleteMutation, clearError],
 	);
@@ -210,6 +221,7 @@ export function useTaskMutations() {
 		updateTask,
 		deleteTask,
 		isMutating,
+		isCreating: createMutation.isPending,
 		error,
 		clearError,
 	};

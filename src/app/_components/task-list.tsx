@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { useRepositories } from "~/lib/data-mode/data-mode-context";
+import { useTaskMutations } from "~/hooks/use-task-mutations";
 import type { DomainTask, DomainTaskId } from "~/lib/data-mode/types";
 
 const WORK_TYPE_CONFIG = {
@@ -93,7 +93,7 @@ type TaskListProps = {
 
 export function TaskList({
 	tasks,
-	onRefresh,
+	onRefresh: _onRefresh,
 	focusedTaskId,
 	highlightedTaskId = null,
 	onFocusTask,
@@ -102,7 +102,15 @@ export function TaskList({
 	onMidCycleMarkComplete,
 	suggestionLoading = false,
 }: TaskListProps) {
-	const { tasks: taskRepo } = useRepositories();
+	const {
+		createTask,
+		updateTask,
+		deleteTask,
+		isMutating,
+		isCreating,
+		error,
+		clearError,
+	} = useTaskMutations();
 
 	const [newTitle, setNewTitle] = useState("");
 	const [showDetails, setShowDetails] = useState(false);
@@ -116,7 +124,6 @@ export function TaskList({
 		"DEEP_WORK" | "OPERATIONAL" | "REACTIVE"
 	>("OPERATIONAL");
 	const [editWeight, setEditWeight] = useState<1 | 2 | 3>(2);
-	const [isPending, setIsPending] = useState(false);
 
 	const activeTasks = tasks.filter((t) => t.status === "active");
 	const completedTasks = tasks.filter((t) => t.status === "completed");
@@ -148,24 +155,35 @@ export function TaskList({
 			return;
 		}
 
-		setIsPending(true);
-		try {
-			await taskRepo.update({
-				id,
-				title: editTitle.trim(),
-				workType: editWorkType,
-				weight: editWeight,
-			});
-			await onRefresh();
-			setEditingId(null);
-			setEditTitle("");
-		} finally {
-			setIsPending(false);
-		}
+		await updateTask({
+			id,
+			title: editTitle.trim(),
+			workType: editWorkType,
+			weight: editWeight,
+		});
+		setEditingId(null);
+		setEditTitle("");
 	}
 
 	return (
 		<div className="w-full max-w-lg space-y-6" data-testid="task-list">
+			{error != null && (
+				<div
+					className="rounded-lg border border-red-400/40 bg-red-500/20 px-4 py-3 text-red-100 text-sm"
+					data-testid="task-list-error"
+					role="alert"
+				>
+					{error}
+					<button
+						className="ml-3 underline hover:text-white"
+						onClick={clearError}
+						type="button"
+					>
+						Dismiss
+					</button>
+				</div>
+			)}
+
 			<form
 				className="space-y-2"
 				onSubmit={(e) => {
@@ -175,21 +193,15 @@ export function TaskList({
 					}
 
 					void (async () => {
-						setIsPending(true);
-						try {
-							await taskRepo.create({
-								title: newTitle.trim(),
-								workType: newWorkType,
-								weight: newWeight,
-							});
-							await onRefresh();
-							setNewTitle("");
-							setShowDetails(false);
-							setNewWorkType("OPERATIONAL");
-							setNewWeight(2);
-						} finally {
-							setIsPending(false);
-						}
+						await createTask({
+							title: newTitle.trim(),
+							workType: newWorkType,
+							weight: newWeight,
+						});
+						setNewTitle("");
+						setShowDetails(false);
+						setNewWorkType("OPERATIONAL");
+						setNewWeight(2);
 					})();
 				}}
 			>
@@ -203,10 +215,10 @@ export function TaskList({
 					/>
 					<button
 						className="rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
-						disabled={isPending || !newTitle.trim()}
+						disabled={isCreating || !newTitle.trim()}
 						type="submit"
 					>
-						{isPending ? "Adding..." : "Add"}
+						{isCreating ? "Adding..." : "Add"}
 					</button>
 				</div>
 				<button
@@ -278,25 +290,17 @@ export function TaskList({
 								<button
 									aria-label="Mark complete"
 									className="h-5 w-5 shrink-0 rounded border-2 border-white/40 transition hover:border-green-400 hover:bg-green-400/20 disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={markCompleteLocked || isPending}
+									disabled={markCompleteLocked || isMutating}
 									onClick={() => {
 										if (canMidCycleMarkComplete) {
 											onMidCycleMarkComplete(task.id, task);
 											return;
 										}
 
-										void (async () => {
-											setIsPending(true);
-											try {
-												await taskRepo.update({
-													id: task.id,
-													status: "completed",
-												});
-												await onRefresh();
-											} finally {
-												setIsPending(false);
-											}
-										})();
+										void updateTask({
+											id: task.id,
+											status: "completed",
+										});
 									}}
 									type="button"
 								/>
@@ -369,17 +373,9 @@ export function TaskList({
 								<button
 									aria-label="Delete task"
 									className="shrink-0 text-white/40 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={cycleLocked || isPending}
+									disabled={cycleLocked || isMutating}
 									onClick={() => {
-										void (async () => {
-											setIsPending(true);
-											try {
-												await taskRepo.delete({ id: task.id });
-												await onRefresh();
-											} finally {
-												setIsPending(false);
-											}
-										})();
+										void deleteTask({ id: task.id });
 									}}
 									type="button"
 								>
@@ -405,20 +401,12 @@ export function TaskList({
 								<button
 									aria-label="Revert to active"
 									className="h-5 w-5 shrink-0 rounded border-2 border-green-400 bg-green-400/30 transition hover:border-white/40 hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={cycleLocked || isPending}
+									disabled={cycleLocked || isMutating}
 									onClick={() => {
-										void (async () => {
-											setIsPending(true);
-											try {
-												await taskRepo.update({
-													id: task.id,
-													status: "active",
-												});
-												await onRefresh();
-											} finally {
-												setIsPending(false);
-											}
-										})();
+										void updateTask({
+											id: task.id,
+											status: "active",
+										});
 									}}
 									type="button"
 								/>
@@ -433,17 +421,9 @@ export function TaskList({
 								<button
 									aria-label="Delete task"
 									className="shrink-0 text-white/40 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={cycleLocked || isPending}
+									disabled={cycleLocked || isMutating}
 									onClick={() => {
-										void (async () => {
-											setIsPending(true);
-											try {
-												await taskRepo.delete({ id: task.id });
-												await onRefresh();
-											} finally {
-												setIsPending(false);
-											}
-										})();
+										void deleteTask({ id: task.id });
 									}}
 									type="button"
 								>
