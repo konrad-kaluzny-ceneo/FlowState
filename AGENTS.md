@@ -19,7 +19,7 @@ FlowState is a Next.js Pomodoro app on the T3-style stack. Agents run terminal c
 - `pnpm typecheck` — TypeScript
 - `pnpm test` — Vitest unit/integration
 - `pnpm prisma migrate dev` — local schema migrations; never hand-write migration SQL
-- Pre-push gate: `@lefthook.yml` runs `check`, typecheck, and full `test`
+- Hooks: `@lefthook.yml` — pre-commit: Biome on staged files, typecheck, `vitest related`; pre-push: `check`, typecheck, full `test`
 
 ## Layout & conventions
 
@@ -30,7 +30,8 @@ FlowState is a Next.js Pomodoro app on the T3-style stack. Agents run terminal c
 ## Testing & delivery
 
 - Model Playwright specs on `@e2e/seed.spec.ts`; risk priorities in `@context/foundation/test-plan.md`. Use `/10x-e2e` for browser-level tests.
-- Commit types: `feat`, `docs`, `init` only — no trailing period. Observed pattern: `feat(<change-id>): title (pN)`.
-- PRs from feature branches with `Fixes #N`. Issue sync (Linear `FLO-*` ↔ GitHub `#*`): `@.cursor/skills/update-status/SKILL.md`. `gh` account `konrad-kaluzny-ceneo`: `@.cursor/skills/github-cli/SKILL.md`.
+- Vitest: co-located `*.test.ts` beside source under `src/`; single file: `pnpm exec vitest run src/<path>/<name>.test.ts`.
+- Commit types: `feat`, `chore`, `fix`, `refactor`, `docs`; `test` when scoped — no trailing period. Pattern: `feat(<change-id>): title (pN)`.
+- PRs from feature branches with `Fixes #N`; must pass `@.github/workflows/ci.yml` (quality + e2e on PR/push to main). Issue sync (Linear `FLO-*` ↔ GitHub `#*`): `@.cursor/skills/update-status/SKILL.md`. `gh` account `konrad-kaluzny-ceneo`: `@.cursor/skills/github-cli/SKILL.md`.
 - Neon DB, Vercel deploy, agent hooks: `@.cursor/skills/neon-database/SKILL.md`, `@.cursor/skills/vercel/SKILL.md`, `@.cursor/hooks.json`.
 - `needs-research` tasks: research before `/10x-plan` — see `@context/foundation/roadmap.md`.
