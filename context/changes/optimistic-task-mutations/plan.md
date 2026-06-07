@@ -286,9 +286,9 @@ No schema or data migration. Deploy is client-only; rollback is revert PR — pe
 
 #### Automated
 
-- [x] 2.1 `pnpm test` passes (full suite)
-- [x] 2.2 `pnpm typecheck` passes
-- [x] 2.3 `pnpm check` passes
+- [x] 2.1 `pnpm test` passes (full suite) — b13726f
+- [x] 2.2 `pnpm typecheck` passes — b13726f
+- [x] 2.3 `pnpm check` passes — b13726f
 
 #### Manual
 
