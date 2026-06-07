@@ -48,6 +48,7 @@ test.describe("Guest merge cycle on sign-in (S-08 / Risk #5)", () => {
 		);
 		await page.goto("/");
 		await getActiveAfterMerge;
+		await dismissFirstRunIfVisible(page);
 
 		await expect(page.getByTestId("guest-banner")).toBeHidden({
 			timeout: 30_000,
