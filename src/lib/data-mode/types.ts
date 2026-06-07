@@ -1,4 +1,4 @@
-export type DomainTaskId = string | number;
+﻿export type DomainTaskId = string | number;
 
 export type DomainTask = {
 	id: DomainTaskId;
@@ -67,6 +67,7 @@ export interface CycleRepository {
 	complete(input: {
 		cycleId: DomainTaskId;
 		markTaskDone?: boolean;
+		incrementInterruption?: boolean;
 	}): Promise<void>;
 	interrupt(input: { cycleId: DomainTaskId }): Promise<void>;
 	rebindTask(input: {

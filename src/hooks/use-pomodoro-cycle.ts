@@ -87,6 +87,7 @@ export function usePomodoroCycle() {
 	);
 	const audioRef = useRef(createAudioManager());
 	const recoveredRef = useRef(false);
+	const pendingIncrementInterruptionRef = useRef(false);
 	const useWorkerRef = useRef(
 		process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER !== "1",
 	);
@@ -495,6 +496,9 @@ export function usePomodoroCycle() {
 					cycles.complete({
 						cycleId: activeCycle.id,
 						markTaskDone,
+						...(pendingIncrementInterruptionRef.current
+							? { incrementInterruption: true }
+							: {}),
 					}),
 				);
 			} catch {
@@ -503,6 +507,8 @@ export function usePomodoroCycle() {
 				);
 				return;
 			}
+
+			pendingIncrementInterruptionRef.current = false;
 
 			stopWorker();
 			endTimeRef.current = null;
@@ -701,6 +707,7 @@ export function usePomodoroCycle() {
 		}
 
 		setPendingMarkTaskDone(true);
+		pendingIncrementInterruptionRef.current = true;
 		setAwaitingCheckIn(true);
 		setIsMidCycleSubmitting(false);
 	}, [

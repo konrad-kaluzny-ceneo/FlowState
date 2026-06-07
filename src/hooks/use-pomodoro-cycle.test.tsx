@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+﻿import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -407,7 +407,7 @@ describe("usePomodoroCycle", () => {
 				await result.current.confirmComplete(false);
 			});
 
-			// Now in break state — complete the break
+			// Now in break state â€” complete the break
 			if (i < 3) {
 				// Short breaks for first 3
 				expect(result.current.cycleKind).toBe("SHORT_BREAK");
@@ -473,7 +473,7 @@ describe("usePomodoroCycle", () => {
 			task: { id: 4, title: "Ship" },
 		});
 
-		// The break auto-start will call createCycle — make it fail
+		// The break auto-start will call createCycle â€” make it fail
 		createCycle.mockRejectedValue(new Error("network error"));
 
 		const { result } = renderHook(() => usePomodoroCycle(), {
@@ -592,7 +592,7 @@ describe("usePomodoroCycle", () => {
 		vi.stubGlobal("Worker", FakeWorker);
 	});
 
-	it("recalculates remaining within ±2s when tab becomes visible (fallback path)", async () => {
+	it("recalculates remaining within Â±2s when tab becomes visible (fallback path)", async () => {
 		vi.stubGlobal(
 			"Worker",
 			class {
@@ -900,6 +900,7 @@ describe("usePomodoroCycle", () => {
 		expect(completeCycle).toHaveBeenCalledWith({
 			cycleId: 61,
 			markTaskDone: true,
+			incrementInterruption: true,
 		});
 		expect(result.current.awaitingCheckIn).toBe(false);
 		expect(result.current.state).toBe("running");

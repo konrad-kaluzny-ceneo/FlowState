@@ -1,4 +1,4 @@
-import type {
+﻿import type {
 	CycleRepository,
 	DomainActiveCycle,
 	DomainSession,
@@ -65,6 +65,7 @@ type TrpcClient = {
 			mutate: (input: {
 				cycleId: number;
 				markTaskDone?: boolean;
+				incrementInterruption?: boolean;
 			}) => Promise<unknown>;
 		};
 		interrupt: { mutate: (input: { cycleId: number }) => Promise<unknown> };
@@ -113,6 +114,7 @@ export function createServerCycleRepository(
 			await client.cycle.complete.mutate({
 				cycleId: toNumericId(input.cycleId),
 				markTaskDone: input.markTaskDone,
+				incrementInterruption: input.incrementInterruption,
 			});
 		},
 		interrupt: async (input) => {

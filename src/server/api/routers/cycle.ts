@@ -131,6 +131,7 @@ export const cycleRouter = createTRPCRouter({
 			z.object({
 				cycleId: z.number().int(),
 				markTaskDone: z.boolean().optional(),
+				incrementInterruption: z.boolean().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -170,7 +171,12 @@ export const cycleRouter = createTRPCRouter({
 
 				await tx.session.update({
 					where: { id: cycle.sessionId },
-					data: { lastActivityAt: new Date() },
+					data: {
+						lastActivityAt: new Date(),
+						...(input.incrementInterruption
+							? { interruptionCount: { increment: 1 } }
+							: {}),
+					},
 				});
 
 				const updated = await tx.cycle.findFirst({
@@ -216,10 +222,22 @@ export const cycleRouter = createTRPCRouter({
 				throw new TRPCError({ code: "NOT_FOUND" });
 			}
 
-			return ctx.db.cycle.update({
-				where: { id: input.cycleId },
-				data: { taskId: input.taskId },
-				include: { task: true },
+			return ctx.db.$transaction(async (tx) => {
+				const updated = await tx.cycle.update({
+					where: { id: input.cycleId },
+					data: { taskId: input.taskId },
+					include: { task: true },
+				});
+
+				await tx.session.update({
+					where: { id: cycle.sessionId },
+					data: {
+						interruptionCount: { increment: 1 },
+						lastActivityAt: new Date(),
+					},
+				});
+
+				return updated;
 			});
 		}),
 
