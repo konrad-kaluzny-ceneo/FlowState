@@ -1,7 +1,7 @@
 ---
 change_id: adaptive-task-suggestion
 title: Adaptive task suggestion
-status: implementing
+status: implemented
 created: 2026-06-07
 updated: 2026-06-07
 archived_at: null

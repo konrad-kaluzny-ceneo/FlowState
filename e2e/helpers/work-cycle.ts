@@ -1,9 +1,13 @@
 import { expect, type Page } from "@playwright/test";
 
 import { splitSecToMinSec } from "../../src/lib/duration-input";
+import { completeCheckIn } from "./check-in";
 
 /** Advance fake clock through a 1s work cycle (+ buffer for completion tick). */
 export const FAST_WORK_CLOCK_MS = 2500;
+
+/** Advance fake clock through a 1s break (+ buffer for completion tick). */
+export const FAST_BREAK_CLOCK_MS = 2500;
 
 export async function setWorkDurationSec(page: Page, seconds: number) {
 	const { minutes, seconds: secs } = splitSecToMinSec(seconds);
@@ -56,4 +60,59 @@ export async function markTaskCompleteMidCycle(page: Page, taskTitle: string) {
 export async function advanceClockThroughFastWork(page: Page) {
 	await page.clock.install();
 	await page.clock.runFor(FAST_WORK_CLOCK_MS);
+}
+
+export async function setShortBreakDurationSec(page: Page, seconds: number) {
+	const { minutes, seconds: secs } = splitSecToMinSec(seconds);
+	await page.getByTestId("break-settings-toggle").click();
+	await page.getByTestId("short-break-duration-min").fill(String(minutes));
+	await page.getByTestId("short-break-duration-sec").fill(String(secs));
+}
+
+export async function advanceClockThroughFastBreak(page: Page) {
+	await page.clock.runFor(FAST_BREAK_CLOCK_MS);
+}
+
+type TaskWorkTypeLabel = "Deep" | "Ops" | "Reactive";
+type TaskWeightLabel = "Light" | "Medium" | "Heavy";
+
+export async function addTaskWithAttributes(
+	page: Page,
+	title: string,
+	workType: TaskWorkTypeLabel,
+	weight: TaskWeightLabel,
+) {
+	const addForm = page.getByTestId("task-list").locator("form");
+	const detailsToggle = addForm.getByRole("button", { name: "+ Details" });
+	if (await detailsToggle.isVisible()) {
+		await detailsToggle.click();
+	}
+	await addForm.getByRole("button", { name: workType }).click();
+	await addForm.getByRole("button", { name: weight }).click();
+	await page.getByPlaceholder("Add a new task...").fill(title);
+	await addForm.getByRole("button", { name: "Add" }).click();
+	await expect(
+		page.getByRole("listitem").filter({ hasText: title }).first(),
+	).toBeVisible();
+}
+
+export async function focusTask(page: Page, taskTitle: string) {
+	const taskRow = page
+		.getByRole("listitem")
+		.filter({ hasText: taskTitle })
+		.first();
+	await taskRow.getByRole("button", { name: "Focus" }).click();
+	await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
+}
+
+export async function completeWorkCycleWithCheckIn(
+	page: Page,
+	energy: "focused" | "steady" | "fading",
+) {
+	await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
+		timeout: 15_000,
+	});
+	await page.getByRole("button", { name: "Continue later" }).click();
+	await expect(page.getByText("Short Break")).toBeHidden();
+	await completeCheckIn(page, energy);
 }
