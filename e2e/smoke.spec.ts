@@ -1,3 +1,8 @@
+/**
+ * Risk: (none — infra smoke)
+ * Modeled on: e2e/seed.spec.ts
+ * Spec role: infra smoke — proves fixture auth + app shell load
+ */
 import { expect, test } from "./fixtures";
 
 test("authenticated user sees app shell with task list", async ({ page }) => {

@@ -47,8 +47,24 @@
  ```
  set CI=true && pnpm test:e2e
  ```
- **Local speed:** Playwright starts `next dev --turbo` on port 3001 (no full build). Fastest loop: keep dev running with `set NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` and `pnpm exec next dev --turbo -p 3001`, then `set CI=true && set E2E_REUSE_SERVER=1 && pnpm test:e2e`. **Workers:** default 4 in CI, ~50% CPU locally; override with `E2E_WORKERS`. **CI / prod parity:** `set E2E_PRODUCTION_SERVER=1` forces `build && next start` (GitHub Actions sets this automatically via `GITHUB_ACTIONS`).
+ **Local speed:** Playwright starts `next dev --turbo` on port 3001 (no full build). Fastest loop: keep dev running with `set NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` and `pnpm exec next dev --turbo -p 3001`, then `set CI=true && set E2E_REUSE_SERVER=1 && pnpm test:e2e`. **Workers:** default `1` when `CI=true` (Neon Auth); ~50% CPU cores locally; override with `E2E_WORKERS`. **CI / prod parity:** `set E2E_PRODUCTION_SERVER=1` forces `build && next start` (GitHub Actions sets this automatically via `GITHUB_ACTIONS`).
  - To run a single spec: `set CI=true && pnpm exec playwright test e2e/my-spec.spec.ts`
+
+### E2E Testing Rules
+
+When adding or changing Playwright specs, follow `/10x-e2e` and model every new test on `@e2e/seed.spec.ts`. Risks and priorities live in `@context/foundation/test-plan.md`.
+
+- **Generation exemplar:** Read `e2e/seed.spec.ts` before writing a new spec — copy its structure (provenance header, fixture auth, helpers, business-outcome assertions).
+- **Authentication:** Use API sign-up/sign-in via `e2e/fixtures.ts` and `createTestUser` — never log in through the sign-in UI; do not use shared `storageState` / `playwright/.auth/user.json`.
+- **Locators:** Prefer `getByRole`, `getByLabel`, and `getByText`. Use `getByTestId` only for overlays and panels where roles are ambiguous (matches existing specs).
+- **Never** use CSS selectors, XPath, or DOM-structure locators.
+- **Isolation:** Each test must be independently runnable — unique data (`Date.now()` suffix), no ordering assumptions, no shared state between tests.
+- **Waits:** Never use `page.waitForTimeout()`. Wait for state: `expect(locator).toBeVisible()`, `page.waitForURL()`, `page.waitForResponse()`.
+- **Assertions:** Assert the business outcome from test-plan risk wording, not implementation details.
+- **VERIFY before merge:** Run a deliberate-break check on new critical specs; record results in `e2e/DELIBERATE-BREAK.md`.
+- **Eligibility:** Do not E2E what an integration test can prove (pure logic, single-endpoint contracts). E2E is for flows crossing auth → routing → API → DB or UI-only state.
+- **Workers:** Use `E2E_WORKERS=1` in CI to avoid Neon Auth rate limits (default when `CI=true`).
+
 - **E2E vs integration:** A direct DB query or server-side tRPC caller is an integration test, not e2e. True e2e requires a browser with an authenticated session hitting the running app. Do not claim "e2e verified" unless a real browser flow (with auth) was exercised.
 - **Test pyramid:** All changes must include unit and integration tests. Code must be testable at each level of the pyramid (unit → integration → e2e). Do not ship code without covering the appropriate test levels for the change.
 - **Vitest agent output (`AI_AGENT=1`):** Vitest 4.1+ switches to compact output (failures only) when `AI_AGENT=1` is set. Use this in agent hooks and scoped test runs so hook feedback stays short and token-cheap — e.g. `set AI_AGENT=1 && pnpm exec vitest related src/hooks/foo.ts --run`. Hooks in `scripts/agent-hooks/related-tests.mjs` set this automatically; set it manually when invoking Vitest from shell scripts the agent will read.

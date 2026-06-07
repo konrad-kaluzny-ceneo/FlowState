@@ -27,7 +27,6 @@ const workerCount = process.env.E2E_WORKERS
 		: undefined;
 
 export default defineConfig({
-	globalSetup: "./e2e/global.setup.ts",
 	testDir: "./e2e",
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
@@ -41,18 +40,17 @@ export default defineConfig({
 	projects: [
 		{
 			name: "chromium",
-			// Per-test API sign-up/sign-in via e2e/fixtures.ts — no shared storageState.
 			use: {
 				...devices["Desktop Chrome"],
 			},
-			testIgnore: /guest-trial\.spec\.ts/,
+			testIgnore: /guest-.*\.spec\.ts/,
 		},
 		{
 			name: "guest-chromium",
 			use: {
 				...devices["Desktop Chrome"],
 			},
-			testMatch: /guest-trial\.spec\.ts/,
+			testMatch: /guest-.*\.spec\.ts/,
 		},
 	],
 	webServer: {

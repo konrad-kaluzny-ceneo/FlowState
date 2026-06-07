@@ -1,3 +1,8 @@
+/**
+ * Risk: #3 — last active task mid-cycle shows only end-break option (no continue)
+ * Modeled on: e2e/seed.spec.ts
+ * Spec role: risk proof
+ */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { ensureIdleCycle } from "./helpers/idle-cycle";

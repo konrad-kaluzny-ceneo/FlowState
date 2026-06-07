@@ -1,3 +1,8 @@
+/**
+ * Risk: S-01 / #7 — pomodoro cycle completion overlay, check-in gate, task done flow
+ * Modeled on: e2e/seed.spec.ts
+ * Spec role: risk proof (S-01 regression + check-in step)
+ */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
