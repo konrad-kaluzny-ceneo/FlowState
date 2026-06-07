@@ -21,3 +21,9 @@ export function getFirstRunCopy(mode: FirstRunMode): FirstRunCopy {
 		dismissLabel: "Got it",
 	};
 }
+
+export const CHECK_IN_COACH_LINE =
+	"This quick check-in helps FlowState suggest what fits your energy.";
+
+export const SUGGESTION_COACH_LINE =
+	"Accept the suggestion or tap Focus on any other task — you're always in control.";

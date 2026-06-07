@@ -104,12 +104,52 @@ Plan steps and `/10x-implement` gates labeled **Manual Verification** must be ex
 
 **When asking the human:** state what was already run, what gap remains, and the minimal human action (e.g. "confirm chime is audible in Chrome"). Do not treat manual gates as a default handoff.
 
+## Git workflow
+
+- **Critical:** Never commit or push directly to `main` (or `master`). All slice/change work happens on a feature branch.
+- **Start every change on a branch.** Before the first edit or commit for a slice, create and switch to a feature branch. Do this at the beginning of `/10x-new`, `/10x-research`, or any implementation task — not only when opening a PR.
+- **Branch naming:** `features/<change-id>` where `<change-id>` is the kebab-case Change ID from `context/foundation/roadmap.md` or `context/changes/<change-id>/` (e.g. `features/adaptive-task-suggestion`). If Linear suggests a git branch name for the issue, prefer that when it clearly maps to the same change.
+- **Create branch from up-to-date default:**
+
+```powershell
+git switch main; git pull; git switch -c features/<change-id>
+```
+
+If the default branch is not `main`, use whatever `git remote show origin` reports as HEAD.
+
+- **Already on the wrong branch?** If `git branch --show-current` is `main`, `master`, or a branch for a different change, stop and create/switch to the correct `features/<change-id>` before committing.
+- **Resume work:** If `features/<change-id>` already exists locally or on origin, switch to it instead of creating a duplicate: `git switch features/<change-id>` (pull if tracking remote).
+- **Context-only edits** under `context/changes/<change-id>/` follow the same rule — research and plan commits also belong on the feature branch, not on `main`.
+
+### Parallel slices — use git worktree
+
+When working on **two or more slices at the same time** (roadmap `Parallel with`, parallel agent sessions, or multiple open changes), use **[git worktree](https://git-scm.com/docs/git-worktree)** — one working directory per slice. Do **not** rely on `git switch` back and forth in a single checkout; that risks wrong-branch commits, stale builds, and port conflicts.
+
+- **One worktree per slice.** Each parallel slice gets its own directory and its own `features/<change-id>` branch checked out there.
+- **Worktree path:** sibling folder named after the change, e.g. `../FlowState-<change-id>` next to the main clone (`FlowState/` stays on `main` or the primary active slice).
+- **Add a worktree** (from the main repo root, branch must exist or use `-b`):
+
+```powershell
+cd D:\repos\10xdev\FlowState; git fetch origin
+git worktree add ..\FlowState-<change-id> -b features/<change-id> origin/main
+```
+
+If the branch already exists: `git worktree add ..\FlowState-<change-id> features/<change-id>`
+
+- **List / remove:** `git worktree list`; when a slice is merged and archived, `git worktree remove ..\FlowState-<change-id>` (directory clean first).
+- **Agent scope:** Run terminal commands and edits **inside the worktree** for that slice only. Do not mix files or commits across worktrees.
+- **Dev servers:** Each worktree needs a distinct port if running `pnpm dev` or Playwright locally (e.g. 3000 vs 3001) — see E2E section for port conventions.
+- **Shared config:** Copy or symlink `.env` into each worktree if needed; never commit secrets. Run `pnpm install` in a new worktree before building (isolated `node_modules` per checkout).
+
+Single-slice work can stay in the main clone with `git switch`; use worktrees when parallelism is intentional.
+
 ## Commit Conventions
 
 Allowed commit types: `feat`, `docs`, `init` only. No trailing period.
 
 ## GitHub CLI (`gh`)
 
+- **Branches:** See **Git workflow** above — never commit to `main`; push feature branches only.
 - `gh` is installed and authenticated with account `konrad-kaluzny-ceneo`. Always use this account.
 - Use `gh` for all GitHub operations (PRs, issues, releases, workflows). Prefer non-interactive flags (`--yes`, `--title`, `--body`).
 - Use `--json` flag when parsing output (e.g., `gh pr list --json number,title,state`).

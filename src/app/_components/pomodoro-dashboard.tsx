@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
@@ -8,9 +8,14 @@ import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion
 import { TaskList } from "~/app/_components/task-list";
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
+import { useOnboarding } from "~/hooks/use-onboarding-state";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import { useGuestDomainTasks } from "~/lib/data-mode/use-domain-tasks";
+import {
+	CHECK_IN_COACH_LINE,
+	SUGGESTION_COACH_LINE,
+} from "~/lib/onboarding/copy";
 import { api } from "~/trpc/react";
 
 function PomodoroDashboardBody({
@@ -18,13 +23,36 @@ function PomodoroDashboardBody({
 	refreshTasks,
 	enableCheckInGate = false,
 	enableSuggestionGate = false,
+	checkInCoachLine,
+	suggestionCoachLine,
+	onCheckInCoachSeen,
+	onSuggestionCoachSeen,
 }: {
 	tasks: ReturnType<typeof useGuestDomainTasks>["tasks"];
 	refreshTasks: () => Promise<void>;
 	enableCheckInGate?: boolean;
 	enableSuggestionGate?: boolean;
+	checkInCoachLine?: string;
+	suggestionCoachLine?: string;
+	onCheckInCoachSeen?: () => void;
+	onSuggestionCoachSeen?: () => void;
 }) {
 	const pomodoro = usePomodoroCycle();
+
+	useEffect(() => {
+		if (
+			enableSuggestionGate &&
+			suggestionCoachLine != null &&
+			pomodoro.pendingSuggestion.status === "ready"
+		) {
+			onSuggestionCoachSeen?.();
+		}
+	}, [
+		enableSuggestionGate,
+		suggestionCoachLine,
+		pomodoro.pendingSuggestion.status,
+		onSuggestionCoachSeen,
+	]);
 
 	const activeTaskIds = useMemo(
 		() => new Set(tasks.filter((t) => t.status === "active").map((t) => t.id)),
@@ -94,6 +122,7 @@ function PomodoroDashboardBody({
 					<TaskSuggestionCard status="loading" />
 				) : pomodoro.pendingSuggestion.status === "ready" ? (
 					<TaskSuggestionCard
+						coachLine={suggestionCoachLine}
 						isAccepting={pomodoro.isAcceptingSuggestion}
 						onAccept={() => void pomodoro.acceptSuggestion()}
 						status="ready"
@@ -160,9 +189,13 @@ function PomodoroDashboardBody({
 				pomodoro.awaitingCheckIn &&
 				pomodoro.activeCycle != null && (
 					<CheckInOverlay
+						coachLine={checkInCoachLine}
 						cycleId={Number(pomodoro.activeCycle.id)}
 						isSubmitting={pomodoro.isConfirming}
-						onSubmit={pomodoro.submitCheckIn}
+						onSubmit={async (energy) => {
+							onCheckInCoachSeen?.();
+							await pomodoro.submitCheckIn(energy);
+						}}
 					/>
 				)}
 
@@ -184,6 +217,12 @@ function PomodoroDashboardBody({
 function AuthenticatedPomodoroDashboard() {
 	const [tasks] = api.task.list.useSuspenseQuery();
 	const utils = api.useUtils();
+	const {
+		shouldShowCheckInCoach,
+		shouldShowSuggestionCoach,
+		markCheckInCoachSeen,
+		markSuggestionCoachSeen,
+	} = useOnboarding();
 
 	const domainTasks = useMemo(
 		() => tasks.map((t) => ({ ...t, weight: t.weight as 1 | 2 | 3 })),
@@ -192,11 +231,19 @@ function AuthenticatedPomodoroDashboard() {
 
 	return (
 		<PomodoroDashboardBody
+			checkInCoachLine={
+				shouldShowCheckInCoach ? CHECK_IN_COACH_LINE : undefined
+			}
 			enableCheckInGate
 			enableSuggestionGate
+			onCheckInCoachSeen={markCheckInCoachSeen}
+			onSuggestionCoachSeen={markSuggestionCoachSeen}
 			refreshTasks={async () => {
 				await utils.task.list.invalidate();
 			}}
+			suggestionCoachLine={
+				shouldShowSuggestionCoach ? SUGGESTION_COACH_LINE : undefined
+			}
 			tasks={domainTasks}
 		/>
 	);
