@@ -245,7 +245,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** Neon Auth middleware configuration for optional session on `/` — owner: `/10x-implement` Phase 4. Block: no.
 - **Risk:** Dual-store complexity and merge edge cases (title collision, active cycle). Plan: `context/changes/guest-local-storage-merge/plan.md`.
-- **Status:** done — shipped 2026-06-07; change `guest-local-storage-merge` at `context/changes/guest-local-storage-merge/`
+- **Status:** done — archived 2026-06-07 at `context/archive/2026-05-29-guest-local-storage-merge/`
 
 ### S-09: Optimistic task mutations (authenticated UX)
 
@@ -329,6 +329,7 @@ Items tagged `needs-research` are non-trivial — they require external research
 
 ## Done
 
+- **S-08: use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account** — Archived 2026-06-07 → `context/archive/2026-05-29-guest-local-storage-merge/`. Lesson: —.
 - **S-08: use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account** — Shipped 2026-06-07 → change `guest-local-storage-merge` (`context/changes/guest-local-storage-merge/`). E2E: `e2e/guest-trial.spec.ts`, `e2e/guest-merge-on-sign-in.spec.ts`, `e2e/guest-merge-cycle-on-sign-in.spec.ts`.
 - **S-03: mark a task done mid-cycle and choose between picking the next task to keep the cycle running or ending the cycle to take a break now** — Archived 2026-06-06 → product in `testing-active-slice-browser-proofs` (`context/archive/2026-06-06-testing-active-slice-browser-proofs/`). Lesson: bundled S-03 + S-05 UI with test-plan Phase 2 e2e.
 - **S-05: declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session** — Archived 2026-06-06 → product in `testing-active-slice-browser-proofs` (`context/archive/2026-06-06-testing-active-slice-browser-proofs/`). Lesson: check-in gate e2e partially covered; batched tRPC oracle deferred.
