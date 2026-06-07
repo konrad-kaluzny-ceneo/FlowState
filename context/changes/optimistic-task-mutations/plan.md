@@ -28,7 +28,7 @@ While logged in, every direct task-list action (add, save edit, mark complete, r
 
 ### Verification
 
-- Unit tests assert `cancelQueries`, `setQueryData`, rollback, and `invalidate` for all five mutation paths.
+- Unit tests assert `cancel`, `setData`, rollback, and `invalidate` for all five mutation paths.
 - Manual: add/complete/delete tasks in authenticated dashboard with network throttling — UI moves before response; forced 500 restores prior list + error message.
 - `pnpm test`, `pnpm typecheck`, `pnpm check` pass; existing e2e specs remain green.
 
@@ -45,7 +45,7 @@ While logged in, every direct task-list action (add, save edit, mark complete, r
 
 Add **`useTaskMutations`** at `src/hooks/use-task-mutations.ts` — a mode-aware hook that:
 
-1. **Authenticated:** registers `api.task.create` / `api.task.update` / `api.task.delete` via `useMutation` with shared helpers for `cancelQueries` → snapshot previous list → `setQueryData` patch → rollback on `onError` → `utils.task.list.invalidate()` on `onSettled`.
+1. **Authenticated:** registers `api.task.create` / `api.task.update` / `api.task.delete` via `useMutation` with shared helpers for `utils.task.list.cancel()` → snapshot previous list via `getData()` → `setData(updater)` patch → rollback on `onError` → `utils.task.list.invalidate()` on `onSettled`.
 2. **Guest:** delegates to `useRepositories().tasks` (existing sync path); no cache operations.
 3. Exposes imperative methods (`createTask`, `updateTask`, `deleteTask`), aggregated `isMutating`, and local `error` / `clearError` for task-list error UX.
 
@@ -61,6 +61,12 @@ Wire **`TaskList`** to call hook methods instead of `taskRepo` + `await onRefres
 
 **Create reconciliation:** On `onSuccess`, replace the temp-ID row in cache with the server-returned task (match by temp id or title+timestamp fallback). Do not append a duplicate.
 
+**Optimistic create row shape:** Temp row must satisfy `RouterOutputs["task"]["list"][number]` — copy `userId` from an existing cached row (or first list item); set `status: "active"`, `createdAt`/`updatedAt` to `new Date()`, and input `workType`/`weight` with Prisma defaults as fallback.
+
+**Temp-ID guard:** While `id` is a negative number (create in flight), reject or no-op `updateTask`/`deleteTask` server calls — optimistic-only or disabled UI — to avoid `NOT_FOUND` against Postgres.
+
+**Imperative API:** `createTask` / `updateTask` / `deleteTask` use `mutateAsync` so existing `TaskList` async handlers can `await` completion without reintroducing `onRefresh`.
+
 **Mid-cycle guard:** When `canMidCycleMarkComplete` is true, `TaskList` already routes to `onMidCycleMarkComplete` — do not route that click through `useTaskMutations.updateTask`; cycle hook invalidation remains unchanged.
 
 ## Phase 1: Optimistic mutation hook
@@ -75,9 +81,9 @@ Implement `useTaskMutations` with TanStack Query optimistic lifecycle for all fi
 
 **File**: `src/hooks/use-task-mutations.ts` (new)
 
-**Intent**: Centralize optimistic patch logic so create/update/delete/revert share one `cancelQueries` + snapshot + `setQueryData` pattern.
+**Intent**: Centralize optimistic patch logic so create/update/delete/revert share one `cancel()` + snapshot + `setData()` pattern.
 
-**Contract**: Internal helpers (not exported unless tests need them) that operate on `utils.task.list.getData()` / `setQueryData(undefined, updater)` where list items match the Prisma task row shape returned by `task.list` (includes `weight` as number). Create appends a temp row; update merges input fields by `id`; delete filters by `id`. Export type alias for list data if tests require it.
+**Contract**: Internal helpers (not exported unless tests need them) that operate on `utils.task.list.getData()` / `setData(updater)` where list items match `RouterOutputs["task"]["list"][number]`. Create appends a temp row (see Critical Implementation Details); update merges input fields by `id`; delete filters by `id`. Export type alias `TaskListData = RouterOutputs["task"]["list"]` if tests require it.
 
 #### 2. useTaskMutations hook
 
@@ -93,7 +99,7 @@ Implement `useTaskMutations` with TanStack Query optimistic lifecycle for all fi
 - `isMutating: boolean` — aggregate pending state across the three mutations
 - `error: string | null`, `clearError(): void` — set on mutation `onError` with user-readable message (tRPC `NOT_FOUND` → "Task not found"; generic fallback otherwise)
 
-Each authenticated mutation: `onMutate` cancels in-flight list queries, saves `previousTasks`, patches cache; `onError` restores `previousTasks` and sets error; `onSettled` calls `void utils.task.list.invalidate()`.
+Each authenticated mutation: `onMutate` awaits `utils.task.list.cancel()`, saves `previousTasks` from `getData()`, patches via `setData`; `onError` restores `previousTasks` with `setData(() => previousTasks)` and sets error; `onSettled` calls `void utils.task.list.invalidate()`.
 
 Guest branch: call `taskRepo.create/update/delete` directly (no cache ops, no error swallowing).
 
@@ -103,13 +109,13 @@ Guest branch: call `taskRepo.create/update/delete` directly (no cache ops, no er
 
 **Intent**: Lock optimistic behavior before UI wiring — the primary regression guard for this slice.
 
-**Contract**: Mock `~/trpc/react` (`api.useUtils`, `api.task.*.useMutation`) and `~/lib/data-mode/data-mode-context` (`useDataMode`, `useRepositories`). Tests (authenticated mode):
+**Contract**: Mock `~/trpc/react` (`api.useUtils` with `task.list.setData`, `getData`, `cancel`, `invalidate`; `api.task.*.useMutation`) and `~/lib/data-mode/data-mode-context` (`useDataMode`, `useRepositories`). Tests (authenticated mode):
 
-- Create: `setQueryData` called with appended task before mutate resolves; `invalidate` on settle
+- Create: `setData` called with appended task before mutate resolves; `invalidate` on settle
 - Update (edit + status): cache row patched optimistically
 - Delete: row removed optimistically
-- Error: `setQueryData` restores snapshot; error string exposed
-- Guest mode: repository called; no `setQueryData`
+- Error: `setData` restores snapshot; error string exposed
+- Guest mode: repository called; no `setData` / `cancel`
 
 Follow `use-pomodoro-cycle.test.tsx` mock + `QueryClientProvider` wrapper pattern.
 
@@ -182,8 +188,8 @@ Replace pessimistic repository + `onRefresh` pattern in `TaskList` with `useTask
 - Mark complete moves row to Completed section instantly
 - Revert to active moves row back instantly
 - Delete removes row instantly
-- Guest mode: all CRUD still works (no regression)
-- Simulate mutation failure (devtools offline or blocked request): list rolls back; `task-list-error` visible
+- Guest mode: all CRUD still works (no regression; no cache rollback or error banner required)
+- Simulate authenticated mutation failure (devtools offline or blocked request): list rolls back; `task-list-error` visible
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
 
@@ -245,7 +251,7 @@ Run full automated gates and complete manual acceptance against NFR 200ms acknow
 
 ## Performance Considerations
 
-Optimistic patches avoid an extra refetch round-trip on the hot path; `invalidate` on settle runs in background for reconciliation. `cancelQueries` on `onMutate` prevents stale refetch from overwriting optimistic state mid-flight. No change to 30s staleTime default.
+Optimistic patches avoid an extra refetch round-trip on the hot path; `invalidate` on settle runs in background for reconciliation. `utils.task.list.cancel()` on `onMutate` prevents stale refetch from overwriting optimistic state mid-flight. No change to 30s staleTime default.
 
 ## Migration Notes
 
@@ -268,9 +274,9 @@ No schema or data migration. Deploy is client-only; rollback is revert PR — pe
 
 #### Automated
 
-- [ ] 1.1 `pnpm test src/hooks/use-task-mutations.test.tsx` passes
-- [ ] 1.2 `pnpm typecheck` passes
-- [ ] 1.3 `pnpm check` passes
+- [x] 1.1 `pnpm test src/hooks/use-task-mutations.test.tsx` passes
+- [x] 1.2 `pnpm typecheck` passes
+- [x] 1.3 `pnpm check` passes
 
 #### Manual
 
@@ -287,7 +293,7 @@ No schema or data migration. Deploy is client-only; rollback is revert PR — pe
 #### Manual
 
 - [ ] 2.4 Logged-in CRUD (add, edit, complete, revert, delete) updates list immediately
-- [ ] 2.5 Guest mode CRUD unchanged; mutation failure shows rollback + `task-list-error`
+- [ ] 2.5 Guest mode CRUD unchanged (no cache rollback); auth mutation failure shows rollback + `task-list-error`
 
 ### Phase 3: Regression and acceptance
 
