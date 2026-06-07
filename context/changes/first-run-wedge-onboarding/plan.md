@@ -513,13 +513,13 @@ Browser proofs for onboarding surfaces; extend helpers so existing wedge specs s
 
 #### Automated
 
-- [x] 5.1 `pnpm check` passes
-- [x] 5.2 `pnpm typecheck` passes
-- [x] 5.3 `pnpm test` passes
-- [x] 5.4 `set CI=true && pnpm test:e2e e2e/first-run-onboarding.spec.ts` passes
-- [x] 5.5 `set CI=true && pnpm test:e2e e2e/guest-first-run.spec.ts` passes
-- [x] 5.6 `set CI=true && pnpm test:e2e e2e/task-suggestion.spec.ts` passes
+- [x] 5.1 `pnpm check` passes — bb968cc
+- [x] 5.2 `pnpm typecheck` passes — bb968cc
+- [x] 5.3 `pnpm test` passes — bb968cc
+- [x] 5.4 `set CI=true && pnpm test:e2e e2e/first-run-onboarding.spec.ts` passes — bb968cc
+- [x] 5.5 `set CI=true && pnpm test:e2e e2e/guest-first-run.spec.ts` passes — bb968cc
+- [x] 5.6 `set CI=true && pnpm test:e2e e2e/task-suggestion.spec.ts` passes — bb968cc
 
 #### Manual
 
-- [x] 5.7 Two-cycle manual smoke: coaches once each; empty guide recurs at zero tasks
+- [x] 5.7 Two-cycle manual smoke: coaches once each; empty guide recurs at zero tasks — bb968cc
