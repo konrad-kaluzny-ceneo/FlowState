@@ -9,7 +9,7 @@ interface TestUserCredentials {
 
 const AUTH_RATE_LIMIT_STATUSES = new Set([429, 503]);
 
-async function postAuthWithRetry(
+export async function postAuthWithRetry(
 	request: APIRequestContext,
 	url: string,
 	data: Record<string, string>,

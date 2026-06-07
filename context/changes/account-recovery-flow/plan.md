@@ -398,11 +398,11 @@ Use `baseURL` from Playwright config. Do not assert email delivery or complete r
 
 #### Automated
 
-- [ ] 3.1 New validation tests pass: `pnpm test`
-- [ ] 3.2 New e2e spec passes: `pnpm test:e2e e2e/account-recovery.spec.ts`
-- [ ] 3.3 Full e2e suite passes: `pnpm test:e2e`
-- [ ] 3.4 Type checking passes: `pnpm typecheck`
-- [ ] 3.5 Linting passes: `pnpm check`
+- [x] 3.1 New validation tests pass: `pnpm test`
+- [x] 3.2 New e2e spec passes: `pnpm test:e2e e2e/account-recovery.spec.ts`
+- [x] 3.3 Full e2e suite passes: `pnpm test:e2e`
+- [x] 3.4 Type checking passes: `pnpm typecheck`
+- [x] 3.5 Linting passes: `pnpm check`
 
 #### Manual
 
