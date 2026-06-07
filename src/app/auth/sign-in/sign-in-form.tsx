@@ -98,6 +98,14 @@ export function SignInForm() {
 						required
 						type="password"
 					/>
+					<div className="flex justify-end">
+						<Link
+							className="text-blue-400 text-sm underline-offset-2 hover:underline"
+							href="/auth/forgot-password"
+						>
+							Forgot password?
+						</Link>
+					</div>
 				</div>
 
 				<button
