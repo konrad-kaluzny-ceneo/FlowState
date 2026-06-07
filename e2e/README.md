@@ -54,6 +54,10 @@ pnpm exec playwright show-report
 
 See `AGENTS.md` § E2E Testing Rules and `context/foundation/test-plan.md` §6.3 for the full cookbook.
 
+## Account recovery (S-07)
+
+`e2e/account-recovery.spec.ts` covers initiation only: the sign-in "Forgot password?" link, the forgot-password form success state, and the `POST /api/auth/request-password-reset` API contract. It does **not** assert email delivery or the full reset flow (email link → token → new password → sign-in). Complete that round-trip manually in dev using a real inbox; see `context/changes/account-recovery-flow/plan.md` § Manual Testing Steps.
+
 ## Seed Exemplar
 
 **`e2e/seed.spec.ts`** is the canonical template for new E2E specs (Risk #1 reload flow). Model new tests on this file — provenance header, fixture auth, helpers, business-outcome assertions.

@@ -17,6 +17,8 @@ export const signUpSchema = z.object({
 		.max(128, "Password must be 128 characters or less"),
 });
 
+export const passwordSchema = signUpSchema.shape.password;
+
 export interface SignUpFormState {
 	errors: {
 		name?: string;
