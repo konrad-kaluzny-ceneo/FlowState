@@ -62,8 +62,12 @@ test.describe("Seed exemplar — Risk #3 mid-cycle prompt", () => {
 		await markTaskCompleteMidCycle(page, task1);
 
 		await expect(page.getByTestId("mid-cycle-prompt-overlay")).toBeVisible();
-		await expect(page.getByTestId("mid-cycle-continue-btn")).toBeVisible();
-		await expect(page.getByTestId("mid-cycle-end-break-btn")).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Continue with selected task" }),
+		).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "End cycle and break" }),
+		).toBeVisible();
 	});
 });
 

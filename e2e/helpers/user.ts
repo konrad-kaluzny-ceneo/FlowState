@@ -14,7 +14,7 @@ async function postAuthWithRetry(
 	url: string,
 	data: Record<string, string>,
 ): Promise<APIResponse> {
-	const maxAttempts = process.env.CI ? 6 : 3;
+	const maxAttempts = process.env.CI ? 10 : 3;
 	let lastResponse: APIResponse | undefined;
 
 	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -24,7 +24,9 @@ async function postAuthWithRetry(
 		}
 		lastResponse = response;
 		if (attempt < maxAttempts) {
-			await new Promise((resolve) => setTimeout(resolve, attempt * 2_000));
+			const baseMs = Math.min(30_000, 1_000 * 2 ** (attempt - 1));
+			const jitterMs = Math.floor(Math.random() * 1_000);
+			await new Promise((resolve) => setTimeout(resolve, baseMs + jitterMs));
 		}
 	}
 
