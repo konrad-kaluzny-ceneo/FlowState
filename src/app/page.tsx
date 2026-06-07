@@ -6,13 +6,15 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
 	let isAuthenticated = false;
+	let user: { id: string; email?: string | null } | undefined;
 
 	try {
 		const { data } = await auth.getSession();
-		const user = data?.user;
+		user = data?.user;
 		isAuthenticated = Boolean(user?.id && user.email);
 	} catch {
 		isAuthenticated = false;
+		user = undefined;
 	}
 
 	if (isAuthenticated) {
@@ -24,7 +26,7 @@ export default async function Home() {
 
 	return (
 		<HydrateClient>
-			<HomeShell isAuthenticated={isAuthenticated} />
+			<HomeShell isAuthenticated={isAuthenticated} userId={user?.id ?? null} />
 		</HydrateClient>
 	);
 }

@@ -477,13 +477,13 @@ Browser proofs for onboarding surfaces; extend helpers so existing wedge specs s
 
 #### Automated
 
-- [ ] 2.1 `pnpm check` passes
-- [ ] 2.2 `pnpm typecheck` passes
-- [ ] 2.3 `pnpm test` passes
+- [x] 2.1 `pnpm check` passes
+- [x] 2.2 `pnpm typecheck` passes
+- [x] 2.3 `pnpm test` passes
 
 #### Manual
 
-- [ ] 2.4 Guest and auth first-run dismiss persists; z-index does not block check-in
+- [x] 2.4 Guest and auth first-run dismiss persists; z-index does not block check-in
 
 ### Phase 3: Empty-List Guidance in Task List
 
