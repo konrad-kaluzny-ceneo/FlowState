@@ -377,60 +377,60 @@ No DB migration. Existing users unaffected. Guest blob is device-local; clearing
 
 #### Automated
 
-- [ ] 1.1 `pnpm check` passes after PRD edits
+- [x] 1.1 `pnpm check` passes after PRD edits
 
 #### Manual
 
-- [ ] 1.2 S-08 already in roadmap At a glance — verified, not duplicated
-- [ ] 1.3 PRD guest trial path does not contradict Access Control
+- [x] 1.2 S-08 already in roadmap At a glance — verified, not duplicated
+- [x] 1.3 PRD guest trial path does not contradict Access Control
 
 ### Phase 2: Guest persistence and types
 
 #### Automated
 
-- [ ] 2.1 `pnpm test` — guest store/schema tests pass
-- [ ] 2.2 `pnpm check`
-- [ ] 2.3 `pnpm typecheck`
+- [x] 2.1 `pnpm test` — guest store/schema tests pass
+- [x] 2.2 `pnpm check`
+- [x] 2.3 `pnpm typecheck`
 
 ### Phase 3: Auth spike — guest can load `/` (gate)
 
 #### Automated
 
-- [ ] 3.1 `pnpm test` — proxy tests updated
-- [ ] 3.2 `pnpm check`
-- [ ] 3.3 `pnpm typecheck`
+- [x] 3.1 `pnpm test` — proxy tests updated
+- [x] 3.2 `pnpm check`
+- [x] 3.3 `pnpm typecheck`
 
 #### Manual
 
-- [ ] 3.4 Incognito `/` loads with guest banner, no redirect
-- [ ] 3.5 Logged-in `/` unchanged (no guest banner)
+- [x] 3.4 Incognito `/` loads with guest banner, no redirect
+- [x] 3.5 Logged-in `/` unchanged (no guest banner)
 
 ### Phase 4: Repository layer and data mode
 
 #### Automated
 
-- [ ] 4.1 `pnpm test` — repository tests pass
-- [ ] 4.2 `pnpm check`
-- [ ] 4.3 `pnpm typecheck`
+- [x] 4.1 `pnpm test` — repository tests pass
+- [x] 4.2 `pnpm check`
+- [x] 4.3 `pnpm typecheck`
 
 #### Manual
 
-- [ ] 4.4 Incognito guest task + cycle + refresh recovery
-- [ ] 4.5 Logged-in `/` uses server data only (no guest blob reads)
+- [x] 4.4 Incognito guest task + cycle + refresh recovery
+- [x] 4.5 Logged-in `/` uses server data only (no guest blob reads)
 
 ### Phase 5: Server import and post-auth hook
 
 #### Automated
 
-- [ ] 5.1 `pnpm test` — guest import integration tests pass
-- [ ] 5.2 `pnpm check`
-- [ ] 5.3 `pnpm typecheck`
+- [x] 5.1 `pnpm test` — guest import integration tests pass
+- [x] 5.2 `pnpm check`
+- [x] 5.3 `pnpm typecheck`
 
 #### Manual
 
-- [ ] 5.4 Guest work survives sign-up/sign-in merge
-- [ ] 5.5 Title collision produces numbered suffix
-- [ ] 5.6 No duplicate import on second authenticated page load
+- [x] 5.4 Guest work survives sign-up/sign-in merge
+- [x] 5.5 Title collision produces numbered suffix
+- [x] 5.6 No duplicate import on second authenticated page load
 
 ### Phase 6: E2E and regression
 
@@ -443,4 +443,4 @@ No DB migration. Existing users unaffected. Guest blob is device-local; clearing
 
 #### Manual
 
-- [ ] 6.5 Logged-in task edits do not write guest domain key
+- [x] 6.5 Logged-in task edits do not write guest domain key

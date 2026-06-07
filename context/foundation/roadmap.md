@@ -3,8 +3,8 @@ project: FlowState
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-06
-active_slices: [S-08]
+updated: 2026-06-07
+active_slices: []
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -43,7 +43,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-05 | end-of-cycle-checkin | [FLO-12](https://linear.app/flowstate-10xdev/issue/FLO-12) | [#12](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/12) (closed) | declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session | S-01 | FR-020, NFR (mental-state data privacy) | done |
 | S-06 | adaptive-task-suggestion | [FLO-13](https://linear.app/flowstate-10xdev/issue/FLO-13) | [#13](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/13) | after each check-in, see a suggested next task with a one-line rationale and accept it or override by picking any other task | S-04, S-05 | FR-021, FR-022, NFR (suggestion feedback ≥1s visible) | proposed |
 | S-07 | account-recovery-flow | [FLO-7](https://linear.app/flowstate-10xdev/issue/FLO-7) | [#9](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/9) | reset a forgotten password and recover access without losing existing tasks or session history | F-02 | FR-003a, NFR (auth must not lock user out of own data) | ready |
-| S-08 | guest-local-storage-merge | — | — | use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account | S-01, F-02 | NFR (no silent data loss), FR-004–FR-009 | active |
+| S-08 | guest-local-storage-merge | [FLO-21](https://linear.app/flowstate-10xdev/issue/FLO-21) | [#30](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/30) (closed) | use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account | S-01, F-02 | NFR (no silent data loss), FR-003b, FR-003c, FR-004–FR-009 | done |
 | S-09 | optimistic-task-mutations | — | — | see task list and task actions update immediately while logged in (optimistic UI), with rollback on server error — matching perceived speed of local guest storage | S-01, F-02 | NFR (200ms acknowledgement), FR-004–FR-008 | proposed |
 | S-10 | google-oauth-provider | [FLO-20](https://linear.app/flowstate-10xdev/issue/FLO-20) | [#20](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/20) (closed) | sign in or sign up with a Google account in one click, alongside the existing email/password flow | F-02 | FR-001, FR-002 | done |
 | F-03 | align-prisma-config | — | — | (foundation) `prisma.config.ts` aligned with Prisma 7: `dotenv/config`, `env()` helper, unpooled URL for CLI migrations; runtime adapter unchanged | — | — | proposed |
@@ -237,15 +237,15 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Outcome:** visitor uses `/` without an account to manage tasks and run a work cycle (local persistence + refresh recovery); after sign-in or sign-up, guest data imports into the account; logged-in sessions use server data only (no guest blob reads).
 - **Change ID:** guest-local-storage-merge
-- **Linear:** —
-- **GitHub:** —
+- **Linear:** [FLO-21](https://linear.app/flowstate-10xdev/issue/FLO-21)
+- **GitHub:** [#30](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/30) (closed)
 - **PRD refs:** NFR (no silent data loss), FR-004–FR-009 (trial path; account still required for durable cross-device use)
 - **Prerequisites:** S-01, F-02
 - **Parallel with:** S-02, S-07, S-09
 - **Blockers:** —
 - **Unknowns:** Neon Auth middleware configuration for optional session on `/` — owner: `/10x-implement` Phase 4. Block: no.
 - **Risk:** Dual-store complexity and merge edge cases (title collision, active cycle). Plan: `context/changes/guest-local-storage-merge/plan.md`.
-- **Status:** active — change `guest-local-storage-merge` in progress (`context/changes/guest-local-storage-merge/`)
+- **Status:** done — shipped 2026-06-07; change `guest-local-storage-merge` at `context/changes/guest-local-storage-merge/`
 
 ### S-09: Optimistic task mutations (authenticated UX)
 
@@ -294,7 +294,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-05 | end-of-cycle-checkin | FLO-12 | #12 | FlowState — end-of-cycle mindful check-in | no | Unblocks after S-01 |
 | S-06 | adaptive-task-suggestion | FLO-13 | #13 | FlowState — adaptive next-task suggestion with override (wedge) | no | Unblocks after S-04 + S-05; carries the v1 scoring formula |
 | S-07 | account-recovery-flow | FLO-7 | #9 | FlowState — verify and expose password recovery flow | no | Requires F-02 for browser-based verification of recovery flow |
-| S-08 | guest-local-storage-merge | — | — | FlowState — guest trial (localStorage) and merge on login | no | Plan at `context/changes/guest-local-storage-merge/` |
+| S-08 | guest-local-storage-merge | FLO-21 | #30 | FlowState — guest trial (localStorage) and merge on login | yes | Shipped 2026-06-07; GitHub closed, Linear Done |
 | S-09 | optimistic-task-mutations | — | — | FlowState — optimistic TanStack Query updates for authenticated task mutations | no | Unblocks after S-01; best after S-08 if guest trial ships first |
 | S-10 | google-oauth-provider | FLO-20 | #20 | FlowState — Google OAuth social login (one-click sign-in) | yes | Neon Auth supports Google OAuth natively; minimal UI addition |
 | F-03 | align-prisma-config | — | — | FlowState — align prisma.config.ts with Prisma 7 conventions | yes | Run `/10x-plan align-prisma-config`; config-only, no user-visible behavior |
@@ -329,6 +329,7 @@ Items tagged `needs-research` are non-trivial — they require external research
 
 ## Done
 
+- **S-08: use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account** — Shipped 2026-06-07 → change `guest-local-storage-merge` (`context/changes/guest-local-storage-merge/`). E2E: `e2e/guest-trial.spec.ts`, `e2e/guest-merge-on-sign-in.spec.ts`, `e2e/guest-merge-cycle-on-sign-in.spec.ts`.
 - **S-03: mark a task done mid-cycle and choose between picking the next task to keep the cycle running or ending the cycle to take a break now** — Archived 2026-06-06 → product in `testing-active-slice-browser-proofs` (`context/archive/2026-06-06-testing-active-slice-browser-proofs/`). Lesson: bundled S-03 + S-05 UI with test-plan Phase 2 e2e.
 - **S-05: declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session** — Archived 2026-06-06 → product in `testing-active-slice-browser-proofs` (`context/archive/2026-06-06-testing-active-slice-browser-proofs/`). Lesson: check-in gate e2e partially covered; batched tRPC oracle deferred.
 - **F-01: (foundation) Pomodoro session domain wired in Prisma + tRPC: Task gains workType + weight; Session, Cycle, CheckIn entities and routers exist with strict per-user isolation** — Archived 2026-06-06 → `context/archive/2026-05-26-session-domain-model/`. Lesson: —.
