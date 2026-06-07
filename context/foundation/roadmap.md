@@ -4,7 +4,7 @@ version: 1
 status: draft
 created: 2026-05-26
 updated: 2026-06-07
-active_slices: [S-07]
+active_slices: []
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -42,7 +42,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-04 | task-attributes-for-scoring | [FLO-9](https://linear.app/flowstate-10xdev/issue/FLO-9) | [#8](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/8) | tag tasks with work type (deep work / admin / reactive) and weight (1–3) at creation and during edit, with values surfaced in the task list | F-01, F-02 | FR-005 (extend), FR-017, FR-018 | done |
 | S-05 | end-of-cycle-checkin | [FLO-12](https://linear.app/flowstate-10xdev/issue/FLO-12) | [#12](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/12) (closed) | declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session | S-01 | FR-020, NFR (mental-state data privacy) | done |
 | S-06 | adaptive-task-suggestion | [FLO-13](https://linear.app/flowstate-10xdev/issue/FLO-13) | [#13](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/13) | after each check-in, see a suggested next task with a one-line rationale and accept it or override by picking any other task | S-04, S-05 | FR-021, FR-022, NFR (suggestion feedback ≥1s visible) | done |
-| S-07 | account-recovery-flow | [FLO-7](https://linear.app/flowstate-10xdev/issue/FLO-7) | [#9](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/9) | reset a forgotten password and recover access without losing existing tasks or session history | F-02 | FR-003a, NFR (auth must not lock user out of own data) | in review |
+| S-07 | account-recovery-flow | [FLO-7](https://linear.app/flowstate-10xdev/issue/FLO-7) | [#9](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/9) (closed) | reset a forgotten password and recover access without losing existing tasks or session history | F-02 | FR-003a, NFR (auth must not lock user out of own data) | done |
 | S-08 | guest-local-storage-merge | [FLO-21](https://linear.app/flowstate-10xdev/issue/FLO-21) | [#30](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/30) (closed) | use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account | S-01, F-02 | NFR (no silent data loss), FR-003b, FR-003c, FR-004–FR-009 | done |
 | S-09 | optimistic-task-mutations | — | — | see task list and task actions update immediately while logged in (optimistic UI), with rollback on server error — matching perceived speed of local guest storage | S-01, F-02 | NFR (200ms acknowledgement), FR-004–FR-008 | proposed |
 | S-10 | google-oauth-provider | [FLO-20](https://linear.app/flowstate-10xdev/issue/FLO-20) | [#20](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/20) (closed) | sign in or sign up with a Google account in one click, alongside the existing email/password flow | F-02 | FR-001, FR-002 | done |
@@ -231,7 +231,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Is Neon Auth's recovery flow already exposed end-to-end in the wired UI, or only available as an API surface? Owner: implementer (audit step in `/10x-plan`). Block: no — the audit IS the slice; if recovery is already wired, the slice closes with verification only; if not, it adds the missing UI surface.
 - **Risk:** Standalone hardening slice. Risk is leaving a guardrail gap (forgotten password = permanent lockout) silently inherited from baseline. Sequenced as `ready` and parallel because it has zero coupling to the Pomodoro domain.
-- **Status:** in review
+- **Status:** done — shipped via [PR #32](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/32) (2026-06-07)
 
 ### S-08: Guest trial and merge on login
 
@@ -329,6 +329,7 @@ Items tagged `needs-research` are non-trivial — they require external research
 
 ## Done
 
+- **S-07: reset a forgotten password and recover access without losing existing tasks or session history** — Archived 2026-06-07 → `context/archive/2026-06-07-account-recovery-flow/`. Lesson: —.
 - **S-06: after the check-in, user sees a suggested next task with a one-line rationale ("deep work — fresh and uninterrupted" / "light admin — energy dipping after 4 cycles"); user can accept it with one click or override by selecting any other task; the override is recorded as a session-context input for the next suggestion.** — Archived 2026-06-07 → `context/archive/2026-06-07-adaptive-task-suggestion/`. Lesson: —.
 - **S-08: use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account** — Archived 2026-06-07 → `context/archive/2026-05-29-guest-local-storage-merge/`. Lesson: —.
 - **S-08: use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account** — Shipped 2026-06-07 → change `guest-local-storage-merge` (`context/changes/guest-local-storage-merge/`). E2E: `e2e/guest-trial.spec.ts`, `e2e/guest-merge-on-sign-in.spec.ts`, `e2e/guest-merge-cycle-on-sign-in.spec.ts`.
