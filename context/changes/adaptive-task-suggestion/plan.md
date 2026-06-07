@@ -1,4 +1,4 @@
-﻿# Adaptive Task Suggestion (S-06) Implementation Plan
+# Adaptive Task Suggestion (S-06) Implementation Plan
 
 ## Overview
 
@@ -405,10 +405,10 @@ Browser proof for FR-021/022 and document pattern in test-plan.
 
 #### Automated
 
-- [ ] 2.1 `pnpm check` passes
-- [ ] 2.2 `pnpm typecheck` passes
-- [ ] 2.3 `pnpm exec vitest run src/lib/scoring/` passes
-- [ ] 2.4 `pnpm exec vitest run src/server/api/routers/suggestion.test.ts src/server/api/routers/suggestion-isolation.test.ts` passes
+- [x] 2.1 `pnpm check` passes - 6782d17
+- [x] 2.2 `pnpm typecheck` passes - 6782d17
+- [x] 2.3 `pnpm exec vitest run src/lib/scoring/` passes - 6782d17
+- [x] 2.4 `pnpm exec vitest run src/server/api/routers/suggestion.test.ts src/server/api/routers/suggestion-isolation.test.ts` passes - 6782d17
 
 #### Manual
 
