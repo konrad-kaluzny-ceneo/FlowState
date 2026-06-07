@@ -26,8 +26,6 @@ const workerCount = process.env.E2E_WORKERS
 		? 1
 		: undefined;
 
-const authFile = path.join(import.meta.dirname, "playwright/.auth/user.json");
-
 export default defineConfig({
 	testDir: "./e2e",
 	fullyParallel: true,
@@ -41,16 +39,10 @@ export default defineConfig({
 	},
 	projects: [
 		{
-			name: "auth-setup",
-			testMatch: /auth\.setup\.ts/,
-		},
-		{
 			name: "chromium",
 			use: {
 				...devices["Desktop Chrome"],
-				storageState: authFile,
 			},
-			dependencies: ["auth-setup"],
 			testIgnore: /guest-.*\.spec\.ts/,
 		},
 		{
