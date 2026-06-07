@@ -382,10 +382,10 @@ Use `baseURL` from Playwright config. Do not assert email delivery or complete r
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `pnpm typecheck`
-- [ ] 2.2 Linting passes: `pnpm check`
-- [ ] 2.3 Existing unit tests pass: `pnpm test`
-- [ ] 2.4 No regressions in existing e2e: `pnpm test:e2e`
+- [x] 2.1 Type checking passes: `pnpm typecheck`
+- [x] 2.2 Linting passes: `pnpm check`
+- [x] 2.3 Existing unit tests pass: `pnpm test`
+- [x] 2.4 No regressions in existing e2e: `pnpm test:e2e`
 
 #### Manual
 

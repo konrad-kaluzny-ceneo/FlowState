@@ -25,8 +25,13 @@ export function SignInForm() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const oauthError = searchParams.get("error");
+	const resetSuccess = searchParams.get("reset") === "success";
 
 	function dismissOAuthError() {
+		router.replace("/auth/sign-in");
+	}
+
+	function dismissResetSuccess() {
 		router.replace("/auth/sign-in");
 	}
 
@@ -45,6 +50,23 @@ export function SignInForm() {
 						aria-label="Dismiss error"
 						className="ml-2 text-red-300 hover:text-red-200"
 						onClick={dismissOAuthError}
+						type="button"
+					>
+						✕
+					</button>
+				</div>
+			)}
+
+			{!oauthError && resetSuccess && (
+				<div
+					className="mb-4 flex items-center justify-between rounded-md bg-green-500/10 p-3 text-green-300 text-sm"
+					role="status"
+				>
+					<span>Password updated. Sign in with your new password.</span>
+					<button
+						aria-label="Dismiss message"
+						className="ml-2 text-green-300 hover:text-green-200"
+						onClick={dismissResetSuccess}
 						type="button"
 					>
 						✕
