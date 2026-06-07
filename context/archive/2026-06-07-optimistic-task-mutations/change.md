@@ -1,10 +1,10 @@
 ---
 change_id: optimistic-task-mutations
 title: Optimistic task mutations
-status: impl_reviewed
+status: archived
 created: 2026-06-07
 updated: 2026-06-07
-archived_at: null
+archived_at: 2026-06-07T16:54:00Z
 ---
 
 ## Notes
