@@ -1,10 +1,10 @@
 ---
 change_id: guest-local-storage-merge
 title: Guest usage via localStorage with merge on login
-status: implemented
+status: archived
 created: 2026-05-29
 updated: 2026-06-07
-archived_at: null
+archived_at: 2026-06-07T13:19:10Z
 ---
 
 ## Notes
