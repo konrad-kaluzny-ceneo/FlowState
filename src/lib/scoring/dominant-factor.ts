@@ -37,16 +37,22 @@ export function getDominantRationaleKey(
 			: 0;
 
 	const contributions: Array<{ key: RationaleKey; magnitude: number }> = [
-		{ key: "override_preference", magnitude: Math.abs(overrideContribution) },
-		{ key: "interruptions", magnitude: Math.abs(interruptionContribution) },
-		{ key: "late_day", magnitude: Math.abs(lateDayContribution) },
-		{ key: "fatigue", magnitude: Math.abs(fatigueContribution) },
+		{
+			key: "override_preference",
+			magnitude: Math.max(0, overrideContribution),
+		},
+		{
+			key: "interruptions",
+			magnitude: Math.max(0, interruptionContribution),
+		},
+		{ key: "late_day", magnitude: Math.max(0, lateDayContribution) },
+		{ key: "fatigue", magnitude: Math.max(0, fatigueContribution) },
 		{
 			key:
 				context.energy === "FOCUSED" && task.workType === "DEEP_WORK"
 					? "energy_deep"
 					: "energy_light",
-			magnitude: Math.abs(energyContribution),
+			magnitude: Math.max(0, energyContribution),
 		},
 	];
 

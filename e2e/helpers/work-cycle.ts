@@ -64,7 +64,10 @@ export async function advanceClockThroughFastWork(page: Page) {
 
 export async function setShortBreakDurationSec(page: Page, seconds: number) {
 	const { minutes, seconds: secs } = splitSecToMinSec(seconds);
-	await page.getByTestId("break-settings-toggle").click();
+	const panel = page.getByTestId("break-settings-panel");
+	if (!(await panel.isVisible())) {
+		await page.getByTestId("break-settings-toggle").click();
+	}
 	await page.getByTestId("short-break-duration-min").fill(String(minutes));
 	await page.getByTestId("short-break-duration-sec").fill(String(secs));
 }

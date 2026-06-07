@@ -5,6 +5,16 @@ import { formatTaskRationale } from "~/lib/scoring/dominant-factor";
 import { pickBestTask, type ScoringContext } from "~/lib/scoring/score-task";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
+function toTaskWeight(weight: number): 1 | 2 | 3 {
+	if (weight === 1 || weight === 2 || weight === 3) {
+		return weight;
+	}
+	throw new TRPCError({
+		code: "INTERNAL_SERVER_ERROR",
+		message: "Task weight must be 1, 2, or 3",
+	});
+}
+
 export const suggestionRouter = createTRPCRouter({
 	next: protectedProcedure
 		.input(
@@ -98,7 +108,7 @@ export const suggestionRouter = createTRPCRouter({
 				taskId: task.id,
 				title: task.title,
 				workType: task.workType,
-				weight: task.weight as 1 | 2 | 3,
+				weight: toTaskWeight(task.weight),
 				rationaleKey,
 				rationale,
 			};

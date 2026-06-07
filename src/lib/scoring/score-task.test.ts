@@ -64,6 +64,26 @@ describe("scoreTask", () => {
 		expect(pickBestTask([deep, reactive], context)?.id).toBe(2);
 	});
 
+	it("prefers reactive work over deep work after interruptions", () => {
+		const context: ScoringContext = {
+			...baseContext,
+			interruptionCount: 4,
+		};
+		const deep = {
+			id: 1,
+			workType: "DEEP_WORK" as const,
+			weight: 2,
+			createdAt: new Date("2026-01-01"),
+		};
+		const reactive = {
+			id: 2,
+			workType: "REACTIVE" as const,
+			weight: 3,
+			createdAt: new Date("2026-01-02"),
+		};
+		expect(pickBestTask([deep, reactive], context)?.id).toBe(2);
+	});
+
 	it("tie-breaks on higher weight then earlier createdAt", () => {
 		const heavier = {
 			id: 1,

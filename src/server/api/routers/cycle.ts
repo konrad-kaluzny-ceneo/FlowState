@@ -223,11 +223,31 @@ export const cycleRouter = createTRPCRouter({
 			}
 
 			return ctx.db.$transaction(async (tx) => {
-				const updated = await tx.cycle.update({
-					where: { id: input.cycleId },
+				const updated = await tx.cycle.updateMany({
+					where: {
+						id: input.cycleId,
+						userId: ctx.session.user.id,
+						state: "RUNNING",
+						kind: "WORK",
+					},
 					data: { taskId: input.taskId },
+				});
+
+				if (updated.count !== 1) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "Only a running work cycle can rebind its task",
+					});
+				}
+
+				const rebound = await tx.cycle.findFirst({
+					where: { id: input.cycleId },
 					include: { task: true },
 				});
+
+				if (rebound == null) {
+					throw new TRPCError({ code: "NOT_FOUND" });
+				}
 
 				await tx.session.update({
 					where: { id: cycle.sessionId },
@@ -237,7 +257,7 @@ export const cycleRouter = createTRPCRouter({
 					},
 				});
 
-				return updated;
+				return rebound;
 			});
 		}),
 

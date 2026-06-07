@@ -1,4 +1,4 @@
-import type { EnergyLevel, WorkType } from "../../../generated/prisma/client";
+import type { EnergyLevel, WorkType } from "@prisma/generated";
 
 export type ScoringContext = {
 	energy: EnergyLevel;
@@ -32,7 +32,16 @@ export function scoreTask(task: ScoringTask, context: ScoringContext): number {
 		score *= task.workType === "DEEP_WORK" ? 0.9 : 1.05;
 	}
 
-	score *= Math.max(0.7, 1 - context.interruptionCount * 0.1);
+	if (context.interruptionCount > 0) {
+		const capped = Math.min(context.interruptionCount, 4);
+		if (task.workType === "DEEP_WORK") {
+			score *= 1 - capped * 0.08;
+		} else if (task.workType === "OPERATIONAL") {
+			score *= 1 - capped * 0.03;
+		} else {
+			score *= 1 + capped * 0.04;
+		}
+	}
 
 	if (context.localHour >= 17) {
 		score *= task.workType === "DEEP_WORK" ? 0.85 : 1.1;
