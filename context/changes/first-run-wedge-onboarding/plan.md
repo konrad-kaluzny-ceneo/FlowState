@@ -489,13 +489,13 @@ Browser proofs for onboarding surfaces; extend helpers so existing wedge specs s
 
 #### Automated
 
-- [ ] 3.1 `pnpm check` passes
-- [ ] 3.2 `pnpm typecheck` passes
-- [ ] 3.3 `pnpm test` passes
+- [x] 3.1 `pnpm check` passes
+- [x] 3.2 `pnpm typecheck` passes
+- [x] 3.3 `pnpm test` passes
 
 #### Manual
 
-- [ ] 3.4 Empty guide shows/hides with active count; CTA focuses add input
+- [x] 3.4 Empty guide shows/hides with active count; CTA focuses add input
 
 ### Phase 4: Coach Subcopy in Check-In + Suggestion (Auth Path)
 
