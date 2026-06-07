@@ -126,6 +126,7 @@ function PomodoroDashboardBody({
 					pomodoro.onMidCycleMarkComplete(taskId, task);
 				}}
 				onRefresh={refreshTasks}
+				suggestionLoading={pomodoro.pendingSuggestion.status === "loading"}
 				tasks={tasks}
 			/>
 

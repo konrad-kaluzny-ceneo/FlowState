@@ -113,24 +113,42 @@ export const suggestionRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			// Verify caller owns the cycle and suggestion flow completed on a WORK cycle
 			const cycle = await ctx.db.cycle.findFirst({
 				where: { id: input.cycleId, userId: ctx.session.user.id },
+				include: { checkIn: true },
 			});
 
 			if (!cycle) {
 				throw new TRPCError({ code: "NOT_FOUND" });
 			}
 
+			if (cycle.kind !== "WORK") {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Decisions can only be recorded for work cycles",
+				});
+			}
+
+			if (cycle.checkIn == null) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Check-in required before recording suggestion decision",
+				});
+			}
+
 			const suggestedTask = await ctx.db.task.findFirst({
 				where: {
 					id: input.suggestedTaskId,
 					userId: ctx.session.user.id,
+					status: "active",
 				},
 			});
 			const chosenTask = await ctx.db.task.findFirst({
 				where: {
 					id: input.chosenTaskId,
 					userId: ctx.session.user.id,
+					status: "active",
 				},
 			});
 
@@ -140,20 +158,34 @@ export const suggestionRouter = createTRPCRouter({
 
 			const accepted = input.suggestedTaskId === input.chosenTaskId;
 
-			return ctx.db.suggestionDecision.upsert({
-				where: { cycleId: input.cycleId },
-				create: {
-					userId: ctx.session.user.id,
-					cycleId: input.cycleId,
-					suggestedTaskId: input.suggestedTaskId,
-					chosenTaskId: input.chosenTaskId,
-					accepted,
-				},
-				update: {
-					suggestedTaskId: input.suggestedTaskId,
-					chosenTaskId: input.chosenTaskId,
-					accepted,
-				},
-			});
+			try {
+				return await ctx.db.suggestionDecision.upsert({
+					where: { cycleId: input.cycleId },
+					create: {
+						userId: ctx.session.user.id,
+						cycleId: input.cycleId,
+						suggestedTaskId: input.suggestedTaskId,
+						chosenTaskId: input.chosenTaskId,
+						accepted,
+					},
+					update: {
+						suggestedTaskId: input.suggestedTaskId,
+						chosenTaskId: input.chosenTaskId,
+						accepted,
+					},
+				});
+			} catch (error) {
+				if (error instanceof TRPCError) {
+					throw error;
+				}
+				if (
+					error instanceof Error &&
+					"code" in error &&
+					(error as { code: string }).code === "P2003"
+				) {
+					throw new TRPCError({ code: "NOT_FOUND" });
+				}
+				throw error;
+			}
 		}),
 });

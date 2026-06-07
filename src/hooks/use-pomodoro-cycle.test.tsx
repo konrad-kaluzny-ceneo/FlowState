@@ -991,6 +991,146 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.suggestedTaskId).toBe(9);
 	});
 
+	it("calls completeCycle before suggestionNext after check-in", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 80,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 400,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		const callOrder: string[] = [];
+		completeCycle.mockImplementation(async () => {
+			callOrder.push("completeCycle");
+		});
+		suggestionNextMutate.mockImplementation(async () => {
+			callOrder.push("suggestionNext");
+			return {
+				cycleId: 80,
+				taskId: 9,
+				title: "Suggested task",
+				workType: "DEEP_WORK",
+				weight: 3,
+				rationaleKey: "energy_deep",
+				rationale: "Deep work — you're focused",
+			};
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		act(() => {
+			fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+				data: { type: "complete" },
+			} as MessageEvent);
+		});
+
+		await act(async () => {
+			await result.current.onCycleCompleteConfirm(false);
+		});
+
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		expect(callOrder).toEqual(["completeCycle", "suggestionNext"]);
+	});
+
+	it("does not call recordDecision when focusing during suggestion loading", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 84,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 404,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		let resolveSuggestion: (value: unknown) => void = () => {};
+		suggestionNextMutate.mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					resolveSuggestion = resolve;
+				}),
+		);
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		act(() => {
+			fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+				data: { type: "complete" },
+			} as MessageEvent);
+		});
+
+		await act(async () => {
+			await result.current.onCycleCompleteConfirm(false);
+		});
+
+		await act(async () => {
+			void result.current.submitCheckIn("FOCUSED");
+		});
+
+		await waitFor(() => {
+			expect(result.current.pendingSuggestion.status).toBe("loading");
+		});
+
+		recordDecisionMutate.mockClear();
+
+		act(() => {
+			result.current.selectTask(12, { id: 12, title: "Other task" });
+		});
+
+		expect(recordDecisionMutate).not.toHaveBeenCalled();
+		expect(result.current.focusedTaskId).not.toBe(12);
+
+		await act(async () => {
+			resolveSuggestion({
+				cycleId: 84,
+				taskId: 9,
+				title: "Suggested task",
+				workType: "DEEP_WORK",
+				weight: 3,
+				rationaleKey: "energy_deep",
+				rationale: "Deep work — you're focused",
+			});
+		});
+	});
+
 	it("acceptSuggestion records decision and pre-focuses task", async () => {
 		activeCycleData = makeActiveCycle({
 			id: 81,

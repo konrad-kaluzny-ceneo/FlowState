@@ -349,6 +349,7 @@ describe("suggestion router", () => {
 				state: "COMPLETED",
 			},
 		];
+		checkIns = [{ cycleId: 10, userId: USER_ID, energy: "STEADY" }];
 		tasks = [
 			{
 				id: 1,
@@ -383,5 +384,37 @@ describe("suggestion router", () => {
 			chosenTaskId: 2,
 		});
 		expect(overridden.accepted).toBe(false);
+	});
+
+	it("recordDecision throws BAD_REQUEST without check-in", async () => {
+		sessions = [{ id: 1, userId: USER_ID, interruptionCount: 0 }];
+		cycles = [
+			{
+				id: 10,
+				sessionId: 1,
+				userId: USER_ID,
+				kind: "WORK",
+				state: "COMPLETED",
+			},
+		];
+		tasks = [
+			{
+				id: 1,
+				title: "A",
+				status: "active",
+				userId: USER_ID,
+				workType: "DEEP_WORK",
+				weight: 2,
+				createdAt: new Date(),
+			},
+		];
+
+		await expect(
+			caller().recordDecision({
+				cycleId: 10,
+				suggestedTaskId: 1,
+				chosenTaskId: 1,
+			}),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
 	});
 });

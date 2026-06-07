@@ -1,12 +1,5 @@
-import type { WorkType } from "../../../generated/prisma/client";
 import { buildRationale, type RationaleKey } from "./rationale";
-import type { ScoringContext, ScoringTask } from "./score-task";
-
-const TYPE_FIT: Record<ScoringContext["energy"], Record<WorkType, number>> = {
-	FOCUSED: { DEEP_WORK: 1.5, OPERATIONAL: 1.0, REACTIVE: 0.7 },
-	STEADY: { DEEP_WORK: 1.1, OPERATIONAL: 1.2, REACTIVE: 1.0 },
-	FADING: { DEEP_WORK: 0.6, OPERATIONAL: 1.3, REACTIVE: 1.4 },
-};
+import { type ScoringContext, type ScoringTask, TYPE_FIT } from "./score-task";
 
 export function getDominantRationaleKey(
 	task: ScoringTask,

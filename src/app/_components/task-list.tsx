@@ -88,6 +88,7 @@ type TaskListProps = {
 	cycleState: "idle" | "running" | "completed";
 	cycleKind?: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null;
 	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
+	suggestionLoading?: boolean;
 };
 
 export function TaskList({
@@ -99,6 +100,7 @@ export function TaskList({
 	cycleState,
 	cycleKind = null,
 	onMidCycleMarkComplete,
+	suggestionLoading = false,
 }: TaskListProps) {
 	const { tasks: taskRepo } = useRepositories();
 
@@ -123,7 +125,8 @@ export function TaskList({
 		cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
 	const focusLocked =
 		(cycleState === "running" && cycleKind === "WORK") ||
-		cycleState === "completed";
+		cycleState === "completed" ||
+		(isBreakCycle && suggestionLoading);
 	const markCompleteLocked =
 		cycleState === "completed" ||
 		isBreakCycle ||

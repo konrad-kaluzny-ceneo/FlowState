@@ -125,6 +125,7 @@ export function usePomodoroCycle() {
 	const audioRef = useRef(createAudioManager());
 	const recoveredRef = useRef(false);
 	const pendingIncrementInterruptionRef = useRef(false);
+	const suggestionFetchGenRef = useRef(0);
 	const useWorkerRef = useRef(
 		process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER !== "1",
 	);
@@ -365,6 +366,7 @@ export function usePomodoroCycle() {
 	}, [stopWorker]);
 
 	const clearSuggestion = useCallback(() => {
+		suggestionFetchGenRef.current += 1;
 		setPendingSuggestion({ status: "idle" });
 		setSuggestionCycleId(null);
 		setSuggestedTaskId(null);
@@ -386,13 +388,17 @@ export function usePomodoroCycle() {
 				return;
 			}
 			try {
-				await recordDecisionMutation.mutateAsync({
-					cycleId: suggestionCycleId,
-					suggestedTaskId: Number(suggestedId),
-					chosenTaskId: Number(chosenId),
-				});
+				await retryOnce(() =>
+					recordDecisionMutation.mutateAsync({
+						cycleId: suggestionCycleId,
+						suggestedTaskId: Number(suggestedId),
+						chosenTaskId: Number(chosenId),
+					}),
+				);
 			} catch {
-				// Best effort — override/accept still updates local pre-focus
+				setError(
+					"Could not save suggestion preference. Your choice is kept locally.",
+				);
 			}
 		},
 		[suggestionCycleId, recordDecisionMutation],
@@ -400,6 +406,7 @@ export function usePomodoroCycle() {
 
 	const fetchSuggestion = useCallback(
 		(cycleId: number) => {
+			const gen = ++suggestionFetchGenRef.current;
 			setPendingSuggestion({ status: "loading" });
 			setSuggestionCycleId(cycleId);
 			setSuggestedTaskId(null);
@@ -411,6 +418,9 @@ export function usePomodoroCycle() {
 						cycleId,
 						localHour: new Date().getHours(),
 					});
+					if (gen !== suggestionFetchGenRef.current) {
+						return;
+					}
 					if (result == null) {
 						setPendingSuggestion({ status: "empty" });
 						setSuggestedTaskId(null);
@@ -419,6 +429,9 @@ export function usePomodoroCycle() {
 						setSuggestedTaskId(result.taskId);
 					}
 				} catch {
+					if (gen !== suggestionFetchGenRef.current) {
+						return;
+					}
 					setPendingSuggestion({ status: "error" });
 					setSuggestedTaskId(null);
 				}
@@ -428,11 +441,26 @@ export function usePomodoroCycle() {
 	);
 
 	const dismissPreFocus = useCallback(() => {
+		if (
+			hasPreFocusedSuggestion &&
+			pendingSuggestion.status === "ready" &&
+			preFocusedTask != null
+		) {
+			void recordSuggestionDecision(
+				pendingSuggestion.data.taskId,
+				preFocusedTask.id,
+			);
+		}
 		setPreFocusedTask(null);
 		setHasPreFocusedSuggestion(false);
 		setFocusedTaskId(null);
 		setFocusedTask(null);
-	}, []);
+	}, [
+		hasPreFocusedSuggestion,
+		pendingSuggestion,
+		preFocusedTask,
+		recordSuggestionDecision,
+	]);
 
 	const selectTask = useCallback(
 		(taskId: DomainTaskId, task?: FocusedTask) => {
@@ -452,6 +480,10 @@ export function usePomodoroCycle() {
 				void recordSuggestionDecision(pendingSuggestion.data.taskId, taskId);
 				setSuggestedTaskId(null);
 				setHasPreFocusedSuggestion(false);
+			}
+
+			if (breakRunning && pendingSuggestion.status === "loading") {
+				return;
 			}
 
 			preFocusTask(taskId, task);
@@ -576,6 +608,7 @@ export function usePomodoroCycle() {
 		setError(null);
 		stopWorker();
 		endTimeRef.current = null;
+		clearSuggestion();
 
 		try {
 			await cycles.interrupt({ cycleId: activeCycle.id });
@@ -589,7 +622,7 @@ export function usePomodoroCycle() {
 		} catch {
 			setError("Could not interrupt the cycle. Try again.");
 		}
-	}, [activeCycle, cycles, invalidateServerCycle, stopWorker]);
+	}, [activeCycle, cycles, invalidateServerCycle, stopWorker, clearSuggestion]);
 
 	const startBreakAfterWorkComplete = useCallback(
 		async (markTaskDone: boolean) => {

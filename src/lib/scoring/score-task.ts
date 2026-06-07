@@ -15,7 +15,7 @@ export type ScoringTask = {
 	createdAt: Date;
 };
 
-const TYPE_FIT: Record<EnergyLevel, Record<WorkType, number>> = {
+export const TYPE_FIT: Record<EnergyLevel, Record<WorkType, number>> = {
 	FOCUSED: { DEEP_WORK: 1.5, OPERATIONAL: 1.0, REACTIVE: 0.7 },
 	STEADY: { DEEP_WORK: 1.1, OPERATIONAL: 1.2, REACTIVE: 1.0 },
 	FADING: { DEEP_WORK: 0.6, OPERATIONAL: 1.3, REACTIVE: 1.4 },

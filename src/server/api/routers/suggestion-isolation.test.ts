@@ -73,4 +73,20 @@ describe("suggestion router isolation", () => {
 			}),
 		).rejects.toMatchObject({ code: "NOT_FOUND" });
 	});
+
+	it("next rejects cross-user cycle", async () => {
+		cycles = [{ id: 1, userId: "victim" }];
+
+		const caller = createCaller({
+			db: db as never,
+			session: {
+				user: { id: "attacker", email: "a@example.com", name: "A" },
+			},
+			headers: new Headers(),
+		});
+
+		await expect(
+			caller.next({ cycleId: 1, localHour: 10 }),
+		).rejects.toMatchObject({ code: "NOT_FOUND" });
+	});
 });
