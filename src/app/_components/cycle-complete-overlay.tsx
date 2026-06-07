@@ -13,6 +13,8 @@ type CycleCompleteOverlayProps = {
 	onConfirm: (markTaskDone: boolean) => Promise<void>;
 	isConfirming?: boolean;
 	cycleKind?: CycleKind | null;
+	preFocusedTask?: FocusedTask;
+	onDismissPreFocus?: () => void;
 };
 
 export function CycleCompleteOverlay({
@@ -22,6 +24,8 @@ export function CycleCompleteOverlay({
 	onConfirm,
 	isConfirming = false,
 	cycleKind = null,
+	preFocusedTask = null,
+	onDismissPreFocus,
 }: CycleCompleteOverlayProps) {
 	if (state !== "completed") {
 		return null;
@@ -30,6 +34,8 @@ export function CycleCompleteOverlay({
 	const isBreak = cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
 
 	if (isBreak) {
+		const hasPreFocus = preFocusedTask != null;
+
 		return (
 			<div
 				className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
@@ -43,16 +49,32 @@ export function CycleCompleteOverlay({
 						{cycleKind === "LONG_BREAK" ? "Long break" : "Short break"} complete
 						— ready for the next cycle.
 					</p>
-					<div className="mt-8">
+					<div className="mt-8 flex flex-col gap-3">
 						<button
 							className="w-full rounded-lg bg-teal-600 py-3 font-semibold text-white transition hover:bg-teal-500 disabled:opacity-50"
-							data-testid="break-continue-btn"
+							data-testid={
+								hasPreFocus
+									? "break-continue-suggested-btn"
+									: "break-continue-btn"
+							}
 							disabled={isConfirming}
 							onClick={() => void onConfirm(false)}
 							type="button"
 						>
-							Continue
+							{hasPreFocus
+								? `Continue with ${preFocusedTask.title}`
+								: "Continue"}
 						</button>
+						{hasPreFocus && onDismissPreFocus != null && (
+							<button
+								className="w-full rounded-lg border border-teal-400/30 py-3 font-semibold text-teal-100 transition hover:bg-teal-500/20 disabled:opacity-50"
+								disabled={isConfirming}
+								onClick={onDismissPreFocus}
+								type="button"
+							>
+								Choose different task
+							</button>
+						)}
 					</div>
 				</div>
 			</div>

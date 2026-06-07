@@ -418,9 +418,9 @@ Browser proof for FR-021/022 and document pattern in test-plan.
 
 #### Automated
 
-- [ ] 3.1 `pnpm check` passes
-- [ ] 3.2 `pnpm typecheck` passes
-- [ ] 3.3 `pnpm test` passes
+- [x] 3.1 `pnpm check` passes
+- [x] 3.2 `pnpm typecheck` passes
+- [x] 3.3 `pnpm test` passes
 
 #### Manual
 

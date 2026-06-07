@@ -18,6 +18,8 @@ const getActiveCycle = vi.fn();
 const invalidateGetActive = vi.fn();
 const invalidateTaskList = vi.fn();
 const createCheckInMutate = vi.fn();
+const suggestionNextMutate = vi.fn();
+const recordDecisionMutate = vi.fn();
 
 let activeCycleData: DomainActiveCycle | null = null;
 
@@ -108,6 +110,18 @@ vi.mock("~/trpc/react", () => ({
 				}),
 			},
 		},
+		suggestion: {
+			next: {
+				useMutation: () => ({
+					mutateAsync: suggestionNextMutate,
+				}),
+			},
+			recordDecision: {
+				useMutation: () => ({
+					mutateAsync: recordDecisionMutate,
+				}),
+			},
+		},
 	},
 }));
 
@@ -178,6 +192,22 @@ describe("usePomodoroCycle", () => {
 			energy: "STEADY",
 			userId: "user-1",
 			respondedAt: new Date(),
+		});
+		suggestionNextMutate.mockResolvedValue({
+			cycleId: 70,
+			taskId: 9,
+			title: "Suggested task",
+			workType: "DEEP_WORK",
+			weight: 3,
+			rationaleKey: "energy_deep",
+			rationale: "Deep work — you're focused",
+		});
+		recordDecisionMutate.mockResolvedValue({
+			id: 1,
+			cycleId: 70,
+			suggestedTaskId: 9,
+			chosenTaskId: 9,
+			accepted: true,
 		});
 		rebindTask.mockImplementation(async (input) => ({
 			id: 99,
@@ -905,6 +935,210 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.awaitingCheckIn).toBe(false);
 		expect(result.current.state).toBe("running");
 		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+	});
+
+	it("fetches suggestion after check-in and break starts", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 80,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 400,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		act(() => {
+			fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+				data: { type: "complete" },
+			} as MessageEvent);
+		});
+
+		await act(async () => {
+			await result.current.onCycleCompleteConfirm(false);
+		});
+
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		await waitFor(() => {
+			expect(result.current.pendingSuggestion.status).toBe("ready");
+		});
+
+		expect(suggestionNextMutate).toHaveBeenCalledWith(
+			expect.objectContaining({ cycleId: 80 }),
+		);
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+		expect(result.current.suggestedTaskId).toBe(9);
+	});
+
+	it("acceptSuggestion records decision and pre-focuses task", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 81,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 401,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		act(() => {
+			fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+				data: { type: "complete" },
+			} as MessageEvent);
+		});
+
+		await act(async () => {
+			await result.current.onCycleCompleteConfirm(false);
+		});
+
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		await waitFor(() => {
+			expect(result.current.pendingSuggestion.status).toBe("ready");
+		});
+
+		await act(async () => {
+			await result.current.acceptSuggestion();
+		});
+
+		expect(recordDecisionMutate).toHaveBeenCalledWith({
+			cycleId: 81,
+			suggestedTaskId: 9,
+			chosenTaskId: 9,
+		});
+		expect(result.current.preFocusedTask).toMatchObject({
+			id: 9,
+			title: "Suggested task",
+		});
+		expect(result.current.hasPreFocusedSuggestion).toBe(true);
+	});
+
+	it("override via selectTask during break records override decision", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 82,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 402,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		act(() => {
+			fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+				data: { type: "complete" },
+			} as MessageEvent);
+		});
+
+		await act(async () => {
+			await result.current.onCycleCompleteConfirm(false);
+		});
+
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		await waitFor(() => {
+			expect(result.current.pendingSuggestion.status).toBe("ready");
+		});
+
+		recordDecisionMutate.mockClear();
+
+		act(() => {
+			result.current.selectTask(12, { id: 12, title: "Other task" });
+		});
+
+		await waitFor(() => {
+			expect(recordDecisionMutate).toHaveBeenCalledWith({
+				cycleId: 82,
+				suggestedTaskId: 9,
+				chosenTaskId: 12,
+			});
+		});
+
+		expect(result.current.suggestedTaskId).toBeNull();
+		expect(result.current.focusedTaskId).toBe(12);
+	});
+
+	it("blocks selectTask during WORK running", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 83,
+			taskId: 4,
+			task: { id: 4, title: "Current" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		act(() => {
+			result.current.selectTask(99, { id: 99, title: "Blocked" });
+		});
+
+		expect(result.current.focusedTaskId).toBe(4);
 	});
 
 	it("hasActiveSession is true after first cycle start, false after endSession", async () => {

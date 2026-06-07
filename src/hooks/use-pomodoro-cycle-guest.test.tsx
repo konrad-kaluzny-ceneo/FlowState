@@ -35,6 +35,18 @@ vi.mock("~/trpc/react", () => ({
 				}),
 			},
 		},
+		suggestion: {
+			next: {
+				useMutation: () => ({
+					mutateAsync: vi.fn(),
+				}),
+			},
+			recordDecision: {
+				useMutation: () => ({
+					mutateAsync: vi.fn(),
+				}),
+			},
+		},
 	},
 }));
 

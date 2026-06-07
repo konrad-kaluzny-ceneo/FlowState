@@ -6,6 +6,7 @@ import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
 import { TaskList } from "~/app/_components/task-list";
+import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
@@ -16,10 +17,12 @@ function PomodoroDashboardBody({
 	tasks,
 	refreshTasks,
 	enableCheckInGate = false,
+	enableSuggestionGate = false,
 }: {
 	tasks: ReturnType<typeof useGuestDomainTasks>["tasks"];
 	refreshTasks: () => Promise<void>;
 	enableCheckInGate?: boolean;
+	enableSuggestionGate?: boolean;
 }) {
 	const pomodoro = usePomodoroCycle();
 
@@ -44,6 +47,16 @@ function PomodoroDashboardBody({
 		pomodoro.focusedTask != null ||
 		pomodoro.state === "running" ||
 		pomodoro.state === "completed";
+
+	const isBreakRunning =
+		pomodoro.state === "running" &&
+		(pomodoro.cycleKind === "SHORT_BREAK" ||
+			pomodoro.cycleKind === "LONG_BREAK");
+
+	const showSuggestionCard =
+		enableSuggestionGate &&
+		isBreakRunning &&
+		pomodoro.pendingSuggestion.status !== "idle";
 
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8">
@@ -76,10 +89,36 @@ function PomodoroDashboardBody({
 				/>
 			)}
 
+			{showSuggestionCard &&
+				(pomodoro.pendingSuggestion.status === "loading" ? (
+					<TaskSuggestionCard status="loading" />
+				) : pomodoro.pendingSuggestion.status === "ready" ? (
+					<TaskSuggestionCard
+						isAccepting={pomodoro.isAcceptingSuggestion}
+						onAccept={() => void pomodoro.acceptSuggestion()}
+						status="ready"
+						suggestion={{
+							taskId: Number(pomodoro.pendingSuggestion.data.taskId),
+							title: pomodoro.pendingSuggestion.data.title,
+							workType: pomodoro.pendingSuggestion.data.workType,
+							weight: pomodoro.pendingSuggestion.data.weight,
+							rationale: pomodoro.pendingSuggestion.data.rationale,
+						}}
+					/>
+				) : pomodoro.pendingSuggestion.status === "empty" ? (
+					<TaskSuggestionCard status="empty" />
+				) : pomodoro.pendingSuggestion.status === "error" ? (
+					<TaskSuggestionCard
+						onRetry={pomodoro.retrySuggestion}
+						status="error"
+					/>
+				) : null)}
+
 			<TaskList
 				cycleKind={pomodoro.cycleKind}
 				cycleState={pomodoro.state}
 				focusedTaskId={pomodoro.focusedTaskId}
+				highlightedTaskId={pomodoro.suggestedTaskId}
 				onFocusTask={(taskId, task) => {
 					pomodoro.selectTask(taskId, task);
 				}}
@@ -110,6 +149,8 @@ function PomodoroDashboardBody({
 					focusedTask={pomodoro.focusedTask}
 					isConfirming={pomodoro.isConfirming}
 					onConfirm={pomodoro.onCycleCompleteConfirm}
+					onDismissPreFocus={pomodoro.dismissPreFocus}
+					preFocusedTask={pomodoro.preFocusedTask}
 					state={pomodoro.state}
 				/>
 			)}
@@ -151,6 +192,7 @@ function AuthenticatedPomodoroDashboard() {
 	return (
 		<PomodoroDashboardBody
 			enableCheckInGate
+			enableSuggestionGate
 			refreshTasks={async () => {
 				await utils.task.list.invalidate();
 			}}
