@@ -1,10 +1,10 @@
 ---
 change_id: account-recovery-flow
 title: Account recovery flow
-status: implemented
+status: archived
 created: 2026-06-07
 updated: 2026-06-07
-archived_at: null
+archived_at: 2026-06-07T16:12:00Z
 ---
 
 ## Notes
