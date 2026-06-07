@@ -4,7 +4,12 @@ version: 1
 status: draft
 created: 2026-05-26
 updated: 2026-06-07
-active_slices: []
+expanded: 2026-06-07
+expanded_intelligence: 2026-06-07
+expanded_story: 2026-06-07
+expanded_followup: 2026-06-07
+expanded_ux_gaps: 2026-06-07
+active_slices: [S-09]
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -16,6 +21,7 @@ top_blocker: time
 > Edit-in-place; archive when superseded.
 > Slices below are listed in dependency order. The "At a glance" table is the index.
 > **Issue tracking:** each roadmap item is mirrored in Linear (team `FLO`) and GitHub Issues on `konrad-kaluzny-ceneo/FlowState`; IDs are in the tables below and in each slice section.
+> **No Linear ↔ GitHub auto-sync** — `roadmap.md` is the pairing table; update both on ship.
 
 ## Vision recap
 
@@ -44,9 +50,24 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-06 | adaptive-task-suggestion | [FLO-13](https://linear.app/flowstate-10xdev/issue/FLO-13) | [#13](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/13) | after each check-in, see a suggested next task with a one-line rationale and accept it or override by picking any other task | S-04, S-05 | FR-021, FR-022, NFR (suggestion feedback ≥1s visible) | done |
 | S-07 | account-recovery-flow | [FLO-7](https://linear.app/flowstate-10xdev/issue/FLO-7) | [#9](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/9) (closed) | reset a forgotten password and recover access without losing existing tasks or session history | F-02 | FR-003a, NFR (auth must not lock user out of own data) | done |
 | S-08 | guest-local-storage-merge | [FLO-21](https://linear.app/flowstate-10xdev/issue/FLO-21) | [#30](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/30) (closed) | use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account | S-01, F-02 | NFR (no silent data loss), FR-003b, FR-003c, FR-004–FR-009 | done |
-| S-09 | optimistic-task-mutations | — | — | see task list and task actions update immediately while logged in (optimistic UI), with rollback on server error — matching perceived speed of local guest storage | S-01, F-02 | NFR (200ms acknowledgement), FR-004–FR-008 | proposed |
+| S-09 | optimistic-task-mutations | [FLO-24](https://linear.app/flowstate-10xdev/issue/FLO-24) | [#35](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/35) | see task list and task actions update immediately while logged in (optimistic UI), with rollback on server error — matching perceived speed of local guest storage | S-01, F-02 | NFR (200ms acknowledgement), FR-004–FR-008 | in review |
 | S-10 | google-oauth-provider | [FLO-20](https://linear.app/flowstate-10xdev/issue/FLO-20) | [#20](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/20) (closed) | sign in or sign up with a Google account in one click, alongside the existing email/password flow | F-02 | FR-001, FR-002 | done |
-| F-03 | align-prisma-config | — | — | (foundation) `prisma.config.ts` aligned with Prisma 7: `dotenv/config`, `env()` helper, unpooled URL for CLI migrations; runtime adapter unchanged | — | — | proposed |
+| F-03 | align-prisma-config | [FLO-22](https://linear.app/flowstate-10xdev/issue/FLO-22) | [#33](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/33) | (foundation) `prisma.config.ts` aligned with Prisma 7: `dotenv/config`, `env()` helper, unpooled URL for CLI migrations; runtime adapter unchanged | — | — | proposed |
+| F-04 | impeccable-design-foundation | [FLO-25](https://linear.app/flowstate-10xdev/issue/FLO-25) | [#36](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/36) | (foundation) `DESIGN.md` via Impeccable shape + document — tokens, typography, color, motion, component patterns for downstream craft | S-09 | Secondary Success Criteria, NFR (200ms acknowledgement), proposed-FR-visual-design-system | proposed |
+| S-11 | first-run-wedge-onboarding | [FLO-26](https://linear.app/flowstate-10xdev/issue/FLO-26) | [#37](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/37) | on first visit, follow a dismissible first-run flow that teaches the check-in → suggestion wedge and lands ready to accept or override the first real suggestion | S-06, S-08 | FR-003b, FR-017, FR-018, FR-021, proposed-FR-first-run-guidance | ready |
+| S-12 | wedge-overlay-visual-polish | [FLO-28](https://linear.app/flowstate-10xdev/issue/FLO-28) | [#38](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/38) | complete a work cycle and move through check-in and next-task suggestion inside a calm, cohesive designed flow — overlays no longer feel like unstyled defaults | S-09, F-04 | FR-013, FR-015, FR-020, FR-021, FR-022, NFR (suggestion feedback ≥1s visible) | proposed |
+| S-13 | focus-home-visual-craft | [FLO-29](https://linear.app/flowstate-10xdev/issue/FLO-29) | [#39](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/39) | open FlowState and see a cohesive branded home with active and completed tasks visually distinct at a glance — not T3 boilerplate | S-09, F-04 | FR-008, US-01, Secondary Success Criteria | proposed |
+| S-14 | auth-merge-first-impression | [FLO-27](https://linear.app/flowstate-10xdev/issue/FLO-27) | [#40](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/40) | on auth pages understand FlowState's value; after sign-in with guest data see an explicit merge-success moment instead of a silent import | S-08 | FR-001, FR-002, FR-003c, NFR (no silent data loss) | ready |
+| S-15 | session-kickoff-suggestion | [FLO-30](https://linear.app/flowstate-10xdev/issue/FLO-30) | [#41](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/41) | kickoff suggestion + work-type duration presets + remembered per-type defaults (tap-to-apply only) | S-06 | FR-021, FR-019, FR-009, FR-010, FR-017, proposed-FR-session-start-guidance | ready |
+| S-16 | mindful-session-wind-down | [FLO-31](https://linear.app/flowstate-10xdev/issue/FLO-31) | [#42](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/42) | receive an optional, dismissible prompt to end the session with rationale when energy is Fading and fatigue signals align — and override to continue | S-05, S-06 | FR-020, FR-021, FR-019 | ready |
+| S-17 | session-narrative-summary | [FLO-32](https://linear.app/flowstate-10xdev/issue/FLO-32) | [#43](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/43) | in-flow narrative + closure + 8h return handoff composing S-18 resume note (max two clauses, no charts) | S-02, S-05, S-18 | FR-019, FR-020, FR-012, NFR (90-day retention), proposed-FR-return-handoff | proposed |
+| S-18 | task-resume-context-note | [FLO-33](https://linear.app/flowstate-10xdev/issue/FLO-33) | [#44](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/44) | capture resume note at mid-cycle switch and mid-cycle completion; show on suggestion card and manual refocus | S-06 | FR-015, FR-019, FR-021, FR-022, proposed-FR-interruption-context | proposed |
+| S-19 | suggestion-override-acknowledgement | [FLO-34](https://linear.app/flowstate-10xdev/issue/FLO-34) | [#45](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/45) | validating acknowledgement on post-check-in and kickoff suggestion override — same FR-022 story | S-06 | FR-022, FR-021, FR-019, proposed-FR-session-start-guidance | ready |
+| S-20 | persistent-quiet-cycle-audio | [FLO-35](https://linear.app/flowstate-10xdev/issue/FLO-35) | [#46](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/46) | persistent mute/soften cycle chime; optional title/favicon pulse when muted + tab backgrounded; pair with S-22 | S-01 | FR-013, FR-014, NFR (200ms acknowledgement) | ready |
+| S-21 | mindful-transition-copy | [FLO-36](https://linear.app/flowstate-10xdev/issue/FLO-36) | [#47](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/47) | skippable break/re-entry copy; re-entry variant keyed to last check-in energy (Focused/Steady/Fading) | S-02, S-05, S-12 | FR-014, FR-011, FR-012, FR-020 | proposed |
+| S-22 | background-tab-return-catchup | [FLO-37](https://linear.app/flowstate-10xdev/issue/FLO-37) | [#48](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/48) | returning to a backgrounded tab after cycle end sees a calm catch-up handoff to the next wedge step (check-in, break confirm, or suggestion) | S-01, S-05, S-06 | FR-013, FR-014, FR-020, FR-021, NFR (timer drift ≤ ±2s) | ready |
+| S-23 | suggestion-rationale-expander | [FLO-38](https://linear.app/flowstate-10xdev/issue/FLO-38) | [#49](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/49) | tap "Why this?" on the suggestion card for a deterministic factor breakdown — no analytics screen | S-06 | FR-021, FR-022, FR-019, NFR (suggestion feedback ≥1s visible) | ready |
+| S-24 | cycle-pause-resume | [FLO-39](https://linear.app/flowstate-10xdev/issue/FLO-39) | [#50](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/50) | pause and resume a work or break cycle with remaining time preserved — without INTERRUPTED state or interruptionCount increment | S-01, S-02 | FR-012, FR-019, US-01, NFR (crash/refresh recovery) | proposed |
 
 ## Streams
 
@@ -59,6 +80,10 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | C | Wedge convergence | `S-05` → `S-06` | Joins Stream A at `S-01` (needs cycle-end hook) and Stream B at `S-04` (needs scoring inputs). Wedge — the differentiating mechanic — lands here. |
 | D | Auth hardening | `S-07` (requires `F-02`), `S-10` (requires `F-02`) | Standalone slices; require e2e infra to verify auth flows end-to-end in a browser. |
 | E | UX responsiveness | `S-09` (requires `S-01`, `F-02`) | TanStack Query optimistic updates on authenticated task (and optionally cycle) mutations. Pairs with guest trial (`S-08` when shipped) so login does not feel slower than try-before-signup. |
+| F | Post-MVP first impression | `S-09` → `F-04` → (`S-12` ∥ `S-13`); `S-11` ∥ `S-14` | Impeccable [`shape` → `DESIGN.md` → `craft`/`polish`](https://impeccable.style/docs/). Onboarding teaches the wedge; visual-ui polishes home and overlay surfaces. Expanded via `/10x-roadmap-expand` 2026-06-07. |
+| G | Intelligent wedge (post-MVP) | `S-15` ∥ `S-16`; `S-17` (after `S-12` recommended); `S-18` | Extends deterministic scoring beyond post-check-in moments — kickoff, wind-down, in-flow narrative, context recovery. Expanded via `/10x-roadmap-expand` 2026-06-07 (intelligence batch). |
+| H | Story & mindfulness (post-MVP) | `S-19` ∥ `S-20`; `S-21` (after `S-12`); `S-22` pairs with `S-20` | Wedge narrative beats — override acknowledgement, quiet audio, paired break/re-entry copy. Follow-up batch 2 (2026-06-07): P-201→S-19, P-202→S-17, P-203+P-204→S-18, P-205→S-15, P-206→S-21, P-208→S-20 acceptance; P-207 **rejected** (duplicate S-13+S-17). |
+| I | Calm focus UX (post-MVP) | `S-22` ∥ `S-23` ∥ `S-20`; `S-24` (product gate) | Tab-return catch-up, scoring transparency, quiet audio, reversible pause. Expanded via `/10x-roadmap-expand` 2026-06-07 (UX gaps batch). Merges: P-204+P-205→S-11, P-206→S-20. |
 
 
 ## Baseline
@@ -113,8 +138,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Outcome:** (foundation) `prisma.config.ts` matches the official Prisma 7 pattern: `import "dotenv/config"`, `env()` from `prisma/config`, relative schema/migrations paths; `DATABASE_URL_UNPOOLED` in `datasource.url` for CLI (migrate, db push, studio). Runtime stays on pooled `DATABASE_URL` via `@prisma/adapter-neon` in `src/server/db/index.ts`.
 - **Change ID:** align-prisma-config
-- **Linear:** —
-- **GitHub:** —
+- **Linear:** [FLO-22](https://linear.app/flowstate-10xdev/issue/FLO-22)
+- **GitHub:** [#33](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/33)
 - **PRD refs:** —
 - **Unlocks:** — (hygiene; reduces agent confusion when running Prisma CLI)
 - **Prerequisites:** —
@@ -122,6 +147,24 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Minimal — config-only; verify `pnpm prisma migrate status` and `pnpm db:generate` after change.
+- **Status:** proposed
+
+
+### F-04: Impeccable design foundation
+
+- **Outcome:** (foundation) `DESIGN.md` captures FlowState's visual system — color, typography, spacing, motion, and component patterns — produced via `/impeccable shape` discovery and `/impeccable document`, so downstream craft slices stay on-brand.
+- **Change ID:** impeccable-design-foundation
+- **Linear:** [FLO-25](https://linear.app/flowstate-10xdev/issue/FLO-25)
+- **GitHub:** [#36](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/36)
+- **PRD refs:** Secondary Success Criteria (active/completed split visually clear), NFR (200ms acknowledgement), proposed-FR-visual-design-system
+- **Unlocks:** S-12 (wedge overlay polish), S-13 (home visual craft)
+- **Prerequisites:** S-09
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Calm/minimal vs bolder personality — which direction fits the mindfulness wedge? Owner: user. Block: no.
+  - Does `DESIGN.md` live at repo root or under `context/foundation/`? Owner: implementer. Block: no.
+- **Risk:** Open-ended shape discovery stalls without a locked calm/focus product voice — scope discovery to wedge surfaces (home, task list, cycle transitions) only.
 - **Status:** proposed
 
 
@@ -251,15 +294,15 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Outcome:** while logged in, task create / update / delete / status changes reflect in the UI immediately (optimistic cache updates via TanStack Query); on mutation failure the UI rolls back and shows an error — no silent loss. Optionally extends to cycle start/complete if scoped in `/10x-plan`.
 - **Change ID:** optimistic-task-mutations
-- **Linear:** —
-- **GitHub:** —
+- **Linear:** [FLO-24](https://linear.app/flowstate-10xdev/issue/FLO-24)
+- **GitHub:** [#35](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/35)
 - **PRD refs:** NFR (200ms acknowledgement), FR-004, FR-005, FR-006, FR-007, FR-008, FR-009a
 - **Prerequisites:** S-01, F-02
 - **Parallel with:** S-02, S-03, S-04, S-07, S-08 (guest-local-storage-merge — recommended after or alongside S-08 so post-login UX matches guest perceived speed)
 - **Blockers:** —
 - **Unknowns:** Whether cycle mutations (`cycle.create`, `complete`, `interrupt`) belong in the same slice or a follow-up — owner: `/10x-plan`. Block: no — task list alone satisfies the slice outcome.
 - **Risk:** Optimistic state can diverge from server truth on race or double-submit; mitigation: `onMutate` / rollback pattern, invalidate on settle, tests for failed mutation. Out of scope for `guest-local-storage-merge` (separate change-id per plan brief).
-- **Status:** proposed
+- **Status:** in review
 
 ### S-10: Google OAuth social login
 
@@ -281,6 +324,285 @@ Foundations below assume these are present and do NOT re-scaffold them.
   4. Add e2e test verifying the Google button renders and the OAuth redirect initiates.
 - **Status:** done — shipped via [PR #21](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/21) (merge 2026-05-31)
 
+### S-11: First-run path to the suggestion wedge
+
+- **Outcome:** user on first visit follows a dismissible first-run flow teaching check-in → suggestion wedge; **plus** ongoing empty-list guidance when active tasks drop to zero again (not only "No active tasks"); **plus** inline one-line coach at first-ever check-in and first suggestion — subcopy only, no second blocking modal. *(Scope expanded P-204+P-205 / roadmap-expand UX batch 2026-06-07.)*
+- **Change ID:** first-run-wedge-onboarding
+- **Linear:** [FLO-26](https://linear.app/flowstate-10xdev/issue/FLO-26)
+- **GitHub:** [#37](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/37)
+- **PRD refs:** FR-003b, FR-004, FR-008, FR-009, FR-017, FR-018, FR-020, FR-021, FR-022, proposed-FR-first-run-guidance, proposed-FR-empty-state-guidance
+- **Prerequisites:** S-06, S-08
+- **Parallel with:** S-09, S-14
+- **Blockers:** —
+- **Unknowns:**
+  - Should first-run trigger for guests only, authenticated empty accounts only, or both with different copy? Owner: user. Block: no.
+  - Empty-list guide: hide after first completed cycle or show whenever active count is zero? Owner: user. Block: no.
+  - First wedge coach: one combined tip or two sequential one-liners at check-in vs suggestion? Owner: user. Block: no.
+  - Persist "seen" flags in localStorage, server profile, or session-only? Owner: implementer. Block: no.
+- **Risk:** Blocking tours, naggy empty-state copy, or stacked coaching on check-in overlay can fight the mindfulness loop — coordinate modal timing with S-14 merge handoff.
+- **Orchestrator doubts:** P-204 scored 69 / P-205 scored 52 — merged here intentionally; high confidence if coaching stays non-blocking subcopy.
+- **Status:** ready
+
+### S-12: Wedge transition surfaces polish
+
+- **Outcome:** user completes a work cycle and moves through check-in and next-task suggestion inside a calm, cohesive designed flow — cycle-end, check-in, mid-cycle, and suggestion surfaces no longer feel like unstyled overlay defaults.
+- **Change ID:** wedge-overlay-visual-polish
+- **Linear:** [FLO-28](https://linear.app/flowstate-10xdev/issue/FLO-28)
+- **GitHub:** [#38](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/38)
+- **PRD refs:** FR-013, FR-015, FR-020, FR-021, FR-022, NFR (suggestion feedback ≥1s visible)
+- **Prerequisites:** S-09, F-04
+- **Parallel with:** S-13
+- **Blockers:** —
+- **Unknowns:**
+  - How much motion is in scope given FR-016 (surprise animation) is parked? Owner: user. Block: no.
+- **Risk:** Visual refactors break existing e2e selectors or cycle-gate behavior — preserve `data-testid` contracts and gate logic; visual-only diffs.
+- **Status:** proposed
+
+### S-13: Branded home shell and task-list clarity
+
+- **Outcome:** user opens FlowState (guest or logged in) and sees a cohesive branded home — not T3 boilerplate or hardcoded gradients — with active and completed tasks visually distinct at a glance; when marking a task done, user sees a brief calm completion moment (sub-second restrained motion per FR-016 — not surprise arcade animation). *(Scope expanded P-110 / roadmap-expand 2026-06-07.)*
+- **Change ID:** focus-home-visual-craft
+- **Linear:** [FLO-29](https://linear.app/flowstate-10xdev/issue/FLO-29)
+- **GitHub:** [#39](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/39)
+- **PRD refs:** FR-008, FR-007, FR-016, US-01 (selected task visually highlighted), Secondary Success Criteria
+- **Prerequisites:** S-09, F-04
+- **Parallel with:** S-12
+- **Blockers:** —
+- **Unknowns:**
+  - Include auth page visual alignment in this slice or defer to a follow-up? Owner: user. Block: no.
+- **Risk:** Surface-area creep across layout metadata, header, guest banner, and task list — bound scope to `home-shell`, `globals.css` tokens, and task-list hierarchy only.
+- **Orchestrator doubts:** Per-task completion delight only (P-110) — **reject** follow-up P-207 "session-end completion moment" as duplicate of S-17 closure; do not add third celebration surface.
+- **Status:** proposed
+
+### S-14: Auth narrative and guest-merge handoff
+
+- **Outcome:** user on sign-in or sign-up pages understands FlowState's value (mindful Pomodoro + session-aware next-task picks with rationale), and after authenticating with guest data sees an explicit merge-success moment naming imported tasks and what unlocked (full sessions, check-ins, suggestions) instead of a silent import.
+- **Change ID:** auth-merge-first-impression
+- **Linear:** [FLO-27](https://linear.app/flowstate-10xdev/issue/FLO-27)
+- **GitHub:** [#40](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/40)
+- **PRD refs:** FR-001, FR-002, FR-003c, NFR (no silent data loss)
+- **Prerequisites:** S-08
+- **Parallel with:** S-09, S-11
+- **Blockers:** —
+- **Unknowns:**
+  - Should merge confirmation be a modal, inline banner, or toast — and should it offer "review imported tasks" vs "continue"? Owner: user. Block: no.
+  - Does auth narrative appear on both sign-in and sign-up, or sign-up only with sign-in staying minimal? Owner: user. Block: no.
+- **Risk:** Marketing copy on auth pages can drift from actual guest vs logged-in feature parity if narrative oversells scoring or multi-cycle sessions; merge success UI may race with S-11 first-run — coordinate modal timing.
+- **Status:** ready
+
+### S-15: Session kickoff suggestion
+
+- **Outcome:** user can see a suggested task with one-line rationale when idle at session start or after a break with no pre-selected task — before manually picking what to focus on next; optionally accept a one-tap work-cycle duration preset matched to the selected task's work type (e.g. 45m deep / 25m admin / 15m reactive) — never auto-applied without explicit accept; kickoff preset chips remember last accepted or customized duration per work type across sessions (labeled "your usual", tap-to-apply only). *(Scope expanded P-103 + follow-up P-205 / roadmap-expand 2026-06-07.)*
+- **Change ID:** session-kickoff-suggestion
+- **Linear:** [FLO-30](https://linear.app/flowstate-10xdev/issue/FLO-30)
+- **GitHub:** [#41](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/41)
+- **PRD refs:** FR-021, FR-019, FR-009, FR-010, FR-017, proposed-FR-session-start-guidance
+- **Prerequisites:** S-06
+- **Parallel with:** S-09, S-11, S-16
+- **Blockers:** —
+- **Unknowns:**
+  - Should kickoff fire only on first cycle of a new session, or also whenever the user clears focus and sits idle mid-session? Owner: user. Block: no.
+  - Reuse `suggestion.next` with synthetic context (no check-in) or a dedicated kickoff scorer path? Owner: implementer. Block: no.
+  - Default mapping deep/admin/reactive → 45/25/15 minutes OK, or user-configurable per type? Owner: user. Block: no.
+  - Fire preset chip on every focus change or only when current duration differs from suggested preset? Owner: implementer. Block: no.
+  - Store per-type defaults server-side for logged-in users and localStorage for guests (mirror S-20 audio preference)? Owner: implementer. Block: no.
+  - Expose reset-to-PRD-defaults (45/25/15) in cycle picker or adjacent surface? Owner: user. Block: no.
+- **Risk:** Kickoff suggestions may duplicate post-check-in picks if session state is not scoped to true idle/cold-start moments. Per-type remembered defaults can fight a one-off deep-work sprint if chips read as enforced settings. Expand score 71/100 — **promote**; follow-up P-205 merged (57/90 revise).
+- **Orchestrator doubts:** Kickoff override acknowledgement belongs in S-19, not here — S-15 only supplies the kickoff suggestion surface.
+- **Status:** ready
+
+### S-16: Mindful session wind-down nudge
+
+- **Outcome:** user can receive an optional, dismissible prompt to end the session with a one-line rationale when check-in energy is Fading and session fatigue/interruption signals align — and override to continue working.
+- **Change ID:** mindful-session-wind-down
+- **Linear:** [FLO-31](https://linear.app/flowstate-10xdev/issue/FLO-31)
+- **GitHub:** [#42](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/42)
+- **PRD refs:** FR-020, FR-021, FR-019
+- **Prerequisites:** S-05, S-06
+- **Parallel with:** S-09, S-12, S-15
+- **Blockers:** —
+- **Unknowns:**
+  - Which fatigue combo triggers the nudge — Fading alone, Fading + ≥4 cycles, or Fading + high interruptionCount? Owner: user. Block: no.
+  - Should declining the nudge suppress it for the rest of the session or only until the next check-in? Owner: implementer. Block: no.
+- **Risk:** An over-eager wind-down prompt feels preachy and fights FR-022 override culture if thresholds are too aggressive. Expand score 70/100 — **promote**.
+- **Status:** ready
+
+### S-17: Session narrative summary (in-flow + closure)
+
+- **Outcome:** user can see a lightweight session narrative — a live one-line summary during an active session (cycles done, tasks completed this session, latest check-in energy, optional per-cycle intention line), a calm closure line on session end, and on return after more than 8 hours away a single dismissible handoff line that composes last closure and, when present, the interrupted task's resume note from S-18 (max two clauses total) — without charts, trends, or analytics screens. *(Scope expanded P-107+P-108 + follow-up P-202 / roadmap-expand 2026-06-07.)*
+- **Change ID:** session-narrative-summary
+- **Linear:** [FLO-32](https://linear.app/flowstate-10xdev/issue/FLO-32)
+- **GitHub:** [#43](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/43)
+- **PRD refs:** FR-019, FR-020, FR-012, NFR (90-day session retention), Secondary Success Criteria (calm end-of-day feeling), proposed-FR-cycle-intention, proposed-FR-return-handoff
+- **Prerequisites:** S-02, S-05, S-18
+- **Parallel with:** S-09, S-12
+- **Blockers:** S-18 resume data must exist before handoff can compose it — can ship closure/intention first, handoff+resume second.
+- **Unknowns:**
+  - Should timeout-ended sessions show the same closure overlay as user-initiated end? Owner: user. Block: no.
+  - Guest mode: omit summary or derive from local guest session blob only? Owner: user. Block: no.
+  - Ship closure UI before or after S-12 wedge overlay polish? Owner: implementer. Block: no.
+  - Prompt cycle intention on every cycle start or only first cycle of session? Owner: user. Block: no.
+  - 8h return threshold fixed or derived from last explicit session end vs last cycle? Owner: user. Block: no.
+  - Store intention on Cycle entity vs ephemeral client-only for guest? Owner: implementer. Block: no.
+  - When handoff has both open task and resume note, prefer resume note over task title? Owner: user. Block: no.
+- **Risk:** Summary line plus suggestion rationale may feel redundant — show summary between cycles only (not overlapping suggestion card). Return handoff must not surface streaks, totals, or comparative stats (parked analytics). Follow-up P-202 merged (63/90 revise).
+- **Orchestrator doubts:** Sequencing S-18 before or in parallel with S-17 handoff phase — do not block entire S-17 on S-18 if closure ships first.
+- **Status:** proposed
+
+### S-18: Task resume context note
+
+- **Outcome:** user can attach or capture at interruption time a one-line "where I left off" note (~120 chars) when switching focus mid-cycle or when marking a task done mid-cycle and choosing the next task to continue the cycle (not when choosing "end cycle and break") — skippable at capture — and see it in the suggestion card **and** when manually re-selecting that task from the active list or focus picker; manual edit on task row remains supported. *(Scope expanded P-102 + follow-up P-203+P-204 / roadmap-expand 2026-06-07.)*
+- **Change ID:** task-resume-context-note
+- **Linear:** [FLO-33](https://linear.app/flowstate-10xdev/issue/FLO-33)
+- **GitHub:** [#44](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/44)
+- **PRD refs:** FR-019, FR-021, FR-022, proposed-FR-task-resume-context, proposed-FR-interruption-context
+- **Prerequisites:** S-06, S-03
+- **Parallel with:** S-09, S-15, S-17
+- **Blockers:** —
+- **Unknowns:**
+  - Is a single optional resume line enough, or should the note auto-clear when the task is marked done? Owner: user. Block: no.
+  - Should resume text influence deterministic scoring or only augment the rationale display? Owner: implementer. Block: no.
+  - Reuse `Task.resumeNote` vs separate interruption snapshot cleared on completion? Owner: implementer. Block: no.
+  - On mid-cycle completion path, attach note to the task being left behind or the newly selected next task? Owner: user. Block: no.
+  - Manual refocus surface: ephemeral toast, focus-picker subtitle, or expanded row on select? Owner: user. Block: no.
+  - Show resume on manual re-select during active cycle or only when idle? Owner: user. Block: no.
+- **Risk:** A free-form notes field can drift into generic CRUD unless display is gated to wedge surfaces and length is strictly bounded (~120 chars). Mid-cycle completion capture adds transition fatigue if not gated to "pick next task" path only. Follow-up P-203+P-204 merged (61+59/90 revise).
+- **Orchestrator doubts:** Resolve schema choice (`resumeNote` vs snapshot) in `/10x-plan` before implementation — blocks clean S-17 handoff composition.
+- **Status:** proposed
+
+### S-19: Suggestion override acknowledgement
+
+- **Outcome:** user can override the suggested next task (post-check-in **and** idle kickoff suggestion from S-15) and see the same brief validating acknowledgement line — autonomy preserved, override recorded for session context, no guilt or patronizing copy. *(Follow-up P-201 merged / roadmap-expand 2026-06-07.)*
+- **Change ID:** suggestion-override-acknowledgement
+- **Linear:** [FLO-34](https://linear.app/flowstate-10xdev/issue/FLO-34)
+- **GitHub:** [#45](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/45)
+- **PRD refs:** FR-022, FR-021, FR-019, proposed-FR-session-start-guidance
+- **Prerequisites:** S-06
+- **Parallel with:** S-15, S-16, S-09
+- **Blockers:** Kickoff-surface acknowledgement requires S-15 shipped — post-check-in ack can ship with S-19 alone.
+- **Unknowns:**
+  - Always show acknowledgement vs only when override diverges from top suggestion by work type? Owner: user. Block: no.
+  - Does override increment `interruptionCount` or a separate `overrideCount` for scoring? Owner: implementer. Block: no.
+  - Reuse exact copy component for kickoff vs post-check-in, or kickoff-specific neutral variant? Owner: user. Block: no.
+  - Suppress second acknowledgement if user overrides kickoff then immediately hits check-in override in same transition beat? Owner: implementer. Block: no.
+  - Does kickoff override feed the same session-context signal as post-check-in override? Owner: implementer. Block: no.
+- **Risk:** Patronizing copy ("you know best!") erodes calm tone — one neutral line max. Duplicate ack on back-to-back transitions feels naggy. Expand score 78/90 — **promote**; follow-up P-201 merged (67/90 revise).
+- **Status:** ready
+
+### S-20: Persistent quiet cycle audio
+
+- **Outcome:** user can mute or soften the in-browser cycle-end chime with a preference that persists across sessions (server profile when logged in, localStorage for guests); the visual transition prompt remains the authoritative mindful signal; when audio is muted/softened and the tab was backgrounded at cycle end, an optional single calm title or favicon pulse may fire until the user returns (work-end at minimum — not native push). *(Follow-up P-208 merged into acceptance / roadmap-expand 2026-06-07.)*
+- **Change ID:** persistent-quiet-cycle-audio
+- **Linear:** [FLO-35](https://linear.app/flowstate-10xdev/issue/FLO-35)
+- **GitHub:** [#46](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/46)
+- **PRD refs:** FR-013, FR-014, NFR (200ms acknowledgement)
+- **Prerequisites:** S-01
+- **Parallel with:** S-09, S-12
+- **Blockers:** —
+- **Unknowns:**
+  - Binary mute vs volume slider? Owner: user. Block: no.
+  - Store preference server-side for logged-in users and localStorage for guests? Owner: implementer. Block: no.
+  - Title/favicon pulse on break-end as well as work-end, or work-end only? Owner: user. Block: no.
+  - Respect `prefers-reduced-motion` for favicon animation? Owner: implementer. Block: no.
+- **Risk:** Silent-only users may miss transitions if visual prompt is off-tab — **S-22 is the primary fix**; title/favicon pulse is a lightweight adjunct only. Aggressive title flashing feels alarming, not calm.
+- **Orchestrator doubts:** Do not ship mute without either S-22 catch-up or documented title-pulse acceptance test. Follow-up P-208 merged (40/90 revise) — not a standalone slice.
+- **Status:** ready
+
+### S-21: Mindful transition copy (break + work re-entry)
+
+- **Outcome:** user can see calm, skippable one-line prompts at break-cycle start and when confirming break → work transition — paired mindful beats that never block timer start or duplicate check-in/suggestion gates; break→work re-entry copy is chosen from a fixed library keyed to the last check-in energy (Focused / Steady / Fading), with neutral fallback when no prior check-in exists. *(Follow-up P-206 merged / roadmap-expand 2026-06-07.)*
+- **Change ID:** mindful-transition-copy
+- **Linear:** [FLO-36](https://linear.app/flowstate-10xdev/issue/FLO-36)
+- **GitHub:** [#47](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/47)
+- **PRD refs:** FR-014, FR-011, FR-012, FR-020
+- **Prerequisites:** S-02, S-05, S-12
+- **Parallel with:** S-16, S-19
+- **Blockers:** —
+- **Unknowns:**
+  - Fixed copy library vs rotating lines keyed to short vs long break? Owner: user. Block: no.
+  - Same component voice for break and re-entry, or distinct copy tone? Owner: user. Block: no.
+  - Should guests see shorter variant or omit entirely? Owner: user. Block: no.
+  - Rotate lines within energy bucket or one fixed line per energy for MVP? Owner: user. Block: no.
+  - Fading re-entry copy must not duplicate S-16 wind-down preachiness — how to keep invitational? Owner: user. Block: no.
+- **Risk:** Interstitial fatigue if shown alongside check-in + suggestion on the same transition — show re-entry line only when no check-in gate is active. Fading-toned re-entry can overlap S-16 wind-down if copy is not carefully separated. Follow-up P-206 merged (53/90 revise).
+- **Orchestrator doubts:** Energy-keyed copy is a variant of S-21, not a new slice — share copy module with S-19/S-17 tone contract when F-04 lands.
+- **Status:** proposed
+
+### S-22: Background tab return catch-up
+
+- **Outcome:** user returning to a backgrounded tab after a cycle ended while away sees a calm catch-up surface — what finished, how long ago, and the single next action (check-in gate, break confirm, or suggestion accept) — instead of landing silently on a gate they may have missed.
+- **Change ID:** background-tab-return-catchup
+- **Linear:** [FLO-37](https://linear.app/flowstate-10xdev/issue/FLO-37)
+- **GitHub:** [#48](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/48)
+- **PRD refs:** FR-013, FR-014, FR-020, FR-021, NFR (timer drift ≤ ±2s), NFR (crash/refresh recovery)
+- **Prerequisites:** S-01, S-05, S-06
+- **Parallel with:** S-12, S-20, S-09
+- **Blockers:** —
+- **Unknowns:**
+  - After missed chime, replay audio, visual-only catch-up, or respect S-20 mute? Owner: user. Block: no.
+  - Show elapsed away time or only pending transition state? Owner: implementer. Block: no.
+  - Wrap all post-work gates or only first pending gate? Owner: implementer. Block: no.
+- **Risk:** `visibilitychange` already fires completion — duplicate overlays if not keyed to one-shot `endedWhileHidden` cleared on first interaction.
+- **Orchestrator doubts:** Overlap with S-12 polish and S-20 mute paths — coordinate in `/10x-plan`. Expand score 67/100 — **promote**; high user value, medium implementation risk.
+- **Status:** ready
+
+### S-23: Suggestion rationale expander
+
+- **Outcome:** user can tap "Why this?" on the next-task suggestion card and see a calm, deterministic breakdown of factors (energy fit, interruptions, cycles completed, time of day, last override) — without leaving the wedge overlay or opening analytics.
+- **Change ID:** suggestion-rationale-expander
+- **Linear:** [FLO-38](https://linear.app/flowstate-10xdev/issue/FLO-38)
+- **GitHub:** [#49](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/49)
+- **PRD refs:** FR-021, FR-022, FR-019, NFR (suggestion feedback ≥1s visible)
+- **Prerequisites:** S-06
+- **Parallel with:** S-12, S-15, S-17
+- **Blockers:** —
+- **Unknowns:**
+  - Full ranked factor list or top 2–3 only? Owner: implementer. Block: no.
+  - Include S-15 kickoff and break-idle picks? Owner: user. Block: no.
+  - Guest mode: same templates from local session blob? Owner: implementer. Block: no.
+- **Risk:** Factor copy overwhelms if every signal shown equally — dominant factor + "also considered" chips; never stack on S-17 narrative line.
+- **Orchestrator doubts:** Must add trust beyond one-line rationale, not duplicate it; resist scoring-debugger creep. Expand score 67/100 — **promote**.
+- **Status:** ready
+
+### S-24: Cycle pause and resume
+
+- **Outcome:** user can temporarily pause a running work or break cycle and resume later with remaining time preserved — without ending the cycle, without marking INTERRUPTED, and without incrementing session `interruptionCount`.
+- **Change ID:** cycle-pause-resume
+- **Linear:** [FLO-39](https://linear.app/flowstate-10xdev/issue/FLO-39)
+- **GitHub:** [#50](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/50)
+- **PRD refs:** FR-012, FR-019, US-01, NFR (crash/refresh recovery), NFR (timer drift ≤ ±2s)
+- **Prerequisites:** S-01, S-02
+- **Parallel with:** S-09, S-22
+- **Blockers:** —
+- **Unknowns:**
+  - Does pause time count toward 4h session inactivity (FR-019)? Owner: user. Block: **yes before promote to ready**.
+  - Pause unlimited or capped (auto-resume after N minutes)? Owner: user. Block: no.
+  - Server-side `PAUSED` + `remainingMs` vs client-only timer freeze? Owner: implementer. Block: no.
+- **Risk:** PAUSED semantics touch Prisma enum, tRPC, guest blob, timer worker, refresh recovery — half-implemented pause worse than today's Interrupt.
+- **Orchestrator doubts:** PRD gap on pause vs interrupt; largest scope in UX batch — **low promote confidence** until inactivity + interruptionCount rules locked. Expand score 66/100 — **revise**.
+- **Status:** proposed
+
+## Follow-up scope merges (batch 2)
+
+> `/10x-roadmap-expand` follow-up pass 2026-06-07 — no new roadmap IDs; evaluator merged P-201…P-208 into existing slices. **Commit** synced to Linear issue bodies.
+
+| Proposal | Score | Action | Target slice |
+|---|---:|---|---|
+| P-201 Kickoff override acknowledgement | 67 | merge | S-19 |
+| P-202 Return handoff + resume context | 63 | merge | S-17 (+ prereq S-18) |
+| P-203 Manual refocus resume surface | 61 | merge | S-18 |
+| P-204 Mid-cycle completion resume capture | 59 | merge | S-18 (+ prereq S-03) |
+| P-205 Persist work-type cycle defaults | 57 | merge | S-15 |
+| P-206 Energy-keyed re-entry copy | 53 | merge | S-21 (+ prereq S-05) |
+| P-207 Session-end completion moment | 45 | **reject** → Parked | — |
+| P-208 Muted background-tab cue | 40 | merge (acceptance note) | S-20; primary path = S-22 |
+
+**Open sequencing doubts (orchestrator):**
+1. Ship S-19 post-check-in ack before S-15 kickoff ack, or both in one plan?
+2. S-17 closure can ship before S-18 if handoff+resume phase is explicitly phased.
+3. S-20 mute should not ship without S-22 catch-up or title-pulse e2e — pick one path in `/10x-plan`.
+4. Calm voice copy module (F-04 downstream) should unify S-19, S-21, S-17 lines — defer copy finalization until `DESIGN.md`.
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID | Linear | GitHub | Suggested issue title | Ready for `/10x-plan` | Notes |
@@ -295,9 +617,24 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-06 | adaptive-task-suggestion | FLO-13 | #13 | FlowState — adaptive next-task suggestion with override (wedge) | yes | Shipped 2026-06-07 via PR #31; GitHub closed, Linear Done |
 | S-07 | account-recovery-flow | FLO-7 | #9 | FlowState — verify and expose password recovery flow | no | Requires F-02 for browser-based verification of recovery flow |
 | S-08 | guest-local-storage-merge | FLO-21 | #30 | FlowState — guest trial (localStorage) and merge on login | yes | Shipped 2026-06-07; GitHub closed, Linear Done |
-| S-09 | optimistic-task-mutations | — | — | FlowState — optimistic TanStack Query updates for authenticated task mutations | no | Unblocks after S-01; best after S-08 if guest trial ships first |
+| S-09 | optimistic-task-mutations | FLO-24 | #35 | FlowState — optimistic TanStack Query updates for authenticated task mutations | no | Active (In Progress); duplicate FLO-23 canceled |
 | S-10 | google-oauth-provider | FLO-20 | #20 | FlowState — Google OAuth social login (one-click sign-in) | yes | Neon Auth supports Google OAuth natively; minimal UI addition |
-| F-03 | align-prisma-config | — | — | FlowState — align prisma.config.ts with Prisma 7 conventions | yes | Run `/10x-plan align-prisma-config`; config-only, no user-visible behavior |
+| F-03 | align-prisma-config | FLO-22 | #33 | FlowState — align prisma.config.ts with Prisma 7 conventions | yes | Run `/10x-plan align-prisma-config`; config-only, no user-visible behavior |
+| F-04 | impeccable-design-foundation | FLO-25 | #36 | FlowState — Impeccable design foundation (DESIGN.md via shape + document) | no | Unblocks after S-09; gates S-12 and S-13 craft slices |
+| S-11 | first-run-wedge-onboarding | FLO-26 | #37 | FlowState — first-run onboarding + empty-list guide + first wedge coach | yes | P-204+P-205 merged; coordinate with S-14 |
+| S-12 | wedge-overlay-visual-polish | FLO-28 | #38 | FlowState — wedge overlay visual polish (check-in, suggestion, cycle-end) | no | Requires F-04 + S-09; `/impeccable craft`/`polish` |
+| S-13 | focus-home-visual-craft | FLO-29 | #39 | FlowState — branded home shell, task-list clarity, calm completion delight | no | Requires F-04 + S-09; includes FR-016 subset (P-110) |
+| S-14 | auth-merge-first-impression | FLO-27 | #40 | FlowState — auth narrative and guest-merge success handoff | yes | Coordinate with S-11 first-run timing |
+| S-15 | session-kickoff-suggestion | FLO-30 | #41 | FlowState — kickoff suggestion + presets + per-type memory | yes | P-103+P-205 merged; kickoff ack → S-19 |
+| S-16 | mindful-session-wind-down | FLO-31 | #42 | FlowState — mindful session wind-down nudge | yes | Expand score 70/100 promote; deterministic mindfulness guardrail |
+| S-17 | session-narrative-summary | FLO-32 | #43 | FlowState — narrative + handoff composing S-18 resume | no | P-107+P-108+P-202; prereq S-18 for handoff phase |
+| S-18 | task-resume-context-note | FLO-33 | #44 | FlowState — capture + manual refocus + mid-cycle path | no | P-102+P-203+P-204; schema Unknown blocks S-17 handoff |
+| S-19 | suggestion-override-acknowledgement | FLO-34 | #45 | FlowState — override ack (check-in + kickoff) | yes | P-101+P-201 merged 78/67; kickoff needs S-15 |
+| S-20 | persistent-quiet-cycle-audio | FLO-35 | #46 | FlowState — mute/soften + optional title pulse | yes | P-208 in acceptance; **require** S-22 or pulse e2e |
+| S-21 | mindful-transition-copy | FLO-36 | #47 | FlowState — transition copy + energy-keyed re-entry | no | P-105+P-106+P-206; requires S-12, S-05 |
+| S-22 | background-tab-return-catchup | FLO-37 | #48 | FlowState — background tab return catch-up | yes | P-201 promote 67; pair with S-20 mute |
+| S-23 | suggestion-rationale-expander | FLO-38 | #49 | FlowState — suggestion "Why this?" expander | yes | P-202 promote 67 |
+| S-24 | cycle-pause-resume | FLO-39 | #50 | FlowState — cycle pause/resume without scoring penalty | no | P-203 revise 66; product gate on FR-019 pause semantics |
 
 ## Research requirements <!-- needs-research -->
 
@@ -310,11 +647,16 @@ Items tagged `needs-research` are non-trivial — they require external research
 | S-06 | adaptive-task-suggestion | 🟡 Medium | Weighted scoring / task-prioritization algorithms; Pomodoro technique research on task-energy matching; deterministic formula design patterns |
 | S-07 | account-recovery-flow | 🟢 Low | Neon Auth password reset/recovery API surface (quick lookup) |
 
-**Not requiring research** (straightforward implementation on existing stack): F-03, S-02, S-03, S-04, S-05, S-09, S-10.
+| S-15 | session-kickoff-suggestion | 🟡 Medium | Kickoff scoring contract without check-in; reuse vs fork of `suggestion.next` API |
+| S-24 | cycle-pause-resume | 🟡 Medium | PAUSED cycle state + guest blob + refresh recovery; pause vs inactivity timeout semantics |
+
+**Not requiring research** (straightforward implementation on existing stack): F-03, F-04, S-02, S-03, S-04, S-05, S-09, S-10, S-11, S-12, S-13, S-14, S-16, S-17, S-18, S-19, S-20, S-21, S-22, S-23.
 
 ## Open Roadmap Questions
 
 1. **What are the exact weights and thresholds in the scoring formula?** — Owner: implementer (first iteration, calibrate after real usage). Block: S-06 only at calibration step, not at planning. Mirrors PRD §Open Questions Q1; surfaced here so it's not lost to `/10x-plan` as a silent scope grab.
+2. **Which transition surfaces may fire on the same beat?** — Check-in gate, suggestion card, S-21 copy, S-17 narrative, S-19 ack — orchestrator rule: at most one interstitial line + one gate per transition; owner: implementer in `/10x-plan` for S-12/S-21/S-19 coordination. Block: no for individual slices; **yes** for polish pass.
+3. **`Task.resumeNote` vs interruption snapshot?** — Owner: implementer. Block: **S-18 and S-17 handoff phase**.
 
 ## Parked
 
@@ -326,6 +668,14 @@ Items tagged `needs-research` are non-trivial — they require external research
 - **External integrations (Jira / Todoist / Calendar / Slack)** — Why parked: PRD §Non-Goals — no import/export in MVP.
 - **Parallel CI workflow under `.github/workflows/`** — Why parked: under `main_goal: speed`, Vercel's GitHub auto-deploy already covers the build-on-push surface; a parallel CI is a quality investment for after launch.
 - **Observability stack (Sentry / OTel / log drains)** — Why parked: baseline absent; not gated by any must-have FR; revisit post-launch.
+- **Cross-day focus streak nudge (P-106 / ideas-notes "statystyki" adjacent)** — Why parked: return-day streak surfacing is cross-session pattern analytics — conflicts with PRD §Non-Goals and parked "Historical analytics or dashboards" even without charts. Expand score 39/100 — **reject**.
+- **ideas-notes: tagi / projekty / SMART / deadline'y / zadania cykliczne / nawyki / mobile / AI plan tuning** — Why parked: either generic CRUD not tied to wedge (tags, projects, SMART tooling), future platform scope (mobile), or explicit Non-Goals (AI/ML scoring). Revisit only if a slice proves they feed FR-021 scoring or context recovery — not as standalone list features.
+- **Recurring wedge kickoff tasks (P-109)** — Why parked: daily recurring template reopens ideas-notes recurring/habits scope and RRULE creep; kickoff scoring can weight standing tasks via work-type/weight today. Expand score 53/90 — **reject** (roadmap-expand 2026-06-07).
+- **Session-end completion moment (P-207 / follow-up batch 2)** — Why parked: duplicate of S-13 per-task delight + S-17 session closure; a third celebration surface adds motion fatigue without wedge value. Expand score 45/90 — **reject** (follow-up 2026-06-07).
+- **Suggestion helpfulness one-tap (P-207 / ideation)** — Why parked: PRD forbids AI/ML scoring; no MVP consumer for Helpful/Not quite without formula calibration path — collecting feedback is dead weight. Expand score 43/100 — **reject** (UX gaps batch 2026-06-07).
+- **Focus shell during WORK (research gap)** — Why parked: dim/hide task chrome while cycle runs — strong UX win, not yet sliced; pairs with S-13 but distinct from rebrand; revisit next expand batch.
+- **Wedge keyboard shortcuts (research gap)** — Why parked: accept/override/start without mouse — power-user speed; no slice yet; verify a11y overlap before planning.
+- **Session reconnect calm banner (research gap)** — Why parked: NFR connection-loss recovery exists but no UX surface; lightweight banner slice candidate for post-S-01 hardening.
 
 ## Done
 
