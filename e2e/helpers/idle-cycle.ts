@@ -24,7 +24,14 @@ export async function ensureIdleCycle(page: Page) {
 					await completeCheckIn(page, "steady");
 				}
 			} else {
-				await page.getByTestId("break-continue-btn").click();
+				const suggestedContinue = page.getByTestId(
+					"break-continue-suggested-btn",
+				);
+				if (await suggestedContinue.isVisible()) {
+					await suggestedContinue.click();
+				} else {
+					await page.getByTestId("break-continue-btn").click();
+				}
 			}
 			throw new Error("cycle overlay dismissed — re-check idle");
 		}

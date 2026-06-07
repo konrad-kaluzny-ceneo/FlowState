@@ -30,7 +30,28 @@ export type PomodoroCycleState = "idle" | "running" | "completed";
 
 export type CycleKind = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 
+export type SuggestionResult = {
+	cycleId: number;
+	taskId: number;
+	title: string;
+	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+	weight: 1 | 2 | 3;
+	rationaleKey: string;
+	rationale: string;
+};
+
+export type PendingSuggestion =
+	| { status: "idle" }
+	| { status: "loading" }
+	| { status: "ready"; data: SuggestionResult }
+	| { status: "empty" }
+	| { status: "error" };
+
 let activeCycleRecoveredForMode: string | null = null;
+
+function isBreakKind(kind: CycleKind | null): boolean {
+	return kind === "SHORT_BREAK" || kind === "LONG_BREAK";
+}
 
 /** Test-only reset for module-level recovery guard. */
 export function resetActiveCycleRecoveryForTests(): void {
@@ -76,8 +97,24 @@ export function usePomodoroCycle() {
 		boolean | null
 	>(null);
 	const [isConfirming, setIsConfirming] = useState(false);
+	const [pendingSuggestion, setPendingSuggestion] = useState<PendingSuggestion>(
+		{
+			status: "idle",
+		},
+	);
+	const [suggestionCycleId, setSuggestionCycleId] = useState<number | null>(
+		null,
+	);
+	const [suggestedTaskId, setSuggestedTaskId] = useState<DomainTaskId | null>(
+		null,
+	);
+	const [preFocusedTask, setPreFocusedTask] = useState<FocusedTask>(null);
+	const [hasPreFocusedSuggestion, setHasPreFocusedSuggestion] = useState(false);
+	const [isAcceptingSuggestion, setIsAcceptingSuggestion] = useState(false);
 
 	const createCheckIn = api.checkIn.create.useMutation();
+	const suggestionNext = api.suggestion.next.useMutation();
+	const recordDecisionMutation = api.suggestion.recordDecision.useMutation();
 
 	const stateRef = useRef(state);
 	const endTimeRef = useRef<number | null>(null);
@@ -87,6 +124,8 @@ export function usePomodoroCycle() {
 	);
 	const audioRef = useRef(createAudioManager());
 	const recoveredRef = useRef(false);
+	const pendingIncrementInterruptionRef = useRef(false);
+	const suggestionFetchGenRef = useRef(0);
 	const useWorkerRef = useRef(
 		process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER !== "1",
 	);
@@ -326,17 +365,158 @@ export function usePomodoroCycle() {
 		};
 	}, [stopWorker]);
 
-	const selectTask = useCallback(
+	const clearSuggestion = useCallback(() => {
+		suggestionFetchGenRef.current += 1;
+		setPendingSuggestion({ status: "idle" });
+		setSuggestionCycleId(null);
+		setSuggestedTaskId(null);
+		setHasPreFocusedSuggestion(false);
+	}, []);
+
+	const preFocusTask = useCallback(
 		(taskId: DomainTaskId, task?: FocusedTask) => {
-			if (state === "running" || state === "completed") {
-				return;
-			}
-			setError(null);
+			setPreFocusedTask(task ?? { id: taskId, title: "" });
 			setFocusedTaskId(taskId);
 			setFocusedTask(task ?? null);
 		},
-		[state],
+		[],
 	);
+
+	const recordSuggestionDecision = useCallback(
+		async (suggestedId: DomainTaskId, chosenId: DomainTaskId) => {
+			if (suggestionCycleId == null) {
+				return;
+			}
+			try {
+				await retryOnce(() =>
+					recordDecisionMutation.mutateAsync({
+						cycleId: suggestionCycleId,
+						suggestedTaskId: Number(suggestedId),
+						chosenTaskId: Number(chosenId),
+					}),
+				);
+			} catch {
+				setError(
+					"Could not save suggestion preference. Your choice is kept locally.",
+				);
+			}
+		},
+		[suggestionCycleId, recordDecisionMutation],
+	);
+
+	const fetchSuggestion = useCallback(
+		(cycleId: number) => {
+			const gen = ++suggestionFetchGenRef.current;
+			setPendingSuggestion({ status: "loading" });
+			setSuggestionCycleId(cycleId);
+			setSuggestedTaskId(null);
+			setHasPreFocusedSuggestion(false);
+
+			void (async () => {
+				try {
+					const result = await suggestionNext.mutateAsync({
+						cycleId,
+						localHour: new Date().getHours(),
+					});
+					if (gen !== suggestionFetchGenRef.current) {
+						return;
+					}
+					if (result == null) {
+						setPendingSuggestion({ status: "empty" });
+						setSuggestedTaskId(null);
+					} else {
+						setPendingSuggestion({ status: "ready", data: result });
+						setSuggestedTaskId(result.taskId);
+					}
+				} catch {
+					if (gen !== suggestionFetchGenRef.current) {
+						return;
+					}
+					setPendingSuggestion({ status: "error" });
+					setSuggestedTaskId(null);
+				}
+			})();
+		},
+		[suggestionNext],
+	);
+
+	const dismissPreFocus = useCallback(() => {
+		if (
+			hasPreFocusedSuggestion &&
+			pendingSuggestion.status === "ready" &&
+			preFocusedTask != null
+		) {
+			void recordSuggestionDecision(
+				pendingSuggestion.data.taskId,
+				preFocusedTask.id,
+			);
+		}
+		setPreFocusedTask(null);
+		setHasPreFocusedSuggestion(false);
+		setFocusedTaskId(null);
+		setFocusedTask(null);
+	}, [
+		hasPreFocusedSuggestion,
+		pendingSuggestion,
+		preFocusedTask,
+		recordSuggestionDecision,
+	]);
+
+	const selectTask = useCallback(
+		(taskId: DomainTaskId, task?: FocusedTask) => {
+			const breakRunning = state === "running" && isBreakKind(cycleKind);
+
+			if (!breakRunning && (state === "running" || state === "completed")) {
+				return;
+			}
+
+			setError(null);
+
+			if (
+				breakRunning &&
+				pendingSuggestion.status === "ready" &&
+				taskId !== pendingSuggestion.data.taskId
+			) {
+				void recordSuggestionDecision(pendingSuggestion.data.taskId, taskId);
+				setSuggestedTaskId(null);
+				setHasPreFocusedSuggestion(false);
+			}
+
+			if (breakRunning && pendingSuggestion.status === "loading") {
+				return;
+			}
+
+			preFocusTask(taskId, task);
+		},
+		[
+			state,
+			cycleKind,
+			pendingSuggestion,
+			recordSuggestionDecision,
+			preFocusTask,
+		],
+	);
+
+	const acceptSuggestion = useCallback(async () => {
+		if (pendingSuggestion.status !== "ready") {
+			return;
+		}
+
+		const { data } = pendingSuggestion;
+		setIsAcceptingSuggestion(true);
+		setError(null);
+
+		try {
+			preFocusTask(data.taskId, {
+				id: data.taskId,
+				title: data.title,
+			});
+			setHasPreFocusedSuggestion(true);
+			await recordSuggestionDecision(data.taskId, data.taskId);
+		} finally {
+			setIsAcceptingSuggestion(false);
+		}
+	}, [pendingSuggestion, preFocusTask, recordSuggestionDecision]);
 
 	const clearTask = useCallback(() => {
 		if (state === "running" || state === "completed") {
@@ -349,6 +529,8 @@ export function usePomodoroCycle() {
 	const start = useCallback(
 		async (durationSec: number) => {
 			setError(null);
+			clearSuggestion();
+			setPreFocusedTask(null);
 
 			if (state !== "idle") {
 				setError(
@@ -414,6 +596,7 @@ export function usePomodoroCycle() {
 			cycles,
 			startWorker,
 			invalidateServerCycle,
+			clearSuggestion,
 		],
 	);
 
@@ -425,6 +608,7 @@ export function usePomodoroCycle() {
 		setError(null);
 		stopWorker();
 		endTimeRef.current = null;
+		clearSuggestion();
 
 		try {
 			await cycles.interrupt({ cycleId: activeCycle.id });
@@ -438,7 +622,7 @@ export function usePomodoroCycle() {
 		} catch {
 			setError("Could not interrupt the cycle. Try again.");
 		}
-	}, [activeCycle, cycles, invalidateServerCycle, stopWorker]);
+	}, [activeCycle, cycles, invalidateServerCycle, stopWorker, clearSuggestion]);
 
 	const startBreakAfterWorkComplete = useCallback(
 		async (markTaskDone: boolean) => {
@@ -495,6 +679,9 @@ export function usePomodoroCycle() {
 					cycles.complete({
 						cycleId: activeCycle.id,
 						markTaskDone,
+						...(pendingIncrementInterruptionRef.current
+							? { incrementInterruption: true }
+							: {}),
 					}),
 				);
 			} catch {
@@ -503,6 +690,8 @@ export function usePomodoroCycle() {
 				);
 				return;
 			}
+
+			pendingIncrementInterruptionRef.current = false;
 
 			stopWorker();
 			endTimeRef.current = null;
@@ -520,12 +709,24 @@ export function usePomodoroCycle() {
 					setFocusedTask(null);
 				}
 			} else {
+				const keptFocus = preFocusedTask;
+
 				setState("idle");
 				setRemainingMs(0);
 				setActiveCycle(null);
 				setCycleKind(null);
-				setFocusedTaskId(null);
-				setFocusedTask(null);
+				setPreFocusedTask(null);
+				setHasPreFocusedSuggestion(false);
+
+				if (keptFocus != null) {
+					setFocusedTaskId(keptFocus.id);
+					setFocusedTask(keptFocus);
+				} else {
+					setFocusedTaskId(null);
+					setFocusedTask(null);
+				}
+
+				clearSuggestion();
 
 				await Promise.all([
 					invalidateServerCycle(),
@@ -540,6 +741,8 @@ export function usePomodoroCycle() {
 			startBreakAfterWorkComplete,
 			stopWorker,
 			utils.task.list,
+			preFocusedTask,
+			clearSuggestion,
 		],
 	);
 
@@ -638,9 +841,11 @@ export function usePomodoroCycle() {
 
 			const markTaskDone = pendingMarkTaskDone;
 
+			const workCycleId = Number(activeCycle.id);
+
 			try {
 				await createCheckIn.mutateAsync({
-					cycleId: Number(activeCycle.id),
+					cycleId: workCycleId,
 					energy,
 				});
 			} catch {
@@ -654,11 +859,18 @@ export function usePomodoroCycle() {
 
 			try {
 				await confirmComplete(markTaskDone);
+				fetchSuggestion(workCycleId);
 			} finally {
 				setIsConfirming(false);
 			}
 		},
-		[activeCycle, pendingMarkTaskDone, createCheckIn, confirmComplete],
+		[
+			activeCycle,
+			pendingMarkTaskDone,
+			createCheckIn,
+			confirmComplete,
+			fetchSuggestion,
+		],
 	);
 
 	const onMidCycleEndCycleAndBreak = useCallback(async () => {
@@ -701,6 +913,7 @@ export function usePomodoroCycle() {
 		}
 
 		setPendingMarkTaskDone(true);
+		pendingIncrementInterruptionRef.current = true;
 		setAwaitingCheckIn(true);
 		setIsMidCycleSubmitting(false);
 	}, [
@@ -739,9 +952,11 @@ export function usePomodoroCycle() {
 		setCycleKind(null);
 		setFocusedTaskId(null);
 		setFocusedTask(null);
+		setPreFocusedTask(null);
 		setHasActiveSession(false);
 		setCompletedWorkCycles(0);
 		setActiveSessionId(null);
+		clearSuggestion();
 
 		await Promise.all([invalidateServerCycle(), utils.task.list.invalidate()]);
 	}, [
@@ -752,6 +967,7 @@ export function usePomodoroCycle() {
 		stopWorker,
 		invalidateServerCycle,
 		utils.task.list,
+		clearSuggestion,
 	]);
 
 	const clearError = useCallback(() => {
@@ -771,8 +987,22 @@ export function usePomodoroCycle() {
 		isMidCycleSubmitting,
 		awaitingCheckIn,
 		isConfirming,
+		pendingSuggestion,
+		suggestionCycleId,
+		suggestedTaskId,
+		preFocusedTask,
+		hasPreFocusedSuggestion,
+		isAcceptingSuggestion,
 		selectTask,
 		clearTask,
+		acceptSuggestion,
+		clearSuggestion,
+		dismissPreFocus,
+		retrySuggestion: () => {
+			if (suggestionCycleId != null) {
+				fetchSuggestion(suggestionCycleId);
+			}
+		},
 		start,
 		interrupt,
 		confirmComplete,

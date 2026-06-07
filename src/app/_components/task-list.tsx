@@ -83,20 +83,24 @@ type TaskListProps = {
 	tasks: DomainTask[];
 	onRefresh: () => Promise<void>;
 	focusedTaskId: DomainTaskId | null;
+	highlightedTaskId?: DomainTaskId | null;
 	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void;
 	cycleState: "idle" | "running" | "completed";
 	cycleKind?: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null;
 	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
+	suggestionLoading?: boolean;
 };
 
 export function TaskList({
 	tasks,
 	onRefresh,
 	focusedTaskId,
+	highlightedTaskId = null,
 	onFocusTask,
 	cycleState,
 	cycleKind = null,
 	onMidCycleMarkComplete,
+	suggestionLoading = false,
 }: TaskListProps) {
 	const { tasks: taskRepo } = useRepositories();
 
@@ -119,6 +123,10 @@ export function TaskList({
 	const cycleLocked = cycleState === "running" || cycleState === "completed";
 	const isBreakCycle =
 		cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
+	const focusLocked =
+		(cycleState === "running" && cycleKind === "WORK") ||
+		cycleState === "completed" ||
+		(isBreakCycle && suggestionLoading);
 	const markCompleteLocked =
 		cycleState === "completed" ||
 		isBreakCycle ||
@@ -255,7 +263,16 @@ export function TaskList({
 							<li
 								className={`flex items-center gap-2 rounded-lg bg-white/10 px-4 py-3 ${
 									focusedTaskId === task.id ? "ring-2 ring-purple-500" : ""
+								} ${
+									highlightedTaskId === task.id
+										? "ring-2 ring-amber-400/80"
+										: ""
 								}`}
+								data-testid={
+									highlightedTaskId === task.id
+										? "suggested-task-row"
+										: undefined
+								}
 								key={String(task.id)}
 							>
 								<button
@@ -343,7 +360,7 @@ export function TaskList({
 											? "bg-purple-600 text-white"
 											: "bg-white/10 text-white/80 hover:bg-white/20"
 									}`}
-									disabled={cycleLocked}
+									disabled={focusLocked}
 									onClick={() => onFocusTask(task.id, task)}
 									type="button"
 								>

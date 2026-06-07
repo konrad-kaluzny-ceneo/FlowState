@@ -41,7 +41,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-03 | mid-cycle-completion-prompt | [FLO-11](https://linear.app/flowstate-10xdev/issue/FLO-11) | [#11](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/11) (closed) | mark a task done mid-cycle and choose between picking the next task to keep the cycle running or ending the cycle to take a break now | S-01 | FR-015, FR-009a (revert path consistency) | done |
 | S-04 | task-attributes-for-scoring | [FLO-9](https://linear.app/flowstate-10xdev/issue/FLO-9) | [#8](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/8) | tag tasks with work type (deep work / admin / reactive) and weight (1–3) at creation and during edit, with values surfaced in the task list | F-01, F-02 | FR-005 (extend), FR-017, FR-018 | done |
 | S-05 | end-of-cycle-checkin | [FLO-12](https://linear.app/flowstate-10xdev/issue/FLO-12) | [#12](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/12) (closed) | declare energy state ("Focused" / "Steady" / "Fading") at every cycle end before transitioning, with the response stored for the active session | S-01 | FR-020, NFR (mental-state data privacy) | done |
-| S-06 | adaptive-task-suggestion | [FLO-13](https://linear.app/flowstate-10xdev/issue/FLO-13) | [#13](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/13) | after each check-in, see a suggested next task with a one-line rationale and accept it or override by picking any other task | S-04, S-05 | FR-021, FR-022, NFR (suggestion feedback ≥1s visible) | proposed |
+| S-06 | adaptive-task-suggestion | [FLO-13](https://linear.app/flowstate-10xdev/issue/FLO-13) | [#13](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/13) | after each check-in, see a suggested next task with a one-line rationale and accept it or override by picking any other task | S-04, S-05 | FR-021, FR-022, NFR (suggestion feedback ≥1s visible) | in review |
 | S-07 | account-recovery-flow | [FLO-7](https://linear.app/flowstate-10xdev/issue/FLO-7) | [#9](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/9) | reset a forgotten password and recover access without losing existing tasks or session history | F-02 | FR-003a, NFR (auth must not lock user out of own data) | ready |
 | S-08 | guest-local-storage-merge | [FLO-21](https://linear.app/flowstate-10xdev/issue/FLO-21) | [#30](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/30) (closed) | use tasks and a focus cycle without an account (device-local storage), then sign in or sign up and have that work merged into the account | S-01, F-02 | NFR (no silent data loss), FR-003b, FR-003c, FR-004–FR-009 | done |
 | S-09 | optimistic-task-mutations | — | — | see task list and task actions update immediately while logged in (optimistic UI), with rollback on server error — matching perceived speed of local guest storage | S-01, F-02 | NFR (200ms acknowledgement), FR-004–FR-008 | proposed |
@@ -215,7 +215,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - What are the exact weights and thresholds in the scoring formula? Owner: implementer (`/10x-plan` for first pass, calibrated post-launch). Block: no — directional behaviour from PRD §Business Logic is sufficient to ship a v1 deterministic formula. (Mirrors PRD §Open Questions Q1.)
 - **Risk:** This is the wedge — the differentiating mechanic this product is built for. The biggest failure mode is over-engineering the formula before real data exists. Mitigation: ship a transparent deterministic v1 (per PRD §Non-Goals "no AI/ML scoring"), expose the rationale in the UI, treat coefficient calibration as post-MVP iteration.
-- **Status:** proposed
+- **Status:** in review — branch `features/adaptive-task-suggestion`; impl review APPROVED (2026-06-07)
 
 
 ### S-07: Account recovery flow
@@ -292,7 +292,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-03 | mid-cycle-completion-prompt | FLO-11 | #11 | FlowState — mid-cycle completion prompt (continue or break) | no | Unblocks after S-01; can run parallel to S-02 |
 | S-04 | task-attributes-for-scoring | FLO-9 | #8 | FlowState — task work-type and weight attributes | no | Unblocks once F-01 + F-02 land; runs parallel to S-01/S-02/S-03 |
 | S-05 | end-of-cycle-checkin | FLO-12 | #12 | FlowState — end-of-cycle mindful check-in | no | Unblocks after S-01 |
-| S-06 | adaptive-task-suggestion | FLO-13 | #13 | FlowState — adaptive next-task suggestion with override (wedge) | no | Unblocks after S-04 + S-05; carries the v1 scoring formula |
+| S-06 | adaptive-task-suggestion | FLO-13 | #13 | FlowState — adaptive next-task suggestion with override (wedge) | no | In review — PR pending merge; wedge v1 shipped on branch |
 | S-07 | account-recovery-flow | FLO-7 | #9 | FlowState — verify and expose password recovery flow | no | Requires F-02 for browser-based verification of recovery flow |
 | S-08 | guest-local-storage-merge | FLO-21 | #30 | FlowState — guest trial (localStorage) and merge on login | yes | Shipped 2026-06-07; GitHub closed, Linear Done |
 | S-09 | optimistic-task-mutations | — | — | FlowState — optimistic TanStack Query updates for authenticated task mutations | no | Unblocks after S-01; best after S-08 if guest trial ships first |

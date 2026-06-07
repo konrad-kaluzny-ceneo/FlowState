@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+﻿import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("~/lib/auth/server", () => ({
 	auth: { getSession: vi.fn() },
@@ -31,6 +31,7 @@ let sessions: Array<{
 	state: string;
 	archivedAt: null;
 	lastActivityAt: Date;
+	interruptionCount: number;
 }>;
 let nextCycleId = 1;
 let nextSessionId = 1;
@@ -222,15 +223,28 @@ vi.mock("~/server/db/index", () => {
 						state: "ACTIVE",
 						archivedAt: null as null,
 						lastActivityAt: new Date(),
+						interruptionCount: 0,
 					};
 					sessions.push(session);
 					return Promise.resolve(session);
 				}),
 				update: vi.fn(
-					(args: { where: { id: number }; data: { lastActivityAt: Date } }) => {
+					(args: {
+						where: { id: number };
+						data: {
+							lastActivityAt?: Date;
+							interruptionCount?: { increment: number };
+						};
+					}) => {
 						const session = sessions.find((s) => s.id === args.where.id);
 						if (!session) throw new Error("session not found");
-						Object.assign(session, args.data);
+						if (args.data.lastActivityAt != null) {
+							session.lastActivityAt = args.data.lastActivityAt;
+						}
+						if (args.data.interruptionCount?.increment != null) {
+							session.interruptionCount +=
+								args.data.interruptionCount.increment;
+						}
 						return Promise.resolve(session);
 					},
 				),
@@ -337,6 +351,7 @@ describe("cycle router lifecycle", () => {
 				state: "ACTIVE",
 				archivedAt: null,
 				lastActivityAt: new Date(),
+				interruptionCount: 0,
 			},
 		];
 		cycles = [
@@ -366,6 +381,7 @@ describe("cycle router lifecycle", () => {
 				state: "ACTIVE",
 				archivedAt: null,
 				lastActivityAt: new Date(),
+				interruptionCount: 0,
 			},
 		];
 		tasks = [{ id: 5, title: "Done task", status: "active", userId: USER_ID }];
@@ -395,6 +411,7 @@ describe("cycle router lifecycle", () => {
 				state: "ACTIVE",
 				archivedAt: null,
 				lastActivityAt: new Date(),
+				interruptionCount: 0,
 			},
 		];
 		cycles = [
@@ -464,6 +481,7 @@ describe("cycle router lifecycle", () => {
 				state: "ACTIVE",
 				archivedAt: null,
 				lastActivityAt: new Date(),
+				interruptionCount: 0,
 			},
 		];
 		tasks = [
@@ -508,7 +526,7 @@ describe("cycle router lifecycle", () => {
 		});
 	});
 
-	it("integration: create → getActive → complete → getActive null", async () => {
+	it("integration: create â†’ getActive â†’ complete â†’ getActive null", async () => {
 		sessions = [
 			{
 				id: 1,
@@ -516,6 +534,7 @@ describe("cycle router lifecycle", () => {
 				state: "ACTIVE",
 				archivedAt: null,
 				lastActivityAt: new Date(),
+				interruptionCount: 0,
 			},
 		];
 		tasks = [{ id: 2, title: "Task", status: "active", userId: USER_ID }];
@@ -553,6 +572,7 @@ describe("cycle router lifecycle", () => {
 				state: "ACTIVE",
 				archivedAt: null,
 				lastActivityAt: new Date(),
+				interruptionCount: 0,
 			},
 		];
 		cycles = [
@@ -602,6 +622,7 @@ describe("cycle router lifecycle", () => {
 					state: "ACTIVE",
 					archivedAt: null,
 					lastActivityAt: oldDate,
+					interruptionCount: 0,
 				},
 			];
 
@@ -625,6 +646,7 @@ describe("cycle router lifecycle", () => {
 					state: "ACTIVE",
 					archivedAt: null,
 					lastActivityAt: oldDate,
+					interruptionCount: 0,
 				},
 			];
 			cycles = [
@@ -657,6 +679,7 @@ describe("cycle router lifecycle", () => {
 					state: "ACTIVE",
 					archivedAt: null,
 					lastActivityAt: oldDate,
+					interruptionCount: 0,
 				},
 			];
 			cycles = [
@@ -683,6 +706,16 @@ describe("cycle router lifecycle", () => {
 
 	describe("rebindTask", () => {
 		it("swaps taskId on a running WORK cycle", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
 			tasks = [
 				{ id: 10, title: "First", status: "active", userId: USER_ID },
 				{ id: 11, title: "Second", status: "active", userId: USER_ID },
@@ -709,7 +742,108 @@ describe("cycle router lifecycle", () => {
 			expect(cycles[0]?.taskId).toBe(11);
 		});
 
+		it("increments session interruptionCount on rebind", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+			tasks = [
+				{ id: 10, title: "First", status: "active", userId: USER_ID },
+				{ id: 11, title: "Second", status: "active", userId: USER_ID },
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: 10,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			await caller().rebindTask({ cycleId: 1, taskId: 11 });
+			expect(sessions[0]?.interruptionCount).toBe(1);
+		});
+
+		it("increments interruptionCount when complete with incrementInterruption flag", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			await caller().complete({ cycleId: 1, incrementInterruption: true });
+			expect(sessions[0]?.interruptionCount).toBe(1);
+		});
+
+		it("does not increment interruptionCount on normal complete", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			await caller().complete({ cycleId: 1 });
+			expect(sessions[0]?.interruptionCount).toBe(0);
+		});
+
 		it("throws NOT_FOUND for another user's cycle", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: VICTIM_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
 			tasks = [{ id: 10, title: "Mine", status: "active", userId: USER_ID }];
 			cycles = [
 				{
@@ -759,6 +893,7 @@ describe("cycle router lifecycle", () => {
 					state: "ACTIVE",
 					archivedAt: null,
 					lastActivityAt: new Date(),
+					interruptionCount: 0,
 				},
 			];
 			cycles = [
@@ -789,6 +924,7 @@ describe("cycle router lifecycle", () => {
 					state: "ACTIVE",
 					archivedAt: null,
 					lastActivityAt: new Date(),
+					interruptionCount: 0,
 				},
 			];
 			cycles = [
@@ -810,7 +946,7 @@ describe("cycle router lifecycle", () => {
 		});
 
 		it("documents getActive when session ended but cycle still RUNNING", async () => {
-			// getActive filters userId + RUNNING only — no session state join (cycle.ts:37-45)
+			// getActive filters userId + RUNNING only â€” no session state join (cycle.ts:37-45)
 			sessions = [
 				{
 					id: 1,
@@ -818,6 +954,7 @@ describe("cycle router lifecycle", () => {
 					state: "ENDED",
 					archivedAt: null,
 					lastActivityAt: new Date(),
+					interruptionCount: 0,
 				},
 			];
 			cycles = [

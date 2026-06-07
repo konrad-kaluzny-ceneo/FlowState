@@ -37,6 +37,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		await page.getByRole("button", { name: "Continue later" }).click();
 		await expect(page.getByText("Short Break")).toBeHidden();
 		await completeCheckIn(page, "steady");
+		// S-06: suggestion card may appear during break — no interaction required for S-01
 
 		await expect(page.getByTestId("cycle-complete-overlay")).not.toBeVisible();
 		const taskRow = page.getByRole("listitem").filter({ hasText: taskTitle });
@@ -64,6 +65,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		await markDone.click();
 		await expect(page.getByText("Short Break")).toBeHidden();
 		await completeCheckIn(page, "steady");
+		// S-06: suggestion card may appear during break — no interaction required for S-01
 
 		await expect(page.getByTestId("cycle-complete-overlay")).not.toBeVisible();
 		await expect(page.getByRole("heading", { name: /Completed/ })).toBeVisible({
