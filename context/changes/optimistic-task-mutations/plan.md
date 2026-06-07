@@ -274,9 +274,9 @@ No schema or data migration. Deploy is client-only; rollback is revert PR — pe
 
 #### Automated
 
-- [x] 1.1 `pnpm test src/hooks/use-task-mutations.test.tsx` passes
-- [x] 1.2 `pnpm typecheck` passes
-- [x] 1.3 `pnpm check` passes
+- [x] 1.1 `pnpm test src/hooks/use-task-mutations.test.tsx` passes — 5fddcc7
+- [x] 1.2 `pnpm typecheck` passes — 5fddcc7
+- [x] 1.3 `pnpm check` passes — 5fddcc7
 
 #### Manual
 
