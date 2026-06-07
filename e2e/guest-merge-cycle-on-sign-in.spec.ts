@@ -4,7 +4,7 @@
  * Spec role: risk proof — guest localStorage cycle → auth → server import → running timer
  */
 import { expect, test } from "@playwright/test";
-
+import { dismissFirstRunIfVisible } from "./helpers/onboarding";
 import { createTestUser, signInAsUser } from "./helpers/user";
 import { startFocusedWorkCycle } from "./helpers/work-cycle";
 
@@ -27,6 +27,7 @@ test.describe("Guest merge cycle on sign-in (S-08 / Risk #5)", () => {
 		await page.reload();
 		await expect(page.getByTestId("guest-banner")).toBeVisible();
 		await expect(page.getByTestId("task-list")).toBeVisible();
+		await dismissFirstRunIfVisible(page);
 
 		await startFocusedWorkCycle(page, taskTitle, 30);
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();

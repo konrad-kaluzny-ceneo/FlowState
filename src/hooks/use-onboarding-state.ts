@@ -16,7 +16,11 @@ import {
 	loadOnboardingState,
 	patchOnboardingState,
 } from "~/lib/onboarding/storage";
-import type { OnboardingScope, OnboardingState } from "~/lib/onboarding/types";
+import {
+	DEFAULT_ONBOARDING_STATE,
+	type OnboardingScope,
+	type OnboardingState,
+} from "~/lib/onboarding/types";
 
 type OnboardingContextValue = {
 	state: OnboardingState;
@@ -34,9 +38,8 @@ function useOnboardingState(scope: OnboardingScope): OnboardingContextValue {
 	const isGuest = scope.mode === "guest";
 	const userId = isGuest ? null : scope.userId;
 
-	const [state, setState] = useState<OnboardingState>(() =>
-		loadOnboardingState(scope),
-	);
+	// SSR-safe: defaults on server; hydrate from localStorage on client mount.
+	const [state, setState] = useState<OnboardingState>(DEFAULT_ONBOARDING_STATE);
 
 	useEffect(() => {
 		const nextScope: OnboardingScope = isGuest

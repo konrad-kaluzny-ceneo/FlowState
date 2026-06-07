@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useMemo } from "react";
 
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
@@ -38,21 +38,6 @@ function PomodoroDashboardBody({
 	onSuggestionCoachSeen?: () => void;
 }) {
 	const pomodoro = usePomodoroCycle();
-
-	useEffect(() => {
-		if (
-			enableSuggestionGate &&
-			suggestionCoachLine != null &&
-			pomodoro.pendingSuggestion.status === "ready"
-		) {
-			onSuggestionCoachSeen?.();
-		}
-	}, [
-		enableSuggestionGate,
-		suggestionCoachLine,
-		pomodoro.pendingSuggestion.status,
-		onSuggestionCoachSeen,
-	]);
 
 	const activeTaskIds = useMemo(
 		() => new Set(tasks.filter((t) => t.status === "active").map((t) => t.id)),
@@ -124,7 +109,10 @@ function PomodoroDashboardBody({
 					<TaskSuggestionCard
 						coachLine={suggestionCoachLine}
 						isAccepting={pomodoro.isAcceptingSuggestion}
-						onAccept={() => void pomodoro.acceptSuggestion()}
+						onAccept={() => {
+							onSuggestionCoachSeen?.();
+							void pomodoro.acceptSuggestion();
+						}}
 						status="ready"
 						suggestion={{
 							taskId: Number(pomodoro.pendingSuggestion.data.taskId),

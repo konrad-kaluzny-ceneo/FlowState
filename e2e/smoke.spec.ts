@@ -4,9 +4,15 @@
  * Spec role: infra smoke — proves fixture auth + app shell load
  */
 import { expect, test } from "./fixtures";
+import {
+	clearOnboardingKeys,
+	dismissFirstRunIfVisible,
+} from "./helpers/onboarding";
 
 test("authenticated user sees app shell with task list", async ({ page }) => {
 	await page.goto("/");
+	await clearOnboardingKeys(page);
+	await dismissFirstRunIfVisible(page);
 
 	// App heading is visible
 	await expect(page.getByRole("heading", { name: "FlowState" })).toBeVisible();
