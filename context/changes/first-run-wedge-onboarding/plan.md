@@ -465,9 +465,9 @@ Browser proofs for onboarding surfaces; extend helpers so existing wedge specs s
 
 #### Automated
 
-- [x] 1.1 `pnpm check` passes
-- [x] 1.2 `pnpm typecheck` passes
-- [x] 1.3 `pnpm exec vitest run src/lib/onboarding/storage.test.ts` passes
+- [x] 1.1 `pnpm check` passes — 86e0454
+- [x] 1.2 `pnpm typecheck` passes — 86e0454
+- [x] 1.3 `pnpm exec vitest run src/lib/onboarding/storage.test.ts` passes — 86e0454
 
 #### Manual
 
