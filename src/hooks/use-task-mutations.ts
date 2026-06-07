@@ -108,7 +108,7 @@ export function useTaskMutations() {
 
 	const handleError = useCallback(
 		(err: unknown, _input: unknown, context: MutationContext | undefined) => {
-			if (context?.previousTasks !== undefined) {
+			if (context) {
 				utils.task.list.setData(undefined, () => context.previousTasks);
 			}
 			setError(formatTaskMutationError(err));

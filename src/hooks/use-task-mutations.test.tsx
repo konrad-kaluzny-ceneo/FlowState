@@ -310,6 +310,32 @@ describe("useTaskMutations", () => {
 		expect(result.current.error).toBeNull();
 	});
 
+	it("restores empty cache on failed create", async () => {
+		taskListCache = undefined;
+
+		const { result } = renderHook(() => useTaskMutations(), {
+			wrapper: createWrapper(),
+		});
+
+		await act(async () => {
+			await runFailingMutationLifecycle(
+				mutationLifecycles.create,
+				createMutateAsync,
+				{ title: "Broken" },
+				new Error("Create failed"),
+			).catch(() => {});
+		});
+
+		await waitFor(() => {
+			expect(result.current.error).toBe(
+				"Something went wrong. Please try again.",
+			);
+		});
+
+		expect(taskListCache).toBeUndefined();
+		expect(invalidateTaskList).toHaveBeenCalled();
+	});
+
 	it("restores snapshot and exposes error on mutation failure", async () => {
 		const previous = [makeTask()];
 		taskListCache = previous;
