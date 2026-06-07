@@ -42,12 +42,16 @@ test.describe("Guest merge cycle on sign-in (S-08 / Risk #5)", () => {
 		const authState = await signInAsUser(request, user);
 		await context.addCookies(authState.cookies);
 
-		const getActiveAfterMerge = page.waitForResponse(
-			(response) => response.url().includes("cycle.getActive") && response.ok(),
-			{ timeout: 30_000 },
-		);
 		await page.goto("/");
-		await getActiveAfterMerge;
+
+		await expect
+			.poll(
+				async () =>
+					page.evaluate((key) => localStorage.getItem(key), GUEST_STORAGE_KEY),
+				{ timeout: 45_000 },
+			)
+			.toBeNull();
+
 		await dismissFirstRunIfVisible(page);
 
 		await expect(page.getByTestId("guest-banner")).toBeHidden({
@@ -56,6 +60,7 @@ test.describe("Guest merge cycle on sign-in (S-08 / Risk #5)", () => {
 		await expect(
 			page.getByRole("listitem").filter({ hasText: taskTitle }).first(),
 		).toBeVisible({ timeout: 30_000 });
+
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible({
 			timeout: 30_000,
 		});

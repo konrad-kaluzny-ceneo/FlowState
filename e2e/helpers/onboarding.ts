@@ -33,11 +33,22 @@ export async function seedOnboardingDismissed(page: Page, userId?: string) {
 }
 
 export async function dismissFirstRunIfVisible(page: Page) {
-	const overlay = page.getByTestId("first-run-overlay");
-	if (await overlay.isVisible()) {
+	for (let attempt = 0; attempt < 3; attempt++) {
+		const overlay = page.getByTestId("first-run-overlay");
+		if (!(await overlay.isVisible().catch(() => false))) {
+			return;
+		}
 		await page.getByTestId("first-run-dismiss-btn").click();
-		await expect(overlay).toBeHidden();
+		try {
+			await expect(overlay).toBeHidden({ timeout: 5000 });
+			return;
+		} catch {
+			// Overlay may reappear when guest-import defer clears — retry dismiss.
+		}
 	}
+	await expect(page.getByTestId("first-run-overlay")).toBeHidden({
+		timeout: 10_000,
+	});
 }
 
 export async function findAuthOnboardingKey(

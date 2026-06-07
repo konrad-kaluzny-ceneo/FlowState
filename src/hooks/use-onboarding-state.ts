@@ -8,6 +8,7 @@ import {
 	useContext,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from "react";
 
@@ -37,11 +38,16 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 function useOnboardingState(scope: OnboardingScope): OnboardingContextValue {
 	const isGuest = scope.mode === "guest";
 	const userId = isGuest ? null : scope.userId;
+	const scopeRef = useRef(scope);
+	scopeRef.current = scope;
 
 	// SSR-safe: defaults on server; hydrate from localStorage on client mount.
 	const [state, setState] = useState<OnboardingState>(DEFAULT_ONBOARDING_STATE);
 
 	useEffect(() => {
+		if (!isGuest && !userId) {
+			return;
+		}
 		const nextScope: OnboardingScope = isGuest
 			? { mode: "guest" }
 			: { mode: "authenticated", userId: userId ?? "" };
@@ -49,21 +55,41 @@ function useOnboardingState(scope: OnboardingScope): OnboardingContextValue {
 	}, [isGuest, userId]);
 
 	const dismissFirstRun = useCallback(() => {
-		setState(() => patchOnboardingState(scope, { firstRunDismissed: true }));
-	}, [scope]);
+		setState(() =>
+			patchOnboardingState(scopeRef.current, { firstRunDismissed: true }),
+		);
+	}, []);
 
 	const markCheckInCoachSeen = useCallback(() => {
-		setState(() => patchOnboardingState(scope, { checkInCoachSeen: true }));
-	}, [scope]);
+		setState(() =>
+			patchOnboardingState(scopeRef.current, { checkInCoachSeen: true }),
+		);
+	}, []);
 
 	const markSuggestionCoachSeen = useCallback(() => {
-		setState(() => patchOnboardingState(scope, { suggestionCoachSeen: true }));
-	}, [scope]);
+		setState(() =>
+			patchOnboardingState(scopeRef.current, { suggestionCoachSeen: true }),
+		);
+	}, []);
 
-	const isFirstRunVisible = useMemo(
-		() => !state.firstRunDismissed && !shouldDeferFirstRun(),
-		[state.firstRunDismissed],
+	const [deferFirstRun, setDeferFirstRun] = useState(() =>
+		shouldDeferFirstRun(),
 	);
+
+	useEffect(() => {
+		setDeferFirstRun(shouldDeferFirstRun());
+		const id = window.setInterval(() => {
+			setDeferFirstRun(shouldDeferFirstRun());
+		}, 200);
+		return () => window.clearInterval(id);
+	}, []);
+
+	const isFirstRunVisible = useMemo(() => {
+		if (!isGuest && !userId) {
+			return false;
+		}
+		return !state.firstRunDismissed && !deferFirstRun;
+	}, [isGuest, userId, state.firstRunDismissed, deferFirstRun]);
 
 	const shouldShowCheckInCoach = !state.checkInCoachSeen;
 	const shouldShowSuggestionCoach = !state.suggestionCoachSeen;
