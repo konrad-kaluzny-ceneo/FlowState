@@ -617,7 +617,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-06 | adaptive-task-suggestion | FLO-13 | #13 | FlowState — adaptive next-task suggestion with override (wedge) | yes | Shipped 2026-06-07 via PR #31; GitHub closed, Linear Done |
 | S-07 | account-recovery-flow | FLO-7 | #9 | FlowState — verify and expose password recovery flow | no | Requires F-02 for browser-based verification of recovery flow |
 | S-08 | guest-local-storage-merge | FLO-21 | #30 | FlowState — guest trial (localStorage) and merge on login | yes | Shipped 2026-06-07; GitHub closed, Linear Done |
-| S-09 | optimistic-task-mutations | FLO-24 | #35 | FlowState — optimistic TanStack Query updates for authenticated task mutations | no | Active (In Progress); duplicate FLO-23 canceled |
+| S-09 | optimistic-task-mutations | FLO-24 | #35 | FlowState — optimistic TanStack Query updates for authenticated task mutations | yes | Shipped 2026-06-07 via PR #51; GitHub closed, Linear Done |
 | S-10 | google-oauth-provider | FLO-20 | #20 | FlowState — Google OAuth social login (one-click sign-in) | yes | Neon Auth supports Google OAuth natively; minimal UI addition |
 | F-03 | align-prisma-config | FLO-22 | #33 | FlowState — align prisma.config.ts with Prisma 7 conventions | yes | Run `/10x-plan align-prisma-config`; config-only, no user-visible behavior |
 | F-04 | impeccable-design-foundation | FLO-25 | #36 | FlowState — Impeccable design foundation (DESIGN.md via shape + document) | no | Unblocks after S-09; gates S-12 and S-13 craft slices |
