@@ -501,13 +501,13 @@ Browser proofs for onboarding surfaces; extend helpers so existing wedge specs s
 
 #### Automated
 
-- [x] 4.1 `pnpm check` passes
-- [x] 4.2 `pnpm typecheck` passes
-- [x] 4.3 `pnpm test` passes
+- [x] 4.1 `pnpm check` passes — 88b6d72
+- [x] 4.2 `pnpm typecheck` passes — 88b6d72
+- [x] 4.3 `pnpm test` passes — 88b6d72
 
 #### Manual
 
-- [x] 4.4 Coaches show once on auth wedge; guest has no coaches
+- [x] 4.4 Coaches show once on auth wedge; guest has no coaches — 88b6d72
 
 ### Phase 5: E2E Tests (First-Run, Empty Guide, Coach Subcopy)
 
