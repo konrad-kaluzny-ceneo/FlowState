@@ -10,6 +10,7 @@ One-time `/10x-e2e` VERIFY results — each row confirms the spec goes **red** w
 | `pomodoro-cycle.spec.ts` | S-01 / #7 | Assert non-existent button `DELIBERATE_BREAK_WRONG_BUTTON` after cycle complete | Yes | 2026-06-06 | Representative test: "focus, start, complete via clock, continue later" |
 | `guest-merge-on-sign-in.spec.ts` | #5 | Assert wrong listitem text `DELIBERATE_BREAK_WRONG_TASK` after sign-in merge | Yes | 2026-06-06 | Guest banner hidden + blob cleared assertions unchanged |
 | `guest-merge-cycle-on-sign-in.spec.ts` | #5 | Assert wrong listitem text `DELIBERATE_BREAK_WRONG_TASK` after cycle merge | Yes | 2026-06-06 | `timer-panel-running` + guest blob cleared assertions unchanged |
+| `mindful-session-wind-down.spec.ts` | S-16 / FR-019–FR-021 | Assert `wind-down-overlay` hidden when fatigue+Fading trigger expected | Yes | 2026-06-08 | Fatigue-path test: overlay oracle caught break; Short Break hidden assertion unchanged |
 
 **Method:** Temporarily invert or replace the key business-outcome assertion, run the single spec with `CI=true`, confirm failure, revert immediately. No production code changes committed.
 

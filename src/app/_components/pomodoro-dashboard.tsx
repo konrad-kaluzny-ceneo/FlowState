@@ -9,6 +9,7 @@ import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
 import { TaskList } from "~/app/_components/task-list";
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
+import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
 import { useOnboarding } from "~/hooks/use-onboarding-state";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
@@ -23,6 +24,7 @@ function PomodoroDashboardBody({
 	tasks,
 	refreshTasks,
 	enableCheckInGate = false,
+	enableWindDownGate = false,
 	enableSuggestionGate = false,
 	checkInCoachLine,
 	suggestionCoachLine,
@@ -32,6 +34,7 @@ function PomodoroDashboardBody({
 	tasks: ReturnType<typeof useGuestDomainTasks>["tasks"];
 	refreshTasks: () => Promise<void>;
 	enableCheckInGate?: boolean;
+	enableWindDownGate?: boolean;
 	enableSuggestionGate?: boolean;
 	checkInCoachLine?: string;
 	suggestionCoachLine?: string;
@@ -69,6 +72,7 @@ function PomodoroDashboardBody({
 
 	const showSuggestionCard =
 		enableSuggestionGate &&
+		!pomodoro.awaitingWindDown &&
 		isBreakRunning &&
 		pomodoro.pendingSuggestion.status !== "idle";
 
@@ -211,7 +215,7 @@ function PomodoroDashboardBody({
 				</div>
 			)}
 
-			{!pomodoro.awaitingCheckIn && (
+			{!pomodoro.awaitingCheckIn && !pomodoro.awaitingWindDown && (
 				<CycleCompleteOverlay
 					canMarkTaskDone={canMarkTaskDone}
 					cycleKind={pomodoro.cycleKind}
@@ -255,6 +259,17 @@ function PomodoroDashboardBody({
 					</>
 				)}
 
+			{enableWindDownGate &&
+				pomodoro.awaitingWindDown &&
+				pomodoro.windDownRationale != null && (
+					<WindDownOverlay
+						isSubmitting={pomodoro.isConfirming}
+						onEndSession={() => void pomodoro.onWindDownEndSession()}
+						onKeepGoing={() => void pomodoro.onWindDownKeepGoing()}
+						rationale={pomodoro.windDownRationale}
+					/>
+				)}
+
 			{pomodoro.hasActiveSession && (
 				<button
 					className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white/60 transition hover:border-red-400/40 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"
@@ -292,6 +307,7 @@ function AuthenticatedPomodoroDashboard() {
 			}
 			enableCheckInGate
 			enableSuggestionGate
+			enableWindDownGate
 			onCheckInCoachSeen={markCheckInCoachSeen}
 			onSuggestionCoachSeen={markSuggestionCoachSeen}
 			refreshTasks={async () => {

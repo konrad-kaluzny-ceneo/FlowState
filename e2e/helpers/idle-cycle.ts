@@ -7,8 +7,16 @@ export async function ensureIdleCycle(page: Page) {
 	await expect(async () => {
 		await dismissFirstRunIfVisible(page);
 
+		if (await page.getByTestId("wind-down-overlay").isVisible()) {
+			await page.getByTestId("wind-down-keep-going-btn").click();
+			throw new Error("wind-down dismissed — re-check idle");
+		}
+
 		if (await page.getByTestId("check-in-overlay").isVisible()) {
 			await completeCheckIn(page, "steady");
+			if (await page.getByTestId("wind-down-overlay").isVisible()) {
+				await page.getByTestId("wind-down-keep-going-btn").click();
+			}
 			throw new Error("check-in completed — re-check idle");
 		}
 

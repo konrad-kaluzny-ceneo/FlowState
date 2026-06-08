@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-07 (S-06 adaptive suggestion e2e cookbook)
+> Last updated: 2026-06-08 (S-16 mindful session wind-down e2e cookbook)
 
 ## 1. Strategy
 
@@ -161,6 +161,7 @@ the relevant rollout phase ships; before that, the sub-section reads
 - **Guest reload**: `e2e/guest-trial.spec.ts` — same UI assertions; guest banner still visible.
 - **Phase 2 browser proofs (Risks #3, #7)**: `e2e/mid-cycle-completion.spec.ts`, `e2e/mid-cycle-last-task.spec.ts`; S-01 regression with check-in step in `e2e/pomodoro-cycle.spec.ts`. Dedicated `check-in-gate.spec.ts` deferred — see §6.6 Phase 2 deferred e2e.
 - **Adaptive task suggestion (S-06, FR-021/FR-022)**: `e2e/task-suggestion.spec.ts` — after FOCUSED check-in, asserts `task-suggestion-card` rationale, `suggested-task-row` highlight, accept → `break-continue-suggested-btn` → idle timer, override via Focus clears highlight. Helpers: `e2e/helpers/suggestion.ts` (`expectSuggestionVisible`, `acceptSuggestion`, `waitForSuggestionNext`); task setup via `addTaskWithAttributes`, `completeWorkCycleWithCheckIn`, `setShortBreakDurationSec` in `e2e/helpers/work-cycle.ts`. Reference test: `shows suggestion with rationale and highlighted row after check-in`. Run: `set CI=true && pnpm test:e2e e2e/task-suggestion.spec.ts`. S-01 specs tolerate the card after check-in (no interaction required).
+- **Mindful session wind-down (S-16, FR-019/FR-020)**: `e2e/mindful-session-wind-down.spec.ts` — after FADING check-in when `completedWorkCycles >= 3` or `interruptionCount >= 2`, asserts `wind-down-overlay` blocks break/suggestion until resolved; **Keep going** → `timer-panel-running` + `task-suggestion-card`; **End session** → `end-session-btn` hidden + idle dashboard; dismiss suppresses until next check-in; negatives (Steady/Focused energy, low fatigue). Helpers: `e2e/helpers/wind-down.ts` (`expectWindDownVisible`, `dismissWindDownKeepGoing`, `endSessionViaWindDown`, `submitFadingCheckInExpectingWindDown`, `completeSteadyWorkCycleAndResumeIdle`, `switchTaskMidCycle`); fatigue setup via 3× `completeSteadyWorkCycleAndResumeIdle` then 4th-cycle Fading; interruption setup via 2× mid-cycle task switch (`switchTaskMidCycle`) on 1st cycle. Test IDs: `wind-down-overlay`, `wind-down-rationale`, `wind-down-keep-going-btn`, `wind-down-end-session-btn`. `ensureIdleCycle` dismisses stranded wind-down via keep-going. Reference tests: `fatigue path triggers wind-down and blocks break until keep going`, `interruption path triggers wind-down with interruptions rationale`, `end session path ends session without break or suggestion`. Run: `set CI=true && pnpm test:e2e e2e/mindful-session-wind-down.spec.ts`.
 - **±2s tolerance**: use `src/test-utils/countdown-tolerance.ts` in Vitest only, not Playwright reload specs (scope addendum: `context/changes/testing-critical-path-persistence-timer/reviews/scope-addendum.md`).
 - **Auth isolation**: per-test API sign-up/sign-in via `e2e/fixtures.ts` (no shared `playwright/.auth/user.json`).
 - **Run locally**: `set CI=true && pnpm test:e2e` (starts `next dev` on 3001 — no full build). Fastest: `next dev --turbo -p 3001` with `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1`, then `set E2E_REUSE_SERVER=1 && set CI=true && pnpm test:e2e`. Prod parity: `set E2E_PRODUCTION_SERVER=1`.

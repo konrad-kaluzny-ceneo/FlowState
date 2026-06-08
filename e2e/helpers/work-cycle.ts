@@ -119,6 +119,13 @@ export async function focusTask(page: Page, taskTitle: string) {
 	await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
 }
 
+async function dismissWindDownIfVisible(page: Page) {
+	if (await page.getByTestId("wind-down-overlay").isVisible()) {
+		await page.getByTestId("wind-down-keep-going-btn").click();
+		await expect(page.getByTestId("wind-down-overlay")).toBeHidden();
+	}
+}
+
 export async function completeWorkCycleWithCheckIn(
 	page: Page,
 	energy: "focused" | "steady" | "fading",
@@ -129,4 +136,5 @@ export async function completeWorkCycleWithCheckIn(
 	await page.getByRole("button", { name: "Continue later" }).click();
 	await expect(page.getByText("Short Break")).toBeHidden();
 	await completeCheckIn(page, energy);
+	await dismissWindDownIfVisible(page);
 }
