@@ -324,9 +324,9 @@ Run: `set CI=true && pnpm test:e2e e2e/mindful-session-wind-down.spec.ts`. Recor
 
 #### Automated
 
-- [x] 3.1 `pnpm check` passes
-- [x] 3.2 `pnpm typecheck` passes
-- [x] 3.3 `pnpm test` passes
+- [x] 3.1 `pnpm check` passes — ad2125d
+- [x] 3.2 `pnpm typecheck` passes — ad2125d
+- [x] 3.3 `pnpm test` passes — ad2125d
 
 #### Manual
 
@@ -338,9 +338,9 @@ Run: `set CI=true && pnpm test:e2e e2e/mindful-session-wind-down.spec.ts`. Recor
 
 #### Automated
 
-- [ ] 4.1 `set CI=true && pnpm test:e2e e2e/mindful-session-wind-down.spec.ts` passes
-- [ ] 4.2 `pnpm check` passes
-- [ ] 4.3 `pnpm test` passes
+- [x] 4.1 `set CI=true && pnpm test:e2e e2e/mindful-session-wind-down.spec.ts` passes — eff8b0d
+- [x] 4.2 `pnpm check` passes — eff8b0d
+- [x] 4.3 `pnpm test` passes — eff8b0d
 
 #### Manual
 
