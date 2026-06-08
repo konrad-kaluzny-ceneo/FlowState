@@ -17,6 +17,10 @@ import {
 	setLastDuration,
 } from "~/lib/duration-storage";
 import {
+	buildWindDownRationale,
+	shouldShowWindDownNudge,
+} from "~/lib/session/wind-down-nudge";
+import {
 	OVERRIDE_ACK_LINE,
 	OVERRIDE_ACK_VISIBLE_MS,
 } from "~/lib/suggestion/override-ack-copy";
@@ -134,6 +138,11 @@ export function usePomodoroCycle() {
 	const [overrideAcknowledgement, setOverrideAcknowledgement] = useState<
 		string | null
 	>(null);
+	const [awaitingWindDown, setAwaitingWindDown] = useState(false);
+	const [windDownDismissed, setWindDownDismissed] = useState(false);
+	const [windDownRationale, setWindDownRationale] = useState<string | null>(
+		null,
+	);
 
 	const createCheckIn = api.checkIn.create.useMutation();
 	const suggestionNext = api.suggestion.next.useMutation();
@@ -148,6 +157,8 @@ export function usePomodoroCycle() {
 	const audioRef = useRef(createAudioManager());
 	const recoveredRef = useRef(false);
 	const pendingIncrementInterruptionRef = useRef(false);
+	const pendingWindDownMarkTaskDoneRef = useRef<boolean | null>(null);
+	const pendingWindDownWorkCycleIdRef = useRef<number | null>(null);
 	const suggestionFetchGenRef = useRef(0);
 	const overrideAckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
@@ -720,6 +731,50 @@ export function usePomodoroCycle() {
 		],
 	);
 
+	const completeWorkCycleOnly = useCallback(
+		async (markTaskDone: boolean) => {
+			if (activeCycle == null) {
+				return;
+			}
+
+			setError(null);
+
+			try {
+				await retryOnce(() =>
+					cycles.complete({
+						cycleId: activeCycle.id,
+						markTaskDone,
+						...(pendingIncrementInterruptionRef.current
+							? { incrementInterruption: true }
+							: {}),
+					}),
+				);
+			} catch {
+				setError(
+					"Could not save cycle completion. Check your connection and try again.",
+				);
+				return;
+			}
+
+			pendingIncrementInterruptionRef.current = false;
+
+			stopWorker();
+			endTimeRef.current = null;
+
+			setCompletedWorkCycles((count) => count + 1);
+			setState("idle");
+			setRemainingMs(0);
+			setActiveCycle(null);
+			setCycleKind(null);
+
+			await Promise.all([
+				invalidateServerCycle(),
+				...(markTaskDone ? [utils.task.list.invalidate()] : []),
+			]);
+		},
+		[activeCycle, cycles, invalidateServerCycle, stopWorker, utils.task.list],
+	);
+
 	const confirmComplete = useCallback(
 		async (markTaskDone: boolean) => {
 			if (activeCycle == null) {
@@ -800,6 +855,14 @@ export function usePomodoroCycle() {
 			preFocusedTask,
 			clearSuggestion,
 		],
+	);
+
+	const continueAfterCheckIn = useCallback(
+		async (markTaskDone: boolean, workCycleId: number) => {
+			await confirmComplete(markTaskDone);
+			fetchSuggestion(workCycleId);
+		},
+		[confirmComplete, fetchSuggestion],
 	);
 
 	const onMidCycleMarkComplete = useCallback(
@@ -914,8 +977,33 @@ export function usePomodoroCycle() {
 			setPendingMarkTaskDone(null);
 
 			try {
-				await confirmComplete(markTaskDone);
-				fetchSuggestion(workCycleId);
+				if (mode !== "guest") {
+					const session = await sessions.getOrCreateActive();
+
+					if (
+						shouldShowWindDownNudge({
+							energy,
+							completedWorkCycles,
+							interruptionCount: session.interruptionCount,
+							dismissed: windDownDismissed,
+						})
+					) {
+						pendingWindDownMarkTaskDoneRef.current = markTaskDone;
+						pendingWindDownWorkCycleIdRef.current = workCycleId;
+						setWindDownRationale(
+							buildWindDownRationale({
+								energy,
+								completedWorkCycles,
+								interruptionCount: session.interruptionCount,
+								dismissed: windDownDismissed,
+							}),
+						);
+						setAwaitingWindDown(true);
+						return;
+					}
+				}
+
+				await continueAfterCheckIn(markTaskDone, workCycleId);
 			} finally {
 				setIsConfirming(false);
 			}
@@ -924,8 +1012,11 @@ export function usePomodoroCycle() {
 			activeCycle,
 			pendingMarkTaskDone,
 			createCheckIn,
-			confirmComplete,
-			fetchSuggestion,
+			mode,
+			sessions,
+			completedWorkCycles,
+			windDownDismissed,
+			continueAfterCheckIn,
 		],
 	);
 
@@ -1012,6 +1103,11 @@ export function usePomodoroCycle() {
 		setHasActiveSession(false);
 		setCompletedWorkCycles(0);
 		setActiveSessionId(null);
+		setAwaitingWindDown(false);
+		setWindDownDismissed(false);
+		setWindDownRationale(null);
+		pendingWindDownMarkTaskDoneRef.current = null;
+		pendingWindDownWorkCycleIdRef.current = null;
 		clearSuggestion();
 
 		await Promise.all([invalidateServerCycle(), utils.task.list.invalidate()]);
@@ -1025,6 +1121,47 @@ export function usePomodoroCycle() {
 		utils.task.list,
 		clearSuggestion,
 	]);
+
+	const onWindDownKeepGoing = useCallback(async () => {
+		const markTaskDone = pendingWindDownMarkTaskDoneRef.current;
+		const workCycleId = pendingWindDownWorkCycleIdRef.current;
+
+		if (workCycleId == null) {
+			return;
+		}
+
+		setIsConfirming(true);
+		setError(null);
+
+		try {
+			setWindDownDismissed(true);
+			setAwaitingWindDown(false);
+			setWindDownRationale(null);
+			pendingWindDownMarkTaskDoneRef.current = null;
+			pendingWindDownWorkCycleIdRef.current = null;
+			await continueAfterCheckIn(markTaskDone ?? false, workCycleId);
+		} finally {
+			setIsConfirming(false);
+		}
+	}, [continueAfterCheckIn]);
+
+	const onWindDownEndSession = useCallback(async () => {
+		const markTaskDone = pendingWindDownMarkTaskDoneRef.current ?? false;
+
+		setIsConfirming(true);
+		setError(null);
+
+		try {
+			setAwaitingWindDown(false);
+			setWindDownRationale(null);
+			pendingWindDownMarkTaskDoneRef.current = null;
+			pendingWindDownWorkCycleIdRef.current = null;
+			await completeWorkCycleOnly(markTaskDone);
+			await endSession();
+		} finally {
+			setIsConfirming(false);
+		}
+	}, [completeWorkCycleOnly, endSession]);
 
 	const clearError = useCallback(() => {
 		setError(null);
@@ -1042,6 +1179,8 @@ export function usePomodoroCycle() {
 		midCyclePendingTask,
 		isMidCycleSubmitting,
 		awaitingCheckIn,
+		awaitingWindDown,
+		windDownRationale,
 		isConfirming,
 		pendingSuggestion,
 		suggestionCycleId,
@@ -1065,6 +1204,8 @@ export function usePomodoroCycle() {
 		confirmComplete,
 		onCycleCompleteConfirm,
 		submitCheckIn,
+		onWindDownKeepGoing,
+		onWindDownEndSession,
 		onMidCycleMarkComplete,
 		onMidCycleContinueWithTask,
 		onMidCycleEndCycleAndBreak,

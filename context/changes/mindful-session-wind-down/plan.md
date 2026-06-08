@@ -324,9 +324,9 @@ Run: `set CI=true && pnpm test:e2e e2e/mindful-session-wind-down.spec.ts`. Recor
 
 #### Automated
 
-- [ ] 3.1 `pnpm check` passes
-- [ ] 3.2 `pnpm typecheck` passes
-- [ ] 3.3 `pnpm test` passes
+- [x] 3.1 `pnpm check` passes
+- [x] 3.2 `pnpm typecheck` passes
+- [x] 3.3 `pnpm test` passes
 
 #### Manual
 
