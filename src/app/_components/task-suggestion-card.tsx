@@ -31,6 +31,7 @@ type TaskSuggestionCardProps =
 			onAccept: () => void;
 			onRetry?: never;
 			isAccepting?: boolean;
+			coachLine?: string;
 	  }
 	| {
 			status: "empty";
@@ -93,6 +94,14 @@ export function TaskSuggestionCard(props: TaskSuggestionCardProps) {
 			data-testid="task-suggestion-card"
 		>
 			<h2 className="font-bold text-lg text-white">Suggested next task</h2>
+			{props.status === "ready" && props.coachLine != null && (
+				<p
+					className="mt-1 text-purple-200/70 text-xs"
+					data-testid="suggestion-coach-line"
+				>
+					{props.coachLine}
+				</p>
+			)}
 
 			{props.status === "loading" && (
 				<div className="mt-4 space-y-3">

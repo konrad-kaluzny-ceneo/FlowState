@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
+import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
+import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import type { DomainTask, DomainTaskId } from "~/lib/data-mode/types";
 
 const WORK_TYPE_CONFIG = {
@@ -102,6 +104,8 @@ export function TaskList({
 	onMidCycleMarkComplete,
 	suggestionLoading = false,
 }: TaskListProps) {
+	const mode = useDataMode();
+	const addTaskInputRef = useRef<HTMLInputElement>(null);
 	const {
 		createTask,
 		updateTask,
@@ -210,6 +214,7 @@ export function TaskList({
 						className="flex-1 rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none"
 						onChange={(e) => setNewTitle(e.target.value)}
 						placeholder="Add a new task..."
+						ref={addTaskInputRef}
 						type="text"
 						value={newTitle}
 					/>
@@ -268,7 +273,10 @@ export function TaskList({
 					Active ({activeTasks.length})
 				</h2>
 				{activeTasks.length === 0 ? (
-					<p className="text-sm text-white/50">No active tasks</p>
+					<EmptyActiveTasksGuide
+						mode={mode}
+						onAddTaskClick={() => addTaskInputRef.current?.focus()}
+					/>
 				) : (
 					<ul className="space-y-2">
 						{activeTasks.map((task) => (

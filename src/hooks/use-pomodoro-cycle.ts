@@ -48,14 +48,30 @@ export type PendingSuggestion =
 	| { status: "error" };
 
 let activeCycleRecoveredForMode: string | null = null;
+const recoveryResetListeners = new Set<() => void>();
 
 function isBreakKind(kind: CycleKind | null): boolean {
 	return kind === "SHORT_BREAK" || kind === "LONG_BREAK";
 }
 
-/** Test-only reset for module-level recovery guard. */
-export function resetActiveCycleRecoveryForTests(): void {
+/** Reset module-level recovery guard (tests + post-guest-import resume). */
+export function resetActiveCycleRecoveryGuard(): void {
 	activeCycleRecoveredForMode = null;
+	for (const listener of recoveryResetListeners) {
+		listener();
+	}
+}
+
+function subscribeActiveCycleRecoveryReset(listener: () => void): () => void {
+	recoveryResetListeners.add(listener);
+	return () => {
+		recoveryResetListeners.delete(listener);
+	};
+}
+
+/** @deprecated Use resetActiveCycleRecoveryGuard */
+export function resetActiveCycleRecoveryForTests(): void {
+	resetActiveCycleRecoveryGuard();
 }
 
 async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {
@@ -340,6 +356,13 @@ export function usePomodoroCycle() {
 
 	useEffect(() => {
 		void recoverActiveCycle();
+	}, [recoverActiveCycle]);
+
+	useEffect(() => {
+		return subscribeActiveCycleRecoveryReset(() => {
+			recoveredRef.current = false;
+			void recoverActiveCycle();
+		});
 	}, [recoverActiveCycle]);
 
 	useEffect(() => {

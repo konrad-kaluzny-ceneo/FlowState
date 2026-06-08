@@ -1,9 +1,12 @@
 import { expect, type Page } from "@playwright/test";
 
 import { completeCheckIn } from "./check-in";
+import { dismissFirstRunIfVisible } from "./onboarding";
 
 export async function ensureIdleCycle(page: Page) {
 	await expect(async () => {
+		await dismissFirstRunIfVisible(page);
+
 		if (await page.getByTestId("check-in-overlay").isVisible()) {
 			await completeCheckIn(page, "steady");
 			throw new Error("check-in completed — re-check idle");

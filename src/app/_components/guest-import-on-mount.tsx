@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { importGuestSnapshotAction } from "~/app/_actions/import-guest-snapshot";
+import { resetActiveCycleRecoveryGuard } from "~/hooks/use-pomodoro-cycle";
 import { useRepositories } from "~/lib/data-mode/data-mode-context";
 import {
 	loadGuestSnapshotForImport,
@@ -54,6 +55,7 @@ export function GuestImportOnMount() {
 			markGuestImportDone();
 			clearGuestSnapshot();
 			setImportError(null);
+			resetActiveCycleRecoveryGuard();
 			await Promise.all([
 				utilsRef.current.task.list.invalidate(),
 				utilsRef.current.cycle.getActive.invalidate(),

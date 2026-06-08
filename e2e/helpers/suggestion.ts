@@ -9,14 +9,26 @@ export async function waitForSuggestionNext(page: Page) {
 
 export async function expectSuggestionVisible(
 	page: Page,
-	options?: { title?: string; rationale?: RegExp | string },
+	options?: {
+		title?: string;
+		rationale?: RegExp | string;
+		expectCoach?: boolean;
+	},
 ) {
+	const coachLine = page.getByTestId("suggestion-coach-line");
+
 	await expect(page.getByTestId("task-suggestion-card")).toBeVisible({
 		timeout: 20_000,
 	});
 	await expect(page.getByTestId("suggestion-accept-btn")).toBeVisible({
-		timeout: 20_000,
+		timeout: 30_000,
 	});
+
+	if (options?.expectCoach === true) {
+		await expect(coachLine).toBeVisible({ timeout: 20_000 });
+	} else if (options?.expectCoach === false) {
+		await expect(coachLine).toBeHidden();
+	}
 
 	if (options?.title != null) {
 		await expect(

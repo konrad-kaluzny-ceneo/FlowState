@@ -4,7 +4,8 @@
  * Spec role: risk proof — guest localStorage cycle → auth → server import → running timer
  */
 import { expect, test } from "@playwright/test";
-
+import { waitForCycleGetActive } from "./fixtures";
+import { dismissFirstRunIfVisible } from "./helpers/onboarding";
 import { createTestUser, signInAsUser } from "./helpers/user";
 import { startFocusedWorkCycle } from "./helpers/work-cycle";
 
@@ -27,6 +28,7 @@ test.describe("Guest merge cycle on sign-in (S-08 / Risk #5)", () => {
 		await page.reload();
 		await expect(page.getByTestId("guest-banner")).toBeVisible();
 		await expect(page.getByTestId("task-list")).toBeVisible();
+		await dismissFirstRunIfVisible(page);
 
 		await startFocusedWorkCycle(page, taskTitle, 30);
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
@@ -41,12 +43,18 @@ test.describe("Guest merge cycle on sign-in (S-08 / Risk #5)", () => {
 		const authState = await signInAsUser(request, user);
 		await context.addCookies(authState.cookies);
 
-		const getActiveAfterMerge = page.waitForResponse(
-			(response) => response.url().includes("cycle.getActive") && response.ok(),
-			{ timeout: 30_000 },
-		);
 		await page.goto("/");
-		await getActiveAfterMerge;
+		await waitForCycleGetActive(page);
+
+		await expect
+			.poll(
+				async () =>
+					page.evaluate((key) => localStorage.getItem(key), GUEST_STORAGE_KEY),
+				{ timeout: 45_000 },
+			)
+			.toBeNull();
+
+		await dismissFirstRunIfVisible(page);
 
 		await expect(page.getByTestId("guest-banner")).toBeHidden({
 			timeout: 30_000,
@@ -54,6 +62,7 @@ test.describe("Guest merge cycle on sign-in (S-08 / Risk #5)", () => {
 		await expect(
 			page.getByRole("listitem").filter({ hasText: taskTitle }).first(),
 		).toBeVisible({ timeout: 30_000 });
+
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible({
 			timeout: 30_000,
 		});

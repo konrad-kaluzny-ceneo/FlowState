@@ -25,13 +25,15 @@ export async function startFocusedWorkCycle(
 	durationSec: number,
 ) {
 	await page.getByPlaceholder("Add a new task...").fill(taskTitle);
-	await page.getByRole("button", { name: "Add" }).click();
+	await page.getByRole("button", { name: "Add", exact: true }).click();
 	const taskRow = page
 		.getByRole("listitem")
 		.filter({ hasText: taskTitle })
 		.first();
 	await expect(taskRow).toBeVisible();
-	await waitForTaskCreateSettled(page.getByRole("button", { name: "Add" }));
+	await waitForTaskCreateSettled(
+		page.getByRole("button", { name: "Add", exact: true }),
+	);
 	await taskRow.getByRole("button", { name: "Focus" }).click();
 	await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
 	await setWorkDurationSec(page, durationSec);
@@ -40,7 +42,7 @@ export async function startFocusedWorkCycle(
 }
 
 export async function addTask(page: Page, title: string) {
-	const addButton = page.getByRole("button", { name: "Add" });
+	const addButton = page.getByRole("button", { name: "Add", exact: true });
 	await page.getByPlaceholder("Add a new task...").fill(title);
 	await addButton.click();
 	await expect(

@@ -34,12 +34,14 @@ type CheckInOverlayProps = {
 	cycleId: number;
 	onSubmit: (energy: CheckInEnergy) => Promise<void>;
 	isSubmitting?: boolean;
+	coachLine?: string;
 };
 
 export function CheckInOverlay({
 	cycleId,
 	onSubmit,
 	isSubmitting = false,
+	coachLine,
 }: CheckInOverlayProps) {
 	return (
 		<div
@@ -55,6 +57,14 @@ export function CheckInOverlay({
 				<p className="mt-2 text-sm text-white/60">
 					Select one before your break starts.
 				</p>
+				{coachLine != null && (
+					<p
+						className="mt-1 text-purple-200/70 text-xs"
+						data-testid="check-in-coach-line"
+					>
+						{coachLine}
+					</p>
+				)}
 				<div className="mt-8 flex flex-col gap-3">
 					{ENERGY_OPTIONS.map((option) => (
 						<button
