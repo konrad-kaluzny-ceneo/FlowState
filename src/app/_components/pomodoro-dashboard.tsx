@@ -4,6 +4,7 @@ import { Suspense, useMemo } from "react";
 
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
+import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
 import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
 import { TaskList } from "~/app/_components/task-list";
@@ -18,6 +19,7 @@ import {
 	CHECK_IN_COACH_LINE,
 	SUGGESTION_COACH_LINE,
 } from "~/lib/onboarding/copy";
+import type { OnboardingScope } from "~/lib/onboarding/types";
 import { api } from "~/trpc/react";
 
 function PomodoroDashboardBody({
@@ -28,6 +30,7 @@ function PomodoroDashboardBody({
 	enableSuggestionGate = false,
 	checkInCoachLine,
 	suggestionCoachLine,
+	workTypeDurationScope,
 	onCheckInCoachSeen,
 	onSuggestionCoachSeen,
 }: {
@@ -38,6 +41,7 @@ function PomodoroDashboardBody({
 	enableSuggestionGate?: boolean;
 	checkInCoachLine?: string;
 	suggestionCoachLine?: string;
+	workTypeDurationScope?: OnboardingScope;
 	onCheckInCoachSeen?: () => void;
 	onSuggestionCoachSeen?: () => void;
 }) {
@@ -75,6 +79,32 @@ function PomodoroDashboardBody({
 		!pomodoro.awaitingWindDown &&
 		isBreakRunning &&
 		pomodoro.pendingSuggestion.status !== "idle";
+
+	const showKickoffCard =
+		enableSuggestionGate &&
+		pomodoro.state === "idle" &&
+		pomodoro.focusedTaskId == null &&
+		pomodoro.pendingKickoffSuggestion.status !== "idle" &&
+		!showSuggestionCard;
+
+	const highlightedTaskId = showKickoffCard
+		? pomodoro.kickoffSuggestedTaskId
+		: showSuggestionCard
+			? pomodoro.suggestedTaskId
+			: null;
+
+	const showKickoffDurationChips =
+		enableSuggestionGate &&
+		pomodoro.hasPreFocusedKickoff &&
+		pomodoro.state === "idle" &&
+		pomodoro.focusedTask != null &&
+		pomodoro.pendingKickoffSuggestion.status === "ready" &&
+		workTypeDurationScope != null;
+
+	const kickoffWorkType =
+		pomodoro.pendingKickoffSuggestion.status === "ready"
+			? pomodoro.pendingKickoffSuggestion.data.workType
+			: null;
 
 	const catchUp = pomodoro.catchUp;
 
@@ -114,6 +144,23 @@ function PomodoroDashboardBody({
 				</div>
 			)}
 
+			{showKickoffDurationChips &&
+				kickoffWorkType != null &&
+				workTypeDurationScope != null && (
+					<KickoffDurationChips
+						onSelect={(sec) => {
+							pomodoro.selectKickoffDuration(
+								kickoffWorkType,
+								sec,
+								workTypeDurationScope,
+							);
+						}}
+						scope={workTypeDurationScope}
+						selectedSec={pomodoro.stagedKickoffDurationSec ?? undefined}
+						workType={kickoffWorkType}
+					/>
+				)}
+
 			{showTimer && (
 				<TimerPanel
 					cycleKind={pomodoro.cycleKind}
@@ -121,6 +168,8 @@ function PomodoroDashboardBody({
 					isStarting={false}
 					onInterrupt={pomodoro.interrupt}
 					onStart={pomodoro.start}
+					onWorkDurationManualChange={pomodoro.clearStagedKickoffDuration}
+					preferredWorkDurationSec={pomodoro.stagedKickoffDurationSec}
 					remainingMs={pomodoro.remainingMs}
 					state={pomodoro.state}
 				/>
@@ -165,6 +214,35 @@ function PomodoroDashboardBody({
 					/>
 				) : null)}
 
+			{showKickoffCard &&
+				(pomodoro.pendingKickoffSuggestion.status === "loading" ? (
+					<TaskSuggestionCard status="loading" />
+				) : pomodoro.pendingKickoffSuggestion.status === "ready" ? (
+					<TaskSuggestionCard
+						coachLine={suggestionCoachLine}
+						isAccepting={pomodoro.isAcceptingKickoffSuggestion}
+						onAccept={() => {
+							onSuggestionCoachSeen?.();
+							void pomodoro.acceptKickoffSuggestion();
+						}}
+						status="ready"
+						suggestion={{
+							taskId: Number(pomodoro.pendingKickoffSuggestion.data.taskId),
+							title: pomodoro.pendingKickoffSuggestion.data.title,
+							workType: pomodoro.pendingKickoffSuggestion.data.workType,
+							weight: pomodoro.pendingKickoffSuggestion.data.weight,
+							rationale: pomodoro.pendingKickoffSuggestion.data.rationale,
+						}}
+					/>
+				) : pomodoro.pendingKickoffSuggestion.status === "empty" ? (
+					<TaskSuggestionCard status="empty" />
+				) : pomodoro.pendingKickoffSuggestion.status === "error" ? (
+					<TaskSuggestionCard
+						onRetry={pomodoro.retryKickoffSuggestion}
+						status="error"
+					/>
+				) : null)}
+
 			{pomodoro.overrideAcknowledgement != null && (
 				<p
 					className="w-full max-w-lg rounded-lg border border-purple-400/30 bg-purple-500/10 px-4 py-3 text-center text-purple-100/90 text-sm"
@@ -178,7 +256,7 @@ function PomodoroDashboardBody({
 				cycleKind={pomodoro.cycleKind}
 				cycleState={pomodoro.state}
 				focusedTaskId={pomodoro.focusedTaskId}
-				highlightedTaskId={pomodoro.suggestedTaskId}
+				highlightedTaskId={highlightedTaskId}
 				onFocusTask={(taskId, task) => {
 					pomodoro.selectTask(taskId, task);
 				}}
@@ -186,7 +264,10 @@ function PomodoroDashboardBody({
 					pomodoro.onMidCycleMarkComplete(taskId, task);
 				}}
 				onRefresh={refreshTasks}
-				suggestionLoading={pomodoro.pendingSuggestion.status === "loading"}
+				suggestionLoading={
+					pomodoro.pendingSuggestion.status === "loading" ||
+					pomodoro.pendingKickoffSuggestion.status === "loading"
+				}
 				tasks={tasks}
 			/>
 
@@ -300,6 +381,14 @@ function AuthenticatedPomodoroDashboard() {
 		[tasks],
 	);
 
+	const workTypeDurationScope = useMemo((): OnboardingScope => {
+		const userId = tasks[0]?.userId;
+		if (userId) {
+			return { mode: "authenticated", userId };
+		}
+		return { mode: "guest" };
+	}, [tasks]);
+
 	return (
 		<PomodoroDashboardBody
 			checkInCoachLine={
@@ -317,6 +406,7 @@ function AuthenticatedPomodoroDashboard() {
 				shouldShowSuggestionCoach ? SUGGESTION_COACH_LINE : undefined
 			}
 			tasks={domainTasks}
+			workTypeDurationScope={workTypeDurationScope}
 		/>
 	);
 }

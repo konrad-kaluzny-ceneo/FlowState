@@ -6,6 +6,8 @@ vi.mock("~/lib/auth/server", () => ({
 
 type EnergyLevel = "FOCUSED" | "STEADY" | "FADING";
 type WorkType = "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+type SuggestionContext = "POST_CHECK_IN" | "KICKOFF";
+type SessionState = "ACTIVE" | "ENDED_BY_USER" | "ENDED_BY_TIMEOUT";
 
 type CycleRow = {
 	id: number;
@@ -19,6 +21,7 @@ type SessionRow = {
 	id: number;
 	userId: string;
 	interruptionCount: number;
+	state: SessionState;
 };
 
 type TaskRow = {
@@ -39,7 +42,9 @@ type CheckInRow = {
 
 type DecisionRow = {
 	id: number;
-	cycleId: number;
+	cycleId: number | null;
+	sessionId: number | null;
+	context: SuggestionContext;
 	userId: string;
 	suggestedTaskId: number;
 	chosenTaskId: number;
@@ -54,6 +59,44 @@ let tasks: TaskRow[] = [];
 let checkIns: CheckInRow[] = [];
 let decisions: DecisionRow[] = [];
 let nextDecisionId = 1;
+
+function matchesLastOverrideWhere(
+	decision: DecisionRow,
+	where: {
+		userId?: string;
+		accepted?: boolean;
+		OR?: Array<
+			| { cycle?: { sessionId?: number } }
+			| { sessionId?: number; context?: SuggestionContext }
+		>;
+	},
+): boolean {
+	if (where.userId != null && decision.userId !== where.userId) {
+		return false;
+	}
+	if (where.accepted != null && decision.accepted !== where.accepted) {
+		return false;
+	}
+	if (where.OR != null) {
+		const matchesOr = where.OR.some((clause) => {
+			if ("cycle" in clause && clause.cycle?.sessionId != null) {
+				const cycle = cycles.find((c) => c.id === decision.cycleId);
+				return cycle?.sessionId === clause.cycle.sessionId;
+			}
+			if ("sessionId" in clause && clause.sessionId != null) {
+				return (
+					decision.sessionId === clause.sessionId &&
+					(clause.context == null || decision.context === clause.context)
+				);
+			}
+			return false;
+		});
+		if (!matchesOr) {
+			return false;
+		}
+	}
+	return true;
+}
 
 vi.mock("~/server/db/index", () => ({
 	db: {
@@ -108,7 +151,13 @@ vi.mock("~/server/db/index", () => ({
 			),
 		},
 		session: {
-			findFirst: vi.fn(),
+			findFirst: vi.fn((args: { where: { id?: number; userId?: string } }) => {
+				return Promise.resolve(
+					sessions.find(
+						(s) => s.id === args.where.id && s.userId === args.where.userId,
+					) ?? null,
+				);
+			}),
 		},
 		task: {
 			findMany: vi.fn(
@@ -126,13 +175,30 @@ vi.mock("~/server/db/index", () => ({
 					);
 				},
 			),
-			findFirst: vi.fn((args: { where: { id?: number; userId?: string } }) => {
-				return Promise.resolve(
-					tasks.find(
-						(t) => t.id === args.where.id && t.userId === args.where.userId,
-					) ?? null,
-				);
-			}),
+			findFirst: vi.fn(
+				(args: {
+					where: {
+						id?: number;
+						userId?: string;
+						status?: string;
+					};
+				}) => {
+					return Promise.resolve(
+						tasks.find((t) => {
+							if (args.where.id != null && t.id !== args.where.id) {
+								return false;
+							}
+							if (args.where.userId != null && t.userId !== args.where.userId) {
+								return false;
+							}
+							if (args.where.status != null && t.status !== args.where.status) {
+								return false;
+							}
+							return true;
+						}) ?? null,
+					);
+				},
+			),
 		},
 		checkIn: {
 			findFirst: vi.fn(),
@@ -144,27 +210,17 @@ vi.mock("~/server/db/index", () => ({
 						userId?: string;
 						accepted?: boolean;
 						cycle?: { sessionId?: number };
+						OR?: Array<
+							| { cycle?: { sessionId?: number } }
+							| { sessionId?: number; context?: SuggestionContext }
+						>;
 					};
 					orderBy?: { createdAt: "desc" };
 					include?: { chosenTask: boolean };
 				}) => {
-					let rows = decisions.filter((d) => {
-						if (args.where.userId != null && d.userId !== args.where.userId)
-							return false;
-						if (
-							args.where.accepted != null &&
-							d.accepted !== args.where.accepted
-						) {
-							return false;
-						}
-						if (args.where.cycle?.sessionId != null) {
-							const cycle = cycles.find((c) => c.id === d.cycleId);
-							if (cycle?.sessionId !== args.where.cycle.sessionId) {
-								return false;
-							}
-						}
-						return true;
-					});
+					let rows = decisions.filter((d) =>
+						matchesLastOverrideWhere(d, args.where),
+					);
 					if (args.orderBy?.createdAt === "desc") {
 						rows = [...rows].sort(
 							(a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
@@ -183,7 +239,10 @@ vi.mock("~/server/db/index", () => ({
 					where: { cycleId: number };
 					create: Omit<DecisionRow, "id" | "createdAt" | "chosenTask">;
 					update: Partial<
-						Pick<DecisionRow, "suggestedTaskId" | "chosenTaskId" | "accepted">
+						Pick<
+							DecisionRow,
+							"suggestedTaskId" | "chosenTaskId" | "accepted" | "context"
+						>
 					>;
 				}) => {
 					const existing = decisions.find(
@@ -201,6 +260,21 @@ vi.mock("~/server/db/index", () => ({
 					const row: DecisionRow = {
 						id: nextDecisionId++,
 						...args.create,
+						createdAt: new Date(),
+						chosenTask: chosenTask as TaskRow,
+					};
+					decisions.push(row);
+					return Promise.resolve(row);
+				},
+			),
+			create: vi.fn(
+				(args: {
+					data: Omit<DecisionRow, "id" | "createdAt" | "chosenTask">;
+				}) => {
+					const chosenTask = tasks.find((t) => t.id === args.data.chosenTaskId);
+					const row: DecisionRow = {
+						id: nextDecisionId++,
+						...args.data,
 						createdAt: new Date(),
 						chosenTask: chosenTask as TaskRow,
 					};
@@ -233,6 +307,38 @@ function caller(userId: string = USER_ID) {
 	});
 }
 
+function seedTasks() {
+	tasks = [
+		{
+			id: 1,
+			title: "Deep feature",
+			status: "active",
+			userId: USER_ID,
+			workType: "DEEP_WORK",
+			weight: 3,
+			createdAt: new Date("2026-01-01"),
+		},
+		{
+			id: 2,
+			title: "Inbox",
+			status: "active",
+			userId: USER_ID,
+			workType: "REACTIVE",
+			weight: 2,
+			createdAt: new Date("2026-01-02"),
+		},
+		{
+			id: 3,
+			title: "Ops queue",
+			status: "active",
+			userId: USER_ID,
+			workType: "OPERATIONAL",
+			weight: 2,
+			createdAt: new Date("2026-01-03"),
+		},
+	];
+}
+
 describe("suggestion router", () => {
 	beforeEach(() => {
 		cycles = [];
@@ -245,7 +351,9 @@ describe("suggestion router", () => {
 	});
 
 	it("next returns deep task when FOCUSED with mixed candidates", async () => {
-		sessions = [{ id: 1, userId: USER_ID, interruptionCount: 0 }];
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
 		cycles = [
 			{
 				id: 10,
@@ -256,28 +364,13 @@ describe("suggestion router", () => {
 			},
 		];
 		checkIns = [{ cycleId: 10, userId: USER_ID, energy: "FOCUSED" }];
-		tasks = [
-			{
-				id: 1,
-				title: "Deep feature",
-				status: "active",
-				userId: USER_ID,
-				workType: "DEEP_WORK",
-				weight: 3,
-				createdAt: new Date("2026-01-01"),
-			},
-			{
-				id: 2,
-				title: "Inbox",
-				status: "active",
-				userId: USER_ID,
-				workType: "REACTIVE",
-				weight: 2,
-				createdAt: new Date("2026-01-02"),
-			},
-		];
+		seedTasks();
 
-		const result = await caller().next({ cycleId: 10, localHour: 10 });
+		const result = await caller().next({
+			context: "post_check_in",
+			cycleId: 10,
+			localHour: 10,
+		});
 
 		expect(result).toMatchObject({
 			taskId: 1,
@@ -288,7 +381,9 @@ describe("suggestion router", () => {
 	});
 
 	it("next returns null when no active tasks", async () => {
-		sessions = [{ id: 1, userId: USER_ID, interruptionCount: 0 }];
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
 		cycles = [
 			{
 				id: 10,
@@ -301,7 +396,11 @@ describe("suggestion router", () => {
 		checkIns = [{ cycleId: 10, userId: USER_ID, energy: "STEADY" }];
 		tasks = [];
 
-		const result = await caller().next({ cycleId: 10, localHour: 10 });
+		const result = await caller().next({
+			context: "post_check_in",
+			cycleId: 10,
+			localHour: 10,
+		});
 		expect(result).toBeNull();
 	});
 
@@ -317,12 +416,18 @@ describe("suggestion router", () => {
 		];
 
 		await expect(
-			caller().next({ cycleId: 10, localHour: 10 }),
+			caller().next({
+				context: "post_check_in",
+				cycleId: 10,
+				localHour: 10,
+			}),
 		).rejects.toMatchObject({ code: "NOT_FOUND" });
 	});
 
 	it("next throws BAD_REQUEST without check-in", async () => {
-		sessions = [{ id: 1, userId: USER_ID, interruptionCount: 0 }];
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
 		cycles = [
 			{
 				id: 10,
@@ -334,12 +439,18 @@ describe("suggestion router", () => {
 		];
 
 		await expect(
-			caller().next({ cycleId: 10, localHour: 10 }),
+			caller().next({
+				context: "post_check_in",
+				cycleId: 10,
+				localHour: 10,
+			}),
 		).rejects.toMatchObject({ code: "BAD_REQUEST" });
 	});
 
 	it("recordDecision stores accept vs override", async () => {
-		sessions = [{ id: 1, userId: USER_ID, interruptionCount: 0 }];
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
 		cycles = [
 			{
 				id: 10,
@@ -372,13 +483,16 @@ describe("suggestion router", () => {
 		];
 
 		const accepted = await caller().recordDecision({
+			context: "post_check_in",
 			cycleId: 10,
 			suggestedTaskId: 1,
 			chosenTaskId: 1,
 		});
 		expect(accepted.accepted).toBe(true);
+		expect(accepted.context).toBe("POST_CHECK_IN");
 
 		const overridden = await caller().recordDecision({
+			context: "post_check_in",
 			cycleId: 10,
 			suggestedTaskId: 1,
 			chosenTaskId: 2,
@@ -387,7 +501,9 @@ describe("suggestion router", () => {
 	});
 
 	it("recordDecision throws BAD_REQUEST without check-in", async () => {
-		sessions = [{ id: 1, userId: USER_ID, interruptionCount: 0 }];
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
 		cycles = [
 			{
 				id: 10,
@@ -411,10 +527,122 @@ describe("suggestion router", () => {
 
 		await expect(
 			caller().recordDecision({
+				context: "post_check_in",
 				cycleId: 10,
 				suggestedTaskId: 1,
 				chosenTaskId: 1,
 			}),
 		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+
+	it("kickoff next returns suggestion without check-in using STEADY scoring", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		seedTasks();
+
+		const result = await caller().next({
+			context: "kickoff",
+			sessionId: 1,
+			localHour: 10,
+		});
+
+		expect(result).toMatchObject({
+			sessionId: 1,
+			taskId: 1,
+			workType: "DEEP_WORK",
+			rationaleKey: "kickoff_fresh",
+		});
+		expect(result).not.toHaveProperty("cycleId");
+	});
+
+	it("kickoff next uses kickoff_resume after completed work cycles", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		cycles = [
+			{
+				id: 10,
+				sessionId: 1,
+				userId: USER_ID,
+				kind: "WORK",
+				state: "COMPLETED",
+			},
+		];
+		seedTasks();
+
+		const result = await caller().next({
+			context: "kickoff",
+			sessionId: 1,
+			localHour: 10,
+		});
+
+		expect(result?.rationaleKey).toBe("kickoff_resume");
+	});
+
+	it("kickoff recordDecision creates row without cycleId", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		seedTasks();
+
+		const row = await caller().recordDecision({
+			context: "kickoff",
+			sessionId: 1,
+			suggestedTaskId: 1,
+			chosenTaskId: 2,
+		});
+
+		expect(row).toMatchObject({
+			cycleId: null,
+			sessionId: 1,
+			context: "KICKOFF",
+			accepted: false,
+		});
+	});
+
+	it("kickoff override feeds lastOverrideWorkType on subsequent next", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		tasks = [
+			{
+				id: 1,
+				title: "Ops queue",
+				status: "active",
+				userId: USER_ID,
+				workType: "OPERATIONAL",
+				weight: 2,
+				createdAt: new Date("2026-01-01"),
+			},
+			{
+				id: 2,
+				title: "Inbox",
+				status: "active",
+				userId: USER_ID,
+				workType: "REACTIVE",
+				weight: 3,
+				createdAt: new Date("2026-01-02"),
+			},
+		];
+
+		await caller().recordDecision({
+			context: "kickoff",
+			sessionId: 1,
+			suggestedTaskId: 1,
+			chosenTaskId: 2,
+		});
+
+		const result = await caller().next({
+			context: "kickoff",
+			sessionId: 1,
+			localHour: 10,
+		});
+
+		expect(result).toMatchObject({
+			taskId: 2,
+			workType: "REACTIVE",
+			rationaleKey: "override_preference",
+		});
 	});
 });

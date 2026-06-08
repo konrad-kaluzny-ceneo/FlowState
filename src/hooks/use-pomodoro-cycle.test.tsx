@@ -20,6 +20,7 @@ const invalidateTaskList = vi.fn();
 const createCheckInMutate = vi.fn();
 const suggestionNextMutate = vi.fn();
 const recordDecisionMutate = vi.fn();
+const taskListQuery = vi.fn();
 
 let activeCycleData: DomainActiveCycle | null = null;
 
@@ -101,7 +102,13 @@ vi.mock("~/trpc/react", () => ({
 		useUtils: () => ({
 			cycle: { getActive: { invalidate: invalidateGetActive } },
 			task: { list: { invalidate: invalidateTaskList } },
-			client: { cycle: { list: { query: vi.fn().mockResolvedValue([]) } } },
+			client: {
+				cycle: {
+					countCompletedWork: { query: vi.fn().mockResolvedValue(0) },
+					list: { query: vi.fn().mockResolvedValue([]) },
+				},
+				task: { list: { query: taskListQuery } },
+			},
 		}),
 		checkIn: {
 			create: {
@@ -209,6 +216,7 @@ describe("usePomodoroCycle", () => {
 			chosenTaskId: 9,
 			accepted: true,
 		});
+		taskListQuery.mockResolvedValue([]);
 		rebindTask.mockImplementation(async (input) => ({
 			id: 99,
 			sessionId: 1,
@@ -1183,6 +1191,7 @@ describe("usePomodoroCycle", () => {
 		});
 
 		expect(recordDecisionMutate).toHaveBeenCalledWith({
+			context: "post_check_in",
 			cycleId: 81,
 			suggestedTaskId: 9,
 			chosenTaskId: 9,
@@ -1249,6 +1258,7 @@ describe("usePomodoroCycle", () => {
 
 		await waitFor(() => {
 			expect(recordDecisionMutate).toHaveBeenCalledWith({
+				context: "post_check_in",
 				cycleId: 82,
 				suggestedTaskId: 9,
 				chosenTaskId: 12,
@@ -1370,6 +1380,365 @@ describe("usePomodoroCycle", () => {
 		});
 
 		expect(result.current.hasActiveSession).toBe(false);
+	});
+
+	describe("kickoff suggestion eligibility", () => {
+		const activeTaskList = [
+			{
+				id: 7,
+				title: "Write tests",
+				status: "active" as const,
+				workType: "DEEP_WORK" as const,
+				weight: 2,
+				userId: "user-1",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			},
+		];
+
+		const kickoffSuggestion = {
+			sessionId: 1,
+			taskId: 9,
+			title: "Kickoff task",
+			workType: "DEEP_WORK" as const,
+			weight: 3,
+			rationaleKey: "kickoff_fresh",
+			rationale: "Start with deep work",
+		};
+
+		it("fetches kickoff suggestion after break complete without pre-focus", async () => {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestion;
+				}
+				return {
+					cycleId: 70,
+					taskId: 9,
+					title: "Suggested task",
+					workType: "DEEP_WORK",
+					weight: 3,
+					rationaleKey: "energy_deep",
+					rationale: "Deep work — you're focused",
+				};
+			});
+
+			activeCycleData = makeActiveCycle({
+				id: 20,
+				kind: "SHORT_BREAK",
+				configuredDurationSec: 300,
+				taskId: null,
+				task: null,
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			act(() => {
+				fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+					data: { type: "complete" },
+				} as MessageEvent);
+			});
+
+			await act(async () => {
+				await result.current.confirmComplete(false);
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+			});
+
+			expect(suggestionNextMutate).toHaveBeenCalledWith(
+				expect.objectContaining({
+					context: "kickoff",
+					sessionId: 1,
+				}),
+			);
+			expect(getOrCreateSession).toHaveBeenCalled();
+			expect(result.current.pendingSuggestion.status).toBe("idle");
+		});
+
+		it("does not fetch kickoff when clearTask clears mid-session focus", async () => {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			activeCycleData = makeActiveCycle({
+				id: 55,
+				taskId: 7,
+				task: { id: 7, title: "Write tests" },
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			await act(async () => {
+				await result.current.interrupt();
+			});
+
+			expect(result.current.state).toBe("idle");
+			expect(result.current.focusedTaskId).toBe(7);
+
+			suggestionNextMutate.mockClear();
+			getOrCreateSession.mockClear();
+
+			act(() => {
+				result.current.clearTask();
+			});
+
+			await waitFor(() => {
+				expect(result.current.focusedTaskId).toBeNull();
+			});
+
+			expect(suggestionNextMutate).not.toHaveBeenCalledWith(
+				expect.objectContaining({ context: "kickoff" }),
+			);
+		});
+
+		it("clears kickoff suggestion on start()", async () => {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestion;
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+			});
+
+			act(() => {
+				result.current.selectTask(7, { id: 7, title: "Write tests" });
+			});
+
+			await act(async () => {
+				await result.current.start(60);
+			});
+
+			expect(result.current.pendingKickoffSuggestion.status).toBe("idle");
+		});
+
+		it("kickoff override via selectTask during idle shows override acknowledgement", async () => {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestion;
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+			});
+
+			recordDecisionMutate.mockClear();
+
+			act(() => {
+				result.current.selectTask(12, { id: 12, title: "Other task" });
+			});
+
+			await waitFor(() => {
+				expect(recordDecisionMutate).toHaveBeenCalledWith({
+					context: "kickoff",
+					sessionId: 1,
+					suggestedTaskId: 9,
+					chosenTaskId: 12,
+				});
+			});
+
+			expect(result.current.kickoffSuggestedTaskId).toBeNull();
+			expect(result.current.focusedTaskId).toBe(12);
+			expect(result.current.overrideAcknowledgement).toMatch(/noted/i);
+		});
+
+		it("acceptKickoffSuggestion does not show override acknowledgement", async () => {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestion;
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+			});
+
+			await act(async () => {
+				await result.current.acceptKickoffSuggestion();
+			});
+
+			expect(result.current.overrideAcknowledgement).toBeNull();
+			expect(result.current.hasPreFocusedKickoff).toBe(true);
+			expect(result.current.focusedTaskId).toBe(9);
+		});
+
+		it("dismissPreFocus after kickoff accept records kickoff decision", async () => {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestion;
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+			});
+
+			await act(async () => {
+				await result.current.acceptKickoffSuggestion();
+			});
+
+			recordDecisionMutate.mockClear();
+
+			act(() => {
+				result.current.dismissPreFocus();
+			});
+
+			await waitFor(() => {
+				expect(recordDecisionMutate).toHaveBeenCalledWith({
+					context: "kickoff",
+					sessionId: 1,
+					suggestedTaskId: 9,
+					chosenTaskId: 9,
+				});
+			});
+
+			expect(result.current.focusedTaskId).toBeNull();
+			expect(result.current.hasPreFocusedKickoff).toBe(false);
+		});
+
+		it("kickoff override acknowledgement auto-dismisses after 3s", async () => {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestion;
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+			});
+
+			vi.useFakeTimers();
+			try {
+				act(() => {
+					result.current.selectTask(12, { id: 12, title: "Other task" });
+				});
+
+				expect(result.current.overrideAcknowledgement).toMatch(/noted/i);
+
+				act(() => {
+					vi.advanceTimersByTime(3_000);
+				});
+
+				expect(result.current.overrideAcknowledgement).toBeNull();
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it("keeps kickoff and post-check-in suggestion states independent", async () => {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestion;
+				}
+				return {
+					cycleId: 80,
+					taskId: 9,
+					title: "Suggested task",
+					workType: "DEEP_WORK",
+					weight: 3,
+					rationaleKey: "energy_deep",
+					rationale: "Deep work — you're focused",
+				};
+			});
+
+			activeCycleData = makeActiveCycle({
+				id: 80,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+
+			createCycle.mockImplementation(async (input) => ({
+				id: input.kind === "WORK" ? 42 : 400,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: null,
+				kind: input.kind,
+				state: "RUNNING",
+				startedAt: new Date(),
+				endedAt: null,
+				task: null,
+				configuredDurationSec: input.configuredDurationSec,
+			}));
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			act(() => {
+				fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+					data: { type: "complete" },
+				} as MessageEvent);
+			});
+
+			await act(async () => {
+				await result.current.onCycleCompleteConfirm(false);
+			});
+
+			await act(async () => {
+				await result.current.submitCheckIn("FOCUSED");
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingSuggestion.status).toBe("ready");
+			});
+
+			expect(result.current.pendingKickoffSuggestion.status).toBe("idle");
+			expect(suggestionNextMutate).toHaveBeenCalledWith(
+				expect.objectContaining({ context: "post_check_in", cycleId: 80 }),
+			);
+			expect(suggestionNextMutate).not.toHaveBeenCalledWith(
+				expect.objectContaining({ context: "kickoff" }),
+			);
+		});
 	});
 });
 

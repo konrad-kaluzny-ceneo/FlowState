@@ -39,6 +39,11 @@ enum CycleKind {
   LONG_BREAK
 }
 
+enum SuggestionContext {
+  POST_CHECK_IN
+  KICKOFF
+}
+
 // --- Models ---
 
 model Task {
@@ -72,7 +77,8 @@ model Session {
   interruptionCount Int         @default(0) @map("interruption_count")
   archivedAt       DateTime?    @map("archived_at") @db.Timestamptz
 
-  cycles Cycle[]
+  cycles              Cycle[]
+  suggestionDecisions SuggestionDecision[]
 
   @@index([userId], name: "session_user_id_idx")
   @@index([state], name: "session_state_idx")
@@ -115,18 +121,22 @@ model CheckIn {
 }
 
 model SuggestionDecision {
-  id              Int      @id @default(autoincrement())
-  userId          String   @map("user_id") @db.VarChar(255)
-  cycleId         Int      @unique @map("cycle_id")
-  suggestedTaskId Int      @map("suggested_task_id")
-  chosenTaskId    Int      @map("chosen_task_id")
+  id              Int               @id @default(autoincrement())
+  userId          String            @map("user_id") @db.VarChar(255)
+  cycleId         Int?              @unique @map("cycle_id")
+  sessionId       Int?              @map("session_id")
+  context         SuggestionContext @default(POST_CHECK_IN)
+  suggestedTaskId Int               @map("suggested_task_id")
+  chosenTaskId    Int               @map("chosen_task_id")
   accepted        Boolean
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz
 
-  cycle         Cycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
-  suggestedTask Task  @relation("SuggestedTask", fields: [suggestedTaskId], references: [id], onDelete: Cascade)
-  chosenTask    Task  @relation("ChosenTask", fields: [chosenTaskId], references: [id], onDelete: Cascade)
+  cycle         Cycle?   @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  session       Session? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  suggestedTask Task     @relation("SuggestedTask", fields: [suggestedTaskId], references: [id], onDelete: Cascade)
+  chosenTask    Task     @relation("ChosenTask", fields: [chosenTaskId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt], name: "suggestion_decision_user_created_idx")
+  @@index([sessionId, createdAt], name: "suggestion_decision_session_created_idx")
   @@map("flow_state_suggestion_decision")
 }

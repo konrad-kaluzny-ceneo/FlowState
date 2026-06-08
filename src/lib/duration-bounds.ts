@@ -1,3 +1,5 @@
+import type { WorkType } from "@prisma/generated";
+
 /** Work cycle length bounds (FR-010). Break bounds (FR-011). */
 
 export const MIN_WORK_DURATION_SEC = 1;
@@ -58,4 +60,15 @@ export function getLongBreakPresets(): ReadonlyArray<{
 		{ label: "15 min", sec: 15 * 60 },
 		{ label: "20 min", sec: 20 * 60 },
 	] as const;
+}
+
+/** PRD-aligned kickoff chip defaults per work type (S-15). */
+export const KICKOFF_PRESET_SEC: Record<WorkType, number> = {
+	DEEP_WORK: 45 * 60,
+	OPERATIONAL: 25 * 60,
+	REACTIVE: 15 * 60,
+};
+
+export function getKickoffPresetSec(workType: WorkType): number {
+	return KICKOFF_PRESET_SEC[workType];
 }

@@ -18,6 +18,7 @@ import {
 	getShortBreakDuration,
 	setLastDuration,
 } from "~/lib/duration-storage";
+import type { OnboardingScope } from "~/lib/onboarding/types";
 import {
 	buildWindDownRationale,
 	shouldShowWindDownNudge,
@@ -26,6 +27,7 @@ import {
 	OVERRIDE_ACK_LINE,
 	OVERRIDE_ACK_VISIBLE_MS,
 } from "~/lib/suggestion/override-ack-copy";
+import { setWorkTypeDuration } from "~/lib/work-type-duration-storage";
 import { api } from "~/trpc/react";
 import type {
 	TimerWorkerInbound,
@@ -54,6 +56,23 @@ export type PendingSuggestion =
 	| { status: "idle" }
 	| { status: "loading" }
 	| { status: "ready"; data: SuggestionResult }
+	| { status: "empty" }
+	| { status: "error" };
+
+export type KickoffSuggestionResult = {
+	sessionId: number;
+	taskId: number;
+	title: string;
+	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+	weight: 1 | 2 | 3;
+	rationaleKey: string;
+	rationale: string;
+};
+
+export type PendingKickoffSuggestion =
+	| { status: "idle" }
+	| { status: "loading" }
+	| { status: "ready"; data: KickoffSuggestionResult }
 	| { status: "empty" }
 	| { status: "error" };
 
@@ -136,10 +155,23 @@ export function usePomodoroCycle() {
 	);
 	const [preFocusedTask, setPreFocusedTask] = useState<FocusedTask>(null);
 	const [hasPreFocusedSuggestion, setHasPreFocusedSuggestion] = useState(false);
+	const [hasPreFocusedKickoff, setHasPreFocusedKickoff] = useState(false);
+	const [stagedKickoffDurationSec, setStagedKickoffDurationSec] = useState<
+		number | null
+	>(null);
 	const [isAcceptingSuggestion, setIsAcceptingSuggestion] = useState(false);
+	const [isAcceptingKickoffSuggestion, setIsAcceptingKickoffSuggestion] =
+		useState(false);
 	const [overrideAcknowledgement, setOverrideAcknowledgement] = useState<
 		string | null
 	>(null);
+	const [pendingKickoffSuggestion, setPendingKickoffSuggestion] =
+		useState<PendingKickoffSuggestion>({ status: "idle" });
+	const [kickoffSuggestedTaskId, setKickoffSuggestedTaskId] =
+		useState<DomainTaskId | null>(null);
+	const [sessionStartIdleFlag, setSessionStartIdleFlag] = useState(false);
+	const [postBreakIdleFlag, setPostBreakIdleFlag] = useState(false);
+	const [hasActiveTasks, setHasActiveTasks] = useState(false);
 	const [awaitingWindDown, setAwaitingWindDown] = useState(false);
 	const [windDownDismissed, setWindDownDismissed] = useState(false);
 	const [windDownRationale, setWindDownRationale] = useState<string | null>(
@@ -148,7 +180,8 @@ export function usePomodoroCycle() {
 	const [catchUp, setCatchUp] = useState<CatchUpState>(null);
 
 	const createCheckIn = api.checkIn.create.useMutation();
-	const suggestionNext = api.suggestion.next.useMutation();
+	const suggestionNextPostCheckIn = api.suggestion.next.useMutation();
+	const suggestionNextKickoff = api.suggestion.next.useMutation();
 	const recordDecisionMutation = api.suggestion.recordDecision.useMutation();
 
 	const stateRef = useRef(state);
@@ -165,7 +198,9 @@ export function usePomodoroCycle() {
 	const pendingIncrementInterruptionRef = useRef(false);
 	const pendingWindDownMarkTaskDoneRef = useRef<boolean | null>(null);
 	const pendingWindDownWorkCycleIdRef = useRef<number | null>(null);
-	const suggestionFetchGenRef = useRef(0);
+	const suggestionCycleIdRef = useRef<number | null>(null);
+	const kickoffFetchGenRef = useRef(0);
+	const prevKickoffEligibleRef = useRef(false);
 	const overrideAckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
@@ -409,6 +444,7 @@ export function usePomodoroCycle() {
 		} else {
 			// No active cycle — session may have timed out server-side; reset counter
 			setCompletedWorkCycles(0);
+			setSessionStartIdleFlag(true);
 		}
 	}, [
 		cycles,
@@ -425,6 +461,31 @@ export function usePomodoroCycle() {
 	useEffect(() => {
 		void recoverActiveCycle();
 	}, [recoverActiveCycle]);
+
+	const loadActiveTasks = useCallback(() => {
+		if (mode !== "authenticated") {
+			setHasActiveTasks(false);
+			return;
+		}
+
+		const queryTasks = utils.client.task?.list?.query;
+		if (queryTasks == null) {
+			setHasActiveTasks(false);
+			return;
+		}
+
+		void queryTasks()
+			.then((tasks) => {
+				setHasActiveTasks(tasks.some((task) => task.status === "active"));
+			})
+			.catch(() => {
+				setHasActiveTasks(false);
+			});
+	}, [mode, utils]);
+
+	useEffect(() => {
+		loadActiveTasks();
+	}, [loadActiveTasks]);
 
 	useEffect(() => {
 		return subscribeActiveCycleRecoveryReset(() => {
@@ -479,8 +540,25 @@ export function usePomodoroCycle() {
 		}, OVERRIDE_ACK_VISIBLE_MS);
 	}, [clearOverrideAck]);
 
+	const clearKickoffSuggestion = useCallback(() => {
+		kickoffFetchGenRef.current += 1;
+		setPendingKickoffSuggestion({ status: "idle" });
+		setKickoffSuggestedTaskId(null);
+		setHasPreFocusedKickoff(false);
+		setStagedKickoffDurationSec(null);
+	}, []);
+
+	const clearStagedKickoffDuration = useCallback(() => {
+		setStagedKickoffDurationSec(null);
+	}, []);
+
+	const clearKickoffIdleFlags = useCallback(() => {
+		setSessionStartIdleFlag(false);
+		setPostBreakIdleFlag(false);
+	}, []);
+
 	const clearSuggestion = useCallback(() => {
-		suggestionFetchGenRef.current += 1;
+		suggestionCycleIdRef.current = null;
 		setPendingSuggestion({ status: "idle" });
 		setSuggestionCycleId(null);
 		setSuggestedTaskId(null);
@@ -505,6 +583,7 @@ export function usePomodoroCycle() {
 			try {
 				await retryOnce(() =>
 					recordDecisionMutation.mutateAsync({
+						context: "post_check_in",
 						cycleId: suggestionCycleId,
 						suggestedTaskId: Number(suggestedId),
 						chosenTaskId: Number(chosenId),
@@ -519,9 +598,34 @@ export function usePomodoroCycle() {
 		[suggestionCycleId, recordDecisionMutation],
 	);
 
+	const recordKickoffDecision = useCallback(
+		async (suggestedId: DomainTaskId, chosenId: DomainTaskId) => {
+			if (_activeSessionId == null) {
+				return;
+			}
+			try {
+				await retryOnce(() =>
+					recordDecisionMutation.mutateAsync({
+						context: "kickoff",
+						sessionId: Number(_activeSessionId),
+						suggestedTaskId: Number(suggestedId),
+						chosenTaskId: Number(chosenId),
+					}),
+				);
+			} catch {
+				setError(
+					"Could not save suggestion preference. Your choice is kept locally.",
+				);
+			}
+		},
+		[_activeSessionId, recordDecisionMutation],
+	);
+
 	const fetchSuggestion = useCallback(
 		(cycleId: number) => {
-			const gen = ++suggestionFetchGenRef.current;
+			clearKickoffSuggestion();
+			clearKickoffIdleFlags();
+			suggestionCycleIdRef.current = cycleId;
 			setPendingSuggestion({ status: "loading" });
 			setSuggestionCycleId(cycleId);
 			setSuggestedTaskId(null);
@@ -529,22 +633,37 @@ export function usePomodoroCycle() {
 
 			void (async () => {
 				try {
-					const result = await suggestionNext.mutateAsync({
+					const result = await suggestionNextPostCheckIn.mutateAsync({
+						context: "post_check_in",
 						cycleId,
 						localHour: new Date().getHours(),
 					});
-					if (gen !== suggestionFetchGenRef.current) {
+					if (suggestionCycleIdRef.current !== cycleId) {
 						return;
 					}
 					if (result == null) {
 						setPendingSuggestion({ status: "empty" });
 						setSuggestedTaskId(null);
 					} else {
-						setPendingSuggestion({ status: "ready", data: result });
+						setPendingSuggestion({
+							status: "ready",
+							data: {
+								cycleId:
+									"cycleId" in result && typeof result.cycleId === "number"
+										? result.cycleId
+										: cycleId,
+								taskId: result.taskId,
+								title: result.title,
+								workType: result.workType,
+								weight: result.weight,
+								rationaleKey: result.rationaleKey,
+								rationale: result.rationale,
+							},
+						});
 						setSuggestedTaskId(result.taskId);
 					}
 				} catch {
-					if (gen !== suggestionFetchGenRef.current) {
+					if (suggestionCycleIdRef.current !== cycleId) {
 						return;
 					}
 					setPendingSuggestion({ status: "error" });
@@ -552,8 +671,73 @@ export function usePomodoroCycle() {
 				}
 			})();
 		},
-		[suggestionNext],
+		[suggestionNextPostCheckIn, clearKickoffSuggestion, clearKickoffIdleFlags],
 	);
+
+	const fetchKickoffSuggestion = useCallback(
+		(sessionId: number) => {
+			const gen = ++kickoffFetchGenRef.current;
+			setPendingKickoffSuggestion({ status: "loading" });
+			setKickoffSuggestedTaskId(null);
+
+			void (async () => {
+				try {
+					const result = await suggestionNextKickoff.mutateAsync({
+						context: "kickoff",
+						sessionId,
+						localHour: new Date().getHours(),
+					});
+					if (gen !== kickoffFetchGenRef.current) {
+						return;
+					}
+					if (result == null) {
+						setPendingKickoffSuggestion({ status: "empty" });
+						setKickoffSuggestedTaskId(null);
+					} else if (!("cycleId" in result)) {
+						setPendingKickoffSuggestion({ status: "ready", data: result });
+						setKickoffSuggestedTaskId(result.taskId);
+					}
+				} catch {
+					if (gen !== kickoffFetchGenRef.current) {
+						return;
+					}
+					setPendingKickoffSuggestion({ status: "error" });
+					setKickoffSuggestedTaskId(null);
+				}
+			})();
+		},
+		[suggestionNextKickoff],
+	);
+
+	const kickoffEligible =
+		mode === "authenticated" &&
+		state === "idle" &&
+		cycleKind === null &&
+		focusedTaskId === null &&
+		!awaitingCheckIn &&
+		!awaitingWindDown &&
+		pendingSuggestion.status === "idle" &&
+		hasActiveTasks &&
+		(sessionStartIdleFlag || postBreakIdleFlag);
+
+	useEffect(() => {
+		const wasEligible = prevKickoffEligibleRef.current;
+		prevKickoffEligibleRef.current = kickoffEligible;
+
+		if (!kickoffEligible || wasEligible) {
+			return;
+		}
+
+		void (async () => {
+			try {
+				const session = await sessions.getOrCreateActive();
+				setActiveSessionId(session.id);
+				fetchKickoffSuggestion(Number(session.id));
+			} catch {
+				setPendingKickoffSuggestion({ status: "error" });
+			}
+		})();
+	}, [kickoffEligible, sessions, fetchKickoffSuggestion]);
 
 	const dismissPreFocus = useCallback(() => {
 		if (
@@ -566,15 +750,30 @@ export function usePomodoroCycle() {
 				preFocusedTask.id,
 			);
 		}
+		if (
+			hasPreFocusedKickoff &&
+			pendingKickoffSuggestion.status === "ready" &&
+			preFocusedTask != null
+		) {
+			void recordKickoffDecision(
+				pendingKickoffSuggestion.data.taskId,
+				preFocusedTask.id,
+			);
+		}
 		setPreFocusedTask(null);
 		setHasPreFocusedSuggestion(false);
+		setHasPreFocusedKickoff(false);
+		setStagedKickoffDurationSec(null);
 		setFocusedTaskId(null);
 		setFocusedTask(null);
 	}, [
 		hasPreFocusedSuggestion,
+		hasPreFocusedKickoff,
 		pendingSuggestion,
+		pendingKickoffSuggestion,
 		preFocusedTask,
 		recordSuggestionDecision,
+		recordKickoffDecision,
 	]);
 
 	const selectTask = useCallback(
@@ -598,19 +797,42 @@ export function usePomodoroCycle() {
 				setHasPreFocusedSuggestion(false);
 			}
 
+			if (
+				!breakRunning &&
+				state === "idle" &&
+				pendingKickoffSuggestion.status === "ready" &&
+				taskId !== pendingKickoffSuggestion.data.taskId
+			) {
+				void recordKickoffDecision(
+					pendingKickoffSuggestion.data.taskId,
+					taskId,
+				);
+				showOverrideAck();
+				setKickoffSuggestedTaskId(null);
+				setHasPreFocusedKickoff(false);
+			}
+
 			if (breakRunning && pendingSuggestion.status === "loading") {
 				return;
 			}
 
+			if (!breakRunning && pendingKickoffSuggestion.status === "loading") {
+				return;
+			}
+
+			clearKickoffIdleFlags();
 			preFocusTask(taskId, task);
 		},
 		[
 			state,
 			cycleKind,
 			pendingSuggestion,
+			pendingKickoffSuggestion,
 			recordSuggestionDecision,
+			recordKickoffDecision,
 			preFocusTask,
 			showOverrideAck,
+			clearKickoffIdleFlags,
 		],
 	);
 
@@ -635,6 +857,45 @@ export function usePomodoroCycle() {
 		}
 	}, [pendingSuggestion, preFocusTask, recordSuggestionDecision]);
 
+	const acceptKickoffSuggestion = useCallback(async () => {
+		if (pendingKickoffSuggestion.status !== "ready") {
+			return;
+		}
+
+		const { data } = pendingKickoffSuggestion;
+		setIsAcceptingKickoffSuggestion(true);
+		setError(null);
+
+		try {
+			preFocusTask(data.taskId, {
+				id: data.taskId,
+				title: data.title,
+			});
+			setHasPreFocusedKickoff(true);
+			clearKickoffIdleFlags();
+			await recordKickoffDecision(data.taskId, data.taskId);
+		} finally {
+			setIsAcceptingKickoffSuggestion(false);
+		}
+	}, [
+		pendingKickoffSuggestion,
+		preFocusTask,
+		recordKickoffDecision,
+		clearKickoffIdleFlags,
+	]);
+
+	const selectKickoffDuration = useCallback(
+		(
+			workType: KickoffSuggestionResult["workType"],
+			sec: number,
+			scope: OnboardingScope,
+		) => {
+			setStagedKickoffDurationSec(sec);
+			setWorkTypeDuration(workType, sec, scope);
+		},
+		[],
+	);
+
 	const clearTask = useCallback(() => {
 		if (state === "running" || state === "completed") {
 			return;
@@ -645,11 +906,16 @@ export function usePomodoroCycle() {
 
 	const start = useCallback(
 		async (durationSec: number) => {
+			const effectiveDurationSec = stagedKickoffDurationSec ?? durationSec;
+
 			setError(null);
 			setCatchUp(null);
 			tabWasHiddenWhileRunningRef.current = false;
 			clearSuggestion();
+			clearKickoffSuggestion();
+			clearKickoffIdleFlags();
 			setPreFocusedTask(null);
+			setStagedKickoffDurationSec(null);
 
 			if (state !== "idle") {
 				setError(
@@ -683,7 +949,7 @@ export function usePomodoroCycle() {
 
 				const cycle = await cycles.create({
 					kind: "WORK",
-					configuredDurationSec: durationSec,
+					configuredDurationSec: effectiveDurationSec,
 					taskId: focusedTaskId,
 				});
 
@@ -697,7 +963,7 @@ export function usePomodoroCycle() {
 				setCycleKind("WORK");
 				setState("running");
 				startWorker(endTime);
-				setLastDuration(durationSec);
+				setLastDuration(effectiveDurationSec);
 
 				await invalidateServerCycle();
 			} catch {
@@ -711,11 +977,14 @@ export function usePomodoroCycle() {
 			focusedTaskId,
 			focusedTask,
 			_activeSessionId,
+			stagedKickoffDurationSec,
 			sessions,
 			cycles,
 			startWorker,
 			invalidateServerCycle,
 			clearSuggestion,
+			clearKickoffSuggestion,
+			clearKickoffIdleFlags,
 		],
 	);
 
@@ -889,6 +1158,7 @@ export function usePomodoroCycle() {
 				} else {
 					setFocusedTaskId(null);
 					setFocusedTask(null);
+					setPostBreakIdleFlag(true);
 				}
 
 				clearSuggestion();
@@ -1167,6 +1437,8 @@ export function usePomodoroCycle() {
 		pendingWindDownMarkTaskDoneRef.current = null;
 		pendingWindDownWorkCycleIdRef.current = null;
 		clearSuggestion();
+		clearKickoffSuggestion();
+		clearKickoffIdleFlags();
 
 		await Promise.all([invalidateServerCycle(), utils.task.list.invalidate()]);
 	}, [
@@ -1178,6 +1450,8 @@ export function usePomodoroCycle() {
 		invalidateServerCycle,
 		utils.task.list,
 		clearSuggestion,
+		clearKickoffSuggestion,
+		clearKickoffIdleFlags,
 	]);
 
 	const onWindDownKeepGoing = useCallback(async () => {
@@ -1253,15 +1527,30 @@ export function usePomodoroCycle() {
 		suggestedTaskId,
 		preFocusedTask,
 		hasPreFocusedSuggestion,
+		hasPreFocusedKickoff,
+		stagedKickoffDurationSec,
 		isAcceptingSuggestion,
+		isAcceptingKickoffSuggestion,
 		overrideAcknowledgement,
+		pendingKickoffSuggestion,
+		kickoffSuggestedTaskId,
+		kickoffEligible,
 		catchUp,
 		dismissCatchUp,
 		selectTask,
 		clearTask,
 		acceptSuggestion,
+		acceptKickoffSuggestion,
+		selectKickoffDuration,
+		clearStagedKickoffDuration,
 		clearSuggestion,
+		clearKickoffSuggestion,
 		dismissPreFocus,
+		retryKickoffSuggestion: () => {
+			if (_activeSessionId != null) {
+				fetchKickoffSuggestion(Number(_activeSessionId));
+			}
+		},
 		retrySuggestion: () => {
 			if (suggestionCycleId != null) {
 				fetchSuggestion(suggestionCycleId);
