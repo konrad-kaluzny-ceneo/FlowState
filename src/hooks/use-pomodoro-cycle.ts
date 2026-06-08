@@ -684,6 +684,44 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		[_activeSessionId, recordDecisionMutation],
 	);
 
+	const fetchPostCheckInSuggestion = useCallback(
+		async (cycleId: number, gen: number) => {
+			const result = await suggestionNextPostCheckIn.mutateAsync({
+				context: "post_check_in",
+				cycleId,
+				localHour: new Date().getHours(),
+			});
+			if (suggestionFetchGenRef.current !== gen) {
+				return;
+			}
+			if (suggestionCycleIdRef.current !== cycleId) {
+				return;
+			}
+			if (result == null) {
+				setPendingSuggestion({ status: "empty" });
+				setSuggestedTaskId(null);
+			} else {
+				setPendingSuggestion({
+					status: "ready",
+					data: {
+						cycleId:
+							"cycleId" in result && typeof result.cycleId === "number"
+								? result.cycleId
+								: cycleId,
+						taskId: result.taskId,
+						title: result.title,
+						workType: result.workType,
+						weight: result.weight,
+						rationaleKey: result.rationaleKey,
+						rationale: result.rationale,
+					},
+				});
+				setSuggestedTaskId(result.taskId);
+			}
+		},
+		[suggestionNextPostCheckIn],
+	);
+
 	const fetchSuggestion = useCallback(
 		(cycleId: number) => {
 			clearKickoffSuggestion();
@@ -698,38 +736,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			void (async () => {
 				const endSuggestionFetch = beginSuggestionFetch();
 				try {
-					const result = await suggestionNextPostCheckIn.mutateAsync({
-						context: "post_check_in",
-						cycleId,
-						localHour: new Date().getHours(),
-					});
-					if (suggestionFetchGenRef.current !== gen) {
-						return;
-					}
-					if (suggestionCycleIdRef.current !== cycleId) {
-						return;
-					}
-					if (result == null) {
-						setPendingSuggestion({ status: "empty" });
-						setSuggestedTaskId(null);
-					} else {
-						setPendingSuggestion({
-							status: "ready",
-							data: {
-								cycleId:
-									"cycleId" in result && typeof result.cycleId === "number"
-										? result.cycleId
-										: cycleId,
-								taskId: result.taskId,
-								title: result.title,
-								workType: result.workType,
-								weight: result.weight,
-								rationaleKey: result.rationaleKey,
-								rationale: result.rationale,
-							},
-						});
-						setSuggestedTaskId(result.taskId);
-					}
+					await fetchPostCheckInSuggestion(cycleId, gen);
 				} catch {
 					if (suggestionFetchGenRef.current !== gen) {
 						return;
@@ -744,7 +751,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				}
 			})();
 		},
-		[suggestionNextPostCheckIn, clearKickoffSuggestion, clearKickoffIdleFlags],
+		[clearKickoffSuggestion, clearKickoffIdleFlags, fetchPostCheckInSuggestion],
 	);
 
 	const fetchKickoffSuggestion = useCallback(
@@ -1260,10 +1267,38 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const continueAfterCheckIn = useCallback(
 		async (markTaskDone: boolean, workCycleId: number) => {
-			await confirmComplete(markTaskDone);
-			fetchSuggestion(workCycleId);
+			clearKickoffSuggestion();
+			clearKickoffIdleFlags();
+			const gen = ++suggestionFetchGenRef.current;
+			suggestionCycleIdRef.current = workCycleId;
+			setPendingSuggestion({ status: "loading" });
+			setSuggestionCycleId(workCycleId);
+			setSuggestedTaskId(null);
+			setHasPreFocusedSuggestion(false);
+
+			const endSuggestionFetch = beginSuggestionFetch();
+			try {
+				await confirmComplete(markTaskDone);
+				await fetchPostCheckInSuggestion(workCycleId, gen);
+			} catch {
+				if (suggestionFetchGenRef.current !== gen) {
+					return;
+				}
+				if (suggestionCycleIdRef.current !== workCycleId) {
+					return;
+				}
+				setPendingSuggestion({ status: "error" });
+				setSuggestedTaskId(null);
+			} finally {
+				endSuggestionFetch();
+			}
 		},
-		[confirmComplete, fetchSuggestion],
+		[
+			confirmComplete,
+			fetchPostCheckInSuggestion,
+			clearKickoffSuggestion,
+			clearKickoffIdleFlags,
+		],
 	);
 
 	const onMidCycleMarkComplete = useCallback(
