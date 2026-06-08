@@ -68,6 +68,10 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-22 | background-tab-return-catchup | [FLO-37](https://linear.app/flowstate-10xdev/issue/FLO-37) | [#48](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/48) | returning to a backgrounded tab after cycle end sees a calm catch-up handoff to the next wedge step (check-in, break confirm, or suggestion) | S-01, S-05, S-06 | FR-013, FR-014, FR-020, FR-021, NFR (timer drift ≤ ±2s) | done |
 | S-23 | suggestion-rationale-expander | [FLO-38](https://linear.app/flowstate-10xdev/issue/FLO-38) | [#49](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/49) | tap "Why this?" on the suggestion card for a deterministic factor breakdown — no analytics screen | S-06 | FR-021, FR-022, FR-019, NFR (suggestion feedback ≥1s visible) | ready |
 | S-24 | cycle-pause-resume | [FLO-39](https://linear.app/flowstate-10xdev/issue/FLO-39) | [#50](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/50) | pause and resume a work or break cycle with remaining time preserved — without INTERRUPTED state or interruptionCount increment | S-01, S-02 | FR-012, FR-019, US-01, NFR (crash/refresh recovery) | proposed |
+| B-01 | fix-cycle-audio-toggle | [FLO-53](https://linear.app/flowstate-10xdev/issue/FLO-53) | [#72](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/72) | **(bug)** Cycle end audio Normal / Soft / Muted buttons respond to click and persist preference | S-20 | FR-013, FR-014 | open |
+| B-02 | fix-task-title-multiline-edit | [FLO-54](https://linear.app/flowstate-10xdev/issue/FLO-54) | [#73](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/73) | **(bug)** task title edit uses multi-line text area so long names wrap and remain fully visible | — | FR-005, FR-008 | open |
+| B-03 | fix-cycle-start-interrupt-optimistic | [FLO-55](https://linear.app/flowstate-10xdev/issue/FLO-55) | [#74](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/74) | **(bug)** Start Cycle / Interrupt update timer UI within 200ms (optimistic), not after server round-trip | S-09 | NFR (200ms acknowledgement), FR-009, FR-012 | open |
+| B-04 | fix-cycle-complete-flash-after-checkin | [FLO-56](https://linear.app/flowstate-10xdev/issue/FLO-56) | [#75](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/75) | **(bug)** after energy check-in, Cycle Complete overlay must not flash/hang until break/suggestion | S-05, S-06 | FR-020, FR-021, NFR (200ms acknowledgement) | open |
 
 ## Streams
 
@@ -244,6 +248,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Adds a UI step in the cycle-end transition that S-01 already owns. Risk is regression of S-01's confirm-flow ergonomics. Mitigation: check-in lives between work-end-prompt and break-start, not in front of the audio signal.
 - **Test substrate:** Risk #7 integration via `testing-check-in-persistence`; UI gate via `testing-active-slice-browser-proofs` (e2e + `completeCheckIn` helper). Dedicated `check-in-gate.spec.ts` deferred per test-plan §6.6.
 - **Status:** done — shipped via change `testing-active-slice-browser-proofs` (2026-06-06)
+- **Known regression:** [B-04](#b-04-cycle-complete-overlay-flashes-after-check-in) — Cycle Complete modal re-flashes after energy submit until `confirmComplete` finishes.
 
 ### S-06: Adaptive task suggestion with override
 
@@ -303,6 +308,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:** Whether cycle mutations (`cycle.create`, `complete`, `interrupt`) belong in the same slice or a follow-up — owner: `/10x-plan`. Block: no — task list alone satisfies the slice outcome.
 - **Risk:** Optimistic state can diverge from server truth on race or double-submit; mitigation: `onMutate` / rollback pattern, invalidate on settle, tests for failed mutation. Out of scope for `guest-local-storage-merge` (separate change-id per plan brief).
 - **Status:** done — shipped via [PR #51](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/51) (2026-06-07)
+- **Known gap:** [B-03](#b-03-cycle-start-interrupt-not-optimistic) — cycle start/interrupt still block on server; task mutations only.
 
 ### S-10: Google OAuth social login
 
@@ -507,6 +513,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Silent-only users may miss transitions if visual prompt is off-tab — **S-22 is the primary fix**; title/favicon pulse is a lightweight adjunct only. Aggressive title flashing feels alarming, not calm.
 - **Orchestrator doubts:** Do not ship mute without either S-22 catch-up or documented title-pulse acceptance test. Follow-up P-208 merged (40/90 revise) — not a standalone slice.
 - **Status:** done — shipped via [PR #71](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/71) (2026-06-08)
+- **Known regression:** [B-01](#b-01-cycle-end-audio-toggle-unresponsive) — toggle buttons do not switch on click (production, reported 2026-06-08)
 
 ### S-21: Mindful transition copy (break + work re-entry)
 
@@ -635,6 +642,68 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-22 | background-tab-return-catchup | FLO-37 | #48 | FlowState — background tab return catch-up | yes | P-201 promote 67; pair with S-20 mute |
 | S-23 | suggestion-rationale-expander | FLO-38 | #49 | FlowState — suggestion "Why this?" expander | yes | P-202 promote 67 |
 | S-24 | cycle-pause-resume | FLO-39 | #50 | FlowState — cycle pause/resume without scoring penalty | no | P-203 revise 66; product gate on FR-019 pause semantics |
+| B-01 | fix-cycle-audio-toggle | FLO-53 | #72 | Bug — cycle end audio toggle unresponsive | yes | S-20 regression; production 2026-06-08 |
+| B-02 | fix-task-title-multiline-edit | FLO-54 | #73 | Bug — task title edit truncates long names | yes | FR-005; single-line input in task-list |
+| B-03 | fix-cycle-start-interrupt-optimistic | FLO-55 | #74 | Bug — Start/Interrupt hang without optimistic UI | yes | S-09 gap; relates to FLO-49 S-27 |
+| B-04 | fix-cycle-complete-flash-after-checkin | FLO-56 | #75 | Bug — Cycle Complete flashes after check-in | yes | S-05/S-06; state machine gap |
+
+## Bugs
+
+### B-01: Cycle end audio toggle unresponsive
+
+- **Outcome:** user can click **Normal**, **Soft**, or **Muted** on the timer panel **Cycle end audio** control and see the selection update immediately; preference persists across refresh (localStorage for guests, server profile when logged in); cycle-end chime respects the chosen mode.
+- **Change ID:** fix-cycle-audio-toggle
+- **Linear:** [FLO-53](https://linear.app/flowstate-10xdev/issue/FLO-53)
+- **GitHub:** [#72](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/72)
+- **PRD refs:** FR-013, FR-014
+- **Prerequisites:** S-20 (shipped — regression)
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Server-sync effect in `useCycleEndAudioPreference` may overwrite optimistic UI before mutation completes; e2e may have seeded preference without exercising live toggle.
+- **Status:** open — reported production 2026-06-08; blocks S-20 acceptance for live users until fixed.
+
+### B-02: Task title edit truncates long names
+
+- **Outcome:** user editing a task title sees a multi-line text control that wraps long names across several lines (auto-resize or scroll) so the full title is readable and editable — not a single-line input that clips overflow.
+- **Change ID:** fix-task-title-multiline-edit
+- **Linear:** [FLO-54](https://linear.app/flowstate-10xdev/issue/FLO-54)
+- **GitHub:** [#73](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/73)
+- **PRD refs:** FR-005, FR-008
+- **Prerequisites:** —
+- **Parallel with:** B-01
+- **Blockers:** —
+- **Unknowns:** Enter key — newline vs save (document in implement plan).
+- **Risk:** Multi-line titles in list display may need matching wrap/read mode when not editing.
+- **Status:** open — reported production 2026-06-08 (screenshot: title cut at `"możliw"`).
+
+### B-03: Cycle start / interrupt not optimistic
+
+- **Outcome:** logged-in user clicking **Start Cycle** or **Interrupt** sees the timer panel update within 200ms — running countdown on start, idle/ready on interrupt — without waiting for `sessions.getOrCreateActive` / `cycles.create` / `cycles.interrupt` to complete; server sync runs async with rollback on failure (mirror S-09 task mutation contract).
+- **Change ID:** fix-cycle-start-interrupt-optimistic
+- **Linear:** [FLO-55](https://linear.app/flowstate-10xdev/issue/FLO-55)
+- **GitHub:** [#74](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/74)
+- **PRD refs:** NFR (200ms acknowledgement), FR-009, FR-012
+- **Prerequisites:** S-09 (optimistic pattern shipped for tasks)
+- **Parallel with:** B-01, B-02
+- **Blockers:** —
+- **Unknowns:** Full S-27 wedge optimistic scope (check-in, suggestion accept) vs fix Start/Interrupt only in B-03 — owner: `/10x-plan`. Block: no.
+- **Risk:** Optimistic cycle state diverges on double-submit or server rejection; guest path already local-first — parity testing required.
+- **Status:** open — reported production 2026-06-08; user-visible hang on authenticated dashboard.
+
+### B-04: Cycle Complete overlay flashes after check-in
+
+- **Outcome:** after submitting energy at cycle end, user never sees the stale **Cycle Complete!** modal again — transition proceeds immediately to break start, suggestion loading, or wind-down without a multi-second freeze on the old overlay.
+- **Change ID:** fix-cycle-complete-flash-after-checkin
+- **Linear:** [FLO-56](https://linear.app/flowstate-10xdev/issue/FLO-56)
+- **GitHub:** [#75](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/75)
+- **PRD refs:** FR-020, FR-021, NFR (200ms acknowledgement)
+- **Prerequisites:** S-05, S-06
+- **Parallel with:** B-03
+- **Blockers:** —
+- **Unknowns:** Show explicit post-check-in loading shell vs hide overlay via `postCheckInTransitioning` flag — owner: `/10x-plan`. Block: no.
+- **Risk:** `awaitingCheckIn=false` + `state=completed` gap is the flash window; wind-down branch must stay excluded.
+- **Status:** open — reported production 2026-06-08 (screenshot: Cycle Complete modal after energy submit).
 
 ## Research requirements <!-- needs-research -->
 
