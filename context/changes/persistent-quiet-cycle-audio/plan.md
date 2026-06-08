@@ -640,11 +640,11 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Automated
 
-- [x] 4.1 Audio tests pass: `pnpm exec vitest run src/lib/audio.test.ts`
-- [x] 4.2 Hook tests pass: `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx`
-- [x] 4.3 Full test suite passes: `pnpm test`
-- [x] 4.4 Typecheck passes: `pnpm typecheck`
-- [x] 4.5 Lint passes: `pnpm check`
+- [x] 4.1 Audio tests pass: `pnpm exec vitest run src/lib/audio.test.ts` ? 682efc6
+- [x] 4.2 Hook tests pass: `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` ? 682efc6
+- [x] 4.3 Full test suite passes: `pnpm test` ? 682efc6
+- [x] 4.4 Typecheck passes: `pnpm typecheck` ? 682efc6
+- [x] 4.5 Lint passes: `pnpm check` ? 682efc6
 
 #### Manual
 
@@ -654,10 +654,10 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Automated
 
-- [ ] 5.1 Hook tests pass: `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx`
-- [ ] 5.2 Full test suite passes: `pnpm test`
-- [ ] 5.3 Typecheck passes: `pnpm typecheck`
-- [ ] 5.4 Lint passes: `pnpm check`
+- [x] 5.1 Hook tests pass: `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx`
+- [x] 5.2 Full test suite passes: `pnpm test`
+- [x] 5.3 Typecheck passes: `pnpm typecheck`
+- [x] 5.4 Lint passes: `pnpm check`
 
 #### Manual
 

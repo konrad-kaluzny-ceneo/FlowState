@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useCallback, useMemo } from "react";
 
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
@@ -51,7 +51,11 @@ function PomodoroDashboardBody({
 	onCheckInCoachSeen?: () => void;
 	onSuggestionCoachSeen?: () => void;
 }) {
-	const pomodoro = usePomodoroCycle();
+	const getCycleEndAudioMode = useCallback(
+		() => cycleEndAudioMode,
+		[cycleEndAudioMode],
+	);
+	const pomodoro = usePomodoroCycle({ getCycleEndAudioMode });
 
 	const activeTaskIds = useMemo(
 		() => new Set(tasks.filter((t) => t.status === "active").map((t) => t.id)),

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createAudioManager } from "~/lib/audio";
 import { deriveCatchUpGate } from "~/lib/catch-up/derive-gate";
 import type { CatchUpState } from "~/lib/catch-up/types";
+import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 import {
 	useDataMode,
 	useRepositories,
@@ -115,7 +116,20 @@ async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {
 	}
 }
 
-export function usePomodoroCycle() {
+export type UsePomodoroCycleOptions = {
+	getCycleEndAudioMode?: () => CycleEndAudioMode;
+};
+
+export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
+	const getCycleEndAudioModeRef = useRef<() => CycleEndAudioMode>(
+		options?.getCycleEndAudioMode ?? (() => "normal"),
+	);
+
+	useEffect(() => {
+		getCycleEndAudioModeRef.current =
+			options?.getCycleEndAudioMode ?? (() => "normal");
+	}, [options?.getCycleEndAudioMode]);
+
 	const mode = useDataMode();
 	const { cycles, sessions, tasks, refreshGuest } = useRepositories();
 	const utils = api.useUtils();
@@ -278,7 +292,9 @@ export function usePomodoroCycle() {
 		endTimeRef.current = null;
 		setRemainingMs(0);
 		setState("completed");
-		void audioRef.current.playAlarm().catch(() => {});
+		void audioRef.current
+			.playAlarm({ mode: getCycleEndAudioModeRef.current() })
+			.catch(() => {});
 
 		if (document.visibilityState !== "visible" || wasHiddenWhileRunning) {
 			setCatchUpFromExpiry(endedAtMs, cycleKindRef.current);
@@ -396,7 +412,9 @@ export function usePomodoroCycle() {
 
 			if (endTime <= Date.now()) {
 				setState("completed");
-				void audioRef.current.playAlarm().catch(() => {});
+				void audioRef.current
+					.playAlarm({ mode: getCycleEndAudioModeRef.current() })
+					.catch(() => {});
 				setCatchUpFromExpiry(endTime, cycle.kind);
 				return;
 			}
