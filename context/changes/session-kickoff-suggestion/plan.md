@@ -500,10 +500,10 @@ Kickoff fetch is a single tRPC mutation on discrete idle transitions (not pollin
 
 #### Automated
 
-- [ ] 5.1 `pnpm check` passes
-- [ ] 5.2 `pnpm test` passes
-- [ ] 5.3 `set CI=true && pnpm test:e2e e2e/session-kickoff.spec.ts` passes
-- [ ] 5.4 `set CI=true && pnpm test:e2e e2e/task-suggestion.spec.ts` passes (regression)
+- [x] 5.1 `pnpm check` passes
+- [x] 5.2 `pnpm test` passes
+- [x] 5.3 `set CI=true && pnpm test:e2e e2e/session-kickoff.spec.ts` passes
+- [x] 5.4 `set CI=true && pnpm test:e2e e2e/task-suggestion.spec.ts` passes (regression)
 
 #### Manual
 
