@@ -2,7 +2,13 @@ import { expect, type Page } from "@playwright/test";
 
 export async function waitForKickoffSuggestion(page: Page) {
 	await page.waitForResponse(
-		(response) => response.url().includes("suggestion.next") && response.ok(),
+		(response) => {
+			if (!response.url().includes("suggestion.next") || !response.ok()) {
+				return false;
+			}
+			const postData = response.request().postData();
+			return postData?.includes('"context":"kickoff"') ?? false;
+		},
 		{ timeout: 20_000 },
 	);
 }

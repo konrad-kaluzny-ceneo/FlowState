@@ -1,8 +1,23 @@
 import { expect, type Page } from "@playwright/test";
 
+function suggestionNextPostDataIncludes(
+	response: {
+		url: () => string;
+		ok: () => boolean;
+		request: () => { postData: () => string | null };
+	},
+	context: "post_check_in" | "kickoff",
+) {
+	if (!response.url().includes("suggestion.next") || !response.ok()) {
+		return false;
+	}
+	const postData = response.request().postData();
+	return postData?.includes(`"context":"${context}"`) ?? false;
+}
+
 export async function waitForSuggestionNext(page: Page) {
 	await page.waitForResponse(
-		(response) => response.url().includes("suggestion.next") && response.ok(),
+		(response) => suggestionNextPostDataIncludes(response, "post_check_in"),
 		{ timeout: 20_000 },
 	);
 }
