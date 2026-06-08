@@ -52,7 +52,7 @@ Authenticated user completing a WORK cycle check-in with **Fading** energy sees 
 
 ### State sequencing
 
-After `createCheckIn` succeeds: close check-in overlay (`setAwaitingCheckIn(false)`), evaluate nudge. If triggered, set `awaitingWindDown` and **return before** `confirmComplete` — break has not started, suggestion fetch has not fired. **Keep going** sets `windDownDismissed = true`, clears `awaitingWindDown`, then runs deferred continuation. **End session** clears `awaitingWindDown`, runs `confirmComplete(markTaskDone)` (cycle saved), then `endSession()` without `fetchSuggestion`.
+After `createCheckIn` succeeds: close check-in overlay (`setAwaitingCheckIn(false)`), evaluate nudge. If triggered, set `awaitingWindDown` and **return before** `confirmComplete` — break has not started, suggestion fetch has not fired. **Keep going** sets `windDownDismissed = true`, clears `awaitingWindDown`, then runs deferred continuation. **End session** clears `awaitingWindDown`, runs `completeWorkCycleOnly(markTaskDone)` (persists cycle completion **without** `startBreakAfterWorkComplete`), then `endSession()` without `fetchSuggestion`.
 
 ### S-15 merge isolation
 
@@ -152,7 +152,7 @@ Wire evaluation into `submitCheckIn`, expose resolve handlers, mount overlay on 
 
 **Intent**: Insert wind-down gate between check-in persist and break/suggestion transition; reuse existing `endSession` for End session path.
 
-**Contract**: New state — `awaitingWindDown`, `windDownDismissed` (session-scoped), `windDownRationale`. New exports — `awaitingWindDown`, `windDownRationale`, `onWindDownKeepGoing`, `onWindDownEndSession`. Internal helper `continueAfterCheckIn(markTaskDone, workCycleId)` encapsulates `confirmComplete` + `fetchSuggestion`. `submitCheckIn` after successful `createCheckIn`: fetch `sessions.getOrCreateActive()` for `interruptionCount`; if `shouldShowWindDownNudge({ energy, completedWorkCycles, interruptionCount, dismissed: windDownDismissed })` → set rationale + `awaitingWindDown`, return. Else call `continueAfterCheckIn`. `onWindDownKeepGoing`: set `windDownDismissed = true`, clear `awaitingWindDown`, call `continueAfterCheckIn`. `onWindDownEndSession`: clear `awaitingWindDown`, `await confirmComplete(markTaskDone)`, then `endSession()` (no `fetchSuggestion`). Reset `windDownDismissed` and `awaitingWindDown` in `endSession`. Skip evaluation when `mode === "guest"`. Apply to mid-cycle path (shared `submitCheckIn`).
+**Contract**: New state — `awaitingWindDown`, `windDownDismissed` (session-scoped), `windDownRationale`. New exports — `awaitingWindDown`, `windDownRationale`, `onWindDownKeepGoing`, `onWindDownEndSession`. Internal helpers: `completeWorkCycleOnly(markTaskDone)` — `cycles.complete` + worker teardown + `completedWorkCycles` refresh, **no** `startBreakAfterWorkComplete`; `continueAfterCheckIn(markTaskDone, workCycleId)` — `confirmComplete` + `fetchSuggestion`. `submitCheckIn` after successful `createCheckIn`: fetch `sessions.getOrCreateActive()` for `interruptionCount`; if `shouldShowWindDownNudge({ energy, completedWorkCycles, interruptionCount, dismissed: windDownDismissed })` → set rationale + `awaitingWindDown`, return (leave `setIsConfirming(false)` in `finally` so overlay buttons are enabled). Else call `continueAfterCheckIn`. `onWindDownKeepGoing` / `onWindDownEndSession`: wrap async work with `setIsConfirming(true/false)` (reuse `isConfirming` for overlay `isSubmitting`). `onWindDownKeepGoing`: set `windDownDismissed = true`, clear `awaitingWindDown`, call `continueAfterCheckIn`. `onWindDownEndSession`: clear `awaitingWindDown`, `await completeWorkCycleOnly(markTaskDone)`, then `endSession()` (no break, no `fetchSuggestion`). Reset `windDownDismissed` and `awaitingWindDown` in `endSession`. Skip evaluation when `mode === "guest"`. Apply to mid-cycle path (shared `submitCheckIn`).
 
 #### 2. Dashboard mount and suggestion guard
 
@@ -160,7 +160,7 @@ Wire evaluation into `submitCheckIn`, expose resolve handlers, mount overlay on 
 
 **Intent**: Show overlay only for authenticated users; prevent suggestion card while wind-down gate is open.
 
-**Contract**: New prop `enableWindDownGate` (default `false`). `AuthenticatedPomodoroDashboard` passes `enableWindDownGate` alongside `enableCheckInGate`. Render `WindDownOverlay` when `enableWindDownGate && pomodoro.awaitingWindDown`. Wire `onKeepGoing` → `onWindDownKeepGoing`, `onEndSession` → `onWindDownEndSession`, `isSubmitting` → `pomodoro.isConfirming`. Extend `showSuggestionCard` condition with `!pomodoro.awaitingWindDown`. Place overlay after `CheckInOverlay` block, before `end-session-btn`.
+**Contract**: New prop `enableWindDownGate` (default `false`). `AuthenticatedPomodoroDashboard` passes `enableWindDownGate` alongside `enableCheckInGate`. Render `WindDownOverlay` when `enableWindDownGate && pomodoro.awaitingWindDown`. Wire `onKeepGoing` → `onWindDownKeepGoing`, `onEndSession` → `onWindDownEndSession`, `isSubmitting` → `pomodoro.isConfirming`. Extend `showSuggestionCard` condition with `!pomodoro.awaitingWindDown`. Gate `CycleCompleteOverlay` with `!pomodoro.awaitingWindDown` (alongside existing `!awaitingCheckIn`) so only one interstitial is visible during the wind-down gate. Place overlay after `CheckInOverlay` block, before `end-session-btn`.
 
 ### Success Criteria:
 
@@ -206,6 +206,12 @@ Browser-level proof for wind-down trigger, dismiss, end-session, and negative pa
 
 **Contract**: Export `completeCheckInWithOptionalWindDown(page, energy, action?: "keep-going" | "end-session")` if it reduces spec duplication; otherwise keep helpers separate.
 
+**File**: `e2e/helpers/idle-cycle.ts`
+
+**Intent**: Prevent `ensureIdleCycle` from hanging when a wind-down gate is open from a prior test step.
+
+**Contract**: In the reset loop, if `wind-down-overlay` is visible, click `wind-down-keep-going-btn` (default) before other dismissals; re-check idle after dismissal.
+
 #### 2. E2E spec
 
 **File**: `e2e/mindful-session-wind-down.spec.ts`
@@ -214,6 +220,7 @@ Browser-level proof for wind-down trigger, dismiss, end-session, and negative pa
 
 **Contract**: Model on `e2e/seed.spec.ts` + `e2e/task-suggestion.spec.ts` (provenance header, per-test auth, `ensureIdleCycle` in `beforeEach`). Tests:
 - **Trigger (fatigue path)**: 3 cycles with `steady` check-in, 4th cycle `fading` → `wind-down-overlay` visible with fatigue rationale; break not running until Keep going.
+- **Trigger (interruption path)**: 1st cycle `fading` after mid-cycle task switch (≥2 `interruptionCount`) → overlay visible with interruptions rationale; no fatigue cycles required.
 - **Keep going → suggestion**: after dismiss, break `timer-panel-running`, `task-suggestion-card` appears (or loading).
 - **End session path**: trigger nudge → `wind-down-end-session-btn` → `end-session-btn` hidden / `hasActiveSession` false / idle dashboard.
 - **Dismiss suppresses**: Keep going on 4th cycle; 5th cycle Fading+f fatigue → no overlay (same session).
