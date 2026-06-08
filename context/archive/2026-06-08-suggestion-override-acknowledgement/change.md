@@ -1,10 +1,10 @@
 ---
 change_id: suggestion-override-acknowledgement
 title: Suggestion override acknowledgement (post-check-in)
-status: impl_reviewed
+status: archived
 created: 2026-06-08
 updated: 2026-06-08
-archived_at: null
+archived_at: 2026-06-08T06:16:00Z
 ---
 
 ## Notes

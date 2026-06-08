@@ -9,7 +9,7 @@ expanded_intelligence: 2026-06-07
 expanded_story: 2026-06-07
 expanded_followup: 2026-06-07
 expanded_ux_gaps: 2026-06-07
-active_slices: [S-19]
+active_slices: []
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -62,7 +62,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-16 | mindful-session-wind-down | [FLO-31](https://linear.app/flowstate-10xdev/issue/FLO-31) | [#42](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/42) | receive an optional, dismissible prompt to end the session with rationale when energy is Fading and fatigue signals align — and override to continue | S-05, S-06 | FR-020, FR-021, FR-019 | ready |
 | S-17 | session-narrative-summary | [FLO-32](https://linear.app/flowstate-10xdev/issue/FLO-32) | [#43](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/43) | in-flow narrative + closure + 8h return handoff composing S-18 resume note (max two clauses, no charts) | S-02, S-05, S-18 | FR-019, FR-020, FR-012, NFR (90-day retention), proposed-FR-return-handoff | proposed |
 | S-18 | task-resume-context-note | [FLO-33](https://linear.app/flowstate-10xdev/issue/FLO-33) | [#44](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/44) | capture resume note at mid-cycle switch and mid-cycle completion; show on suggestion card and manual refocus | S-06 | FR-015, FR-019, FR-021, FR-022, proposed-FR-interruption-context | proposed |
-| S-19 | suggestion-override-acknowledgement | [FLO-34](https://linear.app/flowstate-10xdev/issue/FLO-34) | [#45](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/45) | validating acknowledgement on post-check-in and kickoff suggestion override — same FR-022 story | S-06 | FR-022, FR-021, FR-019, proposed-FR-session-start-guidance | active |
+| S-19 | suggestion-override-acknowledgement | [FLO-34](https://linear.app/flowstate-10xdev/issue/FLO-34) | [#45](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/45) (closed) | validating acknowledgement on post-check-in and kickoff suggestion override — same FR-022 story | S-06 | FR-022, FR-021, FR-019, proposed-FR-session-start-guidance | done |
 | S-20 | persistent-quiet-cycle-audio | [FLO-35](https://linear.app/flowstate-10xdev/issue/FLO-35) | [#46](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/46) | persistent mute/soften cycle chime; optional title/favicon pulse when muted + tab backgrounded; pair with S-22 | S-01 | FR-013, FR-014, NFR (200ms acknowledgement) | ready |
 | S-21 | mindful-transition-copy | [FLO-36](https://linear.app/flowstate-10xdev/issue/FLO-36) | [#47](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/47) | skippable break/re-entry copy; re-entry variant keyed to last check-in energy (Focused/Steady/Fading) | S-02, S-05, S-12 | FR-014, FR-011, FR-012, FR-020 | proposed |
 | S-22 | background-tab-return-catchup | [FLO-37](https://linear.app/flowstate-10xdev/issue/FLO-37) | [#48](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/48) | returning to a backgrounded tab after cycle end sees a calm catch-up handoff to the next wedge step (check-in, break confirm, or suggestion) | S-01, S-05, S-06 | FR-013, FR-014, FR-020, FR-021, NFR (timer drift ≤ ±2s) | ready |
@@ -487,7 +487,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Suppress second acknowledgement if user overrides kickoff then immediately hits check-in override in same transition beat? Owner: implementer. Block: no.
   - Does kickoff override feed the same session-context signal as post-check-in override? Owner: implementer. Block: no.
 - **Risk:** Patronizing copy ("you know best!") erodes calm tone — one neutral line max. Duplicate ack on back-to-back transitions feels naggy. Expand score 78/90 — **promote**; follow-up P-201 merged (67/90 revise).
-- **Status:** active
+- **Status:** done — shipped via [PR #67](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/67) (2026-06-08). Post-check-in ack only; kickoff ack deferred to S-15.
 
 ### S-20: Persistent quiet cycle audio
 
@@ -679,6 +679,7 @@ Items tagged `needs-research` are non-trivial — they require external research
 
 ## Done
 
+- **S-19: user can override the suggested next task (post-check-in **and** idle kickoff suggestion from S-15) and see the same brief validating acknowledgement line — autonomy preserved, override recorded for session context, no guilt or patronizing copy.** — Archived 2026-06-08 → `context/archive/2026-06-08-suggestion-override-acknowledgement/`. Lesson: post-check-in ack shipped first; kickoff surface waits on S-15.
 - **S-14: user on sign-in or sign-up pages understands FlowState's value (mindful Pomodoro + session-aware next-task picks with rationale), and after authenticating with guest data sees an explicit merge-success moment naming imported tasks and what unlocked (full sessions, check-ins, suggestions) instead of a silent import.** — Archived 2026-06-08 → `context/archive/2026-06-08-auth-merge-first-impression/`. Lesson: —.
 - **S-11: user on first visit follows a dismissible first-run flow teaching check-in → suggestion wedge; **plus** ongoing empty-list guidance when active tasks drop to zero again (not only "No active tasks"); **plus** inline one-line coach at first-ever check-in and first suggestion — subcopy only, no second blocking modal. *(Scope expanded P-204+P-205 / roadmap-expand UX batch 2026-06-07.)** — Archived 2026-06-08 → context/archive/2026-06-07-first-run-wedge-onboarding/. Lesson: —.
 - **S-09: while logged in, task create / update / delete / status changes reflect in the UI immediately (optimistic cache updates via TanStack Query); on mutation failure the UI rolls back and shows an error — no silent loss.** — Archived 2026-06-07 → `context/archive/2026-06-07-optimistic-task-mutations/`. Lesson: —.
