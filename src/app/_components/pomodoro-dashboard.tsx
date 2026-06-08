@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useCallback, useMemo } from "react";
 
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
@@ -11,8 +11,10 @@ import { TaskList } from "~/app/_components/task-list";
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
 import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
+import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preference";
 import { useOnboarding } from "~/hooks/use-onboarding-state";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
+import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import { useGuestDomainTasks } from "~/lib/data-mode/use-domain-tasks";
 import {
@@ -31,6 +33,8 @@ function PomodoroDashboardBody({
 	checkInCoachLine,
 	suggestionCoachLine,
 	workTypeDurationScope,
+	cycleEndAudioMode,
+	setCycleEndAudioMode,
 	onCheckInCoachSeen,
 	onSuggestionCoachSeen,
 }: {
@@ -42,10 +46,16 @@ function PomodoroDashboardBody({
 	checkInCoachLine?: string;
 	suggestionCoachLine?: string;
 	workTypeDurationScope?: OnboardingScope;
+	cycleEndAudioMode: CycleEndAudioMode;
+	setCycleEndAudioMode: (mode: CycleEndAudioMode) => void;
 	onCheckInCoachSeen?: () => void;
 	onSuggestionCoachSeen?: () => void;
 }) {
-	const pomodoro = usePomodoroCycle();
+	const getCycleEndAudioMode = useCallback(
+		() => cycleEndAudioMode,
+		[cycleEndAudioMode],
+	);
+	const pomodoro = usePomodoroCycle({ getCycleEndAudioMode });
 
 	const activeTaskIds = useMemo(
 		() => new Set(tasks.filter((t) => t.status === "active").map((t) => t.id)),
@@ -163,9 +173,11 @@ function PomodoroDashboardBody({
 
 			{showTimer && (
 				<TimerPanel
+					cycleEndAudioMode={cycleEndAudioMode}
 					cycleKind={pomodoro.cycleKind}
 					focusedTask={pomodoro.focusedTask}
 					isStarting={false}
+					onCycleEndAudioModeChange={setCycleEndAudioMode}
 					onInterrupt={pomodoro.interrupt}
 					onStart={pomodoro.start}
 					onWorkDurationManualChange={pomodoro.clearStagedKickoffDuration}
@@ -370,6 +382,7 @@ function AuthenticatedPomodoroDashboard() {
 	const [tasks] = api.task.list.useSuspenseQuery();
 	const utils = api.useUtils();
 	const {
+		scope: onboardingScope,
 		shouldShowCheckInCoach,
 		shouldShowSuggestionCoach,
 		markCheckInCoachSeen,
@@ -381,19 +394,18 @@ function AuthenticatedPomodoroDashboard() {
 		[tasks],
 	);
 
-	const workTypeDurationScope = useMemo((): OnboardingScope => {
-		const userId = tasks[0]?.userId;
-		if (userId) {
-			return { mode: "authenticated", userId };
-		}
-		return { mode: "guest" };
-	}, [tasks]);
+	const workTypeDurationScope =
+		onboardingScope.mode === "authenticated" ? onboardingScope : undefined;
+
+	const { mode: cycleEndAudioMode, setMode: setCycleEndAudioMode } =
+		useCycleEndAudioPreference(onboardingScope);
 
 	return (
 		<PomodoroDashboardBody
 			checkInCoachLine={
 				shouldShowCheckInCoach ? CHECK_IN_COACH_LINE : undefined
 			}
+			cycleEndAudioMode={cycleEndAudioMode}
 			enableCheckInGate
 			enableSuggestionGate
 			enableWindDownGate
@@ -402,6 +414,7 @@ function AuthenticatedPomodoroDashboard() {
 			refreshTasks={async () => {
 				await utils.task.list.invalidate();
 			}}
+			setCycleEndAudioMode={setCycleEndAudioMode}
 			suggestionCoachLine={
 				shouldShowSuggestionCoach ? SUGGESTION_COACH_LINE : undefined
 			}
@@ -413,8 +426,18 @@ function AuthenticatedPomodoroDashboard() {
 
 function GuestPomodoroDashboard() {
 	const { tasks, refresh } = useGuestDomainTasks();
+	const guestScope = useMemo(() => ({ mode: "guest" as const }), []);
+	const { mode: cycleEndAudioMode, setMode: setCycleEndAudioMode } =
+		useCycleEndAudioPreference(guestScope);
 
-	return <PomodoroDashboardBody refreshTasks={refresh} tasks={tasks} />;
+	return (
+		<PomodoroDashboardBody
+			cycleEndAudioMode={cycleEndAudioMode}
+			refreshTasks={refresh}
+			setCycleEndAudioMode={setCycleEndAudioMode}
+			tasks={tasks}
+		/>
+	);
 }
 
 export function PomodoroDashboard() {

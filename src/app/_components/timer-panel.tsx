@@ -7,6 +7,7 @@ import type {
 	FocusedTask,
 	PomodoroCycleState,
 } from "~/hooks/use-pomodoro-cycle";
+import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 import {
 	getLongBreakPresets,
 	getMaxBreakDurationSec,
@@ -26,6 +27,7 @@ import {
 } from "~/lib/duration-storage";
 import { formatRemainingMs } from "~/lib/format-remaining";
 
+import { CycleAudioPreferenceControl } from "./cycle-audio-preference-control";
 import { DurationPicker } from "./duration-picker";
 
 type TimerPanelProps = {
@@ -38,6 +40,8 @@ type TimerPanelProps = {
 	cycleKind?: CycleKind | null;
 	preferredWorkDurationSec?: number | null;
 	onWorkDurationManualChange?: () => void;
+	cycleEndAudioMode?: CycleEndAudioMode;
+	onCycleEndAudioModeChange?: (mode: CycleEndAudioMode) => void;
 };
 
 export function TimerPanel({
@@ -50,6 +54,8 @@ export function TimerPanel({
 	cycleKind = null,
 	preferredWorkDurationSec = null,
 	onWorkDurationManualChange,
+	cycleEndAudioMode = "normal",
+	onCycleEndAudioModeChange,
 }: TimerPanelProps) {
 	const [workDurationSec, setWorkDurationSec] = useState(
 		() => preferredWorkDurationSec ?? getLastDuration(),
@@ -162,6 +168,13 @@ export function TimerPanel({
 			>
 				{isStarting ? "Starting..." : "Start Cycle"}
 			</button>
+
+			{onCycleEndAudioModeChange != null && (
+				<CycleAudioPreferenceControl
+					mode={cycleEndAudioMode}
+					onChange={onCycleEndAudioModeChange}
+				/>
+			)}
 
 			<div className="mt-4 border-white/10 border-t pt-4">
 				<button

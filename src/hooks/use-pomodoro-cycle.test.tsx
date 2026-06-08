@@ -1759,6 +1759,7 @@ describe("usePomodoroCycle catchUp", () => {
 		activeCycleData = null;
 		fakeWorkers.length = 0;
 		vi.clearAllMocks();
+		playAlarm.mockClear();
 		vi.useRealTimers();
 		setVisibilityState("visible");
 		getActiveCycle.mockImplementation(async () => activeCycleData);
@@ -1775,6 +1776,51 @@ describe("usePomodoroCycle catchUp", () => {
 			task: { id: 7, title: "Write tests" },
 			configuredDurationSec: 60,
 		}));
+	});
+
+	it("passes muted mode to playAlarm while still setting catchUp when hidden", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+		setVisibilityState("hidden");
+
+		vi.useFakeTimers();
+		try {
+			const { result } = renderHook(
+				() =>
+					usePomodoroCycle({
+						getCycleEndAudioMode: () => "muted",
+					}),
+				{ wrapper: createWrapper() },
+			);
+
+			act(() => {
+				result.current.selectTask(7, { id: 7, title: "Write tests" });
+			});
+
+			await act(async () => {
+				await result.current.start(60);
+			});
+
+			await act(async () => {
+				vi.advanceTimersByTime(61_000);
+			});
+
+			expect(result.current.state).toBe("completed");
+			expect(playAlarm).toHaveBeenCalledWith({ mode: "muted" });
+			expect(result.current.catchUp).toMatchObject({
+				endedWhileHidden: true,
+				gate: "WORK_CONFIRM",
+			});
+		} finally {
+			vi.useRealTimers();
+			vi.stubGlobal("Worker", FakeWorker);
+		}
 	});
 
 	it("sets catchUp when cycle expires while tab is hidden", async () => {

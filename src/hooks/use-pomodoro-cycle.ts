@@ -4,6 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createAudioManager } from "~/lib/audio";
 import { deriveCatchUpGate } from "~/lib/catch-up/derive-gate";
 import type { CatchUpState } from "~/lib/catch-up/types";
+import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
+import {
+	startCycleEndTabPulse,
+	stopCycleEndTabPulse,
+} from "~/lib/cycle-end-tab-pulse";
 import {
 	useDataMode,
 	useRepositories,
@@ -27,6 +32,7 @@ import {
 	OVERRIDE_ACK_LINE,
 	OVERRIDE_ACK_VISIBLE_MS,
 } from "~/lib/suggestion/override-ack-copy";
+import { beginSuggestionFetch } from "~/lib/trpc/suggestion-priority";
 import { setWorkTypeDuration } from "~/lib/work-type-duration-storage";
 import { api } from "~/trpc/react";
 import type {
@@ -83,6 +89,29 @@ function isBreakKind(kind: CycleKind | null): boolean {
 	return kind === "SHORT_BREAK" || kind === "LONG_BREAK";
 }
 
+function maybeStartCycleEndTabPulse(
+	cycleKind: CycleKind | null,
+	wasHiddenWhileRunning: boolean,
+	getMode: () => CycleEndAudioMode,
+) {
+	const mode = getMode();
+	if (
+		cycleKind !== "WORK" ||
+		mode === "normal" ||
+		(document.visibilityState === "visible" && !wasHiddenWhileRunning)
+	) {
+		return;
+	}
+
+	const prefersReducedMotion =
+		typeof window.matchMedia === "function" &&
+		window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+	startCycleEndTabPulse({
+		reducedMotion: prefersReducedMotion,
+	});
+}
+
 /** Reset module-level recovery guard (tests + post-guest-import resume). */
 export function resetActiveCycleRecoveryGuard(): void {
 	activeCycleRecoveredForMode = null;
@@ -115,7 +144,20 @@ async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {
 	}
 }
 
-export function usePomodoroCycle() {
+export type UsePomodoroCycleOptions = {
+	getCycleEndAudioMode?: () => CycleEndAudioMode;
+};
+
+export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
+	const getCycleEndAudioModeRef = useRef<() => CycleEndAudioMode>(
+		options?.getCycleEndAudioMode ?? (() => "normal"),
+	);
+
+	useEffect(() => {
+		getCycleEndAudioModeRef.current =
+			options?.getCycleEndAudioMode ?? (() => "normal");
+	}, [options?.getCycleEndAudioMode]);
+
 	const mode = useDataMode();
 	const { cycles, sessions, tasks, refreshGuest } = useRepositories();
 	const utils = api.useUtils();
@@ -199,6 +241,7 @@ export function usePomodoroCycle() {
 	const pendingWindDownMarkTaskDoneRef = useRef<boolean | null>(null);
 	const pendingWindDownWorkCycleIdRef = useRef<number | null>(null);
 	const suggestionCycleIdRef = useRef<number | null>(null);
+	const suggestionFetchGenRef = useRef(0);
 	const kickoffFetchGenRef = useRef(0);
 	const prevKickoffEligibleRef = useRef(false);
 	const overrideAckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -278,11 +321,20 @@ export function usePomodoroCycle() {
 		endTimeRef.current = null;
 		setRemainingMs(0);
 		setState("completed");
-		void audioRef.current.playAlarm().catch(() => {});
+		void audioRef.current
+			.playAlarm({ mode: getCycleEndAudioModeRef.current() })
+			.catch(() => {});
 
 		if (document.visibilityState !== "visible" || wasHiddenWhileRunning) {
 			setCatchUpFromExpiry(endedAtMs, cycleKindRef.current);
 		}
+
+		stopCycleEndTabPulse();
+		maybeStartCycleEndTabPulse(
+			cycleKindRef.current,
+			wasHiddenWhileRunning,
+			() => getCycleEndAudioModeRef.current(),
+		);
 	}, [setCatchUpFromExpiry, stopWorker]);
 
 	const attachWorkerHandlers = useCallback(
@@ -396,8 +448,16 @@ export function usePomodoroCycle() {
 
 			if (endTime <= Date.now()) {
 				setState("completed");
-				void audioRef.current.playAlarm().catch(() => {});
+				void audioRef.current
+					.playAlarm({ mode: getCycleEndAudioModeRef.current() })
+					.catch(() => {});
 				setCatchUpFromExpiry(endTime, cycle.kind);
+				stopCycleEndTabPulse();
+				maybeStartCycleEndTabPulse(
+					cycle.kind,
+					tabWasHiddenWhileRunningRef.current,
+					() => getCycleEndAudioModeRef.current(),
+				);
 				return;
 			}
 
@@ -502,6 +562,14 @@ export function usePomodoroCycle() {
 				}
 				return;
 			}
+			stopCycleEndTabPulse();
+			if (
+				stateRef.current === "running" &&
+				endTimeRef.current != null &&
+				endTimeRef.current > Date.now()
+			) {
+				tabWasHiddenWhileRunningRef.current = false;
+			}
 			recalculateFromEndTime();
 		};
 
@@ -517,6 +585,7 @@ export function usePomodoroCycle() {
 			workerRef.current?.terminate();
 			workerRef.current = null;
 			audioRef.current.dispose();
+			stopCycleEndTabPulse();
 			if (overrideAckTimerRef.current != null) {
 				clearTimeout(overrideAckTimerRef.current);
 			}
@@ -558,6 +627,7 @@ export function usePomodoroCycle() {
 	}, []);
 
 	const clearSuggestion = useCallback(() => {
+		suggestionFetchGenRef.current += 1;
 		suggestionCycleIdRef.current = null;
 		setPendingSuggestion({ status: "idle" });
 		setSuggestionCycleId(null);
@@ -621,10 +691,49 @@ export function usePomodoroCycle() {
 		[_activeSessionId, recordDecisionMutation],
 	);
 
+	const fetchPostCheckInSuggestion = useCallback(
+		async (cycleId: number, gen: number) => {
+			const result = await suggestionNextPostCheckIn.mutateAsync({
+				context: "post_check_in",
+				cycleId,
+				localHour: new Date().getHours(),
+			});
+			if (suggestionFetchGenRef.current !== gen) {
+				return;
+			}
+			if (suggestionCycleIdRef.current !== cycleId) {
+				return;
+			}
+			if (result == null) {
+				setPendingSuggestion({ status: "empty" });
+				setSuggestedTaskId(null);
+			} else {
+				setPendingSuggestion({
+					status: "ready",
+					data: {
+						cycleId:
+							"cycleId" in result && typeof result.cycleId === "number"
+								? result.cycleId
+								: cycleId,
+						taskId: result.taskId,
+						title: result.title,
+						workType: result.workType,
+						weight: result.weight,
+						rationaleKey: result.rationaleKey,
+						rationale: result.rationale,
+					},
+				});
+				setSuggestedTaskId(result.taskId);
+			}
+		},
+		[suggestionNextPostCheckIn],
+	);
+
 	const fetchSuggestion = useCallback(
 		(cycleId: number) => {
 			clearKickoffSuggestion();
 			clearKickoffIdleFlags();
+			const gen = ++suggestionFetchGenRef.current;
 			suggestionCycleIdRef.current = cycleId;
 			setPendingSuggestion({ status: "loading" });
 			setSuggestionCycleId(cycleId);
@@ -632,46 +741,24 @@ export function usePomodoroCycle() {
 			setHasPreFocusedSuggestion(false);
 
 			void (async () => {
+				const endSuggestionFetch = beginSuggestionFetch();
 				try {
-					const result = await suggestionNextPostCheckIn.mutateAsync({
-						context: "post_check_in",
-						cycleId,
-						localHour: new Date().getHours(),
-					});
-					if (suggestionCycleIdRef.current !== cycleId) {
+					await fetchPostCheckInSuggestion(cycleId, gen);
+				} catch {
+					if (suggestionFetchGenRef.current !== gen) {
 						return;
 					}
-					if (result == null) {
-						setPendingSuggestion({ status: "empty" });
-						setSuggestedTaskId(null);
-					} else {
-						setPendingSuggestion({
-							status: "ready",
-							data: {
-								cycleId:
-									"cycleId" in result && typeof result.cycleId === "number"
-										? result.cycleId
-										: cycleId,
-								taskId: result.taskId,
-								title: result.title,
-								workType: result.workType,
-								weight: result.weight,
-								rationaleKey: result.rationaleKey,
-								rationale: result.rationale,
-							},
-						});
-						setSuggestedTaskId(result.taskId);
-					}
-				} catch {
 					if (suggestionCycleIdRef.current !== cycleId) {
 						return;
 					}
 					setPendingSuggestion({ status: "error" });
 					setSuggestedTaskId(null);
+				} finally {
+					endSuggestionFetch();
 				}
 			})();
 		},
-		[suggestionNextPostCheckIn, clearKickoffSuggestion, clearKickoffIdleFlags],
+		[clearKickoffSuggestion, clearKickoffIdleFlags, fetchPostCheckInSuggestion],
 	);
 
 	const fetchKickoffSuggestion = useCallback(
@@ -681,6 +768,7 @@ export function usePomodoroCycle() {
 			setKickoffSuggestedTaskId(null);
 
 			void (async () => {
+				const endSuggestionFetch = beginSuggestionFetch();
 				try {
 					const result = await suggestionNextKickoff.mutateAsync({
 						context: "kickoff",
@@ -703,6 +791,8 @@ export function usePomodoroCycle() {
 					}
 					setPendingKickoffSuggestion({ status: "error" });
 					setKickoffSuggestedTaskId(null);
+				} finally {
+					endSuggestionFetch();
 				}
 			})();
 		},
@@ -910,6 +1000,7 @@ export function usePomodoroCycle() {
 
 			setError(null);
 			setCatchUp(null);
+			stopCycleEndTabPulse();
 			tabWasHiddenWhileRunningRef.current = false;
 			clearSuggestion();
 			clearKickoffSuggestion();
@@ -1183,10 +1274,38 @@ export function usePomodoroCycle() {
 
 	const continueAfterCheckIn = useCallback(
 		async (markTaskDone: boolean, workCycleId: number) => {
-			await confirmComplete(markTaskDone);
-			fetchSuggestion(workCycleId);
+			clearKickoffSuggestion();
+			clearKickoffIdleFlags();
+			const gen = ++suggestionFetchGenRef.current;
+			suggestionCycleIdRef.current = workCycleId;
+			setPendingSuggestion({ status: "loading" });
+			setSuggestionCycleId(workCycleId);
+			setSuggestedTaskId(null);
+			setHasPreFocusedSuggestion(false);
+
+			const endSuggestionFetch = beginSuggestionFetch();
+			try {
+				await confirmComplete(markTaskDone);
+				await fetchPostCheckInSuggestion(workCycleId, gen);
+			} catch {
+				if (suggestionFetchGenRef.current !== gen) {
+					return;
+				}
+				if (suggestionCycleIdRef.current !== workCycleId) {
+					return;
+				}
+				setPendingSuggestion({ status: "error" });
+				setSuggestedTaskId(null);
+			} finally {
+				endSuggestionFetch();
+			}
 		},
-		[confirmComplete, fetchSuggestion],
+		[
+			confirmComplete,
+			fetchPostCheckInSuggestion,
+			clearKickoffSuggestion,
+			clearKickoffIdleFlags,
+		],
 	);
 
 	const onMidCycleMarkComplete = useCallback(
@@ -1504,6 +1623,7 @@ export function usePomodoroCycle() {
 
 	const dismissCatchUp = useCallback(() => {
 		setCatchUp(null);
+		stopCycleEndTabPulse();
 		tabWasHiddenWhileRunningRef.current = false;
 	}, []);
 

@@ -1,4 +1,8 @@
+import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
+
 const ALARM_FALLBACK_SELECTOR = "audio[data-pomodoro-alarm]";
+
+export const CYCLE_END_AUDIO_SOFT_GAIN = 0.25;
 
 function isPlaybackBlocked(error: unknown): boolean {
 	return (
@@ -24,7 +28,7 @@ async function primeHtmlAudioElement(audio: HTMLAudioElement): Promise<void> {
 export function createAudioManager(): {
 	unlock(): Promise<void>;
 	preload(url: string): Promise<void>;
-	playAlarm(): Promise<void>;
+	playAlarm(options?: { mode?: CycleEndAudioMode }): Promise<void>;
 	dispose(): void;
 } {
 	let context: AudioContext | null = null;
@@ -82,10 +86,17 @@ export function createAudioManager(): {
 			}
 		},
 
-		async playAlarm() {
+		async playAlarm(options?: { mode?: CycleEndAudioMode }) {
 			if (typeof window === "undefined") {
 				return;
 			}
+
+			const mode = options?.mode ?? "normal";
+			if (mode === "muted") {
+				return;
+			}
+
+			const volume = mode === "soft" ? CYCLE_END_AUDIO_SOFT_GAIN : 1;
 
 			try {
 				if (context) {
@@ -96,7 +107,14 @@ export function createAudioManager(): {
 					if (buffer) {
 						const source = context.createBufferSource();
 						source.buffer = buffer;
-						source.connect(context.destination);
+						if (mode === "soft") {
+							const gain = context.createGain();
+							gain.gain.value = volume;
+							source.connect(gain);
+							gain.connect(context.destination);
+						} else {
+							source.connect(context.destination);
+						}
 						source.start(0);
 						return;
 					}
@@ -111,6 +129,7 @@ export function createAudioManager(): {
 					return;
 				}
 
+				audio.volume = volume;
 				audio.currentTime = 0;
 				await audio.play();
 			} catch (error) {

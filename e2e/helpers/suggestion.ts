@@ -29,6 +29,9 @@ export async function waitForSuggestionNext(page: Page) {
 	await expect(page.getByTestId("timer-panel-running")).toContainText("Break", {
 		timeout: 15_000,
 	});
+	await expect(page.getByTestId("suggestion-accept-btn")).toBeVisible({
+		timeout: 30_000,
+	});
 }
 
 export async function expectSuggestionVisible(

@@ -44,6 +44,13 @@ enum SuggestionContext {
   KICKOFF
 }
 
+enum CycleEndAudioMode {
+  NORMAL
+  SOFT
+  MUTED
+}
+
+
 // --- Models ---
 
 model Task {
@@ -140,3 +147,11 @@ model SuggestionDecision {
   @@index([sessionId, createdAt], name: "suggestion_decision_session_created_idx")
   @@map("flow_state_suggestion_decision")
 }
+model UserPreference {
+  userId              String             @id @map("user_id") @db.VarChar(255)
+  cycleEndAudioMode   CycleEndAudioMode  @default(NORMAL) @map("cycle_end_audio_mode")
+  updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("flow_state_user_preference")
+}
+
