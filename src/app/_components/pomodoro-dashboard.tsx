@@ -382,6 +382,7 @@ function AuthenticatedPomodoroDashboard() {
 	const [tasks] = api.task.list.useSuspenseQuery();
 	const utils = api.useUtils();
 	const {
+		scope: onboardingScope,
 		shouldShowCheckInCoach,
 		shouldShowSuggestionCoach,
 		markCheckInCoachSeen,
@@ -393,16 +394,11 @@ function AuthenticatedPomodoroDashboard() {
 		[tasks],
 	);
 
-	const workTypeDurationScope = useMemo((): OnboardingScope => {
-		const userId = tasks[0]?.userId;
-		if (userId) {
-			return { mode: "authenticated", userId };
-		}
-		return { mode: "guest" };
-	}, [tasks]);
+	const workTypeDurationScope =
+		onboardingScope.mode === "authenticated" ? onboardingScope : undefined;
 
 	const { mode: cycleEndAudioMode, setMode: setCycleEndAudioMode } =
-		useCycleEndAudioPreference(workTypeDurationScope);
+		useCycleEndAudioPreference(onboardingScope);
 
 	return (
 		<PomodoroDashboardBody

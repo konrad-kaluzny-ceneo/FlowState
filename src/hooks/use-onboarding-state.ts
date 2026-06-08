@@ -29,6 +29,7 @@ import {
 } from "~/lib/onboarding/types";
 
 type OnboardingContextValue = {
+	scope: OnboardingScope;
 	state: OnboardingState;
 	dismissFirstRun: () => void;
 	markCheckInCoachSeen: () => void;
@@ -43,8 +44,15 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 function useOnboardingState(scope: OnboardingScope): OnboardingContextValue {
 	const isGuest = scope.mode === "guest";
 	const userId = isGuest ? null : scope.userId;
-	const scopeRef = useRef(scope);
-	scopeRef.current = scope;
+	const stableScope = useMemo(
+		(): OnboardingScope =>
+			isGuest
+				? { mode: "guest" }
+				: { mode: "authenticated", userId: userId ?? "" },
+		[isGuest, userId],
+	);
+	const scopeRef = useRef(stableScope);
+	scopeRef.current = stableScope;
 
 	// SSR-safe: defaults on server; hydrate from localStorage on client mount.
 	const [state, setState] = useState<OnboardingState>(DEFAULT_ONBOARDING_STATE);
@@ -106,6 +114,7 @@ function useOnboardingState(scope: OnboardingScope): OnboardingContextValue {
 	const shouldShowSuggestionCoach = !state.suggestionCoachSeen;
 
 	return {
+		scope: stableScope,
 		state,
 		dismissFirstRun,
 		markCheckInCoachSeen,

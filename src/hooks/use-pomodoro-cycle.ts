@@ -240,6 +240,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const pendingWindDownMarkTaskDoneRef = useRef<boolean | null>(null);
 	const pendingWindDownWorkCycleIdRef = useRef<number | null>(null);
 	const suggestionCycleIdRef = useRef<number | null>(null);
+	const suggestionFetchGenRef = useRef(0);
 	const kickoffFetchGenRef = useRef(0);
 	const prevKickoffEligibleRef = useRef(false);
 	const overrideAckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -618,6 +619,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	}, []);
 
 	const clearSuggestion = useCallback(() => {
+		suggestionFetchGenRef.current += 1;
 		suggestionCycleIdRef.current = null;
 		setPendingSuggestion({ status: "idle" });
 		setSuggestionCycleId(null);
@@ -685,6 +687,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		(cycleId: number) => {
 			clearKickoffSuggestion();
 			clearKickoffIdleFlags();
+			const gen = ++suggestionFetchGenRef.current;
 			suggestionCycleIdRef.current = cycleId;
 			setPendingSuggestion({ status: "loading" });
 			setSuggestionCycleId(cycleId);
@@ -698,6 +701,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						cycleId,
 						localHour: new Date().getHours(),
 					});
+					if (suggestionFetchGenRef.current !== gen) {
+						return;
+					}
 					if (suggestionCycleIdRef.current !== cycleId) {
 						return;
 					}
@@ -723,6 +729,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						setSuggestedTaskId(result.taskId);
 					}
 				} catch {
+					if (suggestionFetchGenRef.current !== gen) {
+						return;
+					}
 					if (suggestionCycleIdRef.current !== cycleId) {
 						return;
 					}

@@ -33,10 +33,14 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 	const setMutation = api.preference.set.useMutation();
 
 	useEffect(() => {
-		setModeState(readCycleEndAudioMode(scope));
+		const nextScope: OnboardingScope = isGuest
+			? { mode: "guest" }
+			: { mode: "authenticated", userId: userId ?? "" };
+		scopeRef.current = nextScope;
+		setModeState(readCycleEndAudioMode(nextScope));
 		setIsHydrated(isGuest);
 		guestMergeAttemptedRef.current = false;
-	}, [scope, isGuest]);
+	}, [isGuest, userId]);
 
 	useEffect(() => {
 		if (isGuest || userId == null) {
