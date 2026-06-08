@@ -1,11 +1,11 @@
 ---
 change_id: session-kickoff-suggestion
 title: Session kickoff suggestion
-status: impl_reviewed
+status: archived
 created: 2026-06-08
 updated: 2026-06-08
 ci_fix: 10a1f06
-archived_at: null
+archived_at: 2026-06-08T09:55:00Z
 ---
 
 ## Notes
