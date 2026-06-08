@@ -4,7 +4,10 @@
  * Spec role: risk proof — crosses guest localStorage → auth session → server import → tRPC list
  */
 import { expect, test } from "@playwright/test";
-import { dismissFirstRunIfVisible } from "./helpers/onboarding";
+import {
+	dismissFirstRunIfVisible,
+	dismissMergeSuccessIfVisible,
+} from "./helpers/onboarding";
 import { createTestUser, signInAsUser } from "./helpers/user";
 import { addTask } from "./helpers/work-cycle";
 
@@ -42,6 +45,8 @@ test.describe("Guest merge on sign-in (S-08 / Risk #5)", () => {
 		await context.addCookies(authState.cookies);
 
 		await page.goto("/");
+
+		await dismissMergeSuccessIfVisible(page, { appearTimeoutMs: 30_000 });
 
 		await expect(page.getByTestId("guest-banner")).toBeHidden({
 			timeout: 30_000,

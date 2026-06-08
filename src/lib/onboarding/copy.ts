@@ -27,3 +27,30 @@ export const CHECK_IN_COACH_LINE =
 
 export const SUGGESTION_COACH_LINE =
 	"Accept the suggestion or tap Focus on any other task — you're always in control.";
+
+export type AuthPageVariant = "sign-in" | "sign-up";
+
+export type AuthValueCopy = {
+	subtitle?: string;
+	valueBlock?: { heading: string; lines: string[] };
+};
+
+export function getAuthValueCopy(variant: AuthPageVariant): AuthValueCopy {
+	if (variant === "sign-in") {
+		return {
+			subtitle:
+				"Mindful focus cycles on your tasks — sign in to unlock full sessions, energy check-ins, and session-aware suggestions.",
+		};
+	}
+
+	return {
+		valueBlock: {
+			heading: "Your mindful Pomodoro workflow",
+			lines: [
+				"Run focus cycles on the tasks you choose, one at a time.",
+				"After each cycle, log a quick energy check-in.",
+				"FlowState suggests your best next task with a short rationale.",
+			],
+		},
+	};
+}

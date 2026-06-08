@@ -14,6 +14,9 @@ export async function clearOnboardingKeys(page: Page) {
 		for (const key of keysToRemove) {
 			localStorage.removeItem(key);
 		}
+		sessionStorage.removeItem("flowstate:merge-success-pending");
+		sessionStorage.removeItem("flowstate:guest-import-done");
+		sessionStorage.removeItem("flowstate:guest-import-attempted");
 	});
 }
 
@@ -32,8 +35,32 @@ export async function seedOnboardingDismissed(page: Page, userId?: string) {
 	}, key);
 }
 
+export async function dismissMergeSuccessIfVisible(
+	page: Page,
+	options?: { appearTimeoutMs?: number },
+) {
+	const overlay = page.getByTestId("merge-success-overlay");
+	if (options?.appearTimeoutMs != null) {
+		await overlay
+			.waitFor({ state: "visible", timeout: options.appearTimeoutMs })
+			.catch(() => {});
+	}
+	if (!(await overlay.isVisible().catch(() => false))) {
+		return;
+	}
+	await page.getByTestId("merge-success-dismiss-btn").click();
+	await expect(overlay).toBeHidden({ timeout: 10_000 });
+}
+
 export async function dismissFirstRunIfVisible(page: Page) {
 	for (let attempt = 0; attempt < 3; attempt++) {
+		await dismissMergeSuccessIfVisible(page);
+
+		const mergeOverlay = page.getByTestId("merge-success-overlay");
+		if (await mergeOverlay.isVisible().catch(() => false)) {
+			continue;
+		}
+
 		const overlay = page.getByTestId("first-run-overlay");
 		if (!(await overlay.isVisible().catch(() => false))) {
 			return;
@@ -43,7 +70,7 @@ export async function dismissFirstRunIfVisible(page: Page) {
 			await expect(overlay).toBeHidden({ timeout: 5000 });
 			return;
 		} catch {
-			// Overlay may reappear when guest-import defer clears — retry dismiss.
+			// Merge-success may appear asynchronously after import — retry.
 		}
 	}
 	await expect(page.getByTestId("first-run-overlay")).toBeHidden({
