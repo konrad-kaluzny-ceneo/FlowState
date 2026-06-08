@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createAudioManager } from "~/lib/audio";
+import { deriveCatchUpGate } from "~/lib/catch-up/derive-gate";
+import type { CatchUpState } from "~/lib/catch-up/types";
 import {
 	useDataMode,
 	useRepositories,
@@ -17,6 +19,10 @@ import {
 	setLastDuration,
 } from "~/lib/duration-storage";
 import type { OnboardingScope } from "~/lib/onboarding/types";
+import {
+	buildWindDownRationale,
+	shouldShowWindDownNudge,
+} from "~/lib/session/wind-down-nudge";
 import {
 	OVERRIDE_ACK_LINE,
 	OVERRIDE_ACK_VISIBLE_MS,
@@ -166,12 +172,21 @@ export function usePomodoroCycle() {
 	const [sessionStartIdleFlag, setSessionStartIdleFlag] = useState(false);
 	const [postBreakIdleFlag, setPostBreakIdleFlag] = useState(false);
 	const [hasActiveTasks, setHasActiveTasks] = useState(false);
+	const [awaitingWindDown, setAwaitingWindDown] = useState(false);
+	const [windDownDismissed, setWindDownDismissed] = useState(false);
+	const [windDownRationale, setWindDownRationale] = useState<string | null>(
+		null,
+	);
+	const [catchUp, setCatchUp] = useState<CatchUpState>(null);
 
 	const createCheckIn = api.checkIn.create.useMutation();
 	const suggestionNext = api.suggestion.next.useMutation();
 	const recordDecisionMutation = api.suggestion.recordDecision.useMutation();
 
 	const stateRef = useRef(state);
+	const cycleKindRef = useRef(cycleKind);
+	const awaitingCheckInRef = useRef(awaitingCheckIn);
+	const pendingSuggestionRef = useRef(pendingSuggestion);
 	const endTimeRef = useRef<number | null>(null);
 	const workerRef = useRef<Worker | null>(null);
 	const fallbackIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
@@ -180,12 +195,15 @@ export function usePomodoroCycle() {
 	const audioRef = useRef(createAudioManager());
 	const recoveredRef = useRef(false);
 	const pendingIncrementInterruptionRef = useRef(false);
+	const pendingWindDownMarkTaskDoneRef = useRef<boolean | null>(null);
+	const pendingWindDownWorkCycleIdRef = useRef<number | null>(null);
 	const suggestionFetchGenRef = useRef(0);
 	const kickoffFetchGenRef = useRef(0);
 	const prevKickoffEligibleRef = useRef(false);
 	const overrideAckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
+	const tabWasHiddenWhileRunningRef = useRef(false);
 	const useWorkerRef = useRef(
 		process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER !== "1",
 	);
@@ -193,6 +211,18 @@ export function usePomodoroCycle() {
 	useEffect(() => {
 		stateRef.current = state;
 	}, [state]);
+
+	useEffect(() => {
+		cycleKindRef.current = cycleKind;
+	}, [cycleKind]);
+
+	useEffect(() => {
+		awaitingCheckInRef.current = awaitingCheckIn;
+	}, [awaitingCheckIn]);
+
+	useEffect(() => {
+		pendingSuggestionRef.current = pendingSuggestion;
+	}, [pendingSuggestion]);
 
 	const invalidateServerCycle = useCallback(async () => {
 		if (mode === "authenticated") {
@@ -216,16 +246,43 @@ export function usePomodoroCycle() {
 		stopFallbackTimer();
 	}, [stopFallbackTimer]);
 
+	const setCatchUpFromExpiry = useCallback(
+		(endedAtMs: number, cycleKindSnapshot: CycleKind | null) => {
+			const gate = deriveCatchUpGate({
+				state: "completed",
+				cycleKind: cycleKindSnapshot,
+				awaitingCheckIn: awaitingCheckInRef.current,
+				pendingSuggestionStatus: pendingSuggestionRef.current.status,
+			});
+			if (gate == null) {
+				return;
+			}
+			setCatchUp({
+				endedWhileHidden: true,
+				cycleEndedAtMs: endedAtMs,
+				gate,
+			});
+			tabWasHiddenWhileRunningRef.current = false;
+		},
+		[],
+	);
+
 	const handleCycleExpired = useCallback(() => {
 		if (stateRef.current !== "running") {
 			return;
 		}
+		const endedAtMs = endTimeRef.current ?? Date.now();
+		const wasHiddenWhileRunning = tabWasHiddenWhileRunningRef.current;
 		stopWorker();
 		endTimeRef.current = null;
 		setRemainingMs(0);
 		setState("completed");
 		void audioRef.current.playAlarm().catch(() => {});
-	}, [stopWorker]);
+
+		if (document.visibilityState !== "visible" || wasHiddenWhileRunning) {
+			setCatchUpFromExpiry(endedAtMs, cycleKindRef.current);
+		}
+	}, [setCatchUpFromExpiry, stopWorker]);
 
 	const attachWorkerHandlers = useCallback(
 		(worker: Worker) => {
@@ -339,13 +396,14 @@ export function usePomodoroCycle() {
 			if (endTime <= Date.now()) {
 				setState("completed");
 				void audioRef.current.playAlarm().catch(() => {});
+				setCatchUpFromExpiry(endTime, cycle.kind);
 				return;
 			}
 
 			setState("running");
 			startWorker(endTime);
 		},
-		[startWorker],
+		[setCatchUpFromExpiry, startWorker],
 	);
 
 	const recoverActiveCycle = useCallback(async () => {
@@ -437,7 +495,10 @@ export function usePomodoroCycle() {
 
 	useEffect(() => {
 		const onVisibilityChange = () => {
-			if (document.visibilityState !== "visible") {
+			if (document.visibilityState === "hidden") {
+				if (stateRef.current === "running") {
+					tabWasHiddenWhileRunningRef.current = true;
+				}
 				return;
 			}
 			recalculateFromEndTime();
@@ -835,6 +896,8 @@ export function usePomodoroCycle() {
 			const effectiveDurationSec = stagedKickoffDurationSec ?? durationSec;
 
 			setError(null);
+			setCatchUp(null);
+			tabWasHiddenWhileRunningRef.current = false;
 			clearSuggestion();
 			clearKickoffSuggestion();
 			clearKickoffIdleFlags();
@@ -976,6 +1039,52 @@ export function usePomodoroCycle() {
 		],
 	);
 
+	const completeWorkCycleOnly = useCallback(
+		async (markTaskDone: boolean): Promise<boolean> => {
+			if (activeCycle == null) {
+				return false;
+			}
+
+			setError(null);
+
+			try {
+				await retryOnce(() =>
+					cycles.complete({
+						cycleId: activeCycle.id,
+						markTaskDone,
+						...(pendingIncrementInterruptionRef.current
+							? { incrementInterruption: true }
+							: {}),
+					}),
+				);
+			} catch {
+				setError(
+					"Could not save cycle completion. Check your connection and try again.",
+				);
+				return false;
+			}
+
+			pendingIncrementInterruptionRef.current = false;
+
+			stopWorker();
+			endTimeRef.current = null;
+
+			setCompletedWorkCycles((count) => count + 1);
+			setState("idle");
+			setRemainingMs(0);
+			setActiveCycle(null);
+			setCycleKind(null);
+
+			await Promise.all([
+				invalidateServerCycle(),
+				...(markTaskDone ? [utils.task.list.invalidate()] : []),
+			]);
+
+			return true;
+		},
+		[activeCycle, cycles, invalidateServerCycle, stopWorker, utils.task.list],
+	);
+
 	const confirmComplete = useCallback(
 		async (markTaskDone: boolean) => {
 			if (activeCycle == null) {
@@ -1057,6 +1166,14 @@ export function usePomodoroCycle() {
 			preFocusedTask,
 			clearSuggestion,
 		],
+	);
+
+	const continueAfterCheckIn = useCallback(
+		async (markTaskDone: boolean, workCycleId: number) => {
+			await confirmComplete(markTaskDone);
+			fetchSuggestion(workCycleId);
+		},
+		[confirmComplete, fetchSuggestion],
 	);
 
 	const onMidCycleMarkComplete = useCallback(
@@ -1171,8 +1288,37 @@ export function usePomodoroCycle() {
 			setPendingMarkTaskDone(null);
 
 			try {
-				await confirmComplete(markTaskDone);
-				fetchSuggestion(workCycleId);
+				if (mode !== "guest") {
+					try {
+						const session = await sessions.getOrCreateActive();
+
+						if (
+							shouldShowWindDownNudge({
+								energy,
+								completedWorkCycles,
+								interruptionCount: session.interruptionCount,
+								dismissed: windDownDismissed,
+							})
+						) {
+							pendingWindDownMarkTaskDoneRef.current = markTaskDone;
+							pendingWindDownWorkCycleIdRef.current = workCycleId;
+							setWindDownRationale(
+								buildWindDownRationale({
+									energy,
+									completedWorkCycles,
+									interruptionCount: session.interruptionCount,
+									dismissed: windDownDismissed,
+								}),
+							);
+							setAwaitingWindDown(true);
+							return;
+						}
+					} catch {
+						// Wind-down is optional; never block check-in → break transition.
+					}
+				}
+
+				await continueAfterCheckIn(markTaskDone, workCycleId);
 			} finally {
 				setIsConfirming(false);
 			}
@@ -1181,8 +1327,11 @@ export function usePomodoroCycle() {
 			activeCycle,
 			pendingMarkTaskDone,
 			createCheckIn,
-			confirmComplete,
-			fetchSuggestion,
+			mode,
+			sessions,
+			completedWorkCycles,
+			windDownDismissed,
+			continueAfterCheckIn,
 		],
 	);
 
@@ -1269,6 +1418,11 @@ export function usePomodoroCycle() {
 		setHasActiveSession(false);
 		setCompletedWorkCycles(0);
 		setActiveSessionId(null);
+		setAwaitingWindDown(false);
+		setWindDownDismissed(false);
+		setWindDownRationale(null);
+		pendingWindDownMarkTaskDoneRef.current = null;
+		pendingWindDownWorkCycleIdRef.current = null;
 		clearSuggestion();
 		clearKickoffSuggestion();
 		clearKickoffIdleFlags();
@@ -1287,8 +1441,57 @@ export function usePomodoroCycle() {
 		clearKickoffIdleFlags,
 	]);
 
+	const onWindDownKeepGoing = useCallback(async () => {
+		const markTaskDone = pendingWindDownMarkTaskDoneRef.current;
+		const workCycleId = pendingWindDownWorkCycleIdRef.current;
+
+		if (workCycleId == null) {
+			return;
+		}
+
+		setIsConfirming(true);
+		setError(null);
+
+		try {
+			setWindDownDismissed(true);
+			setAwaitingWindDown(false);
+			setWindDownRationale(null);
+			pendingWindDownMarkTaskDoneRef.current = null;
+			pendingWindDownWorkCycleIdRef.current = null;
+			await continueAfterCheckIn(markTaskDone ?? false, workCycleId);
+		} finally {
+			setIsConfirming(false);
+		}
+	}, [continueAfterCheckIn]);
+
+	const onWindDownEndSession = useCallback(async () => {
+		const markTaskDone = pendingWindDownMarkTaskDoneRef.current ?? false;
+
+		setIsConfirming(true);
+		setError(null);
+
+		try {
+			setAwaitingWindDown(false);
+			setWindDownRationale(null);
+			pendingWindDownMarkTaskDoneRef.current = null;
+			pendingWindDownWorkCycleIdRef.current = null;
+			const completed = await completeWorkCycleOnly(markTaskDone);
+			if (!completed) {
+				return;
+			}
+			await endSession();
+		} finally {
+			setIsConfirming(false);
+		}
+	}, [completeWorkCycleOnly, endSession]);
+
 	const clearError = useCallback(() => {
 		setError(null);
+	}, []);
+
+	const dismissCatchUp = useCallback(() => {
+		setCatchUp(null);
+		tabWasHiddenWhileRunningRef.current = false;
 	}, []);
 
 	return {
@@ -1303,6 +1506,8 @@ export function usePomodoroCycle() {
 		midCyclePendingTask,
 		isMidCycleSubmitting,
 		awaitingCheckIn,
+		awaitingWindDown,
+		windDownRationale,
 		isConfirming,
 		pendingSuggestion,
 		suggestionCycleId,
@@ -1317,6 +1522,8 @@ export function usePomodoroCycle() {
 		pendingKickoffSuggestion,
 		kickoffSuggestedTaskId,
 		kickoffEligible,
+		catchUp,
+		dismissCatchUp,
 		selectTask,
 		clearTask,
 		acceptSuggestion,
@@ -1341,6 +1548,8 @@ export function usePomodoroCycle() {
 		confirmComplete,
 		onCycleCompleteConfirm,
 		submitCheckIn,
+		onWindDownKeepGoing,
+		onWindDownEndSession,
 		onMidCycleMarkComplete,
 		onMidCycleContinueWithTask,
 		onMidCycleEndCycleAndBreak,

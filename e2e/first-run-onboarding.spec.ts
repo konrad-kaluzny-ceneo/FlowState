@@ -27,6 +27,17 @@ import {
 	setWorkDurationSec,
 } from "./helpers/work-cycle";
 
+async function resetAuthSessionForOnboarding(
+	page: import("@playwright/test").Page,
+) {
+	await ensureIdleCycle(page);
+	const endSession = page.getByTestId("end-session-btn");
+	if ((await endSession.isVisible()) && (await endSession.isEnabled())) {
+		await endSession.click();
+		await expect(endSession).toBeHidden({ timeout: 10_000 });
+	}
+}
+
 test.describe("First-run onboarding (S-11 auth path)", () => {
 	test("first visit shows overlay, dismiss persists on reload", async ({
 		page,
@@ -129,7 +140,7 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await clearOnboardingKeys(page);
 		await waitForCycleGetActive(page);
 		await dismissFirstRunIfVisible(page);
-		await ensureIdleCycle(page);
+		await resetAuthSessionForOnboarding(page);
 
 		const ts = Date.now();
 		const deepTask = `E2E Coach Deep ${ts}`;
@@ -138,7 +149,8 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
 		await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
 		await focusTask(page, deepTask);
-		await setShortBreakDurationSec(page, 1);
+		// Longer break window for suggestion coach assertion under shared auth session (CI).
+		await setShortBreakDurationSec(page, 30);
 		await setWorkDurationSec(page, 1);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
@@ -154,7 +166,7 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		});
 		await acceptSuggestion(page);
 
-		await advanceClockThroughFastBreak(page);
+		await page.clock.runFor(31_000);
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
 			timeout: 15_000,
 		});
@@ -163,6 +175,7 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
 
 		await focusTask(page, reactiveTask);
+		await setShortBreakDurationSec(page, 1);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
@@ -183,7 +196,7 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await clearOnboardingKeys(page);
 		await waitForCycleGetActive(page);
 		await dismissFirstRunIfVisible(page);
-		await ensureIdleCycle(page);
+		await resetAuthSessionForOnboarding(page);
 
 		const ts = Date.now();
 		const deepTask = `E2E Onboard Accept ${ts}`;
