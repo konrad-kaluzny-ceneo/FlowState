@@ -1032,28 +1032,32 @@ export function usePomodoroCycle() {
 
 			try {
 				if (mode !== "guest") {
-					const session = await sessions.getOrCreateActive();
+					try {
+						const session = await sessions.getOrCreateActive();
 
-					if (
-						shouldShowWindDownNudge({
-							energy,
-							completedWorkCycles,
-							interruptionCount: session.interruptionCount,
-							dismissed: windDownDismissed,
-						})
-					) {
-						pendingWindDownMarkTaskDoneRef.current = markTaskDone;
-						pendingWindDownWorkCycleIdRef.current = workCycleId;
-						setWindDownRationale(
-							buildWindDownRationale({
+						if (
+							shouldShowWindDownNudge({
 								energy,
 								completedWorkCycles,
 								interruptionCount: session.interruptionCount,
 								dismissed: windDownDismissed,
-							}),
-						);
-						setAwaitingWindDown(true);
-						return;
+							})
+						) {
+							pendingWindDownMarkTaskDoneRef.current = markTaskDone;
+							pendingWindDownWorkCycleIdRef.current = workCycleId;
+							setWindDownRationale(
+								buildWindDownRationale({
+									energy,
+									completedWorkCycles,
+									interruptionCount: session.interruptionCount,
+									dismissed: windDownDismissed,
+								}),
+							);
+							setAwaitingWindDown(true);
+							return;
+						}
+					} catch {
+						// Wind-down is optional; never block check-in → break transition.
 					}
 				}
 
