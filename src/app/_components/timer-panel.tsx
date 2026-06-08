@@ -27,6 +27,7 @@ import {
 } from "~/lib/duration-storage";
 import { formatRemainingMs } from "~/lib/format-remaining";
 
+import { CycleAudioPreferenceControl } from "./cycle-audio-preference-control";
 import { DurationPicker } from "./duration-picker";
 
 type TimerPanelProps = {
@@ -53,8 +54,8 @@ export function TimerPanel({
 	cycleKind = null,
 	preferredWorkDurationSec = null,
 	onWorkDurationManualChange,
-	cycleEndAudioMode: _cycleEndAudioMode,
-	onCycleEndAudioModeChange: _onCycleEndAudioModeChange,
+	cycleEndAudioMode = "normal",
+	onCycleEndAudioModeChange,
 }: TimerPanelProps) {
 	const [workDurationSec, setWorkDurationSec] = useState(
 		() => preferredWorkDurationSec ?? getLastDuration(),
@@ -167,6 +168,13 @@ export function TimerPanel({
 			>
 				{isStarting ? "Starting..." : "Start Cycle"}
 			</button>
+
+			{onCycleEndAudioModeChange != null && (
+				<CycleAudioPreferenceControl
+					mode={cycleEndAudioMode}
+					onChange={onCycleEndAudioModeChange}
+				/>
+			)}
 
 			<div className="mt-4 border-white/10 border-t pt-4">
 				<button
