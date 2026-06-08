@@ -131,6 +131,15 @@ function PomodoroDashboardBody({
 					/>
 				) : null)}
 
+			{pomodoro.overrideAcknowledgement != null && (
+				<p
+					className="w-full max-w-lg rounded-lg border border-purple-400/30 bg-purple-500/10 px-4 py-3 text-center text-purple-100/90 text-sm"
+					data-testid="suggestion-override-ack"
+				>
+					{pomodoro.overrideAcknowledgement}
+				</p>
+			)}
+
 			<TaskList
 				cycleKind={pomodoro.cycleKind}
 				cycleState={pomodoro.state}

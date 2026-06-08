@@ -1257,11 +1257,66 @@ describe("usePomodoroCycle", () => {
 
 		expect(result.current.suggestedTaskId).toBeNull();
 		expect(result.current.focusedTaskId).toBe(12);
+		expect(result.current.overrideAcknowledgement).toMatch(/noted/i);
+	});
+
+	it("acceptSuggestion does not show override acknowledgement", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 83,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 403,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		act(() => {
+			fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+				data: { type: "complete" },
+			} as MessageEvent);
+		});
+
+		await act(async () => {
+			await result.current.onCycleCompleteConfirm(false);
+		});
+
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		await waitFor(() => {
+			expect(result.current.pendingSuggestion.status).toBe("ready");
+		});
+
+		await act(async () => {
+			await result.current.acceptSuggestion();
+		});
+
+		expect(result.current.overrideAcknowledgement).toBeNull();
 	});
 
 	it("blocks selectTask during WORK running", async () => {
 		activeCycleData = makeActiveCycle({
-			id: 83,
+			id: 84,
 			taskId: 4,
 			task: { id: 4, title: "Current" },
 		});
