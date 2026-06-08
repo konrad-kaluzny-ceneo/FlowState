@@ -12,7 +12,13 @@ function suggestionNextPostDataIncludes(
 		return false;
 	}
 	const postData = response.request().postData();
-	return postData?.includes(`"context":"${context}"`) ?? false;
+	if (postData == null) {
+		return false;
+	}
+	if (context === "post_check_in") {
+		return postData.includes("post_check_in") && postData.includes("cycleId");
+	}
+	return postData.includes("kickoff") && postData.includes("sessionId");
 }
 
 export async function waitForSuggestionNext(page: Page) {
@@ -20,6 +26,9 @@ export async function waitForSuggestionNext(page: Page) {
 		(response) => suggestionNextPostDataIncludes(response, "post_check_in"),
 		{ timeout: 20_000 },
 	);
+	await expect(page.getByTestId("suggestion-accept-btn")).toBeVisible({
+		timeout: 30_000,
+	});
 }
 
 export async function expectSuggestionVisible(

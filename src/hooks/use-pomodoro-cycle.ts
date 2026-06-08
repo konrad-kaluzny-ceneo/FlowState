@@ -643,12 +643,23 @@ export function usePomodoroCycle() {
 					if (result == null) {
 						setPendingSuggestion({ status: "empty" });
 						setSuggestedTaskId(null);
-					} else if ("cycleId" in result && result.cycleId != null) {
-						setPendingSuggestion({ status: "ready", data: result });
-						setSuggestedTaskId(result.taskId);
 					} else {
-						setPendingSuggestion({ status: "error" });
-						setSuggestedTaskId(null);
+						setPendingSuggestion({
+							status: "ready",
+							data: {
+								cycleId:
+									"cycleId" in result && typeof result.cycleId === "number"
+										? result.cycleId
+										: cycleId,
+								taskId: result.taskId,
+								title: result.title,
+								workType: result.workType,
+								weight: result.weight,
+								rationaleKey: result.rationaleKey,
+								rationale: result.rationale,
+							},
+						});
+						setSuggestedTaskId(result.taskId);
 					}
 				} catch {
 					if (gen !== suggestionFetchGenRef.current) {
@@ -703,6 +714,7 @@ export function usePomodoroCycle() {
 		cycleKind === null &&
 		focusedTaskId === null &&
 		!awaitingCheckIn &&
+		!awaitingWindDown &&
 		pendingSuggestion.status === "idle" &&
 		hasActiveTasks &&
 		(sessionStartIdleFlag || postBreakIdleFlag);
