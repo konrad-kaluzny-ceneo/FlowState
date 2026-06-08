@@ -304,9 +304,9 @@ Run: `set CI=true && pnpm test:e2e e2e/mindful-session-wind-down.spec.ts`. Recor
 
 #### Automated
 
-- [x] 1.1 `pnpm exec vitest run src/lib/session/wind-down-nudge.test.ts` passes (red → green via TDD)
-- [x] 1.2 `pnpm check` passes
-- [x] 1.3 `pnpm typecheck` passes
+- [x] 1.1 `pnpm exec vitest run src/lib/session/wind-down-nudge.test.ts` passes (red → green via TDD) — 7870c68
+- [x] 1.2 `pnpm check` passes — 7870c68
+- [x] 1.3 `pnpm typecheck` passes — 7870c68
 
 ### Phase 2: WindDownOverlay Component
 
