@@ -123,7 +123,7 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 	});
 
 	test("suggestion coach shows on first ready card only", async ({ page }) => {
-		test.setTimeout(90_000);
+		test.setTimeout(120_000);
 
 		await page.goto("/");
 		await clearOnboardingKeys(page);

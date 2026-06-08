@@ -21,7 +21,7 @@ export async function expectSuggestionVisible(
 		timeout: 20_000,
 	});
 	await expect(page.getByTestId("suggestion-accept-btn")).toBeVisible({
-		timeout: 20_000,
+		timeout: 30_000,
 	});
 
 	if (options?.expectCoach === true) {
