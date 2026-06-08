@@ -7,6 +7,7 @@ import type {
 	FocusedTask,
 	PomodoroCycleState,
 } from "~/hooks/use-pomodoro-cycle";
+import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 import {
 	getLongBreakPresets,
 	getMaxBreakDurationSec,
@@ -38,6 +39,8 @@ type TimerPanelProps = {
 	cycleKind?: CycleKind | null;
 	preferredWorkDurationSec?: number | null;
 	onWorkDurationManualChange?: () => void;
+	cycleEndAudioMode?: CycleEndAudioMode;
+	onCycleEndAudioModeChange?: (mode: CycleEndAudioMode) => void;
 };
 
 export function TimerPanel({
@@ -50,6 +53,8 @@ export function TimerPanel({
 	cycleKind = null,
 	preferredWorkDurationSec = null,
 	onWorkDurationManualChange,
+	cycleEndAudioMode: _cycleEndAudioMode,
+	onCycleEndAudioModeChange: _onCycleEndAudioModeChange,
 }: TimerPanelProps) {
 	const [workDurationSec, setWorkDurationSec] = useState(
 		() => preferredWorkDurationSec ?? getLastDuration(),

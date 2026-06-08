@@ -626,10 +626,10 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Automated
 
-- [ ] 3.1 Storage tests pass: `pnpm exec vitest run src/lib/cycle-audio-preference/storage.test.ts`
-- [ ] 3.2 Full test suite passes: `pnpm test`
-- [ ] 3.3 Typecheck passes: `pnpm typecheck`
-- [ ] 3.4 Lint passes: `pnpm check`
+- [x] 3.1 Storage tests pass: `pnpm exec vitest run src/lib/cycle-audio-preference/storage.test.ts`
+- [x] 3.2 Full test suite passes: `pnpm test`
+- [x] 3.3 Typecheck passes: `pnpm typecheck`
+- [x] 3.4 Lint passes: `pnpm check`
 
 #### Manual
 
