@@ -5,6 +5,7 @@ import { Suspense, useMemo } from "react";
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
+import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
 import { TaskList } from "~/app/_components/task-list";
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
@@ -75,6 +76,25 @@ function PomodoroDashboardBody({
 		isBreakRunning &&
 		pomodoro.pendingSuggestion.status !== "idle";
 
+	const catchUp = pomodoro.catchUp;
+
+	const showCycleCompleteCatchUp =
+		catchUp != null &&
+		pomodoro.state === "completed" &&
+		!pomodoro.awaitingCheckIn &&
+		(catchUp.gate === "WORK_CONFIRM" || catchUp.gate === "BREAK_CONFIRM");
+
+	const showCheckInCatchUp =
+		enableCheckInGate &&
+		catchUp?.gate === "CHECK_IN" &&
+		pomodoro.awaitingCheckIn &&
+		pomodoro.activeCycle != null;
+
+	const showSuggestionCatchUp =
+		enableSuggestionGate &&
+		catchUp?.gate === "SUGGESTION_ACCEPT" &&
+		pomodoro.pendingSuggestion.status === "ready";
+
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8">
 			{pomodoro.error != null && (
@@ -110,22 +130,32 @@ function PomodoroDashboardBody({
 				(pomodoro.pendingSuggestion.status === "loading" ? (
 					<TaskSuggestionCard status="loading" />
 				) : pomodoro.pendingSuggestion.status === "ready" ? (
-					<TaskSuggestionCard
-						coachLine={suggestionCoachLine}
-						isAccepting={pomodoro.isAcceptingSuggestion}
-						onAccept={() => {
-							onSuggestionCoachSeen?.();
-							void pomodoro.acceptSuggestion();
-						}}
-						status="ready"
-						suggestion={{
-							taskId: Number(pomodoro.pendingSuggestion.data.taskId),
-							title: pomodoro.pendingSuggestion.data.title,
-							workType: pomodoro.pendingSuggestion.data.workType,
-							weight: pomodoro.pendingSuggestion.data.weight,
-							rationale: pomodoro.pendingSuggestion.data.rationale,
-						}}
-					/>
+					<div className="w-full max-w-lg">
+						{showSuggestionCatchUp && catchUp != null && (
+							<TabReturnCatchUp
+								catchUp={catchUp}
+								cycleKind={pomodoro.cycleKind}
+								taskTitle={pomodoro.focusedTask?.title}
+							/>
+						)}
+						<TaskSuggestionCard
+							coachLine={suggestionCoachLine}
+							isAccepting={pomodoro.isAcceptingSuggestion}
+							onAccept={() => {
+								pomodoro.dismissCatchUp();
+								onSuggestionCoachSeen?.();
+								void pomodoro.acceptSuggestion();
+							}}
+							status="ready"
+							suggestion={{
+								taskId: Number(pomodoro.pendingSuggestion.data.taskId),
+								title: pomodoro.pendingSuggestion.data.title,
+								workType: pomodoro.pendingSuggestion.data.workType,
+								weight: pomodoro.pendingSuggestion.data.weight,
+								rationale: pomodoro.pendingSuggestion.data.rationale,
+							}}
+						/>
+					</div>
 				) : pomodoro.pendingSuggestion.status === "empty" ? (
 					<TaskSuggestionCard status="empty" />
 				) : pomodoro.pendingSuggestion.status === "error" ? (
@@ -173,13 +203,28 @@ function PomodoroDashboardBody({
 				/>
 			)}
 
+			{showCycleCompleteCatchUp && catchUp != null && (
+				<div className="fixed inset-x-0 top-4 z-[55] flex justify-center px-4">
+					<div className="w-full max-w-md shadow-xl">
+						<TabReturnCatchUp
+							catchUp={catchUp}
+							cycleKind={pomodoro.cycleKind}
+							taskTitle={pomodoro.focusedTask?.title}
+						/>
+					</div>
+				</div>
+			)}
+
 			{!pomodoro.awaitingCheckIn && !pomodoro.awaitingWindDown && (
 				<CycleCompleteOverlay
 					canMarkTaskDone={canMarkTaskDone}
 					cycleKind={pomodoro.cycleKind}
 					focusedTask={pomodoro.focusedTask}
 					isConfirming={pomodoro.isConfirming}
-					onConfirm={pomodoro.onCycleCompleteConfirm}
+					onConfirm={async (markTaskDone) => {
+						pomodoro.dismissCatchUp();
+						await pomodoro.onCycleCompleteConfirm(markTaskDone);
+					}}
 					onDismissPreFocus={pomodoro.dismissPreFocus}
 					preFocusedTask={pomodoro.preFocusedTask}
 					state={pomodoro.state}
@@ -189,15 +234,29 @@ function PomodoroDashboardBody({
 			{enableCheckInGate &&
 				pomodoro.awaitingCheckIn &&
 				pomodoro.activeCycle != null && (
-					<CheckInOverlay
-						coachLine={checkInCoachLine}
-						cycleId={Number(pomodoro.activeCycle.id)}
-						isSubmitting={pomodoro.isConfirming}
-						onSubmit={async (energy) => {
-							onCheckInCoachSeen?.();
-							await pomodoro.submitCheckIn(energy);
-						}}
-					/>
+					<>
+						{showCheckInCatchUp && catchUp != null && (
+							<div className="fixed inset-x-0 top-4 z-[65] flex justify-center px-4">
+								<div className="w-full max-w-md shadow-xl">
+									<TabReturnCatchUp
+										catchUp={catchUp}
+										cycleKind={pomodoro.cycleKind}
+										taskTitle={pomodoro.focusedTask?.title}
+									/>
+								</div>
+							</div>
+						)}
+						<CheckInOverlay
+							coachLine={checkInCoachLine}
+							cycleId={Number(pomodoro.activeCycle.id)}
+							isSubmitting={pomodoro.isConfirming}
+							onSubmit={async (energy) => {
+								pomodoro.dismissCatchUp();
+								onCheckInCoachSeen?.();
+								await pomodoro.submitCheckIn(energy);
+							}}
+						/>
+					</>
 				)}
 
 			{enableWindDownGate &&

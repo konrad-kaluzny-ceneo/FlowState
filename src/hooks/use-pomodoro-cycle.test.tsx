@@ -1,7 +1,7 @@
 ﻿import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainActiveCycle } from "~/lib/data-mode/types";
 import { assertRemainingMsWithinTolerance } from "~/test-utils/countdown-tolerance";
@@ -1370,5 +1370,244 @@ describe("usePomodoroCycle", () => {
 		});
 
 		expect(result.current.hasActiveSession).toBe(false);
+	});
+});
+
+describe("usePomodoroCycle catchUp", () => {
+	function setVisibilityState(state: DocumentVisibilityState) {
+		Object.defineProperty(document, "visibilityState", {
+			configurable: true,
+			get: () => state,
+		});
+	}
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	beforeEach(() => {
+		resetActiveCycleRecoveryForTests();
+		activeCycleData = null;
+		fakeWorkers.length = 0;
+		vi.clearAllMocks();
+		vi.useRealTimers();
+		setVisibilityState("visible");
+		getActiveCycle.mockImplementation(async () => activeCycleData);
+		getOrCreateSession.mockResolvedValue({ id: 1 });
+		createCycle.mockImplementation(async () => ({
+			id: 42,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: 7,
+			kind: "WORK",
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: { id: 7, title: "Write tests" },
+			configuredDurationSec: 60,
+		}));
+	});
+
+	it("sets catchUp when cycle expires while tab is hidden", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+		setVisibilityState("hidden");
+
+		vi.useFakeTimers();
+		try {
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			act(() => {
+				result.current.selectTask(7, { id: 7, title: "Write tests" });
+			});
+
+			await act(async () => {
+				await result.current.start(60);
+			});
+
+			await act(async () => {
+				vi.advanceTimersByTime(61_000);
+			});
+
+			expect(result.current.state).toBe("completed");
+			expect(result.current.catchUp).toMatchObject({
+				endedWhileHidden: true,
+				gate: "WORK_CONFIRM",
+			});
+			expect(result.current.catchUp?.cycleEndedAtMs).toBeGreaterThan(0);
+		} finally {
+			vi.useRealTimers();
+			vi.stubGlobal("Worker", FakeWorker);
+		}
+	});
+
+	it("does not set catchUp when cycle expires while tab is visible", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+		setVisibilityState("visible");
+
+		vi.useFakeTimers();
+		try {
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			act(() => {
+				result.current.selectTask(7, { id: 7, title: "Write tests" });
+			});
+
+			await act(async () => {
+				await result.current.start(60);
+			});
+
+			await act(async () => {
+				vi.advanceTimersByTime(61_000);
+			});
+
+			expect(result.current.state).toBe("completed");
+			expect(result.current.catchUp).toBeNull();
+		} finally {
+			vi.useRealTimers();
+			vi.stubGlobal("Worker", FakeWorker);
+		}
+	});
+
+	it("sets catchUp via visibility recalc when tab was hidden while running", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+
+		const durationSec = 60;
+		const startMs = Date.now() - 30_000;
+		activeCycleData = makeActiveCycle({
+			startedAt: new Date(startMs),
+			configuredDurationSec: durationSec,
+		});
+
+		const endTimeMs = startMs + durationSec * 1000;
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		vi.useFakeTimers();
+		vi.setSystemTime(startMs + 30_000);
+
+		try {
+			setVisibilityState("hidden");
+			await act(async () => {
+				document.dispatchEvent(new Event("visibilitychange"));
+			});
+
+			vi.setSystemTime(endTimeMs + 5_000);
+
+			setVisibilityState("visible");
+			await act(async () => {
+				document.dispatchEvent(new Event("visibilitychange"));
+			});
+
+			expect(result.current.state).toBe("completed");
+			expect(result.current.catchUp).toMatchObject({
+				endedWhileHidden: true,
+				gate: "WORK_CONFIRM",
+				cycleEndedAtMs: endTimeMs,
+			});
+		} finally {
+			vi.useRealTimers();
+			vi.stubGlobal("Worker", FakeWorker);
+		}
+	});
+
+	it("sets catchUp when recovered cycle already expired", async () => {
+		activeCycleData = makeActiveCycle({
+			startedAt: new Date(Date.now() - 120_000),
+			configuredDurationSec: 60,
+			task: { id: 3, title: "Late" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("completed");
+		});
+
+		expect(result.current.catchUp).toMatchObject({
+			endedWhileHidden: true,
+			gate: "WORK_CONFIRM",
+		});
+	});
+
+	it("clears catchUp on dismiss and does not re-show on visibilitychange", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+		setVisibilityState("hidden");
+
+		vi.useFakeTimers();
+		try {
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			act(() => {
+				result.current.selectTask(7, { id: 7, title: "Write tests" });
+			});
+
+			await act(async () => {
+				await result.current.start(60);
+			});
+
+			await act(async () => {
+				vi.advanceTimersByTime(61_000);
+			});
+
+			expect(result.current.catchUp).not.toBeNull();
+
+			act(() => {
+				result.current.dismissCatchUp();
+			});
+
+			expect(result.current.catchUp).toBeNull();
+
+			setVisibilityState("visible");
+			await act(async () => {
+				document.dispatchEvent(new Event("visibilitychange"));
+			});
+
+			expect(result.current.catchUp).toBeNull();
+		} finally {
+			vi.useRealTimers();
+			vi.stubGlobal("Worker", FakeWorker);
+		}
 	});
 });
