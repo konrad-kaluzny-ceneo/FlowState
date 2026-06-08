@@ -4,6 +4,7 @@ title: Session kickoff suggestion
 status: impl_reviewed
 created: 2026-06-08
 updated: 2026-06-08
+ci_fix: 10a1f06
 archived_at: null
 ---
 
