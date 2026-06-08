@@ -19,7 +19,20 @@ describe("suggestion-priority", () => {
 		expect(getSuggestionFetchInFlight()).toBe(false);
 	});
 
-	it("waitUntilSuggestionIdle resolves when the last fetch ends", async () => {
+	it("beginSuggestionFetch cleanup is idempotent", () => {
+		resetSuggestionFetchPriorityForTests();
+		const end = beginSuggestionFetch();
+		const second = beginSuggestionFetch();
+
+		end();
+		end();
+		expect(getSuggestionFetchInFlight()).toBe(true);
+
+		second();
+		expect(getSuggestionFetchInFlight()).toBe(false);
+	});
+
+	it("waitUntilSuggestionIdle resolves with a releasable reservation", async () => {
 		resetSuggestionFetchPriorityForTests();
 		const end = beginSuggestionFetch();
 
@@ -33,7 +46,24 @@ describe("suggestion-priority", () => {
 		expect(resolved).toBe(false);
 
 		end();
-		await idlePromise;
+		const release = await idlePromise;
 		expect(resolved).toBe(true);
+		expect(getSuggestionFetchInFlight()).toBe(true);
+
+		release();
+		expect(getSuggestionFetchInFlight()).toBe(false);
+	});
+
+	it("holds idle window until release so overlapping fetches do not interleave", async () => {
+		resetSuggestionFetchPriorityForTests();
+		const release = await waitUntilSuggestionIdle();
+		const end = beginSuggestionFetch();
+		expect(getSuggestionFetchInFlight()).toBe(true);
+
+		release();
+		expect(getSuggestionFetchInFlight()).toBe(true);
+
+		end();
+		expect(getSuggestionFetchInFlight()).toBe(false);
 	});
 });

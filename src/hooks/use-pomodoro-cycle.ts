@@ -563,6 +563,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				return;
 			}
 			stopCycleEndTabPulse();
+			if (
+				stateRef.current === "running" &&
+				endTimeRef.current != null &&
+				endTimeRef.current > Date.now()
+			) {
+				tabWasHiddenWhileRunningRef.current = false;
+			}
 			recalculateFromEndTime();
 		};
 

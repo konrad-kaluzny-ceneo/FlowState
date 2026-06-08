@@ -17,19 +17,28 @@ export const suggestionPriorityLink: TRPCLink<AppRouter> = () => {
 
 		return observable((observer) => {
 			let unsubscribe: (() => void) | undefined;
+			let releaseIdle: (() => void) | undefined;
 			let cancelled = false;
 
-			void waitUntilSuggestionIdle().then(() => {
+			void waitUntilSuggestionIdle().then((release) => {
 				if (cancelled) {
+					release();
 					return;
 				}
+				releaseIdle = release;
 				const subscription = next(op).subscribe(observer);
-				unsubscribe = () => subscription.unsubscribe();
+				unsubscribe = () => {
+					subscription.unsubscribe();
+					releaseIdle?.();
+					releaseIdle = undefined;
+				};
 			});
 
 			return () => {
 				cancelled = true;
 				unsubscribe?.();
+				releaseIdle?.();
+				releaseIdle = undefined;
 			};
 		});
 	};

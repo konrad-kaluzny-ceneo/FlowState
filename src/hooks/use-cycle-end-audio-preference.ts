@@ -91,33 +91,45 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 		const mergeGen = ++guestMergeGenRef.current;
 
 		void (async () => {
-			await waitUntilSuggestionIdle();
-			if (guestMergeGenRef.current !== mergeGen) {
-				return;
-			}
-
-			const serverMode =
-				preferenceQuery.data?.cycleEndAudioMode ?? DEFAULT_CYCLE_END_AUDIO_MODE;
-
-			if (!guestMergeAttemptedRef.current) {
-				guestMergeAttemptedRef.current = true;
-				const guestMode = readGuestModeForMerge();
-				if (guestMode != null && serverMode === DEFAULT_CYCLE_END_AUDIO_MODE) {
-					setModeState(guestMode);
-					writeCycleEndAudioMode(scopeRef.current, guestMode);
-					await waitUntilSuggestionIdle();
-					if (guestMergeGenRef.current !== mergeGen) {
-						return;
-					}
-					await setMutation.mutateAsync({ cycleEndAudioMode: guestMode });
-					setIsHydrated(true);
+			const release = await waitUntilSuggestionIdle();
+			try {
+				if (guestMergeGenRef.current !== mergeGen) {
 					return;
 				}
-			}
 
-			setModeState(serverMode);
-			writeCycleEndAudioMode(scopeRef.current, serverMode);
-			setIsHydrated(true);
+				const serverMode =
+					preferenceQuery.data?.cycleEndAudioMode ??
+					DEFAULT_CYCLE_END_AUDIO_MODE;
+
+				if (!guestMergeAttemptedRef.current) {
+					guestMergeAttemptedRef.current = true;
+					const guestMode = readGuestModeForMerge();
+					if (
+						guestMode != null &&
+						serverMode === DEFAULT_CYCLE_END_AUDIO_MODE
+					) {
+						setModeState(guestMode);
+						writeCycleEndAudioMode(scopeRef.current, guestMode);
+						const releaseMutation = await waitUntilSuggestionIdle();
+						try {
+							if (guestMergeGenRef.current !== mergeGen) {
+								return;
+							}
+							await setMutation.mutateAsync({ cycleEndAudioMode: guestMode });
+							setIsHydrated(true);
+							return;
+						} finally {
+							releaseMutation();
+						}
+					}
+				}
+
+				setModeState(serverMode);
+				writeCycleEndAudioMode(scopeRef.current, serverMode);
+				setIsHydrated(true);
+			} finally {
+				release();
+			}
 		})();
 	}, [
 		isGuest,
@@ -134,8 +146,12 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 			writeCycleEndAudioMode(scopeRef.current, next);
 			if (!isGuest && userId != null) {
 				void (async () => {
-					await waitUntilSuggestionIdle();
-					setMutation.mutate({ cycleEndAudioMode: next });
+					const release = await waitUntilSuggestionIdle();
+					try {
+						await setMutation.mutateAsync({ cycleEndAudioMode: next });
+					} finally {
+						release();
+					}
 				})();
 			}
 		},
