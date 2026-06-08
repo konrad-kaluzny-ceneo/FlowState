@@ -3,19 +3,24 @@
  * suggestion.next — both share httpBatchStreamLink and can stall each other on CI.
  */
 
-let inFlightSuggestionFetches = 0;
+let suggestionFetchCount = 0;
+let preferenceIdleReservations = 0;
 const idleWaiters: Array<() => void> = [];
 const inFlightListeners = new Set<(inFlight: boolean) => void>();
 
+function isTrafficIdle(): boolean {
+	return suggestionFetchCount === 0 && preferenceIdleReservations === 0;
+}
+
 function notifyInFlightListeners() {
-	const inFlight = inFlightSuggestionFetches > 0;
+	const inFlight = suggestionFetchCount > 0;
 	for (const listener of inFlightListeners) {
 		listener(inFlight);
 	}
 }
 
 function notifyIdleWaiters() {
-	if (inFlightSuggestionFetches !== 0) {
+	if (!isTrafficIdle()) {
 		return;
 	}
 	for (const resolve of idleWaiters.splice(0)) {
@@ -25,7 +30,7 @@ function notifyIdleWaiters() {
 
 /** Marks suggestion.next in flight until the returned disposer runs. */
 export function beginSuggestionFetch(): () => void {
-	inFlightSuggestionFetches += 1;
+	suggestionFetchCount += 1;
 	notifyInFlightListeners();
 	let disposed = false;
 	return () => {
@@ -33,37 +38,35 @@ export function beginSuggestionFetch(): () => void {
 			return;
 		}
 		disposed = true;
-		inFlightSuggestionFetches = Math.max(0, inFlightSuggestionFetches - 1);
+		suggestionFetchCount = Math.max(0, suggestionFetchCount - 1);
 		notifyInFlightListeners();
 		notifyIdleWaiters();
 	};
 }
 
 export function getSuggestionFetchInFlight(): boolean {
-	return inFlightSuggestionFetches > 0;
+	return suggestionFetchCount > 0;
 }
 
 function acquireIdleReservation(): () => void {
-	inFlightSuggestionFetches += 1;
-	notifyInFlightListeners();
+	preferenceIdleReservations += 1;
 	let released = false;
 	return () => {
 		if (released) {
 			return;
 		}
 		released = true;
-		inFlightSuggestionFetches = Math.max(0, inFlightSuggestionFetches - 1);
-		notifyInFlightListeners();
+		preferenceIdleReservations = Math.max(0, preferenceIdleReservations - 1);
 		notifyIdleWaiters();
 	};
 }
 
 /**
  * Waits for suggestion traffic to finish, then reserves the idle window until
- * the returned release runs so new suggestion fetches cannot interleave.
+ * the returned release runs so new preference ops cannot interleave on the link.
  */
 export function waitUntilSuggestionIdle(): Promise<() => void> {
-	if (inFlightSuggestionFetches === 0) {
+	if (isTrafficIdle()) {
 		return Promise.resolve(acquireIdleReservation());
 	}
 	return new Promise((resolve) => {
@@ -84,7 +87,8 @@ export function subscribeSuggestionFetchInFlight(
 
 /** @internal Test-only reset */
 export function resetSuggestionFetchPriorityForTests(): void {
-	inFlightSuggestionFetches = 0;
+	suggestionFetchCount = 0;
+	preferenceIdleReservations = 0;
 	idleWaiters.length = 0;
 	notifyInFlightListeners();
 }

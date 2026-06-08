@@ -48,7 +48,7 @@ describe("suggestion-priority", () => {
 		end();
 		const release = await idlePromise;
 		expect(resolved).toBe(true);
-		expect(getSuggestionFetchInFlight()).toBe(true);
+		expect(getSuggestionFetchInFlight()).toBe(false);
 
 		release();
 		expect(getSuggestionFetchInFlight()).toBe(false);
