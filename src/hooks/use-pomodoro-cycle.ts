@@ -327,6 +327,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setCatchUpFromExpiry(endedAtMs, cycleKindRef.current);
 		}
 
+		stopCycleEndTabPulse();
 		maybeStartCycleEndTabPulse(
 			cycleKindRef.current,
 			wasHiddenWhileRunning,
@@ -449,6 +450,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					.playAlarm({ mode: getCycleEndAudioModeRef.current() })
 					.catch(() => {});
 				setCatchUpFromExpiry(endTime, cycle.kind);
+				stopCycleEndTabPulse();
 				maybeStartCycleEndTabPulse(
 					cycle.kind,
 					tabWasHiddenWhileRunningRef.current,

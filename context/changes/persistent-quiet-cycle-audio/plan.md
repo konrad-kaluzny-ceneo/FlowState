@@ -619,8 +619,8 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Manual
 
-- [ ] 2.5 `preference.get` returns `normal` for new test user without DB row
-- [ ] 2.6 `preference.set` to `muted` survives page reload for authenticated session
+- [x] 2.5 `preference.get` returns `normal` for new test user without DB row
+- [x] 2.6 `preference.set` to `muted` survives page reload for authenticated session
 
 ### Phase 3: Client Preference Storage Module
 
@@ -633,8 +633,8 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Manual
 
-- [ ] 3.5 Guest: toggle mode, refresh, value persists
-- [ ] 3.6 Auth: toggle mode, refresh, value persists from server; no audible flash before hydration when previously muted
+- [x] 3.5 Guest: toggle mode, refresh, value persists
+- [x] 3.6 Auth: toggle mode, refresh, value persists from server; no audible flash before hydration when previously muted
 
 ### Phase 4: Audio Manager Extension
 
@@ -648,7 +648,7 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Manual
 
-- [ ] 4.6 Dev server: soft/muted via localStorage; 1s work cycle; reduced/silent playback when tab visible
+- [x] 4.6 Dev server: soft/muted via localStorage; 1s work cycle; reduced/silent playback when tab visible
 
 ### Phase 5: Hook Integration
 
@@ -661,8 +661,8 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Manual
 
-- [ ] 5.5 Muted preference: visible tab expiry ? no chime; overlay still appears
-- [ ] 5.6 Normal preference: chime still plays on visible tab expiry
+- [x] 5.5 Muted preference: visible tab expiry ? no chime; overlay still appears
+- [x] 5.6 Normal preference: chime still plays on visible tab expiry
 
 ### Phase 6: UI Control
 
@@ -674,9 +674,9 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Manual
 
-- [ ] 6.4 Control visible when idle; hidden during running/completed
-- [ ] 6.5 Toggle updates UI within 200ms; persists after refresh (guest + auth)
-- [ ] 6.6 Keyboard accessible between segments
+- [x] 6.4 Control visible when idle; hidden during running/completed
+- [x] 6.5 Toggle updates UI within 200ms; persists after refresh (guest + auth)
+- [x] 6.6 Keyboard accessible between segments
 
 ### Phase 7: Title Pulse
 
@@ -689,21 +689,21 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Manual
 
-- [ ] 7.5 Muted + hidden work expiry: title pulse while hidden; restores on return
-- [ ] 7.6 Reduced motion: title prefix only, no favicon flicker
-- [ ] 7.7 Break-end hidden expiry: no title pulse
+- [x] 7.5 Muted + hidden work expiry: title pulse while hidden; restores on return
+- [x] 7.6 Reduced motion: title prefix only, no favicon flicker
+- [x] 7.7 Break-end hidden expiry: no title pulse
 
 ### Phase 8: E2E Tests and Test-Plan Cookbook Update
 
 #### Automated
 
-- [ ] 8.1 E2E passes: `set CI=true && pnpm test:e2e e2e/quiet-cycle-audio.spec.ts`
-- [ ] 8.2 Guest e2e passes: `set CI=true && pnpm test:e2e e2e/guest-quiet-cycle-audio.spec.ts`
-- [ ] 8.3 S-22 regression: `set CI=true && pnpm test:e2e e2e/background-tab-return.spec.ts e2e/guest-background-tab-return.spec.ts`
-- [ ] 8.4 Full unit suite passes: `pnpm test`
-- [ ] 8.5 Lint and typecheck pass: `pnpm check` and `pnpm typecheck`
+- [x] 8.1 E2E passes: `set CI=true && pnpm test:e2e e2e/quiet-cycle-audio.spec.ts`
+- [x] 8.2 Guest e2e passes: `set CI=true && pnpm test:e2e e2e/guest-quiet-cycle-audio.spec.ts`
+- [x] 8.3 S-22 regression: `set CI=true && pnpm test:e2e e2e/background-tab-return.spec.ts e2e/guest-background-tab-return.spec.ts`
+- [x] 8.4 Full unit suite passes: `pnpm test`
+- [x] 8.5 Lint and typecheck pass: `pnpm check` and `pnpm typecheck`
 
 #### Manual
 
-- [ ] 8.6 Full e2e suite green: `set CI=true && pnpm test:e2e`
-- [ ] 8.7 test-plan ?6.3 entry readable and matches shipped spec paths
+- [x] 8.6 Full e2e suite green: `set CI=true && pnpm test:e2e`
+- [x] 8.7 test-plan ?6.3 entry readable and matches shipped spec paths

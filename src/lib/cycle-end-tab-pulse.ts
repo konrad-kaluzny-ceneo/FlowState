@@ -42,11 +42,11 @@ export function startCycleEndTabPulse(options?: { reducedMotion?: boolean }) {
 		return;
 	}
 
+	const reducedMotion = options?.reducedMotion ?? false;
+
 	if (intervalId != null) {
 		return;
 	}
-
-	const reducedMotion = options?.reducedMotion ?? false;
 	originalTitle = document.title;
 	prefixVisible = false;
 
@@ -85,4 +85,16 @@ export function stopCycleEndTabPulse() {
 
 export function isCycleEndTabPulseActive(): boolean {
 	return intervalId != null;
+}
+
+if (
+	typeof window !== "undefined" &&
+	process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER === "1"
+) {
+	const w = window as Window & {
+		__stopCycleEndTabPulse?: () => void;
+		__isCycleEndTabPulseActive?: () => boolean;
+	};
+	w.__stopCycleEndTabPulse = stopCycleEndTabPulse;
+	w.__isCycleEndTabPulseActive = isCycleEndTabPulseActive;
 }
