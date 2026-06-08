@@ -480,7 +480,7 @@ export function usePomodoroCycle() {
 					if (result == null) {
 						setPendingSuggestion({ status: "empty" });
 						setSuggestedTaskId(null);
-					} else if ("cycleId" in result) {
+					} else if (typeof result.cycleId === "number") {
 						setPendingSuggestion({ status: "ready", data: result });
 						setSuggestedTaskId(result.taskId);
 					}
