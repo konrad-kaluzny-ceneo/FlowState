@@ -73,7 +73,7 @@ Extend `suggestion.next` and `recordDecision` with kickoff context; migrate `Sug
 
 **Intent**: Persist kickoff accept/override decisions without a WORK cycle so override signal feeds scoring immediately.
 
-**Contract**: Add enum `SuggestionContext` (`POST_CHECK_IN`, `KICKOFF`). On `SuggestionDecision`: make `cycleId` optional (`Int?`, keep `@unique` for post-check-in upsert); add optional `sessionId Int?` with `Session` relation; add `context SuggestionContext @default(POST_CHECK_IN)`. Index `[sessionId, createdAt]`. Run `pnpm prisma migrate dev`.
+**Contract**: Add enum `SuggestionContext` (`POST_CHECK_IN`, `KICKOFF`). On `SuggestionDecision`: make `cycleId` optional (`Int?`, keep `@unique` for post-check-in upsert); change `cycle Cycle` → `cycle Cycle?`; add optional `sessionId Int?` with `session Session?` relation; add `context SuggestionContext @default(POST_CHECK_IN)`. Index `[sessionId, createdAt]`. Run `pnpm prisma migrate dev`.
 
 #### 2. Shared scoring-context builder
 
@@ -81,7 +81,7 @@ Extend `suggestion.next` and `recordDecision` with kickoff context; migrate `Sug
 
 **Intent**: DRY session queries (`lastOverride`, `completedWorkCycles`, active tasks) shared by both context branches.
 
-**Contract**: Extract helper `buildScoringContextForSession(session, userId, localHour, energy)` returning `ScoringContext`. Kickoff branch passes `energy: "STEADY"`.
+**Contract**: Extract helper `buildScoringContextForSession(session, userId, localHour, energy)` returning `ScoringContext`. Kickoff branch passes `energy: "STEADY"`. `lastOverride` query must OR kickoff rows: `{ OR: [{ cycle: { sessionId } }, { sessionId, context: KICKOFF }] }` with `accepted: false`, `orderBy: { createdAt: 'desc' }` — same contract as Critical Implementation Details.
 
 #### 3. `suggestion.next` discriminated input
 
@@ -100,7 +100,7 @@ z.discriminatedUnion("context", [
 
 - `post_check_in`: existing path unchanged (check-in gate, return includes `cycleId`).
 - `kickoff`: load session by `sessionId` + `userId`; verify not ended; skip check-in gate; build context with `STEADY`; return `{ sessionId, taskId, title, workType, weight, rationaleKey, rationale }` (no `cycleId`).
-- Add kickoff `rationaleKey` (e.g. `kickoff_fresh`) in `src/lib/scoring/rationale.ts` / `dominant-factor.ts`.
+- Add kickoff rationale keys `kickoff_fresh` / `kickoff_resume` to `RationaleKey` in `src/lib/scoring/rationale.ts` with kickoff-specific copy. Kickoff `next` calls `formatKickoffRationale(session, context)`: `kickoff_fresh` when `completedWorkCycles === 0`, else `kickoff_resume`; fall back to `formatTaskRationale` when override/fatigue/interruption dominates (existing dominant-factor keys).
 
 #### 4. `recordDecision` kickoff branch
 
@@ -108,7 +108,7 @@ z.discriminatedUnion("context", [
 
 **Intent**: Record kickoff accept/override for FR-022 and override feedback loop.
 
-**Contract**: Extend input with discriminated union mirroring `next`. Kickoff branch: verify session ownership (IDOR); verify task ownership; `create` row with `cycleId: null`, `sessionId`, `context: KICKOFF`, `accepted`. Post-check-in branch: unchanged upsert on `cycleId`.
+**Contract**: Extend input with discriminated union mirroring `next`. Kickoff branch: verify session ownership (IDOR); verify task ownership; `create` row with `cycleId: null`, `sessionId`, `context: KICKOFF`, `accepted`. Post-check-in branch: unchanged upsert on `cycleId`; pass `context: POST_CHECK_IN` explicitly on create/update after enum added.
 
 #### 5. Router tests
 
@@ -116,7 +116,7 @@ z.discriminatedUnion("context", [
 
 **Intent**: Lock kickoff contract and security boundaries before client work.
 
-**Contract**: Tests for kickoff `next` without check-in; synthetic STEADY scoring; kickoff `recordDecision` create; cross-user `sessionId` → NOT_FOUND; post-check-in regression unchanged.
+**Contract**: Tests for kickoff `next` without check-in; synthetic STEADY scoring; kickoff `recordDecision` create; cross-user `sessionId` → NOT_FOUND; post-check-in regression unchanged. Integration: kickoff override `recordDecision` → subsequent kickoff `next` in same session surfaces `lastOverrideWorkType` on matching work type.
 
 ### Success Criteria:
 
@@ -178,7 +178,7 @@ mode === "authenticated"
 
 **Intent**: Kickoff API needs active session id before first WORK cycle.
 
-**Contract**: Ensure `activeSessionId` is available at idle cold-start via existing `sessions.getOrCreateActive` or equivalent session query already used by cycle start — call/get session id when `kickoffEligible` becomes true if session not yet materialized.
+**Contract**: On `kickoffEligible` false→true, call `sessions.getOrCreateActive()` (same as `start()` at `use-pomodoro-cycle.ts:611`) and store id via `setActiveSessionId`; use hook `_activeSessionId` state for `fetchKickoffSuggestion` input. Early session creation is intentional — kickoff API requires a materialized `sessionId` before first WORK cycle.
 
 #### 4. Hook unit tests
 
@@ -235,7 +235,7 @@ Render idle-gated `TaskSuggestionCard` for kickoff; wire accept → pre-focus; e
 
 **Intent**: FR-022 override on kickoff with validating acknowledgement (S-19 deferred scope).
 
-**Contract**: In `selectTask`, add idle branch: when `kickoffEligible && pendingKickoff.status === 'ready' && taskId !== suggested` → `recordKickoffDecision` + `showOverrideAck()` + clear kickoff highlight. Reuse existing `overrideAcknowledgement` state and dashboard banner — no new component.
+**Contract**: In `selectTask`, add idle branch: when `kickoffEligible && pendingKickoffSuggestion.status === 'ready' && taskId !== suggested` → `recordKickoffDecision` + `showOverrideAck()` + clear kickoff highlight. In `dismissPreFocus`, mirror S-06: when `hasPreFocusedKickoff && pendingKickoffSuggestion.status === 'ready'` → `recordKickoffDecision(suggested, preFocused)` before clearing focus. Reuse existing `overrideAcknowledgement` state and dashboard banner — no new component.
 
 #### 4. Mutual exclusion
 
@@ -251,7 +251,7 @@ Render idle-gated `TaskSuggestionCard` for kickoff; wire accept → pre-focus; e
 
 **Intent**: Lock override ack on kickoff path.
 
-**Contract**: Test: kickoff override sets `overrideAcknowledgement`; kickoff accept does not; ack auto-dismisses after 3s (existing timer).
+**Contract**: Test: kickoff override sets `overrideAcknowledgement`; kickoff accept does not; ack auto-dismisses after 3s (existing timer). Test: `dismissPreFocus` after kickoff accept records kickoff override decision (mirrors S-06).
 
 ### Success Criteria:
 
@@ -297,7 +297,7 @@ Work-type duration chips on kickoff accept path; scoped localStorage for remembe
 
 #### 3. Duration chip row component
 
-**File**: `src/app/_components/kickoff-duration-chips.tsx` (new) or extend `task-suggestion-card.tsx`
+**File**: `src/app/_components/kickoff-duration-chips.tsx` (new)
 
 **Intent**: Show presets after kickoff accept when work type is known; label "your usual" when remembered value exists.
 
@@ -460,7 +460,7 @@ Kickoff fetch is a single tRPC mutation on discrete idle transitions (not pollin
 #### Automated
 
 - [ ] 2.1 `pnpm check` passes
-- [ ] 2.2 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` passes (kickoff eligibility cases)
+- [ ] 2.2 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` passes (kickoff-related cases)
 
 #### Manual
 
@@ -477,9 +477,10 @@ Kickoff fetch is a single tRPC mutation on discrete idle transitions (not pollin
 
 #### Manual
 
-- [ ] 3.3 Idle kickoff card shows rationale and highlighted suggested row
-- [ ] 3.4 Accept pre-focuses task; Focus override shows S-19 ack banner
-- [ ] 3.5 Break-running post-check-in card works; no simultaneous kickoff card
+- [ ] 3.3 Idle kickoff card shows rationale + highlighted row
+- [ ] 3.4 Accept pre-focuses task; Focus on different task shows override ack banner
+- [ ] 3.5 Break-running post-check-in card still works; no simultaneous cards
+- [ ] 3.6 Override ack copy matches S-19 (`OVERRIDE_ACK_LINE`)
 
 ### Phase 4: Duration Presets + Per-Type Memory
 
@@ -490,9 +491,10 @@ Kickoff fetch is a single tRPC mutation on discrete idle transitions (not pollin
 
 #### Manual
 
-- [ ] 4.3 Accept kickoff shows work-type duration chips
-- [ ] 4.4 Chip tap persists "your usual" label after reload
-- [ ] 4.5 Accept alone does not change duration until chip tap or picker
+- [ ] 4.3 Accept kickoff → chips show for task work type
+- [ ] 4.4 Tap chip → "your usual" label on return visit after reload
+- [ ] 4.5 Start cycle uses staged chip duration; accepting suggestion alone does not change duration
+- [ ] 4.6 Chips are suggestions only — user can still use generic duration picker
 
 ### Phase 5: E2E + Cookbook
 
