@@ -9,7 +9,7 @@ expanded_intelligence: 2026-06-07
 expanded_story: 2026-06-07
 expanded_followup: 2026-06-07
 expanded_ux_gaps: 2026-06-07
-active_slices: []
+active_slices: [S-22]
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -65,7 +65,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-19 | suggestion-override-acknowledgement | [FLO-34](https://linear.app/flowstate-10xdev/issue/FLO-34) | [#45](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/45) (closed) | validating acknowledgement on post-check-in and kickoff suggestion override — same FR-022 story | S-06 | FR-022, FR-021, FR-019, proposed-FR-session-start-guidance | done |
 | S-20 | persistent-quiet-cycle-audio | [FLO-35](https://linear.app/flowstate-10xdev/issue/FLO-35) | [#46](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/46) | persistent mute/soften cycle chime; optional title/favicon pulse when muted + tab backgrounded; pair with S-22 | S-01 | FR-013, FR-014, NFR (200ms acknowledgement) | ready |
 | S-21 | mindful-transition-copy | [FLO-36](https://linear.app/flowstate-10xdev/issue/FLO-36) | [#47](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/47) | skippable break/re-entry copy; re-entry variant keyed to last check-in energy (Focused/Steady/Fading) | S-02, S-05, S-12 | FR-014, FR-011, FR-012, FR-020 | proposed |
-| S-22 | background-tab-return-catchup | [FLO-37](https://linear.app/flowstate-10xdev/issue/FLO-37) | [#48](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/48) | returning to a backgrounded tab after cycle end sees a calm catch-up handoff to the next wedge step (check-in, break confirm, or suggestion) | S-01, S-05, S-06 | FR-013, FR-014, FR-020, FR-021, NFR (timer drift ≤ ±2s) | ready |
+| S-22 | background-tab-return-catchup | [FLO-37](https://linear.app/flowstate-10xdev/issue/FLO-37) | [#48](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/48) | returning to a backgrounded tab after cycle end sees a calm catch-up handoff to the next wedge step (check-in, break confirm, or suggestion) | S-01, S-05, S-06 | FR-013, FR-014, FR-020, FR-021, NFR (timer drift ≤ ±2s) | active |
 | S-23 | suggestion-rationale-expander | [FLO-38](https://linear.app/flowstate-10xdev/issue/FLO-38) | [#49](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/49) | tap "Why this?" on the suggestion card for a deterministic factor breakdown — no analytics screen | S-06 | FR-021, FR-022, FR-019, NFR (suggestion feedback ≥1s visible) | ready |
 | S-24 | cycle-pause-resume | [FLO-39](https://linear.app/flowstate-10xdev/issue/FLO-39) | [#50](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/50) | pause and resume a work or break cycle with remaining time preserved — without INTERRUPTED state or interruptionCount increment | S-01, S-02 | FR-012, FR-019, US-01, NFR (crash/refresh recovery) | proposed |
 
@@ -544,7 +544,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Wrap all post-work gates or only first pending gate? Owner: implementer. Block: no.
 - **Risk:** `visibilitychange` already fires completion — duplicate overlays if not keyed to one-shot `endedWhileHidden` cleared on first interaction.
 - **Orchestrator doubts:** Overlap with S-12 polish and S-20 mute paths — coordinate in `/10x-plan`. Expand score 67/100 — **promote**; high user value, medium implementation risk.
-- **Status:** ready
+- **Status:** active
 
 ### S-23: Suggestion rationale expander
 
