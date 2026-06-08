@@ -410,9 +410,9 @@ No data migration. Pure client-side additive state; clearing on dismiss means no
 
 #### Automated
 
-- [x] 3.1 `pnpm exec vitest run src/app/_components/tab-return-catchup.test.tsx` passes
-- [x] 3.2 `pnpm check` passes
-- [x] 3.3 `pnpm typecheck` passes
+- [x] 3.1 `pnpm exec vitest run src/app/_components/tab-return-catchup.test.tsx` passes — c672669
+- [x] 3.2 `pnpm check` passes — c672669
+- [x] 3.3 `pnpm typecheck` passes — c672669
 
 #### Manual
 
