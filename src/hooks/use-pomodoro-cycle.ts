@@ -444,6 +444,7 @@ export function usePomodoroCycle() {
 			try {
 				await retryOnce(() =>
 					recordDecisionMutation.mutateAsync({
+						context: "post_check_in",
 						cycleId: suggestionCycleId,
 						suggestedTaskId: Number(suggestedId),
 						chosenTaskId: Number(chosenId),
@@ -469,6 +470,7 @@ export function usePomodoroCycle() {
 			void (async () => {
 				try {
 					const result = await suggestionNext.mutateAsync({
+						context: "post_check_in",
 						cycleId,
 						localHour: new Date().getHours(),
 					});
@@ -478,7 +480,7 @@ export function usePomodoroCycle() {
 					if (result == null) {
 						setPendingSuggestion({ status: "empty" });
 						setSuggestedTaskId(null);
-					} else {
+					} else if ("cycleId" in result) {
 						setPendingSuggestion({ status: "ready", data: result });
 						setSuggestedTaskId(result.taskId);
 					}

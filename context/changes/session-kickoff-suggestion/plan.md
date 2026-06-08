@@ -445,10 +445,10 @@ Kickoff fetch is a single tRPC mutation on discrete idle transitions (not pollin
 
 #### Automated
 
-- [ ] 1.1 `pnpm prisma migrate dev` applies cleanly
-- [ ] 1.2 `pnpm check` passes
-- [ ] 1.3 `pnpm typecheck` passes
-- [ ] 1.4 `pnpm exec vitest run src/server/api/routers/suggestion.test.ts src/server/api/routers/suggestion-isolation.test.ts` passes
+- [x] 1.1 `pnpm prisma migrate dev` applies cleanly
+- [x] 1.2 `pnpm check` passes
+- [x] 1.3 `pnpm typecheck` passes
+- [x] 1.4 `pnpm exec vitest run src/server/api/routers/suggestion.test.ts src/server/api/routers/suggestion-isolation.test.ts` passes
 
 #### Manual
 

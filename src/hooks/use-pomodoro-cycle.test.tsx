@@ -1183,6 +1183,7 @@ describe("usePomodoroCycle", () => {
 		});
 
 		expect(recordDecisionMutate).toHaveBeenCalledWith({
+			context: "post_check_in",
 			cycleId: 81,
 			suggestedTaskId: 9,
 			chosenTaskId: 9,
@@ -1249,6 +1250,7 @@ describe("usePomodoroCycle", () => {
 
 		await waitFor(() => {
 			expect(recordDecisionMutate).toHaveBeenCalledWith({
+				context: "post_check_in",
 				cycleId: 82,
 				suggestedTaskId: 9,
 				chosenTaskId: 12,

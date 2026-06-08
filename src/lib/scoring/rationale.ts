@@ -7,6 +7,8 @@ export type RationaleKey =
 	| "late_day"
 	| "interruptions"
 	| "override_preference"
+	| "kickoff_fresh"
+	| "kickoff_resume"
 	| "default";
 
 export function buildRationale(
@@ -28,6 +30,10 @@ export function buildRationale(
 			return "Reactive work — session had several interruptions";
 		case "override_preference":
 			return "Matches your last pick — continuing that thread";
+		case "kickoff_fresh":
+			return "Fresh session — here's a strong starting point";
+		case "kickoff_resume":
+			return "Back from break — ready for your next focus block";
 		default:
 			return "Next up based on your energy and task mix";
 	}

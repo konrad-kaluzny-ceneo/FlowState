@@ -74,3 +74,26 @@ export function formatTaskRationale(
 		rationale: buildRationale(rationaleKey, context),
 	};
 }
+
+const KICKOFF_FALLBACK_KEYS: RationaleKey[] = [
+	"override_preference",
+	"fatigue",
+	"interruptions",
+	"late_day",
+];
+
+export function formatKickoffRationale(
+	task: ScoringTask,
+	context: ScoringContext,
+): { rationaleKey: RationaleKey; rationale: string } {
+	const dominantKey = getDominantRationaleKey(task, context);
+	if (KICKOFF_FALLBACK_KEYS.includes(dominantKey)) {
+		return formatTaskRationale(task, context);
+	}
+	const rationaleKey: RationaleKey =
+		context.completedWorkCycles === 0 ? "kickoff_fresh" : "kickoff_resume";
+	return {
+		rationaleKey,
+		rationale: buildRationale(rationaleKey, context),
+	};
+}

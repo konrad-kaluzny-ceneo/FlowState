@@ -1,9 +1,46 @@
+import type { EnergyLevel } from "@prisma/generated";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { formatTaskRationale } from "~/lib/scoring/dominant-factor";
+import {
+	formatKickoffRationale,
+	formatTaskRationale,
+} from "~/lib/scoring/dominant-factor";
 import { pickBestTask, type ScoringContext } from "~/lib/scoring/score-task";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import type { db as dbClient } from "~/server/db/index";
+
+const localHourSchema = z.number().int().min(0).max(23);
+
+const nextInputSchema = z.discriminatedUnion("context", [
+	z.object({
+		context: z.literal("post_check_in"),
+		cycleId: z.number().int(),
+		localHour: localHourSchema,
+	}),
+	z.object({
+		context: z.literal("kickoff"),
+		sessionId: z.number().int(),
+		localHour: localHourSchema,
+	}),
+]);
+
+const recordDecisionInputSchema = z.discriminatedUnion("context", [
+	z.object({
+		context: z.literal("post_check_in"),
+		cycleId: z.number().int(),
+		suggestedTaskId: z.number().int(),
+		chosenTaskId: z.number().int(),
+	}),
+	z.object({
+		context: z.literal("kickoff"),
+		sessionId: z.number().int(),
+		suggestedTaskId: z.number().int(),
+		chosenTaskId: z.number().int(),
+	}),
+]);
+
+type DbClient = typeof dbClient;
 
 function toTaskWeight(weight: number): 1 | 2 | 3 {
 	if (weight === 1 || weight === 2 || weight === 3) {
@@ -15,36 +52,167 @@ function toTaskWeight(weight: number): 1 | 2 | 3 {
 	});
 }
 
+async function buildScoringContextForSession(
+	db: DbClient,
+	session: { id: number; interruptionCount: number },
+	userId: string,
+	localHour: number,
+	energy: EnergyLevel,
+): Promise<ScoringContext> {
+	const lastOverride = await db.suggestionDecision.findFirst({
+		where: {
+			userId,
+			accepted: false,
+			OR: [
+				{ cycle: { sessionId: session.id } },
+				{ sessionId: session.id, context: "KICKOFF" },
+			],
+		},
+		orderBy: { createdAt: "desc" },
+		include: { chosenTask: true },
+	});
+
+	const completedWorkCycles = await db.cycle.count({
+		where: {
+			userId,
+			sessionId: session.id,
+			kind: "WORK",
+			state: "COMPLETED",
+		},
+	});
+
+	return {
+		energy,
+		completedWorkCycles,
+		interruptionCount: session.interruptionCount,
+		localHour,
+		lastOverrideWorkType: lastOverride?.chosenTask.workType,
+	};
+}
+
+async function verifyOwnedTasks(
+	db: DbClient,
+	userId: string,
+	suggestedTaskId: number,
+	chosenTaskId: number,
+) {
+	const suggestedTask = await db.task.findFirst({
+		where: {
+			id: suggestedTaskId,
+			userId,
+			status: "active",
+		},
+	});
+	const chosenTask = await db.task.findFirst({
+		where: {
+			id: chosenTaskId,
+			userId,
+			status: "active",
+		},
+	});
+
+	if (!suggestedTask || !chosenTask) {
+		throw new TRPCError({ code: "NOT_FOUND" });
+	}
+
+	return { suggestedTask, chosenTask };
+}
+
 export const suggestionRouter = createTRPCRouter({
 	next: protectedProcedure
-		.input(
-			z.object({
-				cycleId: z.number().int(),
-				localHour: z.number().int().min(0).max(23),
-			}),
-		)
+		.input(nextInputSchema)
 		.mutation(async ({ ctx, input }) => {
-			const cycle = await ctx.db.cycle.findFirst({
-				where: { id: input.cycleId, userId: ctx.session.user.id },
-				include: {
-					session: true,
-					checkIn: true,
-				},
+			const userId = ctx.session.user.id;
+
+			if (input.context === "post_check_in") {
+				const cycle = await ctx.db.cycle.findFirst({
+					where: { id: input.cycleId, userId },
+					include: {
+						session: true,
+						checkIn: true,
+					},
+				});
+
+				if (!cycle) {
+					throw new TRPCError({ code: "NOT_FOUND" });
+				}
+
+				if (cycle.checkIn == null) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "Check-in required before suggestion",
+					});
+				}
+
+				const activeTasks = await ctx.db.task.findMany({
+					where: { userId, status: "active" },
+					orderBy: { createdAt: "asc" },
+				});
+
+				if (activeTasks.length === 0) {
+					return null;
+				}
+
+				const scoringContext = await buildScoringContextForSession(
+					ctx.db,
+					cycle.session,
+					userId,
+					input.localHour,
+					cycle.checkIn.energy,
+				);
+
+				const winner = pickBestTask(
+					activeTasks.map((t) => ({
+						id: t.id,
+						workType: t.workType,
+						weight: t.weight,
+						createdAt: t.createdAt,
+					})),
+					scoringContext,
+				);
+
+				if (winner == null) {
+					return null;
+				}
+
+				const task = activeTasks.find((t) => t.id === winner.id);
+				if (task == null) {
+					return null;
+				}
+
+				const { rationaleKey, rationale } = formatTaskRationale(
+					winner,
+					scoringContext,
+				);
+
+				return {
+					cycleId: cycle.id,
+					taskId: task.id,
+					title: task.title,
+					workType: task.workType,
+					weight: toTaskWeight(task.weight),
+					rationaleKey,
+					rationale,
+				};
+			}
+
+			const session = await ctx.db.session.findFirst({
+				where: { id: input.sessionId, userId },
 			});
 
-			if (!cycle) {
+			if (!session) {
 				throw new TRPCError({ code: "NOT_FOUND" });
 			}
 
-			if (cycle.checkIn == null) {
+			if (session.state !== "ACTIVE") {
 				throw new TRPCError({
 					code: "BAD_REQUEST",
-					message: "Check-in required before suggestion",
+					message: "Session has ended",
 				});
 			}
 
 			const activeTasks = await ctx.db.task.findMany({
-				where: { userId: ctx.session.user.id, status: "active" },
+				where: { userId, status: "active" },
 				orderBy: { createdAt: "asc" },
 			});
 
@@ -52,32 +220,13 @@ export const suggestionRouter = createTRPCRouter({
 				return null;
 			}
 
-			const lastOverride = await ctx.db.suggestionDecision.findFirst({
-				where: {
-					userId: ctx.session.user.id,
-					accepted: false,
-					cycle: { sessionId: cycle.sessionId },
-				},
-				orderBy: { createdAt: "desc" },
-				include: { chosenTask: true },
-			});
-
-			const completedWorkCycles = await ctx.db.cycle.count({
-				where: {
-					userId: ctx.session.user.id,
-					sessionId: cycle.sessionId,
-					kind: "WORK",
-					state: "COMPLETED",
-				},
-			});
-
-			const scoringContext: ScoringContext = {
-				energy: cycle.checkIn.energy,
-				completedWorkCycles,
-				interruptionCount: cycle.session.interruptionCount,
-				localHour: input.localHour,
-				lastOverrideWorkType: lastOverride?.chosenTask.workType,
-			};
+			const scoringContext = await buildScoringContextForSession(
+				ctx.db,
+				session,
+				userId,
+				input.localHour,
+				"STEADY",
+			);
 
 			const winner = pickBestTask(
 				activeTasks.map((t) => ({
@@ -98,13 +247,13 @@ export const suggestionRouter = createTRPCRouter({
 				return null;
 			}
 
-			const { rationaleKey, rationale } = formatTaskRationale(
+			const { rationaleKey, rationale } = formatKickoffRationale(
 				winner,
 				scoringContext,
 			);
 
 			return {
-				cycleId: cycle.id,
+				sessionId: session.id,
 				taskId: task.id,
 				title: task.title,
 				workType: task.workType,
@@ -115,17 +264,56 @@ export const suggestionRouter = createTRPCRouter({
 		}),
 
 	recordDecision: protectedProcedure
-		.input(
-			z.object({
-				cycleId: z.number().int(),
-				suggestedTaskId: z.number().int(),
-				chosenTaskId: z.number().int(),
-			}),
-		)
+		.input(recordDecisionInputSchema)
 		.mutation(async ({ ctx, input }) => {
-			// Verify caller owns the cycle and suggestion flow completed on a WORK cycle
+			const userId = ctx.session.user.id;
+			const accepted = input.suggestedTaskId === input.chosenTaskId;
+
+			if (input.context === "kickoff") {
+				const session = await ctx.db.session.findFirst({
+					where: { id: input.sessionId, userId },
+				});
+
+				if (!session) {
+					throw new TRPCError({ code: "NOT_FOUND" });
+				}
+
+				await verifyOwnedTasks(
+					ctx.db,
+					userId,
+					input.suggestedTaskId,
+					input.chosenTaskId,
+				);
+
+				try {
+					return await ctx.db.suggestionDecision.create({
+						data: {
+							userId,
+							cycleId: null,
+							sessionId: input.sessionId,
+							context: "KICKOFF",
+							suggestedTaskId: input.suggestedTaskId,
+							chosenTaskId: input.chosenTaskId,
+							accepted,
+						},
+					});
+				} catch (error) {
+					if (error instanceof TRPCError) {
+						throw error;
+					}
+					if (
+						error instanceof Error &&
+						"code" in error &&
+						(error as { code: string }).code === "P2003"
+					) {
+						throw new TRPCError({ code: "NOT_FOUND" });
+					}
+					throw error;
+				}
+			}
+
 			const cycle = await ctx.db.cycle.findFirst({
-				where: { id: input.cycleId, userId: ctx.session.user.id },
+				where: { id: input.cycleId, userId },
 				include: { checkIn: true },
 			});
 
@@ -147,33 +335,20 @@ export const suggestionRouter = createTRPCRouter({
 				});
 			}
 
-			const suggestedTask = await ctx.db.task.findFirst({
-				where: {
-					id: input.suggestedTaskId,
-					userId: ctx.session.user.id,
-					status: "active",
-				},
-			});
-			const chosenTask = await ctx.db.task.findFirst({
-				where: {
-					id: input.chosenTaskId,
-					userId: ctx.session.user.id,
-					status: "active",
-				},
-			});
-
-			if (!suggestedTask || !chosenTask) {
-				throw new TRPCError({ code: "NOT_FOUND" });
-			}
-
-			const accepted = input.suggestedTaskId === input.chosenTaskId;
+			await verifyOwnedTasks(
+				ctx.db,
+				userId,
+				input.suggestedTaskId,
+				input.chosenTaskId,
+			);
 
 			try {
 				return await ctx.db.suggestionDecision.upsert({
 					where: { cycleId: input.cycleId },
 					create: {
-						userId: ctx.session.user.id,
+						userId,
 						cycleId: input.cycleId,
+						context: "POST_CHECK_IN",
 						suggestedTaskId: input.suggestedTaskId,
 						chosenTaskId: input.chosenTaskId,
 						accepted,
@@ -182,6 +357,7 @@ export const suggestionRouter = createTRPCRouter({
 						suggestedTaskId: input.suggestedTaskId,
 						chosenTaskId: input.chosenTaskId,
 						accepted,
+						context: "POST_CHECK_IN",
 					},
 				});
 			} catch (error) {
