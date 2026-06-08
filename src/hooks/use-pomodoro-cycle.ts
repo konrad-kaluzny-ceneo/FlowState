@@ -16,6 +16,10 @@ import {
 	getShortBreakDuration,
 	setLastDuration,
 } from "~/lib/duration-storage";
+import {
+	OVERRIDE_ACK_LINE,
+	OVERRIDE_ACK_VISIBLE_MS,
+} from "~/lib/suggestion/override-ack-copy";
 import { api } from "~/trpc/react";
 import type {
 	TimerWorkerInbound,
@@ -127,6 +131,9 @@ export function usePomodoroCycle() {
 	const [preFocusedTask, setPreFocusedTask] = useState<FocusedTask>(null);
 	const [hasPreFocusedSuggestion, setHasPreFocusedSuggestion] = useState(false);
 	const [isAcceptingSuggestion, setIsAcceptingSuggestion] = useState(false);
+	const [overrideAcknowledgement, setOverrideAcknowledgement] = useState<
+		string | null
+	>(null);
 
 	const createCheckIn = api.checkIn.create.useMutation();
 	const suggestionNext = api.suggestion.next.useMutation();
@@ -142,6 +149,9 @@ export function usePomodoroCycle() {
 	const recoveredRef = useRef(false);
 	const pendingIncrementInterruptionRef = useRef(false);
 	const suggestionFetchGenRef = useRef(0);
+	const overrideAckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	);
 	const useWorkerRef = useRef(
 		process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER !== "1",
 	);
@@ -385,8 +395,28 @@ export function usePomodoroCycle() {
 			workerRef.current?.terminate();
 			workerRef.current = null;
 			audioRef.current.dispose();
+			if (overrideAckTimerRef.current != null) {
+				clearTimeout(overrideAckTimerRef.current);
+			}
 		};
 	}, [stopWorker]);
+
+	const clearOverrideAck = useCallback(() => {
+		if (overrideAckTimerRef.current != null) {
+			clearTimeout(overrideAckTimerRef.current);
+			overrideAckTimerRef.current = null;
+		}
+		setOverrideAcknowledgement(null);
+	}, []);
+
+	const showOverrideAck = useCallback(() => {
+		clearOverrideAck();
+		setOverrideAcknowledgement(OVERRIDE_ACK_LINE);
+		overrideAckTimerRef.current = setTimeout(() => {
+			setOverrideAcknowledgement(null);
+			overrideAckTimerRef.current = null;
+		}, OVERRIDE_ACK_VISIBLE_MS);
+	}, [clearOverrideAck]);
 
 	const clearSuggestion = useCallback(() => {
 		suggestionFetchGenRef.current += 1;
@@ -394,7 +424,8 @@ export function usePomodoroCycle() {
 		setSuggestionCycleId(null);
 		setSuggestedTaskId(null);
 		setHasPreFocusedSuggestion(false);
-	}, []);
+		clearOverrideAck();
+	}, [clearOverrideAck]);
 
 	const preFocusTask = useCallback(
 		(taskId: DomainTaskId, task?: FocusedTask) => {
@@ -501,6 +532,7 @@ export function usePomodoroCycle() {
 				taskId !== pendingSuggestion.data.taskId
 			) {
 				void recordSuggestionDecision(pendingSuggestion.data.taskId, taskId);
+				showOverrideAck();
 				setSuggestedTaskId(null);
 				setHasPreFocusedSuggestion(false);
 			}
@@ -517,6 +549,7 @@ export function usePomodoroCycle() {
 			pendingSuggestion,
 			recordSuggestionDecision,
 			preFocusTask,
+			showOverrideAck,
 		],
 	);
 
@@ -1016,6 +1049,7 @@ export function usePomodoroCycle() {
 		preFocusedTask,
 		hasPreFocusedSuggestion,
 		isAcceptingSuggestion,
+		overrideAcknowledgement,
 		selectTask,
 		clearTask,
 		acceptSuggestion,

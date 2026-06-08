@@ -135,6 +135,10 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 			.first();
 		await reactiveRow.getByRole("button", { name: "Focus" }).click();
 
+		await expect(page.getByTestId("suggestion-override-ack")).toBeVisible();
+		await expect(page.getByTestId("suggestion-override-ack")).toContainText(
+			/noted/i,
+		);
 		await expect(page.getByTestId("suggested-task-row")).toHaveCount(0);
 		await expect(reactiveRow).toHaveClass(/ring-purple-500/);
 	});
