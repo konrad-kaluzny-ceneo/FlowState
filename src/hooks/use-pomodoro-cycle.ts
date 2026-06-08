@@ -158,6 +158,7 @@ export function usePomodoroCycle() {
 	const overrideAckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
+	const tabWasHiddenWhileRunningRef = useRef(false);
 	const useWorkerRef = useRef(
 		process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER !== "1",
 	);
@@ -216,6 +217,7 @@ export function usePomodoroCycle() {
 				cycleEndedAtMs: endedAtMs,
 				gate,
 			});
+			tabWasHiddenWhileRunningRef.current = false;
 		},
 		[],
 	);
@@ -224,14 +226,16 @@ export function usePomodoroCycle() {
 		if (stateRef.current !== "running") {
 			return;
 		}
+		const endedAtMs = endTimeRef.current ?? Date.now();
+		const wasHiddenWhileRunning = tabWasHiddenWhileRunningRef.current;
 		stopWorker();
 		endTimeRef.current = null;
 		setRemainingMs(0);
 		setState("completed");
 		void audioRef.current.playAlarm().catch(() => {});
 
-		if (document.visibilityState !== "visible") {
-			setCatchUpFromExpiry(Date.now(), cycleKindRef.current);
+		if (document.visibilityState !== "visible" || wasHiddenWhileRunning) {
+			setCatchUpFromExpiry(endedAtMs, cycleKindRef.current);
 		}
 	}, [setCatchUpFromExpiry, stopWorker]);
 
@@ -347,7 +351,7 @@ export function usePomodoroCycle() {
 			if (endTime <= Date.now()) {
 				setState("completed");
 				void audioRef.current.playAlarm().catch(() => {});
-				setCatchUpFromExpiry(Date.now(), cycle.kind);
+				setCatchUpFromExpiry(endTime, cycle.kind);
 				return;
 			}
 
@@ -420,7 +424,10 @@ export function usePomodoroCycle() {
 
 	useEffect(() => {
 		const onVisibilityChange = () => {
-			if (document.visibilityState !== "visible") {
+			if (document.visibilityState === "hidden") {
+				if (stateRef.current === "running") {
+					tabWasHiddenWhileRunningRef.current = true;
+				}
 				return;
 			}
 			recalculateFromEndTime();
@@ -628,6 +635,8 @@ export function usePomodoroCycle() {
 	const start = useCallback(
 		async (durationSec: number) => {
 			setError(null);
+			setCatchUp(null);
+			tabWasHiddenWhileRunningRef.current = false;
 			clearSuggestion();
 			setPreFocusedTask(null);
 
@@ -1075,6 +1084,7 @@ export function usePomodoroCycle() {
 
 	const dismissCatchUp = useCallback(() => {
 		setCatchUp(null);
+		tabWasHiddenWhileRunningRef.current = false;
 	}, []);
 
 	return {

@@ -436,9 +436,9 @@ No data migration. Pure client-side additive state; clearing on dismiss means no
 
 #### Automated
 
-- [ ] 5.1 `set CI=true && pnpm test:e2e e2e/background-tab-return.spec.ts` passes
-- [ ] 5.2 `set CI=true && pnpm test:e2e` full suite passes
-- [x] 5.3 `pnpm test` passes
+- [x] 5.1 `set CI=true && pnpm test:e2e e2e/background-tab-return.spec.ts` passes
+- [x] 5.2 `set CI=true && pnpm test:e2e` full suite passes
+- [x] 5.3 `pnpm test` passes — 970e35d
 
 #### Manual
 

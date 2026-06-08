@@ -5,7 +5,10 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { dismissFirstRunIfVisible } from "./helpers/onboarding";
+import {
+	clearOnboardingKeys,
+	dismissFirstRunIfVisible,
+} from "./helpers/onboarding";
 import { runWhileHidden } from "./helpers/visibility";
 import {
 	FAST_WORK_CLOCK_MS,
@@ -16,6 +19,9 @@ test.describe("Guest background tab return catch-up (S-22)", () => {
 	test.beforeEach(async ({ page, context }) => {
 		await context.clearCookies();
 		await page.goto("/");
+		await clearOnboardingKeys(page);
+		await page.reload();
+		await expect(page.getByTestId("guest-banner")).toBeVisible();
 		await dismissFirstRunIfVisible(page);
 	});
 

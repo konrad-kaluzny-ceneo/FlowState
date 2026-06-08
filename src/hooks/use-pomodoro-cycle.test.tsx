@@ -1,7 +1,7 @@
 ﻿import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainActiveCycle } from "~/lib/data-mode/types";
 import { assertRemainingMsWithinTolerance } from "~/test-utils/countdown-tolerance";
@@ -1381,11 +1381,16 @@ describe("usePomodoroCycle catchUp", () => {
 		});
 	}
 
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	beforeEach(() => {
 		resetActiveCycleRecoveryForTests();
 		activeCycleData = null;
 		fakeWorkers.length = 0;
 		vi.clearAllMocks();
+		vi.useRealTimers();
 		setVisibilityState("visible");
 		getActiveCycle.mockImplementation(async () => activeCycleData);
 		getOrCreateSession.mockResolvedValue({ id: 1 });
@@ -1475,6 +1480,61 @@ describe("usePomodoroCycle catchUp", () => {
 
 			expect(result.current.state).toBe("completed");
 			expect(result.current.catchUp).toBeNull();
+		} finally {
+			vi.useRealTimers();
+			vi.stubGlobal("Worker", FakeWorker);
+		}
+	});
+
+	it("sets catchUp via visibility recalc when tab was hidden while running", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+
+		const durationSec = 60;
+		const startMs = Date.now() - 30_000;
+		activeCycleData = makeActiveCycle({
+			startedAt: new Date(startMs),
+			configuredDurationSec: durationSec,
+		});
+
+		const endTimeMs = startMs + durationSec * 1000;
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		vi.useFakeTimers();
+		vi.setSystemTime(startMs + 30_000);
+
+		try {
+			setVisibilityState("hidden");
+			await act(async () => {
+				document.dispatchEvent(new Event("visibilitychange"));
+			});
+
+			vi.setSystemTime(endTimeMs + 5_000);
+
+			setVisibilityState("visible");
+			await act(async () => {
+				document.dispatchEvent(new Event("visibilitychange"));
+			});
+
+			expect(result.current.state).toBe("completed");
+			expect(result.current.catchUp).toMatchObject({
+				endedWhileHidden: true,
+				gate: "WORK_CONFIRM",
+				cycleEndedAtMs: endTimeMs,
+			});
 		} finally {
 			vi.useRealTimers();
 			vi.stubGlobal("Worker", FakeWorker);
