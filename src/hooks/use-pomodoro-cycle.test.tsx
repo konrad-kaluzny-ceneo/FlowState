@@ -1530,6 +1530,144 @@ describe("usePomodoroCycle", () => {
 			expect(result.current.pendingKickoffSuggestion.status).toBe("idle");
 		});
 
+		it("kickoff override via selectTask during idle shows override acknowledgement", async () => {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestion;
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+			});
+
+			recordDecisionMutate.mockClear();
+
+			act(() => {
+				result.current.selectTask(12, { id: 12, title: "Other task" });
+			});
+
+			await waitFor(() => {
+				expect(recordDecisionMutate).toHaveBeenCalledWith({
+					context: "kickoff",
+					sessionId: 1,
+					suggestedTaskId: 9,
+					chosenTaskId: 12,
+				});
+			});
+
+			expect(result.current.kickoffSuggestedTaskId).toBeNull();
+			expect(result.current.focusedTaskId).toBe(12);
+			expect(result.current.overrideAcknowledgement).toMatch(/noted/i);
+		});
+
+		it("acceptKickoffSuggestion does not show override acknowledgement", async () => {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestion;
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+			});
+
+			await act(async () => {
+				await result.current.acceptKickoffSuggestion();
+			});
+
+			expect(result.current.overrideAcknowledgement).toBeNull();
+			expect(result.current.hasPreFocusedKickoff).toBe(true);
+			expect(result.current.focusedTaskId).toBe(9);
+		});
+
+		it("dismissPreFocus after kickoff accept records kickoff decision", async () => {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestion;
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+			});
+
+			await act(async () => {
+				await result.current.acceptKickoffSuggestion();
+			});
+
+			recordDecisionMutate.mockClear();
+
+			act(() => {
+				result.current.dismissPreFocus();
+			});
+
+			await waitFor(() => {
+				expect(recordDecisionMutate).toHaveBeenCalledWith({
+					context: "kickoff",
+					sessionId: 1,
+					suggestedTaskId: 9,
+					chosenTaskId: 9,
+				});
+			});
+
+			expect(result.current.focusedTaskId).toBeNull();
+			expect(result.current.hasPreFocusedKickoff).toBe(false);
+		});
+
+		it("kickoff override acknowledgement auto-dismisses after 3s", async () => {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestion;
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+			});
+
+			vi.useFakeTimers();
+			try {
+				act(() => {
+					result.current.selectTask(12, { id: 12, title: "Other task" });
+				});
+
+				expect(result.current.overrideAcknowledgement).toMatch(/noted/i);
+
+				act(() => {
+					vi.advanceTimersByTime(3_000);
+				});
+
+				expect(result.current.overrideAcknowledgement).toBeNull();
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
 		it("keeps kickoff and post-check-in suggestion states independent", async () => {
 			taskListQuery.mockResolvedValue(activeTaskList);
 			suggestionNextMutate.mockImplementation(async (input) => {

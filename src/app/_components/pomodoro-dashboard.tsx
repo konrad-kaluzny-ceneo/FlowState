@@ -71,6 +71,19 @@ function PomodoroDashboardBody({
 		isBreakRunning &&
 		pomodoro.pendingSuggestion.status !== "idle";
 
+	const showKickoffCard =
+		enableSuggestionGate &&
+		pomodoro.state === "idle" &&
+		pomodoro.focusedTaskId == null &&
+		pomodoro.pendingKickoffSuggestion.status !== "idle" &&
+		!showSuggestionCard;
+
+	const highlightedTaskId = showKickoffCard
+		? pomodoro.kickoffSuggestedTaskId
+		: showSuggestionCard
+			? pomodoro.suggestedTaskId
+			: null;
+
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8">
 			{pomodoro.error != null && (
@@ -131,6 +144,35 @@ function PomodoroDashboardBody({
 					/>
 				) : null)}
 
+			{showKickoffCard &&
+				(pomodoro.pendingKickoffSuggestion.status === "loading" ? (
+					<TaskSuggestionCard status="loading" />
+				) : pomodoro.pendingKickoffSuggestion.status === "ready" ? (
+					<TaskSuggestionCard
+						coachLine={suggestionCoachLine}
+						isAccepting={pomodoro.isAcceptingKickoffSuggestion}
+						onAccept={() => {
+							onSuggestionCoachSeen?.();
+							void pomodoro.acceptKickoffSuggestion();
+						}}
+						status="ready"
+						suggestion={{
+							taskId: Number(pomodoro.pendingKickoffSuggestion.data.taskId),
+							title: pomodoro.pendingKickoffSuggestion.data.title,
+							workType: pomodoro.pendingKickoffSuggestion.data.workType,
+							weight: pomodoro.pendingKickoffSuggestion.data.weight,
+							rationale: pomodoro.pendingKickoffSuggestion.data.rationale,
+						}}
+					/>
+				) : pomodoro.pendingKickoffSuggestion.status === "empty" ? (
+					<TaskSuggestionCard status="empty" />
+				) : pomodoro.pendingKickoffSuggestion.status === "error" ? (
+					<TaskSuggestionCard
+						onRetry={pomodoro.retryKickoffSuggestion}
+						status="error"
+					/>
+				) : null)}
+
 			{pomodoro.overrideAcknowledgement != null && (
 				<p
 					className="w-full max-w-lg rounded-lg border border-purple-400/30 bg-purple-500/10 px-4 py-3 text-center text-purple-100/90 text-sm"
@@ -144,7 +186,7 @@ function PomodoroDashboardBody({
 				cycleKind={pomodoro.cycleKind}
 				cycleState={pomodoro.state}
 				focusedTaskId={pomodoro.focusedTaskId}
-				highlightedTaskId={pomodoro.suggestedTaskId}
+				highlightedTaskId={highlightedTaskId}
 				onFocusTask={(taskId, task) => {
 					pomodoro.selectTask(taskId, task);
 				}}
@@ -152,7 +194,10 @@ function PomodoroDashboardBody({
 					pomodoro.onMidCycleMarkComplete(taskId, task);
 				}}
 				onRefresh={refreshTasks}
-				suggestionLoading={pomodoro.pendingSuggestion.status === "loading"}
+				suggestionLoading={
+					pomodoro.pendingSuggestion.status === "loading" ||
+					pomodoro.pendingKickoffSuggestion.status === "loading"
+				}
 				tasks={tasks}
 			/>
 

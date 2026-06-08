@@ -147,7 +147,10 @@ export function usePomodoroCycle() {
 	);
 	const [preFocusedTask, setPreFocusedTask] = useState<FocusedTask>(null);
 	const [hasPreFocusedSuggestion, setHasPreFocusedSuggestion] = useState(false);
+	const [hasPreFocusedKickoff, setHasPreFocusedKickoff] = useState(false);
 	const [isAcceptingSuggestion, setIsAcceptingSuggestion] = useState(false);
+	const [isAcceptingKickoffSuggestion, setIsAcceptingKickoffSuggestion] =
+		useState(false);
 	const [overrideAcknowledgement, setOverrideAcknowledgement] = useState<
 		string | null
 	>(null);
@@ -474,6 +477,7 @@ export function usePomodoroCycle() {
 		kickoffFetchGenRef.current += 1;
 		setPendingKickoffSuggestion({ status: "idle" });
 		setKickoffSuggestedTaskId(null);
+		setHasPreFocusedKickoff(false);
 	}, []);
 
 	const clearKickoffIdleFlags = useCallback(() => {
@@ -520,6 +524,29 @@ export function usePomodoroCycle() {
 			}
 		},
 		[suggestionCycleId, recordDecisionMutation],
+	);
+
+	const recordKickoffDecision = useCallback(
+		async (suggestedId: DomainTaskId, chosenId: DomainTaskId) => {
+			if (_activeSessionId == null) {
+				return;
+			}
+			try {
+				await retryOnce(() =>
+					recordDecisionMutation.mutateAsync({
+						context: "kickoff",
+						sessionId: Number(_activeSessionId),
+						suggestedTaskId: Number(suggestedId),
+						chosenTaskId: Number(chosenId),
+					}),
+				);
+			} catch {
+				setError(
+					"Could not save suggestion preference. Your choice is kept locally.",
+				);
+			}
+		},
+		[_activeSessionId, recordDecisionMutation],
 	);
 
 	const fetchSuggestion = useCallback(
@@ -635,15 +662,29 @@ export function usePomodoroCycle() {
 				preFocusedTask.id,
 			);
 		}
+		if (
+			hasPreFocusedKickoff &&
+			pendingKickoffSuggestion.status === "ready" &&
+			preFocusedTask != null
+		) {
+			void recordKickoffDecision(
+				pendingKickoffSuggestion.data.taskId,
+				preFocusedTask.id,
+			);
+		}
 		setPreFocusedTask(null);
 		setHasPreFocusedSuggestion(false);
+		setHasPreFocusedKickoff(false);
 		setFocusedTaskId(null);
 		setFocusedTask(null);
 	}, [
 		hasPreFocusedSuggestion,
+		hasPreFocusedKickoff,
 		pendingSuggestion,
+		pendingKickoffSuggestion,
 		preFocusedTask,
 		recordSuggestionDecision,
+		recordKickoffDecision,
 	]);
 
 	const selectTask = useCallback(
@@ -655,7 +696,6 @@ export function usePomodoroCycle() {
 			}
 
 			setError(null);
-			clearKickoffIdleFlags();
 
 			if (
 				breakRunning &&
@@ -668,17 +708,39 @@ export function usePomodoroCycle() {
 				setHasPreFocusedSuggestion(false);
 			}
 
+			if (
+				!breakRunning &&
+				state === "idle" &&
+				pendingKickoffSuggestion.status === "ready" &&
+				taskId !== pendingKickoffSuggestion.data.taskId
+			) {
+				void recordKickoffDecision(
+					pendingKickoffSuggestion.data.taskId,
+					taskId,
+				);
+				showOverrideAck();
+				setKickoffSuggestedTaskId(null);
+				setHasPreFocusedKickoff(false);
+			}
+
 			if (breakRunning && pendingSuggestion.status === "loading") {
 				return;
 			}
 
+			if (!breakRunning && pendingKickoffSuggestion.status === "loading") {
+				return;
+			}
+
+			clearKickoffIdleFlags();
 			preFocusTask(taskId, task);
 		},
 		[
 			state,
 			cycleKind,
 			pendingSuggestion,
+			pendingKickoffSuggestion,
 			recordSuggestionDecision,
+			recordKickoffDecision,
 			preFocusTask,
 			showOverrideAck,
 			clearKickoffIdleFlags,
@@ -705,6 +767,33 @@ export function usePomodoroCycle() {
 			setIsAcceptingSuggestion(false);
 		}
 	}, [pendingSuggestion, preFocusTask, recordSuggestionDecision]);
+
+	const acceptKickoffSuggestion = useCallback(async () => {
+		if (pendingKickoffSuggestion.status !== "ready") {
+			return;
+		}
+
+		const { data } = pendingKickoffSuggestion;
+		setIsAcceptingKickoffSuggestion(true);
+		setError(null);
+
+		try {
+			preFocusTask(data.taskId, {
+				id: data.taskId,
+				title: data.title,
+			});
+			setHasPreFocusedKickoff(true);
+			clearKickoffIdleFlags();
+			await recordKickoffDecision(data.taskId, data.taskId);
+		} finally {
+			setIsAcceptingKickoffSuggestion(false);
+		}
+	}, [
+		pendingKickoffSuggestion,
+		preFocusTask,
+		recordKickoffDecision,
+		clearKickoffIdleFlags,
+	]);
 
 	const clearTask = useCallback(() => {
 		if (state === "running" || state === "completed") {
@@ -1189,7 +1278,9 @@ export function usePomodoroCycle() {
 		suggestedTaskId,
 		preFocusedTask,
 		hasPreFocusedSuggestion,
+		hasPreFocusedKickoff,
 		isAcceptingSuggestion,
+		isAcceptingKickoffSuggestion,
 		overrideAcknowledgement,
 		pendingKickoffSuggestion,
 		kickoffSuggestedTaskId,
@@ -1197,6 +1288,7 @@ export function usePomodoroCycle() {
 		selectTask,
 		clearTask,
 		acceptSuggestion,
+		acceptKickoffSuggestion,
 		clearSuggestion,
 		clearKickoffSuggestion,
 		dismissPreFocus,
