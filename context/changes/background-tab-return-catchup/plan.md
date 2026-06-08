@@ -56,7 +56,7 @@ Five TDD-friendly phases: pure catch-up helpers → hook state (red/green unit t
 
 ## Critical Implementation Details
 
-**Catch-up set timing:** Set `catchUp` inside `handleCycleExpired` when `document.visibilityState !== "visible"`, recording `cycleEndedAtMs = Date.now()` and deriving `gate` from post-expiry hook state (`WORK_CONFIRM` or `BREAK_CONFIRM` from `cycleKind`). On `resumeFromActiveCycle` when `endTime <= Date.now()`, set the same catch-up (mount/refresh treated as hidden expiry).
+**Catch-up set timing:** Track `tabWasHiddenWhileRunningRef` — set `true` on `visibilitychange` when `document.visibilityState === "hidden"` and `stateRef === "running"`; clear on `dismissCatchUp`, new cycle start, or after catch-up is set. Set `catchUp` inside a shared `setCatchUpOnHiddenExpiry(gateSnapshot)` helper when `handleCycleExpired` runs and **either** `document.visibilityState !== "visible"` **or** `tabWasHiddenWhileRunningRef` is true (covers fallback-throttled expiry on tab return via `recalculateFromEndTime`). Record `cycleEndedAtMs = endTimeRef.current ?? Date.now()` so “ended ago” reflects the true wall-clock end, not the moment recalc fired. Derive `gate` from post-expiry hook snapshot (`WORK_CONFIRM` or `BREAK_CONFIRM` from `cycleKind`). On `resumeFromActiveCycle` when `endTime <= Date.now()`, call the same helper with `cycleEndedAtMs = endTime` (mount/refresh treated as hidden expiry).
 
 **Gate derivation priority** (when setting or displaying `catchUp.gate`): `awaitingCheckIn` → `CHECK_IN`; else `state === "completed"` + `WORK` → `WORK_CONFIRM`; else `state === "completed"` + break kind → `BREAK_CONFIRM`; else break running + `pendingSuggestion.status === "ready"` → `SUGGESTION_ACCEPT`. Primary MVP paths are `WORK_CONFIRM` and `BREAK_CONFIRM`; `CHECK_IN` / `SUGGESTION_ACCEPT` copy exists for enum completeness but catch-up clears on first interaction so stacking cannot occur.
 
@@ -147,10 +147,12 @@ Extend `use-pomodoro-cycle` to set a one-shot `catchUp` when expiry fires while 
 **Intent**: Record hidden expiry and expose dismiss API without changing server completion semantics.
 
 **Contract**:
-- Add `catchUp` state (`CatchUpState`, default `null`).
-- In `handleCycleExpired`, after setting `completed`, if `document.visibilityState !== "visible"`, set `catchUp` with `endedWhileHidden: true`, `cycleEndedAtMs: Date.now()`, `gate: deriveCatchUpGate(...)` from post-expiry snapshot.
-- In `resumeFromActiveCycle` expired branch (`endTime <= Date.now()`), set equivalent `catchUp` (treat mount/refresh as hidden).
-- Export `catchUp` and `dismissCatchUp: () => setCatchUp(null)` on hook return object.
+- Add `catchUp` state (`CatchUpState`, default `null`) and `tabWasHiddenWhileRunningRef` (ref, default `false`).
+- On `visibilitychange` to `"hidden"` while `stateRef === "running"`, set `tabWasHiddenWhileRunningRef = true`.
+- Extract `setCatchUpOnHiddenExpiry(snapshot)` — sets `catchUp` with `endedWhileHidden: true`, `cycleEndedAtMs: endTimeRef.current ?? Date.now()`, `gate: deriveCatchUpGate(snapshot)`; clears `tabWasHiddenWhileRunningRef`.
+- In `handleCycleExpired`, after setting `completed`, call `setCatchUpOnHiddenExpiry` when `document.visibilityState !== "visible"` **or** `tabWasHiddenWhileRunningRef` is true.
+- In `resumeFromActiveCycle` expired branch (`endTime <= Date.now()`), call `setCatchUpOnHiddenExpiry` with `cycleEndedAtMs = endTime` (treat mount/refresh as hidden).
+- Export `catchUp` and `dismissCatchUp: () => setCatchUp(null)` on hook return object (`dismissCatchUp` also clears `tabWasHiddenWhileRunningRef`).
 - Do **not** replay alarm on visibility return; existing `playAlarm` in `handleCycleExpired` unchanged.
 
 #### 2. Hook unit tests
@@ -161,8 +163,9 @@ Extend `use-pomodoro-cycle` to set a one-shot `catchUp` when expiry fires while 
 
 **Contract**:
 - Mock `document.visibilityState` to `"hidden"` before advancing timers to expiry → expect `catchUp.endedWhileHidden === true`, `gate === "WORK_CONFIRM"`.
-- Same flow with `"visible"` → `catchUp === null`.
-- Expired `resumeFromActiveCycle` → `catchUp` set.
+- Same flow with `"visible"` throughout (never hidden) → `catchUp === null`.
+- **Visibility-recalc path (primary fallback story):** set hidden while running, advance wall-clock past `endTime` without firing expiry, flip to `"visible"`, dispatch `visibilitychange` → `recalculateFromEndTime` triggers expiry → `catchUp` set with `cycleEndedAtMs` matching `endTime`, not `Date.now()`.
+- Expired `resumeFromActiveCycle` → `catchUp` set with `cycleEndedAtMs` from `endTime`.
 - After `dismissCatchUp()`, simulate `visibilitychange` → `catchUp` stays null.
 - Existing visibility recalc test (`625-678`) still passes (no regression).
 
@@ -299,7 +302,7 @@ Playwright proof for calm catch-up on tab return after hidden work expiry; reuse
 
 **Intent**: Simulate hidden tab during clock advance for e2e.
 
-**Contract**: Export `runWhileHidden(page, fn)` that sets `document.visibilityState` to `"hidden"` via `page.evaluate`, runs `fn` (e.g. clock advance), restores `"visible"`, and dispatches `visibilitychange`.
+**Contract**: Export `runWhileHidden(page, fn)` that mocks `document.visibilityState` via `Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" })` inside `page.evaluate` (read-only in real browsers), runs `fn` (e.g. clock advance), restores `"visible"` with another `defineProperty`, and dispatches `visibilitychange`. Hook unit tests remain authority for the visibility-recalc fallback path; e2e proves expiry-while-hidden mock + gate wedge.
 
 #### 2. E2E spec
 
@@ -387,9 +390,9 @@ No data migration. Pure client-side additive state; clearing on dismiss means no
 
 #### Automated
 
-- [ ] 1.1 `pnpm exec vitest run src/lib/catch-up/` passes
-- [ ] 1.2 `pnpm check` passes
-- [ ] 1.3 `pnpm typecheck` passes
+- [x] 1.1 `pnpm exec vitest run src/lib/catch-up/` passes
+- [x] 1.2 `pnpm check` passes
+- [x] 1.3 `pnpm typecheck` passes
 
 #### Manual
 
