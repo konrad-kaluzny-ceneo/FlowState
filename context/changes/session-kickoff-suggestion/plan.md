@@ -472,8 +472,8 @@ Kickoff fetch is a single tRPC mutation on discrete idle transitions (not pollin
 
 #### Automated
 
-- [x] 3.1 `pnpm check` passes
-- [x] 3.2 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` passes (kickoff UI/override cases)
+- [x] 3.1 `pnpm check` passes — 9ad14a6
+- [x] 3.2 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` passes (kickoff UI/override cases) — 9ad14a6
 
 #### Manual
 
