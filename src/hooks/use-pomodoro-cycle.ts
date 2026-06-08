@@ -6,6 +6,10 @@ import { deriveCatchUpGate } from "~/lib/catch-up/derive-gate";
 import type { CatchUpState } from "~/lib/catch-up/types";
 import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 import {
+	startCycleEndTabPulse,
+	stopCycleEndTabPulse,
+} from "~/lib/cycle-end-tab-pulse";
+import {
 	useDataMode,
 	useRepositories,
 } from "~/lib/data-mode/data-mode-context";
@@ -82,6 +86,29 @@ const recoveryResetListeners = new Set<() => void>();
 
 function isBreakKind(kind: CycleKind | null): boolean {
 	return kind === "SHORT_BREAK" || kind === "LONG_BREAK";
+}
+
+function maybeStartCycleEndTabPulse(
+	cycleKind: CycleKind | null,
+	wasHiddenWhileRunning: boolean,
+	getMode: () => CycleEndAudioMode,
+) {
+	const mode = getMode();
+	if (
+		cycleKind !== "WORK" ||
+		mode === "normal" ||
+		(document.visibilityState === "visible" && !wasHiddenWhileRunning)
+	) {
+		return;
+	}
+
+	const prefersReducedMotion =
+		typeof window.matchMedia === "function" &&
+		window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+	startCycleEndTabPulse({
+		reducedMotion: prefersReducedMotion,
+	});
 }
 
 /** Reset module-level recovery guard (tests + post-guest-import resume). */
@@ -299,6 +326,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		if (document.visibilityState !== "visible" || wasHiddenWhileRunning) {
 			setCatchUpFromExpiry(endedAtMs, cycleKindRef.current);
 		}
+
+		maybeStartCycleEndTabPulse(
+			cycleKindRef.current,
+			wasHiddenWhileRunning,
+			() => getCycleEndAudioModeRef.current(),
+		);
 	}, [setCatchUpFromExpiry, stopWorker]);
 
 	const attachWorkerHandlers = useCallback(
@@ -416,6 +449,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					.playAlarm({ mode: getCycleEndAudioModeRef.current() })
 					.catch(() => {});
 				setCatchUpFromExpiry(endTime, cycle.kind);
+				maybeStartCycleEndTabPulse(
+					cycle.kind,
+					tabWasHiddenWhileRunningRef.current,
+					() => getCycleEndAudioModeRef.current(),
+				);
 				return;
 			}
 
@@ -520,6 +558,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				}
 				return;
 			}
+			stopCycleEndTabPulse();
 			recalculateFromEndTime();
 		};
 
@@ -535,6 +574,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			workerRef.current?.terminate();
 			workerRef.current = null;
 			audioRef.current.dispose();
+			stopCycleEndTabPulse();
 			if (overrideAckTimerRef.current != null) {
 				clearTimeout(overrideAckTimerRef.current);
 			}
@@ -928,6 +968,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			setError(null);
 			setCatchUp(null);
+			stopCycleEndTabPulse();
 			tabWasHiddenWhileRunningRef.current = false;
 			clearSuggestion();
 			clearKickoffSuggestion();
@@ -1522,6 +1563,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const dismissCatchUp = useCallback(() => {
 		setCatchUp(null);
+		stopCycleEndTabPulse();
 		tabWasHiddenWhileRunningRef.current = false;
 	}, []);
 

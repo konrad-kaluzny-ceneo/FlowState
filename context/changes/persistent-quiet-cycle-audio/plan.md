@@ -668,9 +668,9 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Automated
 
-- [x] 6.1 Full test suite passes: `pnpm test`
-- [x] 6.2 Typecheck passes: `pnpm typecheck`
-- [x] 6.3 Lint passes: `pnpm check`
+- [x] 6.1 Full test suite passes: `pnpm test` ? b7796d2
+- [x] 6.2 Typecheck passes: `pnpm typecheck` ? b7796d2
+- [x] 6.3 Lint passes: `pnpm check` ? b7796d2
 
 #### Manual
 
@@ -682,10 +682,10 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Automated
 
-- [x] 7.1 Tab pulse tests pass: `pnpm exec vitest run src/lib/cycle-end-tab-pulse.test.ts`
-- [x] 7.2 Full test suite passes: `pnpm test`
-- [x] 7.3 Typecheck passes: `pnpm typecheck`
-- [x] 7.4 Lint passes: `pnpm check`
+- [x] 7.1 Tab pulse tests pass: `pnpm exec vitest run src/lib/cycle-end-tab-pulse.test.ts` ? 51e4ecf
+- [x] 7.2 Full test suite passes: `pnpm test` ? 51e4ecf
+- [x] 7.3 Typecheck passes: `pnpm typecheck` ? 51e4ecf
+- [x] 7.4 Lint passes: `pnpm check` ? 51e4ecf
 
 #### Manual
 
