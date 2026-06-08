@@ -598,15 +598,15 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly: `pnpm prisma migrate dev`
-- [x] 1.2 Prisma validates: `pnpm exec prisma validate`
-- [x] 1.3 Typecheck passes: `pnpm typecheck`
-- [x] 1.4 Lint passes: `pnpm check`
+- [x] 1.1 Migration applies cleanly: `pnpm prisma migrate dev` — 7818efb
+- [x] 1.2 Prisma validates: `pnpm exec prisma validate` — 7818efb
+- [x] 1.3 Typecheck passes: `pnpm typecheck` — 7818efb
+- [x] 1.4 Lint passes: `pnpm check` — 7818efb
 
 #### Manual
 
-- [x] 1.5 Inspect migration SQL shows `flow_state_user_preference` table with enum column default `NORMAL`
-- [x] 1.6 No existing tables altered destructively
+- [x] 1.5 Inspect migration SQL shows `flow_state_user_preference` table with enum column default `NORMAL` — 7818efb
+- [x] 1.6 No existing tables altered destructively — 7818efb
 
 ### Phase 2: tRPC Preference Router
 
