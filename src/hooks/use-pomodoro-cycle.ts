@@ -197,7 +197,7 @@ export function usePomodoroCycle() {
 	const pendingIncrementInterruptionRef = useRef(false);
 	const pendingWindDownMarkTaskDoneRef = useRef<boolean | null>(null);
 	const pendingWindDownWorkCycleIdRef = useRef<number | null>(null);
-	const suggestionFetchGenRef = useRef(0);
+	const suggestionCycleIdRef = useRef<number | null>(null);
 	const kickoffFetchGenRef = useRef(0);
 	const prevKickoffEligibleRef = useRef(false);
 	const overrideAckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -557,7 +557,7 @@ export function usePomodoroCycle() {
 	}, []);
 
 	const clearSuggestion = useCallback(() => {
-		suggestionFetchGenRef.current += 1;
+		suggestionCycleIdRef.current = null;
 		setPendingSuggestion({ status: "idle" });
 		setSuggestionCycleId(null);
 		setSuggestedTaskId(null);
@@ -624,7 +624,7 @@ export function usePomodoroCycle() {
 		(cycleId: number) => {
 			clearKickoffSuggestion();
 			clearKickoffIdleFlags();
-			const gen = ++suggestionFetchGenRef.current;
+			suggestionCycleIdRef.current = cycleId;
 			setPendingSuggestion({ status: "loading" });
 			setSuggestionCycleId(cycleId);
 			setSuggestedTaskId(null);
@@ -637,7 +637,7 @@ export function usePomodoroCycle() {
 						cycleId,
 						localHour: new Date().getHours(),
 					});
-					if (gen !== suggestionFetchGenRef.current) {
+					if (suggestionCycleIdRef.current !== cycleId) {
 						return;
 					}
 					if (result == null) {
@@ -662,7 +662,7 @@ export function usePomodoroCycle() {
 						setSuggestedTaskId(result.taskId);
 					}
 				} catch {
-					if (gen !== suggestionFetchGenRef.current) {
+					if (suggestionCycleIdRef.current !== cycleId) {
 						return;
 					}
 					setPendingSuggestion({ status: "error" });

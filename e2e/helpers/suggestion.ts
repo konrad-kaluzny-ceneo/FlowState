@@ -26,8 +26,8 @@ export async function waitForSuggestionNext(page: Page) {
 		(response) => suggestionNextPostDataIncludes(response, "post_check_in"),
 		{ timeout: 20_000 },
 	);
-	await expect(page.getByTestId("suggestion-accept-btn")).toBeVisible({
-		timeout: 30_000,
+	await expect(page.getByTestId("timer-panel-running")).toContainText("Break", {
+		timeout: 15_000,
 	});
 }
 
