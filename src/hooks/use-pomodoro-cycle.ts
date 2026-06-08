@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createAudioManager } from "~/lib/audio";
+import { deriveCatchUpGate } from "~/lib/catch-up/derive-gate";
+import type { CatchUpState } from "~/lib/catch-up/types";
 import {
 	useDataMode,
 	useRepositories,
@@ -134,12 +136,16 @@ export function usePomodoroCycle() {
 	const [overrideAcknowledgement, setOverrideAcknowledgement] = useState<
 		string | null
 	>(null);
+	const [catchUp, setCatchUp] = useState<CatchUpState>(null);
 
 	const createCheckIn = api.checkIn.create.useMutation();
 	const suggestionNext = api.suggestion.next.useMutation();
 	const recordDecisionMutation = api.suggestion.recordDecision.useMutation();
 
 	const stateRef = useRef(state);
+	const cycleKindRef = useRef(cycleKind);
+	const awaitingCheckInRef = useRef(awaitingCheckIn);
+	const pendingSuggestionRef = useRef(pendingSuggestion);
 	const endTimeRef = useRef<number | null>(null);
 	const workerRef = useRef<Worker | null>(null);
 	const fallbackIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
@@ -152,6 +158,7 @@ export function usePomodoroCycle() {
 	const overrideAckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
+	const tabWasHiddenWhileRunningRef = useRef(false);
 	const useWorkerRef = useRef(
 		process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER !== "1",
 	);
@@ -159,6 +166,18 @@ export function usePomodoroCycle() {
 	useEffect(() => {
 		stateRef.current = state;
 	}, [state]);
+
+	useEffect(() => {
+		cycleKindRef.current = cycleKind;
+	}, [cycleKind]);
+
+	useEffect(() => {
+		awaitingCheckInRef.current = awaitingCheckIn;
+	}, [awaitingCheckIn]);
+
+	useEffect(() => {
+		pendingSuggestionRef.current = pendingSuggestion;
+	}, [pendingSuggestion]);
 
 	const invalidateServerCycle = useCallback(async () => {
 		if (mode === "authenticated") {
@@ -182,16 +201,43 @@ export function usePomodoroCycle() {
 		stopFallbackTimer();
 	}, [stopFallbackTimer]);
 
+	const setCatchUpFromExpiry = useCallback(
+		(endedAtMs: number, cycleKindSnapshot: CycleKind | null) => {
+			const gate = deriveCatchUpGate({
+				state: "completed",
+				cycleKind: cycleKindSnapshot,
+				awaitingCheckIn: awaitingCheckInRef.current,
+				pendingSuggestionStatus: pendingSuggestionRef.current.status,
+			});
+			if (gate == null) {
+				return;
+			}
+			setCatchUp({
+				endedWhileHidden: true,
+				cycleEndedAtMs: endedAtMs,
+				gate,
+			});
+			tabWasHiddenWhileRunningRef.current = false;
+		},
+		[],
+	);
+
 	const handleCycleExpired = useCallback(() => {
 		if (stateRef.current !== "running") {
 			return;
 		}
+		const endedAtMs = endTimeRef.current ?? Date.now();
+		const wasHiddenWhileRunning = tabWasHiddenWhileRunningRef.current;
 		stopWorker();
 		endTimeRef.current = null;
 		setRemainingMs(0);
 		setState("completed");
 		void audioRef.current.playAlarm().catch(() => {});
-	}, [stopWorker]);
+
+		if (document.visibilityState !== "visible" || wasHiddenWhileRunning) {
+			setCatchUpFromExpiry(endedAtMs, cycleKindRef.current);
+		}
+	}, [setCatchUpFromExpiry, stopWorker]);
 
 	const attachWorkerHandlers = useCallback(
 		(worker: Worker) => {
@@ -305,13 +351,14 @@ export function usePomodoroCycle() {
 			if (endTime <= Date.now()) {
 				setState("completed");
 				void audioRef.current.playAlarm().catch(() => {});
+				setCatchUpFromExpiry(endTime, cycle.kind);
 				return;
 			}
 
 			setState("running");
 			startWorker(endTime);
 		},
-		[startWorker],
+		[setCatchUpFromExpiry, startWorker],
 	);
 
 	const recoverActiveCycle = useCallback(async () => {
@@ -377,7 +424,10 @@ export function usePomodoroCycle() {
 
 	useEffect(() => {
 		const onVisibilityChange = () => {
-			if (document.visibilityState !== "visible") {
+			if (document.visibilityState === "hidden") {
+				if (stateRef.current === "running") {
+					tabWasHiddenWhileRunningRef.current = true;
+				}
 				return;
 			}
 			recalculateFromEndTime();
@@ -585,6 +635,8 @@ export function usePomodoroCycle() {
 	const start = useCallback(
 		async (durationSec: number) => {
 			setError(null);
+			setCatchUp(null);
+			tabWasHiddenWhileRunningRef.current = false;
 			clearSuggestion();
 			setPreFocusedTask(null);
 
@@ -1030,6 +1082,11 @@ export function usePomodoroCycle() {
 		setError(null);
 	}, []);
 
+	const dismissCatchUp = useCallback(() => {
+		setCatchUp(null);
+		tabWasHiddenWhileRunningRef.current = false;
+	}, []);
+
 	return {
 		state,
 		remainingMs,
@@ -1050,6 +1107,8 @@ export function usePomodoroCycle() {
 		hasPreFocusedSuggestion,
 		isAcceptingSuggestion,
 		overrideAcknowledgement,
+		catchUp,
+		dismissCatchUp,
 		selectTask,
 		clearTask,
 		acceptSuggestion,
