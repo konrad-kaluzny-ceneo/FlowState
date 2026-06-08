@@ -32,6 +32,7 @@ import {
 	OVERRIDE_ACK_LINE,
 	OVERRIDE_ACK_VISIBLE_MS,
 } from "~/lib/suggestion/override-ack-copy";
+import { beginSuggestionFetch } from "~/lib/trpc/suggestion-priority";
 import { setWorkTypeDuration } from "~/lib/work-type-duration-storage";
 import { api } from "~/trpc/react";
 import type {
@@ -695,6 +696,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setHasPreFocusedSuggestion(false);
 
 			void (async () => {
+				const endSuggestionFetch = beginSuggestionFetch();
 				try {
 					const result = await suggestionNextPostCheckIn.mutateAsync({
 						context: "post_check_in",
@@ -737,6 +739,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					}
 					setPendingSuggestion({ status: "error" });
 					setSuggestedTaskId(null);
+				} finally {
+					endSuggestionFetch();
 				}
 			})();
 		},
@@ -750,6 +754,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setKickoffSuggestedTaskId(null);
 
 			void (async () => {
+				const endSuggestionFetch = beginSuggestionFetch();
 				try {
 					const result = await suggestionNextKickoff.mutateAsync({
 						context: "kickoff",
@@ -772,6 +777,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					}
 					setPendingKickoffSuggestion({ status: "error" });
 					setKickoffSuggestedTaskId(null);
+				} finally {
+					endSuggestionFetch();
 				}
 			})();
 		},

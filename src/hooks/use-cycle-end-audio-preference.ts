@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+	useSyncExternalStore,
+} from "react";
 
 import {
 	readCycleEndAudioMode,
@@ -12,6 +18,11 @@ import {
 	DEFAULT_CYCLE_END_AUDIO_MODE,
 } from "~/lib/cycle-audio-preference/types";
 import type { OnboardingScope } from "~/lib/onboarding/types";
+import {
+	getSuggestionFetchInFlight,
+	subscribeSuggestionFetchInFlight,
+	waitUntilSuggestionIdle,
+} from "~/lib/trpc/suggestion-priority";
 import { api } from "~/trpc/react";
 
 export function useCycleEndAudioPreference(scope: OnboardingScope) {
@@ -24,13 +35,31 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 		readCycleEndAudioMode(scope),
 	);
 	const [isHydrated, setIsHydrated] = useState(isGuest);
+	const [mountSettled, setMountSettled] = useState(isGuest);
 	const guestMergeAttemptedRef = useRef(false);
+	const guestMergeGenRef = useRef(0);
 
-	const preferenceQuery = api.preference.get.useQuery(undefined, {
-		enabled: !isGuest && userId != null,
-	});
+	const suggestionFetchInFlight = useSyncExternalStore(
+		subscribeSuggestionFetchInFlight,
+		getSuggestionFetchInFlight,
+		() => false,
+	);
 
 	const setMutation = api.preference.set.useMutation();
+
+	useEffect(() => {
+		if (isGuest) {
+			setMountSettled(true);
+			return;
+		}
+
+		const frameId = window.requestAnimationFrame(() => {
+			setMountSettled(true);
+		});
+		return () => {
+			window.cancelAnimationFrame(frameId);
+		};
+	}, [isGuest]);
 
 	useEffect(() => {
 		const nextScope: OnboardingScope = isGuest
@@ -40,38 +69,60 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 		setModeState(readCycleEndAudioMode(nextScope));
 		setIsHydrated(isGuest);
 		guestMergeAttemptedRef.current = false;
+		guestMergeGenRef.current += 1;
 	}, [isGuest, userId]);
+
+	const preferenceQueryEnabled =
+		!isGuest && userId != null && mountSettled && !suggestionFetchInFlight;
+
+	const preferenceQuery = api.preference.get.useQuery(undefined, {
+		enabled: preferenceQueryEnabled,
+	});
 
 	useEffect(() => {
 		if (isGuest || userId == null) {
 			return;
 		}
 
-		if (!preferenceQuery.isFetched) {
+		if (suggestionFetchInFlight || !preferenceQuery.isFetched) {
 			return;
 		}
 
-		const serverMode =
-			preferenceQuery.data?.cycleEndAudioMode ?? DEFAULT_CYCLE_END_AUDIO_MODE;
+		const mergeGen = ++guestMergeGenRef.current;
 
-		if (!guestMergeAttemptedRef.current) {
-			guestMergeAttemptedRef.current = true;
-			const guestMode = readGuestModeForMerge();
-			if (guestMode != null && serverMode === DEFAULT_CYCLE_END_AUDIO_MODE) {
-				setModeState(guestMode);
-				writeCycleEndAudioMode(scopeRef.current, guestMode);
-				setMutation.mutate({ cycleEndAudioMode: guestMode });
-				setIsHydrated(true);
+		void (async () => {
+			await waitUntilSuggestionIdle();
+			if (guestMergeGenRef.current !== mergeGen) {
 				return;
 			}
-		}
 
-		setModeState(serverMode);
-		writeCycleEndAudioMode(scopeRef.current, serverMode);
-		setIsHydrated(true);
+			const serverMode =
+				preferenceQuery.data?.cycleEndAudioMode ?? DEFAULT_CYCLE_END_AUDIO_MODE;
+
+			if (!guestMergeAttemptedRef.current) {
+				guestMergeAttemptedRef.current = true;
+				const guestMode = readGuestModeForMerge();
+				if (guestMode != null && serverMode === DEFAULT_CYCLE_END_AUDIO_MODE) {
+					setModeState(guestMode);
+					writeCycleEndAudioMode(scopeRef.current, guestMode);
+					await waitUntilSuggestionIdle();
+					if (guestMergeGenRef.current !== mergeGen) {
+						return;
+					}
+					await setMutation.mutateAsync({ cycleEndAudioMode: guestMode });
+					setIsHydrated(true);
+					return;
+				}
+			}
+
+			setModeState(serverMode);
+			writeCycleEndAudioMode(scopeRef.current, serverMode);
+			setIsHydrated(true);
+		})();
 	}, [
 		isGuest,
 		userId,
+		suggestionFetchInFlight,
 		preferenceQuery.isFetched,
 		preferenceQuery.data,
 		setMutation,
@@ -82,7 +133,10 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 			setModeState(next);
 			writeCycleEndAudioMode(scopeRef.current, next);
 			if (!isGuest && userId != null) {
-				setMutation.mutate({ cycleEndAudioMode: next });
+				void (async () => {
+					await waitUntilSuggestionIdle();
+					setMutation.mutate({ cycleEndAudioMode: next });
+				})();
 			}
 		},
 		[isGuest, userId, setMutation],
