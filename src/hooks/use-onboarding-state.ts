@@ -7,13 +7,17 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
 } from "react";
 
 import { subscribeGuestStore } from "~/lib/guest/store";
-import { shouldDeferFirstRun } from "~/lib/onboarding/defer";
+import {
+	shouldDeferFirstRun,
+	subscribeDeferState,
+} from "~/lib/onboarding/defer";
 import {
 	loadOnboardingState,
 	patchOnboardingState,
@@ -73,15 +77,22 @@ function useOnboardingState(scope: OnboardingScope): OnboardingContextValue {
 		);
 	}, []);
 
-	const [deferFirstRun, setDeferFirstRun] = useState(() =>
-		shouldDeferFirstRun(),
-	);
+	// Pessimistic true on first render (SSR + hydration) avoids overlay flash/mismatch.
+	const [deferFirstRun, setDeferFirstRun] = useState(true);
 
-	useEffect(() => {
-		setDeferFirstRun(shouldDeferFirstRun());
-		return subscribeGuestStore(() => {
+	useLayoutEffect(() => {
+		const syncDeferFirstRun = () => {
 			setDeferFirstRun(shouldDeferFirstRun());
-		});
+		};
+
+		syncDeferFirstRun();
+		const unsubscribeGuest = subscribeGuestStore(syncDeferFirstRun);
+		const unsubscribeDefer = subscribeDeferState(syncDeferFirstRun);
+
+		return () => {
+			unsubscribeGuest();
+			unsubscribeDefer();
+		};
 	}, []);
 
 	const isFirstRunVisible = useMemo(() => {

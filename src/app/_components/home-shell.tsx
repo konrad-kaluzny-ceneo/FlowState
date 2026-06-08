@@ -3,6 +3,11 @@
 import { FirstRunOverlay } from "~/app/_components/first-run-overlay";
 import { GuestBanner } from "~/app/_components/guest-banner";
 import { GuestImportOnMount } from "~/app/_components/guest-import-on-mount";
+import {
+	GuestMergeUiProvider,
+	useGuestMergeUi,
+} from "~/app/_components/guest-merge-ui-context";
+import { MergeSuccessOverlay } from "~/app/_components/merge-success-overlay";
 import { PomodoroDashboard } from "~/app/_components/pomodoro-dashboard";
 import {
 	OnboardingProvider,
@@ -17,18 +22,39 @@ type HomeShellProps = {
 	userId: string | null;
 };
 
+function MergeSuccessOverlayMount() {
+	const { mergeSuccessCopy, mergeSuccessVisible, dismissMergeSuccess } =
+		useGuestMergeUi();
+
+	if (mergeSuccessCopy == null) {
+		return null;
+	}
+
+	return (
+		<MergeSuccessOverlay
+			copy={mergeSuccessCopy}
+			onDismiss={dismissMergeSuccess}
+			visible={mergeSuccessVisible}
+		/>
+	);
+}
+
 function HomeShellContent({ isAuthenticated }: { isAuthenticated: boolean }) {
 	const mode = isAuthenticated ? "authenticated" : "guest";
 	const { isFirstRunVisible, dismissFirstRun } = useOnboarding();
+	const { mergeSuccessVisible } = useGuestMergeUi();
 	const cycleCompleteVisible = useTestIdVisible("cycle-complete-overlay");
 
 	return (
 		<DataModeProvider mode={mode}>
 			{isAuthenticated && <GuestImportOnMount />}
+			<MergeSuccessOverlayMount />
 			<FirstRunOverlay
 				mode={mode}
 				onDismiss={dismissFirstRun}
-				visible={isFirstRunVisible && !cycleCompleteVisible}
+				visible={
+					isFirstRunVisible && !cycleCompleteVisible && !mergeSuccessVisible
+				}
 			/>
 			<main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#1a1a2e] to-[#16213e] text-white">
 				<div className="container flex flex-col items-center justify-center gap-8 px-4 py-16">
@@ -49,7 +75,9 @@ export function HomeShell({ isAuthenticated, userId }: HomeShellProps) {
 
 	return (
 		<OnboardingProvider scope={scope}>
-			<HomeShellContent isAuthenticated={isAuthenticated} />
+			<GuestMergeUiProvider>
+				<HomeShellContent isAuthenticated={isAuthenticated} />
+			</GuestMergeUiProvider>
 		</OnboardingProvider>
 	);
 }
