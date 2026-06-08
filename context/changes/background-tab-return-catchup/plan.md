@@ -422,9 +422,9 @@ No data migration. Pure client-side additive state; clearing on dismiss means no
 
 #### Automated
 
-- [x] 4.1 `pnpm test` passes (full unit suite)
-- [x] 4.2 `pnpm check` passes
-- [x] 4.3 `pnpm typecheck` passes
+- [x] 4.1 `pnpm test` passes (full unit suite) — cf69fcd
+- [x] 4.2 `pnpm check` passes — cf69fcd
+- [x] 4.3 `pnpm typecheck` passes — cf69fcd
 
 #### Manual
 
@@ -438,7 +438,7 @@ No data migration. Pure client-side additive state; clearing on dismiss means no
 
 - [ ] 5.1 `set CI=true && pnpm test:e2e e2e/background-tab-return.spec.ts` passes
 - [ ] 5.2 `set CI=true && pnpm test:e2e` full suite passes
-- [ ] 5.3 `pnpm test` passes
+- [x] 5.3 `pnpm test` passes
 
 #### Manual
 
