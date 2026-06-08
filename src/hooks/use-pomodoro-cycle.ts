@@ -16,10 +16,12 @@ import {
 	getShortBreakDuration,
 	setLastDuration,
 } from "~/lib/duration-storage";
+import type { OnboardingScope } from "~/lib/onboarding/types";
 import {
 	OVERRIDE_ACK_LINE,
 	OVERRIDE_ACK_VISIBLE_MS,
 } from "~/lib/suggestion/override-ack-copy";
+import { setWorkTypeDuration } from "~/lib/work-type-duration-storage";
 import { api } from "~/trpc/react";
 import type {
 	TimerWorkerInbound,
@@ -148,6 +150,9 @@ export function usePomodoroCycle() {
 	const [preFocusedTask, setPreFocusedTask] = useState<FocusedTask>(null);
 	const [hasPreFocusedSuggestion, setHasPreFocusedSuggestion] = useState(false);
 	const [hasPreFocusedKickoff, setHasPreFocusedKickoff] = useState(false);
+	const [stagedKickoffDurationSec, setStagedKickoffDurationSec] = useState<
+		number | null
+	>(null);
 	const [isAcceptingSuggestion, setIsAcceptingSuggestion] = useState(false);
 	const [isAcceptingKickoffSuggestion, setIsAcceptingKickoffSuggestion] =
 		useState(false);
@@ -478,6 +483,11 @@ export function usePomodoroCycle() {
 		setPendingKickoffSuggestion({ status: "idle" });
 		setKickoffSuggestedTaskId(null);
 		setHasPreFocusedKickoff(false);
+		setStagedKickoffDurationSec(null);
+	}, []);
+
+	const clearStagedKickoffDuration = useCallback(() => {
+		setStagedKickoffDurationSec(null);
 	}, []);
 
 	const clearKickoffIdleFlags = useCallback(() => {
@@ -675,6 +685,7 @@ export function usePomodoroCycle() {
 		setPreFocusedTask(null);
 		setHasPreFocusedSuggestion(false);
 		setHasPreFocusedKickoff(false);
+		setStagedKickoffDurationSec(null);
 		setFocusedTaskId(null);
 		setFocusedTask(null);
 	}, [
@@ -795,6 +806,18 @@ export function usePomodoroCycle() {
 		clearKickoffIdleFlags,
 	]);
 
+	const selectKickoffDuration = useCallback(
+		(
+			workType: KickoffSuggestionResult["workType"],
+			sec: number,
+			scope: OnboardingScope,
+		) => {
+			setStagedKickoffDurationSec(sec);
+			setWorkTypeDuration(workType, sec, scope);
+		},
+		[],
+	);
+
 	const clearTask = useCallback(() => {
 		if (state === "running" || state === "completed") {
 			return;
@@ -805,11 +828,14 @@ export function usePomodoroCycle() {
 
 	const start = useCallback(
 		async (durationSec: number) => {
+			const effectiveDurationSec = stagedKickoffDurationSec ?? durationSec;
+
 			setError(null);
 			clearSuggestion();
 			clearKickoffSuggestion();
 			clearKickoffIdleFlags();
 			setPreFocusedTask(null);
+			setStagedKickoffDurationSec(null);
 
 			if (state !== "idle") {
 				setError(
@@ -843,7 +869,7 @@ export function usePomodoroCycle() {
 
 				const cycle = await cycles.create({
 					kind: "WORK",
-					configuredDurationSec: durationSec,
+					configuredDurationSec: effectiveDurationSec,
 					taskId: focusedTaskId,
 				});
 
@@ -857,7 +883,7 @@ export function usePomodoroCycle() {
 				setCycleKind("WORK");
 				setState("running");
 				startWorker(endTime);
-				setLastDuration(durationSec);
+				setLastDuration(effectiveDurationSec);
 
 				await invalidateServerCycle();
 			} catch {
@@ -871,6 +897,7 @@ export function usePomodoroCycle() {
 			focusedTaskId,
 			focusedTask,
 			_activeSessionId,
+			stagedKickoffDurationSec,
 			sessions,
 			cycles,
 			startWorker,
@@ -1279,6 +1306,7 @@ export function usePomodoroCycle() {
 		preFocusedTask,
 		hasPreFocusedSuggestion,
 		hasPreFocusedKickoff,
+		stagedKickoffDurationSec,
 		isAcceptingSuggestion,
 		isAcceptingKickoffSuggestion,
 		overrideAcknowledgement,
@@ -1289,6 +1317,8 @@ export function usePomodoroCycle() {
 		clearTask,
 		acceptSuggestion,
 		acceptKickoffSuggestion,
+		selectKickoffDuration,
+		clearStagedKickoffDuration,
 		clearSuggestion,
 		clearKickoffSuggestion,
 		dismissPreFocus,

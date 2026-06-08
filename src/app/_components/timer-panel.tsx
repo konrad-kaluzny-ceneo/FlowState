@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type {
 	CycleKind,
@@ -36,6 +36,8 @@ type TimerPanelProps = {
 	onInterrupt: () => Promise<void>;
 	isStarting?: boolean;
 	cycleKind?: CycleKind | null;
+	preferredWorkDurationSec?: number | null;
+	onWorkDurationManualChange?: () => void;
 };
 
 export function TimerPanel({
@@ -46,9 +48,11 @@ export function TimerPanel({
 	onInterrupt,
 	isStarting = false,
 	cycleKind = null,
+	preferredWorkDurationSec = null,
+	onWorkDurationManualChange,
 }: TimerPanelProps) {
-	const [workDurationSec, setWorkDurationSec] = useState(() =>
-		getLastDuration(),
+	const [workDurationSec, setWorkDurationSec] = useState(
+		() => preferredWorkDurationSec ?? getLastDuration(),
 	);
 	const [shortBreakSec, setShortBreakSec] = useState(() =>
 		getShortBreakDuration(),
@@ -58,6 +62,12 @@ export function TimerPanel({
 	);
 	const [workPickerInvalid, setWorkPickerInvalid] = useState(false);
 	const [showBreakSettings, setShowBreakSettings] = useState(false);
+
+	useEffect(() => {
+		if (preferredWorkDurationSec != null) {
+			setWorkDurationSec(preferredWorkDurationSec);
+		}
+	}, [preferredWorkDurationSec]);
 
 	const workMinSec = getMinWorkDurationSec();
 	const workMaxSec = getMaxWorkDurationSec();
@@ -134,7 +144,10 @@ export function TimerPanel({
 				boundsLabel="1 s – 90 min"
 				maxSec={workMaxSec}
 				minSec={workMinSec}
-				onChangeSec={setWorkDurationSec}
+				onChangeSec={(sec) => {
+					onWorkDurationManualChange?.();
+					setWorkDurationSec(sec);
+				}}
 				onValidationChange={setWorkPickerInvalid}
 				presets={getWorkDurationPresets()}
 				testIdPrefix="work-duration"
