@@ -180,7 +180,8 @@ export function usePomodoroCycle() {
 	const [catchUp, setCatchUp] = useState<CatchUpState>(null);
 
 	const createCheckIn = api.checkIn.create.useMutation();
-	const suggestionNext = api.suggestion.next.useMutation();
+	const suggestionNextPostCheckIn = api.suggestion.next.useMutation();
+	const suggestionNextKickoff = api.suggestion.next.useMutation();
 	const recordDecisionMutation = api.suggestion.recordDecision.useMutation();
 
 	const stateRef = useRef(state);
@@ -632,7 +633,7 @@ export function usePomodoroCycle() {
 
 			void (async () => {
 				try {
-					const result = await suggestionNext.mutateAsync({
+					const result = await suggestionNextPostCheckIn.mutateAsync({
 						context: "post_check_in",
 						cycleId,
 						localHour: new Date().getHours(),
@@ -670,7 +671,7 @@ export function usePomodoroCycle() {
 				}
 			})();
 		},
-		[suggestionNext, clearKickoffSuggestion, clearKickoffIdleFlags],
+		[suggestionNextPostCheckIn, clearKickoffSuggestion, clearKickoffIdleFlags],
 	);
 
 	const fetchKickoffSuggestion = useCallback(
@@ -681,7 +682,7 @@ export function usePomodoroCycle() {
 
 			void (async () => {
 				try {
-					const result = await suggestionNext.mutateAsync({
+					const result = await suggestionNextKickoff.mutateAsync({
 						context: "kickoff",
 						sessionId,
 						localHour: new Date().getHours(),
@@ -705,7 +706,7 @@ export function usePomodoroCycle() {
 				}
 			})();
 		},
-		[suggestionNext],
+		[suggestionNextKickoff],
 	);
 
 	const kickoffEligible =
