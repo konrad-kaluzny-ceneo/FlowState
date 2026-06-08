@@ -697,11 +697,11 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Automated
 
-- [x] 8.1 E2E passes: `set CI=true && pnpm test:e2e e2e/quiet-cycle-audio.spec.ts`
-- [x] 8.2 Guest e2e passes: `set CI=true && pnpm test:e2e e2e/guest-quiet-cycle-audio.spec.ts`
-- [x] 8.3 S-22 regression: `set CI=true && pnpm test:e2e e2e/background-tab-return.spec.ts e2e/guest-background-tab-return.spec.ts`
-- [x] 8.4 Full unit suite passes: `pnpm test`
-- [x] 8.5 Lint and typecheck pass: `pnpm check` and `pnpm typecheck`
+- [x] 8.1 E2E passes: `set CI=true && pnpm test:e2e e2e/quiet-cycle-audio.spec.ts` ? 576c1ef
+- [x] 8.2 Guest e2e passes: `set CI=true && pnpm test:e2e e2e/guest-quiet-cycle-audio.spec.ts` ? 576c1ef
+- [x] 8.3 S-22 regression: `set CI=true && pnpm test:e2e e2e/background-tab-return.spec.ts e2e/guest-background-tab-return.spec.ts` ? 576c1ef
+- [x] 8.4 Full unit suite passes: `pnpm test` ? 576c1ef
+- [x] 8.5 Lint and typecheck pass: `pnpm check` and `pnpm typecheck` ? 576c1ef
 
 #### Manual
 
