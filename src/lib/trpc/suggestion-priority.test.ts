@@ -32,7 +32,7 @@ describe("suggestion-priority", () => {
 		expect(getSuggestionFetchInFlight()).toBe(false);
 	});
 
-	it("waitUntilSuggestionIdle resolves with a releasable reservation", async () => {
+	it("waitUntilSuggestionIdle resolves after suggestion fetch ends", async () => {
 		resetSuggestionFetchPriorityForTests();
 		const end = beginSuggestionFetch();
 
@@ -46,24 +46,8 @@ describe("suggestion-priority", () => {
 		expect(resolved).toBe(false);
 
 		end();
-		const release = await idlePromise;
+		await idlePromise;
 		expect(resolved).toBe(true);
-		expect(getSuggestionFetchInFlight()).toBe(false);
-
-		release();
-		expect(getSuggestionFetchInFlight()).toBe(false);
-	});
-
-	it("holds idle window until release so overlapping fetches do not interleave", async () => {
-		resetSuggestionFetchPriorityForTests();
-		const release = await waitUntilSuggestionIdle();
-		const end = beginSuggestionFetch();
-		expect(getSuggestionFetchInFlight()).toBe(true);
-
-		release();
-		expect(getSuggestionFetchInFlight()).toBe(true);
-
-		end();
 		expect(getSuggestionFetchInFlight()).toBe(false);
 	});
 });

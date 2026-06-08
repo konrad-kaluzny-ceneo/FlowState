@@ -4,13 +4,8 @@
  */
 
 let suggestionFetchCount = 0;
-let preferenceIdleReservations = 0;
 const idleWaiters: Array<() => void> = [];
 const inFlightListeners = new Set<(inFlight: boolean) => void>();
-
-function isTrafficIdle(): boolean {
-	return suggestionFetchCount === 0 && preferenceIdleReservations === 0;
-}
 
 function notifyInFlightListeners() {
 	const inFlight = suggestionFetchCount > 0;
@@ -20,7 +15,7 @@ function notifyInFlightListeners() {
 }
 
 function notifyIdleWaiters() {
-	if (!isTrafficIdle()) {
+	if (suggestionFetchCount !== 0) {
 		return;
 	}
 	for (const resolve of idleWaiters.splice(0)) {
@@ -48,31 +43,13 @@ export function getSuggestionFetchInFlight(): boolean {
 	return suggestionFetchCount > 0;
 }
 
-function acquireIdleReservation(): () => void {
-	preferenceIdleReservations += 1;
-	let released = false;
-	return () => {
-		if (released) {
-			return;
-		}
-		released = true;
-		preferenceIdleReservations = Math.max(0, preferenceIdleReservations - 1);
-		notifyIdleWaiters();
-	};
-}
-
-/**
- * Waits for suggestion traffic to finish, then reserves the idle window until
- * the returned release runs so new preference ops cannot interleave on the link.
- */
-export function waitUntilSuggestionIdle(): Promise<() => void> {
-	if (isTrafficIdle()) {
-		return Promise.resolve(acquireIdleReservation());
+/** Resolves once no suggestion.next fetch is in flight. */
+export function waitUntilSuggestionIdle(): Promise<void> {
+	if (suggestionFetchCount === 0) {
+		return Promise.resolve();
 	}
 	return new Promise((resolve) => {
-		idleWaiters.push(() => {
-			resolve(acquireIdleReservation());
-		});
+		idleWaiters.push(resolve);
 	});
 }
 
@@ -88,7 +65,6 @@ export function subscribeSuggestionFetchInFlight(
 /** @internal Test-only reset */
 export function resetSuggestionFetchPriorityForTests(): void {
 	suggestionFetchCount = 0;
-	preferenceIdleReservations = 0;
 	idleWaiters.length = 0;
 	notifyInFlightListeners();
 }
