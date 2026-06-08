@@ -1,10 +1,10 @@
 ---
 change_id: first-run-wedge-onboarding
 title: First-run wedge onboarding
-status: impl_reviewed
+status: archived
 created: 2026-06-07
-updated: 2026-06-07
-archived_at: null
+updated: 2026-06-08
+archived_at: 2026-06-08T05:27:07Z
 ---
 
 ## Notes
