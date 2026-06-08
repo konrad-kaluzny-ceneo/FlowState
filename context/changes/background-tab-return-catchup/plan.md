@@ -422,9 +422,9 @@ No data migration. Pure client-side additive state; clearing on dismiss means no
 
 #### Automated
 
-- [ ] 4.1 `pnpm test` passes (full unit suite)
-- [ ] 4.2 `pnpm check` passes
-- [ ] 4.3 `pnpm typecheck` passes
+- [x] 4.1 `pnpm test` passes (full unit suite)
+- [x] 4.2 `pnpm check` passes
+- [x] 4.3 `pnpm typecheck` passes
 
 #### Manual
 
