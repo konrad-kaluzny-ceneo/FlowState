@@ -1,7 +1,7 @@
 ---
 change_id: mindful-session-wind-down
 title: Mindful session wind-down nudge
-status: implemented
+status: impl_reviewed
 created: 2026-06-08
 updated: 2026-06-08
 archived_at: null

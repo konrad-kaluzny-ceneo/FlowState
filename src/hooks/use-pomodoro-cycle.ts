@@ -732,9 +732,9 @@ export function usePomodoroCycle() {
 	);
 
 	const completeWorkCycleOnly = useCallback(
-		async (markTaskDone: boolean) => {
+		async (markTaskDone: boolean): Promise<boolean> => {
 			if (activeCycle == null) {
-				return;
+				return false;
 			}
 
 			setError(null);
@@ -753,7 +753,7 @@ export function usePomodoroCycle() {
 				setError(
 					"Could not save cycle completion. Check your connection and try again.",
 				);
-				return;
+				return false;
 			}
 
 			pendingIncrementInterruptionRef.current = false;
@@ -771,6 +771,8 @@ export function usePomodoroCycle() {
 				invalidateServerCycle(),
 				...(markTaskDone ? [utils.task.list.invalidate()] : []),
 			]);
+
+			return true;
 		},
 		[activeCycle, cycles, invalidateServerCycle, stopWorker, utils.task.list],
 	);
@@ -1156,7 +1158,10 @@ export function usePomodoroCycle() {
 			setWindDownRationale(null);
 			pendingWindDownMarkTaskDoneRef.current = null;
 			pendingWindDownWorkCycleIdRef.current = null;
-			await completeWorkCycleOnly(markTaskDone);
+			const completed = await completeWorkCycleOnly(markTaskDone);
+			if (!completed) {
+				return;
+			}
 			await endSession();
 		} finally {
 			setIsConfirming(false);
