@@ -1,10 +1,10 @@
 ---
 change_id: auth-merge-first-impression
 title: Auth narrative and guest-merge success handoff
-status: implemented
+status: archived
 created: 2026-06-08
 updated: 2026-06-08
-archived_at: null
+archived_at: 2026-06-08T06:15:00Z
 ---
 
 ## Notes
