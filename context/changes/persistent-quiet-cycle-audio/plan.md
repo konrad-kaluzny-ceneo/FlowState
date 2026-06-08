@@ -654,10 +654,10 @@ New table only; no backfill required. Existing users implicitly `NORMAL` until f
 
 #### Automated
 
-- [x] 5.1 Hook tests pass: `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx`
-- [x] 5.2 Full test suite passes: `pnpm test`
-- [x] 5.3 Typecheck passes: `pnpm typecheck`
-- [x] 5.4 Lint passes: `pnpm check`
+- [x] 5.1 Hook tests pass: `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` ? f857cd7
+- [x] 5.2 Full test suite passes: `pnpm test` ? f857cd7
+- [x] 5.3 Typecheck passes: `pnpm typecheck` ? f857cd7
+- [x] 5.4 Lint passes: `pnpm check` ? f857cd7
 
 #### Manual
 
