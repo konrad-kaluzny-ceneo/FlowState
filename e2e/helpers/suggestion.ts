@@ -16,11 +16,6 @@ export async function expectSuggestionVisible(
 	},
 ) {
 	const coachLine = page.getByTestId("suggestion-coach-line");
-	if (options?.expectCoach === true) {
-		await expect(coachLine).toBeVisible({ timeout: 20_000 });
-	} else if (options?.expectCoach === false) {
-		await expect(coachLine).toBeHidden();
-	}
 
 	await expect(page.getByTestId("task-suggestion-card")).toBeVisible({
 		timeout: 20_000,
@@ -28,6 +23,12 @@ export async function expectSuggestionVisible(
 	await expect(page.getByTestId("suggestion-accept-btn")).toBeVisible({
 		timeout: 20_000,
 	});
+
+	if (options?.expectCoach === true) {
+		await expect(coachLine).toBeVisible({ timeout: 20_000 });
+	} else if (options?.expectCoach === false) {
+		await expect(coachLine).toBeHidden();
+	}
 
 	if (options?.title != null) {
 		await expect(

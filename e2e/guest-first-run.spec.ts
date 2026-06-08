@@ -11,7 +11,10 @@ import {
 	getOnboardingStateFromStorage,
 	ONBOARDING_KEY_GUEST,
 } from "./helpers/onboarding";
-import { startFocusedWorkCycle } from "./helpers/work-cycle";
+import {
+	advanceClockThroughFastWork,
+	startFocusedWorkCycle,
+} from "./helpers/work-cycle";
 
 test.describe("Guest first-run onboarding (S-11)", () => {
 	test.beforeEach(async ({ page, context }) => {
@@ -63,7 +66,11 @@ test.describe("Guest first-run onboarding (S-11)", () => {
 		await dismissFirstRunIfVisible(page);
 
 		const taskTitle = `Guest Coach E2E ${Date.now()}`;
-		await startFocusedWorkCycle(page, taskTitle, 30);
+		await startFocusedWorkCycle(page, taskTitle, 1);
+		await advanceClockThroughFastWork(page);
+		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
+			timeout: 15_000,
+		});
 
 		await expect(page.getByTestId("check-in-overlay")).toBeHidden();
 		await expect(page.getByTestId("check-in-coach-line")).toBeHidden();

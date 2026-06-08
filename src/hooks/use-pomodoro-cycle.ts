@@ -53,9 +53,14 @@ function isBreakKind(kind: CycleKind | null): boolean {
 	return kind === "SHORT_BREAK" || kind === "LONG_BREAK";
 }
 
-/** Test-only reset for module-level recovery guard. */
-export function resetActiveCycleRecoveryForTests(): void {
+/** Reset module-level recovery guard (tests + post-guest-import resume). */
+export function resetActiveCycleRecoveryGuard(): void {
 	activeCycleRecoveredForMode = null;
+}
+
+/** @deprecated Use resetActiveCycleRecoveryGuard */
+export function resetActiveCycleRecoveryForTests(): void {
+	resetActiveCycleRecoveryGuard();
 }
 
 async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {

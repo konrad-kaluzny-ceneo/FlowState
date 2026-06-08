@@ -12,6 +12,7 @@ import {
 	useState,
 } from "react";
 
+import { subscribeGuestStore } from "~/lib/guest/store";
 import { shouldDeferFirstRun } from "~/lib/onboarding/defer";
 import {
 	loadOnboardingState,
@@ -78,10 +79,9 @@ function useOnboardingState(scope: OnboardingScope): OnboardingContextValue {
 
 	useEffect(() => {
 		setDeferFirstRun(shouldDeferFirstRun());
-		const id = window.setInterval(() => {
+		return subscribeGuestStore(() => {
 			setDeferFirstRun(shouldDeferFirstRun());
-		}, 200);
-		return () => window.clearInterval(id);
+		});
 	}, []);
 
 	const isFirstRunVisible = useMemo(() => {
