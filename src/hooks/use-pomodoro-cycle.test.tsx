@@ -1372,3 +1372,182 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.hasActiveSession).toBe(false);
 	});
 });
+
+describe("usePomodoroCycle catchUp", () => {
+	function setVisibilityState(state: DocumentVisibilityState) {
+		Object.defineProperty(document, "visibilityState", {
+			configurable: true,
+			get: () => state,
+		});
+	}
+
+	beforeEach(() => {
+		resetActiveCycleRecoveryForTests();
+		activeCycleData = null;
+		fakeWorkers.length = 0;
+		vi.clearAllMocks();
+		setVisibilityState("visible");
+		getActiveCycle.mockImplementation(async () => activeCycleData);
+		getOrCreateSession.mockResolvedValue({ id: 1 });
+		createCycle.mockImplementation(async () => ({
+			id: 42,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: 7,
+			kind: "WORK",
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: { id: 7, title: "Write tests" },
+			configuredDurationSec: 60,
+		}));
+	});
+
+	it("sets catchUp when cycle expires while tab is hidden", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+		setVisibilityState("hidden");
+
+		vi.useFakeTimers();
+		try {
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			act(() => {
+				result.current.selectTask(7, { id: 7, title: "Write tests" });
+			});
+
+			await act(async () => {
+				await result.current.start(60);
+			});
+
+			await act(async () => {
+				vi.advanceTimersByTime(61_000);
+			});
+
+			expect(result.current.state).toBe("completed");
+			expect(result.current.catchUp).toMatchObject({
+				endedWhileHidden: true,
+				gate: "WORK_CONFIRM",
+			});
+			expect(result.current.catchUp?.cycleEndedAtMs).toBeGreaterThan(0);
+		} finally {
+			vi.useRealTimers();
+			vi.stubGlobal("Worker", FakeWorker);
+		}
+	});
+
+	it("does not set catchUp when cycle expires while tab is visible", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+		setVisibilityState("visible");
+
+		vi.useFakeTimers();
+		try {
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			act(() => {
+				result.current.selectTask(7, { id: 7, title: "Write tests" });
+			});
+
+			await act(async () => {
+				await result.current.start(60);
+			});
+
+			await act(async () => {
+				vi.advanceTimersByTime(61_000);
+			});
+
+			expect(result.current.state).toBe("completed");
+			expect(result.current.catchUp).toBeNull();
+		} finally {
+			vi.useRealTimers();
+			vi.stubGlobal("Worker", FakeWorker);
+		}
+	});
+
+	it("sets catchUp when recovered cycle already expired", async () => {
+		activeCycleData = makeActiveCycle({
+			startedAt: new Date(Date.now() - 120_000),
+			configuredDurationSec: 60,
+			task: { id: 3, title: "Late" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("completed");
+		});
+
+		expect(result.current.catchUp).toMatchObject({
+			endedWhileHidden: true,
+			gate: "WORK_CONFIRM",
+		});
+	});
+
+	it("clears catchUp on dismiss and does not re-show on visibilitychange", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+		setVisibilityState("hidden");
+
+		vi.useFakeTimers();
+		try {
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			act(() => {
+				result.current.selectTask(7, { id: 7, title: "Write tests" });
+			});
+
+			await act(async () => {
+				await result.current.start(60);
+			});
+
+			await act(async () => {
+				vi.advanceTimersByTime(61_000);
+			});
+
+			expect(result.current.catchUp).not.toBeNull();
+
+			act(() => {
+				result.current.dismissCatchUp();
+			});
+
+			expect(result.current.catchUp).toBeNull();
+
+			setVisibilityState("visible");
+			await act(async () => {
+				document.dispatchEvent(new Event("visibilitychange"));
+			});
+
+			expect(result.current.catchUp).toBeNull();
+		} finally {
+			vi.useRealTimers();
+			vi.stubGlobal("Worker", FakeWorker);
+		}
+	});
+});

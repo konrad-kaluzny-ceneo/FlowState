@@ -390,9 +390,9 @@ No data migration. Pure client-side additive state; clearing on dismiss means no
 
 #### Automated
 
-- [x] 1.1 `pnpm exec vitest run src/lib/catch-up/` passes
-- [x] 1.2 `pnpm check` passes
-- [x] 1.3 `pnpm typecheck` passes
+- [x] 1.1 `pnpm exec vitest run src/lib/catch-up/` passes — 60d05d7
+- [x] 1.2 `pnpm check` passes — 60d05d7
+- [x] 1.3 `pnpm typecheck` passes — 60d05d7
 
 #### Manual
 
@@ -402,9 +402,9 @@ No data migration. Pure client-side additive state; clearing on dismiss means no
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` passes
-- [ ] 2.2 `pnpm check` passes
-- [ ] 2.3 `pnpm typecheck` passes
+- [x] 2.1 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` passes
+- [x] 2.2 `pnpm check` passes
+- [x] 2.3 `pnpm typecheck` passes
 
 ### Phase 3: `TabReturnCatchUp` Banner Component (TDD)
 
