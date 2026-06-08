@@ -486,8 +486,8 @@ Kickoff fetch is a single tRPC mutation on discrete idle transitions (not pollin
 
 #### Automated
 
-- [x] 4.1 `pnpm check` passes
-- [x] 4.2 `pnpm exec vitest run src/lib/work-type-duration-storage.test.ts` passes
+- [x] 4.1 `pnpm check` passes — 0967707
+- [x] 4.2 `pnpm exec vitest run src/lib/work-type-duration-storage.test.ts` passes — 0967707
 
 #### Manual
 
