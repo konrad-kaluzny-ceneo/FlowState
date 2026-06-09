@@ -10,7 +10,7 @@ expanded_story: 2026-06-07
 expanded_followup: 2026-06-07
 expanded_ux_gaps: 2026-06-07
 expanded_task_planning: 2026-06-09
-active_slices: [B-04]
+active_slices: []
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -72,7 +72,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | B-01 | fix-cycle-audio-toggle | [FLO-53](https://linear.app/flowstate-10xdev/issue/FLO-53) | [#72](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/72) | **(bug)** Cycle end audio Normal / Soft / Muted buttons respond to click and persist preference | S-20 | FR-013, FR-014 | done |
 | B-02 | fix-task-title-multiline-edit | [FLO-54](https://linear.app/flowstate-10xdev/issue/FLO-54) | [#73](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/73) | **(bug)** task title edit uses multi-line text area so long names wrap and remain fully visible | — | FR-005, FR-008 | open |
 | B-03 | fix-cycle-start-interrupt-optimistic | [FLO-55](https://linear.app/flowstate-10xdev/issue/FLO-55) | [#74](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/74) | **(bug)** Start Cycle / Interrupt update timer UI within 200ms (optimistic), not after server round-trip | S-09 | NFR (200ms acknowledgement), FR-009, FR-012 | open |
-| B-04 | fix-cycle-complete-flash-after-checkin | [FLO-56](https://linear.app/flowstate-10xdev/issue/FLO-56) | [#75](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/75) | **(bug)** after energy check-in, Cycle Complete overlay must not flash/hang until break/suggestion | S-05, S-06 | FR-020, FR-021, NFR (200ms acknowledgement) | active |
+| B-04 | fix-cycle-complete-flash-after-checkin | [FLO-56](https://linear.app/flowstate-10xdev/issue/FLO-56) | [#75](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/75) | **(bug)** after energy check-in, Cycle Complete overlay must not flash/hang until break/suggestion | S-05, S-06 | FR-020, FR-021, NFR (200ms acknowledgement) | done |
 | F-05 | eisenhower-effort-task-attributes | [FLO-57](https://linear.app/flowstate-10xdev/issue/FLO-57) | [#78](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/78) | (foundation) importance + urgency + effort minutes + commitment horizon on Task; deterministic scorer v2 (Eisenhower/Pareto/Ockham) | S-04, S-06 | FR-017, FR-018, FR-021, proposed-FR-task-importance, proposed-FR-commitment-horizon, proposed-FR-effort-estimate | proposed |
 | S-25 | pre-suggestion-readiness | [FLO-58](https://linear.app/flowstate-10xdev/issue/FLO-58) | [#79](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/79) | declare Focused/Steady/Fading at kickoff and before next-task suggestion — feeds scorer instead of hardcoded STEADY | S-05, S-06, S-15 | FR-020, FR-021, FR-019, proposed-FR-pre-suggestion-readiness | ready |
 | S-26 | task-manual-priority-order | [FLO-59](https://linear.app/flowstate-10xdev/issue/FLO-59) | [#81](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/81) | **drag-reorder** active tasks with persisted manual priority as suggester tie-breaker | S-04, S-06, S-09 | FR-021, FR-022, FR-005, NFR (200ms acknowledgement) | done |
@@ -798,7 +798,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** Show explicit post-check-in loading shell vs hide overlay via `postCheckInTransitioning` flag — owner: `/10x-plan`. Block: no.
 - **Risk:** `awaitingCheckIn=false` + `state=completed` gap is the flash window; wind-down branch must stay excluded.
-- **Status:** active — reported production 2026-06-08 (screenshot: Cycle Complete modal after energy submit).
+- **Status:** done — shipped via [PR #82](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/82) (2026-06-09)
 
 ## Research requirements <!-- needs-research -->
 
@@ -868,6 +868,7 @@ Items tagged `needs-research` are non-trivial — they require external research
 
 ## Done
 
+- **B-04: after submitting energy at cycle end, user never sees the stale Cycle Complete! modal again — transition proceeds immediately to break start, suggestion loading, or wind-down without a multi-second freeze on the old overlay.** — Archived 2026-06-09 → `context/archive/2026-06-09-fix-cycle-complete-flash-after-checkin/`. Lesson: defer `awaitingCheckIn` clear until break `running` observable; gate overlay mount with `isPostCheckInTransitioning`.
 - **S-26: user drag-reorders active tasks in the task list; order persists across refresh and guest merge (`sortOrder` on Task); post-check-in and kickoff suggestions use manual order as the deterministic tie-breaker when scorer scores tie — not as the primary ranking signal.** — Archived 2026-06-09 → `context/archive/2026-06-09-task-manual-priority-order/`. Lesson: mirror S-09 optimistic rollback for reorder; dnd-kit drag handle + `onSettled` cache invalidate keeps list and suggestion paths consistent.
 - **B-01: user can click Normal, Soft, or Muted on the timer panel Cycle end audio control and see the selection update immediately; preference persists across refresh (localStorage for guests, server profile when logged in); cycle-end chime respects the chosen mode.** — Archived 2026-06-09 → `context/archive/2026-06-08-fix-cycle-audio-toggle/`. Lesson: one-time server-sync guard per auth scope prevents suggestion-fetch re-entry from overwriting optimistic toggles.
 - **S-20: user can mute or soften the in-browser cycle-end chime with a preference that persists across sessions (server profile when logged in, localStorage for guests); the visual transition prompt remains the authoritative mindful signal; when audio is muted/softened and the tab was backgrounded at cycle end, an optional single calm title or favicon pulse may fire until the user returns (work-end at minimum — not native push).** — Archived 2026-06-08 → `context/archive/2026-06-08-persistent-quiet-cycle-audio/`. Lesson: —.

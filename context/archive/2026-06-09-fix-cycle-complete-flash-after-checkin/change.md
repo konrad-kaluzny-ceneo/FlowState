@@ -1,7 +1,8 @@
 ---
 change-id: fix-cycle-complete-flash-after-checkin
 title: Fix Cycle Complete overlay flash after check-in
-status: impl_reviewed
+status: archived
+archived_at: 2026-06-09T10:21:00Z
 roadmap-id: B-04
 linear: FLO-56
 github: "#75"
