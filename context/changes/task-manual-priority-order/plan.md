@@ -514,11 +514,11 @@ Model on `e2e/seed.spec.ts` — fixture auth, `addTask` helper, deliberate-break
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run src/lib/scoring/score-task.test.ts` passes
-- [ ] 3.2 `pnpm exec vitest run src/server/api/routers/suggestion.test.ts` passes
-- [ ] 3.3 `pnpm test` passes
-- [ ] 3.4 `pnpm typecheck` passes
-- [ ] 3.5 `pnpm check` passes
+- [x] 3.1 `pnpm exec vitest run src/lib/scoring/score-task.test.ts` passes
+- [x] 3.2 `pnpm exec vitest run src/server/api/routers/suggestion.test.ts` passes
+- [x] 3.3 `pnpm test` passes
+- [x] 3.4 `pnpm typecheck` passes
+- [x] 3.5 `pnpm check` passes
 
 #### Manual
 
