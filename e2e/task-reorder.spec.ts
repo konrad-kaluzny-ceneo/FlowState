@@ -75,13 +75,25 @@ async function dragActiveTaskToIndex(
 	const rows = activeTaskRows(page);
 	const sourceHandle = rows.nth(fromIndex).getByTestId("task-drag-handle");
 	const targetHandle = rows.nth(toIndex).getByTestId("task-drag-handle");
+	const sourceBox = await sourceHandle.boundingBox();
+	const targetBox = await targetHandle.boundingBox();
 
-	await sourceHandle.scrollIntoViewIfNeeded();
-	await targetHandle.scrollIntoViewIfNeeded();
-	await sourceHandle.dragTo(targetHandle, {
-		sourcePosition: { x: 8, y: 8 },
-		targetPosition: { x: 8, y: 8 },
-	});
+	if (sourceBox == null || targetBox == null) {
+		throw new Error("Could not resolve drag handle positions");
+	}
+
+	const sourceX = sourceBox.x + sourceBox.width / 2;
+	const sourceY = sourceBox.y + sourceBox.height / 2;
+	const targetX = targetBox.x + targetBox.width / 2;
+	const targetY = targetBox.y + targetBox.height / 2;
+
+	await sourceHandle.hover();
+	await page.mouse.move(sourceX, sourceY);
+	await page.mouse.down();
+	// Satisfy PointerSensor activationConstraint (distance: 8)
+	await page.mouse.move(sourceX, sourceY + 10, { steps: 5 });
+	await page.mouse.move(targetX, targetY, { steps: 30 });
+	await page.mouse.up();
 }
 
 async function reorderActiveTasksByDrag(
@@ -105,12 +117,10 @@ async function reorderActiveTasksByDrag(
 		}
 
 		const reorderResponse = waitForTaskReorderOk(page);
-		const listRefresh = waitForTaskListOk(page);
 
 		try {
 			await dragActiveTaskToIndex(page, fromIndex, toIndex);
 			await reorderResponse;
-			await listRefresh;
 			await expect(page.getByTestId("task-list-error")).toBeHidden();
 			await expect
 				.poll(async () => getActiveTaskTitlesInOrder(page), { timeout: 30_000 })
