@@ -59,6 +59,8 @@ jobs:
     env:
       CI: "true"
       E2E_WORKERS: "1"
+      # Inlined at `pnpm build` — must be set before Playwright starts production server
+      NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: "1"
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
       NEON_AUTH_BASE_URL: ${{ secrets.NEON_AUTH_BASE_URL }}

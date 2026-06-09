@@ -16,8 +16,14 @@ const e2eBaseUrl = `http://localhost:${e2ePort}`;
 const useProductionServer =
 	process.env.E2E_PRODUCTION_SERVER === "1" || !!process.env.GITHUB_ACTIONS;
 
+// NEXT_PUBLIC_* is baked at build time — export before `pnpm build` on production e2e path.
+const e2eBuildEnv =
+	process.platform === "win32"
+		? "set NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1&& "
+		: "NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1 ";
+
 const webServerCommand = useProductionServer
-	? `pnpm build && pnpm exec next start -p ${e2ePort}`
+	? `${e2eBuildEnv}pnpm build && pnpm exec next start -p ${e2ePort}`
 	: `pnpm exec next dev --turbo -p ${e2ePort}`;
 
 const workerCount = process.env.E2E_WORKERS

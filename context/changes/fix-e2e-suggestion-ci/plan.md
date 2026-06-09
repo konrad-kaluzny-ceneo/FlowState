@@ -10,6 +10,7 @@ Fix deterministic post-check-in suggestion e2e failures on CI by aligning break 
 - [x] 1.2 `ensureFakeClock` — single `clock.install()` per page in `e2e/helpers/work-cycle.ts`
 - [x] 1.3 Fix `first-run-onboarding.spec.ts` second-cycle work duration + `ensureFakeClock` before 31s break advance
 - [x] 2.1 Verify `pnpm test` + full `CI=true E2E_WORKERS=1 pnpm test:e2e` (48/48)
+- [x] 2.2 Bake `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` at production build (ci.yml + playwright.config)
 
 ## Verification
 
