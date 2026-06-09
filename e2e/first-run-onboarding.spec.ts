@@ -22,6 +22,7 @@ import {
 	advanceClockThroughFastBreak,
 	advanceClockThroughFastWork,
 	completeWorkCycleWithCheckIn,
+	ensureFakeClock,
 	focusTask,
 	setShortBreakDurationSec,
 	setWorkDurationSec,
@@ -166,6 +167,7 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		});
 		await acceptSuggestion(page);
 
+		await ensureFakeClock(page);
 		await page.clock.runFor(31_000);
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
 			timeout: 15_000,
@@ -176,6 +178,7 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 
 		await focusTask(page, reactiveTask);
 		await setShortBreakDurationSec(page, 1);
+		await setWorkDurationSec(page, 1);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 

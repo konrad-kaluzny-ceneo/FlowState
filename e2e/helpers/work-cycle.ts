@@ -9,6 +9,16 @@ export const FAST_WORK_CLOCK_MS = 2500;
 /** Advance fake clock through a 1s break (+ buffer for completion tick). */
 export const FAST_BREAK_CLOCK_MS = 2500;
 
+const clockInstalledPages = new WeakSet<Page>();
+
+/** Install Playwright fake timers once per page — re-install resets active cycle end times. */
+export async function ensureFakeClock(page: Page) {
+	if (!clockInstalledPages.has(page)) {
+		await page.clock.install();
+		clockInstalledPages.add(page);
+	}
+}
+
 async function waitForTaskCreateSettled(addButton: Locator) {
 	await expect(addButton).not.toHaveText("Adding...", { timeout: 15_000 });
 }
@@ -67,7 +77,7 @@ export async function markTaskCompleteMidCycle(page: Page, taskTitle: string) {
 }
 
 export async function advanceClockThroughFastWork(page: Page) {
-	await page.clock.install();
+	await ensureFakeClock(page);
 	await page.clock.runFor(FAST_WORK_CLOCK_MS);
 }
 
@@ -82,6 +92,7 @@ export async function setShortBreakDurationSec(page: Page, seconds: number) {
 }
 
 export async function advanceClockThroughFastBreak(page: Page) {
+	await ensureFakeClock(page);
 	await page.clock.runFor(FAST_BREAK_CLOCK_MS);
 }
 
