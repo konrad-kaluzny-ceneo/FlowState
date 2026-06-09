@@ -1,10 +1,10 @@
 ---
 change_id: task-manual-priority-order
 title: Drag-reorder active tasks with persisted sortOrder tie-breaker
-status: impl_reviewed
+status: archived
 created: 2026-06-09
 updated: 2026-06-09
-archived_at: null
+archived_at: 2026-06-09T08:20:00Z
 roadmap_id: S-26
 linear: FLO-59
 github: "#81"
