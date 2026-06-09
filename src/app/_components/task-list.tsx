@@ -3,6 +3,7 @@
 import {
 	DndContext,
 	type DragEndEvent,
+	MouseSensor,
 	PointerSensor,
 	useSensor,
 	useSensors,
@@ -364,6 +365,9 @@ export function TaskList({
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
+			activationConstraint: { distance: 8 },
+		}),
+		useSensor(MouseSensor, {
 			activationConstraint: { distance: 8 },
 		}),
 	);

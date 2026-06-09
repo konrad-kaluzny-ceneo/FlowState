@@ -123,9 +123,9 @@ test.describe("Task reorder (S-26)", () => {
 			(response) => response.url().includes("cycle.getActive") && response.ok(),
 			{ timeout: 20_000 },
 		);
+		const taskListAfterReload = waitForTaskListOk(page);
 		await page.reload();
-		await getActiveAfterReload;
-		await waitForTaskListOk(page);
+		await Promise.all([getActiveAfterReload, taskListAfterReload]);
 		await ensureIdleCycle(page);
 		await dismissKickoffSuggestionIfVisible(page);
 
