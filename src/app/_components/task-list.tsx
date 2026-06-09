@@ -228,6 +228,7 @@ function SortableActiveTaskRow({
 			/>
 			{editingId === task.id ? (
 				<div className="flex-1 space-y-2">
+					{/* textarea (not input): titles are unbounded; multiline + wrap in read mode (B-02) */}
 					<textarea
 						className="w-full resize-y rounded bg-white/10 px-2 py-1 text-white focus:outline-none"
 						onBlur={() => void onSaveEdit(task.id)}

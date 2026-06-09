@@ -2,7 +2,7 @@
 project: FlowState
 type: lessons
 created: 2026-05-28
-updated: 2026-05-28
+updated: 2026-06-09
 ---
 
 # Lessons learned
@@ -46,3 +46,15 @@ Never reverse this order.
 **Rule:** After bulk changes, run the verification table from the `update-status` skill for every affected pair. Don't assume the sync handled it correctly — especially when canceled/closed issues share attachments with open ones.
 
 **Check:** `gh issue list --state all --json number,title,state` + Linear MCP `list_issues` filtered by team.
+
+---
+
+## L-04: NFR 200ms applies per action surface, not per slice
+
+**Trigger:** Shipping a slice that touches one user-facing control while another surface in the same flow still blocks on the server.
+
+**Rule:** When the PRD NFR calls for perceived latency under 200ms, verify **each** interactive surface that users tap in a flow — not only the slice you are implementing. Start/interrupt, inline edit, and form controls each need their own oracle (unit or component test) if they can block on network.
+
+**What went wrong:** S-09 (`optimistic-task-mutations`) sped up task CRUD but its plan explicitly excluded `cycle.create` / `cycle.interrupt` — so Start/Interrupt stayed pessimistic until B-03. Separately, B-02 (task title clipped in edit mode) shipped in `task-list.tsx` with zero co-located component tests — a single-line `<input>` hid long and multiline titles until manual QA.
+
+**Impact:** Users still perceived lag on any non-optimistic surface; long titles remained a regression risk with no automated guard on the edit control choice (textarea vs input).

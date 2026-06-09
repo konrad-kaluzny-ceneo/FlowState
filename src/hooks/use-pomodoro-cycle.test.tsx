@@ -379,6 +379,79 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.state).toBe("running");
 	});
 
+	it("restores running state when interruptCycle fails after optimistic interrupt", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		interruptCycle.mockRejectedValueOnce(new Error("network"));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.interrupt();
+		});
+
+		expect(interruptCycle).toHaveBeenCalledWith({ cycleId: 10 });
+		expect(result.current.state).toBe("running");
+		expect(result.current.remainingMs).toBeGreaterThan(0);
+		expect(result.current.focusedTask).toMatchObject({ id: 2, title: "Focus" });
+		expect(result.current.error).toMatch(/Could not interrupt/);
+	});
+
+	it("interrupt during pending create cancels server cycle when create settles", async () => {
+		const { releaseCreateCycle } = mockCreateCycleDeferred();
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		let startPromise!: Promise<void>;
+		act(() => {
+			startPromise = result.current.start(60);
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		expect(result.current.activeCycle?.id).toBeLessThan(0);
+
+		let interruptPromise!: Promise<void>;
+		act(() => {
+			interruptPromise = result.current.interrupt();
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		expect(interruptCycle).not.toHaveBeenCalled();
+
+		await act(async () => {
+			releaseCreateCycle();
+			await startPromise;
+			await interruptPromise;
+		});
+
+		expect(createCycle).toHaveBeenCalled();
+		expect(interruptCycle).toHaveBeenCalledWith({ cycleId: 42 });
+		expect(result.current.state).toBe("idle");
+	});
+
 	it("returns to idle before interruptCycle resolves (optimistic interrupt)", async () => {
 		activeCycleData = makeActiveCycle({
 			id: 10,

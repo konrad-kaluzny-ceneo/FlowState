@@ -224,6 +224,14 @@ the relevant rollout phase ships; before that, the sub-section reads
 - **Deferred e2e — `check-in-gate.spec.ts` (Risk #7 dedicated gate oracle)**: UI path — complete 1s WORK cycle → S-01 overlay → "Continue later" → assert `check-in-overlay` visible and "Short Break" hidden until `completeCheckIn(page, "steady")` → assert break `timer-panel-running`. Network persistence oracle — match batched tRPC POST body on `/api/trpc` for `STEADY` + numeric `cycleId` (not `/api/trpc/checkIn.create` URL; app uses `httpBatchStreamLink`). Prior attempts failed on `waitForRequest` timeout and `response.json()` on batch stream. Re-add when e2e infra supports batched mutation oracles.
 - **Deferred**: guest-mode Playwright check-in/mid-cycle proofs; escape/refresh skip-vector e2e; server-side `cycle.complete` check-in prerequisite; `interruptionCount` increment; CI gate wiring (Phase 4 test-plan row).
 
+### 6.8 Perceived latency (NFR 200ms)
+
+- **When to use**: any user tap that must feel instant while a mutation or query is in flight — cycle start/interrupt, optimistic task updates, etc.
+- **Deferred-mock oracle**: block the repository/mock with a manual `release` (or `mockImplementation` that awaits a deferred promise); assert UI state flips **before** `release`; optionally assert rollback or server reconciliation after `release` or on rejection.
+- **Reference tests**: `src/hooks/use-pomodoro-cycle.test.tsx` — `"transitions to running before createCycle resolves"`, `"returns to idle before interruptCycle resolves"`, `"restores running state when interruptCycle fails after optimistic interrupt"`, `"interrupt during pending create cancels server cycle when create settles"`.
+- **Component smoke**: unbounded text fields — co-located test that edit mode uses `textarea` and read mode shows full content; see `src/app/_components/task-list.test.tsx`.
+- **Run**: `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx src/app/_components/task-list.test.tsx`
+
 ### 6.7 Mutation testing (Stryker)
 
 - **When to run**: after changing code under a test-plan risk; before closing a testing rollout phase; when reviewing survived mutants from the last baseline.

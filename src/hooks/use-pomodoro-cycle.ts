@@ -1022,6 +1022,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		setFocusedTask(null);
 	}, [state]);
 
+	// NFR 200ms: authenticated start/interrupt update UI before server settles (B-03).
 	const start = useCallback(
 		async (durationSec: number) => {
 			const effectiveDurationSec = stagedKickoffDurationSec ?? durationSec;

@@ -26,6 +26,12 @@ Fix two production bugs in one change: multiline task title editing (B-02) and o
 - [x] Optimistic `start` / `interrupt` in `use-pomodoro-cycle.ts`
 - [x] Unit tests for immediate UI transition
 
+### Prevention (B-02 / B-03)
+- [x] `use-pomodoro-cycle.test.tsx` — interrupt failure rollback + pending-create cancel
+- [x] `task-list.test.tsx` — textarea multiline save + long title read mode
+- [x] `lessons.md` L-04, `test-plan.md` §6.8, `AGENTS.md` component-smoke bullet
+- [x] Inline comments in `task-list.tsx` and `use-pomodoro-cycle.ts`
+
 ### Automated verification
 - [x] `pnpm test` (392 passed)
 - [ ] `pnpm check` (pre-existing CRLF on unrelated files; changed files formatted)
