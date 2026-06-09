@@ -122,6 +122,8 @@ function PomodoroDashboardBody({
 		catchUp != null &&
 		pomodoro.state === "completed" &&
 		!pomodoro.awaitingCheckIn &&
+		!pomodoro.awaitingWindDown &&
+		!pomodoro.isPostCheckInTransitioning &&
 		(catchUp.gate === "WORK_CONFIRM" || catchUp.gate === "BREAK_CONFIRM");
 
 	const showCheckInCatchUp =
@@ -308,21 +310,23 @@ function PomodoroDashboardBody({
 				</div>
 			)}
 
-			{!pomodoro.awaitingCheckIn && !pomodoro.awaitingWindDown && (
-				<CycleCompleteOverlay
-					canMarkTaskDone={canMarkTaskDone}
-					cycleKind={pomodoro.cycleKind}
-					focusedTask={pomodoro.focusedTask}
-					isConfirming={pomodoro.isConfirming}
-					onConfirm={async (markTaskDone) => {
-						pomodoro.dismissCatchUp();
-						await pomodoro.onCycleCompleteConfirm(markTaskDone);
-					}}
-					onDismissPreFocus={pomodoro.dismissPreFocus}
-					preFocusedTask={pomodoro.preFocusedTask}
-					state={pomodoro.state}
-				/>
-			)}
+			{!pomodoro.awaitingCheckIn &&
+				!pomodoro.awaitingWindDown &&
+				!pomodoro.isPostCheckInTransitioning && (
+					<CycleCompleteOverlay
+						canMarkTaskDone={canMarkTaskDone}
+						cycleKind={pomodoro.cycleKind}
+						focusedTask={pomodoro.focusedTask}
+						isConfirming={pomodoro.isConfirming}
+						onConfirm={async (markTaskDone) => {
+							pomodoro.dismissCatchUp();
+							await pomodoro.onCycleCompleteConfirm(markTaskDone);
+						}}
+						onDismissPreFocus={pomodoro.dismissPreFocus}
+						preFocusedTask={pomodoro.preFocusedTask}
+						state={pomodoro.state}
+					/>
+				)}
 
 			{enableCheckInGate &&
 				pomodoro.awaitingCheckIn &&

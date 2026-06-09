@@ -202,9 +202,9 @@ Not applicable — client-only state-machine fix, no schema or API changes.
 
 #### Automated
 
-- [x] 1.1 `pnpm check` passes
-- [x] 1.2 `pnpm typecheck` passes
-- [x] 1.3 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` passes
+- [x] 1.1 `pnpm check` passes — d5881f1
+- [x] 1.2 `pnpm typecheck` passes — d5881f1
+- [x] 1.3 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` passes — d5881f1
 
 #### Manual
 
@@ -214,8 +214,8 @@ Not applicable — client-only state-machine fix, no schema or API changes.
 
 #### Automated
 
-- [ ] 2.1 `pnpm check` passes
-- [ ] 2.2 `pnpm typecheck` passes
+- [x] 2.1 `pnpm check` passes
+- [x] 2.2 `pnpm typecheck` passes
 
 #### Manual
 
