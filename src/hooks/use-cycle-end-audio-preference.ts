@@ -38,6 +38,7 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 	const [mountSettled, setMountSettled] = useState(isGuest);
 	const guestMergeAttemptedRef = useRef(false);
 	const guestMergeGenRef = useRef(0);
+	const hasInitialSyncRef = useRef(false);
 
 	const suggestionFetchInFlight = useSyncExternalStore(
 		subscribeSuggestionFetchInFlight,
@@ -45,7 +46,15 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 		() => false,
 	);
 
-	const setMutation = api.preference.set.useMutation();
+	const utils = api.useUtils();
+
+	const setMutation = api.preference.set.useMutation({
+		onSuccess: (_data, variables) => {
+			utils.preference.get.setData(undefined, {
+				cycleEndAudioMode: variables.cycleEndAudioMode,
+			});
+		},
+	});
 
 	useEffect(() => {
 		if (isGuest) {
@@ -70,6 +79,7 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 		setIsHydrated(isGuest);
 		guestMergeAttemptedRef.current = false;
 		guestMergeGenRef.current += 1;
+		hasInitialSyncRef.current = false;
 	}, [isGuest, userId]);
 
 	const preferenceQueryEnabled =
@@ -79,6 +89,7 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 		enabled: preferenceQueryEnabled,
 	});
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: setMutation omitted to avoid spurious re-sync on identity change
 	useEffect(() => {
 		if (isGuest || userId == null) {
 			return;
@@ -93,6 +104,10 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 		void (async () => {
 			await waitUntilSuggestionIdle();
 			if (guestMergeGenRef.current !== mergeGen) {
+				return;
+			}
+
+			if (hasInitialSyncRef.current) {
 				return;
 			}
 
@@ -111,6 +126,7 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 					}
 					await setMutation.mutateAsync({ cycleEndAudioMode: guestMode });
 					setIsHydrated(true);
+					hasInitialSyncRef.current = true;
 					return;
 				}
 			}
@@ -118,6 +134,7 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 			setModeState(serverMode);
 			writeCycleEndAudioMode(scopeRef.current, serverMode);
 			setIsHydrated(true);
+			hasInitialSyncRef.current = true;
 		})();
 	}, [
 		isGuest,
@@ -125,7 +142,6 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 		suggestionFetchInFlight,
 		preferenceQuery.isFetched,
 		preferenceQuery.data,
-		setMutation,
 	]);
 
 	const setMode = useCallback(

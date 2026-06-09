@@ -90,6 +90,51 @@ test.describe("Quiet cycle audio — auth (S-20)", () => {
 		await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 	});
 
+	test("live toggle updates aria-pressed for each mode (B-01)", async ({
+		page,
+	}) => {
+		const taskTitle = `E2E Live Audio Toggle ${Date.now()}`;
+
+		await addTask(page, taskTitle);
+		await focusTask(page, taskTitle);
+
+		await expect(
+			page.getByTestId("cycle-audio-preference-normal"),
+		).toHaveAttribute("aria-pressed", "true");
+
+		await page.getByTestId("cycle-audio-preference-soft").click();
+		await expect(
+			page.getByTestId("cycle-audio-preference-soft"),
+		).toHaveAttribute("aria-pressed", "true");
+
+		await page.getByTestId("cycle-audio-preference-muted").click();
+		await expect(
+			page.getByTestId("cycle-audio-preference-muted"),
+		).toHaveAttribute("aria-pressed", "true");
+
+		await page.getByTestId("cycle-audio-preference-normal").click();
+		await expect(
+			page.getByTestId("cycle-audio-preference-normal"),
+		).toHaveAttribute("aria-pressed", "true");
+
+		await page.getByTestId("cycle-audio-preference-soft").click();
+		await expect(
+			page.getByTestId("cycle-audio-preference-soft"),
+		).toHaveAttribute("aria-pressed", "true");
+
+		const getActiveAfterReload = page.waitForResponse(
+			(response) => response.url().includes("cycle.getActive") && response.ok(),
+			{ timeout: 20_000 },
+		);
+		await page.reload();
+		await getActiveAfterReload;
+		await expect(page.getByTestId("task-list")).toBeVisible();
+		await focusTask(page, taskTitle);
+		await expect(
+			page.getByTestId("cycle-audio-preference-soft"),
+		).toHaveAttribute("aria-pressed", "true");
+	});
+
 	test("normal audio user still gets catch-up on hidden work expiry (S-22 regression)", async ({
 		page,
 	}) => {
