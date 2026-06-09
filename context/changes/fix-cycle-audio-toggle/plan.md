@@ -210,26 +210,26 @@ None. Server data unchanged; fix is client hook semantics only.
 
 #### Automated
 
-- [ ] 1.1 Hook unit tests pass: `pnpm exec vitest run src/hooks/use-cycle-end-audio-preference.test.tsx`
-- [ ] 1.2 Full unit suite passes: `pnpm test`
-- [ ] 1.3 Lint/format passes: `pnpm check`
-- [ ] 1.4 Typecheck passes: `pnpm typecheck`
+- [x] 1.1 Hook unit tests pass: `pnpm exec vitest run src/hooks/use-cycle-end-audio-preference.test.tsx` — 2f0d542
+- [x] 1.2 Full unit suite passes: `pnpm test` — 2f0d542
+- [x] 1.3 Lint/format passes: `pnpm check` — 2f0d542
+- [x] 1.4 Typecheck passes: `pnpm typecheck` — 2f0d542
 
 #### Manual
 
-- [ ] 1.5 Auth dashboard live-click Normal → Soft → Muted responds immediately
-- [ ] 1.6 Auth toggle responds during/after suggestion gate activity
-- [ ] 1.7 Guest live-click sequence responds on timer panel
-- [ ] 1.8 Guest→auth merge smoke with non-default guest localStorage
+- [x] 1.5 Auth dashboard live-click Normal → Soft → Muted responds immediately — 2f0d542
+- [x] 1.6 Auth toggle responds during/after suggestion gate activity — 2f0d542
+- [x] 1.7 Guest live-click sequence responds on timer panel — 2f0d542
+- [x] 1.8 Guest→auth merge smoke with non-default guest localStorage — 2f0d542
 
 ### Phase 2: Live-click E2E regression (auth + guest)
 
 #### Automated
 
-- [ ] 2.1 Auth quiet-cycle e2e passes: `set CI=true && pnpm exec playwright test e2e/quiet-cycle-audio.spec.ts`
-- [ ] 2.2 Guest quiet-cycle e2e passes: `set CI=true && pnpm exec playwright test e2e/guest-quiet-cycle-audio.spec.ts`
-- [ ] 2.3 Full check passes: `pnpm check`
+- [x] 2.1 Auth quiet-cycle e2e passes: `set CI=true && pnpm exec playwright test e2e/quiet-cycle-audio.spec.ts` — 2f0d542
+- [x] 2.2 Guest quiet-cycle e2e passes: `set CI=true && pnpm exec playwright test e2e/guest-quiet-cycle-audio.spec.ts` — 2f0d542
+- [x] 2.3 Full check passes: `pnpm check` — 2f0d542
 
 #### Manual
 
-- [ ] 2.4 Existing seeded muted + hidden-expiry tests still pass in same spec files (review trace on live-toggle flake)
+- [x] 2.4 Existing seeded muted + hidden-expiry tests still pass in same spec files (review trace on live-toggle flake) — 2f0d542
