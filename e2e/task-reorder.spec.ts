@@ -50,10 +50,18 @@ async function dragActiveTaskToIndex(
 		throw new Error("Could not resolve drag handle positions");
 	}
 
-	await sourceHandle.dragTo(targetHandle, {
-		sourcePosition: { x: sourceBox.width / 2, y: sourceBox.height / 2 },
-		targetPosition: { x: targetBox.width / 2, y: targetBox.height / 2 },
-	});
+	const sourceX = sourceBox.x + sourceBox.width / 2;
+	const sourceY = sourceBox.y + sourceBox.height / 2;
+	const targetX = targetBox.x + targetBox.width / 2;
+	const targetY = targetBox.y + targetBox.height / 2;
+
+	await sourceHandle.hover();
+	await page.mouse.move(sourceX, sourceY);
+	await page.mouse.down();
+	// Satisfy PointerSensor activationConstraint (distance: 8)
+	await page.mouse.move(sourceX, sourceY + 10, { steps: 5 });
+	await page.mouse.move(targetX, targetY, { steps: 30 });
+	await page.mouse.up();
 }
 
 function waitForTaskListOk(page: Page) {
@@ -103,7 +111,7 @@ test.describe("Task reorder (S-26)", () => {
 
 		const reorderResponse = page.waitForResponse(
 			(response) => response.url().includes("task.reorder") && response.ok(),
-			{ timeout: 15_000 },
+			{ timeout: 30_000 },
 		);
 		await dragActiveTaskToIndex(page, 1, 0);
 		await reorderResponse;
