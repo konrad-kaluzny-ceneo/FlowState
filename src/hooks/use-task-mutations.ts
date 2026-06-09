@@ -203,7 +203,6 @@ export function useTaskMutations() {
 			return { previousTasks };
 		},
 		onError: handleError,
-		onSettled: handleSettled,
 	});
 
 	const isMutating =

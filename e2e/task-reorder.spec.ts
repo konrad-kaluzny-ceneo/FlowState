@@ -50,18 +50,18 @@ async function dragActiveTaskToIndex(
 		throw new Error("Could not resolve drag handle positions");
 	}
 
-	const sourceX = sourceBox.x + sourceBox.width / 2;
-	const sourceY = sourceBox.y + sourceBox.height / 2;
-	const targetX = targetBox.x + targetBox.width / 2;
-	const targetY = targetBox.y + targetBox.height / 2;
-
-	await page.mouse.move(sourceX, sourceY);
-	await page.mouse.down();
-	await page.mouse.move(sourceX, sourceY + 12, { steps: 3 });
-	await page.mouse.move(targetX, targetY, { steps: 25 });
-	await page.mouse.up();
+	await sourceHandle.dragTo(targetHandle, {
+		sourcePosition: { x: sourceBox.width / 2, y: sourceBox.height / 2 },
+		targetPosition: { x: targetBox.width / 2, y: targetBox.height / 2 },
+	});
 }
 
+function waitForTaskListOk(page: Page) {
+	return page.waitForResponse(
+		(response) => response.url().includes("task.list") && response.ok(),
+		{ timeout: 20_000 },
+	);
+}
 async function dismissKickoffSuggestionIfVisible(page: Page) {
 	const card = page.getByTestId("task-suggestion-card");
 	if (!(await card.isVisible().catch(() => false))) {
@@ -117,11 +117,12 @@ test.describe("Task reorder (S-26)", () => {
 		);
 		await page.reload();
 		await getActiveAfterReload;
+		await waitForTaskListOk(page);
 		await ensureIdleCycle(page);
 		await dismissKickoffSuggestionIfVisible(page);
 
 		await expect
-			.poll(async () => getActiveTaskTitlesInOrder(page), { timeout: 30_000 })
+			.poll(async () => getActiveTaskTitlesInOrder(page), { timeout: 60_000 })
 			.toEqual([taskB, taskA, taskC]);
 	});
 

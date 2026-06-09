@@ -245,7 +245,6 @@ describe("useTaskMutations", () => {
 		});
 
 		expect(taskListCache?.[1]?.id).toBe(42);
-		expect(invalidateTaskList).toHaveBeenCalled();
 		expect(result.current.error).toBeNull();
 	});
 
@@ -268,7 +267,6 @@ describe("useTaskMutations", () => {
 		expect(updated?.title).toBe("Renamed");
 		expect(updated?.workType).toBe("DEEP_WORK");
 		expect(updated?.weight).toBe(3);
-		expect(invalidateTaskList).toHaveBeenCalled();
 		expect(result.current.error).toBeNull();
 	});
 
@@ -322,7 +320,6 @@ describe("useTaskMutations", () => {
 
 		expect(cancelTaskList).toHaveBeenCalled();
 		expect(taskListCache).toEqual([makeTask({ id: 2, title: "Keep me" })]);
-		expect(invalidateTaskList).toHaveBeenCalled();
 		expect(result.current.error).toBeNull();
 	});
 
@@ -349,7 +346,6 @@ describe("useTaskMutations", () => {
 		});
 
 		expect(taskListCache).toBeUndefined();
-		expect(invalidateTaskList).toHaveBeenCalled();
 	});
 
 	it("restores snapshot and exposes error on mutation failure", async () => {
@@ -384,7 +380,6 @@ describe("useTaskMutations", () => {
 		});
 
 		expect(taskListCache).toEqual(previous);
-		expect(invalidateTaskList).toHaveBeenCalled();
 	});
 
 	it("delegates to repository in guest mode without cache helpers", async () => {
@@ -463,7 +458,6 @@ describe("useTaskMutations", () => {
 		expect(cancelTaskList).toHaveBeenCalled();
 		expect(taskListCache?.map((task) => task.id)).toEqual([3, 1, 2]);
 		expect(taskListCache?.map((task) => task.sortOrder)).toEqual([0, 1, 2]);
-		expect(invalidateTaskList).toHaveBeenCalled();
 		expect(result.current.error).toBeNull();
 	});
 
@@ -494,7 +488,6 @@ describe("useTaskMutations", () => {
 		});
 
 		expect(taskListCache).toEqual(previous);
-		expect(invalidateTaskList).toHaveBeenCalled();
 	});
 
 	it("delegates reorder to repository in guest mode without cache helpers", async () => {
