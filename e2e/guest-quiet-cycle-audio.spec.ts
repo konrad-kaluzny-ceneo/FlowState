@@ -17,22 +17,26 @@ const TITLE_PULSE_PATTERN = /●/;
 /** Advance past 1s work expiry but before 1.5s pulse toggle (see cycle-end-tab-pulse.ts). */
 const HIDDEN_EXPIRY_CLOCK_MS = 1200;
 
-test.describe("Quiet cycle audio — guest (S-20)", () => {
+async function setupGuestPage(page: import("@playwright/test").Page) {
+	await clearOnboardingKeys(page);
+	await page.reload();
+	await expect(page.getByTestId("guest-banner")).toBeVisible();
+	await dismissFirstRunIfVisible(page);
+	await page.evaluate(() => {
+		(
+			window as Window & { __stopCycleEndTabPulse?: () => void }
+		).__stopCycleEndTabPulse?.();
+	});
+}
+
+test.describe("Quiet cycle audio — guest muted (S-20)", () => {
 	test.beforeEach(async ({ page, context }) => {
 		await context.clearCookies();
 		await page.addInitScript((key) => {
 			localStorage.setItem(key, JSON.stringify("muted"));
 		}, GUEST_MUTED_KEY);
 		await page.goto("/");
-		await clearOnboardingKeys(page);
-		await page.reload();
-		await expect(page.getByTestId("guest-banner")).toBeVisible();
-		await dismissFirstRunIfVisible(page);
-		await page.evaluate(() => {
-			(
-				window as Window & { __stopCycleEndTabPulse?: () => void }
-			).__stopCycleEndTabPulse?.();
-		});
+		await setupGuestPage(page);
 	});
 
 	test("guest muted hidden work expiry shows catch-up and title pulse", async ({
@@ -75,5 +79,53 @@ test.describe("Quiet cycle audio — guest (S-20)", () => {
 		expect(titleAfterDismiss).not.toMatch(TITLE_PULSE_PATTERN);
 		expect(titleAfterDismiss).toBe(originalTitle);
 		await expect(page.getByTestId("check-in-overlay")).toBeHidden();
+	});
+});
+
+test.describe("Quiet cycle audio — guest live toggle (B-01)", () => {
+	test.beforeEach(async ({ page, context }) => {
+		await context.clearCookies();
+		await page.goto("/");
+		await setupGuestPage(page);
+		await page.evaluate(() => {
+			localStorage.removeItem("flowstate:cycleEndAudio:guest");
+		});
+		await page.reload();
+		await expect(page.getByTestId("guest-banner")).toBeVisible();
+		await dismissFirstRunIfVisible(page);
+	});
+
+	test("guest live toggle updates aria-pressed for each mode (B-01)", async ({
+		page,
+	}) => {
+		const taskTitle = `Guest Live Audio Toggle ${Date.now()}`;
+
+		await addTask(page, taskTitle);
+		await focusTask(page, taskTitle);
+
+		await expect(
+			page.getByTestId("cycle-audio-preference-normal"),
+		).toHaveAttribute("aria-pressed", "true");
+
+		await page.getByTestId("cycle-audio-preference-soft").click();
+		await expect(
+			page.getByTestId("cycle-audio-preference-soft"),
+		).toHaveAttribute("aria-pressed", "true");
+
+		await page.getByTestId("cycle-audio-preference-muted").click();
+		await expect(
+			page.getByTestId("cycle-audio-preference-muted"),
+		).toHaveAttribute("aria-pressed", "true");
+
+		await page.getByTestId("cycle-audio-preference-normal").click();
+		await expect(
+			page.getByTestId("cycle-audio-preference-normal"),
+		).toHaveAttribute("aria-pressed", "true");
+
+		const stored = await page.evaluate(
+			(key) => localStorage.getItem(key),
+			GUEST_MUTED_KEY,
+		);
+		expect(stored).toBe(JSON.stringify("normal"));
 	});
 });
