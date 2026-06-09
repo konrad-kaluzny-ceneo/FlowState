@@ -9,6 +9,7 @@ expanded_intelligence: 2026-06-07
 expanded_story: 2026-06-07
 expanded_followup: 2026-06-07
 expanded_ux_gaps: 2026-06-07
+expanded_task_planning: 2026-06-09
 active_slices: []
 prd_version: 1
 main_goal: speed
@@ -72,6 +73,10 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | B-02 | fix-task-title-multiline-edit | [FLO-54](https://linear.app/flowstate-10xdev/issue/FLO-54) | [#73](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/73) | **(bug)** task title edit uses multi-line text area so long names wrap and remain fully visible | — | FR-005, FR-008 | open |
 | B-03 | fix-cycle-start-interrupt-optimistic | [FLO-55](https://linear.app/flowstate-10xdev/issue/FLO-55) | [#74](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/74) | **(bug)** Start Cycle / Interrupt update timer UI within 200ms (optimistic), not after server round-trip | S-09 | NFR (200ms acknowledgement), FR-009, FR-012 | open |
 | B-04 | fix-cycle-complete-flash-after-checkin | [FLO-56](https://linear.app/flowstate-10xdev/issue/FLO-56) | [#75](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/75) | **(bug)** after energy check-in, Cycle Complete overlay must not flash/hang until break/suggestion | S-05, S-06 | FR-020, FR-021, NFR (200ms acknowledgement) | open |
+| F-05 | eisenhower-effort-task-attributes | [FLO-57](https://linear.app/flowstate-10xdev/issue/FLO-57) | [#78](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/78) | (foundation) importance + urgency + effort minutes + commitment horizon on Task; deterministic scorer v2 (Eisenhower/Pareto/Ockham) | S-04, S-06 | FR-017, FR-018, FR-021, proposed-FR-task-importance, proposed-FR-commitment-horizon, proposed-FR-effort-estimate | proposed |
+| S-25 | pre-suggestion-readiness | [FLO-58](https://linear.app/flowstate-10xdev/issue/FLO-58) | [#79](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/79) | declare Focused/Steady/Fading at kickoff and before next-task suggestion — feeds scorer instead of hardcoded STEADY | S-05, S-06, S-15 | FR-020, FR-021, FR-019, proposed-FR-pre-suggestion-readiness | ready |
+| S-26 | task-manual-priority-order | [FLO-59](https://linear.app/flowstate-10xdev/issue/FLO-59) | [#81](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/81) | **drag-reorder** active tasks with persisted manual priority as suggester tie-breaker | S-04, S-06, S-09 | FR-021, FR-022, FR-005, NFR (200ms acknowledgement) | ready (**high priority**) |
+| S-27 | daily-standing-tasks-capacity-plan | [FLO-60](https://linear.app/flowstate-10xdev/issue/FLO-60) | [#80](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/80) | daily standing tasks roll into today's plan with focus-hours budget and capacity-aware suggestion rationale (no RRULE) | F-05, S-06, S-15 | FR-021, FR-022, FR-019, proposed-FR-daily-standing-tasks, proposed-FR-daily-focus-budget | proposed |
 
 ## Streams
 
@@ -88,6 +93,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | G | Intelligent wedge (post-MVP) | `S-15` ∥ `S-16`; `S-17` (after `S-12` recommended); `S-18` | Extends deterministic scoring beyond post-check-in moments — kickoff, wind-down, in-flow narrative, context recovery. Expanded via `/10x-roadmap-expand` 2026-06-07 (intelligence batch). |
 | H | Story & mindfulness (post-MVP) | `S-19` ∥ `S-20`; `S-21` (after `S-12`); `S-22` pairs with `S-20` | Wedge narrative beats — override acknowledgement, quiet audio, paired break/re-entry copy. Follow-up batch 2 (2026-06-07): P-201→S-19, P-202→S-17, P-203+P-204→S-18, P-205→S-15, P-206→S-21, P-208→S-20 acceptance; P-207 **rejected** (duplicate S-13+S-17). |
 | I | Calm focus UX (post-MVP) | `S-22` ∥ `S-23` ∥ `S-20`; `S-24` (product gate) | Tab-return catch-up, scoring transparency, quiet audio, reversible pause. Expanded via `/10x-roadmap-expand` 2026-06-07 (UX gaps batch). Merges: P-204+P-205→S-11, P-206→S-20. |
+| J | Task planning & richer scoring | **`S-26` (high)** ∥ `S-25` ∥ `S-23`; `F-05` → `S-27` | Expanded `/10x-roadmap-expand` 2026-06-09. User-priority drag-drop first; Eisenhower substrate before daily standing + capacity. |
 
 
 ## Baseline
@@ -169,6 +175,25 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Calm/minimal vs bolder personality — which direction fits the mindfulness wedge? Owner: user. Block: no.
   - Does `DESIGN.md` live at repo root or under `context/foundation/`? Owner: implementer. Block: no.
 - **Risk:** Open-ended shape discovery stalls without a locked calm/focus product voice — scope discovery to wedge surfaces (home, task list, cycle transitions) only.
+- **Status:** proposed
+
+
+### F-05: Eisenhower effort task attributes (scorer v2 substrate)
+
+- **Outcome:** (foundation) Task carries separate importance (1–3) and urgency (1–3), optional effort estimate in minutes, and commitment horizon (ASAP / this week / when possible) at create/edit; existing `weight` migrates to urgency with sensible defaults; `workType` unchanged; deterministic scorer v2 applies Eisenhower (urgency×importance), Pareto (importance when Focused), and Ockham (low-effort when Fading); rationale templates and S-23 expander factors updated.
+- **Change ID:** eisenhower-effort-task-attributes
+- **Linear:** [FLO-57](https://linear.app/flowstate-10xdev/issue/FLO-57)
+- **GitHub:** [#78](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/78)
+- **PRD refs:** FR-017, FR-018, FR-021, proposed-FR-task-importance, proposed-FR-commitment-horizon, proposed-FR-effort-estimate
+- **Unlocks:** S-27 (daily standing + capacity), S-23 factor breakdown refresh after ship
+- **Prerequisites:** S-04, S-06
+- **Parallel with:** S-25, S-26, S-23
+- **Blockers:** —
+- **Unknowns:**
+  - Migrate existing `weight` → urgency only, or copy to both axes? Owner: implementer. Block: no.
+  - Cap effort range (e.g. 5–240 min) and treat null as unknown in scoring? Owner: implementer. Block: no.
+  - Relabel weight UI as "urgency" or keep label with tooltip? Owner: user. Block: no.
+- **Risk:** Three user-facing scales plus horizon may feel heavy at task creation — mitigate with defaults (importance 2, urgency 2, horizon when possible) and compact pickers; `weight` retained as legacy fallback in v1. Expand score 73/90 — **promote** (roadmap-expand 2026-06-09); merges importance-commitment-horizon + effort estimate from ideation batch.
 - **Status:** proposed
 
 
@@ -589,6 +614,72 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Orchestrator doubts:** PRD gap on pause vs interrupt; largest scope in UX batch — **low promote confidence** until inactivity + interruptionCount rules locked. Expand score 66/100 — **revise**.
 - **Status:** proposed
 
+### S-25: Pre-suggestion readiness gate
+
+- **Outcome:** at session kickoff and before the post-check-in next-task suggestion card, user declares readiness using the same Focused / Steady / Fading control as S-05 — skippable with Steady default — and the declared energy feeds `suggestion.next` / kickoff scorer instead of the current hardcoded STEADY path.
+- **Change ID:** pre-suggestion-readiness
+- **Linear:** [FLO-58](https://linear.app/flowstate-10xdev/issue/FLO-58)
+- **GitHub:** [#79](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/79)
+- **PRD refs:** FR-020, FR-021, FR-019, proposed-FR-pre-suggestion-readiness
+- **Prerequisites:** S-05, S-06, S-15
+- **Parallel with:** S-26, S-23, F-05
+- **Blockers:** —
+- **Unknowns:**
+  - Reuse exact check-in overlay component vs compact inline chips on suggestion surface? Owner: implementer. Block: no.
+  - Does skipped readiness persist as STEADY for session context only or also write a CheckIn row? Owner: implementer. Block: no.
+- **Risk:** Second energy gate on the same transition beat as check-in — show pre-suggestion readiness only when no check-in gate is active; coordinate with Open Roadmap Q2. Expand score 80/90 — **promote** (roadmap-expand 2026-06-09).
+- **Status:** ready
+
+### S-26: Manual task priority order (drag-and-drop)
+
+- **Outcome:** user drag-reorders active tasks in the task list; order persists across refresh and guest merge (`sortOrder` on Task); post-check-in and kickoff suggestions use manual order as the deterministic tie-breaker when scorer scores tie — not as the primary ranking signal.
+- **Change ID:** task-manual-priority-order
+- **Linear:** [FLO-59](https://linear.app/flowstate-10xdev/issue/FLO-59)
+- **GitHub:** [#81](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/81)
+- **PRD refs:** FR-021, FR-022, FR-005, NFR (200ms acknowledgement)
+- **Prerequisites:** S-04, S-06, S-09
+- **Parallel with:** S-25, S-23, B-02
+- **Blockers:** —
+- **Unknowns:**
+  - Manual order on active tasks only, or also completed list? Owner: user. Block: no — active only in v1.
+  - Guest merge: preserve relative sortOrder on import? Owner: implementer. Block: no.
+  - Drag handle vs full-row drag for touch? Owner: implementer. Block: no.
+- **Risk:** Optimistic reorder + suggester cache invalidation may desync list order from accepted suggestion on race — mirror S-09 rollback pattern. Expand score 65/90 — **promote**; **user priority: high** — first `/10x-plan` target in batch 2026-06-09.
+- **Status:** ready (**high priority**)
+
+### S-27: Daily standing tasks and focus-hours capacity plan
+
+- **Outcome:** user marks tasks as daily standing work, sets today's available focus hours once per local day, and adds optional per-task minute estimates (or uses F-05 effort field); at session kickoff and post-check-in, standing tasks not yet done today roll into the active suggestion pool and the suggester prefers tasks that fit remaining capacity — rationale cites fit (e.g. "fits ~25 min left today"). **Scope guard:** boolean daily flag + local-day reset only — no RRULE, no weekly/monthly schedules, no habit dashboard.
+- **Change ID:** daily-standing-tasks-capacity-plan
+- **Linear:** [FLO-60](https://linear.app/flowstate-10xdev/issue/FLO-60)
+- **GitHub:** [#80](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/80)
+- **PRD refs:** FR-021, FR-022, FR-019, proposed-FR-daily-standing-tasks, proposed-FR-daily-focus-budget
+- **Prerequisites:** F-05, S-06, S-15
+- **Parallel with:** S-25, S-26
+- **Blockers:** —
+- **Unknowns:**
+  - Store day plan on Session vs per-user per-local-date record? Owner: implementer. Block: no.
+  - Completing daily standing task: archive until midnight vs `todayDone` flag? Owner: user. Block: no.
+  - Decrement capacity on cycle complete minutes vs task-done only? Owner: implementer. Block: no.
+- **Risk:** Daily reset semantics can drift into full recurring-product scope — bound to suggestion pool only; no auto-spawn at midnight without user opening app. Expand score 64/90 — **revise then promote**; safe reframe of parked P-109.
+- **Status:** proposed
+
+## Follow-up scope merges (batch 3)
+
+> `/10x-roadmap-expand` task-planning pass 2026-06-09 — **Commit** synced to Linear + GitHub.
+
+| Proposal | Score | Action | Target |
+|---|---:|---|---|
+| P-101 Pre-suggestion readiness | 80 | promote | S-25 |
+| P-102 Eisenhower + effort foundation | 73 | promote | F-05 |
+| P-103 Manual task priority (drag-drop) | 65 | promote (**high user priority**) | S-26 |
+| P-104 Daily standing + capacity | 64 | promote (revise) | S-27 |
+| P-105 Importance & commitment horizon | 66 | merge | F-05 |
+| P-106 Task effort & focus window | 65 | merge | F-05 (effort) + S-27 (focus budget) |
+| P-107 Today focus mega-bundle | 61 | **reject** → Future ideas | — |
+
+**Recommended `/10x-plan` order:** `S-26` (drag-drop, high priority) → `F-05` → `S-25` ∥ `S-23` → `S-27`.
+
 ## Follow-up scope merges (batch 2)
 
 > `/10x-roadmap-expand` follow-up pass 2026-06-07 — no new roadmap IDs; evaluator merged P-201…P-208 into existing slices. **Commit** synced to Linear issue bodies.
@@ -646,6 +737,10 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | B-02 | fix-task-title-multiline-edit | FLO-54 | #73 | Bug — task title edit truncates long names | yes | FR-005; single-line input in task-list |
 | B-03 | fix-cycle-start-interrupt-optimistic | FLO-55 | #74 | Bug — Start/Interrupt hang without optimistic UI | yes | S-09 gap; relates to FLO-49 S-27 |
 | B-04 | fix-cycle-complete-flash-after-checkin | FLO-56 | #75 | Bug — Cycle Complete flashes after check-in | yes | S-05/S-06; state machine gap |
+| F-05 | eisenhower-effort-task-attributes | FLO-57 | #78 | FlowState — Eisenhower task attributes + scorer v2 | no | Substrate for S-27; refresh S-23 factors after ship |
+| S-25 | pre-suggestion-readiness | FLO-58 | #79 | FlowState — pre-suggestion readiness gate | yes | Fixes S-15 hardcoded STEADY |
+| S-26 | task-manual-priority-order | FLO-59 | #81 | FlowState — drag-reorder task priority | yes | **High user priority** — plan first |
+| S-27 | daily-standing-tasks-capacity-plan | FLO-60 | #80 | FlowState — daily standing + focus budget | no | Requires F-05; anti-RRULE guard |
 
 ## Bugs
 
@@ -718,14 +813,39 @@ Items tagged `needs-research` are non-trivial — they require external research
 
 | S-15 | session-kickoff-suggestion | 🟡 Medium | Kickoff scoring contract without check-in; reuse vs fork of `suggestion.next` API |
 | S-24 | cycle-pause-resume | 🟡 Medium | PAUSED cycle state + guest blob + refresh recovery; pause vs inactivity timeout semantics |
+| F-05 | eisenhower-effort-task-attributes | 🟡 Medium | Eisenhower/Pareto deterministic scoring patterns; weight→urgency migration; horizon coefficient calibration |
+| S-26 | task-manual-priority-order | 🟢 Low | dnd-kit vs native HTML DnD with optimistic reorder; guest merge sortOrder |
+| S-27 | daily-standing-tasks-capacity-plan | 🟡 Medium | Local-day reset semantics; capacity decrement model; anti-RRULE scope boundary |
 
-**Not requiring research** (straightforward implementation on existing stack): F-03, F-04, S-02, S-03, S-04, S-05, S-09, S-10, S-11, S-12, S-13, S-14, S-16, S-17, S-18, S-19, S-20, S-21, S-22, S-23.
+**Not requiring research** (straightforward implementation on existing stack): F-03, F-04, S-02, S-03, S-04, S-05, S-09, S-10, S-11, S-12, S-13, S-14, S-16, S-17, S-18, S-19, S-20, S-21, S-22, S-23, S-25.
 
 ## Open Roadmap Questions
 
 1. **What are the exact weights and thresholds in the scoring formula?** — Owner: implementer (first iteration, calibrate after real usage). Block: S-06 only at calibration step, not at planning. Mirrors PRD §Open Questions Q1; surfaced here so it's not lost to `/10x-plan` as a silent scope grab.
 2. **Which transition surfaces may fire on the same beat?** — Check-in gate, suggestion card, S-21 copy, S-17 narrative, S-19 ack — orchestrator rule: at most one interstitial line + one gate per transition; owner: implementer in `/10x-plan` for S-12/S-21/S-19 coordination. Block: no for individual slices; **yes** for polish pass.
 3. **`Task.resumeNote` vs interruption snapshot?** — Owner: implementer. Block: **S-18 and S-17 handoff phase**.
+4. **`weight` migration vs dual-axis defaults?** — Owner: implementer. Block: **F-05** before S-27 capacity scoring.
+5. **Drag-drop library and touch targets?** — Owner: implementer. Block: no for S-26 planning.
+
+## Future ideas
+
+> Consciously deferred from `/10x-roadmap-expand` 2026-06-09 — preserve analysis for the next expand or unpark review. Not scheduled slices; revisit only if they strengthen FR-021 wedge without violating PRD Non-Goals.
+
+| Idea | Why deferred | Revisit when |
+|---|---|---|
+| **Today focus mega-bundle** (deadline + standing + drag + hours in one slice) | Rejected 61/90 — vertical-slice discipline; decomposed into F-05, S-25–S-27 | Never as bundle; parts already sliced |
+| **Full RRULE / habit tracker** | Weekly/monthly recurrence, auto-spawn at midnight — parked P-109 / ideas-notes | S-27 daily flag proves insufficient in real use |
+| **Hard calendar deadlines (datetime)** | "Before standup 10:00" needs datetime picker + overdue rules — ideas-notes deadline scope | Wedge needs datetime boost beyond commitment horizon (ASAP/this week) |
+| **Eisenhower 2×2 matrix screen** | Visual quadrant UI = analytics-adjacent dashboard | Attributes ship in F-05; screen only if users can't map importance/urgency |
+| **Separate task-type enums** (learning / run-meeting / book-room) | Generic taxonomy creep vs `workType` + importance/urgency | User testing shows F-05 mapping fails for recurring personas |
+| **Tags / projects / SMART goals** | Generic CRUD not tied to wedge — ideas-notes parked | Only if proven to feed scoring or context recovery |
+| **Focus window start + end band** | Full working-hours schedule vs S-27 single focus-hours budget | User needs start-time blocking, not just remaining capacity |
+| **Legacy `weight` field removal** | Scorer v2 needs migration period | After F-05 stable + S-23 factors updated |
+| **Suggestion helpfulness feedback** (Helpful / Not quite) | No ML path; dead data without calibration loop — rejected P-207 UX batch | Formula calibration pipeline exists post-launch |
+| **Past-deadline urgency boost cap** | Product rule for overdue tasks not in v1 horizon model | Datetime deadlines unparked |
+| **Agile modifiers** (sprint points, WIP limits) | Outside mindfulness + Pomodoro wedge | Explicit user demand with wedge tie-in |
+| **Calendar / Slack / Jira integrations** | PRD Non-Goals | Platform slice post-MVP |
+| **Expanded energy states** beyond Focused/Steady/Fading | S-25 reuses S-05 triad by design | Check-in fatigue research suggests need |
 
 ## Parked
 
