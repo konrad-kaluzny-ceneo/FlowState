@@ -146,7 +146,7 @@ export const suggestionRouter = createTRPCRouter({
 
 				const activeTasks = await ctx.db.task.findMany({
 					where: { userId, status: "active" },
-					orderBy: { createdAt: "asc" },
+					orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
 				});
 
 				if (activeTasks.length === 0) {
@@ -166,6 +166,7 @@ export const suggestionRouter = createTRPCRouter({
 						id: t.id,
 						workType: t.workType,
 						weight: t.weight,
+						sortOrder: t.sortOrder,
 						createdAt: t.createdAt,
 					})),
 					scoringContext,
@@ -213,7 +214,7 @@ export const suggestionRouter = createTRPCRouter({
 
 			const activeTasks = await ctx.db.task.findMany({
 				where: { userId, status: "active" },
-				orderBy: { createdAt: "asc" },
+				orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
 			});
 
 			if (activeTasks.length === 0) {
@@ -233,6 +234,7 @@ export const suggestionRouter = createTRPCRouter({
 					id: t.id,
 					workType: t.workType,
 					weight: t.weight,
+					sortOrder: t.sortOrder,
 					createdAt: t.createdAt,
 				})),
 				scoringContext,

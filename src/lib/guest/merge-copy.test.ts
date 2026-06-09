@@ -15,11 +15,13 @@ function makeTask(partial: {
 	title: string;
 	status: "active" | "completed";
 	createdAt: Date;
+	sortOrder?: number;
 }): GuestTask {
 	return {
 		...partial,
 		workType: "OPERATIONAL",
 		weight: 2,
+		sortOrder: partial.sortOrder ?? 0,
 		updatedAt: null,
 	};
 }
@@ -33,7 +35,7 @@ describe("extractPreviewTaskTitles", () => {
 		expect(extractPreviewTaskTitles(createEmptyGuestSnapshot())).toEqual([]);
 	});
 
-	it("orders active tasks before completed, each by createdAt ascending", () => {
+	it("orders active tasks before completed; active by sortOrder, completed by createdAt", () => {
 		const snapshot = snapshotWithTasks([
 			makeTask({
 				id: "1",
@@ -45,12 +47,14 @@ describe("extractPreviewTaskTitles", () => {
 				id: "2",
 				title: "Active later",
 				status: "active",
+				sortOrder: 1,
 				createdAt: new Date("2026-01-03T10:00:00.000Z"),
 			}),
 			makeTask({
 				id: "3",
 				title: "Active earlier",
 				status: "active",
+				sortOrder: 0,
 				createdAt: new Date("2026-01-02T10:00:00.000Z"),
 			}),
 			makeTask({
@@ -103,30 +107,35 @@ describe("extractPreviewTaskTitles", () => {
 				id: "1",
 				title: "Task one",
 				status: "active",
+				sortOrder: 0,
 				createdAt: new Date("2026-01-01T10:00:00.000Z"),
 			}),
 			makeTask({
 				id: "2",
 				title: "Task two",
 				status: "active",
+				sortOrder: 1,
 				createdAt: new Date("2026-01-02T10:00:00.000Z"),
 			}),
 			makeTask({
 				id: "3",
 				title: "Task three",
 				status: "active",
+				sortOrder: 2,
 				createdAt: new Date("2026-01-03T10:00:00.000Z"),
 			}),
 			makeTask({
 				id: "4",
 				title: "Task four",
 				status: "active",
+				sortOrder: 3,
 				createdAt: new Date("2026-01-04T10:00:00.000Z"),
 			}),
 			makeTask({
 				id: "5",
 				title: "Task five",
 				status: "active",
+				sortOrder: 4,
 				createdAt: new Date("2026-01-05T10:00:00.000Z"),
 			}),
 		]);

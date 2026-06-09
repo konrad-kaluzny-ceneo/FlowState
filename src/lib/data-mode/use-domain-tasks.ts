@@ -7,16 +7,24 @@ import { GUEST_STORAGE_KEY } from "~/lib/guest/schema";
 import { loadSnapshot, subscribeGuestStore } from "~/lib/guest/store";
 
 function mapSnapshotToTasks(): DomainTask[] {
-	return loadSnapshot().tasks.map((task) => ({
-		id: task.id,
-		title: task.title,
-		status: task.status,
-		userId: "guest",
-		createdAt: task.createdAt,
-		updatedAt: task.updatedAt,
-		workType: task.workType,
-		weight: task.weight as 1 | 2 | 3,
-	}));
+	return [...loadSnapshot().tasks]
+		.sort((a, b) => {
+			if (a.sortOrder !== b.sortOrder) {
+				return a.sortOrder - b.sortOrder;
+			}
+			return a.createdAt.getTime() - b.createdAt.getTime();
+		})
+		.map((task) => ({
+			id: task.id,
+			title: task.title,
+			status: task.status,
+			userId: "guest",
+			createdAt: task.createdAt,
+			updatedAt: task.updatedAt,
+			workType: task.workType,
+			weight: task.weight as 1 | 2 | 3,
+			sortOrder: task.sortOrder,
+		}));
 }
 
 let cachedStorageValue: string | null | undefined;

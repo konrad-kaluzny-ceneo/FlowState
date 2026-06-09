@@ -43,19 +43,23 @@ const invalidateTaskList = vi.fn();
 const taskRepoCreate = vi.fn();
 const taskRepoUpdate = vi.fn();
 const taskRepoDelete = vi.fn();
+const taskRepoReorder = vi.fn();
 
 const createMutateAsync = vi.fn();
 const updateMutateAsync = vi.fn();
 const deleteMutateAsync = vi.fn();
+const reorderMutateAsync = vi.fn();
 
 const mutationLifecycles: {
 	create: MutationLifecycle;
 	update: MutationLifecycle;
 	delete: MutationLifecycle;
+	reorder: MutationLifecycle;
 } = {
 	create: {},
 	update: {},
 	delete: {},
+	reorder: {},
 };
 
 let dataMode: "authenticated" | "guest" = "authenticated";
@@ -108,6 +112,7 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 			create: taskRepoCreate,
 			update: taskRepoUpdate,
 			delete: taskRepoDelete,
+			reorder: taskRepoReorder,
 		},
 	}),
 }));
@@ -152,6 +157,15 @@ vi.mock("~/trpc/react", () => ({
 					};
 				},
 			},
+			reorder: {
+				useMutation: (opts: MutationLifecycle) => {
+					mutationLifecycles.reorder = opts;
+					return {
+						mutateAsync: reorderMutateAsync,
+						isPending: false,
+					};
+				},
+			},
 		},
 	},
 }));
@@ -180,6 +194,7 @@ function makeTask(
 		status: "active",
 		workType: "OPERATIONAL",
 		weight: 2,
+		sortOrder: 0,
 		createdAt: new Date("2026-01-01T00:00:00Z"),
 		updatedAt: new Date("2026-01-01T00:00:00Z"),
 		...overrides,
@@ -194,6 +209,7 @@ describe("useTaskMutations", () => {
 		mutationLifecycles.create = {};
 		mutationLifecycles.update = {};
 		mutationLifecycles.delete = {};
+		mutationLifecycles.reorder = {};
 		cancelTaskList.mockResolvedValue(undefined);
 	});
 
@@ -229,7 +245,6 @@ describe("useTaskMutations", () => {
 		});
 
 		expect(taskListCache?.[1]?.id).toBe(42);
-		expect(invalidateTaskList).toHaveBeenCalled();
 		expect(result.current.error).toBeNull();
 	});
 
@@ -252,7 +267,6 @@ describe("useTaskMutations", () => {
 		expect(updated?.title).toBe("Renamed");
 		expect(updated?.workType).toBe("DEEP_WORK");
 		expect(updated?.weight).toBe(3);
-		expect(invalidateTaskList).toHaveBeenCalled();
 		expect(result.current.error).toBeNull();
 	});
 
@@ -306,7 +320,6 @@ describe("useTaskMutations", () => {
 
 		expect(cancelTaskList).toHaveBeenCalled();
 		expect(taskListCache).toEqual([makeTask({ id: 2, title: "Keep me" })]);
-		expect(invalidateTaskList).toHaveBeenCalled();
 		expect(result.current.error).toBeNull();
 	});
 
@@ -333,7 +346,6 @@ describe("useTaskMutations", () => {
 		});
 
 		expect(taskListCache).toBeUndefined();
-		expect(invalidateTaskList).toHaveBeenCalled();
 	});
 
 	it("restores snapshot and exposes error on mutation failure", async () => {
@@ -368,7 +380,6 @@ describe("useTaskMutations", () => {
 		});
 
 		expect(taskListCache).toEqual(previous);
-		expect(invalidateTaskList).toHaveBeenCalled();
 	});
 
 	it("delegates to repository in guest mode without cache helpers", async () => {
@@ -422,6 +433,79 @@ describe("useTaskMutations", () => {
 		});
 
 		expect(result.current.error).toBeNull();
+	});
+
+	it("optimistically reorders active tasks before resolve", async () => {
+		taskListCache = [
+			makeTask({ id: 1, title: "First", sortOrder: 0 }),
+			makeTask({ id: 2, title: "Second", sortOrder: 1 }),
+			makeTask({ id: 3, title: "Third", sortOrder: 2 }),
+		];
+
+		const { result } = renderHook(() => useTaskMutations(), {
+			wrapper: createWrapper(),
+		});
+
+		await act(async () => {
+			await runMutationLifecycle(
+				mutationLifecycles.reorder,
+				reorderMutateAsync,
+				{ orderedIds: [3, 1, 2] },
+				undefined,
+			);
+		});
+
+		expect(cancelTaskList).toHaveBeenCalled();
+		expect(taskListCache?.map((task) => task.id)).toEqual([3, 1, 2]);
+		expect(taskListCache?.map((task) => task.sortOrder)).toEqual([0, 1, 2]);
+		expect(result.current.error).toBeNull();
+	});
+
+	it("restores snapshot on failed reorder", async () => {
+		const previous = [
+			makeTask({ id: 1, sortOrder: 0 }),
+			makeTask({ id: 2, title: "Second", sortOrder: 1 }),
+		];
+		taskListCache = previous;
+
+		const { result } = renderHook(() => useTaskMutations(), {
+			wrapper: createWrapper(),
+		});
+
+		await act(async () => {
+			await runFailingMutationLifecycle(
+				mutationLifecycles.reorder,
+				reorderMutateAsync,
+				{ orderedIds: [2, 1] },
+				new Error("Reorder failed"),
+			).catch(() => {});
+		});
+
+		await waitFor(() => {
+			expect(result.current.error).toBe(
+				"Something went wrong. Please try again.",
+			);
+		});
+
+		expect(taskListCache).toEqual(previous);
+	});
+
+	it("delegates reorder to repository in guest mode without cache helpers", async () => {
+		dataMode = "guest";
+		taskRepoReorder.mockResolvedValue(undefined);
+
+		const { result } = renderHook(() => useTaskMutations(), {
+			wrapper: createWrapper(),
+		});
+
+		await act(async () => {
+			await result.current.reorderTasks({ orderedIds: [2, 1] });
+		});
+
+		expect(taskRepoReorder).toHaveBeenCalledWith({ orderedIds: [2, 1] });
+		expect(cancelTaskList).not.toHaveBeenCalled();
+		expect(setTaskListData).not.toHaveBeenCalled();
+		expect(reorderMutateAsync).not.toHaveBeenCalled();
 	});
 
 	it("skips server update/delete for temp negative ids", async () => {

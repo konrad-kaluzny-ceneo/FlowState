@@ -23,6 +23,9 @@ vi.mock("~/server/db/index", () => {
 		db: {
 			task: {
 				findMany: vi.fn(() => Promise.resolve([])),
+				aggregate: vi.fn(() =>
+					Promise.resolve({ _max: { sortOrder: null as number | null } }),
+				),
 				create: vi.fn((args: { data: Record<string, unknown> }) => {
 					capturedData = args.data;
 					return Promise.resolve({ id: 1, ...args.data });

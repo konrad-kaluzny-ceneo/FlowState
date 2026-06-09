@@ -21,6 +21,7 @@ describe("guest schema", () => {
 					status: "active" as const,
 					workType: "DEEP_WORK" as const,
 					weight: 2,
+					sortOrder: 0,
 					createdAt: new Date("2026-05-29T10:00:00.000Z"),
 					updatedAt: null,
 				},
