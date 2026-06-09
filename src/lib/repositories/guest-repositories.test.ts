@@ -73,6 +73,7 @@ describe("guest repositories", () => {
 					status: "active",
 					workType: "OPERATIONAL",
 					weight: 2,
+					sortOrder: 0,
 					createdAt: startedAt,
 					updatedAt: null,
 				},

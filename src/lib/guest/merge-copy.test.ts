@@ -20,6 +20,7 @@ function makeTask(partial: {
 		...partial,
 		workType: "OPERATIONAL",
 		weight: 2,
+		sortOrder: 0,
 		updatedAt: null,
 	};
 }

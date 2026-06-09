@@ -43,6 +43,7 @@ type TrpcTaskRow = {
 	status: string;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: number;
+	sortOrder: number;
 	createdAt: Date;
 	updatedAt: Date | null;
 };

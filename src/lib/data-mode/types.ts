@@ -9,6 +9,7 @@ export type DomainTask = {
 	updatedAt: Date | null;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: 1 | 2 | 3;
+	sortOrder: number;
 };
 
 export type DomainActiveCycle = {

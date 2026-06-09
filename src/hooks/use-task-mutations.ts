@@ -51,6 +51,10 @@ function buildOptimisticCreateRow(
 ): TaskListItem {
 	const userId = existing?.[0]?.userId ?? "";
 	const now = new Date();
+	const maxSortOrder = (existing ?? []).reduce(
+		(max, task) => Math.max(max, task.sortOrder),
+		-1,
+	);
 	return {
 		id: tempId,
 		title: input.title,
@@ -58,6 +62,7 @@ function buildOptimisticCreateRow(
 		status: "active",
 		workType: input.workType ?? "OPERATIONAL",
 		weight: input.weight ?? 2,
+		sortOrder: maxSortOrder + 1,
 		createdAt: now,
 		updatedAt: now,
 	};

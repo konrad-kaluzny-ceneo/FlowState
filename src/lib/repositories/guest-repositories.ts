@@ -19,6 +19,7 @@ function toDomainTask(task: {
 	status: string;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: number;
+	sortOrder: number;
 	createdAt: Date;
 	updatedAt: Date | null;
 }): DomainTask {
@@ -31,6 +32,7 @@ function toDomainTask(task: {
 		updatedAt: task.updatedAt,
 		workType: task.workType,
 		weight: task.weight as 1 | 2 | 3,
+		sortOrder: task.sortOrder,
 	};
 }
 
@@ -73,14 +75,20 @@ export function createGuestTaskRepository(): TaskRepository {
 		},
 
 		async create(input) {
+			const snapshot = loadSnapshot();
 			const now = new Date();
 			const rawWeight = input.weight ?? 2;
+			const maxSortOrder = snapshot.tasks.reduce(
+				(max, task) => Math.max(max, task.sortOrder),
+				-1,
+			);
 			const task = {
 				id: newGuestId(),
 				title: input.title,
 				status: "active" as const,
 				workType: input.workType ?? "OPERATIONAL",
 				weight: Math.min(3, Math.max(1, rawWeight)) as 1 | 2 | 3,
+				sortOrder: maxSortOrder + 1,
 				createdAt: now,
 				updatedAt: null,
 			};

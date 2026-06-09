@@ -1,7 +1,10 @@
 "use server";
 
 import { auth } from "~/lib/auth/server";
-import { guestSnapshotV1Schema } from "~/lib/guest/schema";
+import {
+	guestSnapshotV1Schema,
+	normalizeGuestSnapshot,
+} from "~/lib/guest/schema";
 import { importGuestSnapshot } from "~/server/api/lib/import-guest-snapshot";
 import { db } from "~/server/db/index";
 
@@ -32,7 +35,11 @@ export async function importGuestSnapshotAction(
 	}
 
 	try {
-		const result = await importGuestSnapshot(db, user.id, parsed.data);
+		const result = await importGuestSnapshot(
+			db,
+			user.id,
+			normalizeGuestSnapshot(parsed.data),
+		);
 		return {
 			ok: true,
 			importedTasks: result.importedTasks,
