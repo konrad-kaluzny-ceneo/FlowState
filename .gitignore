@@ -252,3 +252,4 @@ test-results/
 reports
 .playwright-cli
 auth.json
+.tmp-backlog-sync
