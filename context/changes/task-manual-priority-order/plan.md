@@ -500,11 +500,11 @@ Model on `e2e/seed.spec.ts` — fixture auth, `addTask` helper, deliberate-break
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec vitest run src/server/api/routers/task-mutation.test.ts` passes
-- [ ] 2.2 `pnpm exec vitest run src/server/api/routers/task-isolation.test.ts` passes
-- [ ] 2.3 `pnpm test` passes
-- [ ] 2.4 `pnpm typecheck` passes
-- [ ] 2.5 `pnpm check` passes
+- [x] 2.1 `pnpm exec vitest run src/server/api/routers/task-mutation.test.ts` passes
+- [x] 2.2 `pnpm exec vitest run src/server/api/routers/task-isolation.test.ts` passes
+- [x] 2.3 `pnpm test` passes
+- [x] 2.4 `pnpm typecheck` passes
+- [x] 2.5 `pnpm check` passes
 
 #### Manual
 
