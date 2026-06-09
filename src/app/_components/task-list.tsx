@@ -1,5 +1,19 @@
 "use client";
 
+import {
+	DndContext,
+	type DragEndEvent,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import {
+	arrayMove,
+	SortableContext,
+	useSortable,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useRef, useState } from "react";
 
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
@@ -93,6 +107,205 @@ type TaskListProps = {
 	suggestionLoading?: boolean;
 };
 
+type SortableActiveTaskRowProps = {
+	task: DomainTask;
+	dragDisabled: boolean;
+	focusedTaskId: DomainTaskId | null;
+	highlightedTaskId: DomainTaskId | null;
+	editingId: DomainTaskId | null;
+	editTitle: string;
+	editWorkType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+	editWeight: 1 | 2 | 3;
+	cycleLocked: boolean;
+	markCompleteLocked: boolean;
+	isMutating: boolean;
+	canMidCycleMarkComplete: boolean;
+	focusLocked: boolean;
+	onStartEditing: (task: DomainTask) => void;
+	onSaveEdit: (id: DomainTaskId) => void;
+	onSetEditingId: (id: DomainTaskId | null) => void;
+	onSetEditTitle: (title: string) => void;
+	onSetEditWorkType: (
+		workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE",
+	) => void;
+	onSetEditWeight: (weight: 1 | 2 | 3) => void;
+	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
+	onUpdateTask: (input: {
+		id: DomainTaskId;
+		status?: "completed";
+	}) => Promise<void>;
+	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void;
+	onDeleteTask: (input: { id: DomainTaskId }) => Promise<void>;
+};
+
+function SortableActiveTaskRow({
+	task,
+	dragDisabled,
+	focusedTaskId,
+	highlightedTaskId,
+	editingId,
+	editTitle,
+	editWorkType,
+	editWeight,
+	cycleLocked,
+	markCompleteLocked,
+	isMutating,
+	canMidCycleMarkComplete,
+	focusLocked,
+	onStartEditing,
+	onSaveEdit,
+	onSetEditingId,
+	onSetEditTitle,
+	onSetEditWorkType,
+	onSetEditWeight,
+	onMidCycleMarkComplete,
+	onUpdateTask,
+	onFocusTask,
+	onDeleteTask,
+}: SortableActiveTaskRowProps) {
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		setActivatorNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({
+		id: String(task.id),
+		disabled: dragDisabled,
+	});
+
+	const style = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+	};
+
+	return (
+		<li
+			className={`flex items-center gap-2 rounded-lg bg-white/10 px-4 py-3 ${
+				focusedTaskId === task.id ? "ring-2 ring-purple-500" : ""
+			} ${
+				highlightedTaskId === task.id ? "ring-2 ring-amber-400/80" : ""
+			} ${isDragging ? "z-10 opacity-80" : ""}`}
+			data-testid={
+				highlightedTaskId === task.id ? "suggested-task-row" : "active-task-row"
+			}
+			ref={setNodeRef}
+			style={style}
+		>
+			<button
+				aria-label="Drag to reorder"
+				className={`shrink-0 cursor-grab px-1 text-white/40 transition hover:text-white/70 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30 ${
+					dragDisabled ? "pointer-events-none" : ""
+				}`}
+				data-testid="task-drag-handle"
+				disabled={dragDisabled}
+				ref={setActivatorNodeRef}
+				type="button"
+				{...attributes}
+				{...listeners}
+			>
+				⋮⋮
+			</button>
+			<button
+				aria-label="Mark complete"
+				className="h-5 w-5 shrink-0 rounded border-2 border-white/40 transition hover:border-green-400 hover:bg-green-400/20 disabled:cursor-not-allowed disabled:opacity-40"
+				disabled={markCompleteLocked || isMutating}
+				onClick={() => {
+					if (canMidCycleMarkComplete && onMidCycleMarkComplete != null) {
+						onMidCycleMarkComplete(task.id, task);
+						return;
+					}
+
+					void onUpdateTask({
+						id: task.id,
+						status: "completed",
+					});
+				}}
+				type="button"
+			/>
+			{editingId === task.id ? (
+				<div className="flex-1 space-y-2">
+					<input
+						className="w-full rounded bg-white/10 px-2 py-1 text-white focus:outline-none"
+						onBlur={() => void onSaveEdit(task.id)}
+						onChange={(e) => onSetEditTitle(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter") void onSaveEdit(task.id);
+							if (e.key === "Escape") onSetEditingId(null);
+						}}
+						type="text"
+						value={editTitle}
+					/>
+					<div className="flex items-center gap-2">
+						<span className="w-16 text-white/60 text-xs">Type</span>
+						<SegmentedControl
+							colorMap={{
+								DEEP_WORK: "bg-blue-500/30 text-blue-300",
+								OPERATIONAL: "bg-amber-500/30 text-amber-300",
+								REACTIVE: "bg-rose-500/30 text-rose-300",
+							}}
+							onChange={onSetEditWorkType}
+							options={[
+								{ value: "DEEP_WORK" as const, label: "Deep" },
+								{ value: "OPERATIONAL" as const, label: "Ops" },
+								{ value: "REACTIVE" as const, label: "Reactive" },
+							]}
+							value={editWorkType}
+						/>
+					</div>
+					<div className="flex items-center gap-2">
+						<span className="w-16 text-white/60 text-xs">Weight</span>
+						<SegmentedControl
+							onChange={(v) => onSetEditWeight(v as 1 | 2 | 3)}
+							options={[
+								{ value: 1 as const, label: "Light" },
+								{ value: 2 as const, label: "Medium" },
+								{ value: 3 as const, label: "Heavy" },
+							]}
+							value={editWeight}
+						/>
+					</div>
+				</div>
+			) : (
+				<button
+					className="flex-1 cursor-pointer text-left text-white disabled:cursor-default disabled:opacity-70"
+					disabled={cycleLocked}
+					onClick={() => onStartEditing(task)}
+					type="button"
+				>
+					{task.title}
+				</button>
+			)}
+			<TaskBadges weight={task.weight} workType={task.workType} />
+			<button
+				className={`shrink-0 rounded-lg px-2 py-1 font-medium text-xs transition ${
+					focusedTaskId === task.id
+						? "bg-purple-600 text-white"
+						: "bg-white/10 text-white/80 hover:bg-white/20"
+				}`}
+				disabled={focusLocked}
+				onClick={() => onFocusTask(task.id, task)}
+				type="button"
+			>
+				{focusedTaskId === task.id ? "Focused" : "Focus"}
+			</button>
+			<button
+				aria-label="Delete task"
+				className="shrink-0 text-white/40 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+				disabled={cycleLocked || isMutating}
+				onClick={() => {
+					void onDeleteTask({ id: task.id });
+				}}
+				type="button"
+			>
+				✕
+			</button>
+		</li>
+	);
+}
+
 export function TaskList({
 	tasks,
 	onRefresh: _onRefresh,
@@ -110,6 +323,7 @@ export function TaskList({
 		createTask,
 		updateTask,
 		deleteTask,
+		reorderTasks,
 		isMutating,
 		isCreating,
 		error,
@@ -146,6 +360,35 @@ export function TaskList({
 		cycleState === "running" &&
 		cycleKind === "WORK" &&
 		onMidCycleMarkComplete != null;
+	const dragDisabled = cycleLocked || isMutating;
+
+	const sensors = useSensors(
+		useSensor(PointerSensor, {
+			activationConstraint: { distance: 8 },
+		}),
+	);
+
+	function handleDragEnd(event: DragEndEvent) {
+		const { active, over } = event;
+		if (over == null || active.id === over.id) {
+			return;
+		}
+
+		const oldIndex = activeTasks.findIndex(
+			(task) => String(task.id) === active.id,
+		);
+		const newIndex = activeTasks.findIndex(
+			(task) => String(task.id) === over.id,
+		);
+		if (oldIndex === -1 || newIndex === -1) {
+			return;
+		}
+
+		const reordered = arrayMove(activeTasks, oldIndex, newIndex);
+		void reorderTasks({
+			orderedIds: reordered.map((task) => task.id),
+		});
+	}
 
 	function startEditing(task: DomainTask) {
 		setEditingId(task.id);
@@ -278,120 +521,43 @@ export function TaskList({
 						onAddTaskClick={() => addTaskInputRef.current?.focus()}
 					/>
 				) : (
-					<ul className="space-y-2">
-						{activeTasks.map((task) => (
-							<li
-								className={`flex items-center gap-2 rounded-lg bg-white/10 px-4 py-3 ${
-									focusedTaskId === task.id ? "ring-2 ring-purple-500" : ""
-								} ${
-									highlightedTaskId === task.id
-										? "ring-2 ring-amber-400/80"
-										: ""
-								}`}
-								data-testid={
-									highlightedTaskId === task.id
-										? "suggested-task-row"
-										: undefined
-								}
-								key={String(task.id)}
-							>
-								<button
-									aria-label="Mark complete"
-									className="h-5 w-5 shrink-0 rounded border-2 border-white/40 transition hover:border-green-400 hover:bg-green-400/20 disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={markCompleteLocked || isMutating}
-									onClick={() => {
-										if (canMidCycleMarkComplete) {
-											onMidCycleMarkComplete(task.id, task);
-											return;
-										}
-
-										void updateTask({
-											id: task.id,
-											status: "completed",
-										});
-									}}
-									type="button"
-								/>
-								{editingId === task.id ? (
-									<div className="flex-1 space-y-2">
-										<input
-											className="w-full rounded bg-white/10 px-2 py-1 text-white focus:outline-none"
-											onBlur={() => void saveEdit(task.id)}
-											onChange={(e) => setEditTitle(e.target.value)}
-											onKeyDown={(e) => {
-												if (e.key === "Enter") void saveEdit(task.id);
-												if (e.key === "Escape") setEditingId(null);
-											}}
-											type="text"
-											value={editTitle}
-										/>
-										<div className="flex items-center gap-2">
-											<span className="w-16 text-white/60 text-xs">Type</span>
-											<SegmentedControl
-												colorMap={{
-													DEEP_WORK: "bg-blue-500/30 text-blue-300",
-													OPERATIONAL: "bg-amber-500/30 text-amber-300",
-													REACTIVE: "bg-rose-500/30 text-rose-300",
-												}}
-												onChange={setEditWorkType}
-												options={[
-													{ value: "DEEP_WORK" as const, label: "Deep" },
-													{ value: "OPERATIONAL" as const, label: "Ops" },
-													{ value: "REACTIVE" as const, label: "Reactive" },
-												]}
-												value={editWorkType}
-											/>
-										</div>
-										<div className="flex items-center gap-2">
-											<span className="w-16 text-white/60 text-xs">Weight</span>
-											<SegmentedControl
-												onChange={(v) => setEditWeight(v as 1 | 2 | 3)}
-												options={[
-													{ value: 1 as const, label: "Light" },
-													{ value: 2 as const, label: "Medium" },
-													{ value: 3 as const, label: "Heavy" },
-												]}
-												value={editWeight}
-											/>
-										</div>
-									</div>
-								) : (
-									<button
-										className="flex-1 cursor-pointer text-left text-white disabled:cursor-default disabled:opacity-70"
-										disabled={cycleLocked}
-										onClick={() => startEditing(task)}
-										type="button"
-									>
-										{task.title}
-									</button>
-								)}
-								<TaskBadges weight={task.weight} workType={task.workType} />
-								<button
-									className={`shrink-0 rounded-lg px-2 py-1 font-medium text-xs transition ${
-										focusedTaskId === task.id
-											? "bg-purple-600 text-white"
-											: "bg-white/10 text-white/80 hover:bg-white/20"
-									}`}
-									disabled={focusLocked}
-									onClick={() => onFocusTask(task.id, task)}
-									type="button"
-								>
-									{focusedTaskId === task.id ? "Focused" : "Focus"}
-								</button>
-								<button
-									aria-label="Delete task"
-									className="shrink-0 text-white/40 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={cycleLocked || isMutating}
-									onClick={() => {
-										void deleteTask({ id: task.id });
-									}}
-									type="button"
-								>
-									✕
-								</button>
-							</li>
-						))}
-					</ul>
+					<DndContext onDragEnd={handleDragEnd} sensors={sensors}>
+						<SortableContext
+							items={activeTasks.map((task) => String(task.id))}
+							strategy={verticalListSortingStrategy}
+						>
+							<ul className="space-y-2">
+								{activeTasks.map((task) => (
+									<SortableActiveTaskRow
+										canMidCycleMarkComplete={canMidCycleMarkComplete}
+										cycleLocked={cycleLocked}
+										dragDisabled={dragDisabled}
+										editingId={editingId}
+										editTitle={editTitle}
+										editWeight={editWeight}
+										editWorkType={editWorkType}
+										focusedTaskId={focusedTaskId}
+										focusLocked={focusLocked}
+										highlightedTaskId={highlightedTaskId}
+										isMutating={isMutating}
+										key={String(task.id)}
+										markCompleteLocked={markCompleteLocked}
+										onDeleteTask={deleteTask}
+										onFocusTask={onFocusTask}
+										onMidCycleMarkComplete={onMidCycleMarkComplete}
+										onSaveEdit={saveEdit}
+										onSetEditingId={setEditingId}
+										onSetEditTitle={setEditTitle}
+										onSetEditWeight={setEditWeight}
+										onSetEditWorkType={setEditWorkType}
+										onStartEditing={startEditing}
+										onUpdateTask={updateTask}
+										task={task}
+									/>
+								))}
+							</ul>
+						</SortableContext>
+					</DndContext>
 				)}
 			</section>
 

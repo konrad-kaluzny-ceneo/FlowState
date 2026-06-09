@@ -18,7 +18,7 @@ type DeleteTaskInput = RouterInputs["task"]["delete"];
 
 type UpdateTaskArgs = Omit<UpdateTaskInput, "id"> & { id: DomainTaskId };
 type DeleteTaskArgs = { id: DomainTaskId };
-type ReorderTasksArgs = { orderedIds: number[] };
+type ReorderTasksArgs = { orderedIds: DomainTaskId[] };
 
 type TaskListItem = TaskListData[number];
 
@@ -263,7 +263,11 @@ export function useTaskMutations() {
 			if (mode === "guest") {
 				return taskRepo.reorder({ orderedIds: input.orderedIds });
 			}
-			return reorderMutation.mutateAsync(input);
+			return reorderMutation.mutateAsync({
+				orderedIds: input.orderedIds.filter(
+					(id): id is number => typeof id === "number",
+				),
+			});
 		},
 		[mode, taskRepo, reorderMutation, clearError],
 	);

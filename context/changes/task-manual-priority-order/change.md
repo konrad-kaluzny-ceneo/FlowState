@@ -1,7 +1,7 @@
 ---
 change_id: task-manual-priority-order
 title: Drag-reorder active tasks with persisted sortOrder tie-breaker
-status: implementing
+status: implemented
 created: 2026-06-09
 updated: 2026-06-09
 archived_at: null

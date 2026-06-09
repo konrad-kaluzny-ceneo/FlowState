@@ -13,6 +13,7 @@ type TaskRow = {
 	userId: string;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: 1 | 2 | 3;
+	sortOrder: number;
 };
 
 type CycleRow = {
@@ -41,6 +42,25 @@ vi.mock("~/server/db/index", () => ({
 				task: {
 					findMany: vi.fn(() =>
 						Promise.resolve(tasks.map((task) => ({ title: task.title }))),
+					),
+					aggregate: vi.fn(
+						(args: {
+							where: { userId: string };
+							_max: { sortOrder: true };
+						}) => {
+							const userTasks = tasks.filter(
+								(task) => task.userId === args.where.userId,
+							);
+							const maxSortOrder = userTasks.reduce(
+								(max, task) => Math.max(max, task.sortOrder),
+								-1,
+							);
+							return Promise.resolve({
+								_max: {
+									sortOrder: maxSortOrder >= 0 ? maxSortOrder : null,
+								},
+							});
+						},
 					),
 					create: vi.fn((args: { data: Omit<TaskRow, "id"> }) => {
 						const row: TaskRow = { id: nextTaskId++, ...args.data };
@@ -123,6 +143,7 @@ describe("guest.import", () => {
 				userId: "user-1",
 				workType: "OPERATIONAL",
 				weight: 2,
+				sortOrder: 2,
 			},
 		];
 		cycles = [];
@@ -289,6 +310,46 @@ describe("guest.import", () => {
 		expect(tasks).toHaveLength(tasksBefore);
 		expect(cycles).toHaveLength(cyclesBefore);
 		expect(sessions).toHaveLength(sessionsBefore);
+	});
+
+	it("preserves guest manual order after existing account tasks on import", async () => {
+		const snapshot: GuestSnapshotV1 = {
+			version: 1,
+			tasks: [
+				{
+					id: "550e8400-e29b-41d4-a716-446655440020",
+					title: "Guest second",
+					status: "active",
+					workType: "OPERATIONAL",
+					weight: 2,
+					sortOrder: 1,
+					createdAt: new Date("2026-05-29T10:05:00.000Z"),
+					updatedAt: null,
+				},
+				{
+					id: "550e8400-e29b-41d4-a716-446655440021",
+					title: "Guest first",
+					status: "active",
+					workType: "DEEP_WORK",
+					weight: 3,
+					sortOrder: 0,
+					createdAt: new Date("2026-05-29T10:10:00.000Z"),
+					updatedAt: null,
+				},
+			],
+			sessions: [],
+			cycles: [],
+		};
+
+		const result = await guestCaller().import(snapshot);
+
+		expect(result.importedTasks).toBe(2);
+		const imported = tasks.filter((task) => task.id > 1);
+		expect(imported.map((task) => task.title)).toEqual([
+			"Guest first",
+			"Guest second",
+		]);
+		expect(imported.map((task) => task.sortOrder)).toEqual([3, 4]);
 	});
 
 	it("sets taskId null when guest cycle references unmapped task UUID", async () => {

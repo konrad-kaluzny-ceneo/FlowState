@@ -45,7 +45,16 @@ export async function importGuestSnapshot(
 		const existingTitles = new Set(existingTasks.map((task) => task.title));
 		const taskIdMap = new Map<string, number>();
 
-		for (const guestTask of snapshot.tasks) {
+		const maxSortOrderResult = await tx.task.aggregate({
+			where: { userId },
+			_max: { sortOrder: true },
+		});
+		const baseOffset = (maxSortOrderResult._max.sortOrder ?? -1) + 1;
+		const sortedGuestTasks = [...snapshot.tasks].sort(
+			(a, b) => a.sortOrder - b.sortOrder,
+		);
+
+		for (const [relativeIndex, guestTask] of sortedGuestTasks.entries()) {
 			const title = resolveUniqueTitle(guestTask.title, existingTitles);
 			existingTitles.add(title);
 
@@ -56,6 +65,7 @@ export async function importGuestSnapshot(
 					userId,
 					workType: guestTask.workType,
 					weight: guestTask.weight,
+					sortOrder: baseOffset + relativeIndex,
 				},
 			});
 
