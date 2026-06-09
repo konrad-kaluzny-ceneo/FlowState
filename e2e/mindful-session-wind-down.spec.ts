@@ -27,13 +27,16 @@ import {
 	focusTask,
 	setShortBreakDurationSec,
 	setWorkDurationSec,
+	waitForCycleCreateSettled,
 } from "./helpers/work-cycle";
 
 async function startFastWorkCycle(page: Page, taskTitle: string) {
 	await focusTask(page, taskTitle);
 	await setShortBreakDurationSec(page, 1);
 	await setWorkDurationSec(page, 1);
+	const createSettled = waitForCycleCreateSettled(page);
 	await page.getByRole("button", { name: "Start Cycle" }).click();
+	await createSettled;
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 }
 

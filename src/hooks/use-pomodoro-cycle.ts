@@ -18,6 +18,11 @@ import type {
 	DomainTaskId,
 	FocusedTask,
 } from "~/lib/data-mode/types";
+
+type CreatedActiveCycle = Omit<DomainActiveCycle, "task"> & {
+	task?: DomainActiveCycle["task"];
+};
+
 import {
 	getLongBreakDuration,
 	getShortBreakDuration,
@@ -272,9 +277,15 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	);
 	const tabWasHiddenWhileRunningRef = useRef(false);
 	const cancelPendingStartRef = useRef(false);
+	const pendingCreateRef = useRef<Promise<CreatedActiveCycle> | null>(null);
+	const activeCycleRef = useRef(activeCycle);
 	const useWorkerRef = useRef(
 		process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER !== "1",
 	);
+
+	useEffect(() => {
+		activeCycleRef.current = activeCycle;
+	}, [activeCycle]);
 
 	useEffect(() => {
 		stateRef.current = state;
@@ -303,6 +314,30 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			refreshGuest();
 		}
 	}, [mode, refreshGuest, utils.cycle.getActive]);
+
+	const resolveServerCycleId = useCallback(async (): Promise<number> => {
+		const current = activeCycleRef.current;
+		if (current == null) {
+			throw new Error("No active cycle");
+		}
+
+		const { id } = current;
+		if (typeof id === "number" && id > 0) {
+			return id;
+		}
+
+		const pending = pendingCreateRef.current;
+		if (pending != null) {
+			const cycle = await pending;
+			const createdId = cycle.id;
+			if (typeof createdId === "number" && createdId > 0) {
+				return createdId;
+			}
+			throw new Error("Invalid cycle id from pending create");
+		}
+
+		throw new Error("Optimistic cycle without pending create");
+	}, []);
 
 	const stopFallbackTimer = useCallback(() => {
 		if (fallbackIntervalRef.current != null) {
@@ -1050,6 +1085,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			}
 
 			const rollbackOptimisticStart = () => {
+				pendingCreateRef.current = null;
 				stopWorker();
 				endTimeRef.current = null;
 				setState("idle");
@@ -1121,13 +1157,23 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				setActiveSessionId(session.id);
 				setHasActiveSession(true);
 
-				const cycle = await cycles.create({
+				const createCall = cycles.create({
 					kind: "WORK",
 					configuredDurationSec: effectiveDurationSec,
 					taskId: focusedTaskId,
 				});
+				pendingCreateRef.current = createCall;
+
+				let cycle: CreatedActiveCycle;
+				try {
+					cycle = await createCall;
+				} catch (createError) {
+					pendingCreateRef.current = null;
+					throw createError;
+				}
 
 				if (cancelPendingStartRef.current) {
+					pendingCreateRef.current = null;
 					await cycles.interrupt({ cycleId: cycle.id });
 					await invalidateServerCycle();
 					return;
@@ -1139,6 +1185,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					...cycle,
 					task: focusedTask,
 				});
+				pendingCreateRef.current = null;
 				setCycleKind("WORK");
 				cycleKindRef.current = "WORK";
 
@@ -1314,10 +1361,20 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			setError(null);
 
+			let cycleId: number;
+			try {
+				cycleId = await resolveServerCycleId();
+			} catch {
+				setError(
+					"Could not save cycle completion. Check your connection and try again.",
+				);
+				return false;
+			}
+
 			try {
 				await retryOnce(() =>
 					cycles.complete({
-						cycleId: activeCycle.id,
+						cycleId,
 						markTaskDone,
 						...(pendingIncrementInterruptionRef.current
 							? { incrementInterruption: true }
@@ -1349,7 +1406,14 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			return true;
 		},
-		[activeCycle, cycles, invalidateServerCycle, stopWorker, utils.task.list],
+		[
+			activeCycle,
+			cycles,
+			invalidateServerCycle,
+			resolveServerCycleId,
+			stopWorker,
+			utils.task.list,
+		],
 	);
 
 	const confirmComplete = useCallback(
@@ -1362,10 +1426,20 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			const currentKind = activeCycle.kind;
 
+			let cycleId: number;
+			try {
+				cycleId = await resolveServerCycleId();
+			} catch {
+				setError(
+					"Could not save cycle completion. Check your connection and try again.",
+				);
+				return;
+			}
+
 			try {
 				await retryOnce(() =>
 					cycles.complete({
-						cycleId: activeCycle.id,
+						cycleId,
 						markTaskDone,
 						...(pendingIncrementInterruptionRef.current
 							? { incrementInterruption: true }
@@ -1427,6 +1501,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			activeCycle,
 			cycles,
 			invalidateServerCycle,
+			resolveServerCycleId,
 			startBreakAfterWorkComplete,
 			stopWorker,
 			utils.task.list,
@@ -1502,12 +1577,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setError(null);
 
 			try {
+				const cycleId = await resolveServerCycleId();
 				await tasks.update({
 					id: midCyclePendingTask.id,
 					status: "completed",
 				});
 				const rebound = await cycles.rebindTask({
-					cycleId: activeCycle.id,
+					cycleId,
 					taskId: nextTaskId,
 				});
 				setActiveCycle({
@@ -1535,6 +1611,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			tasks,
 			cycles,
 			invalidateServerCycle,
+			resolveServerCycleId,
 			utils.task.list,
 		],
 	);
@@ -1576,7 +1653,14 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			const markTaskDone = pendingMarkTaskDone;
 
-			const workCycleId = Number(activeCycle.id);
+			let workCycleId: number;
+			try {
+				workCycleId = await resolveServerCycleId();
+			} catch {
+				setError("Could not save check-in. Try again.");
+				setIsConfirming(false);
+				return;
+			}
 
 			try {
 				await createCheckIn.mutateAsync({
@@ -1636,6 +1720,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			completedWorkCycles,
 			windDownDismissed,
 			continueAfterCheckIn,
+			resolveServerCycleId,
 		],
 	);
 
@@ -1657,9 +1742,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 		if (currentKind !== "WORK" || mode === "guest") {
 			try {
+				const cycleId = await resolveServerCycleId();
 				await retryOnce(() =>
 					cycles.complete({
-						cycleId: activeCycle.id,
+						cycleId,
 						markTaskDone: true,
 					}),
 				);
@@ -1687,6 +1773,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		activeCycle,
 		mode,
 		cycles,
+		resolveServerCycleId,
 		startBreakAfterWorkComplete,
 		stopWorker,
 	]);
@@ -1696,12 +1783,21 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 		// If a cycle is running, interrupt it first
 		if (activeCycle != null && state === "running") {
+			const cycleId = activeCycle.id;
+			const isOptimisticCycle =
+				mode === "authenticated" && typeof cycleId === "number" && cycleId < 0;
+
 			stopWorker();
 			endTimeRef.current = null;
-			try {
-				await cycles.interrupt({ cycleId: activeCycle.id });
-			} catch {
-				// Best effort — continue ending session
+
+			if (isOptimisticCycle) {
+				cancelPendingStartRef.current = true;
+			} else {
+				try {
+					await cycles.interrupt({ cycleId });
+				} catch {
+					// Best effort — continue ending session
+				}
 			}
 		}
 
@@ -1735,6 +1831,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	}, [
 		activeCycle,
 		state,
+		mode,
 		cycles,
 		sessions,
 		stopWorker,

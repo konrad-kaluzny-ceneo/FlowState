@@ -408,6 +408,60 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.error).toMatch(/Could not interrupt/);
 	});
 
+	it("submitCheckIn awaits server cycle id when create is still pending", async () => {
+		const { releaseCreateCycle } = mockCreateCycleDeferred();
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		let startPromise!: Promise<void>;
+		act(() => {
+			startPromise = result.current.start(60);
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		const worker = fakeWorkers[fakeWorkers.length - 1];
+		act(() => {
+			worker?.onmessage?.({ data: { type: "complete" } } as MessageEvent);
+		});
+
+		await act(async () => {
+			await result.current.onCycleCompleteConfirm(false);
+		});
+
+		expect(result.current.awaitingCheckIn).toBe(true);
+		expect(result.current.activeCycle?.id).toBeLessThan(0);
+
+		let submitPromise!: Promise<void>;
+		act(() => {
+			submitPromise = result.current.submitCheckIn("FOCUSED");
+		});
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+		expect(createCheckInMutate).not.toHaveBeenCalled();
+
+		await act(async () => {
+			releaseCreateCycle();
+			await startPromise;
+			await submitPromise;
+		});
+
+		expect(createCheckInMutate).toHaveBeenCalledWith({
+			cycleId: 42,
+			energy: "FOCUSED",
+		});
+	});
+
 	it("interrupt during pending create cancels server cycle when create settles", async () => {
 		const { releaseCreateCycle } = mockCreateCycleDeferred();
 

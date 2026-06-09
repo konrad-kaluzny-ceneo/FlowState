@@ -23,6 +23,14 @@ async function waitForTaskCreateSettled(addButton: Locator) {
 	await expect(addButton).not.toHaveText("Adding...", { timeout: 15_000 });
 }
 
+/** Wait for optimistic start to persist the cycle before server mutations. */
+export async function waitForCycleCreateSettled(page: Page) {
+	await page.waitForResponse(
+		(response) => response.url().includes("cycle.create") && response.ok(),
+		{ timeout: 15_000 },
+	);
+}
+
 export async function setWorkDurationSec(page: Page, seconds: number) {
 	const { minutes, seconds: secs } = splitSecToMinSec(seconds);
 	await page.getByTestId("work-duration-min").fill(String(minutes));
@@ -47,7 +55,9 @@ export async function startFocusedWorkCycle(
 	await taskRow.getByRole("button", { name: "Focus" }).click();
 	await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
 	await setWorkDurationSec(page, durationSec);
+	const createSettled = waitForCycleCreateSettled(page);
 	await page.getByRole("button", { name: "Start Cycle" }).click();
+	await createSettled;
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 }
 

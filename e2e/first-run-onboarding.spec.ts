@@ -26,6 +26,7 @@ import {
 	focusTask,
 	setShortBreakDurationSec,
 	setWorkDurationSec,
+	waitForCycleCreateSettled,
 } from "./helpers/work-cycle";
 
 async function resetAuthSessionForOnboarding(
@@ -105,7 +106,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await focusTask(page, taskTitle);
 		await setShortBreakDurationSec(page, 1);
 		await setWorkDurationSec(page, 1);
+		const firstCreateSettled = waitForCycleCreateSettled(page);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await firstCreateSettled;
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);
@@ -123,7 +126,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeHidden();
 
 		await focusTask(page, taskTitle);
+		const secondCreateSettled = waitForCycleCreateSettled(page);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await secondCreateSettled;
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);
