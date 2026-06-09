@@ -487,10 +487,10 @@ Model on `e2e/seed.spec.ts` — fixture auth, `addTask` helper, deliberate-break
 
 #### Automated
 
-- [x] 1.1 `pnpm db:migrate` applies cleanly in dev — b412887
-- [x] 1.2 `pnpm db:generate` succeeds — b412887
-- [x] 1.3 `pnpm typecheck` passes — b412887
-- [x] 1.4 `pnpm check` passes — b412887
+- [x] 1.1 `pnpm db:migrate` applies cleanly in dev — 12297f1
+- [x] 1.2 `pnpm db:generate` succeeds — 12297f1
+- [x] 1.3 `pnpm typecheck` passes — 12297f1
+- [x] 1.4 `pnpm check` passes — 12297f1
 
 #### Manual
 
