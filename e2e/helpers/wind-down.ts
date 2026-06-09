@@ -1,6 +1,5 @@
 import { expect, type Page } from "@playwright/test";
 
-import { completeCheckIn } from "./check-in";
 import {
 	focusTask,
 	markTaskCompleteMidCycle,
