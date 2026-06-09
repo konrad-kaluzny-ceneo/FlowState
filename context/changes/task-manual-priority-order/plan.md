@@ -514,11 +514,11 @@ Model on `e2e/seed.spec.ts` — fixture auth, `addTask` helper, deliberate-break
 
 #### Automated
 
-- [x] 3.1 `pnpm exec vitest run src/lib/scoring/score-task.test.ts` passes
-- [x] 3.2 `pnpm exec vitest run src/server/api/routers/suggestion.test.ts` passes
-- [x] 3.3 `pnpm test` passes
-- [x] 3.4 `pnpm typecheck` passes
-- [x] 3.5 `pnpm check` passes
+- [x] 3.1 `pnpm exec vitest run src/lib/scoring/score-task.test.ts` passes — 6d8d7b6
+- [x] 3.2 `pnpm exec vitest run src/server/api/routers/suggestion.test.ts` passes — 6d8d7b6
+- [x] 3.3 `pnpm test` passes — 6d8d7b6
+- [x] 3.4 `pnpm typecheck` passes — 6d8d7b6
+- [x] 3.5 `pnpm check` passes — 6d8d7b6
 
 #### Manual
 
@@ -528,11 +528,11 @@ Model on `e2e/seed.spec.ts` — fixture auth, `addTask` helper, deliberate-break
 
 #### Automated
 
-- [ ] 4.1 `pnpm exec vitest run src/hooks/use-task-mutations.test.tsx` passes
-- [ ] 4.2 `pnpm exec vitest run src/lib/repositories/guest-repositories.test.ts` passes
-- [ ] 4.3 `pnpm test` passes
-- [ ] 4.4 `pnpm typecheck` passes
-- [ ] 4.5 `pnpm check` passes
+- [x] 4.1 `pnpm exec vitest run src/hooks/use-task-mutations.test.tsx` passes — c6de8f5
+- [x] 4.2 `pnpm exec vitest run src/lib/repositories/guest-repositories.test.ts` passes — c6de8f5
+- [x] 4.3 `pnpm test` passes — c6de8f5
+- [x] 4.4 `pnpm typecheck` passes — c6de8f5
+- [x] 4.5 `pnpm check` passes — c6de8f5
 
 #### Manual
 

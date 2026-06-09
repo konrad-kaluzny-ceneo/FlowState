@@ -18,6 +18,7 @@ type DeleteTaskInput = RouterInputs["task"]["delete"];
 
 type UpdateTaskArgs = Omit<UpdateTaskInput, "id"> & { id: DomainTaskId };
 type DeleteTaskArgs = { id: DomainTaskId };
+type ReorderTasksArgs = { orderedIds: number[] };
 
 type TaskListItem = TaskListData[number];
 
@@ -51,10 +52,9 @@ function buildOptimisticCreateRow(
 ): TaskListItem {
 	const userId = existing?.[0]?.userId ?? "";
 	const now = new Date();
-	const maxSortOrder = (existing ?? []).reduce(
-		(max, task) => Math.max(max, task.sortOrder),
-		-1,
-	);
+	const maxSortOrder = (existing ?? [])
+		.filter((task) => task.status === "active")
+		.reduce((max, task) => Math.max(max, task.sortOrder), -1);
 	return {
 		id: tempId,
 		title: input.title,
@@ -95,6 +95,28 @@ function replaceTempTask(
 	serverTask: TaskListItem,
 ): TaskListData {
 	return (list ?? []).map((task) => (task.id === tempId ? serverTask : task));
+}
+
+function reorderActiveTasks(
+	list: TaskListData | undefined,
+	orderedIds: number[],
+): TaskListData {
+	const tasks = list ?? [];
+	const sortOrderById = new Map(orderedIds.map((id, index) => [id, index]));
+	const updated = tasks.map((task) => {
+		const newSortOrder = sortOrderById.get(task.id);
+		if (newSortOrder !== undefined) {
+			return { ...task, sortOrder: newSortOrder };
+		}
+		return task;
+	});
+
+	return [...updated].sort((a, b) => {
+		if (a.sortOrder !== b.sortOrder) {
+			return a.sortOrder - b.sortOrder;
+		}
+		return a.createdAt.getTime() - b.createdAt.getTime();
+	});
 }
 
 export function useTaskMutations() {
@@ -171,10 +193,24 @@ export function useTaskMutations() {
 		onSettled: handleSettled,
 	});
 
+	const reorderMutation = api.task.reorder.useMutation({
+		onMutate: async (input) => {
+			await utils.task.list.cancel();
+			const previousTasks = utils.task.list.getData();
+			utils.task.list.setData(undefined, (old) =>
+				reorderActiveTasks(old, input.orderedIds),
+			);
+			return { previousTasks };
+		},
+		onError: handleError,
+		onSettled: handleSettled,
+	});
+
 	const isMutating =
 		createMutation.isPending ||
 		updateMutation.isPending ||
-		deleteMutation.isPending;
+		deleteMutation.isPending ||
+		reorderMutation.isPending;
 
 	const createTask = useCallback(
 		async (input: CreateTaskInput) => {
@@ -221,10 +257,22 @@ export function useTaskMutations() {
 		[mode, taskRepo, deleteMutation, clearError],
 	);
 
+	const reorderTasks = useCallback(
+		async (input: ReorderTasksArgs) => {
+			clearError();
+			if (mode === "guest") {
+				return taskRepo.reorder({ orderedIds: input.orderedIds });
+			}
+			return reorderMutation.mutateAsync(input);
+		},
+		[mode, taskRepo, reorderMutation, clearError],
+	);
+
 	return {
 		createTask,
 		updateTask,
 		deleteTask,
+		reorderTasks,
 		isMutating,
 		isCreating: createMutation.isPending,
 		error,

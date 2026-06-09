@@ -54,6 +54,7 @@ export interface TaskRepository {
 		weight?: 1 | 2 | 3;
 	}): Promise<void>;
 	delete(input: { id: DomainTaskId }): Promise<void>;
+	reorder(input: { orderedIds: DomainTaskId[] }): Promise<void>;
 }
 
 export interface CycleRepository {
