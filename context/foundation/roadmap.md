@@ -273,7 +273,6 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Adds a UI step in the cycle-end transition that S-01 already owns. Risk is regression of S-01's confirm-flow ergonomics. Mitigation: check-in lives between work-end-prompt and break-start, not in front of the audio signal.
 - **Test substrate:** Risk #7 integration via `testing-check-in-persistence`; UI gate via `testing-active-slice-browser-proofs` (e2e + `completeCheckIn` helper). Dedicated `check-in-gate.spec.ts` deferred per test-plan §6.6.
 - **Status:** done — shipped via change `testing-active-slice-browser-proofs` (2026-06-06)
-- **Known regression:** [B-04](#b-04-cycle-complete-overlay-flashes-after-check-in) — Cycle Complete modal re-flashes after energy submit until `confirmComplete` finishes.
 
 ### S-06: Adaptive task suggestion with override
 
