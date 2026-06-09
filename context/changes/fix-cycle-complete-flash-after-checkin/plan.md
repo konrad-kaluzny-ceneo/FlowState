@@ -214,8 +214,8 @@ Not applicable — client-only state-machine fix, no schema or API changes.
 
 #### Automated
 
-- [x] 2.1 `pnpm check` passes
-- [x] 2.2 `pnpm typecheck` passes
+- [x] 2.1 `pnpm check` passes — f002efb
+- [x] 2.2 `pnpm typecheck` passes — f002efb
 
 #### Manual
 
@@ -225,8 +225,8 @@ Not applicable — client-only state-machine fix, no schema or API changes.
 
 #### Automated
 
-- [ ] 3.1 `pnpm test` passes
-- [ ] 3.2 Flash-regression and confirmComplete-failure retry vitest cases pass in `use-pomodoro-cycle.test.tsx`
+- [x] 3.1 `pnpm test` passes
+- [x] 3.2 Flash-regression and confirmComplete-failure retry vitest cases pass in `use-pomodoro-cycle.test.tsx`
 
 #### Manual
 
