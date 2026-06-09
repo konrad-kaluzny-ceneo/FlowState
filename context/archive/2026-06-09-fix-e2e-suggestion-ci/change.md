@@ -1,10 +1,10 @@
 ---
 change_id: fix-e2e-suggestion-ci
 title: Fix E2E suggestion flakiness and slow CI runs
-status: impl_reviewed
+status: archived
 created: 2026-06-09
 updated: 2026-06-09
-archived_at: null
+archived_at: 2026-06-09T12:00:00Z
 ---
 
 ## Notes
