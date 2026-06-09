@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useState } from "react";
@@ -203,6 +203,7 @@ export function useTaskMutations() {
 			return { previousTasks };
 		},
 		onError: handleError,
+		onSettled: handleSettled,
 	});
 
 	const isMutating =

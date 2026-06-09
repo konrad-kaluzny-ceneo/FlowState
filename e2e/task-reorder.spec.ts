@@ -1,10 +1,4 @@
-/**
- * Risk: S-26 — manual task priority order via drag handle persists across reload and guest merge
- * Modeled on: e2e/seed.spec.ts, e2e/guest-merge-on-sign-in.spec.ts
- * Spec role: risk proof — drag-reorder active list + sortOrder persistence
- */
-
-import type { Page } from "@playwright/test";
+﻿import type { Page } from "@playwright/test";
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 import {
@@ -35,6 +29,44 @@ async function getActiveTaskTitlesInOrder(page: Page): Promise<string[]> {
 	return titles;
 }
 
+async function waitForTaskReorderOk(page: Page) {
+	return page.waitForResponse(async (response) => {
+		if (response.request().method() !== "POST") {
+			return false;
+		}
+		if (!response.url().includes("/api/trpc")) {
+			return false;
+		}
+		const url = response.url();
+		const postData = response.request().postData() ?? "";
+		const isReorder =
+			url.includes("task.reorder") || postData.includes("task.reorder");
+		if (!isReorder || !response.ok()) {
+			return false;
+		}
+		try {
+			const body: unknown = await response.json();
+			if (Array.isArray(body)) {
+				return body.every(
+					(chunk) =>
+						chunk == null ||
+						(typeof chunk === "object" &&
+							chunk !== null &&
+							!("error" in chunk && chunk.error != null)),
+				);
+			}
+			return !(
+				typeof body === "object" &&
+				body !== null &&
+				"error" in body &&
+				(body as { error?: unknown }).error != null
+			);
+		} catch {
+			return true;
+		}
+	});
+}
+
 async function dragActiveTaskToIndex(
 	page: Page,
 	fromIndex: number,
@@ -43,25 +75,13 @@ async function dragActiveTaskToIndex(
 	const rows = activeTaskRows(page);
 	const sourceHandle = rows.nth(fromIndex).getByTestId("task-drag-handle");
 	const targetHandle = rows.nth(toIndex).getByTestId("task-drag-handle");
-	const sourceBox = await sourceHandle.boundingBox();
-	const targetBox = await targetHandle.boundingBox();
 
-	if (sourceBox == null || targetBox == null) {
-		throw new Error("Could not resolve drag handle positions");
-	}
-
-	const sourceX = sourceBox.x + sourceBox.width / 2;
-	const sourceY = sourceBox.y + sourceBox.height / 2;
-	const targetX = targetBox.x + targetBox.width / 2;
-	const targetY = targetBox.y + targetBox.height / 2;
-
-	await sourceHandle.hover();
-	await page.mouse.move(sourceX, sourceY);
-	await page.mouse.down();
-	// Satisfy PointerSensor activationConstraint (distance: 8)
-	await page.mouse.move(sourceX, sourceY + 10, { steps: 5 });
-	await page.mouse.move(targetX, targetY, { steps: 30 });
-	await page.mouse.up();
+	await sourceHandle.scrollIntoViewIfNeeded();
+	await targetHandle.scrollIntoViewIfNeeded();
+	await sourceHandle.dragTo(targetHandle, {
+		sourcePosition: { x: 8, y: 8 },
+		targetPosition: { x: 8, y: 8 },
+	});
 }
 
 async function reorderActiveTasksByDrag(
@@ -84,17 +104,14 @@ async function reorderActiveTasksByDrag(
 			return;
 		}
 
-		const reorderResponse = page.waitForResponse(
-			(response) =>
-				response.request().method() === "POST" &&
-				response.url().includes("task.reorder") &&
-				response.ok(),
-			{ timeout: 30_000 },
-		);
+		const reorderResponse = waitForTaskReorderOk(page);
+		const listRefresh = waitForTaskListOk(page);
 
 		try {
 			await dragActiveTaskToIndex(page, fromIndex, toIndex);
 			await reorderResponse;
+			await listRefresh;
+			await expect(page.getByTestId("task-list-error")).toBeHidden();
 			await expect
 				.poll(async () => getActiveTaskTitlesInOrder(page), { timeout: 30_000 })
 				.toEqual(expected);
