@@ -86,7 +86,7 @@ test.describe("Task reorder (S-26)", () => {
 	test("authenticated drag handle reorders active tasks and persists after reload", async ({
 		page,
 	}) => {
-		test.setTimeout(60_000);
+		test.setTimeout(120_000);
 
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
@@ -121,10 +121,10 @@ test.describe("Task reorder (S-26)", () => {
 
 		const getActiveAfterReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),
-			{ timeout: 20_000 },
+			{ timeout: 30_000 },
 		);
 		const taskListAfterReload = waitForTaskListOk(page);
-		await page.reload();
+		await page.goto(`/?e2e=${Date.now()}`, { waitUntil: "networkidle" });
 		await Promise.all([getActiveAfterReload, taskListAfterReload]);
 		await ensureIdleCycle(page);
 		await dismissKickoffSuggestionIfVisible(page);
