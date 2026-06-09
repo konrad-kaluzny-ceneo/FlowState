@@ -215,6 +215,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const [postBreakIdleFlag, setPostBreakIdleFlag] = useState(false);
 	const [hasActiveTasks, setHasActiveTasks] = useState(false);
 	const [awaitingWindDown, setAwaitingWindDown] = useState(false);
+	const [isPostCheckInTransitioning, setIsPostCheckInTransitioning] =
+		useState(false);
 	const [windDownDismissed, setWindDownDismissed] = useState(false);
 	const [windDownRationale, setWindDownRationale] = useState<string | null>(
 		null,
@@ -229,6 +231,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const stateRef = useRef(state);
 	const cycleKindRef = useRef(cycleKind);
 	const awaitingCheckInRef = useRef(awaitingCheckIn);
+	const isPostCheckInTransitioningRef = useRef(isPostCheckInTransitioning);
 	const pendingSuggestionRef = useRef(pendingSuggestion);
 	const endTimeRef = useRef<number | null>(null);
 	const workerRef = useRef<Worker | null>(null);
@@ -265,6 +268,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	}, [awaitingCheckIn]);
 
 	useEffect(() => {
+		isPostCheckInTransitioningRef.current = isPostCheckInTransitioning;
+	}, [isPostCheckInTransitioning]);
+
+	useEffect(() => {
 		pendingSuggestionRef.current = pendingSuggestion;
 	}, [pendingSuggestion]);
 
@@ -295,7 +302,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			const gate = deriveCatchUpGate({
 				state: "completed",
 				cycleKind: cycleKindSnapshot,
-				awaitingCheckIn: awaitingCheckInRef.current,
+				awaitingCheckIn:
+					awaitingCheckInRef.current || isPostCheckInTransitioningRef.current,
 				pendingSuggestionStatus: pendingSuggestionRef.current.status,
 			});
 			if (gate == null) {
@@ -1126,7 +1134,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			setActiveCycle({ ...breakCycle, task: null });
 			setCycleKind(breakKind);
+			cycleKindRef.current = breakKind;
 			setState("running");
+			stateRef.current = "running";
 			startWorker(endTime);
 
 			await Promise.all([
@@ -1274,6 +1284,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const continueAfterCheckIn = useCallback(
 		async (markTaskDone: boolean, workCycleId: number) => {
+			setIsPostCheckInTransitioning(true);
 			clearKickoffSuggestion();
 			clearKickoffIdleFlags();
 			const gen = ++suggestionFetchGenRef.current;
@@ -1286,6 +1297,14 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			const endSuggestionFetch = beginSuggestionFetch();
 			try {
 				await confirmComplete(markTaskDone);
+				const breakStarted =
+					stateRef.current === "running" &&
+					(cycleKindRef.current === "SHORT_BREAK" ||
+						cycleKindRef.current === "LONG_BREAK");
+				if (breakStarted) {
+					setAwaitingCheckIn(false);
+					setPendingMarkTaskDone(null);
+				}
 				await fetchPostCheckInSuggestion(workCycleId, gen);
 			} catch {
 				if (suggestionFetchGenRef.current !== gen) {
@@ -1297,6 +1316,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				setPendingSuggestion({ status: "error" });
 				setSuggestedTaskId(null);
 			} finally {
+				setIsPostCheckInTransitioning(false);
 				endSuggestionFetch();
 			}
 		},
@@ -1416,9 +1436,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				return;
 			}
 
-			setAwaitingCheckIn(false);
-			setPendingMarkTaskDone(null);
-
 			try {
 				if (mode !== "guest") {
 					try {
@@ -1442,6 +1459,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 									dismissed: windDownDismissed,
 								}),
 							);
+							setAwaitingCheckIn(false);
+							setPendingMarkTaskDone(null);
 							setAwaitingWindDown(true);
 							return;
 						}
@@ -1639,6 +1658,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		midCyclePendingTask,
 		isMidCycleSubmitting,
 		awaitingCheckIn,
+		isPostCheckInTransitioning,
 		awaitingWindDown,
 		windDownRationale,
 		isConfirming,
