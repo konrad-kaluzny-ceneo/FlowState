@@ -542,11 +542,11 @@ Model on `e2e/seed.spec.ts` — fixture auth, `addTask` helper, deliberate-break
 
 #### Automated
 
-- [x] 5.1 `pnpm test` passes
-- [x] 5.2 `set CI=true && pnpm test:e2e e2e/task-reorder.spec.ts` passes
-- [x] 5.3 `set CI=true && pnpm test:e2e` passes (full suite)
-- [x] 5.4 `pnpm typecheck` passes
-- [x] 5.5 `pnpm check` passes
+- [x] 5.1 `pnpm test` passes — 59f0488
+- [x] 5.2 `set CI=true && pnpm test:e2e e2e/task-reorder.spec.ts` passes — 59f0488
+- [x] 5.3 `set CI=true && pnpm test:e2e` passes (full suite) — 59f0488
+- [x] 5.4 `pnpm typecheck` passes — 59f0488
+- [x] 5.5 `pnpm check` passes — 59f0488
 
 #### Manual
 
