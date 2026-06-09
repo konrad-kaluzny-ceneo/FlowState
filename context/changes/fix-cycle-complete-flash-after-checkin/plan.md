@@ -225,8 +225,8 @@ Not applicable — client-only state-machine fix, no schema or API changes.
 
 #### Automated
 
-- [x] 3.1 `pnpm test` passes
-- [x] 3.2 Flash-regression and confirmComplete-failure retry vitest cases pass in `use-pomodoro-cycle.test.tsx`
+- [x] 3.1 `pnpm test` passes — 16b1f5c
+- [x] 3.2 Flash-regression and confirmComplete-failure retry vitest cases pass in `use-pomodoro-cycle.test.tsx` — 16b1f5c
 
 #### Manual
 
