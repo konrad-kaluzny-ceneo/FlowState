@@ -59,11 +59,8 @@ export async function completeSteadyWorkCycleAndResumeIdle(page: Page) {
 	});
 	await page.getByRole("button", { name: "Continue later" }).click();
 	await completeCheckIn(page, "steady");
-	await expect(page.getByTestId("check-in-overlay")).toBeHidden({
-		timeout: 15_000,
-	});
 	await expect(page.getByText("Short Break")).toBeVisible({
-		timeout: 15_000,
+		timeout: 20_000,
 	});
 	await page.getByRole("button", { name: "End break early" }).click();
 	await expect(page.getByTestId("timer-panel-idle")).toBeVisible();

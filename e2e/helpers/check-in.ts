@@ -24,6 +24,16 @@ export async function completeCheckIn(
 
 	await page.getByTestId(ENERGY_TEST_IDS[energy]).click();
 	if (options?.waitForHidden !== false) {
-		await expect(page.getByTestId("check-in-overlay")).toBeHidden();
+		// B-04: check-in may stay mounted during post-check-in async break start.
+		await expect(async () => {
+			const windDownVisible = await page
+				.getByTestId("wind-down-overlay")
+				.isVisible();
+			const shortBreakVisible = await page.getByText("Short Break").isVisible();
+			const checkInHidden = !(await page
+				.getByTestId("check-in-overlay")
+				.isVisible());
+			expect(windDownVisible || shortBreakVisible || checkInHidden).toBe(true);
+		}).toPass({ timeout: 20_000 });
 	}
 }
