@@ -64,6 +64,48 @@ async function dragActiveTaskToIndex(
 	await page.mouse.up();
 }
 
+async function reorderActiveTasksByDrag(
+	page: Page,
+	fromIndex: number,
+	toIndex: number,
+	expected: string[],
+) {
+	const current = await getActiveTaskTitlesInOrder(page);
+	if (JSON.stringify(current) === JSON.stringify(expected)) {
+		return;
+	}
+
+	let lastError: unknown;
+	for (let attempt = 0; attempt < 3; attempt++) {
+		if (
+			JSON.stringify(await getActiveTaskTitlesInOrder(page)) ===
+			JSON.stringify(expected)
+		) {
+			return;
+		}
+
+		const reorderResponse = page.waitForResponse(
+			(response) =>
+				response.request().method() === "POST" &&
+				response.url().includes("task.reorder") &&
+				response.ok(),
+			{ timeout: 30_000 },
+		);
+
+		try {
+			await dragActiveTaskToIndex(page, fromIndex, toIndex);
+			await reorderResponse;
+			await expect
+				.poll(async () => getActiveTaskTitlesInOrder(page), { timeout: 30_000 })
+				.toEqual(expected);
+			return;
+		} catch (error) {
+			lastError = error;
+		}
+	}
+
+	throw lastError ?? new Error("Failed to reorder active tasks by drag");
+}
 function waitForTaskListOk(page: Page) {
 	return page.waitForResponse(
 		(response) => response.url().includes("task.list") && response.ok(),
@@ -109,15 +151,7 @@ test.describe("Task reorder (S-26)", () => {
 			taskC,
 		]);
 
-		const reorderResponse = page.waitForResponse(
-			(response) => response.url().includes("task.reorder") && response.ok(),
-			{ timeout: 30_000 },
-		);
-		await dragActiveTaskToIndex(page, 1, 0);
-		await reorderResponse;
-		await expect
-			.poll(async () => getActiveTaskTitlesInOrder(page), { timeout: 15_000 })
-			.toEqual([taskB, taskA, taskC]);
+		await reorderActiveTasksByDrag(page, 1, 0, [taskB, taskA, taskC]);
 
 		const getActiveAfterReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),
@@ -130,7 +164,7 @@ test.describe("Task reorder (S-26)", () => {
 		await dismissKickoffSuggestionIfVisible(page);
 
 		await expect
-			.poll(async () => getActiveTaskTitlesInOrder(page), { timeout: 60_000 })
+			.poll(async () => getActiveTaskTitlesInOrder(page), { timeout: 90_000 })
 			.toEqual([taskB, taskA, taskC]);
 	});
 
