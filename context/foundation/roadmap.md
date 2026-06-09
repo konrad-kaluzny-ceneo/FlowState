@@ -10,7 +10,7 @@ expanded_story: 2026-06-07
 expanded_followup: 2026-06-07
 expanded_ux_gaps: 2026-06-07
 expanded_task_planning: 2026-06-09
-active_slices: []
+active_slices: [S-26]
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -75,7 +75,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | B-04 | fix-cycle-complete-flash-after-checkin | [FLO-56](https://linear.app/flowstate-10xdev/issue/FLO-56) | [#75](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/75) | **(bug)** after energy check-in, Cycle Complete overlay must not flash/hang until break/suggestion | S-05, S-06 | FR-020, FR-021, NFR (200ms acknowledgement) | open |
 | F-05 | eisenhower-effort-task-attributes | [FLO-57](https://linear.app/flowstate-10xdev/issue/FLO-57) | [#78](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/78) | (foundation) importance + urgency + effort minutes + commitment horizon on Task; deterministic scorer v2 (Eisenhower/Pareto/Ockham) | S-04, S-06 | FR-017, FR-018, FR-021, proposed-FR-task-importance, proposed-FR-commitment-horizon, proposed-FR-effort-estimate | proposed |
 | S-25 | pre-suggestion-readiness | [FLO-58](https://linear.app/flowstate-10xdev/issue/FLO-58) | [#79](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/79) | declare Focused/Steady/Fading at kickoff and before next-task suggestion — feeds scorer instead of hardcoded STEADY | S-05, S-06, S-15 | FR-020, FR-021, FR-019, proposed-FR-pre-suggestion-readiness | ready |
-| S-26 | task-manual-priority-order | [FLO-59](https://linear.app/flowstate-10xdev/issue/FLO-59) | [#81](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/81) | **drag-reorder** active tasks with persisted manual priority as suggester tie-breaker | S-04, S-06, S-09 | FR-021, FR-022, FR-005, NFR (200ms acknowledgement) | ready (**high priority**) |
+| S-26 | task-manual-priority-order | [FLO-59](https://linear.app/flowstate-10xdev/issue/FLO-59) | [#81](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/81) | **drag-reorder** active tasks with persisted manual priority as suggester tie-breaker | S-04, S-06, S-09 | FR-021, FR-022, FR-005, NFR (200ms acknowledgement) | active |
 | S-27 | daily-standing-tasks-capacity-plan | [FLO-60](https://linear.app/flowstate-10xdev/issue/FLO-60) | [#80](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/80) | daily standing tasks roll into today's plan with focus-hours budget and capacity-aware suggestion rationale (no RRULE) | F-05, S-06, S-15 | FR-021, FR-022, FR-019, proposed-FR-daily-standing-tasks, proposed-FR-daily-focus-budget | proposed |
 
 ## Streams
@@ -645,7 +645,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Guest merge: preserve relative sortOrder on import? Owner: implementer. Block: no.
   - Drag handle vs full-row drag for touch? Owner: implementer. Block: no.
 - **Risk:** Optimistic reorder + suggester cache invalidation may desync list order from accepted suggestion on race — mirror S-09 rollback pattern. Expand score 65/90 — **promote**; **user priority: high** — first `/10x-plan` target in batch 2026-06-09.
-- **Status:** ready (**high priority**)
+- **Status:** active
 
 ### S-27: Daily standing tasks and focus-hours capacity plan
 
