@@ -1,7 +1,8 @@
 ---
 change-id: fix-cycle-audio-toggle
 title: Fix cycle end audio toggle unresponsive
-status: impl_reviewed
+status: archived
+archived_at: 2026-06-09T05:35:00Z
 roadmap-id: B-01
 linear: FLO-53
 github: "#72"

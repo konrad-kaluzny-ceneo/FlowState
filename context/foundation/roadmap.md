@@ -3,13 +3,13 @@ project: FlowState
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-08
+updated: 2026-06-09
 expanded: 2026-06-07
 expanded_intelligence: 2026-06-07
 expanded_story: 2026-06-07
 expanded_followup: 2026-06-07
 expanded_ux_gaps: 2026-06-07
-active_slices: [B-01]
+active_slices: []
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -68,7 +68,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-22 | background-tab-return-catchup | [FLO-37](https://linear.app/flowstate-10xdev/issue/FLO-37) | [#48](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/48) | returning to a backgrounded tab after cycle end sees a calm catch-up handoff to the next wedge step (check-in, break confirm, or suggestion) | S-01, S-05, S-06 | FR-013, FR-014, FR-020, FR-021, NFR (timer drift ≤ ±2s) | done |
 | S-23 | suggestion-rationale-expander | [FLO-38](https://linear.app/flowstate-10xdev/issue/FLO-38) | [#49](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/49) | tap "Why this?" on the suggestion card for a deterministic factor breakdown — no analytics screen | S-06 | FR-021, FR-022, FR-019, NFR (suggestion feedback ≥1s visible) | ready |
 | S-24 | cycle-pause-resume | [FLO-39](https://linear.app/flowstate-10xdev/issue/FLO-39) | [#50](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/50) | pause and resume a work or break cycle with remaining time preserved — without INTERRUPTED state or interruptionCount increment | S-01, S-02 | FR-012, FR-019, US-01, NFR (crash/refresh recovery) | proposed |
-| B-01 | fix-cycle-audio-toggle | [FLO-53](https://linear.app/flowstate-10xdev/issue/FLO-53) | [#72](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/72) | **(bug)** Cycle end audio Normal / Soft / Muted buttons respond to click and persist preference | S-20 | FR-013, FR-014 | active |
+| B-01 | fix-cycle-audio-toggle | [FLO-53](https://linear.app/flowstate-10xdev/issue/FLO-53) | [#72](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/72) | **(bug)** Cycle end audio Normal / Soft / Muted buttons respond to click and persist preference | S-20 | FR-013, FR-014 | done |
 | B-02 | fix-task-title-multiline-edit | [FLO-54](https://linear.app/flowstate-10xdev/issue/FLO-54) | [#73](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/73) | **(bug)** task title edit uses multi-line text area so long names wrap and remain fully visible | — | FR-005, FR-008 | open |
 | B-03 | fix-cycle-start-interrupt-optimistic | [FLO-55](https://linear.app/flowstate-10xdev/issue/FLO-55) | [#74](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/74) | **(bug)** Start Cycle / Interrupt update timer UI within 200ms (optimistic), not after server round-trip | S-09 | NFR (200ms acknowledgement), FR-009, FR-012 | open |
 | B-04 | fix-cycle-complete-flash-after-checkin | [FLO-56](https://linear.app/flowstate-10xdev/issue/FLO-56) | [#75](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/75) | **(bug)** after energy check-in, Cycle Complete overlay must not flash/hang until break/suggestion | S-05, S-06 | FR-020, FR-021, NFR (200ms acknowledgement) | open |
@@ -661,7 +661,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Server-sync effect in `useCycleEndAudioPreference` may overwrite optimistic UI before mutation completes; e2e may have seeded preference without exercising live toggle.
-- **Status:** active
+- **Status:** done — shipped via [PR #77](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/77) (2026-06-09)
 
 ### B-02: Task title edit truncates long names
 
@@ -748,6 +748,7 @@ Items tagged `needs-research` are non-trivial — they require external research
 
 ## Done
 
+- **B-01: user can click Normal, Soft, or Muted on the timer panel Cycle end audio control and see the selection update immediately; preference persists across refresh (localStorage for guests, server profile when logged in); cycle-end chime respects the chosen mode.** — Archived 2026-06-09 → `context/archive/2026-06-08-fix-cycle-audio-toggle/`. Lesson: one-time server-sync guard per auth scope prevents suggestion-fetch re-entry from overwriting optimistic toggles.
 - **S-20: user can mute or soften the in-browser cycle-end chime with a preference that persists across sessions (server profile when logged in, localStorage for guests); the visual transition prompt remains the authoritative mindful signal; when audio is muted/softened and the tab was backgrounded at cycle end, an optional single calm title or favicon pulse may fire until the user returns (work-end at minimum — not native push).** — Archived 2026-06-08 → `context/archive/2026-06-08-persistent-quiet-cycle-audio/`. Lesson: —.
 - **S-15: user can see a suggested task with one-line rationale when idle at session start or after a break with no pre-selected task — before manually picking what to focus on next; optionally accept a one-tap work-cycle duration preset matched to the selected task's work type (e.g. 45m deep / 25m admin / 15m reactive) — never auto-applied without explicit accept; kickoff preset chips remember last accepted or customized duration per work type across sessions (labeled "your usual", tap-to-apply only).** — Archived 2026-06-08 → `context/archive/2026-06-08-session-kickoff-suggestion/`. Lesson: isolate kickoff vs post-check-in `suggestion.next` mutation hooks to avoid stuck loading on CI.
 - **S-16: user can receive an optional, dismissible prompt to end the session with a one-line rationale when check-in energy is Fading and session fatigue/interruption signals align — and override to continue working.** — Archived 2026-06-08 → `context/archive/2026-06-08-mindful-session-wind-down/`. Lesson: —.
