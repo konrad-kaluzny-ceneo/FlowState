@@ -168,6 +168,56 @@ function makeActiveCycle(
 	};
 }
 
+type PomodoroCycleHookResult = {
+	current: ReturnType<typeof usePomodoroCycle>;
+};
+
+function assertNoCycleCompleteFlash(result: PomodoroCycleHookResult) {
+	const {
+		awaitingCheckIn,
+		awaitingWindDown,
+		isPostCheckInTransitioning,
+		state,
+	} = result.current;
+	if (
+		!awaitingCheckIn &&
+		!awaitingWindDown &&
+		!isPostCheckInTransitioning &&
+		state === "completed"
+	) {
+		throw new Error(
+			"Cycle complete flash window: completed state visible without gate suppression",
+		);
+	}
+}
+
+async function driveWorkCycleToCheckIn(result: PomodoroCycleHookResult) {
+	await waitFor(() => {
+		expect(result.current.state).toBe("running");
+	});
+	act(() => {
+		fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+			data: { type: "complete" },
+		} as MessageEvent);
+	});
+	expect(result.current.state).toBe("completed");
+	await act(async () => {
+		await result.current.onCycleCompleteConfirm(false);
+	});
+	expect(result.current.awaitingCheckIn).toBe(true);
+}
+
+function mockCompleteCycleDeferred() {
+	let releaseCompleteCycle!: () => void;
+	const completeBlocked = new Promise<void>((resolve) => {
+		releaseCompleteCycle = resolve;
+	});
+	completeCycle.mockImplementation(async () => {
+		await completeBlocked;
+	});
+	return { releaseCompleteCycle };
+}
+
 describe("usePomodoroCycle", () => {
 	beforeEach(() => {
 		resetActiveCycleRecoveryForTests();
@@ -808,6 +858,196 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.awaitingCheckIn).toBe(false);
 		expect(result.current.state).toBe("running");
 		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+	});
+
+	it("submitCheckIn keeps cycle-complete suppressed until break running", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 70,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 300,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		const { releaseCompleteCycle } = mockCompleteCycleDeferred();
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await driveWorkCycleToCheckIn(result);
+
+		let submitPromise!: Promise<void>;
+		act(() => {
+			submitPromise = result.current.submitCheckIn("FOCUSED");
+		});
+
+		await waitFor(() => {
+			assertNoCycleCompleteFlash(result);
+			expect(result.current.isPostCheckInTransitioning).toBe(true);
+			expect(result.current.state).toBe("completed");
+			expect(result.current.awaitingCheckIn).toBe(true);
+		});
+
+		releaseCompleteCycle();
+
+		await act(async () => {
+			await submitPromise;
+		});
+
+		assertNoCycleCompleteFlash(result);
+		expect(result.current.awaitingCheckIn).toBe(false);
+		expect(result.current.state).toBe("running");
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+	});
+
+	it("onWindDownKeepGoing keeps cycle-complete suppressed until break running", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 72,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+		getOrCreateSession.mockResolvedValue({ id: 1, interruptionCount: 3 });
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 302,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await driveWorkCycleToCheckIn(result);
+
+		await act(async () => {
+			await result.current.submitCheckIn("FADING");
+		});
+
+		expect(result.current.awaitingWindDown).toBe(true);
+		expect(result.current.awaitingCheckIn).toBe(false);
+		assertNoCycleCompleteFlash(result);
+
+		const { releaseCompleteCycle } = mockCompleteCycleDeferred();
+
+		let keepGoingPromise!: Promise<void>;
+		act(() => {
+			keepGoingPromise = result.current.onWindDownKeepGoing();
+		});
+
+		await waitFor(() => {
+			assertNoCycleCompleteFlash(result);
+			expect(result.current.isPostCheckInTransitioning).toBe(true);
+		});
+
+		releaseCompleteCycle();
+
+		await act(async () => {
+			await keepGoingPromise;
+		});
+
+		assertNoCycleCompleteFlash(result);
+		expect(result.current.state).toBe("running");
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+	});
+
+	it("wind-down after check-in suppresses cycle-complete without transition flag", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 73,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+		getOrCreateSession.mockResolvedValue({ id: 1, interruptionCount: 3 });
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await driveWorkCycleToCheckIn(result);
+
+		await act(async () => {
+			await result.current.submitCheckIn("FADING");
+		});
+
+		assertNoCycleCompleteFlash(result);
+		expect(result.current.awaitingWindDown).toBe(true);
+		expect(result.current.awaitingCheckIn).toBe(false);
+		expect(result.current.isPostCheckInTransitioning).toBe(false);
+	});
+
+	it("confirmComplete failure keeps check-in retryable", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 74,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 301,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		completeCycle
+			.mockRejectedValueOnce(new Error("network"))
+			.mockRejectedValueOnce(new Error("network"));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await driveWorkCycleToCheckIn(result);
+
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		assertNoCycleCompleteFlash(result);
+		expect(result.current.awaitingCheckIn).toBe(true);
+		expect(result.current.isPostCheckInTransitioning).toBe(false);
+		expect(completeCycle).toHaveBeenCalledTimes(2);
+
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		expect(completeCycle).toHaveBeenCalledTimes(3);
+		expect(completeCycle).toHaveBeenLastCalledWith({
+			cycleId: 74,
+			markTaskDone: false,
+		});
+		expect(result.current.awaitingCheckIn).toBe(false);
+		expect(result.current.state).toBe("running");
 	});
 
 	it("break cycle-end skips check-in gate", async () => {

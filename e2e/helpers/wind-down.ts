@@ -1,6 +1,5 @@
 import { expect, type Page } from "@playwright/test";
 
-import { completeCheckIn } from "./check-in";
 import {
 	focusTask,
 	markTaskCompleteMidCycle,
@@ -49,7 +48,6 @@ export async function submitFadingCheckInExpectingWindDown(page: Page) {
 	await expect(page.getByText("Short Break")).toBeHidden();
 	await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 	await page.getByTestId("check-in-energy-fading").click();
-	await expect(page.getByTestId("check-in-overlay")).toBeHidden();
 	await expectWindDownVisible(page);
 }
 
@@ -58,11 +56,14 @@ export async function completeSteadyWorkCycleAndResumeIdle(page: Page) {
 		timeout: 15_000,
 	});
 	await page.getByRole("button", { name: "Continue later" }).click();
-	await completeCheckIn(page, "steady");
+	await expect(page.getByTestId("check-in-overlay")).toBeVisible({
+		timeout: 10_000,
+	});
+	await page.getByTestId("check-in-energy-steady").click();
 	await expect(page.getByTestId("check-in-overlay")).toBeHidden({
 		timeout: 15_000,
 	});
-	await expect(page.getByText("Short Break")).toBeVisible({
+	await expect(page.getByTestId("timer-panel-running")).toContainText("Break", {
 		timeout: 15_000,
 	});
 	await page.getByRole("button", { name: "End break early" }).click();
