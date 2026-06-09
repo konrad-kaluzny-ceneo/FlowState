@@ -218,6 +218,40 @@ function mockCompleteCycleDeferred() {
 	return { releaseCompleteCycle };
 }
 
+function mockCreateCycleDeferred() {
+	let releaseCreateCycle!: () => void;
+	const createBlocked = new Promise<void>((resolve) => {
+		releaseCreateCycle = resolve;
+	});
+	createCycle.mockImplementation(async () => {
+		await createBlocked;
+		return {
+			id: 42,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: 7,
+			kind: "WORK",
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: { id: 7, title: "Write tests" },
+			configuredDurationSec: 60,
+		};
+	});
+	return { releaseCreateCycle };
+}
+
+function mockInterruptCycleDeferred() {
+	let releaseInterruptCycle!: () => void;
+	const interruptBlocked = new Promise<void>((resolve) => {
+		releaseInterruptCycle = resolve;
+	});
+	interruptCycle.mockImplementation(async () => {
+		await interruptBlocked;
+	});
+	return { releaseInterruptCycle };
+}
+
 describe("usePomodoroCycle", () => {
 	beforeEach(() => {
 		resetActiveCycleRecoveryForTests();
@@ -305,6 +339,162 @@ describe("usePomodoroCycle", () => {
 			taskId: 7,
 		});
 		expect(result.current.state).toBe("running");
+	});
+
+	it("transitions to running before createCycle resolves (optimistic start)", async () => {
+		const { releaseCreateCycle } = mockCreateCycleDeferred();
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		let startPromise!: Promise<void>;
+		act(() => {
+			startPromise = result.current.start(60);
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		let startSettledEarly = false;
+		void startPromise.then(() => {
+			startSettledEarly = true;
+		});
+		await act(async () => {
+			await Promise.resolve();
+		});
+		expect(startSettledEarly).toBe(false);
+
+		await act(async () => {
+			releaseCreateCycle();
+			await startPromise;
+		});
+
+		expect(createCycle).toHaveBeenCalled();
+		expect(result.current.state).toBe("running");
+	});
+
+	it("restores running state when interruptCycle fails after optimistic interrupt", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		interruptCycle.mockRejectedValueOnce(new Error("network"));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.interrupt();
+		});
+
+		expect(interruptCycle).toHaveBeenCalledWith({ cycleId: 10 });
+		expect(result.current.state).toBe("running");
+		expect(result.current.remainingMs).toBeGreaterThan(0);
+		expect(result.current.focusedTask).toMatchObject({ id: 2, title: "Focus" });
+		expect(result.current.error).toMatch(/Could not interrupt/);
+	});
+
+	it("interrupt during pending create cancels server cycle when create settles", async () => {
+		const { releaseCreateCycle } = mockCreateCycleDeferred();
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		let startPromise!: Promise<void>;
+		act(() => {
+			startPromise = result.current.start(60);
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		expect(result.current.activeCycle?.id).toBeLessThan(0);
+
+		let interruptPromise!: Promise<void>;
+		act(() => {
+			interruptPromise = result.current.interrupt();
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		expect(interruptCycle).not.toHaveBeenCalled();
+
+		await act(async () => {
+			releaseCreateCycle();
+			await startPromise;
+			await interruptPromise;
+		});
+
+		expect(createCycle).toHaveBeenCalled();
+		expect(interruptCycle).toHaveBeenCalledWith({ cycleId: 42 });
+		expect(result.current.state).toBe("idle");
+	});
+
+	it("returns to idle before interruptCycle resolves (optimistic interrupt)", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		const { releaseInterruptCycle } = mockInterruptCycleDeferred();
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		let interruptPromise!: Promise<void>;
+		act(() => {
+			interruptPromise = result.current.interrupt();
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		let interruptSettledEarly = false;
+		void interruptPromise.then(() => {
+			interruptSettledEarly = true;
+		});
+		await act(async () => {
+			await Promise.resolve();
+		});
+		expect(interruptSettledEarly).toBe(false);
+
+		await act(async () => {
+			releaseInterruptCycle();
+			await interruptPromise;
+		});
+
+		expect(interruptCycle).toHaveBeenCalledWith({ cycleId: 10 });
+		expect(result.current.state).toBe("idle");
 	});
 
 	it("transitions to completed when worker completes", async () => {

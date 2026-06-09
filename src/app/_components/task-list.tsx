@@ -228,15 +228,19 @@ function SortableActiveTaskRow({
 			/>
 			{editingId === task.id ? (
 				<div className="flex-1 space-y-2">
-					<input
-						className="w-full rounded bg-white/10 px-2 py-1 text-white focus:outline-none"
+					{/* textarea (not input): titles are unbounded; multiline + wrap in read mode (B-02) */}
+					<textarea
+						className="w-full resize-y rounded bg-white/10 px-2 py-1 text-white focus:outline-none"
 						onBlur={() => void onSaveEdit(task.id)}
 						onChange={(e) => onSetEditTitle(e.target.value)}
 						onKeyDown={(e) => {
-							if (e.key === "Enter") void onSaveEdit(task.id);
+							if (e.key === "Enter" && !e.shiftKey) {
+								e.preventDefault();
+								void onSaveEdit(task.id);
+							}
 							if (e.key === "Escape") onSetEditingId(null);
 						}}
-						type="text"
+						rows={2}
 						value={editTitle}
 					/>
 					<div className="flex items-center gap-2">
@@ -271,7 +275,7 @@ function SortableActiveTaskRow({
 				</div>
 			) : (
 				<button
-					className="flex-1 cursor-pointer text-left text-white disabled:cursor-default disabled:opacity-70"
+					className="flex-1 cursor-pointer whitespace-pre-wrap break-words text-left text-white disabled:cursor-default disabled:opacity-70"
 					disabled={cycleLocked}
 					onClick={() => onStartEditing(task)}
 					type="button"

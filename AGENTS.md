@@ -31,6 +31,7 @@ FlowState is a Next.js Pomodoro app on the T3-style stack. Agents run terminal c
 
 - Model Playwright specs on `@e2e/seed.spec.ts`; risk priorities in `@context/foundation/test-plan.md`. Use `/10x-e2e` for browser-level tests.
 - Vitest: co-located `*.test.ts` beside source under `src/`; single file: `pnpm exec vitest run src/<path>/<name>.test.ts`.
+- Co-located component smoke for form controls when text is unbounded (e.g. `textarea` vs `input` for inline edit); canonical example: `src/app/_components/task-list.test.tsx`.
 - Commit types: `feat`, `chore`, `fix`, `refactor`, `docs`; `test` when scoped — no trailing period. Pattern: `feat(<change-id>): title (pN)`.
 - PRs from feature branches with `Fixes #N`; must pass `@.github/workflows/ci.yml` (quality + e2e on PR/push to main). Issue sync (Linear `FLO-*` ↔ GitHub `#*`): `@.cursor/skills/update-status/SKILL.md`. `gh` account `konrad-kaluzny-ceneo`: `@.cursor/skills/github-cli/SKILL.md`.
 - Neon DB, Vercel deploy, agent hooks: `@.cursor/skills/neon-database/SKILL.md`, `@.cursor/skills/vercel/SKILL.md`, `@.cursor/hooks.json`.
