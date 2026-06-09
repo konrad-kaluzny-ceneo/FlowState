@@ -19,6 +19,7 @@ function toDomainTask(task: {
 	status: string;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: number;
+	sortOrder: number;
 	createdAt: Date;
 	updatedAt: Date | null;
 }): DomainTask {
@@ -31,6 +32,7 @@ function toDomainTask(task: {
 		updatedAt: task.updatedAt,
 		workType: task.workType,
 		weight: task.weight as 1 | 2 | 3,
+		sortOrder: task.sortOrder,
 	};
 }
 
@@ -66,21 +68,37 @@ function toDomainCycle(
 	};
 }
 
+function sortTasksByOrder<T extends { sortOrder: number; createdAt: Date }>(
+	tasks: T[],
+): T[] {
+	return [...tasks].sort((a, b) => {
+		if (a.sortOrder !== b.sortOrder) {
+			return a.sortOrder - b.sortOrder;
+		}
+		return a.createdAt.getTime() - b.createdAt.getTime();
+	});
+}
+
 export function createGuestTaskRepository(): TaskRepository {
 	return {
 		async list() {
-			return loadSnapshot().tasks.map(toDomainTask);
+			return sortTasksByOrder(loadSnapshot().tasks).map(toDomainTask);
 		},
 
 		async create(input) {
+			const snapshot = loadSnapshot();
 			const now = new Date();
 			const rawWeight = input.weight ?? 2;
+			const maxSortOrder = snapshot.tasks
+				.filter((task) => task.status === "active")
+				.reduce((max, task) => Math.max(max, task.sortOrder), -1);
 			const task = {
 				id: newGuestId(),
 				title: input.title,
 				status: "active" as const,
 				workType: input.workType ?? "OPERATIONAL",
 				weight: Math.min(3, Math.max(1, rawWeight)) as 1 | 2 | 3,
+				sortOrder: maxSortOrder + 1,
 				createdAt: now,
 				updatedAt: null,
 			};
@@ -105,6 +123,16 @@ export function createGuestTaskRepository(): TaskRepository {
 						return task;
 					}
 
+					const wasCompleted = task.status === "completed";
+					const becomingActive = input.status === "active";
+					let sortOrder = task.sortOrder;
+					if (wasCompleted && becomingActive) {
+						const maxActiveSortOrder = snapshot.tasks
+							.filter((t) => t.status === "active")
+							.reduce((max, t) => Math.max(max, t.sortOrder), -1);
+						sortOrder = maxActiveSortOrder + 1;
+					}
+
 					return {
 						...task,
 						...(input.title != null ? { title: input.title } : {}),
@@ -113,6 +141,7 @@ export function createGuestTaskRepository(): TaskRepository {
 						...(input.weight != null
 							? { weight: Math.min(3, Math.max(1, input.weight)) as 1 | 2 | 3 }
 							: {}),
+						sortOrder,
 						updatedAt: new Date(),
 					};
 				}),
@@ -128,6 +157,50 @@ export function createGuestTaskRepository(): TaskRepository {
 				...snapshot,
 				tasks: snapshot.tasks.filter((task) => task.id !== input.id),
 			}));
+
+			if (error != null) {
+				throw new Error(error);
+			}
+		},
+
+		async reorder(input) {
+			const { error } = mutateSnapshot((snapshot) => {
+				const activeTasks = snapshot.tasks.filter(
+					(task) => task.status === "active",
+				);
+				const activeIds = new Set(activeTasks.map((task) => task.id));
+
+				if (input.orderedIds.length !== activeTasks.length) {
+					throw new Error("Invalid reorder");
+				}
+
+				const orderedSet = new Set(input.orderedIds.map(String));
+				if (orderedSet.size !== input.orderedIds.length) {
+					throw new Error("Invalid reorder");
+				}
+
+				for (const id of input.orderedIds) {
+					if (!activeIds.has(String(id))) {
+						throw new Error("Task not found or not active");
+					}
+				}
+
+				const sortOrderById = new Map(
+					input.orderedIds.map((id, index) => [String(id), index]),
+				);
+				const now = new Date();
+
+				return {
+					...snapshot,
+					tasks: snapshot.tasks.map((task) => {
+						const newSortOrder = sortOrderById.get(task.id);
+						if (newSortOrder !== undefined) {
+							return { ...task, sortOrder: newSortOrder, updatedAt: now };
+						}
+						return task;
+					}),
+				};
+			});
 
 			if (error != null) {
 				throw new Error(error);

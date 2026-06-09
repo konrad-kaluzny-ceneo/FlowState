@@ -73,6 +73,7 @@ describe("guest repositories", () => {
 					status: "active",
 					workType: "OPERATIONAL",
 					weight: 2,
+					sortOrder: 0,
 					createdAt: startedAt,
 					updatedAt: null,
 				},
@@ -114,6 +115,51 @@ describe("guest repositories", () => {
 		expect(
 			active.startedAt.getTime() + active.configuredDurationSec * 1000,
 		).toBeLessThan(Date.now());
+	});
+
+	it("appends new tasks at the tail sortOrder", async () => {
+		const { tasks } = createGuestRepositories();
+		const first = await tasks.create({ title: "First" });
+		const second = await tasks.create({ title: "Second" });
+
+		expect(first.sortOrder).toBe(0);
+		expect(second.sortOrder).toBe(1);
+
+		const list = await tasks.list();
+		expect(list.map((task) => task.title)).toEqual(["First", "Second"]);
+	});
+
+	it("reorders active tasks and persists sortOrder in snapshot", async () => {
+		const { tasks } = createGuestRepositories();
+		const first = await tasks.create({ title: "First" });
+		const second = await tasks.create({ title: "Second" });
+		const third = await tasks.create({ title: "Third" });
+
+		await tasks.reorder({
+			orderedIds: [third.id, first.id, second.id],
+		});
+
+		const list = await tasks.list();
+		expect(list.map((task) => task.title)).toEqual([
+			"Third",
+			"First",
+			"Second",
+		]);
+		expect(list.map((task) => task.sortOrder)).toEqual([0, 1, 2]);
+
+		const raw = JSON.parse(localStorage.getItem(GUEST_STORAGE_KEY) ?? "{}");
+		const titlesBySortOrder = [...raw.tasks]
+			.sort(
+				(
+					a: { sortOrder: number; createdAt: string },
+					b: { sortOrder: number; createdAt: string },
+				) =>
+					a.sortOrder !== b.sortOrder
+						? a.sortOrder - b.sortOrder
+						: new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+			)
+			.map((task: { title: string }) => task.title);
+		expect(titlesBySortOrder).toEqual(["Third", "First", "Second"]);
 	});
 
 	it("returns cycle with null task when taskId is missing from snapshot", async () => {

@@ -12,6 +12,7 @@ export type ScoringTask = {
 	id: number;
 	workType: WorkType;
 	weight: number;
+	sortOrder: number;
 	createdAt: Date;
 };
 
@@ -73,6 +74,12 @@ export function pickBestTask(
 			return task;
 		}
 		if (taskScore < bestScore) {
+			return best;
+		}
+		if (task.sortOrder < best.sortOrder) {
+			return task;
+		}
+		if (task.sortOrder > best.sortOrder) {
 			return best;
 		}
 		if (task.weight > best.weight) {

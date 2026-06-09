@@ -1,21 +1,25 @@
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
-import { beforeEach, describe, expect, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUND on failure
  * Validates: Requirements 9.4, 9.5
  */
 
-// Stateful in-memory store; findFirst filters by { id, userId } like production
-let allTasks: Array<{
+type TaskRow = {
 	id: number;
 	title: string;
 	status: string;
 	userId: string;
+	sortOrder: number;
 	createdAt: Date;
 	updatedAt: Date | null;
-}> = [];
+};
+
+// Stateful in-memory store; findFirst filters by { id, userId } like production
+let allTasks: TaskRow[] = [];
+let nextTaskId = 1;
 
 // Mock ~/lib/auth/server
 vi.mock("~/lib/auth/server", () => ({
@@ -24,15 +28,83 @@ vi.mock("~/lib/auth/server", () => ({
 	},
 }));
 
+function filterTasks(args: {
+	where?: {
+		userId?: string;
+		status?: string;
+		id?: number;
+	};
+	select?: { id?: true };
+	orderBy?: Array<{ sortOrder?: "asc" | "desc"; createdAt?: "asc" | "desc" }>;
+}): TaskRow[] | Array<{ id: number }> {
+	let rows = [...allTasks];
+
+	if (args.where?.userId != null) {
+		rows = rows.filter((t) => t.userId === args.where?.userId);
+	}
+	if (args.where?.status != null) {
+		rows = rows.filter((t) => t.status === args.where?.status);
+	}
+	if (args.where?.id != null) {
+		rows = rows.filter((t) => t.id === args.where?.id);
+	}
+
+	if (args.orderBy) {
+		for (const clause of [...args.orderBy].reverse()) {
+			if (clause.sortOrder != null) {
+				const dir = clause.sortOrder === "asc" ? 1 : -1;
+				rows.sort((a, b) => (a.sortOrder - b.sortOrder) * dir);
+			}
+			if (clause.createdAt != null) {
+				const dir = clause.createdAt === "asc" ? 1 : -1;
+				rows.sort(
+					(a, b) => (a.createdAt.getTime() - b.createdAt.getTime()) * dir,
+				);
+			}
+		}
+	}
+
+	if (args.select?.id) {
+		return rows.map((t) => ({ id: t.id }));
+	}
+
+	return rows;
+}
+
 // Mock ~/server/db/index with Prisma-style API
 vi.mock("~/server/db/index", () => {
 	return {
 		db: {
 			task: {
-				findMany: vi.fn(() => Promise.resolve([])),
-				create: vi.fn((args: { data: Record<string, unknown> }) =>
-					Promise.resolve({ id: 1, ...args.data }),
+				findMany: vi.fn((args: Parameters<typeof filterTasks>[0]) =>
+					Promise.resolve(filterTasks(args)),
 				),
+				aggregate: vi.fn(
+					(args: {
+						where?: { userId?: string; status?: string };
+						_max?: { sortOrder?: true };
+					}) => {
+						const rows = filterTasks({ where: args.where }) as TaskRow[];
+						const maxSortOrder =
+							rows.length === 0
+								? null
+								: Math.max(...rows.map((t) => t.sortOrder));
+						return Promise.resolve({ _max: { sortOrder: maxSortOrder } });
+					},
+				),
+				create: vi.fn((args: { data: Record<string, unknown> }) => {
+					const row: TaskRow = {
+						id: nextTaskId++,
+						title: String(args.data.title),
+						status: "active",
+						userId: String(args.data.userId),
+						sortOrder: Number(args.data.sortOrder ?? 0),
+						createdAt: new Date(),
+						updatedAt: null,
+					};
+					allTasks.push(row);
+					return Promise.resolve(row);
+				}),
 				findFirst: vi.fn(
 					(args: { where?: { id?: number; userId?: string } }) => {
 						return Promise.resolve(
@@ -43,9 +115,37 @@ vi.mock("~/server/db/index", () => {
 						);
 					},
 				),
-				update: vi.fn(() => Promise.resolve({ id: 1 })),
-				delete: vi.fn(() => Promise.resolve({ id: 1 })),
+				update: vi.fn(
+					(args: {
+						where: { id: number };
+						data: Partial<
+							Pick<TaskRow, "title" | "status" | "sortOrder" | "updatedAt">
+						>;
+					}) => {
+						const task = allTasks.find((t) => t.id === args.where.id);
+						if (!task) {
+							throw new Error("not found");
+						}
+						Object.assign(task, args.data);
+						return Promise.resolve(task);
+					},
+				),
+				delete: vi.fn((args: { where: { id: number } }) => {
+					const idx = allTasks.findIndex((t) => t.id === args.where.id);
+					if (idx >= 0) {
+						allTasks.splice(idx, 1);
+					}
+					return Promise.resolve({ id: args.where.id });
+				}),
 			},
+			$transaction: vi.fn(
+				async (ops: Array<Promise<unknown>> | ((tx: unknown) => unknown)) => {
+					if (typeof ops === "function") {
+						return ops((await import("~/server/db/index")).db);
+					}
+					return Promise.all(ops);
+				},
+			),
 		},
 	};
 });
@@ -57,8 +157,26 @@ installImmediateSetTimeout();
 // Import after mocks are set up
 const { createCallerFactory } = await import("~/server/api/trpc");
 const { taskRouter } = await import("~/server/api/routers/task");
+const { db } = await import("~/server/db/index");
 
 const createCaller = createCallerFactory(taskRouter);
+
+const USER_A = "user-a";
+const USER_B = "user-b";
+
+function taskCaller(userId: string) {
+	return createCaller({
+		db: db as never,
+		session: {
+			user: {
+				id: userId,
+				email: "test@example.com",
+				name: "Test User",
+			},
+		},
+		headers: new Headers(),
+	});
+}
 
 /** Arbitrary for non-empty user IDs */
 const userIdArb = fc
@@ -101,6 +219,7 @@ const ownershipScenarioArb = fc
 describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUND on failure", () => {
 	beforeEach(() => {
 		allTasks = [];
+		nextTaskId = 1;
 	});
 
 	fcTest.prop([ownershipScenarioArb, taskIdArb, taskTitleArb, emailArb], {
@@ -117,13 +236,14 @@ describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUN
 					title: "Original",
 					status: "active",
 					userId: scenario.ownerUserId,
+					sortOrder: 0,
 					createdAt: new Date(),
 					updatedAt: null,
 				},
 			];
 
 			const caller = createCaller({
-				db: (await import("~/server/db/index")).db as never,
+				db: db as never,
 				session: {
 					user: {
 						id: scenario.callerUserId,
@@ -159,13 +279,14 @@ describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUN
 					title: "Task",
 					status: "active",
 					userId: scenario.ownerUserId,
+					sortOrder: 0,
 					createdAt: new Date(),
 					updatedAt: null,
 				},
 			];
 
 			const caller = createCaller({
-				db: (await import("~/server/db/index")).db as never,
+				db: db as never,
 				session: {
 					user: {
 						id: scenario.callerUserId,
@@ -187,4 +308,202 @@ describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUN
 			}
 		},
 	);
+});
+
+describe("task reorder and sortOrder", () => {
+	beforeEach(() => {
+		allTasks = [];
+		nextTaskId = 1;
+		vi.clearAllMocks();
+	});
+
+	it("owner reorders active tasks and list reflects new order", async () => {
+		allTasks = [
+			{
+				id: 1,
+				title: "First",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 0,
+				createdAt: new Date(2024, 0, 1),
+				updatedAt: null,
+			},
+			{
+				id: 2,
+				title: "Second",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 1,
+				createdAt: new Date(2024, 0, 2),
+				updatedAt: null,
+			},
+			{
+				id: 3,
+				title: "Third",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 2,
+				createdAt: new Date(2024, 0, 3),
+				updatedAt: null,
+			},
+		];
+
+		await taskCaller(USER_A).reorder({ orderedIds: [3, 1, 2] });
+
+		const list = await taskCaller(USER_A).list();
+		expect(list.map((t) => t.id)).toEqual([3, 1, 2]);
+		expect(list.map((t) => t.sortOrder)).toEqual([0, 1, 2]);
+	});
+
+	it("cross-user ID in orderedIds throws NOT_FOUND", async () => {
+		allTasks = [
+			{
+				id: 1,
+				title: "A first",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 0,
+				createdAt: new Date(),
+				updatedAt: null,
+			},
+			{
+				id: 2,
+				title: "B task",
+				status: "active",
+				userId: USER_B,
+				sortOrder: 0,
+				createdAt: new Date(),
+				updatedAt: null,
+			},
+			{
+				id: 3,
+				title: "A second",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 1,
+				createdAt: new Date(),
+				updatedAt: null,
+			},
+		];
+
+		await expect(
+			taskCaller(USER_A).reorder({ orderedIds: [3, 2] }),
+		).rejects.toMatchObject({ code: "NOT_FOUND" });
+	});
+
+	it("completed task ID in orderedIds throws BAD_REQUEST", async () => {
+		allTasks = [
+			{
+				id: 1,
+				title: "Active",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 0,
+				createdAt: new Date(),
+				updatedAt: null,
+			},
+			{
+				id: 2,
+				title: "Done",
+				status: "completed",
+				userId: USER_A,
+				sortOrder: 1,
+				createdAt: new Date(),
+				updatedAt: null,
+			},
+		];
+
+		await expect(
+			taskCaller(USER_A).reorder({ orderedIds: [2, 1] }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+
+	it("non-permutation input throws BAD_REQUEST", async () => {
+		allTasks = [
+			{
+				id: 1,
+				title: "One",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 0,
+				createdAt: new Date(),
+				updatedAt: null,
+			},
+			{
+				id: 2,
+				title: "Two",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 1,
+				createdAt: new Date(),
+				updatedAt: null,
+			},
+		];
+
+		await expect(
+			taskCaller(USER_A).reorder({ orderedIds: [1, 1] }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+		await expect(
+			taskCaller(USER_A).reorder({ orderedIds: [1] }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+
+	it("revert completed to active assigns tail sortOrder", async () => {
+		allTasks = [
+			{
+				id: 1,
+				title: "Active A",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 0,
+				createdAt: new Date(2024, 0, 1),
+				updatedAt: null,
+			},
+			{
+				id: 2,
+				title: "Active B",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 1,
+				createdAt: new Date(2024, 0, 2),
+				updatedAt: null,
+			},
+			{
+				id: 3,
+				title: "Completed",
+				status: "completed",
+				userId: USER_A,
+				sortOrder: 0,
+				createdAt: new Date(2024, 0, 3),
+				updatedAt: null,
+			},
+		];
+
+		await taskCaller(USER_A).update({ id: 3, status: "active" });
+
+		const reverted = allTasks.find((t) => t.id === 3);
+		expect(reverted?.status).toBe("active");
+		expect(reverted?.sortOrder).toBe(2);
+
+		const list = await taskCaller(USER_A).list();
+		expect(list.map((t) => t.id)).toEqual([1, 2, 3]);
+	});
+
+	it("create appends at tail sortOrder", async () => {
+		allTasks = [
+			{
+				id: 1,
+				title: "Existing",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 4,
+				createdAt: new Date(),
+				updatedAt: null,
+			},
+		];
+
+		const created = await taskCaller(USER_A).create({ title: "New task" });
+		expect(created.sortOrder).toBe(5);
+	});
 });

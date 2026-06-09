@@ -13,6 +13,7 @@ const otherTasks = [
 		updatedAt: null,
 		workType: "OPERATIONAL" as const,
 		weight: 2 as const,
+		sortOrder: 0,
 	},
 ];
 

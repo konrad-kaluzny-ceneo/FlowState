@@ -19,6 +19,7 @@ describe("scoreTask", () => {
 			id: 1,
 			workType: "OPERATIONAL" as const,
 			weight: 2,
+			sortOrder: 0,
 			createdAt: new Date("2026-01-01"),
 		};
 		expect(pickBestTask([task], baseContext)).toEqual(task);
@@ -29,12 +30,14 @@ describe("scoreTask", () => {
 			id: 1,
 			workType: "DEEP_WORK" as const,
 			weight: 3,
+			sortOrder: 1,
 			createdAt: new Date("2026-01-01"),
 		};
 		const reactive = {
 			id: 2,
 			workType: "REACTIVE" as const,
 			weight: 3,
+			sortOrder: 0,
 			createdAt: new Date("2026-01-02"),
 		};
 		expect(pickBestTask([reactive, deep], baseContext)?.id).toBe(1);
@@ -53,12 +56,14 @@ describe("scoreTask", () => {
 			id: 1,
 			workType: "DEEP_WORK" as const,
 			weight: 3,
+			sortOrder: 0,
 			createdAt: new Date("2026-01-01"),
 		};
 		const reactive = {
 			id: 2,
 			workType: "REACTIVE" as const,
 			weight: 2,
+			sortOrder: 1,
 			createdAt: new Date("2026-01-02"),
 		};
 		expect(pickBestTask([deep, reactive], context)?.id).toBe(2);
@@ -73,28 +78,52 @@ describe("scoreTask", () => {
 			id: 1,
 			workType: "DEEP_WORK" as const,
 			weight: 2,
+			sortOrder: 0,
 			createdAt: new Date("2026-01-01"),
 		};
 		const reactive = {
 			id: 2,
 			workType: "REACTIVE" as const,
 			weight: 3,
+			sortOrder: 1,
 			createdAt: new Date("2026-01-02"),
 		};
 		expect(pickBestTask([deep, reactive], context)?.id).toBe(2);
 	});
 
-	it("tie-breaks on higher weight then earlier createdAt", () => {
+	it("prefers lower sortOrder when scores tie", () => {
+		const higherPriority = {
+			id: 1,
+			workType: "OPERATIONAL" as const,
+			weight: 2,
+			sortOrder: 0,
+			createdAt: new Date("2026-01-02"),
+		};
+		const lowerPriority = {
+			id: 2,
+			workType: "OPERATIONAL" as const,
+			weight: 2,
+			sortOrder: 1,
+			createdAt: new Date("2026-01-01"),
+		};
+		expect(pickBestTask([lowerPriority, higherPriority], baseContext)?.id).toBe(
+			1,
+		);
+	});
+
+	it("tie-breaks on higher weight then earlier createdAt when scores and sortOrder tie", () => {
 		const heavier = {
 			id: 1,
 			workType: "OPERATIONAL" as const,
 			weight: 3,
+			sortOrder: 0,
 			createdAt: new Date("2026-01-02"),
 		};
 		const lighter = {
 			id: 2,
-			workType: "OPERATIONAL" as const,
+			workType: "DEEP_WORK" as const,
 			weight: 2,
+			sortOrder: 0,
 			createdAt: new Date("2026-01-01"),
 		};
 		expect(pickBestTask([lighter, heavier], baseContext)?.id).toBe(1);
@@ -105,12 +134,14 @@ describe("scoreTask", () => {
 			id: 1,
 			workType: "OPERATIONAL" as const,
 			weight: 2,
+			sortOrder: 0,
 			createdAt: new Date("2026-01-01"),
 		};
 		const reactive = {
 			id: 2,
 			workType: "REACTIVE" as const,
 			weight: 2,
+			sortOrder: 1,
 			createdAt: new Date("2026-01-02"),
 		};
 		const fadingContext = {

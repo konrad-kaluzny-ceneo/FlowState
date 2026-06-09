@@ -60,6 +60,7 @@ model Task {
   userId    String    @map("user_id") @db.VarChar(255)
   workType  WorkType  @default(OPERATIONAL) @map("work_type")
   weight    Int       @default(2) @db.SmallInt
+  sortOrder Int       @default(0) @map("sort_order")
   createdAt DateTime  @default(now()) @map("createdAt") @db.Timestamptz
   updatedAt DateTime? @updatedAt @map("updatedAt") @db.Timestamptz
 
@@ -70,6 +71,7 @@ model Task {
 
   @@index([status], name: "task_status_idx")
   @@index([userId], name: "task_user_id_idx")
+  @@index([userId, sortOrder], name: "task_user_sort_order_idx")
   @@index([workType], name: "task_work_type_idx")
   @@map("flow_state_task")
 }

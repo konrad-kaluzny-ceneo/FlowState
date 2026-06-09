@@ -84,5 +84,8 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm exec playwright install chromium --with-deps
 
+      - name: Apply database migrations
+        run: pnpm db:migrate:prod
+
       - name: E2E tests
         run: pnpm test:e2e

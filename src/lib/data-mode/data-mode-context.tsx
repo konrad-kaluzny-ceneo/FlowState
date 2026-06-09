@@ -56,6 +56,11 @@ export function DataModeProvider({
 						input: Parameters<typeof utils.client.task.delete.mutate>[0],
 					) => utils.client.task.delete.mutate(input),
 				},
+				reorder: {
+					mutate: (
+						input: Parameters<typeof utils.client.task.reorder.mutate>[0],
+					) => utils.client.task.reorder.mutate(input),
+				},
 			},
 			cycle: {
 				getActive: { fetch: () => utils.client.cycle.getActive.query() },

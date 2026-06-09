@@ -43,6 +43,7 @@ type TrpcTaskRow = {
 	status: string;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: number;
+	sortOrder: number;
 	createdAt: Date;
 	updatedAt: Date | null;
 };
@@ -53,6 +54,7 @@ type TrpcClient = {
 		create: { mutate: (input: CreateTaskInput) => Promise<TrpcTaskRow> };
 		update: { mutate: (input: UpdateTaskInput) => Promise<void> };
 		delete: { mutate: (input: { id: number }) => Promise<void> };
+		reorder: { mutate: (input: { orderedIds: number[] }) => Promise<void> };
 	};
 	cycle: {
 		getActive: { fetch: () => Promise<DomainActiveCycle | null> };
@@ -97,6 +99,10 @@ export function createServerTaskRepository(client: TrpcClient): TaskRepository {
 				id: toNumericId(input.id),
 			}),
 		delete: (input) => client.task.delete.mutate({ id: toNumericId(input.id) }),
+		reorder: (input) =>
+			client.task.reorder.mutate({
+				orderedIds: input.orderedIds.map(toNumericId),
+			}),
 	};
 }
 

@@ -12,9 +12,30 @@ export const guestTaskSchema = z.object({
 		.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"])
 		.default("OPERATIONAL"),
 	weight: z.number().int().min(1).max(3).default(2),
+	sortOrder: z.number().int().min(0).optional(),
 	createdAt: z.coerce.date(),
 	updatedAt: z.coerce.date().nullable(),
 });
+
+export type GuestTask = {
+	id: string;
+	title: string;
+	status: "active" | "completed";
+	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+	weight: number;
+	sortOrder: number;
+	createdAt: Date;
+	updatedAt: Date | null;
+};
+
+function normalizeGuestTasks(
+	tasks: Array<z.infer<typeof guestTaskSchema>>,
+): GuestTask[] {
+	return tasks.map((task, index) => ({
+		...task,
+		sortOrder: task.sortOrder ?? index,
+	}));
+}
 
 export const guestSessionSchema = z.object({
 	id: z.string().uuid(),
@@ -49,10 +70,23 @@ export const guestSnapshotV1Schema = z.object({
 	cycles: z.array(guestCycleSchema),
 });
 
-export type GuestTask = z.infer<typeof guestTaskSchema>;
 export type GuestSession = z.infer<typeof guestSessionSchema>;
 export type GuestCycle = z.infer<typeof guestCycleSchema>;
-export type GuestSnapshotV1 = z.infer<typeof guestSnapshotV1Schema>;
+export type GuestSnapshotV1 = Omit<
+	z.infer<typeof guestSnapshotV1Schema>,
+	"tasks"
+> & {
+	tasks: GuestTask[];
+};
+
+export function normalizeGuestSnapshot(
+	snapshot: z.infer<typeof guestSnapshotV1Schema>,
+): GuestSnapshotV1 {
+	return {
+		...snapshot,
+		tasks: normalizeGuestTasks(snapshot.tasks),
+	};
+}
 
 export function createEmptyGuestSnapshot(): GuestSnapshotV1 {
 	return {
@@ -93,7 +127,7 @@ export function parseGuestSnapshot(raw: string | null): GuestSnapshotV1 {
 			return createEmptyGuestSnapshot();
 		}
 
-		return result.data;
+		return normalizeGuestSnapshot(result.data);
 	} catch {
 		if (process.env.NODE_ENV === "development") {
 			console.warn("[guest] corrupt snapshot JSON");

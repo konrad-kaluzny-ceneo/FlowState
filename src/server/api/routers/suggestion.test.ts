@@ -31,6 +31,7 @@ type TaskRow = {
 	userId: string;
 	workType: WorkType;
 	weight: number;
+	sortOrder: number;
 	createdAt: Date;
 };
 
@@ -161,18 +162,43 @@ vi.mock("~/server/db/index", () => ({
 		},
 		task: {
 			findMany: vi.fn(
-				(args: { where: { userId?: string; status?: string } }) => {
-					return Promise.resolve(
-						tasks.filter((t) => {
-							if (args.where.userId != null && t.userId !== args.where.userId) {
-								return false;
+				(args: {
+					where: { userId?: string; status?: string };
+					orderBy?:
+						| { createdAt: "asc" }
+						| Array<{ sortOrder?: "asc"; createdAt?: "asc" }>;
+				}) => {
+					let rows = tasks.filter((t) => {
+						if (args.where.userId != null && t.userId !== args.where.userId) {
+							return false;
+						}
+						if (args.where.status != null && t.status !== args.where.status) {
+							return false;
+						}
+						return true;
+					});
+					const orderBy = args.orderBy;
+					if (Array.isArray(orderBy)) {
+						rows = [...rows].sort((a, b) => {
+							for (const clause of orderBy) {
+								if (clause.sortOrder === "asc" && a.sortOrder !== b.sortOrder) {
+									return a.sortOrder - b.sortOrder;
+								}
+								if (
+									clause.createdAt === "asc" &&
+									a.createdAt.getTime() !== b.createdAt.getTime()
+								) {
+									return a.createdAt.getTime() - b.createdAt.getTime();
+								}
 							}
-							if (args.where.status != null && t.status !== args.where.status) {
-								return false;
-							}
-							return true;
-						}),
-					);
+							return 0;
+						});
+					} else if (orderBy?.createdAt === "asc") {
+						rows = [...rows].sort(
+							(a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+						);
+					}
+					return Promise.resolve(rows);
 				},
 			),
 			findFirst: vi.fn(
@@ -316,6 +342,7 @@ function seedTasks() {
 			userId: USER_ID,
 			workType: "DEEP_WORK",
 			weight: 3,
+			sortOrder: 0,
 			createdAt: new Date("2026-01-01"),
 		},
 		{
@@ -325,6 +352,7 @@ function seedTasks() {
 			userId: USER_ID,
 			workType: "REACTIVE",
 			weight: 2,
+			sortOrder: 1,
 			createdAt: new Date("2026-01-02"),
 		},
 		{
@@ -334,6 +362,7 @@ function seedTasks() {
 			userId: USER_ID,
 			workType: "OPERATIONAL",
 			weight: 2,
+			sortOrder: 2,
 			createdAt: new Date("2026-01-03"),
 		},
 	];
@@ -469,6 +498,7 @@ describe("suggestion router", () => {
 				userId: USER_ID,
 				workType: "DEEP_WORK",
 				weight: 2,
+				sortOrder: 0,
 				createdAt: new Date(),
 			},
 			{
@@ -478,6 +508,7 @@ describe("suggestion router", () => {
 				userId: USER_ID,
 				workType: "REACTIVE",
 				weight: 2,
+				sortOrder: 1,
 				createdAt: new Date(),
 			},
 		];
@@ -521,6 +552,7 @@ describe("suggestion router", () => {
 				userId: USER_ID,
 				workType: "DEEP_WORK",
 				weight: 2,
+				sortOrder: 0,
 				createdAt: new Date(),
 			},
 		];
@@ -601,6 +633,55 @@ describe("suggestion router", () => {
 		});
 	});
 
+	it("post-check-in next prefers lower sortOrder when scores tie", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		cycles = [
+			{
+				id: 10,
+				sessionId: 1,
+				userId: USER_ID,
+				kind: "WORK",
+				state: "COMPLETED",
+			},
+		];
+		checkIns = [{ cycleId: 10, userId: USER_ID, energy: "FOCUSED" }];
+		tasks = [
+			{
+				id: 1,
+				title: "Later manual priority",
+				status: "active",
+				userId: USER_ID,
+				workType: "OPERATIONAL",
+				weight: 2,
+				sortOrder: 1,
+				createdAt: new Date("2026-01-01"),
+			},
+			{
+				id: 2,
+				title: "Top manual priority",
+				status: "active",
+				userId: USER_ID,
+				workType: "OPERATIONAL",
+				weight: 2,
+				sortOrder: 0,
+				createdAt: new Date("2026-01-02"),
+			},
+		];
+
+		const result = await caller().next({
+			context: "post_check_in",
+			cycleId: 10,
+			localHour: 10,
+		});
+
+		expect(result).toMatchObject({
+			taskId: 2,
+			title: "Top manual priority",
+		});
+	});
+
 	it("kickoff override feeds lastOverrideWorkType on subsequent next", async () => {
 		sessions = [
 			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
@@ -613,6 +694,7 @@ describe("suggestion router", () => {
 				userId: USER_ID,
 				workType: "OPERATIONAL",
 				weight: 2,
+				sortOrder: 1,
 				createdAt: new Date("2026-01-01"),
 			},
 			{
@@ -622,6 +704,7 @@ describe("suggestion router", () => {
 				userId: USER_ID,
 				workType: "REACTIVE",
 				weight: 3,
+				sortOrder: 0,
 				createdAt: new Date("2026-01-02"),
 			},
 		];

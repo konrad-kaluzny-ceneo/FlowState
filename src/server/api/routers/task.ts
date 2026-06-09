@@ -3,11 +3,29 @@ import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
+async function nextActiveSortOrder(
+	db: {
+		task: {
+			aggregate: (args: {
+				where: { userId: string; status: string };
+				_max: { sortOrder: true };
+			}) => Promise<{ _max: { sortOrder: number | null } }>;
+		};
+	},
+	userId: string,
+): Promise<number> {
+	const maxResult = await db.task.aggregate({
+		where: { userId, status: "active" },
+		_max: { sortOrder: true },
+	});
+	return (maxResult._max.sortOrder ?? -1) + 1;
+}
+
 export const taskRouter = createTRPCRouter({
 	list: protectedProcedure.query(async ({ ctx }) => {
 		return ctx.db.task.findMany({
 			where: { userId: ctx.session.user.id },
-			orderBy: { createdAt: "asc" },
+			orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
 		});
 	}),
 
@@ -20,10 +38,13 @@ export const taskRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const sortOrder = await nextActiveSortOrder(ctx.db, ctx.session.user.id);
+
 			return await ctx.db.task.create({
 				data: {
 					title: input.title,
 					userId: ctx.session.user.id,
+					sortOrder,
 					...(input.workType != null ? { workType: input.workType } : {}),
 					...(input.weight != null ? { weight: input.weight } : {}),
 				},
@@ -50,10 +71,66 @@ export const taskRouter = createTRPCRouter({
 				throw new TRPCError({ code: "NOT_FOUND" });
 			}
 
+			let updateData: typeof data & { sortOrder?: number } = data;
+
+			if (data.status === "active" && existing.status === "completed") {
+				updateData = {
+					...updateData,
+					sortOrder: await nextActiveSortOrder(ctx.db, ctx.session.user.id),
+				};
+			}
+
 			await ctx.db.task.update({
 				where: { id },
-				data,
+				data: updateData,
 			});
+		}),
+
+	reorder: protectedProcedure
+		.input(z.object({ orderedIds: z.array(z.number().int()).min(1) }))
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+
+			const activeTasks = await ctx.db.task.findMany({
+				where: { userId, status: "active" },
+				select: { id: true },
+			});
+
+			const activeIds = new Set(activeTasks.map((t) => t.id));
+
+			if (input.orderedIds.length !== activeIds.size) {
+				throw new TRPCError({ code: "BAD_REQUEST" });
+			}
+
+			const orderedSet = new Set(input.orderedIds);
+			if (orderedSet.size !== input.orderedIds.length) {
+				throw new TRPCError({ code: "BAD_REQUEST" });
+			}
+
+			for (const id of input.orderedIds) {
+				if (activeIds.has(id)) {
+					continue;
+				}
+
+				const task = await ctx.db.task.findFirst({
+					where: { id, userId },
+				});
+
+				if (!task) {
+					throw new TRPCError({ code: "NOT_FOUND" });
+				}
+
+				throw new TRPCError({ code: "BAD_REQUEST" });
+			}
+
+			await ctx.db.$transaction(
+				input.orderedIds.map((id, index) =>
+					ctx.db.task.update({
+						where: { id },
+						data: { sortOrder: index },
+					}),
+				),
+			);
 		}),
 
 	delete: protectedProcedure

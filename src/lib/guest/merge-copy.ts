@@ -15,6 +15,13 @@ export type MergeSuccessCopy = {
 const UNLOCK_LINE =
 	"You now have full sessions, energy check-ins, and session-aware task suggestions.";
 
+function compareBySortOrder(
+	a: GuestSnapshotV1["tasks"][number],
+	b: GuestSnapshotV1["tasks"][number],
+): number {
+	return a.sortOrder - b.sortOrder;
+}
+
 function compareByCreatedAt(
 	a: GuestSnapshotV1["tasks"][number],
 	b: GuestSnapshotV1["tasks"][number],
@@ -32,7 +39,7 @@ export function extractPreviewTaskTitles(
 ): string[] {
 	const active = snapshot.tasks
 		.filter((task) => task.status === "active" && isNonEmptyTitle(task.title))
-		.sort(compareByCreatedAt);
+		.sort(compareBySortOrder);
 	const completed = snapshot.tasks
 		.filter(
 			(task) => task.status === "completed" && isNonEmptyTitle(task.title),
