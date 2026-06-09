@@ -42,6 +42,19 @@ import type {
 
 export const POMODORO_ALARM_URL = "/sounds/pomodoro-complete.mp3";
 
+/** E2E uses Playwright fake timers; server `startedAt` must not drive break expiry. */
+const useE2eClientTimer = process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER === "1";
+
+function cycleEndTimeMs(cycle: {
+	startedAt: Date;
+	configuredDurationSec: number;
+}): number {
+	if (useE2eClientTimer) {
+		return Date.now() + cycle.configuredDurationSec * 1000;
+	}
+	return cycle.startedAt.getTime() + cycle.configuredDurationSec * 1000;
+}
+
 export type { FocusedTask };
 
 export type PomodoroCycleState = "idle" | "running" | "completed";
@@ -439,8 +452,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const resumeFromActiveCycle = useCallback(
 		(cycle: DomainActiveCycle) => {
-			const endTime =
-				cycle.startedAt.getTime() + cycle.configuredDurationSec * 1000;
+			const endTime = cycleEndTimeMs(cycle);
 			setActiveCycle(cycle);
 			setCycleKind(cycle.kind);
 			setActiveSessionId(cycle.sessionId);
@@ -1052,8 +1064,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					taskId: focusedTaskId,
 				});
 
-				const endTime =
-					cycle.startedAt.getTime() + cycle.configuredDurationSec * 1000;
+				const endTime = cycleEndTimeMs(cycle);
 
 				setActiveCycle({
 					...cycle,
@@ -1128,9 +1139,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				configuredDurationSec: breakDuration,
 			});
 
-			const endTime =
-				breakCycle.startedAt.getTime() +
-				breakCycle.configuredDurationSec * 1000;
+			const endTime = cycleEndTimeMs(breakCycle);
 
 			setActiveCycle({ ...breakCycle, task: null });
 			setCycleKind(breakKind);
