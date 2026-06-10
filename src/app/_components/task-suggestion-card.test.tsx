@@ -3,6 +3,25 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 
+const baseSuggestion = {
+	taskId: 5,
+	title: "Deep refactor",
+	workType: "DEEP_WORK" as const,
+	weight: 3 as const,
+	rationale: "Deep work — you're focused with few interruptions",
+};
+
+const sampleBreakdown = {
+	headline: baseSuggestion.rationale,
+	dominant: [
+		{
+			key: "late_day" as const,
+			copy: "Late in the day — lighter work may fit better",
+		},
+	],
+	alsoConsidered: ["Cycles completed", "Energy fit"],
+};
+
 describe("TaskSuggestionCard", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
@@ -84,5 +103,122 @@ describe("TaskSuggestionCard", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 		expect(onRetry).toHaveBeenCalled();
+	});
+
+	it("hides Why this? when breakdown is missing", () => {
+		render(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={baseSuggestion}
+			/>,
+		);
+
+		expect(screen.queryByTestId("suggestion-rationale-toggle")).toBeNull();
+	});
+
+	it("hides Why this? when breakdown has no dominant or chip content", () => {
+		render(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={{
+					...baseSuggestion,
+					breakdown: {
+						headline: baseSuggestion.rationale,
+						dominant: [],
+						alsoConsidered: [],
+					},
+				}}
+			/>,
+		);
+
+		expect(screen.queryByTestId("suggestion-rationale-toggle")).toBeNull();
+	});
+
+	it("shows expander synchronously on toggle click without waiting on timers", () => {
+		render(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={{
+					...baseSuggestion,
+					breakdown: sampleBreakdown,
+				}}
+			/>,
+		);
+
+		expect(screen.queryByTestId("suggestion-rationale-expander")).toBeNull();
+
+		fireEvent.click(screen.getByTestId("suggestion-rationale-toggle"));
+
+		expect(screen.getByTestId("suggestion-rationale-expander")).toBeTruthy();
+	});
+
+	it("renders dominant copy and chip labels without duplicating the one-liner", () => {
+		render(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={{
+					...baseSuggestion,
+					breakdown: sampleBreakdown,
+				}}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("suggestion-rationale-toggle"));
+
+		expect(
+			screen.getByText("Late in the day — lighter work may fit better"),
+		).toBeTruthy();
+		expect(screen.getByText("Cycles completed")).toBeTruthy();
+		expect(screen.getByText("Energy fit")).toBeTruthy();
+
+		const rationaleMatches = screen.getAllByText(baseSuggestion.rationale);
+		expect(rationaleMatches).toHaveLength(1);
+	});
+
+	it("toggles aria-expanded on the Why this? control", () => {
+		render(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={{
+					...baseSuggestion,
+					breakdown: sampleBreakdown,
+				}}
+			/>,
+		);
+
+		const toggle = screen.getByTestId("suggestion-rationale-toggle");
+		expect(toggle.getAttribute("aria-expanded")).toBe("false");
+
+		fireEvent.click(toggle);
+		expect(toggle.getAttribute("aria-expanded")).toBe("true");
+
+		fireEvent.click(toggle);
+		expect(toggle.getAttribute("aria-expanded")).toBe("false");
+	});
+
+	it("renders coachLine alongside expander without duplicate rationale stacking", () => {
+		render(
+			<TaskSuggestionCard
+				coachLine="Pick a task to start your first focus block."
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={{
+					...baseSuggestion,
+					breakdown: sampleBreakdown,
+				}}
+			/>,
+		);
+
+		expect(screen.getByTestId("suggestion-coach-line")).toBeTruthy();
+		expect(
+			screen.getByText("Pick a task to start your first focus block."),
+		).toBeTruthy();
+		expect(screen.getByTestId("suggestion-rationale-toggle")).toBeTruthy();
+		expect(screen.getAllByText(baseSuggestion.rationale)).toHaveLength(1);
 	});
 });

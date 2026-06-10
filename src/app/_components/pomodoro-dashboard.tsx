@@ -217,6 +217,7 @@ function PomodoroDashboardBody({
 								workType: pomodoro.pendingSuggestion.data.workType,
 								weight: pomodoro.pendingSuggestion.data.weight,
 								rationale: pomodoro.pendingSuggestion.data.rationale,
+								breakdown: pomodoro.pendingSuggestion.data.breakdown,
 							}}
 						/>
 					</div>
@@ -247,6 +248,7 @@ function PomodoroDashboardBody({
 							workType: pomodoro.pendingKickoffSuggestion.data.workType,
 							weight: pomodoro.pendingKickoffSuggestion.data.weight,
 							rationale: pomodoro.pendingKickoffSuggestion.data.rationale,
+							breakdown: pomodoro.pendingKickoffSuggestion.data.breakdown,
 						}}
 					/>
 				) : pomodoro.pendingKickoffSuggestion.status === "empty" ? (

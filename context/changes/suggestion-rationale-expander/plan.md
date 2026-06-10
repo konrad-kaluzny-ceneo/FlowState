@@ -362,10 +362,10 @@ No schema migration. API response is additive (`breakdown` field). Older clients
 
 #### Automated
 
-- [ ] 3.1 Component tests pass: `pnpm exec vitest run src/app/_components/task-suggestion-card.test.tsx`
-- [ ] 3.2 Full test suite passes: `pnpm test`
-- [ ] 3.3 Lint/format passes: `pnpm check`
-- [ ] 3.4 Typecheck passes: `pnpm typecheck`
+- [x] 3.1 Component tests pass: `pnpm exec vitest run src/app/_components/task-suggestion-card.test.tsx`
+- [x] 3.2 Full test suite passes: `pnpm test`
+- [x] 3.3 Lint/format passes: `pnpm check`
+- [x] 3.4 Typecheck passes: `pnpm typecheck`
 
 #### Manual
 
