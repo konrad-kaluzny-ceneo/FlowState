@@ -394,9 +394,9 @@ No schema migration — kickoff `energy` is input-only. Existing kickoff clients
 
 #### Automated
 
-- [x] 1.1 `pnpm check` passes
-- [x] 1.2 `pnpm typecheck` passes
-- [x] 1.3 `pnpm exec vitest run src/server/api/routers/suggestion.test.ts` passes
+- [x] 1.1 `pnpm check` passes — 7ca979e
+- [x] 1.2 `pnpm typecheck` passes — 7ca979e
+- [x] 1.3 `pnpm exec vitest run src/server/api/routers/suggestion.test.ts` passes — 7ca979e
 
 #### Manual
 
