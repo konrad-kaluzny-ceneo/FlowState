@@ -1,6 +1,7 @@
 /**
  * E2E generation exemplar — model every new spec on this file + e2e/fixtures.ts helpers.
- * Critical risks (test-plan §2, §6.3): #1 persistence reload, #3 mid-cycle prompt, #7 check-in gate.
+ * Critical risks (test-plan §2, §6.3): #3 mid-cycle prompt, #7 check-in gate.
+ * Risk #1 auth reload: hook + integration (see test-plan §6.2); guest reload in guest-trial.spec.ts.
  * Anti-patterns avoided: UI login, waitForTimeout, CSS/XPath locators, shared storageState.
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
@@ -12,37 +13,6 @@ import {
 	markTaskCompleteMidCycle,
 	startFocusedWorkCycle,
 } from "./helpers/work-cycle";
-
-test.describe("Seed exemplar — Risk #1 persistence reload", () => {
-	test("authenticated mid-cycle reload preserves task and running panel", async ({
-		page,
-	}) => {
-		test.setTimeout(60_000);
-
-		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
-		await waitForCycleGetActive(page);
-		await ensureIdleCycle(page);
-
-		const taskTitle = `E2E Seed R1 ${Date.now()}`;
-
-		await startFocusedWorkCycle(page, taskTitle, 30);
-
-		const getActiveAfterReload = page.waitForResponse(
-			(response) => response.url().includes("cycle.getActive") && response.ok(),
-			{ timeout: 20_000 },
-		);
-		await page.reload();
-		await getActiveAfterReload;
-
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible({
-			timeout: 30_000,
-		});
-		await expect(
-			page.getByRole("listitem").filter({ hasText: taskTitle }),
-		).toBeVisible();
-	});
-});
 
 test.describe("Seed exemplar — Risk #3 mid-cycle prompt", () => {
 	test("completing a task mid-cycle surfaces FR-015 choices", async ({

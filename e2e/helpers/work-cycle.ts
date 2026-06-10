@@ -27,12 +27,11 @@ async function isGuestDashboard(page: Page) {
 	return page.getByTestId("guest-banner").isVisible();
 }
 
-function isCycleCreateResponse(response: {
+function isCycleCreatePost(response: {
 	url: () => string;
-	ok: () => boolean;
 	request: () => { method: () => string; postData: () => string | null };
 }) {
-	if (response.request().method() !== "POST" || !response.ok()) {
+	if (response.request().method() !== "POST") {
 		return false;
 	}
 	const url = response.url();
@@ -45,9 +44,23 @@ export async function waitForCycleCreateSettled(page: Page) {
 	if (await isGuestDashboard(page)) {
 		return;
 	}
-	await page.waitForResponse((response) => isCycleCreateResponse(response), {
-		timeout: 15_000,
-	});
+
+	const timeout = 15_000;
+	const deadline = Date.now() + timeout;
+
+	while (Date.now() < deadline) {
+		const remaining = deadline - Date.now();
+		if (remaining <= 0) {
+			break;
+		}
+		const response = await page.waitForResponse(isCycleCreatePost, {
+			timeout: remaining,
+		});
+		if (response.ok()) {
+			return;
+		}
+	}
+	throw new Error("cycle.create did not return ok within timeout");
 }
 
 /** Click Start Cycle and await server create on authenticated dashboards. */
