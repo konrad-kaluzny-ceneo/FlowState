@@ -510,9 +510,9 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 #### Automated
 
-- [ ] 3.1 `pnpm check` passes
-- [ ] 3.2 `set CI=true && pnpm test:e2e:belt` passes (all 12 belt tests)
-- [ ] 3.3 Belt list still reports 12 tests
+- [x] 3.1 `pnpm check` passes ? d976c71
+- [x] 3.2 `set CI=true && pnpm test:e2e:belt` passes (all 12 belt tests) ? d976c71
+- [x] 3.3 Belt list still reports 12 tests ? d976c71
 
 #### Manual
 
