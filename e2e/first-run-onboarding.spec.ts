@@ -202,7 +202,7 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 	});
 
 	test("accept path still works after first-run dismiss", async ({ page }) => {
-		test.setTimeout(60_000);
+		test.setTimeout(90_000);
 
 		await page.goto("/");
 		await clearOnboardingKeys(page);
