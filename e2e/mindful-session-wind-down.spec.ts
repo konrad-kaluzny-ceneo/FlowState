@@ -23,20 +23,18 @@ import {
 	addTask,
 	addTasks,
 	advanceClockThroughFastWork,
+	clickStartCycle,
 	completeWorkCycleWithCheckIn,
 	focusTask,
 	setShortBreakDurationSec,
 	setWorkDurationSec,
-	waitForCycleCreateSettled,
 } from "./helpers/work-cycle";
 
 async function startFastWorkCycle(page: Page, taskTitle: string) {
 	await focusTask(page, taskTitle);
 	await setShortBreakDurationSec(page, 1);
 	await setWorkDurationSec(page, 1);
-	const createSettled = waitForCycleCreateSettled(page);
-	await page.getByRole("button", { name: "Start Cycle" }).click();
-	await createSettled;
+	await clickStartCycle(page);
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 }
 
@@ -62,7 +60,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		for (let cycle = 0; cycle < 3; cycle++) {
 			await advanceClockThroughFastWork(page);
 			await completeSteadyWorkCycleAndResumeIdle(page);
-			await page.getByRole("button", { name: "Start Cycle" }).click();
+			await clickStartCycle(page);
 			await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 		}
 
@@ -112,7 +110,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		for (let cycle = 0; cycle < 3; cycle++) {
 			await advanceClockThroughFastWork(page);
 			await completeSteadyWorkCycleAndResumeIdle(page);
-			await page.getByRole("button", { name: "Start Cycle" }).click();
+			await clickStartCycle(page);
 			await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 		}
 
@@ -147,7 +145,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		for (let cycle = 0; cycle < 3; cycle++) {
 			await advanceClockThroughFastWork(page);
 			await completeSteadyWorkCycleAndResumeIdle(page);
-			await page.getByRole("button", { name: "Start Cycle" }).click();
+			await clickStartCycle(page);
 			await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 		}
 
@@ -177,7 +175,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		for (let cycle = 0; cycle < 3; cycle++) {
 			await advanceClockThroughFastWork(page);
 			await completeSteadyWorkCycleAndResumeIdle(page);
-			await page.getByRole("button", { name: "Start Cycle" }).click();
+			await clickStartCycle(page);
 			await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 		}
 
@@ -187,7 +185,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		await page.getByRole("button", { name: "End break early" }).click();
 		await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
 
-		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await clickStartCycle(page);
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 		await advanceClockThroughFastWork(page);
 
@@ -214,7 +212,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		for (let cycle = 0; cycle < 3; cycle++) {
 			await advanceClockThroughFastWork(page);
 			await completeSteadyWorkCycleAndResumeIdle(page);
-			await page.getByRole("button", { name: "Start Cycle" }).click();
+			await clickStartCycle(page);
 			await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 		}
 

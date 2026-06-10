@@ -1092,6 +1092,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				stateRef.current = "idle";
 				setRemainingMs(0);
 				setActiveCycle(null);
+				activeCycleRef.current = null;
 				setCycleKind(null);
 				cycleKindRef.current = null;
 			};
@@ -1125,6 +1126,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				};
 
 				setActiveCycle(optimisticCycle);
+				activeCycleRef.current = optimisticCycle;
 				setCycleKind("WORK");
 				cycleKindRef.current = "WORK";
 				setState("running");
@@ -1181,10 +1183,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 				const endTime = cycleEndTimeMs(cycle);
 
-				setActiveCycle({
+				const reconciledCycle: DomainActiveCycle = {
 					...cycle,
 					task: focusedTask,
-				});
+				};
+
+				setActiveCycle(reconciledCycle);
+				activeCycleRef.current = reconciledCycle;
 				pendingCreateRef.current = null;
 				setCycleKind("WORK");
 				cycleKindRef.current = "WORK";
@@ -1586,11 +1591,14 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					cycleId,
 					taskId: nextTaskId,
 				});
-				setActiveCycle({
+				const updatedCycle: DomainActiveCycle = {
 					...activeCycle,
+					id: cycleId,
 					taskId: nextTaskId,
 					task: nextTask ?? rebound.task,
-				});
+				};
+				setActiveCycle(updatedCycle);
+				activeCycleRef.current = updatedCycle;
 				setFocusedTaskId(nextTaskId);
 				setFocusedTask(nextTask ?? rebound.task);
 				setMidCyclePendingTask(null);
@@ -1599,7 +1607,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					invalidateServerCycle(),
 					utils.task.list.invalidate(),
 				]);
-			} catch {
+			} catch (err) {
 				setError("Could not switch tasks. Try again.");
 			} finally {
 				setIsMidCycleSubmitting(false);

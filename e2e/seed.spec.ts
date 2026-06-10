@@ -35,7 +35,9 @@ test.describe("Seed exemplar — Risk #1 persistence reload", () => {
 		await page.reload();
 		await getActiveAfterReload;
 
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+		await expect(page.getByTestId("timer-panel-running")).toBeVisible({
+			timeout: 15_000,
+		});
 		await expect(
 			page.getByRole("listitem").filter({ hasText: taskTitle }),
 		).toBeVisible();

@@ -50,6 +50,13 @@ export async function waitForCycleCreateSettled(page: Page) {
 	});
 }
 
+/** Click Start Cycle and await server create on authenticated dashboards. */
+export async function clickStartCycle(page: Page) {
+	const createSettled = waitForCycleCreateSettled(page);
+	await page.getByRole("button", { name: "Start Cycle" }).click();
+	await createSettled;
+}
+
 export async function setWorkDurationSec(page: Page, seconds: number) {
 	const { minutes, seconds: secs } = splitSecToMinSec(seconds);
 	await page.getByTestId("work-duration-min").fill(String(minutes));
@@ -74,9 +81,7 @@ export async function startFocusedWorkCycle(
 	await taskRow.getByRole("button", { name: "Focus" }).click();
 	await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
 	await setWorkDurationSec(page, durationSec);
-	const createSettled = waitForCycleCreateSettled(page);
-	await page.getByRole("button", { name: "Start Cycle" }).click();
-	await createSettled;
+	await clickStartCycle(page);
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 }
 
