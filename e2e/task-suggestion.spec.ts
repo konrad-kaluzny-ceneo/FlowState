@@ -49,6 +49,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await advanceClockThroughFastWork(page);
 		const suggestionResponse = waitForSuggestionNext(page);
 		await completeWorkCycleWithCheckIn(page, "focused");
+		await expect(page.getByTestId("kickoff-readiness-overlay")).toHaveCount(0);
 		await suggestionResponse;
 
 		await expectSuggestionVisible(page, {
@@ -81,6 +82,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await advanceClockThroughFastWork(page);
 		const suggestionResponse = waitForSuggestionNext(page);
 		await completeWorkCycleWithCheckIn(page, "focused");
+		await expect(page.getByTestId("kickoff-readiness-overlay")).toHaveCount(0);
 		await suggestionResponse;
 
 		await expectSuggestionVisible(page, { title: deepTask });
@@ -125,6 +127,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await advanceClockThroughFastWork(page);
 		const suggestionResponse = waitForSuggestionNext(page);
 		await completeWorkCycleWithCheckIn(page, "focused");
+		await expect(page.getByTestId("kickoff-readiness-overlay")).toHaveCount(0);
 		await suggestionResponse;
 
 		await expectSuggestionVisible(page, { title: deepTask });

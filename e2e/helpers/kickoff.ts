@@ -1,6 +1,39 @@
 import { expect, type Page } from "@playwright/test";
+import type { CheckInEnergyUi } from "./check-in";
 
-export async function waitForKickoffSuggestion(page: Page) {
+const ENERGY_TEST_IDS: Record<CheckInEnergyUi, string> = {
+	focused: "check-in-energy-focused",
+	steady: "check-in-energy-steady",
+	fading: "check-in-energy-fading",
+};
+
+export async function completeKickoffReadiness(
+	page: Page,
+	energy: CheckInEnergyUi | "skip",
+) {
+	await expect(page.getByTestId("kickoff-readiness-overlay")).toBeVisible({
+		timeout: 15_000,
+	});
+
+	if (energy === "skip") {
+		await page.getByTestId("kickoff-readiness-skip-btn").click();
+	} else {
+		await page.getByTestId(ENERGY_TEST_IDS[energy]).click();
+	}
+
+	await expect(page.getByTestId("kickoff-readiness-overlay")).toBeHidden({
+		timeout: 5_000,
+	});
+}
+
+export async function waitForKickoffSuggestion(
+	page: Page,
+	options?: { readinessCompleted?: boolean },
+) {
+	if (options?.readinessCompleted !== true) {
+		await completeKickoffReadiness(page, "skip");
+	}
+
 	await page.waitForResponse(
 		(response) => {
 			if (!response.url().includes("suggestion.next") || !response.ok()) {

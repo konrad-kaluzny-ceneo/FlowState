@@ -567,7 +567,7 @@ describe("suggestion router", () => {
 		).rejects.toMatchObject({ code: "BAD_REQUEST" });
 	});
 
-	it("kickoff next returns suggestion without check-in using STEADY scoring", async () => {
+	it("kickoff next returns suggestion without check-in using declared energy", async () => {
 		sessions = [
 			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
 		];
@@ -577,6 +577,7 @@ describe("suggestion router", () => {
 			context: "kickoff",
 			sessionId: 1,
 			localHour: 10,
+			energy: "STEADY",
 		});
 
 		expect(result).toMatchObject({
@@ -586,6 +587,44 @@ describe("suggestion router", () => {
 			rationaleKey: "kickoff_fresh",
 		});
 		expect(result).not.toHaveProperty("cycleId");
+	});
+
+	it("kickoff next rejects missing energy", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		seedTasks();
+
+		await expect(
+			caller().next({
+				context: "kickoff",
+				sessionId: 1,
+				localHour: 10,
+			} as never),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+
+	it("kickoff next picks different tasks for FOCUSED vs FADING on mixed pool", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		seedTasks();
+
+		const focused = await caller().next({
+			context: "kickoff",
+			sessionId: 1,
+			localHour: 10,
+			energy: "FOCUSED",
+		});
+		const fading = await caller().next({
+			context: "kickoff",
+			sessionId: 1,
+			localHour: 10,
+			energy: "FADING",
+		});
+
+		expect(focused).toMatchObject({ taskId: 1, workType: "DEEP_WORK" });
+		expect(fading).toMatchObject({ taskId: 2, workType: "REACTIVE" });
 	});
 
 	it("kickoff next uses kickoff_resume after completed work cycles", async () => {
@@ -607,6 +646,7 @@ describe("suggestion router", () => {
 			context: "kickoff",
 			sessionId: 1,
 			localHour: 10,
+			energy: "STEADY",
 		});
 
 		expect(result?.rationaleKey).toBe("kickoff_resume");
@@ -720,6 +760,7 @@ describe("suggestion router", () => {
 			context: "kickoff",
 			sessionId: 1,
 			localHour: 10,
+			energy: "STEADY",
 		});
 
 		expect(result).toMatchObject({

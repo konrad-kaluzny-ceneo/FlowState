@@ -4,9 +4,11 @@
  * Spec role: risk proof (kickoff card, accept, override ack, duration chip tap-to-apply)
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
+import type { CheckInEnergyUi } from "./helpers/check-in";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 import {
 	acceptKickoffSuggestion,
+	completeKickoffReadiness,
 	expectKickoffDurationChips,
 	expectKickoffVisible,
 	waitForKickoffSuggestion,
@@ -17,6 +19,7 @@ async function prepareSessionStartKickoff(
 	page: import("@playwright/test").Page,
 	deepTask: string,
 	reactiveTask: string,
+	readinessEnergy: CheckInEnergyUi | "skip" = "skip",
 ) {
 	await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
 	await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
@@ -27,7 +30,8 @@ async function prepareSessionStartKickoff(
 	);
 	await page.reload();
 	await getActiveAfterReload;
-	await waitForKickoffSuggestion(page);
+	await completeKickoffReadiness(page, readinessEnergy);
+	await waitForKickoffSuggestion(page, { readinessCompleted: true });
 }
 
 test.describe("Session kickoff suggestion (S-15)", () => {
@@ -54,6 +58,23 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 			rationale: /Fresh session — here's a strong starting point/,
 		});
 		await expect(page.getByTestId("suggested-task-row")).toBeVisible();
+		await expect(
+			page.getByTestId("suggested-task-row").filter({ hasText: deepTask }),
+		).toBeVisible();
+	});
+
+	test("FOCUSED energy selects deep-work task on mixed pool", async ({
+		page,
+	}) => {
+		test.setTimeout(60_000);
+
+		const ts = Date.now();
+		const deepTask = `E2E Focused Kickoff Deep ${ts}`;
+		const reactiveTask = `E2E Focused Kickoff Reactive ${ts}`;
+
+		await prepareSessionStartKickoff(page, deepTask, reactiveTask, "focused");
+
+		await expectKickoffVisible(page, { title: deepTask });
 		await expect(
 			page.getByTestId("suggested-task-row").filter({ hasText: deepTask }),
 		).toBeVisible();

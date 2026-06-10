@@ -183,6 +183,7 @@ describe("suggestion router isolation", () => {
 				context: "kickoff",
 				sessionId: 5,
 				localHour: 10,
+				energy: "STEADY",
 			}),
 		).rejects.toMatchObject({ code: "NOT_FOUND" });
 	});
