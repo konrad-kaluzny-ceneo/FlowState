@@ -14,6 +14,7 @@ import {
 	addTaskWithAttributes,
 	advanceClockThroughFastBreak,
 	advanceClockThroughFastWork,
+	clickStartCycle,
 	completeWorkCycleWithCheckIn,
 	focusTask,
 	setShortBreakDurationSec,
@@ -42,7 +43,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await focusTask(page, deepTask);
 		await setShortBreakDurationSec(page, 1);
 		await setWorkDurationSec(page, 1);
-		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await clickStartCycle(page);
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);
@@ -74,7 +75,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await focusTask(page, deepTask);
 		await setShortBreakDurationSec(page, 1);
 		await setWorkDurationSec(page, 1);
-		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await clickStartCycle(page);
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);
@@ -118,7 +119,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await focusTask(page, deepTask);
 		await setShortBreakDurationSec(page, 1);
 		await setWorkDurationSec(page, 1);
-		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await clickStartCycle(page);
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);

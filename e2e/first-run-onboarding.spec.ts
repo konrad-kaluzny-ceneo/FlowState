@@ -26,6 +26,7 @@ import {
 	focusTask,
 	setShortBreakDurationSec,
 	setWorkDurationSec,
+	waitForCycleCreateSettled,
 } from "./helpers/work-cycle";
 
 async function resetAuthSessionForOnboarding(
@@ -105,7 +106,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await focusTask(page, taskTitle);
 		await setShortBreakDurationSec(page, 1);
 		await setWorkDurationSec(page, 1);
+		const firstCreateSettled = waitForCycleCreateSettled(page);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await firstCreateSettled;
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);
@@ -123,7 +126,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeHidden();
 
 		await focusTask(page, taskTitle);
+		const secondCreateSettled = waitForCycleCreateSettled(page);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await secondCreateSettled;
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);
@@ -153,7 +158,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		// Longer break window for suggestion coach assertion under shared auth session (CI).
 		await setShortBreakDurationSec(page, 30);
 		await setWorkDurationSec(page, 1);
+		const firstCreateSettled = waitForCycleCreateSettled(page);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await firstCreateSettled;
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);
@@ -179,7 +186,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await focusTask(page, reactiveTask);
 		await setShortBreakDurationSec(page, 1);
 		await setWorkDurationSec(page, 1);
+		const secondCreateSettled = waitForCycleCreateSettled(page);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await secondCreateSettled;
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);
@@ -193,7 +202,7 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 	});
 
 	test("accept path still works after first-run dismiss", async ({ page }) => {
-		test.setTimeout(60_000);
+		test.setTimeout(90_000);
 
 		await page.goto("/");
 		await clearOnboardingKeys(page);
@@ -210,7 +219,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await focusTask(page, deepTask);
 		await setShortBreakDurationSec(page, 1);
 		await setWorkDurationSec(page, 1);
+		const acceptCreateSettled = waitForCycleCreateSettled(page);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await acceptCreateSettled;
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);

@@ -23,6 +23,53 @@ async function waitForTaskCreateSettled(addButton: Locator) {
 	await expect(addButton).not.toHaveText("Adding...", { timeout: 15_000 });
 }
 
+async function isGuestDashboard(page: Page) {
+	return page.getByTestId("guest-banner").isVisible();
+}
+
+function isCycleCreatePost(response: {
+	url: () => string;
+	request: () => { method: () => string; postData: () => string | null };
+}) {
+	if (response.request().method() !== "POST") {
+		return false;
+	}
+	const url = response.url();
+	const postData = response.request().postData() ?? "";
+	return url.includes("cycle.create") || postData.includes("cycle.create");
+}
+
+/** Wait for optimistic start to persist the cycle before server mutations (auth only). */
+export async function waitForCycleCreateSettled(page: Page) {
+	if (await isGuestDashboard(page)) {
+		return;
+	}
+
+	const timeout = 15_000;
+	const deadline = Date.now() + timeout;
+
+	while (Date.now() < deadline) {
+		const remaining = deadline - Date.now();
+		if (remaining <= 0) {
+			break;
+		}
+		const response = await page.waitForResponse(isCycleCreatePost, {
+			timeout: remaining,
+		});
+		if (response.ok()) {
+			return;
+		}
+	}
+	throw new Error("cycle.create did not return ok within timeout");
+}
+
+/** Click Start Cycle and await server create on authenticated dashboards. */
+export async function clickStartCycle(page: Page) {
+	const createSettled = waitForCycleCreateSettled(page);
+	await page.getByRole("button", { name: "Start Cycle" }).click();
+	await createSettled;
+}
+
 export async function setWorkDurationSec(page: Page, seconds: number) {
 	const { minutes, seconds: secs } = splitSecToMinSec(seconds);
 	await page.getByTestId("work-duration-min").fill(String(minutes));
@@ -47,7 +94,7 @@ export async function startFocusedWorkCycle(
 	await taskRow.getByRole("button", { name: "Focus" }).click();
 	await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
 	await setWorkDurationSec(page, durationSec);
-	await page.getByRole("button", { name: "Start Cycle" }).click();
+	await clickStartCycle(page);
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 }
 

@@ -60,7 +60,7 @@ See `AGENTS.md` § E2E Testing Rules and `context/foundation/test-plan.md` §6.3
 
 ## Seed Exemplar
 
-**`e2e/seed.spec.ts`** is the canonical template for new E2E specs (Risk #1 reload flow). Model new tests on this file — provenance header, fixture auth, helpers, business-outcome assertions.
+**`e2e/seed.spec.ts`** is the canonical template for new E2E specs (Risk #3 / #7 exemplars). Model new tests on this file — provenance header, fixture auth, helpers, business-outcome assertions. Risk #1 auth reload is covered by Vitest hook + integration tests; guest reload is in `guest-trial.spec.ts`.
 
 ## File Structure
 
@@ -71,7 +71,6 @@ e2e/
 ├── fixtures.ts               # Per-test API auth fixture
 ├── smoke.spec.ts             # Pipeline sanity (infra smoke)
 ├── pomodoro-cycle.spec.ts    # S-01: focus → start → clock → overlay → complete
-├── persistence-reload.spec.ts  # Risk #1: auth mid-cycle reload
 ├── guest-trial.spec.ts       # Risk #1: guest reload (guest-chromium project)
 ├── mid-cycle-completion.spec.ts
 ├── mid-cycle-last-task.spec.ts

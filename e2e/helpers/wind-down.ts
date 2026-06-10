@@ -1,6 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
 import {
+	clickStartCycle,
 	focusTask,
 	markTaskCompleteMidCycle,
 	setShortBreakDurationSec,
@@ -78,7 +79,7 @@ export async function startWorkCycleForMidCycleSwitches(
 	await focusTask(page, taskTitle);
 	await setShortBreakDurationSec(page, 1);
 	await setWorkDurationSec(page, workDurationSec);
-	await page.getByRole("button", { name: "Start Cycle" }).click();
+	await clickStartCycle(page);
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 }
 
@@ -98,5 +99,10 @@ export async function switchTaskMidCycle(
 		.getByRole("button", { name: nextTask })
 		.click();
 	await page.getByTestId("mid-cycle-continue-btn").click();
-	await expect(page.getByTestId("mid-cycle-prompt-overlay")).toBeHidden();
+	await expect(page.getByTestId("pomodoro-error")).toBeHidden({
+		timeout: 15_000,
+	});
+	await expect(page.getByTestId("mid-cycle-prompt-overlay")).toBeHidden({
+		timeout: 15_000,
+	});
 }
