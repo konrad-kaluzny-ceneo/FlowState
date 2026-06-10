@@ -1,10 +1,10 @@
 import { buildRationale, type RationaleKey } from "./rationale";
 import { type ScoringContext, type ScoringTask, TYPE_FIT } from "./score-task";
 
-export function getDominantRationaleKey(
+export function getFactorContributions(
 	task: ScoringTask,
 	context: ScoringContext,
-): RationaleKey {
+): Array<{ key: RationaleKey; magnitude: number }> {
 	const base = task.weight;
 	const energyFit = TYPE_FIT[context.energy][task.workType];
 	const energyContribution = base * (energyFit - 1);
@@ -20,7 +20,9 @@ export function getDominantRationaleKey(
 
 	const interruptionContribution =
 		context.interruptionCount > 0
-			? base * Math.max(-0.3, -context.interruptionCount * 0.1)
+			? task.workType === "REACTIVE"
+				? base * Math.min(context.interruptionCount, 4) * 0.04
+				: base * Math.max(-0.3, -context.interruptionCount * 0.1)
 			: 0;
 
 	const lateDayContribution =
@@ -57,6 +59,14 @@ export function getDominantRationaleKey(
 	];
 
 	contributions.sort((a, b) => b.magnitude - a.magnitude);
+	return contributions;
+}
+
+export function getDominantRationaleKey(
+	task: ScoringTask,
+	context: ScoringContext,
+): RationaleKey {
+	const contributions = getFactorContributions(task, context);
 	const top = contributions[0];
 	if (top == null || top.magnitude === 0) {
 		return "default";

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import type { RationaleBreakdown } from "~/lib/scoring/rationale-breakdown";
+
 const WORK_TYPE_CONFIG = {
 	DEEP_WORK: { label: "Deep", bg: "bg-blue-500/20", text: "text-blue-300" },
 	OPERATIONAL: { label: "Ops", bg: "bg-amber-500/20", text: "text-amber-300" },
@@ -16,7 +18,15 @@ export type TaskSuggestionData = {
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: 1 | 2 | 3;
 	rationale: string;
+	breakdown?: RationaleBreakdown;
 };
+
+function hasBreakdownContent(breakdown?: RationaleBreakdown): boolean {
+	if (breakdown == null) {
+		return false;
+	}
+	return breakdown.dominant.length > 0 || breakdown.alsoConsidered.length > 0;
+}
 
 type TaskSuggestionCardProps =
 	| {
@@ -68,14 +78,100 @@ function TaskBadges({
 	);
 }
 
+function ReadySuggestionContent({
+	suggestion,
+	onAccept,
+	isAccepting,
+	rationaleExpanded,
+	onRationaleExpandedChange,
+}: {
+	suggestion: TaskSuggestionData;
+	onAccept: () => void;
+	isAccepting?: boolean;
+	rationaleExpanded: boolean;
+	onRationaleExpandedChange: (expanded: boolean) => void;
+}) {
+	const showExpander = hasBreakdownContent(suggestion.breakdown);
+	const breakdown = suggestion.breakdown;
+
+	return (
+		<div className="mt-4 space-y-4">
+			<div className="flex items-start justify-between gap-3">
+				<p className="font-medium text-white">{suggestion.title}</p>
+				<TaskBadges weight={suggestion.weight} workType={suggestion.workType} />
+			</div>
+			<p className="text-sm text-white/60">{suggestion.rationale}</p>
+			{showExpander && breakdown != null && (
+				<div className="space-y-2">
+					<button
+						aria-expanded={rationaleExpanded}
+						className="text-sm text-white/50 underline-offset-2 transition hover:text-white/70 hover:underline"
+						data-testid="suggestion-rationale-toggle"
+						onClick={() => onRationaleExpandedChange(!rationaleExpanded)}
+						type="button"
+					>
+						Why this?
+					</button>
+					{rationaleExpanded && (
+						<div
+							className="space-y-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/50"
+							data-testid="suggestion-rationale-expander"
+						>
+							{breakdown.dominant.length > 0 && (
+								<ul className="list-disc space-y-1 pl-4">
+									{breakdown.dominant.map((factor) => (
+										<li key={factor.key}>{factor.copy}</li>
+									))}
+								</ul>
+							)}
+							{breakdown.alsoConsidered.length > 0 && (
+								<div className="space-y-1">
+									<p className="text-white/40 text-xs">Also considered:</p>
+									<div className="flex flex-wrap gap-1.5">
+										{breakdown.alsoConsidered.map((label) => (
+											<span
+												className="rounded-full bg-white/10 px-2 py-0.5 text-white/50 text-xs"
+												key={label}
+											>
+												{label}
+											</span>
+										))}
+									</div>
+								</div>
+							)}
+						</div>
+					)}
+				</div>
+			)}
+			<button
+				className="w-full rounded-lg bg-purple-600 py-3 font-semibold text-white transition hover:bg-purple-500 disabled:opacity-50"
+				data-testid="suggestion-accept-btn"
+				disabled={isAccepting}
+				onClick={onAccept}
+				type="button"
+			>
+				{isAccepting ? "Focusing…" : "Focus this"}
+			</button>
+		</div>
+	);
+}
+
 export function TaskSuggestionCard(props: TaskSuggestionCardProps) {
 	const [showSkeleton, setShowSkeleton] = useState(false);
 	const [showSlowMessage, setShowSlowMessage] = useState(false);
+	const [rationaleExpanded, setRationaleExpanded] = useState(false);
 
 	useEffect(() => {
 		if (props.status !== "loading") {
 			setShowSkeleton(false);
 			setShowSlowMessage(false);
+		}
+
+		if (props.status !== "ready") {
+			setRationaleExpanded(false);
+		}
+
+		if (props.status !== "loading") {
 			return;
 		}
 
@@ -121,25 +217,13 @@ export function TaskSuggestionCard(props: TaskSuggestionCardProps) {
 			)}
 
 			{props.status === "ready" && (
-				<div className="mt-4 space-y-4">
-					<div className="flex items-start justify-between gap-3">
-						<p className="font-medium text-white">{props.suggestion.title}</p>
-						<TaskBadges
-							weight={props.suggestion.weight}
-							workType={props.suggestion.workType}
-						/>
-					</div>
-					<p className="text-sm text-white/60">{props.suggestion.rationale}</p>
-					<button
-						className="w-full rounded-lg bg-purple-600 py-3 font-semibold text-white transition hover:bg-purple-500 disabled:opacity-50"
-						data-testid="suggestion-accept-btn"
-						disabled={props.isAccepting}
-						onClick={props.onAccept}
-						type="button"
-					>
-						{props.isAccepting ? "Focusing…" : "Focus this"}
-					</button>
-				</div>
+				<ReadySuggestionContent
+					isAccepting={props.isAccepting}
+					onAccept={props.onAccept}
+					onRationaleExpandedChange={setRationaleExpanded}
+					rationaleExpanded={rationaleExpanded}
+					suggestion={props.suggestion}
+				/>
 			)}
 
 			{props.status === "empty" && (
