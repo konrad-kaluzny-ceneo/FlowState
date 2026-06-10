@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-10 (S-23 suggestion rationale expander cookbook)
+> Last updated: 2026-06-10 (E2E belt merge-gate strategy — Phase 7 documented)
 
 ## 1. Strategy
 
@@ -26,6 +26,11 @@ Tests follow three non-negotiable principles for this project:
    produced by `/10x-research` during each rollout phase. If the plan and
    research disagree about where the failure lives, research is the
    ground truth.
+4. **Merge gate = belt, not catalog.** Once §3 Phase 7 lands, CI runs the
+   **12-test Playwright belt** (§6.3) as the merge gate — not the full
+   catalog (~49 tests). Until Phase 7 ships, the full catalog remains the
+   required gate (§5). New feature slices default to Vitest/component proofs
+   unless `/10x-research` proves browser-only signal.
 
 Hot-spot scope used for likelihood weighting: `src/`, `e2e/`, `prisma/`.
 
@@ -51,13 +56,13 @@ research's job, see §1 principle #3).
 
 | Risk | What would prove protection | Must challenge | Context `/10x-research` must ground | Likely cheapest layer | Anti-pattern to avoid |
 |------|-----------------------------|----------------|--------------------------------------|-----------------------|-----------------------|
-| #1 | After refresh mid-active work cycle, user sees the same tasks and the cycle resumes at the correct phase and remaining time | "Hydration on mount" implies server and client state agree; empty task list on slow network is acceptable | Refresh entry point; persisted cycle + task state shape; guest vs authenticated persistence boundaries | Integration (server caller + DB fixture) before browser e2e; hook tests must kill conditional/branch mutants on recovery paths | Asserting save-format fields copied from implementation rather than user-visible restored state; e2e reload alone while hook branches survive (Stryker: 170 survived in `src/hooks/`) |
-| #2 | At cycle end in a backgrounded tab, elapsed time is within ±2s of the configured work duration | Fake timers in jsdom prove throttled-tab behavior; client-only clock is authoritative | Clock authority (worker vs main thread vs server `startedAt`); visibility/throttle handling | Unit (timer worker) + hook integration with controlled time; e2e only if cheaper layers cannot simulate throttling | Testing raw `setInterval` without background-throttle or worker path; relying on worker unit tests while hook visibility/fallback branches survive |
-| #3 | Completing a task during an active cycle always surfaces FR-015 choices; with no active tasks left, only "end cycle and break" is offered | Happy-path completion without in-flight cycle state | Mid-cycle UI gate; cycle in-flight detection; task list empty edge case | Playwright e2e with authenticated fixture | Unit-testing prompt component in isolation without cycle-in-flight context |
-| #4 | No tRPC query or mutation returns another user's tasks, sessions, cycles, or check-ins | "Protected procedure" label implies row-level ownership checks on every read/write | Auth context injection; ownership filter on every list/get/mutate path | Integration (dual-user callers, expect forbidden/not-found); per-router mutation runs until survived count drops | Mocking auth middleware while skipping DB-level isolation assertions; happy-path-only router tests that pass when ownership checks are deleted (Stryker: ~150 survived in `src/server/api/routers/`) |
-| #5 | After sign-in, guest tasks and cycles appear in the account; title collisions get numbered suffixes; guest blob cleared only after successful merge | Merge test passes when guest blob is empty; suffix logic mirrors production string concat | Guest blob schema version; merge transaction boundary; collision suffix policy | Integration (merge procedure + repository layer) + one browser merge e2e | Asserting suffix algorithm by copying production helper output as oracle; integration-only merge while guest repository layer has 192 no-coverage mutants |
-| #6 | Mutating or fetching a task/cycle/session ID belonging to another user returns forbidden or not-found, not the foreign row | Logged-in user implies any ID is reachable if auth passes | ID parameters on mutations; ownership check before update/delete | Integration (cross-user ID swap on each router) | Only testing "unauthenticated → 401" without cross-user IDOR |
-| #7 | Every completed work cycle requires an energy check-in before transition; stored value is readable for the next suggestion | Check-in UI mount implies persistence; skipping modal via keyboard is acceptable UX | Cycle-end transition gate; check-in persistence model; S-05 vs S-06 boundary | Playwright e2e once S-05 UI lands; integration for persistence until then | Snapshot of check-in modal without asserting gate blocks transition |
+| #1 | After refresh mid-active work cycle, user sees the same tasks and the cycle resumes at the correct phase and remaining time | "Hydration on mount" implies server and client state agree; empty task list on slow network is acceptable | Refresh entry point; persisted cycle + task state shape; guest vs authenticated persistence boundaries | Belt: `guest-trial` e2e; authenticated reload demoted to hook/integration (existing §6.3); hook tests must kill conditional/branch mutants on recovery paths | Running full catalog on every merge for auth reload signal; asserting save-format fields copied from implementation rather than user-visible restored state; e2e reload alone while hook branches survive (Stryker: 170 survived in `src/hooks/`) |
+| #2 | At cycle end in a backgrounded tab, elapsed time is within ±2s of the configured work duration | Fake timers in jsdom prove throttled-tab behavior; client-only clock is authoritative | Clock authority (worker vs main thread vs server `startedAt`); visibility/throttle handling | Vitest hook + worker unit only; **no belt e2e** after Phase 7 demotion | Keeping `background-tab-return` e2e on merge gate when Vitest covers throttle path; testing raw `setInterval` without background-throttle or worker path; relying on worker unit tests while hook visibility/fallback branches survive |
+| #3 | Completing a task during an active cycle always surfaces FR-015 choices; with no active tasks left, only "end cycle and break" is offered | Happy-path completion without in-flight cycle state | Mid-cycle UI gate; cycle in-flight detection; task list empty edge case | Belt: `seed`, `mid-cycle-last-task`, partial `pomodoro-cycle`; demote `mid-cycle-completion.spec.ts` to component | Full mid-cycle e2e suite on merge gate; unit-testing prompt component in isolation without cycle-in-flight context |
+| #4 | No tRPC query or mutation returns another user's tasks, sessions, cycles, or check-ins | "Protected procedure" label implies row-level ownership checks on every read/write | Auth context injection; ownership filter on every list/get/mutate path | Integration (dual-user callers, expect forbidden/not-found); per-router mutation runs until survived count drops; **no belt e2e** | Mocking auth middleware while skipping DB-level isolation assertions; happy-path-only router tests that pass when ownership checks are deleted (Stryker: ~150 survived in `src/server/api/routers/`) |
+| #5 | After sign-in, guest tasks and cycles appear in the account; title collisions get numbered suffixes; guest blob cleared only after successful merge | Merge test passes when guest blob is empty; suffix logic mirrors production string concat | Guest blob schema version; merge transaction boundary; collision suffix policy | Integration (merge procedure + repository layer) + belt `guest-merge-on-sign-in`; demote merge-success/cycle-merge e2e to Vitest | Browser merge proofs beyond one belt spec; asserting suffix algorithm by copying production helper output as oracle; integration-only merge while guest repository layer has 192 no-coverage mutants |
+| #6 | Mutating or fetching a task/cycle/session ID belonging to another user returns forbidden or not-found, not the foreign row | Logged-in user implies any ID is reachable if auth passes | ID parameters on mutations; ownership check before update/delete | Integration (cross-user ID swap on each router); **no belt e2e** | Only testing "unauthenticated → 401" without cross-user IDOR |
+| #7 | Every completed work cycle requires an energy check-in before transition; stored value is readable for the next suggestion | Check-in UI mount implies persistence; skipping modal via keyboard is acceptable UX | Cycle-end transition gate; check-in persistence model; S-05 vs S-06 boundary | Belt: `seed` + `pomodoro-cycle` check-in step; integration for persistence; dedicated gate e2e still deferred | Asserting check-in persistence only in demoted full-catalog specs; snapshot of check-in modal without asserting gate blocks transition |
 
 ## 3. Phased Rollout
 
@@ -73,6 +78,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 4 | Quality-gates wiring | Enforce lint, typecheck, unit/integration, and critical e2e in CI on every PR | cross-cutting | CI gates | complete | testing-quality-gates-wiring |
 | 5 | Mutation oracle hardening | Raise covered-code mutation score from ~58% by killing survived mutants in hooks and server routers — tests exist but assertions are too weak | #1, #2, #3, #4, #5, #6 | unit + integration (targeted Stryker runs) | not started | — |
 | 6 | Uncovered UI & auth paths | Exercise task-list, dashboard, and auth action paths so no-coverage mutants drop — largest score drag but narrower than Phase 5 per test | #1, #3, #5 | component smoke + integration | not started | — |
+| 7 | E2E belt merge gate | Replace full-catalog CI gate with 12-test belt; Vitest backfill then delete 11 demoted e2e files | #1–#7 (belt entry points + integration-only #4/#6) | Playwright belt + Vitest/component backfill | not started | testing-e2e-belt-fast |
 
 ## 4. Stack
 
@@ -85,7 +91,8 @@ plus the MCP/tools actually exposed in the current session.
 |-------|------|---------|-------|
 | unit + integration | Vitest | 4.1.7 | jsdom environment; co-located `*.test.ts(x)` under `src/`; fast-check for properties |
 | API / server integration | Vitest + tRPC createCaller | 4.1.7 | Router isolation tests pattern already in repo; exclude `e2e/` from Vitest |
-| e2e | Playwright | 1.60.0 | Authenticated fixture from F-02; always `set CI=true && pnpm test:e2e` per AGENTS.md |
+| e2e merge gate (belt) | Playwright | 1.60.0 | `pnpm test:e2e:belt` — **planned** (not on disk); 12 scenarios (§6.3 `#### Belt merge gate` table); CI job `e2e` calls belt when Phase 7 lands; worker-scoped auth (`e2e/.auth/worker-{n}.json`), 4 workers |
+| e2e full catalog | Playwright | 1.60.0 | `set CI=true && pnpm test:e2e` — **required until §3 Phase 7 lands** (current merge gate, ~49 tests); ad-hoc local + optional pre-release manual after belt ships |
 | property-based | fast-check | 4.8.0 | Via `@fast-check/vitest` where input spaces are wide |
 | mutation testing | Stryker + Vitest runner | 9.6.1 | `pnpm test:mutate`; HTML report at `reports/mutation/mutation.html`; thresholds high 80 / low 60 / break null |
 | accessibility | none yet | — | See Phase 2 if check-in/mid-cycle modals need axe — only if e2e misses a11y regressions |
@@ -122,10 +129,13 @@ phase lands; before that, the gate is `planned`.
 |------|-------|-----------|---------|
 | lint + typecheck (`pnpm check`, `pnpm typecheck`) | local | required | syntactic / type drift |
 | unit + integration (`pnpm test`) | local | required | logic regressions in routers, hooks, workers |
-| e2e critical flows (`set CI=true && pnpm test:e2e`) | local + CI | required | broken auth, cycle, and active-slice UI paths |
-| PR CI workflow | GitHub Actions | required | merges without test suite |
+| e2e belt (`set CI=true && pnpm test:e2e:belt`) | local + CI (after Phase 7) | planned until §3 Phase 7 lands; required after Phase 7 | auth shell, risks #1/#3/#5/#7 belt entry points, S-01/S-06/S-15/S-16/S-07 API smoke |
+| e2e full catalog (`set CI=true && pnpm test:e2e`) | local + CI (until Phase 7); ad-hoc + optional pre-release manual after | required until §3 Phase 7 lands; not required on merge after Phase 7 | exhaustive feature-slice regressions; current merge gate (~49 tests) until belt ships |
+| PR CI workflow | GitHub Actions | required | merges without test suite; branch protection requires `quality` + `e2e` job names (command swaps to belt in `testing-e2e-belt-fast`) |
 | mutation score floor (covered code ≥ 60%) | local + optional CI after §3 Phase 5 | planned after §3 Phase 5 | tests that pass when logic is deleted; shallow oracles |
 | pre-prod smoke | Vercel preview | optional | environment-specific failures |
+
+No nightly full-suite CI in this strategy — full catalog runs ad-hoc locally and optionally before major releases after Phase 7 lands.
 
 ## 6. Cookbook Patterns
 
@@ -155,15 +165,37 @@ the relevant rollout phase ships; before that, the sub-section reads
 ### 6.3 Adding an e2e test
 
 - **Generation exemplar**: `e2e/seed.spec.ts` — model every new spec on this file (provenance header, fixture auth, helpers, business-outcome assertions). Rules in `AGENTS.md` § E2E Testing Rules; run deliberate-break VERIFY and record in `e2e/DELIBERATE-BREAK.md` before merging critical specs.
+
+#### Belt merge gate (Phase 7)
+
+Planned merge gate — **12 tests across 10 spec files** (§3 Phase 7, change `testing-e2e-belt-fast`). Partial-file tests tag non-belt cases `@skip-belt`; belt script uses `--grep-invert @skip-belt` (script not on disk yet).
+
+| # | Spec | Belt scope | Tests | Risk / role |
+|---|------|------------|------:|-------------|
+| 1 | `e2e/smoke.spec.ts` | whole file | 1 | Infra: auth + shell |
+| 2 | `e2e/seed.spec.ts` | whole file | 2 | #3 mid-cycle + #7 check-in gate |
+| 3 | `e2e/guest-trial.spec.ts` | whole file | 1 | #1 guest reload |
+| 4 | `e2e/mid-cycle-last-task.spec.ts` | whole file | 1 | #3 end-break-only |
+| 5 | `e2e/guest-merge-on-sign-in.spec.ts` | whole file | 1 | #5 merge integrity |
+| 6 | `e2e/pomodoro-cycle.spec.ts` | `focus, start, complete via clock, continue later` only | 1 | S-01 core loop |
+| 7 | `e2e/task-suggestion.spec.ts` | `shows suggestion with rationale...` only | 1 | S-06 entry |
+| 8 | `e2e/session-kickoff.spec.ts` | `shows kickoff card...` only | 1 | S-15 entry |
+| 9 | `e2e/mindful-session-wind-down.spec.ts` | fatigue + end-session paths (after API seed refactor) | 2 | S-16 gate |
+| 10 | `e2e/account-recovery.spec.ts` | `request-password-reset API returns 2xx` only | 1 | S-07 API contract |
+
+- **Run command (planned)**: `set CI=true && pnpm test:e2e:belt`
+- **Demoted files (delete after Vitest backfill in `testing-e2e-belt-fast`)**: `mid-cycle-completion.spec.ts`, `merge-success-on-sign-in.spec.ts`, `guest-merge-cycle-on-sign-in.spec.ts`, `task-reorder.spec.ts`, `first-run-onboarding.spec.ts`, `guest-first-run.spec.ts`, `quiet-cycle-audio.spec.ts`, `guest-quiet-cycle-audio.spec.ts`, `background-tab-return.spec.ts`, `guest-background-tab-return.spec.ts`, plus wind-down UI-setup portions of `e2e/helpers/wind-down.ts`
+- **Vitest gap audit**: per-file missing cases live in `testing-e2e-belt-fast` plan — not duplicated here
+
 - **Location**: `e2e/*.spec.ts`.
 - **Helpers**: `e2e/helpers/work-cycle.ts` — `setWorkDurationSec`, `startFocusedWorkCycle`, `advanceClockThroughFastWork`, `addTask`, `addTasks`, `markTaskCompleteMidCycle`. `e2e/helpers/check-in.ts` — `completeCheckIn(page, "focused" | "steady" | "fading")` after S-01 overlay confirm on auth WORK cycles. `e2e/helpers/idle-cycle.ts` — `ensureIdleCycle` dismisses stranded check-in (default `steady`), mid-cycle prompt, cycle-complete overlay, running cycle, and enabled end-session.
 - **Auth mid-cycle reload (Risk #1)**: hook `use-pomodoro-cycle.test.tsx` (`resumes running state from getActive on mount`) + integration recovery fields in `cycle.test.ts` (`integration: create → getActive → complete`). Auth browser reload removed from `e2e/seed.spec.ts` (flaky); guest reload remains `e2e/guest-trial.spec.ts`.
-- **Guest reload**: `e2e/guest-trial.spec.ts` — same UI assertions; guest banner still visible.
-- **Phase 2 browser proofs (Risks #3, #7)**: `e2e/mid-cycle-completion.spec.ts`, `e2e/mid-cycle-last-task.spec.ts`; S-01 regression with check-in step in `e2e/pomodoro-cycle.spec.ts`. Dedicated `check-in-gate.spec.ts` deferred — see §6.6 Phase 2 deferred e2e.
-- **Adaptive task suggestion (S-06, FR-021/FR-022)**: `e2e/task-suggestion.spec.ts` — after FOCUSED check-in, asserts `task-suggestion-card` rationale, `suggested-task-row` highlight, accept → `break-continue-suggested-btn` → idle timer, override via Focus clears highlight; post-check-in path uses S-05 check-in only — no `kickoff-readiness-overlay` (S-25 regression). Helpers: `e2e/helpers/suggestion.ts` (`expectSuggestionVisible`, `acceptSuggestion`, `waitForSuggestionNext`); task setup via `addTaskWithAttributes`, `completeWorkCycleWithCheckIn`, `setShortBreakDurationSec` in `e2e/helpers/work-cycle.ts`. Reference test: `shows suggestion with rationale and highlighted row after check-in`. Run: `set CI=true && pnpm test:e2e e2e/task-suggestion.spec.ts`. S-01 specs tolerate the card after check-in (no interaction required).
+- **Guest reload**: `e2e/guest-trial.spec.ts` — same UI assertions; guest banner still visible. **Belt retained** (see `#### Belt merge gate`).
+- **Phase 2 browser proofs (Risks #3, #7)**: `e2e/mid-cycle-completion.spec.ts`, `e2e/mid-cycle-last-task.spec.ts` (**belt retained**: last-task only); S-01 regression with check-in step in `e2e/pomodoro-cycle.spec.ts` (**belt retained**: partial). Dedicated `check-in-gate.spec.ts` deferred — see §6.6 Phase 2 deferred e2e.
+- **Adaptive task suggestion (S-06, FR-021/FR-022)**: `e2e/task-suggestion.spec.ts` — **belt retained** (partial). After FOCUSED check-in, asserts `task-suggestion-card` rationale, `suggested-task-row` highlight, accept → `break-continue-suggested-btn` → idle timer, override via Focus clears highlight; post-check-in path uses S-05 check-in only — no `kickoff-readiness-overlay` (S-25 regression). Helpers: `e2e/helpers/suggestion.ts` (`expectSuggestionVisible`, `acceptSuggestion`, `waitForSuggestionNext`); task setup via `addTaskWithAttributes`, `completeWorkCycleWithCheckIn`, `setShortBreakDurationSec` in `e2e/helpers/work-cycle.ts`. Reference test: `shows suggestion with rationale and highlighted row after check-in`. Run: `set CI=true && pnpm test:e2e e2e/task-suggestion.spec.ts`. S-01 specs tolerate the card after check-in (no interaction required).
 - **Suggestion rationale expander (S-23, FR-021/FR-019)**: component tests in `src/app/_components/task-suggestion-card.test.tsx` (toggle visibility, `aria-expanded`, empty-breakdown hide, coachLine coexistence); optional e2e expand smoke in `e2e/task-suggestion.spec.ts` — `expands Why this? breakdown when secondary factors exist` clicks `suggestion-rationale-toggle`, asserts `suggestion-rationale-expander` visible (no factor-copy assertions; seeds `lastOverrideWorkType` via prior-cycle override). Breakdown oracles: `src/lib/scoring/rationale-breakdown.test.ts`, `src/lib/scoring/dominant-factor.test.ts`; API shape in `src/server/api/routers/suggestion.test.ts`. Test IDs: `suggestion-rationale-toggle`, `suggestion-rationale-expander`.
-- **Session kickoff suggestion (S-15/S-25, FR-021/FR-022)**: `e2e/session-kickoff.spec.ts` — session-start idle with tasks (reload after add to refresh eligibility) completes S-25 `kickoff-readiness-overlay` (`completeKickoffReadiness(page, energy | 'skip')`) before `task-suggestion-card`; asserts kickoff rationale + `suggested-task-row`, accept → pre-focus + `kickoff-duration-chips`, chip tap stages `work-duration-min`/`sec` and `timer-countdown` at start, override via Focus shows `suggestion-override-ack`. FOCUSED energy path on mixed pool proves energy-sensitive kickoff pick. Helpers: `e2e/helpers/kickoff.ts` (`completeKickoffReadiness`, `waitForKickoffSuggestion`, `expectKickoffVisible`, `acceptKickoffSuggestion`, `expectKickoffDurationChips`); task setup via `addTaskWithAttributes` in `e2e/helpers/work-cycle.ts`. Test IDs: `kickoff-readiness-overlay`, `kickoff-readiness-skip-btn`, `check-in-energy-*` (via `EnergySelector`). Reference test: `shows kickoff card with rationale and highlighted row on session-start idle`. Run: `set CI=true && pnpm test:e2e e2e/session-kickoff.spec.ts`. Post-check-in suggestion (`task-suggestion.spec.ts`) does not use readiness helper.
-- **Mindful session wind-down (S-16, FR-019/FR-020)**: `e2e/mindful-session-wind-down.spec.ts` — after FADING check-in when `completedWorkCycles >= 3` or `interruptionCount >= 2`, asserts `wind-down-overlay` blocks break/suggestion until resolved; **Keep going** → `timer-panel-running` + `task-suggestion-card`; **End session** → `end-session-btn` hidden + idle dashboard; dismiss suppresses until next check-in; negatives (Steady/Focused energy, low fatigue). Helpers: `e2e/helpers/wind-down.ts` (`expectWindDownVisible`, `dismissWindDownKeepGoing`, `endSessionViaWindDown`, `submitFadingCheckInExpectingWindDown`, `completeSteadyWorkCycleAndResumeIdle`, `switchTaskMidCycle`); fatigue setup via 3× `completeSteadyWorkCycleAndResumeIdle` then 4th-cycle Fading; interruption setup via 2× mid-cycle task switch (`switchTaskMidCycle`) on 1st cycle. Test IDs: `wind-down-overlay`, `wind-down-rationale`, `wind-down-keep-going-btn`, `wind-down-end-session-btn`. `ensureIdleCycle` dismisses stranded wind-down via keep-going. Reference tests: `fatigue path triggers wind-down and blocks break until keep going`, `interruption path triggers wind-down with interruptions rationale`, `end session path ends session without break or suggestion`. Run: `set CI=true && pnpm test:e2e e2e/mindful-session-wind-down.spec.ts`.
+- **Session kickoff suggestion (S-15/S-25, FR-021/FR-022)**: `e2e/session-kickoff.spec.ts` — **belt retained** (partial). Session-start idle with tasks (reload after add to refresh eligibility) completes S-25 `kickoff-readiness-overlay` (`completeKickoffReadiness(page, energy | 'skip')`) before `task-suggestion-card`; asserts kickoff rationale + `suggested-task-row`, accept → pre-focus + `kickoff-duration-chips`, chip tap stages `work-duration-min`/`sec` and `timer-countdown` at start, override via Focus shows `suggestion-override-ack`. FOCUSED energy path on mixed pool proves energy-sensitive kickoff pick. Helpers: `e2e/helpers/kickoff.ts` (`completeKickoffReadiness`, `waitForKickoffSuggestion`, `expectKickoffVisible`, `acceptKickoffSuggestion`, `expectKickoffDurationChips`); task setup via `addTaskWithAttributes` in `e2e/helpers/work-cycle.ts`. Test IDs: `kickoff-readiness-overlay`, `kickoff-readiness-skip-btn`, `check-in-energy-*` (via `EnergySelector`). Reference test: `shows kickoff card with rationale and highlighted row on session-start idle`. Run: `set CI=true && pnpm test:e2e e2e/session-kickoff.spec.ts`. Post-check-in suggestion (`task-suggestion.spec.ts`) does not use readiness helper.
+- **Mindful session wind-down (S-16, FR-019/FR-020)**: `e2e/mindful-session-wind-down.spec.ts` — **belt retained** (partial, after API seed refactor). After FADING check-in when `completedWorkCycles >= 3` or `interruptionCount >= 2`, asserts `wind-down-overlay` blocks break/suggestion until resolved; **Keep going** → `timer-panel-running` + `task-suggestion-card`; **End session** → `end-session-btn` hidden + idle dashboard; dismiss suppresses until next check-in; negatives (Steady/Focused energy, low fatigue). Helpers: `e2e/helpers/wind-down.ts` (`expectWindDownVisible`, `dismissWindDownKeepGoing`, `endSessionViaWindDown`, `submitFadingCheckInExpectingWindDown`, `completeSteadyWorkCycleAndResumeIdle`, `switchTaskMidCycle`); fatigue setup via 3× `completeSteadyWorkCycleAndResumeIdle` then 4th-cycle Fading; interruption setup via 2× mid-cycle task switch (`switchTaskMidCycle`) on 1st cycle. Test IDs: `wind-down-overlay`, `wind-down-rationale`, `wind-down-keep-going-btn`, `wind-down-end-session-btn`. `ensureIdleCycle` dismisses stranded wind-down via keep-going. Reference tests: `fatigue path triggers wind-down and blocks break until keep going`, `interruption path triggers wind-down with interruptions rationale`, `end session path ends session without break or suggestion`. Run: `set CI=true && pnpm test:e2e e2e/mindful-session-wind-down.spec.ts`.
 - **Quiet cycle audio (S-20, FR-013)**: `e2e/quiet-cycle-audio.spec.ts` (auth) and `e2e/guest-quiet-cycle-audio.spec.ts` (guest) — muted preference + hidden work expiry still surfaces S-22 `tab-return-catchup` and `cycle-complete-overlay`; muted also shows a calm `●` document-title prefix while the tab is mocked hidden. Pattern: `page.clock.install()` before `Start Cycle`, then `runWhileHidden` + `page.clock.runFor(1200)` (past 1s work expiry, before 1.5s pulse toggle) and assert `page.title()` inside the hidden block. Auth: `page.request.post("/api/trpc/preference.set", { json: { cycleEndAudioMode: "muted" } })` + reload before focus; guest: `addInitScript` seed `flowstate:cycleEndAudio:guest` = `"muted"`. Helpers: `e2e/helpers/visibility.ts` (`runWhileHidden`), `e2e/helpers/work-cycle.ts` (`addTask`, `focusTask`, `setWorkDurationSec`). Test IDs: `cycle-audio-preference-muted`, `tab-return-catchup`. S-22 regression: `e2e/background-tab-return.spec.ts`, `e2e/guest-background-tab-return.spec.ts`. Reference test: `muted hidden work expiry shows catch-up, title pulse, then check-in wedge`. Run: `set CI=true && pnpm test:e2e e2e/quiet-cycle-audio.spec.ts`. **B-01 live-toggle regression**: same spec files — focus task → click `cycle-audio-preference-{normal|soft|muted}` → assert `aria-pressed="true"` on clicked control (no API/localStorage seed); auth reload persistence in `live toggle updates aria-pressed for each mode (B-01)`; guest nested `live toggle (B-01)` clears `flowstate:cycleEndAudio:guest` first. **Limitation**: no audible assertion — visual/tab signals only; soft gain and alarm skip are covered by `src/lib/audio.test.ts` and hook tests.
 - **±2s tolerance**: use `src/test-utils/countdown-tolerance.ts` in Vitest only, not Playwright reload specs (scope addendum: `context/changes/testing-critical-path-persistence-timer/reviews/scope-addendum.md`).
 - **Auth isolation**: per-test API sign-up/sign-in via `e2e/fixtures.ts` (no shared `playwright/.auth/user.json`).
@@ -225,6 +257,15 @@ the relevant rollout phase ships; before that, the sub-section reads
 - **Deferred e2e — `check-in-gate.spec.ts` (Risk #7 dedicated gate oracle)**: UI path — complete 1s WORK cycle → S-01 overlay → "Continue later" → assert `check-in-overlay` visible and "Short Break" hidden until `completeCheckIn(page, "steady")` → assert break `timer-panel-running`. Network persistence oracle — match batched tRPC POST body on `/api/trpc` for `STEADY` + numeric `cycleId` (not `/api/trpc/checkIn.create` URL; app uses `httpBatchStreamLink`). Prior attempts failed on `waitForRequest` timeout and `response.json()` on batch stream. Re-add when e2e infra supports batched mutation oracles.
 - **Deferred**: guest-mode Playwright check-in/mid-cycle proofs; escape/refresh skip-vector e2e; server-side `cycle.complete` check-in prerequisite; `interruptionCount` increment; CI gate wiring (Phase 4 test-plan row).
 
+**Phase 7 — E2E belt merge gate** (not started, change `testing-e2e-belt-fast`)
+
+- Goal: replace full-catalog CI gate (~49 tests) with 12-test belt (§6.3 `#### Belt merge gate` table); Vitest backfill then delete 11 demoted e2e files.
+- **Worker-scoped auth pool**: `e2e/global-setup.ts` creates 4 users; `fixtures.ts` uses `storageState` from `e2e/.auth/worker-{n}.json`; CI `E2E_WORKERS=4`.
+- **Vitest backfill (D.1/D.2)**: component tests for overlays before e2e deletion (`merge-success-overlay`, `first-run-overlay`, `guest-first-run-overlay`, `wind-down-overlay`, `check-in-overlay` gate UI); extend existing hook/component tests; per-file gap audit in follow-up plan.
+- **Wind-down API seed**: `e2e/helpers/seed-scenario.ts` via tRPC `page.request.post` to replace 3× UI cycle setup; reduces belt wind-down timeouts.
+- **CI build cache**: separate `pnpm build` step + `.next/cache` cache; webServer becomes `next start` only in CI.
+- **Target CI time**: ≤3–4 min for `e2e` job after belt lands; CI job name stays `e2e`, command swaps to `pnpm test:e2e:belt`.
+
 ### 6.8 Perceived latency (NFR 200ms)
 
 - **When to use**: any user tap that must feel instant while a mutation or query is in flight — cycle start/interrupt, optimistic task updates, etc.
@@ -257,16 +298,20 @@ contributors should respect these unless the underlying assumption changes.
 
 - **Generated Prisma client** — the generator and `prisma generate` build step are the contract; do not unit-test generated query builders. Re-evaluate if custom client extensions are added. (Source: Phase 2 interview Q5.)
 - **Delight animation (FR-016)** — nice-to-have deferred until core loop is solid; not in MVP rollout scope. (Source: PRD non-goals / roadmap priority.)
+- **Full Playwright catalog on every merge** — the ~49-test suite is not required on every PR once §3 Phase 7 lands; the 12-test belt (§6.3) is the merge gate. Until Phase 7 ships, full catalog remains required (§5). (Source: test-plan refresh 2026-06-10 / cost × signal.)
+- **Feature-slice browser proofs when Vitest covers signal** — demoted e2e specs (§6.3 demotion list) are deleted after Vitest/component backfill in `testing-e2e-belt-fast`; do not re-add full-catalog merge proofs for paths cheaper layers already cover. (Source: test-plan refresh 2026-06-10 / cost × signal.)
+- **Nightly full-suite CI** — no scheduled CI job runs the full Playwright catalog; ad-hoc local + optional pre-release manual only after belt lands. (Source: test-plan refresh 2026-06-10 / cost × signal.)
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-06-06
+- Strategy (§1–§5) last reviewed: 2026-06-10 (belt merge-gate refresh)
 - Stack versions last verified: 2026-06-06
 - AI-native tool references last verified: 2026-06-06
 - Mutation baseline last run: 2026-06-06 (`reports/mutation/mutation.html` — 33.1% total / 58.2% covered)
 - CI quality gates wired: 2026-06-06 (`.github/workflows/ci.yml` — lint, typecheck, Vitest, Playwright; `/10x-e2e` levers: `e2e/seed.spec.ts`, `AGENTS.md` E2E rules, `e2e/DELIBERATE-BREAK.md`)
-- **Next session:** §3 Phase 5 (Mutation oracle hardening) — highest product ROI after CI floor is locked
-- **Phase 5 change-id proposal:** `testing-mutation-oracle-hardening`
+- Belt merge-gate strategy documented: 2026-06-10 (`test-plan-refresh-2026-06-10`)
+- **Next session:** §3 Phase 7 (`testing-e2e-belt-fast`) — belt script, auth pool, CI command swap
+- **Phase 5 change-id proposal:** `testing-mutation-oracle-hardening` (follows Phase 7 in execution order)
 
 Refresh (`/10x-test-plan --refresh`) when:
 
