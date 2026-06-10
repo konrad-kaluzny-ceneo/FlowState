@@ -2,7 +2,7 @@
 
 ## Overview
 
-Replace the full Playwright catalog (~49 tests, ~10+ min CI) with a **12-test belt** in **10 spec files** as the merge gate (`pnpm test:e2e:belt`), targeting **โ?ค3โ??4 min** e2e job time. Enable **4 parallel workers** via a pre-provisioned auth pool, add wind-down **API seed** to eliminate UI cycle setup timeouts, backfill demoted paths at the Vitest/component layer, then delete 10 demoted e2e specs and sync docs. Risk coverage: belt retains browser entry points for test-plan risks #1, #3, #5, #7 and S-01/S-06/S-07/S-15/S-16; #2 moves to hook/component tests; #4/#6 stay integration-only.
+Replace the full Playwright catalog (~49 tests, ~10+ min CI) with a **12-test belt** in **10 spec files** as the merge gate (`pnpm test:e2e:belt`), targeting **???3???4 min** e2e job time. Enable **4 parallel workers** via a pre-provisioned auth pool, add wind-down **API seed** to eliminate UI cycle setup timeouts, backfill demoted paths at the Vitest/component layer, then delete 10 demoted e2e specs and sync docs. Risk coverage: belt retains browser entry points for test-plan risks #1, #3, #5, #7 and S-01/S-06/S-07/S-15/S-16; #2 moves to hook/component tests; #4/#6 stay integration-only.
 
 ## Current State Analysis
 
@@ -10,21 +10,21 @@ On `features/testing-e2e-belt-fast` at `36a152c`, CI runs the **full catalog** v
 
 ### Key Discoveries
 
-- **Auth bottleneck**: Serial workers were a Neon 429 mitigation; worker-scoped `storageState` (4 users / 4 workers) reintroduces shared state safely โ?? distinct from the Phase 1 single-user parallel failure.
-- **Partial-file belt pattern**: Retain rich spec files; tag non-belt tests `@skip-belt` and grep-invert in CI โ?? avoids file splits while preserving full-catalog local runs.
+- **Auth bottleneck**: Serial workers were a Neon 429 mitigation; worker-scoped `storageState` (4 users / 4 workers) reintroduces shared state safely ??? distinct from the Phase 1 single-user parallel failure.
+- **Partial-file belt pattern**: Retain rich spec files; tag non-belt tests `@skip-belt` and grep-invert in CI ??? avoids file splits while preserving full-catalog local runs.
 - **Wind-down timeout risk**: `mindful-session-wind-down.spec.ts` fatigue setup runs 3+ UI cycles via `e2e/helpers/wind-down.ts:55+`; API seed is a prerequisite, not an optimization.
 - **Vitest gaps block demotion**: Five overlay/component oracles missing; guest hook catchUp parity missing; DnD drag-handle smoke missing; guest merge cycle resume needs one hook test.
 - **Already adequate**: `mid-cycle-completion-prompt.test.tsx`, auth `use-pomodoro-cycle.test.tsx` catchUp, `tab-return-catchup.test.tsx`, kickoff/suggestion component tests, #4/#6 isolation matrix.
 
 ## Desired End State
 
-1. **CI merge gate** runs `pnpm test:e2e:belt` โ?? exactly **12 tests** listed by `pnpm exec playwright test --list` when invoked via belt script.
-2. **4-worker auth pool** โ?? `e2e/global-setup.ts` provisions 4 users; `fixtures.ts` loads `e2e/.auth/worker-{n}.json`; `E2E_WORKERS=4` in CI.
-3. **Build cache** โ?? separate `pnpm build` step caches `.next/cache`; Playwright `webServer` runs `next start` only in CI.
+1. **CI merge gate** runs `pnpm test:e2e:belt` ??? exactly **12 tests** listed by `pnpm exec playwright test --list` when invoked via belt script.
+2. **4-worker auth pool** ??? `e2e/global-setup.ts` provisions 4 users; `fixtures.ts` loads `e2e/.auth/worker-{n}.json`; `E2E_WORKERS=4` in CI.
+3. **Build cache** ??? separate `pnpm build` step caches `.next/cache`; Playwright `webServer` runs `next start` only in CI.
 4. **Wind-down belt** uses `e2e/helpers/seed-scenario.ts` (tRPC `page.request`) for fatigue/end-session paths only.
-5. **Vitest backfill complete** โ?? all demoted UI surfaces have component/hook oracles per L-04.
-6. **10 demoted e2e files deleted**; `test-plan.md` ยง3 Phase 7 โ?? `complete`; `AGENTS.md` and `e2e/README.md` document belt command.
-7. **Full catalog** (`pnpm test:e2e`) still runnable locally for ad-hoc verification (~27 tests after demotion โ?? 49 today minus 22 deleted across 10 files).
+5. **Vitest backfill complete** ??? all demoted UI surfaces have component/hook oracles per L-04.
+6. **10 demoted e2e files deleted**; `test-plan.md` ?3 Phase 7 ??? `complete`; `AGENTS.md` and `e2e/README.md` document belt command.
+7. **Full catalog** (`pnpm test:e2e`) still runnable locally for ad-hoc verification (~27 tests after demotion ??? 49 today minus 22 deleted across 10 files).
 
 ### Verification
 
@@ -36,10 +36,10 @@ On `features/testing-e2e-belt-fast` at `36a152c`, CI runs the **full catalog** v
 
 - Running the full 49-test catalog on every PR merge (negative-space rule after Phase 7).
 - Splitting partial spec files into separate belt/non-belt files.
-- Belt-retaining interruption/negative wind-down paths โ?? demoted to Vitest after seed refactor.
+- Belt-retaining interruption/negative wind-down paths ??? demoted to Vitest after seed refactor.
 - Deleting demoted e2e files before Vitest backfill (Phase 4 must complete first).
 - Changing production timer Worker path or branch protection automation.
-- Waiting for PR #90 merge โ?? Phase 1 rebases onto `features/test-plan-refresh-2026-06-10` instead.
+- Waiting for PR #90 merge ??? Phase 1 rebases onto `features/test-plan-refresh-2026-06-10` instead.
 
 ## Implementation Approach
 
@@ -79,7 +79,7 @@ Ordered phases minimize rework: sync test-plan docs first (belt table is the con
 
 - Annotate **non-belt** tests in the five partial spec files by including `@skip-belt` in the test title (Playwright grep matches title + tags).
 - Belt script: `"test:e2e:belt": "playwright test --grep-invert @skip-belt"`.
-- Full catalog: `"test:e2e": "playwright test"` (unchanged โ?? runs all tests including skipped-by-CI ones).
+- Full catalog: `"test:e2e": "playwright test"` (unchanged ??? runs all tests including skipped-by-CI ones).
 - Partial files requiring tags: `pomodoro-cycle.spec.ts`, `task-suggestion.spec.ts`, `session-kickoff.spec.ts`, `mindful-session-wind-down.spec.ts`, `account-recovery.spec.ts`.
 - Wind-down: tag **five** non-belt tests `@skip-belt` (interruption, keep-going, keep-going suppress, steady/focused negative, first-cycle negative); retain only fatigue + end-session as belt tests.
 
@@ -108,7 +108,7 @@ Rebase `features/testing-e2e-belt-fast` onto `features/test-plan-refresh-2026-06
 
 #### 1. Branch rebase
 
-**Intent**: Bring ยง6.3 belt table, ยง6.6 Phase 7 prerequisites, and ยง3 Phase 7 rollout row into the feature branch without waiting for PR #90 merge.
+**Intent**: Bring ?6.3 belt table, ?6.6 Phase 7 prerequisites, and ?3 Phase 7 rollout row into the feature branch without waiting for PR #90 merge.
 
 **Contract**: `git fetch origin; git rebase origin/features/test-plan-refresh-2026-06-10` on `features/testing-e2e-belt-fast`. If conflicts in `context/foundation/test-plan.md`, keep refresh-branch belt table and demotion list.
 
@@ -116,9 +116,9 @@ Rebase `features/testing-e2e-belt-fast` onto `features/test-plan-refresh-2026-06
 
 **File**: `context/foundation/test-plan.md`
 
-**Intent**: Confirm implementer can cite on-branch docs โ?? no drift from PR #90 strategy.
+**Intent**: Confirm implementer can cite on-branch docs ??? no drift from PR #90 strategy.
 
-**Contract**: ยง6.3 contains `#### Belt merge gate` table (12 tests / 10 files); ยง3 Phase 7 row status is `change opened` or `implementing` (not `complete` until Phase 5).
+**Contract**: ?6.3 contains `#### Belt merge gate` table (12 tests / 10 files); ?3 Phase 7 row status is `change opened` or `implementing` (not `complete` until Phase 5).
 
 ### Success Criteria:
 
@@ -129,7 +129,7 @@ Rebase `features/testing-e2e-belt-fast` onto `features/test-plan-refresh-2026-06
 
 #### Manual Verification:
 
-- Belt table in ยง6.3 matches the Critical Implementation Details table above (12 tests, 10 files)
+- Belt table in ?6.3 matches the Critical Implementation Details table above (12 tests, 10 files)
 - No unresolved rebase conflict markers in tracked files
 
 **Implementation Note**: Pause for manual confirmation that test-plan content matches PR #90 intent before Phase 2.
@@ -144,13 +144,13 @@ Wire belt grep selection, pre-provision 4-user auth pool, and migrate fixtures t
 
 ### Changes Required:
 
-#### 1. Global setup โ?? auth pool
+#### 1. Global setup ??? auth pool
 
 **File**: `e2e/global-setup.ts` (new)
 
 **Intent**: Provision 4 users once before suite; eliminate per-test sign-up latency.
 
-**Contract**: Export default async function; create users via API; write `e2e/.auth/worker-{index}.json` for indices 0โ??3; use retry helper for Neon 429.
+**Contract**: Export default async function; create users via API; write `e2e/.auth/worker-{index}.json` for indices 0???3; use retry helper for Neon 429.
 
 #### 2. Fixtures migration
 
@@ -158,7 +158,7 @@ Wire belt grep selection, pre-provision 4-user auth pool, and migrate fixtures t
 
 **Intent**: Load worker-scoped `storageState` instead of per-test `createTestUser` + cookie injection.
 
-**Contract**: Map **`test.info().workerIndex`** (not `parallelIndex`) to auth files: `e2e/.auth/worker-${workerIndex}.json` for indices 0โ??3. Guest project specs stay on `@playwright/test` without `storageState`. `e2e/account-recovery.spec.ts` intentionally uses raw `@playwright/test` (API-only belt test, no session fixture).
+**Contract**: Map **`test.info().workerIndex`** (not `parallelIndex`) to auth files: `e2e/.auth/worker-${workerIndex}.json` for indices 0???3. Guest project specs stay on `@playwright/test` without `storageState`. `e2e/account-recovery.spec.ts` intentionally uses raw `@playwright/test` (API-only belt test, no session fixture).
 
 #### 3. Playwright config
 
@@ -190,7 +190,7 @@ Wire belt grep selection, pre-provision 4-user auth pool, and migrate fixtures t
 
 - `pnpm check` passes
 - `pnpm exec playwright test --grep-invert @skip-belt --list` reports **12 tests**
-- `set CI=true && pnpm test:e2e:belt` passes locally (wind-down may still be slow until Phase 3 seed โ?? if timeout, note and proceed after Phase 3 re-run)
+- `set CI=true && pnpm test:e2e:belt` passes locally (wind-down may still be slow until Phase 3 seed ??? if timeout, note and proceed after Phase 3 re-run)
 
 #### Manual Verification:
 
@@ -213,7 +213,7 @@ Add API seed helper for wind-down preconditions, refactor belt wind-down tests t
 
 **File**: `e2e/helpers/seed-scenario.ts` (new)
 
-**Intent**: Replace 3ร? UI cycle setup in wind-down belt tests with tRPC seed calls.
+**Intent**: Replace 3?? UI cycle setup in wind-down belt tests with tRPC seed calls.
 
 **Contract**: Functions accept `Page` + session context; use `page.request.post` against tRPC endpoints to establish fatigue and end-session preconditions; document required session/task state in file header.
 
@@ -232,12 +232,12 @@ Add API seed helper for wind-down preconditions, refactor belt wind-down tests t
 **Intent**: Run belt on merge; cache build; enable parallelism.
 
 **Contract**:
-- Add separate `pnpm build` step before e2e; cache `.next/cache` via `actions/cache` (job-level `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: "1"` already set โ?? build step inherits it; do not rely on Playwright `webServer` inline build after this change)
+- Add separate `pnpm build` step before e2e; cache `.next/cache` via `actions/cache` (job-level `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: "1"` already set ??? build step inherits it; do not rely on Playwright `webServer` inline build after this change)
 - Change e2e command from `pnpm test:e2e` to `pnpm test:e2e:belt`
 - Set `E2E_WORKERS: "4"` on e2e job
 - Job name stays `e2e`
 
-#### 4. Playwright webServer โ?? CI build separation
+#### 4. Playwright webServer ??? CI build separation
 
 **File**: `playwright.config.ts`
 
@@ -258,7 +258,7 @@ Add API seed helper for wind-down preconditions, refactor belt wind-down tests t
 - Review CI workflow diff: build step + cache key + belt command + workers=4
 - Wind-down belt tests no longer call `completeSteadyWorkCycleAndResumeIdle` UI loop
 
-**Implementation Note**: Push branch and confirm CI e2e job completes in โ?ค3โ??4 min target (informational โ?? not a hard gate if slightly over on first run).
+**Implementation Note**: Push branch and confirm CI e2e job completes in ???3???4 min target (informational ??? not a hard gate if slightly over on first run).
 
 ---
 
@@ -316,7 +316,7 @@ Close signal gaps for all demoted e2e paths before file deletion. Follow L-04 pe
 
 **Intent**: Cover demoted `quiet-cycle-audio.spec.ts` and `guest-quiet-cycle-audio.spec.ts` UI delta.
 
-**Contract**: Render `CycleAudioPreferenceControl`; assert `aria-pressed` on mode buttons changes on click; hook/lib coverage already exists โ?? this is UI-only gap.
+**Contract**: Render `CycleAudioPreferenceControl`; assert `aria-pressed` on mode buttons changes on click; hook/lib coverage already exists ??? this is UI-only gap.
 
 #### 7. Guest hook catchUp parity
 
@@ -330,13 +330,13 @@ Close signal gaps for all demoted e2e paths before file deletion. Follow L-04 pe
 
 **File**: `src/hooks/use-pomodoro-cycle.test.tsx` (extend existing hook suite)
 
-**Intent**: Oracle for demoted `guest-merge-cycle-on-sign-in.spec.ts` โ?? post-sign-in active cycle resumes.
+**Intent**: Oracle for demoted `guest-merge-cycle-on-sign-in.spec.ts` ??? post-sign-in active cycle resumes.
 
 **Contract**: One test in auth hook suite: after merge/sign-in, `getActive` returns imported guest RUNNING cycle and hook reports `state === "running"`; complements `guest.test.ts:218-255` integration matrix (server-side closure/remap).
 
 #### 9. Extend partial existing tests where noted
 
-**Files**: `src/server/api/routers/guest.test.ts`, `defer.test.ts`, `task-mutation.test.ts` โ?? extend only if Phase 4 tests reveal gaps; research marks these PARTIAL but sufficient with new hook test.
+**Files**: `src/server/api/routers/guest.test.ts`, `defer.test.ts`, `task-mutation.test.ts` ??? extend only if Phase 4 tests reveal gaps; research marks these PARTIAL but sufficient with new hook test.
 
 ### Success Criteria:
 
@@ -355,7 +355,7 @@ Close signal gaps for all demoted e2e paths before file deletion. Follow L-04 pe
 
 #### Manual Verification:
 
-- Cross-check Vitest backfill matrix in `research.md` โ?? every demoted row marked EXISTS or covered
+- Cross-check Vitest backfill matrix in `research.md` ??? every demoted row marked EXISTS or covered
 - No demoted e2e file deleted yet
 
 **Implementation Note**: Pause for manual review of new component tests against L-04 before Phase 5 deletion.
@@ -408,7 +408,7 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 **Intent**: Close rollout row per test-plan orchestrator.
 
-**Contract**: ยง3 Phase 7 status โ?? `complete`; ยง6.3 belt table unchanged; ยง6 cookbook entry for belt command filled (location, run command, reference test).
+**Contract**: ?3 Phase 7 status ??? `complete`; ?6.3 belt table unchanged; ?6 cookbook entry for belt command filled (location, run command, reference test).
 
 #### 6. Update change status
 
@@ -431,7 +431,7 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 #### Manual Verification:
 
 - AGENTS.md and e2e/README.md describe belt workflow accurately
-- test-plan ยง3 Phase 7 marked complete
+- test-plan ?3 Phase 7 marked complete
 - CI e2e job uses `test:e2e:belt` on pushed branch
 
 **Implementation Note**: Final pause for human sign-off before PR merge.
@@ -444,7 +444,7 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 - Overlay smokes: merge-success, first-run (auth+guest), check-in gate, wind-down
 - Hook: guest catchUp parity, guest merge cycle resume
-- Integration: existing `guest.test.ts`, isolation tests โ?? no new e2e for #4/#6
+- Integration: existing `guest.test.ts`, isolation tests ??? no new e2e for #4/#6
 - UI: task-list DnD handle, cycle-audio toggle
 
 ### E2E Belt (CI merge gate):
@@ -460,14 +460,14 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 ## Performance Considerations
 
-- Belt target: โ?ค3โ??4 min CI e2e (down from ~10+ min). Auth pool + build cache + reduced test count are the levers.
+- Belt target: ???3???4 min CI e2e (down from ~10+ min). Auth pool + build cache + reduced test count are the levers.
 - Wind-down seed eliminates the largest per-test setup cost.
-- 4 workers require distinct auth files per worker โ?? do not share one global storageState.
+- 4 workers require distinct auth files per worker ??? do not share one global storageState.
 
 ## Migration Notes
 
 - Phase 1 rebase may touch `test-plan.md` only; no runtime migration.
-- Auth pool writes ephemeral `e2e/.auth/` โ?? CI regenerates each run.
+- Auth pool writes ephemeral `e2e/.auth/` ??? CI regenerates each run.
 - Demotion is one-way; restore from git history if a demoted path needs browser proof again.
 
 ## References
@@ -479,7 +479,7 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 ## Progress
 
-> Convention: `- [ ]` pending, `- [x]` done. Append ` โ?? <commit sha>` when a step lands. Do not rename step titles.
+> Convention: `- [ ]` pending, `- [x]` done. Append ` ??? <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Test-Plan Doc Sync
 
@@ -497,14 +497,14 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 #### Automated
 
-- [x] 2.1 `pnpm check` passes
-- [x] 2.2 `pnpm exec playwright test --grep-invert @skip-belt --list` reports 12 tests
-- [x] 2.3 `set CI=true && pnpm test:e2e:belt` passes (or wind-down belt tests timeout pre-seed โ?? defer green re-check to Phase 3.2)
+- [x] 2.1 `pnpm check` passes ? 5f7941b
+- [x] 2.2 `pnpm exec playwright test --grep-invert @skip-belt --list` reports 12 tests ? 5f7941b
+- [x] 2.3 `set CI=true && pnpm test:e2e:belt` passes (or wind-down belt tests timeout pre-seed ??? defer green re-check to Phase 3.2) ? 5f7941b
 
 #### Manual
 
-- [x] 2.4 `e2e/.auth/` gitignored and not staged
-- [x] 2.5 Partial spec `@skip-belt` tagging verified
+- [x] 2.4 `e2e/.auth/` gitignored and not staged ? 5f7941b
+- [x] 2.5 Partial spec `@skip-belt` tagging verified ? 5f7941b
 
 ### Phase 3: Wind-Down Seed + CI Gate Swap
 
@@ -552,5 +552,5 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 #### Manual
 
 - [ ] 5.6 AGENTS.md and e2e/README.md updated
-- [ ] 5.7 test-plan ยง3 Phase 7 marked complete
+- [ ] 5.7 test-plan ?3 Phase 7 marked complete
 - [ ] 5.8 CI e2e job confirmed on pushed branch
