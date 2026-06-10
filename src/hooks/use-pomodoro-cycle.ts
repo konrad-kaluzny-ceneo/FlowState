@@ -1607,7 +1607,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					invalidateServerCycle(),
 					utils.task.list.invalidate(),
 				]);
-			} catch (err) {
+			} catch {
 				setError("Could not switch tasks. Try again.");
 			} finally {
 				setIsMidCycleSubmitting(false);
