@@ -11,6 +11,40 @@ export async function dismissKickoffReadinessIfVisible(page: Page) {
 	}
 }
 
+export async function dismissTaskSuggestionIfVisible(page: Page) {
+	const card = page.getByTestId("task-suggestion-card");
+	if (!(await card.isVisible().catch(() => false))) {
+		return;
+	}
+	const acceptBtn = card.getByTestId("suggestion-accept-btn");
+	if (!(await acceptBtn.isVisible().catch(() => false))) {
+		return;
+	}
+	await expect(acceptBtn).toBeEnabled({ timeout: 10_000 });
+	await acceptBtn.click();
+	await expect(card).toBeHidden({ timeout: 10_000 });
+}
+
+/** Dismiss blocking overlays until the idle timer shell is mounted. */
+export async function waitForTimerPanelIdle(page: Page) {
+	await expect(async () => {
+		await dismissKickoffReadinessIfVisible(page);
+		await dismissTaskSuggestionIfVisible(page);
+
+		if (await page.getByTestId("timer-panel-running").isVisible()) {
+			const interruptLabel = (await page
+				.getByRole("button", { name: "End break early" })
+				.isVisible())
+				? "End break early"
+				: "Interrupt";
+			await page.getByRole("button", { name: interruptLabel }).click();
+			throw new Error("running cycle interrupted — re-check idle");
+		}
+
+		await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
+	}).toPass({ timeout: 20_000 });
+}
+
 export async function ensureIdleCycle(page: Page) {
 	await expect(async () => {
 		await dismissFirstRunIfVisible(page);
@@ -18,6 +52,11 @@ export async function ensureIdleCycle(page: Page) {
 		if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
 			await page.getByTestId("kickoff-readiness-skip-btn").click();
 			throw new Error("kickoff readiness dismissed — re-check idle");
+		}
+
+		if (await page.getByTestId("task-suggestion-card").isVisible()) {
+			await dismissTaskSuggestionIfVisible(page);
+			throw new Error("task suggestion dismissed — re-check idle");
 		}
 
 		if (await page.getByTestId("wind-down-overlay").isVisible()) {
@@ -39,6 +78,7 @@ export async function ensureIdleCycle(page: Page) {
 		}
 
 		if (await page.getByTestId("cycle-complete-overlay").isVisible()) {
+			await dismissKickoffReadinessIfVisible(page);
 			const continueLater = page.getByRole("button", {
 				name: "Continue later",
 			});

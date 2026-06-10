@@ -58,7 +58,7 @@ jobs:
       contents: read
     env:
       CI: "true"
-      E2E_WORKERS: "1"
+      E2E_WORKERS: "4"
       # Inlined at `pnpm build` — must be set before Playwright starts production server
       NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: "1"
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -89,5 +89,16 @@ jobs:
       - name: Apply database migrations
         run: pnpm db:migrate:prod
 
+      - name: Cache Next.js build
+        uses: actions/cache@6849a6489940fbe016b7635389924d6e8bd8b2ed # v4.1.2
+        with:
+          path: .next/cache
+          key: next-cache-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**', 'package.json', 'next.config.*') }}
+          restore-keys: |
+            next-cache-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      - name: Build application
+        run: pnpm build
+
       - name: E2E tests
-        run: pnpm test:e2e
+        run: pnpm test:e2e:belt

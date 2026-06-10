@@ -8,6 +8,7 @@ import type { Page } from "@playwright/test";
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
+import { seedWindDownFatigueScenario } from "./helpers/seed-scenario";
 import { waitForSuggestionNext } from "./helpers/suggestion";
 import {
 	advanceClockThroughWorkSec,
@@ -25,6 +26,7 @@ import {
 	advanceClockThroughFastWork,
 	clickStartCycle,
 	completeWorkCycleWithCheckIn,
+	ensureFakeClock,
 	focusTask,
 	setShortBreakDurationSec,
 	setWorkDurationSec,
@@ -38,6 +40,15 @@ async function startFastWorkCycle(page: Page, taskTitle: string) {
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 }
 
+async function seedFatigueAndAdvanceToWindDownGate(
+	page: Page,
+	taskTitle: string,
+) {
+	await seedWindDownFatigueScenario(page, taskTitle, 1);
+	await ensureFakeClock(page);
+	await advanceClockThroughFastWork(page);
+}
+
 test.describe("Mindful session wind-down (S-16)", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
@@ -49,22 +60,11 @@ test.describe("Mindful session wind-down (S-16)", () => {
 	test("fatigue path triggers wind-down and blocks break until keep going", async ({
 		page,
 	}) => {
-		test.setTimeout(180_000);
+		test.setTimeout(90_000);
 
-		const ts = Date.now();
-		const taskTitle = `E2E WindDown Fatigue ${ts}`;
+		const taskTitle = `E2E WindDown Fatigue ${Date.now()}`;
 
-		await addTask(page, taskTitle);
-		await startFastWorkCycle(page, taskTitle);
-
-		for (let cycle = 0; cycle < 3; cycle++) {
-			await advanceClockThroughFastWork(page);
-			await completeSteadyWorkCycleAndResumeIdle(page);
-			await clickStartCycle(page);
-			await expect(page.getByTestId("timer-panel-running")).toBeVisible();
-		}
-
-		await advanceClockThroughFastWork(page);
+		await seedFatigueAndAdvanceToWindDownGate(page, taskTitle);
 		await submitFadingCheckInExpectingWindDown(page);
 		await expectWindDownVisible(page, {
 			rationale: /energy dipping after 4 cycles/,
@@ -136,22 +136,11 @@ test.describe("Mindful session wind-down (S-16)", () => {
 	test("end session path ends session without break or suggestion", async ({
 		page,
 	}) => {
-		test.setTimeout(180_000);
+		test.setTimeout(90_000);
 
-		const ts = Date.now();
-		const taskTitle = `E2E WindDown End ${ts}`;
+		const taskTitle = `E2E WindDown End ${Date.now()}`;
 
-		await addTask(page, taskTitle);
-		await startFastWorkCycle(page, taskTitle);
-
-		for (let cycle = 0; cycle < 3; cycle++) {
-			await advanceClockThroughFastWork(page);
-			await completeSteadyWorkCycleAndResumeIdle(page);
-			await clickStartCycle(page);
-			await expect(page.getByTestId("timer-panel-running")).toBeVisible();
-		}
-
-		await advanceClockThroughFastWork(page);
+		await seedFatigueAndAdvanceToWindDownGate(page, taskTitle);
 		await submitFadingCheckInExpectingWindDown(page);
 		await endSessionViaWindDown(page);
 

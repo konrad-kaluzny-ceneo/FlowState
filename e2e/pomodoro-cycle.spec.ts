@@ -5,7 +5,10 @@
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
-import { ensureIdleCycle } from "./helpers/idle-cycle";
+import {
+	dismissKickoffReadinessIfVisible,
+	ensureIdleCycle,
+} from "./helpers/idle-cycle";
 import {
 	advanceClockThroughFastWork,
 	startFocusedWorkCycle,
@@ -34,6 +37,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 			page.getByRole("button", { name: "Continue later" }),
 		).toBeVisible();
 
+		await dismissKickoffReadinessIfVisible(page);
 		await page.getByRole("button", { name: "Continue later" }).click();
 		await expect(page.getByText("Short Break")).toBeHidden();
 		await completeCheckIn(page, "steady");

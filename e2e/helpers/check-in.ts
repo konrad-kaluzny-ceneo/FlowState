@@ -1,5 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
+import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
+
 export type CheckInEnergyUi = "focused" | "steady" | "fading";
 
 const ENERGY_TEST_IDS: Record<CheckInEnergyUi, string> = {
@@ -14,6 +16,7 @@ export async function completeCheckIn(
 	options?: { waitForHidden?: boolean; expectCoach?: boolean },
 ) {
 	await expect(page.getByTestId("check-in-overlay")).toBeVisible();
+	await dismissKickoffReadinessIfVisible(page);
 
 	const coachLine = page.getByTestId("check-in-coach-line");
 	if (options?.expectCoach === true) {

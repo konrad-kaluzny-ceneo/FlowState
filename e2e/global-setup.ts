@@ -27,6 +27,9 @@ function isProductionE2eServer(): boolean {
 function webServerCommand(port: string): string {
 	const useProduction = isProductionE2eServer();
 	if (useProduction) {
+		if (process.env.GITHUB_ACTIONS) {
+			return `pnpm exec next start -p ${port}`;
+		}
 		const buildEnv =
 			process.platform === "win32"
 				? "set NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1&& "

@@ -22,8 +22,11 @@ const e2eBuildEnv =
 		? "set NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1&& "
 		: "NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1 ";
 
+/** CI pre-builds in the workflow; local production e2e still builds inline. */
 const webServerCommand = useProductionServer
-	? `${e2eBuildEnv}pnpm build && pnpm exec next start -p ${e2ePort}`
+	? process.env.GITHUB_ACTIONS
+		? `pnpm exec next start -p ${e2ePort}`
+		: `${e2eBuildEnv}pnpm build && pnpm exec next start -p ${e2ePort}`
 	: `pnpm exec next dev --turbo -p ${e2ePort}`;
 
 const AUTH_POOL_SIZE = 4;

@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
+import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
 import {
 	clickStartCycle,
 	focusTask,
@@ -45,6 +46,7 @@ export async function submitFadingCheckInExpectingWindDown(page: Page) {
 	await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
 		timeout: 15_000,
 	});
+	await dismissKickoffReadinessIfVisible(page);
 	await page.getByRole("button", { name: "Continue later" }).click();
 	await expect(page.getByText("Short Break")).toBeHidden();
 	await expect(page.getByTestId("check-in-overlay")).toBeVisible();

@@ -5,7 +5,6 @@
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import type { CheckInEnergyUi } from "./helpers/check-in";
-import { ensureIdleCycle } from "./helpers/idle-cycle";
 import {
 	acceptKickoffSuggestion,
 	completeKickoffReadiness,
@@ -13,6 +12,8 @@ import {
 	expectKickoffVisible,
 	waitForKickoffSuggestion,
 } from "./helpers/kickoff";
+
+import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import { addTaskWithAttributes } from "./helpers/work-cycle";
 
 async function prepareSessionStartKickoff(
@@ -21,6 +22,15 @@ async function prepareSessionStartKickoff(
 	reactiveTask: string,
 	readinessEnergy: CheckInEnergyUi | "skip" = "skip",
 ) {
+	await resetWorkerSessionViaApi(page);
+	const cleanReload = page.waitForResponse(
+		(response) => response.url().includes("cycle.getActive") && response.ok(),
+		{ timeout: 20_000 },
+	);
+	await page.reload();
+	await cleanReload;
+	await expect(page.getByTestId("task-list")).toBeVisible();
+
 	await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
 	await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
 
@@ -39,7 +49,6 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
 		await waitForCycleGetActive(page);
-		await ensureIdleCycle(page);
 	});
 
 	test("shows kickoff card with rationale and highlighted row on session-start idle", async ({

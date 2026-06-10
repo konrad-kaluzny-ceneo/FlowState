@@ -2,7 +2,11 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 import { splitSecToMinSec } from "../../src/lib/duration-input";
 import { completeCheckIn } from "./check-in";
-import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
+import {
+	dismissKickoffReadinessIfVisible,
+	dismissTaskSuggestionIfVisible,
+	waitForTimerPanelIdle,
+} from "./idle-cycle";
 
 /** Advance fake clock through a 1s work cycle (+ buffer for completion tick). */
 export const FAST_WORK_CLOCK_MS = 2500;
@@ -93,10 +97,9 @@ export async function startFocusedWorkCycle(
 		page.getByRole("button", { name: "Add", exact: true }),
 	);
 	await dismissKickoffReadinessIfVisible(page);
+	await dismissTaskSuggestionIfVisible(page);
 	await taskRow.getByRole("button", { name: "Focus" }).click();
-	await expect(page.getByTestId("timer-panel-idle")).toBeVisible({
-		timeout: 15_000,
-	});
+	await waitForTimerPanelIdle(page);
 	await setWorkDurationSec(page, durationSec);
 	await clickStartCycle(page);
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
@@ -104,7 +107,9 @@ export async function startFocusedWorkCycle(
 
 export async function addTask(page: Page, title: string) {
 	const addButton = page.getByRole("button", { name: "Add", exact: true });
+	await dismissKickoffReadinessIfVisible(page);
 	await page.getByPlaceholder("Add a new task...").fill(title);
+	await dismissKickoffReadinessIfVisible(page);
 	await addButton.click();
 	await expect(
 		page.getByRole("listitem").filter({ hasText: title }).first(),
@@ -168,6 +173,7 @@ export async function addTaskWithAttributes(
 	const addButton = addForm.getByRole("button", { name: "Add" });
 	await dismissKickoffReadinessIfVisible(page);
 	await addButton.click();
+	await dismissKickoffReadinessIfVisible(page);
 	await expect(
 		page.getByRole("listitem").filter({ hasText: title }).first(),
 	).toBeVisible();
@@ -181,9 +187,7 @@ export async function focusTask(page: Page, taskTitle: string) {
 		.filter({ hasText: taskTitle })
 		.first();
 	await taskRow.getByRole("button", { name: "Focus" }).click();
-	await expect(page.getByTestId("timer-panel-idle")).toBeVisible({
-		timeout: 15_000,
-	});
+	await waitForTimerPanelIdle(page);
 }
 
 async function dismissWindDownIfVisible(page: Page) {
