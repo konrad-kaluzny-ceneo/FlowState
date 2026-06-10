@@ -7,6 +7,7 @@ import {
 	dismissTaskSuggestionIfVisible,
 	waitForTimerPanelIdle,
 } from "./idle-cycle";
+import { dismissFirstRunIfVisible } from "./onboarding";
 
 /** Advance fake clock through a 1s work cycle (+ buffer for completion tick). */
 export const FAST_WORK_CLOCK_MS = 2500;
@@ -21,6 +22,15 @@ export async function ensureFakeClock(page: Page) {
 	if (!clockInstalledPages.has(page)) {
 		await page.clock.install();
 		clockInstalledPages.add(page);
+		return;
+	}
+	await page.clock.install({ time: Date.now() });
+}
+
+/** Drop fake-timer bleed between belt tests that share a worker page. */
+export async function resetFakeClock(page: Page) {
+	if (clockInstalledPages.has(page)) {
+		await page.clock.install({ time: Date.now() });
 	}
 }
 
@@ -70,6 +80,8 @@ export async function waitForCycleCreateSettled(page: Page) {
 
 /** Click Start Cycle and await server create on authenticated dashboards. */
 export async function clickStartCycle(page: Page) {
+	await dismissFirstRunIfVisible(page);
+	await dismissKickoffReadinessIfVisible(page);
 	const createSettled = waitForCycleCreateSettled(page);
 	await page.getByRole("button", { name: "Start Cycle" }).click();
 	await createSettled;
@@ -86,6 +98,8 @@ export async function startFocusedWorkCycle(
 	taskTitle: string,
 	durationSec: number,
 ) {
+	await dismissFirstRunIfVisible(page);
+	await dismissKickoffReadinessIfVisible(page);
 	await page.getByPlaceholder("Add a new task...").fill(taskTitle);
 	await page.getByRole("button", { name: "Add", exact: true }).click();
 	const taskRow = page
@@ -107,6 +121,7 @@ export async function startFocusedWorkCycle(
 
 export async function addTask(page: Page, title: string) {
 	const addButton = page.getByRole("button", { name: "Add", exact: true });
+	await dismissFirstRunIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	await page.getByPlaceholder("Add a new task...").fill(title);
 	await dismissKickoffReadinessIfVisible(page);
@@ -161,13 +176,18 @@ export async function addTaskWithAttributes(
 	workType: TaskWorkTypeLabel,
 	weight: TaskWeightLabel,
 ) {
+	await dismissFirstRunIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	const addForm = page.getByTestId("task-list").locator("form");
 	const detailsToggle = addForm.getByRole("button", { name: "+ Details" });
 	if (await detailsToggle.isVisible()) {
+		await dismissFirstRunIfVisible(page);
+		await dismissKickoffReadinessIfVisible(page);
 		await detailsToggle.click();
 	}
+	await dismissKickoffReadinessIfVisible(page);
 	await addForm.getByRole("button", { name: workType }).click();
+	await dismissKickoffReadinessIfVisible(page);
 	await addForm.getByRole("button", { name: weight }).click();
 	await page.getByPlaceholder("Add a new task...").fill(title);
 	const addButton = addForm.getByRole("button", { name: "Add" });

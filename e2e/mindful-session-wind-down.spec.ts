@@ -28,6 +28,7 @@ import {
 	completeWorkCycleWithCheckIn,
 	ensureFakeClock,
 	focusTask,
+	resetFakeClock,
 	setShortBreakDurationSec,
 	setWorkDurationSec,
 } from "./helpers/work-cycle";
@@ -50,7 +51,10 @@ async function seedFatigueAndAdvanceToWindDownGate(
 }
 
 test.describe("Mindful session wind-down (S-16)", () => {
+	test.describe.configure({ mode: "serial" });
+
 	test.beforeEach(async ({ page }) => {
+		await resetFakeClock(page);
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
 		await waitForCycleGetActive(page);

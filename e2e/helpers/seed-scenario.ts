@@ -8,6 +8,7 @@
 import { expect, type Page } from "@playwright/test";
 
 import { MIN_WORK_DURATION_SEC } from "../../src/lib/duration-bounds";
+import { resetFakeClock } from "./work-cycle";
 
 async function dismissKickoffReadinessIfVisible(page: Page) {
 	const overlay = page.getByTestId("kickoff-readiness-overlay");
@@ -81,6 +82,10 @@ async function endActiveSessionIfAny(page: Page) {
 export async function resetWorkerSessionViaApi(page: Page) {
 	await interruptActiveCycleIfRunning(page);
 	await endActiveSessionIfAny(page);
+	const tasks = await trpcQuery<Array<{ id: number }>>(page, "task.list");
+	for (const task of tasks) {
+		await trpcMutation(page, "task.delete", { id: task.id });
+	}
 }
 
 async function interruptActiveCycleIfRunning(page: Page) {
@@ -170,6 +175,7 @@ export async function seedWindDownFatigueScenario(
 		taskId: task.id,
 	});
 
+	await resetFakeClock(page);
 	const getActiveAfterReload = page.waitForResponse(
 		(response) => response.url().includes("cycle.getActive") && response.ok(),
 		{ timeout: 20_000 },

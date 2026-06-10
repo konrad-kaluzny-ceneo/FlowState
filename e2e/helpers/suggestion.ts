@@ -32,6 +32,15 @@ export async function waitForSuggestionNext(page: Page) {
 	await expect(page.getByTestId("cycle-complete-overlay")).toBeHidden({
 		timeout: 20_000,
 	});
+	await expect(page.getByTestId("timer-panel-running")).toContainText(
+		/Break/i,
+		{
+			timeout: 20_000,
+		},
+	);
+	await expect(page.getByTestId("task-suggestion-card")).toBeVisible({
+		timeout: 30_000,
+	});
 	await expect(page.getByTestId("suggestion-accept-btn")).toBeVisible({
 		timeout: 30_000,
 	});

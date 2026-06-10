@@ -4,7 +4,8 @@
  * Spec role: risk proof (suggestion wedge — accept + override)
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
-import { ensureIdleCycle } from "./helpers/idle-cycle";
+import { completeKickoffReadiness } from "./helpers/kickoff";
+import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import {
 	acceptSuggestion,
 	expectSuggestionVisible,
@@ -26,7 +27,21 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
 		await waitForCycleGetActive(page);
-		await ensureIdleCycle(page);
+		await resetWorkerSessionViaApi(page);
+		const cleanReload = page.waitForResponse(
+			(response) => response.url().includes("cycle.getActive") && response.ok(),
+			{ timeout: 20_000 },
+		);
+		await page.reload();
+		await cleanReload;
+		await expect(page.getByTestId("task-list")).toBeVisible();
+		if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
+			await completeKickoffReadiness(page, "skip");
+		}
+	});
+
+	test.afterEach(async ({ page }) => {
+		await resetWorkerSessionViaApi(page);
 	});
 
 	test("shows suggestion with rationale and highlighted row after check-in", async ({
@@ -41,7 +56,8 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
 		await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
 		await focusTask(page, deepTask);
-		await setShortBreakDurationSec(page, 1);
+		// Long break keeps the suggestion card visible while assertions run (belt-safe).
+		await setShortBreakDurationSec(page, 120);
 		await setWorkDurationSec(page, 1);
 		await clickStartCycle(page);
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();

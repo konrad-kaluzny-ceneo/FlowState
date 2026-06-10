@@ -12,7 +12,7 @@ import {
 	expectKickoffVisible,
 	waitForKickoffSuggestion,
 } from "./helpers/kickoff";
-
+import { dismissFirstRunIfVisible } from "./helpers/onboarding";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import { addTaskWithAttributes } from "./helpers/work-cycle";
 
@@ -30,6 +30,7 @@ async function prepareSessionStartKickoff(
 	await page.reload();
 	await cleanReload;
 	await expect(page.getByTestId("task-list")).toBeVisible();
+	await dismissFirstRunIfVisible(page);
 
 	await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
 	await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
@@ -40,6 +41,7 @@ async function prepareSessionStartKickoff(
 	);
 	await page.reload();
 	await getActiveAfterReload;
+	await dismissFirstRunIfVisible(page);
 	await completeKickoffReadiness(page, readinessEnergy);
 	await waitForKickoffSuggestion(page, { readinessCompleted: true });
 }
