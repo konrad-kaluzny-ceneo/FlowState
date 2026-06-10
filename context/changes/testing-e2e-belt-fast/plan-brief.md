@@ -18,7 +18,7 @@ Ship a **12-test Playwright belt** as the CI merge gate (`pnpm test:e2e:belt`), 
 | Wind-down setup | 3× UI cycles via `wind-down.ts` helpers | `seed-scenario.ts` tRPC seed |
 | Demoted paths | 10 e2e files still on disk | Deleted; Vitest/component oracles |
 | test-plan §3 Phase 7 | Not on `main`; on PR #90 branch | Rebased + marked `complete` |
-| Local full catalog | Same as CI | `pnpm test:e2e` (~22 tests post-demotion) |
+| Local full catalog | Same as CI | `pnpm test:e2e` (~27 tests post-demotion: 49 − 22 deleted) |
 
 ## Phase Summary
 
