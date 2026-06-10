@@ -837,6 +837,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						context: "kickoff",
 						sessionId,
 						localHour: new Date().getHours(),
+						energy: "STEADY",
 					});
 					if (gen !== kickoffFetchGenRef.current) {
 						return;

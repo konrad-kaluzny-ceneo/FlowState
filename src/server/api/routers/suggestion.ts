@@ -22,6 +22,7 @@ const nextInputSchema = z.discriminatedUnion("context", [
 		context: z.literal("kickoff"),
 		sessionId: z.number().int(),
 		localHour: localHourSchema,
+		energy: z.enum(["FOCUSED", "STEADY", "FADING"]),
 	}),
 ]);
 
@@ -226,7 +227,7 @@ export const suggestionRouter = createTRPCRouter({
 				session,
 				userId,
 				input.localHour,
-				"STEADY",
+				input.energy,
 			);
 
 			const winner = pickBestTask(
