@@ -247,6 +247,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		null,
 	);
 	const [catchUp, setCatchUp] = useState<CatchUpState>(null);
+	const [awaitingKickoffReadiness, setAwaitingKickoffReadiness] =
+		useState(false);
+	const [kickoffReadinessSubmitting, setKickoffReadinessSubmitting] =
+		useState(false);
 
 	const createCheckIn = api.checkIn.create.useMutation();
 	const suggestionNextPostCheckIn = api.suggestion.next.useMutation();
@@ -272,6 +276,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const suggestionFetchGenRef = useRef(0);
 	const kickoffFetchGenRef = useRef(0);
 	const prevKickoffEligibleRef = useRef(false);
+	const lastKickoffEnergyRef = useRef<"FOCUSED" | "STEADY" | "FADING">(
+		"STEADY",
+	);
 	const overrideAckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
@@ -678,6 +685,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		setKickoffSuggestedTaskId(null);
 		setHasPreFocusedKickoff(false);
 		setStagedKickoffDurationSec(null);
+		setAwaitingKickoffReadiness(false);
+		setKickoffReadinessSubmitting(false);
 	}, []);
 
 	const clearStagedKickoffDuration = useCallback(() => {
@@ -825,8 +834,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	);
 
 	const fetchKickoffSuggestion = useCallback(
-		(sessionId: number) => {
+		(sessionId: number, energy: "FOCUSED" | "STEADY" | "FADING") => {
 			const gen = ++kickoffFetchGenRef.current;
+			lastKickoffEnergyRef.current = energy;
 			setPendingKickoffSuggestion({ status: "loading" });
 			setKickoffSuggestedTaskId(null);
 
@@ -837,7 +847,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						context: "kickoff",
 						sessionId,
 						localHour: new Date().getHours(),
-						energy: "STEADY",
+						energy,
 					});
 					if (gen !== kickoffFetchGenRef.current) {
 						return;
@@ -857,11 +867,28 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					setKickoffSuggestedTaskId(null);
 				} finally {
 					endSuggestionFetch();
+					setKickoffReadinessSubmitting(false);
 				}
 			})();
 		},
 		[suggestionNextKickoff],
 	);
+
+	const submitKickoffReadiness = useCallback(
+		(energy: "FOCUSED" | "STEADY" | "FADING") => {
+			if (_activeSessionId == null) {
+				return;
+			}
+			setKickoffReadinessSubmitting(true);
+			setAwaitingKickoffReadiness(false);
+			fetchKickoffSuggestion(Number(_activeSessionId), energy);
+		},
+		[_activeSessionId, fetchKickoffSuggestion],
+	);
+
+	const skipKickoffReadiness = useCallback(() => {
+		submitKickoffReadiness("STEADY");
+	}, [submitKickoffReadiness]);
 
 	const kickoffEligible =
 		mode === "authenticated" &&
@@ -870,6 +897,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		focusedTaskId === null &&
 		!awaitingCheckIn &&
 		!awaitingWindDown &&
+		!isPostCheckInTransitioning &&
 		pendingSuggestion.status === "idle" &&
 		hasActiveTasks &&
 		(sessionStartIdleFlag || postBreakIdleFlag);
@@ -878,7 +906,18 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		const wasEligible = prevKickoffEligibleRef.current;
 		prevKickoffEligibleRef.current = kickoffEligible;
 
-		if (!kickoffEligible || wasEligible) {
+		if (!kickoffEligible) {
+			if (wasEligible && awaitingKickoffReadiness) {
+				setAwaitingKickoffReadiness(false);
+			}
+			return;
+		}
+
+		if (wasEligible || awaitingKickoffReadiness) {
+			return;
+		}
+
+		if (pendingKickoffSuggestion.status !== "idle") {
 			return;
 		}
 
@@ -886,12 +925,17 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			try {
 				const session = await sessions.getOrCreateActive();
 				setActiveSessionId(session.id);
-				fetchKickoffSuggestion(Number(session.id));
+				setAwaitingKickoffReadiness(true);
 			} catch {
 				setPendingKickoffSuggestion({ status: "error" });
 			}
 		})();
-	}, [kickoffEligible, sessions, fetchKickoffSuggestion]);
+	}, [
+		kickoffEligible,
+		sessions,
+		awaitingKickoffReadiness,
+		pendingKickoffSuggestion.status,
+	]);
 
 	const dismissPreFocus = useCallback(() => {
 		if (
@@ -1934,6 +1978,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		pendingKickoffSuggestion,
 		kickoffSuggestedTaskId,
 		kickoffEligible,
+		awaitingKickoffReadiness,
+		kickoffReadinessSubmitting,
+		submitKickoffReadiness,
+		skipKickoffReadiness,
 		catchUp,
 		dismissCatchUp,
 		selectTask,
@@ -1947,7 +1995,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		dismissPreFocus,
 		retryKickoffSuggestion: () => {
 			if (_activeSessionId != null) {
-				fetchKickoffSuggestion(Number(_activeSessionId));
+				fetchKickoffSuggestion(
+					Number(_activeSessionId),
+					lastKickoffEnergyRef.current,
+				);
 			}
 		},
 		retrySuggestion: () => {

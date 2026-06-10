@@ -5,6 +5,7 @@ import { Suspense, useCallback, useMemo } from "react";
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
+import { KickoffReadinessOverlay } from "~/app/_components/kickoff-readiness-overlay";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
 import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
 import { TaskList } from "~/app/_components/task-list";
@@ -325,6 +326,18 @@ function PomodoroDashboardBody({
 						onDismissPreFocus={pomodoro.dismissPreFocus}
 						preFocusedTask={pomodoro.preFocusedTask}
 						state={pomodoro.state}
+					/>
+				)}
+
+			{enableSuggestionGate &&
+				pomodoro.awaitingKickoffReadiness &&
+				!pomodoro.awaitingCheckIn &&
+				!pomodoro.awaitingWindDown &&
+				!pomodoro.isPostCheckInTransitioning && (
+					<KickoffReadinessOverlay
+						isSubmitting={pomodoro.kickoffReadinessSubmitting}
+						onSkip={pomodoro.skipKickoffReadiness}
+						onSubmit={pomodoro.submitKickoffReadiness}
 					/>
 				)}
 

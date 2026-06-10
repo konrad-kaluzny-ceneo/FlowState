@@ -191,6 +191,18 @@ function assertNoCycleCompleteFlash(result: PomodoroCycleHookResult) {
 	}
 }
 
+async function completeKickoffReadinessGate(result: PomodoroCycleHookResult) {
+	await waitFor(() => {
+		expect(result.current.awaitingKickoffReadiness).toBe(true);
+	});
+	act(() => {
+		result.current.skipKickoffReadiness();
+	});
+	await waitFor(() => {
+		expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+	});
+}
+
 async function driveWorkCycleToCheckIn(result: PomodoroCycleHookResult) {
 	await waitFor(() => {
 		expect(result.current.state).toBe("running");
@@ -1933,14 +1945,13 @@ describe("usePomodoroCycle", () => {
 				await result.current.confirmComplete(false);
 			});
 
-			await waitFor(() => {
-				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
-			});
+			await completeKickoffReadinessGate(result);
 
 			expect(suggestionNextMutate).toHaveBeenCalledWith(
 				expect.objectContaining({
 					context: "kickoff",
 					sessionId: 1,
+					energy: "STEADY",
 				}),
 			);
 			expect(getOrCreateSession).toHaveBeenCalled();
@@ -1999,9 +2010,7 @@ describe("usePomodoroCycle", () => {
 				wrapper: createWrapper(),
 			});
 
-			await waitFor(() => {
-				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
-			});
+			await completeKickoffReadinessGate(result);
 
 			act(() => {
 				result.current.selectTask(7, { id: 7, title: "Write tests" });
@@ -2027,9 +2036,7 @@ describe("usePomodoroCycle", () => {
 				wrapper: createWrapper(),
 			});
 
-			await waitFor(() => {
-				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
-			});
+			await completeKickoffReadinessGate(result);
 
 			recordDecisionMutate.mockClear();
 
@@ -2064,9 +2071,7 @@ describe("usePomodoroCycle", () => {
 				wrapper: createWrapper(),
 			});
 
-			await waitFor(() => {
-				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
-			});
+			await completeKickoffReadinessGate(result);
 
 			await act(async () => {
 				await result.current.acceptKickoffSuggestion();
@@ -2090,9 +2095,7 @@ describe("usePomodoroCycle", () => {
 				wrapper: createWrapper(),
 			});
 
-			await waitFor(() => {
-				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
-			});
+			await completeKickoffReadinessGate(result);
 
 			await act(async () => {
 				await result.current.acceptKickoffSuggestion();
@@ -2130,9 +2133,7 @@ describe("usePomodoroCycle", () => {
 				wrapper: createWrapper(),
 			});
 
-			await waitFor(() => {
-				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
-			});
+			await completeKickoffReadinessGate(result);
 
 			vi.useFakeTimers();
 			try {
