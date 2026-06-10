@@ -445,9 +445,9 @@ No schema migration — kickoff `energy` is input-only. Existing kickoff clients
 
 #### Automated
 
-- [ ] 5.1 `pnpm exec vitest run src/server/api/routers/suggestion.test.ts` passes (post-check-in cases)
-- [ ] 5.2 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` passes (post-check-in cases)
-- [ ] 5.3 `set CI=true && pnpm test:e2e e2e/task-suggestion.spec.ts` passes
+- [x] 5.1 `pnpm exec vitest run src/server/api/routers/suggestion.test.ts` passes (post-check-in cases)
+- [x] 5.2 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` passes (post-check-in cases)
+- [x] 5.3 `set CI=true && pnpm test:e2e e2e/task-suggestion.spec.ts` passes
 
 #### Manual
 
@@ -457,7 +457,7 @@ No schema migration — kickoff `energy` is input-only. Existing kickoff clients
 
 #### Automated
 
-- [ ] 6.1 `pnpm check` passes
+- [x] 6.1 `pnpm check` passes
 
 #### Manual
 

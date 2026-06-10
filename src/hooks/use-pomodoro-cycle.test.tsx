@@ -2416,6 +2416,8 @@ describe("usePomodoroCycle", () => {
 				await result.current.submitCheckIn("FOCUSED");
 			});
 
+			expect(result.current.awaitingKickoffReadiness).toBe(false);
+
 			await waitFor(() => {
 				expect(result.current.pendingSuggestion.status).toBe("ready");
 			});
