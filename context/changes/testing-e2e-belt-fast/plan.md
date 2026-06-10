@@ -485,13 +485,13 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 #### Automated
 
-- [x] 1.1 `pnpm check` passes after rebase
-- [x] 1.2 Belt merge gate section present in `context/foundation/test-plan.md`
+- [x] 1.1 `pnpm check` passes after rebase — e4488ea
+- [x] 1.2 Belt merge gate section present in `context/foundation/test-plan.md` — e4488ea
 
 #### Manual
 
-- [x] 1.3 Belt table matches 12 tests / 10 files contract
-- [x] 1.4 No unresolved rebase conflict markers
+- [x] 1.3 Belt table matches 12 tests / 10 files contract — e4488ea
+- [x] 1.4 No unresolved rebase conflict markers — e4488ea
 
 ### Phase 2: Belt Selection + Auth Pool
 
