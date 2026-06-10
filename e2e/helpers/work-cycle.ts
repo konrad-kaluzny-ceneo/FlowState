@@ -23,12 +23,31 @@ async function waitForTaskCreateSettled(addButton: Locator) {
 	await expect(addButton).not.toHaveText("Adding...", { timeout: 15_000 });
 }
 
-/** Wait for optimistic start to persist the cycle before server mutations. */
+async function isGuestDashboard(page: Page) {
+	return page.getByTestId("guest-banner").isVisible();
+}
+
+function isCycleCreateResponse(response: {
+	url: () => string;
+	ok: () => boolean;
+	request: () => { method: () => string; postData: () => string | null };
+}) {
+	if (response.request().method() !== "POST" || !response.ok()) {
+		return false;
+	}
+	const url = response.url();
+	const postData = response.request().postData() ?? "";
+	return url.includes("cycle.create") || postData.includes("cycle.create");
+}
+
+/** Wait for optimistic start to persist the cycle before server mutations (auth only). */
 export async function waitForCycleCreateSettled(page: Page) {
-	await page.waitForResponse(
-		(response) => response.url().includes("cycle.create") && response.ok(),
-		{ timeout: 15_000 },
-	);
+	if (await isGuestDashboard(page)) {
+		return;
+	}
+	await page.waitForResponse((response) => isCycleCreateResponse(response), {
+		timeout: 15_000,
+	});
 }
 
 export async function setWorkDurationSec(page: Page, seconds: number) {

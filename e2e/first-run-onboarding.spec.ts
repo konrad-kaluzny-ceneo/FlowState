@@ -158,7 +158,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		// Longer break window for suggestion coach assertion under shared auth session (CI).
 		await setShortBreakDurationSec(page, 30);
 		await setWorkDurationSec(page, 1);
+		const firstCreateSettled = waitForCycleCreateSettled(page);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await firstCreateSettled;
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);
@@ -184,7 +186,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await focusTask(page, reactiveTask);
 		await setShortBreakDurationSec(page, 1);
 		await setWorkDurationSec(page, 1);
+		const secondCreateSettled = waitForCycleCreateSettled(page);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await secondCreateSettled;
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);
@@ -215,7 +219,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await focusTask(page, deepTask);
 		await setShortBreakDurationSec(page, 1);
 		await setWorkDurationSec(page, 1);
+		const acceptCreateSettled = waitForCycleCreateSettled(page);
 		await page.getByRole("button", { name: "Start Cycle" }).click();
+		await acceptCreateSettled;
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
 		await advanceClockThroughFastWork(page);
