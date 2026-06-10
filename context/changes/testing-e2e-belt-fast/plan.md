@@ -24,7 +24,7 @@ On `features/testing-e2e-belt-fast` at `36a152c`, CI runs the **full catalog** v
 4. **Wind-down belt** uses `e2e/helpers/seed-scenario.ts` (tRPC `page.request`) for fatigue/end-session paths only.
 5. **Vitest backfill complete** — all demoted UI surfaces have component/hook oracles per L-04.
 6. **10 demoted e2e files deleted**; `test-plan.md` §3 Phase 7 → `complete`; `AGENTS.md` and `e2e/README.md` document belt command.
-7. **Full catalog** (`pnpm test:e2e`) still runnable locally for ad-hoc verification (~22 tests after demotion).
+7. **Full catalog** (`pnpm test:e2e`) still runnable locally for ad-hoc verification (~27 tests after demotion — 49 today minus 22 deleted across 10 files).
 
 ### Verification
 
@@ -81,7 +81,7 @@ Ordered phases minimize rework: sync test-plan docs first (belt table is the con
 - Belt script: `"test:e2e:belt": "playwright test --grep-invert @skip-belt"`.
 - Full catalog: `"test:e2e": "playwright test"` (unchanged — runs all tests including skipped-by-CI ones).
 - Partial files requiring tags: `pomodoro-cycle.spec.ts`, `task-suggestion.spec.ts`, `session-kickoff.spec.ts`, `mindful-session-wind-down.spec.ts`, `account-recovery.spec.ts`.
-- Wind-down: tag interruption path and negative cases `@skip-belt`; retain only fatigue + end-session as belt tests.
+- Wind-down: tag **five** non-belt tests `@skip-belt` (interruption, keep-going, keep-going suppress, steady/focused negative, first-cycle negative); retain only fatigue + end-session as belt tests.
 
 ### Auth pool contract
 
@@ -182,7 +182,7 @@ Wire belt grep selection, pre-provision 4-user auth pool, and migrate fixtures t
 
 **Intent**: Exclude non-belt tests from CI grep without deleting them.
 
-**Contract**: Add `@skip-belt` to every test title that is **not** in the belt table row for that file. Wind-down: tag interruption + negative cases; keep fatigue + end-session untagged.
+**Contract**: Add `@skip-belt` to every test title that is **not** in the belt table row for that file. Wind-down: tag five non-belt tests (interruption, keep-going, keep-going suppress, two negatives); keep fatigue + end-session untagged.
 
 ### Success Criteria:
 
@@ -232,7 +232,7 @@ Add API seed helper for wind-down preconditions, refactor belt wind-down tests t
 **Intent**: Run belt on merge; cache build; enable parallelism.
 
 **Contract**:
-- Add separate `pnpm build` step before e2e; cache `.next/cache` via `actions/cache`
+- Add separate `pnpm build` step before e2e; cache `.next/cache` via `actions/cache` (job-level `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: "1"` already set — build step inherits it; do not rely on Playwright `webServer` inline build after this change)
 - Change e2e command from `pnpm test:e2e` to `pnpm test:e2e:belt`
 - Set `E2E_WORKERS: "4"` on e2e job
 - Job name stays `e2e`
@@ -312,27 +312,27 @@ Close signal gaps for all demoted e2e paths before file deletion. Follow L-04 pe
 
 #### 6. Cycle audio preference UI smoke
 
-**File**: extend existing preference test file or new co-located test beside toggle component
+**File**: `src/app/_components/cycle-audio-preference-control.test.tsx` (new, co-located beside `cycle-audio-preference-control.tsx`)
 
 **Intent**: Cover demoted `quiet-cycle-audio.spec.ts` and `guest-quiet-cycle-audio.spec.ts` UI delta.
 
-**Contract**: Assert `aria-pressed` toggle state changes on click; hook/lib coverage already exists — this is UI-only gap.
+**Contract**: Render `CycleAudioPreferenceControl`; assert `aria-pressed` on mode buttons changes on click; hook/lib coverage already exists — this is UI-only gap.
 
 #### 7. Guest hook catchUp parity
 
-**File**: `src/hooks/use-pomodoro-cycle-guest.test.tsx` (new, minimal)
+**File**: `src/hooks/use-pomodoro-cycle-guest.test.tsx` (extend existing recovery file)
 
 **Intent**: Parity with auth hook catchUp tests for demoted `guest-background-tab-return.spec.ts`.
 
-**Contract**: At minimum: hidden-tab expiry + catchUp recalc test mirroring `use-pomodoro-cycle.test.tsx:2517-2635` pattern for guest hook.
+**Contract**: Add `describe("usePomodoroCycle guest catchUp")` with at minimum hidden-tab expiry + visibility recalc tests mirroring `use-pomodoro-cycle.test.tsx:2517-2635`; do not replace existing guest recovery tests.
 
 #### 8. Guest merge cycle resume hook test
 
-**File**: extend `src/hooks/use-pomodoro-cycle.test.tsx` or guest-specific hook test
+**File**: `src/hooks/use-pomodoro-cycle.test.tsx` (extend existing hook suite)
 
 **Intent**: Oracle for demoted `guest-merge-cycle-on-sign-in.spec.ts` — post-sign-in active cycle resumes.
 
-**Contract**: One test: guest RUNNING cycle → sign-in merge → hook reports running state from `getActive`; complements `guest.test.ts:218-255` integration matrix.
+**Contract**: One test in auth hook suite: after merge/sign-in, `getActive` returns imported guest RUNNING cycle and hook reports `state === "running"`; complements `guest.test.ts:218-255` integration matrix (server-side closure/remap).
 
 #### 9. Extend partial existing tests where noted
 
@@ -348,8 +348,10 @@ Close signal gaps for all demoted e2e paths before file deletion. Follow L-04 pe
 - `pnpm exec vitest run src/app/_components/first-run-overlay.test.tsx` passes
 - `pnpm exec vitest run src/app/_components/check-in-overlay.test.tsx` passes
 - `pnpm exec vitest run src/app/_components/wind-down-overlay.test.tsx` passes
-- `pnpm exec vitest run src/hooks/use-pomodoro-cycle-guest.test.tsx` passes
+- `pnpm exec vitest run src/hooks/use-pomodoro-cycle-guest.test.tsx` passes (catchUp describe added)
 - Extended `task-list.test.tsx` DnD smoke passes
+- `pnpm exec vitest run src/app/_components/cycle-audio-preference-control.test.tsx` passes
+- Guest merge cycle resume hook test in `use-pomodoro-cycle.test.tsx` passes
 
 #### Manual Verification:
 
@@ -483,13 +485,13 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 #### Automated
 
-- [ ] 1.1 `pnpm check` passes after rebase
-- [ ] 1.2 Belt merge gate section present in `context/foundation/test-plan.md`
+- [x] 1.1 `pnpm check` passes after rebase
+- [x] 1.2 Belt merge gate section present in `context/foundation/test-plan.md`
 
 #### Manual
 
-- [ ] 1.3 Belt table matches 12 tests / 10 files contract
-- [ ] 1.4 No unresolved rebase conflict markers
+- [x] 1.3 Belt table matches 12 tests / 10 files contract
+- [x] 1.4 No unresolved rebase conflict markers
 
 ### Phase 2: Belt Selection + Auth Pool
 
@@ -497,7 +499,7 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 - [ ] 2.1 `pnpm check` passes
 - [ ] 2.2 `pnpm exec playwright test --grep-invert @skip-belt --list` reports 12 tests
-- [ ] 2.3 `set CI=true && pnpm test:e2e:belt` passes
+- [ ] 2.3 `set CI=true && pnpm test:e2e:belt` passes (or wind-down belt tests timeout pre-seed — defer green re-check to Phase 3.2)
 
 #### Manual
 
@@ -527,13 +529,15 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 - [ ] 4.4 `first-run-overlay.test.tsx` passes
 - [ ] 4.5 `check-in-overlay.test.tsx` passes
 - [ ] 4.6 `wind-down-overlay.test.tsx` passes
-- [ ] 4.7 `use-pomodoro-cycle-guest.test.tsx` passes
+- [ ] 4.7 `use-pomodoro-cycle-guest.test.tsx` catchUp parity passes
 - [ ] 4.8 Task-list DnD smoke passes
+- [ ] 4.9 `cycle-audio-preference-control.test.tsx` UI smoke passes
+- [ ] 4.10 Guest merge cycle resume hook test passes
 
 #### Manual
 
-- [ ] 4.9 Vitest backfill matrix complete per research.md
-- [ ] 4.10 No demoted e2e files deleted yet
+- [ ] 4.11 Vitest backfill matrix complete per research.md
+- [ ] 4.12 No demoted e2e files deleted yet
 
 ### Phase 5: Demotion + Docs
 
