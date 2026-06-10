@@ -406,8 +406,8 @@ No schema migration — kickoff `energy` is input-only. Existing kickoff clients
 
 #### Automated
 
-- [x] 2.1 `pnpm check` passes
-- [x] 2.2 `pnpm typecheck` passes
+- [x] 2.1 `pnpm check` passes — 510dd96
+- [x] 2.2 `pnpm typecheck` passes — 510dd96
 
 #### Manual
 
