@@ -433,9 +433,9 @@ No schema migration — kickoff `energy` is input-only. Existing kickoff clients
 
 #### Automated
 
-- [ ] 4.1 `pnpm check` passes
-- [ ] 4.2 `pnpm test` passes
-- [ ] 4.3 `set CI=true && pnpm test:e2e e2e/session-kickoff.spec.ts` passes
+- [x] 4.1 `pnpm check` passes — 6080b0d
+- [x] 4.2 `pnpm test` passes — 6080b0d
+- [x] 4.3 `set CI=true && pnpm test:e2e e2e/session-kickoff.spec.ts` passes — 6080b0d
 
 #### Manual
 
