@@ -29,6 +29,7 @@ import {
 	setLastDuration,
 } from "~/lib/duration-storage";
 import type { OnboardingScope } from "~/lib/onboarding/types";
+import type { RationaleBreakdown } from "~/lib/scoring/rationale-breakdown";
 import {
 	buildWindDownRationale,
 	shouldShowWindDownNudge,
@@ -74,6 +75,7 @@ export type SuggestionResult = {
 	weight: 1 | 2 | 3;
 	rationaleKey: string;
 	rationale: string;
+	breakdown: RationaleBreakdown;
 };
 
 export type PendingSuggestion =
@@ -91,6 +93,7 @@ export type KickoffSuggestionResult = {
 	weight: 1 | 2 | 3;
 	rationaleKey: string;
 	rationale: string;
+	breakdown: RationaleBreakdown;
 };
 
 export type PendingKickoffSuggestion =
@@ -793,6 +796,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						weight: result.weight,
 						rationaleKey: result.rationaleKey,
 						rationale: result.rationale,
+						breakdown: result.breakdown,
 					},
 				});
 				setSuggestedTaskId(result.taskId);

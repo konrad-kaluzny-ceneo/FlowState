@@ -20,7 +20,9 @@ export function getFactorContributions(
 
 	const interruptionContribution =
 		context.interruptionCount > 0
-			? base * Math.max(-0.3, -context.interruptionCount * 0.1)
+			? task.workType === "REACTIVE"
+				? base * Math.min(context.interruptionCount, 4) * 0.04
+				: base * Math.max(-0.3, -context.interruptionCount * 0.1)
 			: 0;
 
 	const lateDayContribution =

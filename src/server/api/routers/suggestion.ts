@@ -6,6 +6,7 @@ import {
 	formatKickoffRationale,
 	formatTaskRationale,
 } from "~/lib/scoring/dominant-factor";
+import { buildRationaleBreakdown } from "~/lib/scoring/rationale-breakdown";
 import { pickBestTask, type ScoringContext } from "~/lib/scoring/score-task";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import type { db as dbClient } from "~/server/db/index";
@@ -187,6 +188,11 @@ export const suggestionRouter = createTRPCRouter({
 					scoringContext,
 				);
 
+				const breakdown = buildRationaleBreakdown(winner, scoringContext, {
+					headline: rationale,
+					headlineKey: rationaleKey,
+				});
+
 				return {
 					cycleId: cycle.id,
 					taskId: task.id,
@@ -195,6 +201,7 @@ export const suggestionRouter = createTRPCRouter({
 					weight: toTaskWeight(task.weight),
 					rationaleKey,
 					rationale,
+					breakdown,
 				};
 			}
 
@@ -255,6 +262,11 @@ export const suggestionRouter = createTRPCRouter({
 				scoringContext,
 			);
 
+			const breakdown = buildRationaleBreakdown(winner, scoringContext, {
+				headline: rationale,
+				headlineKey: rationaleKey,
+			});
+
 			return {
 				sessionId: session.id,
 				taskId: task.id,
@@ -263,6 +275,7 @@ export const suggestionRouter = createTRPCRouter({
 				weight: toTaskWeight(task.weight),
 				rationaleKey,
 				rationale,
+				breakdown,
 			};
 		}),
 

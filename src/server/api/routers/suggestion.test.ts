@@ -323,6 +323,24 @@ const { db } = await import("~/server/db/index");
 const createCaller = createCallerFactory(suggestionRouter);
 const USER_ID = "suggestion-user";
 
+function expectBreakdownShape(
+	result: {
+		rationale: string;
+		breakdown: {
+			headline: string;
+			dominant: Array<{ key: string; copy: string }>;
+			alsoConsidered: string[];
+		};
+	} | null,
+) {
+	expect(result).not.toBeNull();
+	if (result == null) return;
+	expect(result.breakdown.headline).toBe(result.rationale);
+	expect(result.breakdown.dominant.length).toBeGreaterThanOrEqual(0);
+	expect(result.breakdown.dominant.length).toBeLessThanOrEqual(3);
+	expect(result.breakdown.alsoConsidered.length).toBeLessThanOrEqual(4);
+}
+
 function caller(userId: string = USER_ID) {
 	return createCaller({
 		db: db as never,
@@ -407,6 +425,11 @@ describe("suggestion router", () => {
 			workType: "DEEP_WORK",
 		});
 		expect(result?.rationale).toBeTruthy();
+		expectBreakdownShape(result);
+		expect(result?.rationaleKey).toBe("energy_deep");
+		if (result?.breakdown.dominant[0] != null) {
+			expect(result.breakdown.dominant[0].copy).not.toBe(result.rationale);
+		}
 	});
 
 	it("next returns null when no active tasks", async () => {
@@ -587,6 +610,7 @@ describe("suggestion router", () => {
 			rationaleKey: "kickoff_fresh",
 		});
 		expect(result).not.toHaveProperty("cycleId");
+		expectBreakdownShape(result);
 	});
 
 	it("kickoff next rejects missing energy", async () => {
@@ -650,6 +674,7 @@ describe("suggestion router", () => {
 		});
 
 		expect(result?.rationaleKey).toBe("kickoff_resume");
+		expectBreakdownShape(result);
 	});
 
 	it("kickoff recordDecision creates row without cycleId", async () => {
@@ -768,5 +793,49 @@ describe("suggestion router", () => {
 			workType: "REACTIVE",
 			rationaleKey: "override_preference",
 		});
+		expectBreakdownShape(result);
+	});
+
+	it("post-check-in next surfaces Interruptions in breakdown when interruption count is high", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 4, state: "ACTIVE" },
+		];
+		cycles = [
+			{
+				id: 10,
+				sessionId: 1,
+				userId: USER_ID,
+				kind: "WORK",
+				state: "COMPLETED",
+			},
+		];
+		checkIns = [{ cycleId: 10, userId: USER_ID, energy: "FADING" }];
+		tasks = [
+			{
+				id: 1,
+				title: "Inbox",
+				status: "active",
+				userId: USER_ID,
+				workType: "REACTIVE",
+				weight: 3,
+				sortOrder: 0,
+				createdAt: new Date("2026-01-01"),
+			},
+		];
+
+		const result = await caller().next({
+			context: "post_check_in",
+			cycleId: 10,
+			localHour: 10,
+		});
+
+		expectBreakdownShape(result);
+		expect(result?.rationaleKey).toBe("energy_light");
+		const dominantKeys =
+			result?.breakdown.dominant.map((item) => item.key) ?? [];
+		const chips = result?.breakdown.alsoConsidered ?? [];
+		const hasInterruptions =
+			dominantKeys.includes("interruptions") || chips.includes("Interruptions");
+		expect(hasInterruptions).toBe(true);
 	});
 });

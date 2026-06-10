@@ -349,14 +349,14 @@ No schema migration. API response is additive (`breakdown` field). Older clients
 
 #### Automated
 
-- [ ] 2.1 Router tests pass: `pnpm exec vitest run src/server/api/routers/suggestion.test.ts`
-- [ ] 2.2 Full test suite passes: `pnpm test`
-- [ ] 2.3 Lint/format passes: `pnpm check`
-- [ ] 2.4 Typecheck passes: `pnpm typecheck`
+- [x] 2.1 Router tests pass: `pnpm exec vitest run src/server/api/routers/suggestion.test.ts` — 282b4e7
+- [x] 2.2 Full test suite passes: `pnpm test` — 282b4e7
+- [x] 2.3 Lint/format passes: `pnpm check` — 282b4e7
+- [x] 2.4 Typecheck passes: `pnpm typecheck` — 282b4e7
 
 #### Manual
 
-- [ ] 2.5 N/A — no UI yet (confirm proceed)
+- [x] 2.5 N/A — no UI yet (confirm proceed) — 282b4e7
 
 ### Phase 3: Expander UI + component tests
 
