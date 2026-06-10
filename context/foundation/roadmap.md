@@ -770,7 +770,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** Enter key — newline vs save (document in implement plan).
 - **Risk:** Multi-line titles in list display may need matching wrap/read mode when not editing.
-- **Status:** done — shipped via [PR #85](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/85) (2026-06-10) in change `fix-title-multiline-and-cycle-optimistic`.
+- **Status:** done — archived 2026-06-10 → `context/archive/2026-06-09-fix-title-multiline-and-cycle-optimistic/` ([PR #85](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/85)).
 
 ### B-03: Cycle start / interrupt not optimistic
 
@@ -784,7 +784,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** Full S-27 wedge optimistic scope (check-in, suggestion accept) vs fix Start/Interrupt only in B-03 — owner: `/10x-plan`. Block: no.
 - **Risk:** Optimistic cycle state diverges on double-submit or server rejection; guest path already local-first — parity testing required.
-- **Status:** done — shipped via [PR #85](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/85) + [PR #86](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/86) (2026-06-10) in change `fix-title-multiline-and-cycle-optimistic`.
+- **Status:** done — archived 2026-06-10 → `context/archive/2026-06-09-fix-title-multiline-and-cycle-optimistic/` ([PR #85](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/85), [PR #86](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/86)).
 
 ### B-04: Cycle Complete overlay flashes after check-in
 
@@ -872,8 +872,8 @@ Items tagged `needs-research` are non-trivial — they require external research
 
 ## Done
 
-- **B-03: logged-in user clicking Start Cycle or Interrupt sees the timer panel update within 200ms — running countdown on start, idle/ready on interrupt — without waiting for sessions.getOrCreateActive / cycles.create / cycles.interrupt to complete; server sync runs async with rollback on failure.** — Shipped 2026-06-10 → change `fix-title-multiline-and-cycle-optimistic` ([PR #85](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/85), [PR #86](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/86)). Lesson: await server cycle id when create is still pending before check-in mutations; E2E uses `waitForCycleCreateSettled` not latency assertions.
-- **B-02: user editing a task title sees a multi-line text control that wraps long names across several lines so the full title is readable and editable — not a single-line input that clips overflow.** — Shipped 2026-06-10 → change `fix-title-multiline-and-cycle-optimistic` ([PR #85](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/85)). Lesson: co-locate textarea smoke test in `task-list.test.tsx` when edit control type changes.
+- **B-03: logged-in user clicking Start Cycle or Interrupt sees the timer panel update within 200ms — running countdown on start, idle/ready on interrupt — without waiting for sessions.getOrCreateActive / cycles.create / cycles.interrupt to complete; server sync runs async with rollback on failure.** — Archived 2026-06-10 → `context/archive/2026-06-09-fix-title-multiline-and-cycle-optimistic/` ([PR #85](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/85), [PR #86](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/86)). Lesson: await server cycle id when create is still pending before check-in mutations; E2E uses `waitForCycleCreateSettled` not latency assertions.
+- **B-02: user editing a task title sees a multi-line text control that wraps long names across several lines so the full title is readable and editable — not a single-line input that clips overflow.** — Archived 2026-06-10 → `context/archive/2026-06-09-fix-title-multiline-and-cycle-optimistic/` ([PR #85](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/85)). Lesson: co-locate textarea smoke test in `task-list.test.tsx` when edit control type changes.
 - **B-04: after submitting energy at cycle end, user never sees the stale Cycle Complete! modal again — transition proceeds immediately to break start, suggestion loading, or wind-down without a multi-second freeze on the old overlay.** — Archived 2026-06-09 → `context/archive/2026-06-09-fix-cycle-complete-flash-after-checkin/`. Lesson: defer `awaitingCheckIn` clear until break `running` observable; gate overlay mount with `isPostCheckInTransitioning`.
 - **S-26: user drag-reorders active tasks in the task list; order persists across refresh and guest merge (`sortOrder` on Task); post-check-in and kickoff suggestions use manual order as the deterministic tie-breaker when scorer scores tie — not as the primary ranking signal.** — Archived 2026-06-09 → `context/archive/2026-06-09-task-manual-priority-order/`. Lesson: mirror S-09 optimistic rollback for reorder; dnd-kit drag handle + `onSettled` cache invalidate keeps list and suggestion paths consistent.
 - **B-01: user can click Normal, Soft, or Muted on the timer panel Cycle end audio control and see the selection update immediately; preference persists across refresh (localStorage for guests, server profile when logged in); cycle-end chime respects the chosen mode.** — Archived 2026-06-09 → `context/archive/2026-06-08-fix-cycle-audio-toggle/`. Lesson: one-time server-sync guard per auth scope prevents suggestion-fetch re-entry from overwriting optimistic toggles.
