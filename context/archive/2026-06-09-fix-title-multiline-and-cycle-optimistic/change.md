@@ -1,9 +1,10 @@
 ---
 change_id: fix-title-multiline-and-cycle-optimistic
 title: Fix task title multiline edit and optimistic cycle start/interrupt
-status: impl_reviewed
+status: archived
+created: 2026-06-09
 updated: 2026-06-10
-archived_at: null
+archived_at: 2026-06-10T16:02:17Z
 ---
 
 ## Notes
