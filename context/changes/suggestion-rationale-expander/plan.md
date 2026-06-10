@@ -362,10 +362,10 @@ No schema migration. API response is additive (`breakdown` field). Older clients
 
 #### Automated
 
-- [x] 3.1 Component tests pass: `pnpm exec vitest run src/app/_components/task-suggestion-card.test.tsx`
-- [x] 3.2 Full test suite passes: `pnpm test`
-- [x] 3.3 Lint/format passes: `pnpm check`
-- [x] 3.4 Typecheck passes: `pnpm typecheck`
+- [x] 3.1 Component tests pass: `pnpm exec vitest run src/app/_components/task-suggestion-card.test.tsx` — 3faea07
+- [x] 3.2 Full test suite passes: `pnpm test` — 3faea07
+- [x] 3.3 Lint/format passes: `pnpm check` — 3faea07
+- [x] 3.4 Typecheck passes: `pnpm typecheck` — 3faea07
 
 #### Manual
 
@@ -376,10 +376,10 @@ No schema migration. API response is additive (`breakdown` field). Older clients
 
 #### Automated
 
-- [ ] 4.1 E2E passes: `set CI=true && pnpm test:e2e e2e/task-suggestion.spec.ts`
-- [ ] 4.2 Full test suite passes: `pnpm test`
-- [ ] 4.3 Lint/format passes: `pnpm check`
-- [ ] 4.4 Typecheck passes: `pnpm typecheck`
+- [x] 4.1 E2E passes: `set CI=true && pnpm test:e2e e2e/task-suggestion.spec.ts` — da9e31f
+- [x] 4.2 Full test suite passes: `pnpm test` — da9e31f
+- [x] 4.3 Lint/format passes: `pnpm check` — da9e31f
+- [x] 4.4 Typecheck passes: `pnpm typecheck` — da9e31f
 
 #### Manual
 

@@ -107,6 +107,58 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		).toBeVisible();
 	});
 
+	test("expands Why this? breakdown when secondary factors exist", async ({
+		page,
+	}) => {
+		test.setTimeout(120_000);
+
+		const ts = Date.now();
+		const deepTask = `E2E Expand Deep ${ts}`;
+		const reactiveTask = `E2E Expand Reactive ${ts}`;
+
+		await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
+		await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
+
+		const deepRow = page
+			.getByRole("listitem")
+			.filter({ hasText: deepTask })
+			.first();
+
+		// Seed lastOverrideWorkType=DEEP_WORK via FADING check-in + override to deep.
+		await focusTask(page, reactiveTask);
+		await setShortBreakDurationSec(page, 1);
+		await setWorkDurationSec(page, 1);
+		await clickStartCycle(page);
+		await advanceClockThroughFastWork(page);
+		let suggestionResponse = waitForSuggestionNext(page);
+		await completeWorkCycleWithCheckIn(page, "fading");
+		await suggestionResponse;
+		await expect(page.getByTestId("task-suggestion-card")).toBeVisible();
+		await deepRow.getByRole("button", { name: "Focus" }).click();
+		await expect(page.getByTestId("suggestion-override-ack")).toBeVisible();
+
+		await advanceClockThroughFastBreak(page);
+		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
+			timeout: 15_000,
+		});
+		await page.getByTestId("break-continue-suggested-btn").click();
+		await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
+
+		await focusTask(page, deepTask);
+		await clickStartCycle(page);
+		await advanceClockThroughFastWork(page);
+		suggestionResponse = waitForSuggestionNext(page);
+		await completeWorkCycleWithCheckIn(page, "focused");
+		await suggestionResponse;
+
+		await expectSuggestionVisible(page, { title: deepTask });
+		await expect(page.getByTestId("suggestion-rationale-toggle")).toBeVisible();
+		await page.getByTestId("suggestion-rationale-toggle").click();
+		await expect(
+			page.getByTestId("suggestion-rationale-expander"),
+		).toBeVisible();
+	});
+
 	test("override path clears suggestion highlight when focusing another task", async ({
 		page,
 	}) => {
