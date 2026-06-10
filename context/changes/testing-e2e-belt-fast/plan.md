@@ -516,8 +516,8 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 #### Manual
 
-- [ ] 3.4 CI workflow has build cache, belt command, E2E_WORKERS=4
-- [ ] 3.5 Wind-down belt tests use seed-scenario not UI loops
+- [x] 3.4 CI workflow has build cache, belt command, E2E_WORKERS=4 ? d976c71
+- [x] 3.5 Wind-down belt tests use seed-scenario not UI loops ? d976c71
 
 ### Phase 4: Vitest Backfill
 
