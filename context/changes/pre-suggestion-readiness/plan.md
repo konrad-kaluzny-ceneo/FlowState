@@ -421,9 +421,9 @@ No schema migration — kickoff `energy` is input-only. Existing kickoff clients
 
 #### Automated
 
-- [ ] 3.1 `pnpm check` passes
-- [ ] 3.2 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` passes (readiness cases)
-- [ ] 3.3 `pnpm exec vitest run src/app/_components/energy-selector.test.tsx src/app/_components/kickoff-readiness-overlay.test.tsx` passes
+- [x] 3.1 `pnpm check` passes
+- [x] 3.2 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` passes (readiness cases)
+- [x] 3.3 `pnpm exec vitest run src/app/_components/energy-selector.test.tsx src/app/_components/kickoff-readiness-overlay.test.tsx` passes
 
 #### Manual
 

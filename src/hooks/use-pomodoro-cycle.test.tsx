@@ -2153,6 +2153,210 @@ describe("usePomodoroCycle", () => {
 			}
 		});
 
+		describe("kickoff readiness gate", () => {
+			it("sets awaitingKickoffReadiness without calling suggestion.next on kickoffEligible", async () => {
+				taskListQuery.mockResolvedValue(activeTaskList);
+
+				const { result } = renderHook(() => usePomodoroCycle(), {
+					wrapper: createWrapper(),
+				});
+
+				await waitFor(() => {
+					expect(result.current.awaitingKickoffReadiness).toBe(true);
+				});
+
+				expect(suggestionNextMutate).not.toHaveBeenCalledWith(
+					expect.objectContaining({ context: "kickoff" }),
+				);
+			});
+
+			it("submitKickoffReadiness forwards declared energy to kickoff mutate", async () => {
+				taskListQuery.mockResolvedValue(activeTaskList);
+				suggestionNextMutate.mockImplementation(async (input) => {
+					if (input.context === "kickoff") {
+						return kickoffSuggestion;
+					}
+					return null;
+				});
+
+				const { result } = renderHook(() => usePomodoroCycle(), {
+					wrapper: createWrapper(),
+				});
+
+				await waitFor(() => {
+					expect(result.current.awaitingKickoffReadiness).toBe(true);
+				});
+
+				suggestionNextMutate.mockClear();
+
+				act(() => {
+					result.current.submitKickoffReadiness("FOCUSED");
+				});
+
+				await waitFor(() => {
+					expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+				});
+
+				expect(suggestionNextMutate).toHaveBeenCalledWith(
+					expect.objectContaining({
+						context: "kickoff",
+						sessionId: 1,
+						energy: "FOCUSED",
+					}),
+				);
+			});
+
+			it("skipKickoffReadiness forwards STEADY energy without creating check-in", async () => {
+				taskListQuery.mockResolvedValue(activeTaskList);
+				suggestionNextMutate.mockImplementation(async (input) => {
+					if (input.context === "kickoff") {
+						return kickoffSuggestion;
+					}
+					return null;
+				});
+
+				const { result } = renderHook(() => usePomodoroCycle(), {
+					wrapper: createWrapper(),
+				});
+
+				await waitFor(() => {
+					expect(result.current.awaitingKickoffReadiness).toBe(true);
+				});
+
+				suggestionNextMutate.mockClear();
+				createCheckInMutate.mockClear();
+
+				act(() => {
+					result.current.skipKickoffReadiness();
+				});
+
+				await waitFor(() => {
+					expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+				});
+
+				expect(suggestionNextMutate).toHaveBeenCalledWith(
+					expect.objectContaining({
+						context: "kickoff",
+						sessionId: 1,
+						energy: "STEADY",
+					}),
+				);
+				expect(createCheckInMutate).not.toHaveBeenCalled();
+			});
+
+			it("clears awaitingKickoffReadiness within 200ms before kickoff mutate resolves (L-04)", async () => {
+				taskListQuery.mockResolvedValue(activeTaskList);
+				let releaseKickoffMutate!: (value: typeof kickoffSuggestion) => void;
+				const kickoffMutateBlocked = new Promise<typeof kickoffSuggestion>(
+					(resolve) => {
+						releaseKickoffMutate = resolve;
+					},
+				);
+				suggestionNextMutate.mockImplementation(async (input) => {
+					if (input.context === "kickoff") {
+						return kickoffMutateBlocked;
+					}
+					return null;
+				});
+
+				const { result } = renderHook(() => usePomodoroCycle(), {
+					wrapper: createWrapper(),
+				});
+
+				await waitFor(() => {
+					expect(result.current.awaitingKickoffReadiness).toBe(true);
+				});
+
+				vi.useFakeTimers();
+				try {
+					const startedAt = performance.now();
+					act(() => {
+						result.current.submitKickoffReadiness("FOCUSED");
+					});
+					const elapsedMs = performance.now() - startedAt;
+
+					expect(elapsedMs).toBeLessThan(200);
+					expect(result.current.awaitingKickoffReadiness).toBe(false);
+					expect(result.current.pendingKickoffSuggestion.status).toBe(
+						"loading",
+					);
+
+					await act(async () => {
+						releaseKickoffMutate(kickoffSuggestion);
+						await kickoffMutateBlocked;
+					});
+
+					expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+				} finally {
+					vi.useRealTimers();
+				}
+			});
+
+			it("clears awaitingKickoffReadiness within 200ms on skip before mutate resolves (L-04)", async () => {
+				taskListQuery.mockResolvedValue(activeTaskList);
+				let releaseKickoffMutate!: (value: typeof kickoffSuggestion) => void;
+				const kickoffMutateBlocked = new Promise<typeof kickoffSuggestion>(
+					(resolve) => {
+						releaseKickoffMutate = resolve;
+					},
+				);
+				suggestionNextMutate.mockImplementation(async (input) => {
+					if (input.context === "kickoff") {
+						return kickoffMutateBlocked;
+					}
+					return null;
+				});
+
+				const { result } = renderHook(() => usePomodoroCycle(), {
+					wrapper: createWrapper(),
+				});
+
+				await waitFor(() => {
+					expect(result.current.awaitingKickoffReadiness).toBe(true);
+				});
+
+				vi.useFakeTimers();
+				try {
+					const startedAt = performance.now();
+					act(() => {
+						result.current.skipKickoffReadiness();
+					});
+					const elapsedMs = performance.now() - startedAt;
+
+					expect(elapsedMs).toBeLessThan(200);
+					expect(result.current.awaitingKickoffReadiness).toBe(false);
+				} finally {
+					vi.useRealTimers();
+					await act(async () => {
+						releaseKickoffMutate(kickoffSuggestion);
+						await kickoffMutateBlocked;
+					});
+				}
+			});
+
+			it("does not open readiness while awaitingCheckIn", async () => {
+				taskListQuery.mockResolvedValue(activeTaskList);
+				activeCycleData = makeActiveCycle({
+					id: 80,
+					configuredDurationSec: 300,
+					taskId: 4,
+					task: { id: 4, title: "Ship" },
+				});
+
+				const { result } = renderHook(() => usePomodoroCycle(), {
+					wrapper: createWrapper(),
+				});
+
+				await driveWorkCycleToCheckIn(result);
+
+				expect(result.current.awaitingCheckIn).toBe(true);
+				expect(result.current.awaitingKickoffReadiness).toBe(false);
+				expect(suggestionNextMutate).not.toHaveBeenCalledWith(
+					expect.objectContaining({ context: "kickoff" }),
+				);
+			});
+		});
+
 		it("keeps kickoff and post-check-in suggestion states independent", async () => {
 			taskListQuery.mockResolvedValue(activeTaskList);
 			suggestionNextMutate.mockImplementation(async (input) => {
