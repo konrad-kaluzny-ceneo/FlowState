@@ -73,7 +73,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		await expect(page.getByTestId("task-suggestion-card")).toBeHidden();
 	});
 
-	test("interruption path triggers wind-down with interruptions rationale", async ({
+	test("interruption path triggers wind-down with interruptions rationale @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(90_000);
@@ -96,7 +96,9 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		});
 	});
 
-	test("keep going proceeds to break and suggestion", async ({ page }) => {
+	test("keep going proceeds to break and suggestion @skip-belt", async ({
+		page,
+	}) => {
 		test.setTimeout(180_000);
 
 		const ts = Date.now();
@@ -161,7 +163,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		await expect(page.getByTestId("task-list")).toBeVisible();
 	});
 
-	test("keep going suppresses wind-down until next check-in", async ({
+	test("keep going suppresses wind-down until next check-in @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(240_000);
@@ -198,7 +200,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		await expect(page.getByText("Short Break")).toBeVisible();
 	});
 
-	test("steady or focused energy with fatigue skips wind-down", async ({
+	test("steady or focused energy with fatigue skips wind-down @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(180_000);
@@ -233,7 +235,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		});
 	});
 
-	test("fading on first cycle without fatigue or interruptions skips wind-down", async ({
+	test("fading on first cycle without fatigue or interruptions skips wind-down @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);

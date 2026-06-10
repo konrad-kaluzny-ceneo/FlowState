@@ -152,7 +152,7 @@ async function dismissKickoffSuggestionIfVisible(page: Page) {
 }
 
 test.describe("Task reorder (S-26)", () => {
-	test("authenticated drag handle reorders active tasks and persists after reload", async ({
+	test("authenticated drag handle reorders active tasks and persists after reload @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(120_000);
@@ -195,7 +195,7 @@ test.describe("Task reorder (S-26)", () => {
 			.toEqual([taskB, taskA, taskC]);
 	});
 
-	test("guest merge preserves manual order on sign-in", async ({
+	test("guest merge preserves manual order on sign-in @skip-belt", async ({
 		page,
 		context,
 		request,

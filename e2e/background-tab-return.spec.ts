@@ -19,7 +19,7 @@ test.describe("Background tab return catch-up (S-22)", () => {
 		await ensureIdleCycle(page);
 	});
 
-	test("auth hidden work expiry shows catch-up then check-in wedge", async ({
+	test("auth hidden work expiry shows catch-up then check-in wedge @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);

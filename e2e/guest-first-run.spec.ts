@@ -24,7 +24,7 @@ test.describe("Guest first-run onboarding (S-11)", () => {
 		await page.reload();
 	});
 
-	test("shows guest-specific first-run copy", async ({ page }) => {
+	test("shows guest-specific first-run copy @skip-belt", async ({ page }) => {
 		test.setTimeout(60_000);
 
 		await expect(page.getByTestId("guest-banner")).toBeVisible();
@@ -40,7 +40,7 @@ test.describe("Guest first-run onboarding (S-11)", () => {
 		await expect(page.getByText(/Your wedge workflow/i)).toBeHidden();
 	});
 
-	test("dismiss persists on reload", async ({ page }) => {
+	test("dismiss persists on reload @skip-belt", async ({ page }) => {
 		test.setTimeout(60_000);
 
 		await expect(page.getByTestId("first-run-overlay")).toBeVisible();
@@ -60,7 +60,9 @@ test.describe("Guest first-run onboarding (S-11)", () => {
 		await expect(page.getByTestId("first-run-overlay")).toBeHidden();
 	});
 
-	test("guest work cycle has no wedge coach lines", async ({ page }) => {
+	test("guest work cycle has no wedge coach lines @skip-belt", async ({
+		page,
+	}) => {
 		test.setTimeout(60_000);
 
 		await dismissFirstRunIfVisible(page);

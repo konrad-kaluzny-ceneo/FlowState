@@ -6,7 +6,10 @@
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
-import { ensureIdleCycle } from "./helpers/idle-cycle";
+import {
+	dismissKickoffReadinessIfVisible,
+	ensureIdleCycle,
+} from "./helpers/idle-cycle";
 import {
 	addTasks,
 	advanceClockThroughFastWork,
@@ -62,6 +65,7 @@ test.describe("Seed exemplar — Risk #7 check-in gate", () => {
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
 			timeout: 15_000,
 		});
+		await dismissKickoffReadinessIfVisible(page);
 		await page.getByRole("button", { name: "Continue later" }).click();
 
 		await expect(page.getByText("Short Break")).toBeHidden();

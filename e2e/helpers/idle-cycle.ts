@@ -3,9 +3,22 @@ import { expect, type Page } from "@playwright/test";
 import { completeCheckIn } from "./check-in";
 import { dismissFirstRunIfVisible } from "./onboarding";
 
+export async function dismissKickoffReadinessIfVisible(page: Page) {
+	const overlay = page.getByTestId("kickoff-readiness-overlay");
+	if (await overlay.isVisible().catch(() => false)) {
+		await page.getByTestId("kickoff-readiness-skip-btn").click();
+		await expect(overlay).toBeHidden({ timeout: 5_000 });
+	}
+}
+
 export async function ensureIdleCycle(page: Page) {
 	await expect(async () => {
 		await dismissFirstRunIfVisible(page);
+
+		if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
+			await page.getByTestId("kickoff-readiness-skip-btn").click();
+			throw new Error("kickoff readiness dismissed — re-check idle");
+		}
 
 		if (await page.getByTestId("wind-down-overlay").isVisible()) {
 			await page.getByTestId("wind-down-keep-going-btn").click();

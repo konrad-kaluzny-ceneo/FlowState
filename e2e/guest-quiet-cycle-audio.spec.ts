@@ -39,7 +39,7 @@ test.describe("Quiet cycle audio — guest muted (S-20)", () => {
 		await setupGuestPage(page);
 	});
 
-	test("guest muted hidden work expiry shows catch-up and title pulse", async ({
+	test("guest muted hidden work expiry shows catch-up and title pulse @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -95,7 +95,7 @@ test.describe("Quiet cycle audio — guest live toggle (B-01)", () => {
 		await dismissFirstRunIfVisible(page);
 	});
 
-	test("guest live toggle updates aria-pressed for each mode (B-01)", async ({
+	test("guest live toggle updates aria-pressed for each mode (B-01) @skip-belt", async ({
 		page,
 	}) => {
 		const taskTitle = `Guest Live Audio Toggle ${Date.now()}`;

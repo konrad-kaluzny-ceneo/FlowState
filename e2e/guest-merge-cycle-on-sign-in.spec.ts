@@ -12,7 +12,7 @@ import { startFocusedWorkCycle } from "./helpers/work-cycle";
 const GUEST_STORAGE_KEY = "flowstate:guest-v1";
 
 test.describe("Guest merge cycle on sign-in (S-08 / Risk #5)", () => {
-	test("guest active work cycle resumes on account after sign-in", async ({
+	test("guest active work cycle resumes on account after sign-in @skip-belt", async ({
 		page,
 		context,
 		request,

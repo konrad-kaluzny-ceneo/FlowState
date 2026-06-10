@@ -63,7 +63,7 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 		).toBeVisible();
 	});
 
-	test("FOCUSED energy selects deep-work task on mixed pool", async ({
+	test("FOCUSED energy selects deep-work task on mixed pool @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -80,7 +80,7 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 		).toBeVisible();
 	});
 
-	test("accept path pre-focuses task and shows work-type duration chips", async ({
+	test("accept path pre-focuses task and shows work-type duration chips @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -103,7 +103,7 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 		);
 	});
 
-	test("duration chip tap stages work duration for the next start", async ({
+	test("duration chip tap stages work duration for the next start @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -127,7 +127,7 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 		await expect(page.getByTestId("timer-countdown")).toHaveText("45:00");
 	});
 
-	test("override path shows acknowledgement banner and clears suggestion highlight", async ({
+	test("override path shows acknowledgement banner and clears suggestion highlight @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);

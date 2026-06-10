@@ -41,7 +41,7 @@ async function resetAuthSessionForOnboarding(
 }
 
 test.describe("First-run onboarding (S-11 auth path)", () => {
-	test("first visit shows overlay, dismiss persists on reload", async ({
+	test("first visit shows overlay, dismiss persists on reload @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -72,7 +72,7 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await expect(page.getByTestId("first-run-overlay")).toBeHidden();
 	});
 
-	test("empty active list shows guidance and CTA focuses add input", async ({
+	test("empty active list shows guidance and CTA focuses add input @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -90,7 +90,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await expect(page.getByPlaceholder("Add a new task...")).toBeFocused();
 	});
 
-	test("check-in coach shows on first cycle only", async ({ page }) => {
+	test("check-in coach shows on first cycle only @skip-belt", async ({
+		page,
+	}) => {
 		test.setTimeout(90_000);
 
 		await page.goto("/");
@@ -139,7 +141,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		await completeCheckIn(page, "steady", { expectCoach: false });
 	});
 
-	test("suggestion coach shows on first ready card only", async ({ page }) => {
+	test("suggestion coach shows on first ready card only @skip-belt", async ({
+		page,
+	}) => {
 		test.setTimeout(120_000);
 
 		await page.goto("/");
@@ -201,7 +205,9 @@ test.describe("First-run onboarding (S-11 auth path)", () => {
 		});
 	});
 
-	test("accept path still works after first-run dismiss", async ({ page }) => {
+	test("accept path still works after first-run dismiss @skip-belt", async ({
+		page,
+	}) => {
 		test.setTimeout(90_000);
 
 		await page.goto("/");

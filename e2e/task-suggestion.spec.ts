@@ -62,7 +62,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		).toBeVisible();
 	});
 
-	test("accept path pre-focuses task and break-end continue starts idle timer", async ({
+	test("accept path pre-focuses task and break-end continue starts idle timer @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -107,7 +107,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		).toBeVisible();
 	});
 
-	test("expands Why this? breakdown when secondary factors exist", async ({
+	test("expands Why this? breakdown when secondary factors exist @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(120_000);
@@ -159,7 +159,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		).toBeVisible();
 	});
 
-	test("override path clears suggestion highlight when focusing another task", async ({
+	test("override path clears suggestion highlight when focusing another task @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);

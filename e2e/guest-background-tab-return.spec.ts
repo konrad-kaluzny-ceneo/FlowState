@@ -25,7 +25,7 @@ test.describe("Guest background tab return catch-up (S-22)", () => {
 		await dismissFirstRunIfVisible(page);
 	});
 
-	test("guest hidden work expiry shows catch-up without check-in gate", async ({
+	test("guest hidden work expiry shows catch-up without check-in gate @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);

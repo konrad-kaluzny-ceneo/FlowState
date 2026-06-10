@@ -2,6 +2,7 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 import { splitSecToMinSec } from "../../src/lib/duration-input";
 import { completeCheckIn } from "./check-in";
+import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
 
 /** Advance fake clock through a 1s work cycle (+ buffer for completion tick). */
 export const FAST_WORK_CLOCK_MS = 2500;
@@ -91,8 +92,11 @@ export async function startFocusedWorkCycle(
 	await waitForTaskCreateSettled(
 		page.getByRole("button", { name: "Add", exact: true }),
 	);
+	await dismissKickoffReadinessIfVisible(page);
 	await taskRow.getByRole("button", { name: "Focus" }).click();
-	await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
+	await expect(page.getByTestId("timer-panel-idle")).toBeVisible({
+		timeout: 15_000,
+	});
 	await setWorkDurationSec(page, durationSec);
 	await clickStartCycle(page);
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
@@ -152,6 +156,7 @@ export async function addTaskWithAttributes(
 	workType: TaskWorkTypeLabel,
 	weight: TaskWeightLabel,
 ) {
+	await dismissKickoffReadinessIfVisible(page);
 	const addForm = page.getByTestId("task-list").locator("form");
 	const detailsToggle = addForm.getByRole("button", { name: "+ Details" });
 	if (await detailsToggle.isVisible()) {
@@ -161,6 +166,7 @@ export async function addTaskWithAttributes(
 	await addForm.getByRole("button", { name: weight }).click();
 	await page.getByPlaceholder("Add a new task...").fill(title);
 	const addButton = addForm.getByRole("button", { name: "Add" });
+	await dismissKickoffReadinessIfVisible(page);
 	await addButton.click();
 	await expect(
 		page.getByRole("listitem").filter({ hasText: title }).first(),
@@ -169,12 +175,15 @@ export async function addTaskWithAttributes(
 }
 
 export async function focusTask(page: Page, taskTitle: string) {
+	await dismissKickoffReadinessIfVisible(page);
 	const taskRow = page
 		.getByRole("listitem")
 		.filter({ hasText: taskTitle })
 		.first();
 	await taskRow.getByRole("button", { name: "Focus" }).click();
-	await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
+	await expect(page.getByTestId("timer-panel-idle")).toBeVisible({
+		timeout: 15_000,
+	});
 }
 
 async function dismissWindDownIfVisible(page: Page) {
@@ -191,6 +200,7 @@ export async function completeWorkCycleWithCheckIn(
 	await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
 		timeout: 15_000,
 	});
+	await dismissKickoffReadinessIfVisible(page);
 	await page.getByRole("button", { name: "Continue later" }).click();
 	await expect(page.getByText("Short Break")).toBeHidden();
 	await completeCheckIn(page, energy);

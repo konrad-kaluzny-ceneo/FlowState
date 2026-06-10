@@ -19,6 +19,7 @@
 		"test": "vitest run",
 		"test:mutate": "stryker run",
 		"test:e2e": "playwright test",
+		"test:e2e:belt": "playwright test --grep-invert @skip-belt",
 		"test:watch": "vitest",
 		"typecheck": "tsc --noEmit",
 		"prepare": "lefthook install"

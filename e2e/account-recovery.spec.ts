@@ -7,7 +7,7 @@ import { expect, test } from "@playwright/test";
 import { createTestUser, postAuthWithRetry } from "./helpers/user";
 
 test.describe("Account recovery (S-07)", () => {
-	test("sign-in shows Forgot password link to forgot-password page", async ({
+	test("sign-in shows Forgot password link to forgot-password page @skip-belt", async ({
 		page,
 	}) => {
 		await page.goto("/auth/sign-in");
@@ -17,7 +17,7 @@ test.describe("Account recovery (S-07)", () => {
 		await expect(link).toHaveAttribute("href", "/auth/forgot-password");
 	});
 
-	test("forgot-password form shows generic success message after submit", async ({
+	test("forgot-password form shows generic success message after submit @skip-belt", async ({
 		page,
 	}) => {
 		await page.goto("/auth/forgot-password");

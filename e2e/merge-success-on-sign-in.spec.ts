@@ -12,7 +12,7 @@ import { createTestUser, signInAsUser } from "./helpers/user";
 import { addTask } from "./helpers/work-cycle";
 
 test.describe("Merge-success ordering on sign-in (FR-003c / S-11)", () => {
-	test("merge-success modal blocks first-run until dismissed", async ({
+	test("merge-success modal blocks first-run until dismissed @skip-belt", async ({
 		page,
 		context,
 		request,

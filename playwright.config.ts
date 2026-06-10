@@ -26,14 +26,20 @@ const webServerCommand = useProductionServer
 	? `${e2eBuildEnv}pnpm build && pnpm exec next start -p ${e2ePort}`
 	: `pnpm exec next dev --turbo -p ${e2ePort}`;
 
-const workerCount = process.env.E2E_WORKERS
-	? Number.parseInt(process.env.E2E_WORKERS, 10)
-	: process.env.CI
-		? 1
-		: undefined;
+const AUTH_POOL_SIZE = 4;
+
+const workerCount = (() => {
+	const raw = process.env.E2E_WORKERS
+		? Number.parseInt(process.env.E2E_WORKERS, 10)
+		: process.env.CI
+			? 1
+			: AUTH_POOL_SIZE;
+	return Math.min(raw, AUTH_POOL_SIZE);
+})();
 
 export default defineConfig({
 	testDir: "./e2e",
+	globalSetup: "./e2e/global-setup.ts",
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: 0,
@@ -63,8 +69,8 @@ export default defineConfig({
 		command: webServerCommand,
 		url: e2eBaseUrl,
 		// Reuse only when E2E_REUSE_SERVER=1 (manual dev must set MAIN_THREAD_TIMER).
-		reuseExistingServer:
-			process.env.E2E_REUSE_SERVER === "1" && !useProductionServer,
+		// global-setup may start the server; reuse when already listening.
+		reuseExistingServer: true,
 		timeout: useProductionServer ? 300_000 : 120_000,
 		env: {
 			...process.env,

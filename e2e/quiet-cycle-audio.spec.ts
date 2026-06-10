@@ -47,7 +47,7 @@ test.describe("Quiet cycle audio — auth (S-20)", () => {
 		});
 	});
 
-	test("muted hidden work expiry shows catch-up, title pulse, then check-in wedge", async ({
+	test("muted hidden work expiry shows catch-up, title pulse, then check-in wedge @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -90,7 +90,7 @@ test.describe("Quiet cycle audio — auth (S-20)", () => {
 		await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 	});
 
-	test("live toggle updates aria-pressed for each mode (B-01)", async ({
+	test("live toggle updates aria-pressed for each mode (B-01) @skip-belt", async ({
 		page,
 	}) => {
 		const taskTitle = `E2E Live Audio Toggle ${Date.now()}`;
@@ -135,7 +135,7 @@ test.describe("Quiet cycle audio — auth (S-20)", () => {
 		).toHaveAttribute("aria-pressed", "true");
 	});
 
-	test("normal audio user still gets catch-up on hidden work expiry (S-22 regression)", async ({
+	test("normal audio user still gets catch-up on hidden work expiry (S-22 regression) @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);

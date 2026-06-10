@@ -47,7 +47,9 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		await expect(taskRow.getByRole("button", { name: "Focus" })).toBeVisible();
 	});
 
-	test("mark task done from completion overlay", async ({ page }) => {
+	test("mark task done from completion overlay @skip-belt", async ({
+		page,
+	}) => {
 		test.setTimeout(60_000);
 
 		const taskTitle = `E2E Done ${Date.now()}`;

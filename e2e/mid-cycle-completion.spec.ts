@@ -20,7 +20,7 @@ test.describe("Mid-cycle completion (Risk #3)", () => {
 		await ensureIdleCycle(page);
 	});
 
-	test("shows both choices when other active tasks remain", async ({
+	test("shows both choices when other active tasks remain @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -39,7 +39,9 @@ test.describe("Mid-cycle completion (Risk #3)", () => {
 		await expect(page.getByTestId("mid-cycle-end-break-btn")).toBeVisible();
 	});
 
-	test("continue keeps timer running and switches focus", async ({ page }) => {
+	test("continue keeps timer running and switches focus @skip-belt", async ({
+		page,
+	}) => {
 		test.setTimeout(60_000);
 
 		const ts = Date.now();
@@ -66,7 +68,9 @@ test.describe("Mid-cycle completion (Risk #3)", () => {
 		).toBeVisible();
 	});
 
-	test("end cycle and break starts short break", async ({ page }) => {
+	test("end cycle and break starts short break @skip-belt", async ({
+		page,
+	}) => {
 		test.setTimeout(60_000);
 
 		const ts = Date.now();
