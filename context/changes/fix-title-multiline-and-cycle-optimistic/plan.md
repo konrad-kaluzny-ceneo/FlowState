@@ -26,12 +26,23 @@ Fix two production bugs in one change: multiline task title editing (B-02) and o
 - [x] Optimistic `start` / `interrupt` in `use-pomodoro-cycle.ts`
 - [x] Unit tests for immediate UI transition
 
+### Phase 3
+- [x] `resolveServerCycleId` + `pendingCreateRef` for server mutations during pending create
+- [x] E2E `waitForCycleCreateSettled` in work-cycle helper + affected specs
+- [x] Unit test: submitCheckIn awaits server cycle id when create is still pending
+
 ### Prevention (B-02 / B-03)
 - [x] `use-pomodoro-cycle.test.tsx` — interrupt failure rollback + pending-create cancel
 - [x] `task-list.test.tsx` — textarea multiline save + long title read mode
 - [x] `lessons.md` L-04, `test-plan.md` §6.8, `AGENTS.md` component-smoke bullet
 - [x] Inline comments in `task-list.tsx` and `use-pomodoro-cycle.ts`
 
+### Phase 3: Pending-create server id + E2E settlement (B-03 follow-up)
+
+- `resolveServerCycleId()` — await `pendingCreateRef` before `checkIn.create`, `cycles.complete`, `rebindTask`, `endSession`.
+- `waitForCycleCreateSettled()` in e2e helpers — race-free specs after optimistic start.
+- Unit test: `submitCheckIn awaits server cycle id when create is still pending`.
+
 ### Automated verification
-- [x] `pnpm test` (392 passed)
-- [ ] `pnpm check` (pre-existing CRLF on unrelated files; changed files formatted)
+- [x] `pnpm test`
+- [x] `pnpm check`
