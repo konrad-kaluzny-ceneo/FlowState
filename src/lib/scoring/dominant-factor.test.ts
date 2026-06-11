@@ -30,9 +30,39 @@ describe("getFactorContributions", () => {
 		const contributions = getFactorContributions(baseTask, baseContext);
 		expect(contributions[0]).toMatchObject({
 			key: "energy_deep",
-			magnitude: 1.5,
+			magnitude: 3,
 		});
 		expect(contributions.every((c) => c.magnitude >= 0)).toBe(true);
+	});
+
+	it("includes eisenhower_priority when urgency × importance is high", () => {
+		const contributions = getFactorContributions(baseTask, baseContext);
+		expect(
+			contributions.find((item) => item.key === "eisenhower_priority"),
+		).toMatchObject({ magnitude: 1.5 });
+	});
+
+	it("includes horizon_asap for ASAP commitment", () => {
+		const task: ScoringTask = {
+			...baseTask,
+			commitmentHorizon: "ASAP",
+		};
+		const contributions = getFactorContributions(task, baseContext);
+		expect(
+			contributions.find((item) => item.key === "horizon_asap"),
+		).toMatchObject({ magnitude: 1.08 });
+	});
+
+	it("includes low_effort_fit when fading with short effort estimate", () => {
+		const task: ScoringTask = {
+			...baseTask,
+			effortMinutes: 20,
+		};
+		const context: ScoringContext = { ...baseContext, energy: "FADING" };
+		const contributions = getFactorContributions(task, context);
+		expect(
+			contributions.find((item) => item.key === "low_effort_fit"),
+		).toMatchObject({ magnitude: 0.72 });
 	});
 });
 
@@ -42,7 +72,13 @@ describe("getDominantRationaleKey", () => {
 	});
 
 	it("returns late_day for operational work late in the day after cycles", () => {
-		const task: ScoringTask = { ...baseTask, workType: "OPERATIONAL" };
+		const task: ScoringTask = {
+			...baseTask,
+			workType: "OPERATIONAL",
+			importance: 2,
+			urgency: 2,
+			weight: 2,
+		};
 		const context: ScoringContext = {
 			...baseContext,
 			completedWorkCycles: 2,
@@ -67,6 +103,8 @@ describe("getDominantRationaleKey", () => {
 			...baseTask,
 			workType: "OPERATIONAL",
 			weight: 2,
+			urgency: 2,
+			importance: 2,
 		};
 		const context: ScoringContext = { ...baseContext, energy: "STEADY" };
 		expect(getDominantRationaleKey(task, context)).toBe("energy_light");
@@ -76,7 +114,9 @@ describe("getDominantRationaleKey", () => {
 		const task: ScoringTask = {
 			...baseTask,
 			workType: "OPERATIONAL",
-			weight: 2,
+			weight: 1,
+			urgency: 1,
+			importance: 2,
 		};
 		expect(getDominantRationaleKey(task, baseContext)).toBe("default");
 	});
@@ -86,11 +126,34 @@ describe("getDominantRationaleKey", () => {
 			...baseTask,
 			workType: "OPERATIONAL",
 			weight: 2,
+			urgency: 2,
+			importance: 2,
 		};
 		const context: ScoringContext = {
 			...baseContext,
 			lastOverrideWorkType: "OPERATIONAL",
 		};
 		expect(getDominantRationaleKey(task, context)).toBe("override_preference");
+	});
+
+	it("includes horizon_asap contribution for ASAP tasks", () => {
+		const task: ScoringTask = {
+			...baseTask,
+			workType: "OPERATIONAL",
+			importance: 2,
+			urgency: 2,
+			weight: 2,
+			commitmentHorizon: "ASAP",
+		};
+		const context: ScoringContext = {
+			energy: "STEADY",
+			completedWorkCycles: 0,
+			interruptionCount: 0,
+			localHour: 10,
+		};
+		const contributions = getFactorContributions(task, context);
+		expect(
+			contributions.find((item) => item.key === "horizon_asap"),
+		).toMatchObject({ magnitude: 0.72 });
 	});
 });

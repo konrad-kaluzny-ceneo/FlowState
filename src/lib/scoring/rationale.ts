@@ -7,6 +7,10 @@ export type RationaleKey =
 	| "late_day"
 	| "interruptions"
 	| "override_preference"
+	| "eisenhower_priority"
+	| "importance_focus"
+	| "low_effort_fit"
+	| "horizon_asap"
 	| "kickoff_fresh"
 	| "kickoff_resume"
 	| "default";
@@ -30,6 +34,14 @@ export function buildRationale(
 			return "Reactive work — session had several interruptions";
 		case "override_preference":
 			return "Matches your last pick — continuing that thread";
+		case "eisenhower_priority":
+			return "High urgency and importance — top of the queue";
+		case "importance_focus":
+			return "Important work — good moment while you're focused";
+		case "low_effort_fit":
+			return "Quick win — fits your fading energy";
+		case "horizon_asap":
+			return "Due ASAP — time-sensitive commitment";
 		case "kickoff_fresh":
 			return "Fresh session — here's a strong starting point";
 		case "kickoff_resume":

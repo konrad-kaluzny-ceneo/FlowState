@@ -480,14 +480,14 @@ Scorer adds constant-time arithmetic per candidate task — negligible vs existi
 
 #### Automated
 
-- [ ] 5.1 Component smoke tests pass: `pnpm exec vitest run src/app/_components/task-list.test.tsx src/app/_components/task-suggestion-card.test.tsx`
-- [ ] 5.2 Full unit suite: `pnpm test`
-- [ ] 5.3 Lint passes: `pnpm check`
+- [x] 5.1 Component smoke tests pass: `pnpm exec vitest run src/app/_components/task-list.test.tsx src/app/_components/task-suggestion-card.test.tsx` — e954e17
+- [x] 5.2 Full unit suite: `pnpm test` — e954e17
+- [x] 5.3 Lint passes: `pnpm check` — e954e17
 
 #### Manual
 
-- [ ] 5.4 Logged-in create/edit saves all four attributes across refresh
-- [ ] 5.5 Guest attributes survive refresh and merge after sign-in
+- [x] 5.4 Logged-in create/edit saves all four attributes across refresh — e954e17
+- [x] 5.5 Guest attributes survive refresh and merge after sign-in — e954e17
 
 ### Phase 6: Rationale expander refresh (S-23)
 

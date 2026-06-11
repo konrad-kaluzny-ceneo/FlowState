@@ -829,7 +829,11 @@ describe("suggestion router", () => {
 				workType: "OPERATIONAL",
 				sortOrder: 1,
 				createdAt: new Date("2026-01-01"),
-				...taskDefaults(2),
+				weight: 1,
+				importance: 2,
+				urgency: 1,
+				effortMinutes: null,
+				commitmentHorizon: "WHEN_POSSIBLE",
 			},
 			{
 				id: 2,
@@ -839,7 +843,7 @@ describe("suggestion router", () => {
 				workType: "REACTIVE",
 				sortOrder: 0,
 				createdAt: new Date("2026-01-02"),
-				...taskDefaults(3),
+				...taskDefaults(2),
 			},
 		];
 
