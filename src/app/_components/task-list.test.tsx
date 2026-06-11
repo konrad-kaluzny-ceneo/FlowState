@@ -178,4 +178,24 @@ describe("TaskList", () => {
 
 		expect(reorderTasks).toHaveBeenCalledWith({ orderedIds: [2, 1] });
 	});
+
+	it("applies completion delight animation when marking a task done", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Finish me" })]}
+			/>,
+		);
+
+		const row = screen.getByTestId("active-task-row");
+		expect(row.className).not.toContain("animate-task-complete");
+
+		fireEvent.click(screen.getByRole("button", { name: "Mark complete" }));
+
+		expect(row.className).toContain("animate-task-complete");
+		expect(updateTask).toHaveBeenCalledWith({
+			id: 1,
+			status: "completed",
+		});
+	});
 });
