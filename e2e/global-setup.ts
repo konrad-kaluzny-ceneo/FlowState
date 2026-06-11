@@ -26,7 +26,7 @@ async function waitForServer(baseURL: string, timeoutMs: number) {
 			const ctx = await request.newContext({ baseURL });
 			const response = await ctx.get("/");
 			await ctx.dispose();
-			if (response.ok() || response.status() < 500) {
+			if (response.ok()) {
 				return;
 			}
 		} catch (error) {

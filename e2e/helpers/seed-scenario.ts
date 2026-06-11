@@ -8,7 +8,7 @@
 import { expect, type Page } from "@playwright/test";
 
 import { MIN_WORK_DURATION_SEC } from "../../src/lib/duration-bounds";
-import { resetFakeClock } from "./work-cycle";
+import { forgetFakeClock, resetFakeClock } from "./work-cycle";
 
 async function dismissKickoffReadinessIfVisible(page: Page) {
 	const overlay = page.getByTestId("kickoff-readiness-overlay");
@@ -25,26 +25,55 @@ type TrpcEnvelope<T> = {
 	error?: { json?: { message?: string } };
 };
 
+function isTransientTrpcError(error: unknown): boolean {
+	const message = error instanceof Error ? error.message : String(error);
+	return /ECONNRESET|ECONNREFUSED|ETIMEDOUT|socket hang up/i.test(message);
+}
+
+async function withTrpcRetry<T>(
+	label: string,
+	run: () => Promise<T>,
+	attempts = 3,
+): Promise<T> {
+	let lastError: unknown;
+	for (let attempt = 1; attempt <= attempts; attempt++) {
+		try {
+			return await run();
+		} catch (error) {
+			lastError = error;
+			if (!isTransientTrpcError(error) || attempt === attempts) {
+				throw error;
+			}
+			await new Promise((resolve) => setTimeout(resolve, attempt * 250));
+		}
+	}
+	throw new Error(`tRPC ${label} failed after ${attempts} attempts`, {
+		cause: lastError,
+	});
+}
+
 async function trpcMutation<TInput, TResult>(
 	page: Page,
 	procedure: string,
 	input: TInput,
 ): Promise<TResult> {
-	const response = await page.request.post(`/api/trpc/${procedure}`, {
-		data: { json: input },
+	return withTrpcRetry(procedure, async () => {
+		const response = await page.request.post(`/api/trpc/${procedure}`, {
+			data: { json: input },
+		});
+		const body = (await response.json()) as TrpcEnvelope<TResult>;
+		if (!response.ok() || body.error != null) {
+			const message =
+				body.error?.json?.message ??
+				(await response.text().catch(() => response.statusText()));
+			throw new Error(`tRPC ${procedure} failed: ${message}`);
+		}
+		const json = body.result?.data?.json;
+		if (json === undefined) {
+			throw new Error(`tRPC ${procedure} returned no data`);
+		}
+		return json;
 	});
-	const body = (await response.json()) as TrpcEnvelope<TResult>;
-	if (!response.ok() || body.error != null) {
-		const message =
-			body.error?.json?.message ??
-			(await response.text().catch(() => response.statusText()));
-		throw new Error(`tRPC ${procedure} failed: ${message}`);
-	}
-	const json = body.result?.data?.json;
-	if (json === undefined) {
-		throw new Error(`tRPC ${procedure} returned no data`);
-	}
-	return json;
 }
 
 async function trpcQuery<TResult>(
@@ -52,22 +81,24 @@ async function trpcQuery<TResult>(
 	procedure: string,
 	input: Record<string, unknown> = {},
 ): Promise<TResult> {
-	const encoded = encodeURIComponent(JSON.stringify({ json: input }));
-	const response = await page.request.get(
-		`/api/trpc/${procedure}?input=${encoded}`,
-	);
-	const body = (await response.json()) as TrpcEnvelope<TResult>;
-	if (!response.ok() || body.error != null) {
-		const message =
-			body.error?.json?.message ??
-			(await response.text().catch(() => response.statusText()));
-		throw new Error(`tRPC ${procedure} failed: ${message}`);
-	}
-	const json = body.result?.data?.json;
-	if (json === undefined) {
-		throw new Error(`tRPC ${procedure} returned no data`);
-	}
-	return json;
+	return withTrpcRetry(procedure, async () => {
+		const encoded = encodeURIComponent(JSON.stringify({ json: input }));
+		const response = await page.request.get(
+			`/api/trpc/${procedure}?input=${encoded}`,
+		);
+		const body = (await response.json()) as TrpcEnvelope<TResult>;
+		if (!response.ok() || body.error != null) {
+			const message =
+				body.error?.json?.message ??
+				(await response.text().catch(() => response.statusText()));
+			throw new Error(`tRPC ${procedure} failed: ${message}`);
+		}
+		const json = body.result?.data?.json;
+		if (json === undefined) {
+			throw new Error(`tRPC ${procedure} returned no data`);
+		}
+		return json;
+	});
 }
 
 async function endActiveSessionIfAny(page: Page) {
@@ -175,13 +206,20 @@ export async function seedWindDownFatigueScenario(
 		taskId: task.id,
 	});
 
-	await resetFakeClock(page);
+	await forgetFakeClock(page);
 	const getActiveAfterReload = page.waitForResponse(
 		(response) => response.url().includes("cycle.getActive") && response.ok(),
 		{ timeout: 20_000 },
 	);
+	const countWorkAfterReload = page.waitForResponse(
+		(response) =>
+			response.url().includes("cycle.countCompletedWork") && response.ok(),
+		{ timeout: 20_000 },
+	);
 	await page.reload();
 	await getActiveAfterReload;
+	await countWorkAfterReload;
+	await resetFakeClock(page);
 	await expect(page.getByTestId("task-list")).toBeVisible();
 	await dismissKickoffReadinessIfVisible(page);
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible({

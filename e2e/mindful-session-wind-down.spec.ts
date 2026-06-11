@@ -8,7 +8,10 @@ import type { Page } from "@playwright/test";
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
-import { seedWindDownFatigueScenario } from "./helpers/seed-scenario";
+import {
+	resetWorkerSessionViaApi,
+	seedWindDownFatigueScenario,
+} from "./helpers/seed-scenario";
 import { waitForSuggestionNext } from "./helpers/suggestion";
 import {
 	advanceClockThroughWorkSec,
@@ -28,6 +31,7 @@ import {
 	completeWorkCycleWithCheckIn,
 	ensureFakeClock,
 	focusTask,
+	forgetFakeClock,
 	resetFakeClock,
 	setShortBreakDurationSec,
 	setWorkDurationSec,
@@ -54,11 +58,16 @@ test.describe("Mindful session wind-down (S-16)", () => {
 	test.describe.configure({ mode: "serial" });
 
 	test.beforeEach(async ({ page }) => {
-		await resetFakeClock(page);
+		forgetFakeClock(page);
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
 		await waitForCycleGetActive(page);
 		await ensureIdleCycle(page);
+	});
+
+	test.afterEach(async ({ page }) => {
+		forgetFakeClock(page);
+		await resetWorkerSessionViaApi(page);
 	});
 
 	test("fatigue path triggers wind-down and blocks break until keep going", async ({

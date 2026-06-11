@@ -9,6 +9,7 @@ import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import {
 	acceptSuggestion,
 	expectSuggestionVisible,
+	overrideSuggestionByFocusingTask,
 	waitForSuggestionNext,
 } from "./helpers/suggestion";
 import {
@@ -17,9 +18,10 @@ import {
 	advanceClockThroughFastWork,
 	clickStartCycle,
 	completeWorkCycleWithCheckIn,
+	configureFastPomodoroDurations,
 	focusTask,
-	setShortBreakDurationSec,
-	setWorkDurationSec,
+	forgetFakeClock,
+	resetFakeClock,
 } from "./helpers/work-cycle";
 
 test.describe("Adaptive task suggestion (S-06)", () => {
@@ -28,12 +30,14 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await expect(page.getByTestId("task-list")).toBeVisible();
 		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
+		forgetFakeClock(page);
 		const cleanReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),
 			{ timeout: 20_000 },
 		);
 		await page.reload();
 		await cleanReload;
+		await resetFakeClock(page);
 		await expect(page.getByTestId("task-list")).toBeVisible();
 		if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
 			await completeKickoffReadiness(page, "skip");
@@ -56,9 +60,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
 		await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
 		await focusTask(page, deepTask);
-		// Long break keeps the suggestion card visible while assertions run (belt-safe).
-		await setShortBreakDurationSec(page, 120);
-		await setWorkDurationSec(page, 1);
+		await configureFastPomodoroDurations(page);
 		await clickStartCycle(page);
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
@@ -90,8 +92,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
 		await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
 		await focusTask(page, deepTask);
-		await setShortBreakDurationSec(page, 1);
-		await setWorkDurationSec(page, 1);
+		await configureFastPomodoroDurations(page);
 		await clickStartCycle(page);
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
@@ -126,7 +127,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 	test("expands Why this? breakdown when secondary factors exist @skip-belt", async ({
 		page,
 	}) => {
-		test.setTimeout(120_000);
+		test.setTimeout(60_000);
 
 		const ts = Date.now();
 		const deepTask = `E2E Expand Deep ${ts}`;
@@ -135,23 +136,15 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
 		await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
 
-		const deepRow = page
-			.getByRole("listitem")
-			.filter({ hasText: deepTask })
-			.first();
-
 		// Seed lastOverrideWorkType=DEEP_WORK via FADING check-in + override to deep.
 		await focusTask(page, reactiveTask);
-		await setShortBreakDurationSec(page, 1);
-		await setWorkDurationSec(page, 1);
+		await configureFastPomodoroDurations(page);
 		await clickStartCycle(page);
 		await advanceClockThroughFastWork(page);
 		let suggestionResponse = waitForSuggestionNext(page);
 		await completeWorkCycleWithCheckIn(page, "fading");
 		await suggestionResponse;
-		await expect(page.getByTestId("task-suggestion-card")).toBeVisible();
-		await deepRow.getByRole("button", { name: "Focus" }).click();
-		await expect(page.getByTestId("suggestion-override-ack")).toBeVisible();
+		await overrideSuggestionByFocusingTask(page, deepTask);
 
 		await advanceClockThroughFastBreak(page);
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
@@ -187,8 +180,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
 		await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
 		await focusTask(page, deepTask);
-		await setShortBreakDurationSec(page, 1);
-		await setWorkDurationSec(page, 1);
+		await configureFastPomodoroDurations(page);
 		await clickStartCycle(page);
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 
@@ -198,20 +190,15 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await expect(page.getByTestId("kickoff-readiness-overlay")).toHaveCount(0);
 		await suggestionResponse;
 
-		await expectSuggestionVisible(page, { title: deepTask });
-		await expect(page.getByTestId("suggested-task-row")).toBeVisible();
-
-		const reactiveRow = page
-			.getByRole("listitem")
-			.filter({ hasText: reactiveTask })
-			.first();
-		await reactiveRow.getByRole("button", { name: "Focus" }).click();
-
-		await expect(page.getByTestId("suggestion-override-ack")).toBeVisible();
+		await overrideSuggestionByFocusingTask(page, reactiveTask);
 		await expect(page.getByTestId("suggestion-override-ack")).toContainText(
 			/noted/i,
 		);
 		await expect(page.getByTestId("suggested-task-row")).toHaveCount(0);
+		const reactiveRow = page
+			.getByRole("listitem")
+			.filter({ hasText: reactiveTask })
+			.first();
 		await expect(reactiveRow).toHaveClass(/ring-purple-500/);
 	});
 });

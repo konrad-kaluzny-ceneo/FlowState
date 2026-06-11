@@ -10,23 +10,42 @@ import {
 	dismissKickoffReadinessIfVisible,
 	ensureIdleCycle,
 } from "./helpers/idle-cycle";
+import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import {
 	addTasks,
 	advanceClockThroughFastWork,
+	forgetFakeClock,
 	markTaskCompleteMidCycle,
+	resetFakeClock,
 	startFocusedWorkCycle,
 } from "./helpers/work-cycle";
+
+test.beforeEach(async ({ page }) => {
+	forgetFakeClock(page);
+	await page.goto("/");
+	await expect(page.getByTestId("task-list")).toBeVisible();
+	await waitForCycleGetActive(page);
+	await resetWorkerSessionViaApi(page);
+	const cleanReload = page.waitForResponse(
+		(response) => response.url().includes("cycle.getActive") && response.ok(),
+		{ timeout: 20_000 },
+	);
+	await page.reload();
+	await cleanReload;
+	await expect(page.getByTestId("task-list")).toBeVisible();
+	await resetFakeClock(page);
+	await ensureIdleCycle(page);
+});
+
+test.afterEach(async ({ page }) => {
+	await resetWorkerSessionViaApi(page);
+});
 
 test.describe("Seed exemplar — Risk #3 mid-cycle prompt", () => {
 	test("completing a task mid-cycle surfaces FR-015 choices", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
-
-		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
-		await waitForCycleGetActive(page);
-		await ensureIdleCycle(page);
 
 		const ts = Date.now();
 		const task1 = `Seed R3 A ${ts}`;
@@ -51,11 +70,6 @@ test.describe("Seed exemplar — Risk #7 check-in gate", () => {
 		page,
 	}) => {
 		test.setTimeout(60_000);
-
-		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
-		await waitForCycleGetActive(page);
-		await ensureIdleCycle(page);
 
 		const taskTitle = `E2E Seed R7 ${Date.now()}`;
 

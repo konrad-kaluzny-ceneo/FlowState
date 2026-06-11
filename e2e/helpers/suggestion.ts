@@ -86,3 +86,15 @@ export async function acceptSuggestion(page: Page) {
 	await expect(page.getByTestId("suggestion-accept-btn")).toBeEnabled();
 	await page.getByTestId("suggestion-accept-btn").click();
 }
+
+/** Override during break — break timer stays frozen until advanceClockThroughFastBreak. */
+export async function overrideSuggestionByFocusingTask(
+	page: Page,
+	taskTitle: string,
+) {
+	await expect(page.getByTestId("timer-panel-running")).toContainText(/Break/i);
+	await expect(page.getByTestId("suggestion-accept-btn")).toBeEnabled();
+	const row = page.getByRole("listitem").filter({ hasText: taskTitle }).first();
+	await row.getByRole("button", { name: "Focus" }).click();
+	await expect(page.getByTestId("suggestion-override-ack")).toBeVisible();
+}

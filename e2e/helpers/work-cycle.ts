@@ -17,21 +17,31 @@ export const FAST_BREAK_CLOCK_MS = 2500;
 
 const clockInstalledPages = new WeakSet<Page>();
 
-/** Install Playwright fake timers once per page — re-install resets active cycle end times. */
-export async function ensureFakeClock(page: Page) {
-	if (!clockInstalledPages.has(page)) {
-		await page.clock.install();
-		clockInstalledPages.add(page);
-		return;
-	}
-	await page.clock.install({ time: Date.now() });
+/** Call after navigation/reload so the next ensureFakeClock installs fresh timers. */
+export function forgetFakeClock(page: Page) {
+	clockInstalledPages.delete(page);
 }
 
-/** Drop fake-timer bleed between belt tests that share a worker page. */
-export async function resetFakeClock(page: Page) {
+/** Install Playwright fake timers once per test phase — never re-sync to wall clock mid-cycle. */
+export async function ensureFakeClock(page: Page) {
 	if (clockInstalledPages.has(page)) {
-		await page.clock.install({ time: Date.now() });
+		return;
 	}
+	await page.clock.install();
+	clockInstalledPages.add(page);
+}
+
+/** Fresh fake timers between tests on a reused worker page (clears pending intervals). */
+export async function resetFakeClock(page: Page) {
+	forgetFakeClock(page);
+	await page.clock.install();
+	clockInstalledPages.add(page);
+}
+
+/** 1s work + 1s break — pair with ensureFakeClock + advanceClockThroughFast*. */
+export async function configureFastPomodoroDurations(page: Page) {
+	await setShortBreakDurationSec(page, 1);
+	await setWorkDurationSec(page, 1);
 }
 
 async function waitForTaskCreateSettled(addButton: Locator) {
