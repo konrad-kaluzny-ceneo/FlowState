@@ -1,6 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import {
+	OverlayCard,
+	OverlayScrim,
+	overlayButtonClass,
+} from "~/app/_components/overlay-shell";
 import type { FocusedTask } from "~/hooks/use-pomodoro-cycle";
 import type { DomainTask, DomainTaskId } from "~/lib/data-mode/types";
 
@@ -26,16 +31,15 @@ export function MidCycleCompletionPrompt({
 	const hasOtherTasks = otherActiveTasks.length > 0;
 
 	return (
-		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-			data-testid="mid-cycle-prompt-overlay"
-		>
-			<div className="w-full max-w-md rounded-xl border border-white/20 bg-[#1a1a2e] p-8 shadow-xl">
+		<OverlayScrim testId="mid-cycle-prompt-overlay">
+			<OverlayCard centered={false}>
 				<h2 className="text-center font-bold text-2xl text-white">
 					Task complete
 				</h2>
 				{pendingTask != null && (
-					<p className="mt-2 text-center text-white/70">{pendingTask.title}</p>
+					<p className="mt-2 text-center text-sm text-white/70">
+						{pendingTask.title}
+					</p>
 				)}
 				<p className="mt-4 text-center text-sm text-white/60">
 					{hasOtherTasks
@@ -51,7 +55,7 @@ export function MidCycleCompletionPrompt({
 									className={`w-full rounded-lg border px-4 py-3 text-left transition ${
 										selectedTaskId === task.id
 											? "border-purple-500 bg-purple-500/20 text-white"
-											: "border-white/20 bg-white/5 text-white/80 hover:border-white/40"
+											: "border-border-subtle bg-white/5 text-white/80 hover:border-white/40"
 									}`}
 									disabled={isSubmitting}
 									onClick={() => setSelectedTaskId(task.id)}
@@ -67,7 +71,7 @@ export function MidCycleCompletionPrompt({
 				<div className="mt-8 flex flex-col gap-3">
 					{hasOtherTasks && (
 						<button
-							className="rounded-lg bg-purple-600 py-3 font-semibold text-white transition hover:bg-purple-500 disabled:opacity-50"
+							className={overlayButtonClass.primary}
 							data-testid="mid-cycle-continue-btn"
 							disabled={selectedTaskId == null || isSubmitting}
 							onClick={() => {
@@ -81,7 +85,7 @@ export function MidCycleCompletionPrompt({
 						</button>
 					)}
 					<button
-						className="rounded-lg bg-teal-600 py-3 font-semibold text-white transition hover:bg-teal-500 disabled:opacity-50"
+						className={overlayButtonClass.breakPrimary}
 						data-testid="mid-cycle-end-break-btn"
 						disabled={isSubmitting}
 						onClick={() => void onEndCycleAndBreak()}
@@ -90,7 +94,7 @@ export function MidCycleCompletionPrompt({
 						End cycle and break
 					</button>
 				</div>
-			</div>
-		</div>
+			</OverlayCard>
+		</OverlayScrim>
 	);
 }

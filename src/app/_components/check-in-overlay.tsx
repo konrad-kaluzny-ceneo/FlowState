@@ -5,6 +5,7 @@ import {
 	type CheckInEnergyUi,
 	EnergySelector,
 } from "~/app/_components/energy-selector";
+import { OverlayCard, OverlayScrim } from "~/app/_components/overlay-shell";
 
 export type { CheckInEnergy, CheckInEnergyUi };
 
@@ -22,13 +23,13 @@ export function CheckInOverlay({
 	coachLine,
 }: CheckInOverlayProps) {
 	return (
-		<div
-			className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
-			data-cycle-id={cycleId}
-			data-testid="check-in-overlay"
+		<OverlayScrim
+			cycleId={cycleId}
 			role="dialog"
+			testId="check-in-overlay"
+			zIndex={60}
 		>
-			<div className="w-full max-w-md rounded-xl border border-white/20 bg-[#1a1a2e] p-8 text-center shadow-xl">
+			<OverlayCard>
 				<h2 className="font-bold text-2xl text-white">
 					How&apos;s your energy?
 				</h2>
@@ -40,7 +41,7 @@ export function CheckInOverlay({
 					disabled={isSubmitting}
 					onSelect={(energy) => void onSubmit(energy)}
 				/>
-			</div>
-		</div>
+			</OverlayCard>
+		</OverlayScrim>
 	);
 }

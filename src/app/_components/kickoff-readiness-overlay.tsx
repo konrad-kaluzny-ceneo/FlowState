@@ -4,6 +4,11 @@ import {
 	type CheckInEnergy,
 	EnergySelector,
 } from "~/app/_components/energy-selector";
+import {
+	OverlayCard,
+	OverlayScrim,
+	overlayButtonClass,
+} from "~/app/_components/overlay-shell";
 
 type KickoffReadinessOverlayProps = {
 	onSubmit: (energy: CheckInEnergy) => void;
@@ -17,12 +22,8 @@ export function KickoffReadinessOverlay({
 	isSubmitting = false,
 }: KickoffReadinessOverlayProps) {
 	return (
-		<div
-			className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
-			data-testid="kickoff-readiness-overlay"
-			role="dialog"
-		>
-			<div className="w-full max-w-md rounded-xl border border-white/20 bg-[#1a1a2e] p-8 text-center shadow-xl">
+		<OverlayScrim role="dialog" testId="kickoff-readiness-overlay" zIndex={60}>
+			<OverlayCard>
 				<h2 className="font-bold text-2xl text-white">
 					How&apos;s your energy to start?
 				</h2>
@@ -31,7 +32,7 @@ export function KickoffReadinessOverlay({
 				</p>
 				<EnergySelector disabled={isSubmitting} onSelect={onSubmit} />
 				<button
-					className="mt-4 w-full rounded-lg border border-white/10 bg-transparent py-2 text-sm text-white/50 transition hover:border-white/20 hover:text-white/70 disabled:opacity-50"
+					className={`${overlayButtonClass.secondaryFull} mt-4 py-2 text-sm text-white/50 hover:text-white/70`}
 					data-testid="kickoff-readiness-skip-btn"
 					disabled={isSubmitting}
 					onClick={onSkip}
@@ -39,7 +40,7 @@ export function KickoffReadinessOverlay({
 				>
 					Skip — use Steady
 				</button>
-			</div>
-		</div>
+			</OverlayCard>
+		</OverlayScrim>
 	);
 }

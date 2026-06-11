@@ -1,5 +1,10 @@
 "use client";
 
+import {
+	OverlayCard,
+	OverlayScrim,
+	overlayButtonClass,
+} from "~/app/_components/overlay-shell";
 import type {
 	CycleKind,
 	FocusedTask,
@@ -37,21 +42,18 @@ export function CycleCompleteOverlay({
 		const hasPreFocus = preFocusedTask != null;
 
 		return (
-			<div
-				className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-				data-testid="cycle-complete-overlay"
-			>
-				<div className="w-full max-w-md rounded-xl border border-teal-400/30 bg-[#1a2e2e] p-8 text-center shadow-xl">
+			<OverlayScrim testId="cycle-complete-overlay">
+				<OverlayCard variant="break">
 					<h2 className="font-bold text-2xl text-teal-100">
 						Break&apos;s over!
 					</h2>
-					<p className="mt-2 text-teal-200/70">
+					<p className="mt-2 text-sm text-teal-200/70">
 						{cycleKind === "LONG_BREAK" ? "Long break" : "Short break"} complete
 						— ready for the next cycle.
 					</p>
 					<div className="mt-8 flex flex-col gap-3">
 						<button
-							className="w-full rounded-lg bg-teal-600 py-3 font-semibold text-white transition hover:bg-teal-500 disabled:opacity-50"
+							className={overlayButtonClass.breakPrimary}
 							data-testid={
 								hasPreFocus
 									? "break-continue-suggested-btn"
@@ -67,7 +69,7 @@ export function CycleCompleteOverlay({
 						</button>
 						{hasPreFocus && onDismissPreFocus != null && (
 							<button
-								className="w-full rounded-lg border border-teal-400/30 py-3 font-semibold text-teal-100 transition hover:bg-teal-500/20 disabled:opacity-50"
+								className={overlayButtonClass.breakSecondary}
 								disabled={isConfirming}
 								onClick={onDismissPreFocus}
 								type="button"
@@ -76,24 +78,21 @@ export function CycleCompleteOverlay({
 							</button>
 						)}
 					</div>
-				</div>
-			</div>
+				</OverlayCard>
+			</OverlayScrim>
 		);
 	}
 
 	return (
-		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-			data-testid="cycle-complete-overlay"
-		>
-			<div className="w-full max-w-md rounded-xl border border-white/20 bg-[#1a1a2e] p-8 text-center shadow-xl">
+		<OverlayScrim testId="cycle-complete-overlay">
+			<OverlayCard>
 				<h2 className="font-bold text-2xl text-white">Cycle Complete!</h2>
 				{focusedTask != null && (
-					<p className="mt-2 text-white/70">{focusedTask.title}</p>
+					<p className="mt-2 text-sm text-white/70">{focusedTask.title}</p>
 				)}
 				<div className="mt-8 flex flex-col gap-3">
 					<button
-						className="rounded-lg bg-green-600 py-3 font-semibold text-white transition hover:bg-green-500 disabled:opacity-50"
+						className={overlayButtonClass.success}
 						disabled={!canMarkTaskDone || isConfirming}
 						onClick={() => void onConfirm(true)}
 						type="button"
@@ -101,7 +100,7 @@ export function CycleCompleteOverlay({
 						Done — mark task complete
 					</button>
 					<button
-						className="rounded-lg border border-white/30 py-3 font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+						className={overlayButtonClass.secondary}
 						disabled={isConfirming}
 						onClick={() => void onConfirm(false)}
 						type="button"
@@ -114,7 +113,7 @@ export function CycleCompleteOverlay({
 						This task is no longer active — you can only continue later.
 					</p>
 				)}
-			</div>
-		</div>
+			</OverlayCard>
+		</OverlayScrim>
 	);
 }
