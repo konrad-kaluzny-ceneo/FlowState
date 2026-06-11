@@ -432,18 +432,18 @@ None — test-only and documentation changes.
 
 #### Manual
 
-- [x] 3.3 Dashboard tests do not duplicate use-pomodoro-cycle state machine cases
+- [x] 3.3 Dashboard tests do not duplicate use-pomodoro-cycle state machine cases — 1bf6820
 
 ### Phase 4: Auth Actions & Repository Gaps
 
 #### Automated
 
-- [x] 4.1 `pnpm exec vitest run` sign-in/action, sign-up/actions, guest-repositories tests
-- [x] 4.2 `pnpm test`
+- [x] 4.1 `pnpm exec vitest run` sign-in/action, sign-up/actions, guest-repositories tests — 2dcac33
+- [x] 4.2 `pnpm test` — 2dcac33
 
 #### Manual
 
-- [x] 4.3 Auth action tests mock ~/lib/auth/server (no Neon calls)
+- [x] 4.3 Auth action tests mock ~/lib/auth/server (no Neon calls) — 2dcac33
 
 ### Phase 5: Test-Plan Cookbook & Phase 6 Closure
 
