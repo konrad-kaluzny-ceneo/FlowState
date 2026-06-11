@@ -1,7 +1,7 @@
 ---
 change_id: testing-component-layer-cookbook
 title: Testing component layer cookbook
-status: implementing
+status: implemented
 created: 2026-06-11
 updated: 2026-06-11
 archived_at: null

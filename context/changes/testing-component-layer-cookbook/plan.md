@@ -453,17 +453,17 @@ None — test-only and documentation changes.
 
 #### Manual
 
-- [x] 5.2 Spot-read §6.9 — contributor can add component test from cookbook alone
-- [x] 5.3 §3 Phase 6 row marked complete with change folder
+- [x] 5.2 Spot-read §6.9 — contributor can add component test from cookbook alone — 4968eae
+- [x] 5.3 §3 Phase 6 row marked complete with change folder — 4968eae
 
 ### Phase 6: Narrowed Stryker & Baseline Update
 
 #### Automated
 
-- [x] 6.1 Narrowed Stryker runs on new/changed source files
-- [x] 6.2 `pnpm test`
-- [x] 6.3 `pnpm check`
+- [x] 6.1 Narrowed Stryker runs on new/changed source files — 9df083c
+- [x] 6.2 `pnpm test` — 9df083c
+- [x] 6.3 `pnpm check` — 9df083c
 
 #### Manual
 
-- [x] 6.4 Survivors in mutation report reviewed per §6.7 review rule
+- [x] 6.4 Survivors in mutation report reviewed per §6.7 review rule — 9df083c
