@@ -10,7 +10,7 @@ FlowState is a Next.js Pomodoro app on the T3-style stack. Agents run terminal c
 - **pnpm only** — never `npm` or `yarn`.
 - Never commit secrets; declare env vars in `@src/env.js`.
 - After each code iteration: `pnpm check`. Before presenting results: `pnpm test`.
-- E2E: `set CI=true && pnpm test:e2e` — `CI=true` only selects the list reporter (non-blocking terminal); Playwright starts `next dev` on port **3001** (or `next start` in GHA). Neon secrets from `.env`/`.env.local` only — no E2E flags required per run. Optional: `E2E_REUSE_SERVER=1` with a manual dev server; `E2E_WORKERS=1` if Neon Auth 429; `E2E_PRODUCTION_SERVER=1` for local prod parity. See `@e2e/README.md`. Bare `pnpm test:e2e` blocks on the html reporter.
+- E2E belt (CI merge gate): `set CI=true && pnpm test:e2e:belt` — 12 tests via `--grep-invert @skip-belt`; partial specs tag non-belt cases `@skip-belt`. Full catalog: `set CI=true && pnpm test:e2e` (ad-hoc local / pre-release). `CI=true` only selects the list reporter (non-blocking terminal); Playwright starts `next dev` on port **3001** (or `next start` in GHA). Auth pool: `e2e/global-setup.ts` provisions 4 users; fixtures map workers to `e2e/.auth/worker-{n}.json`; default **4 workers** (`E2E_WORKERS=4` in CI). Neon secrets from `.env`/`.env.local` only — no E2E flags required per run. Optional: `E2E_REUSE_SERVER=1` with a manual dev server; `E2E_WORKERS=1` if Neon Auth 429; `E2E_PRODUCTION_SERVER=1` for local prod parity. See `@e2e/README.md`. Bare `pnpm test:e2e` / `pnpm test:e2e:belt` blocks on the html reporter.
 
 ## Commands
 

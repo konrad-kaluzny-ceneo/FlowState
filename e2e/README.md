@@ -37,11 +37,11 @@ You do **not** need to export E2E flags manually for a normal local run — only
 ## Running Tests
 
 ```bash
-# Local (default): Playwright starts next dev on port 3001
-set CI=true && pnpm test:e2e
-
-# Belt (CI merge gate)
+# Belt (CI merge gate — 12 tests, --grep-invert @skip-belt)
 set CI=true && pnpm test:e2e:belt
+
+# Full catalog (ad-hoc local / pre-release; includes @skip-belt tests)
+set CI=true && pnpm test:e2e
 
 # Reuse your own dev server (fastest iteration — start once, run specs many times)
 set NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1
@@ -78,24 +78,34 @@ See `AGENTS.md` and `context/foundation/test-plan.md` §6.3 for the full cookboo
 
 **`e2e/seed.spec.ts`** is the canonical template for new E2E specs (Risk #3 / #7 exemplars). Model new tests on this file — provenance header, fixture auth, helpers, business-outcome assertions. Risk #1 auth reload is covered by Vitest hook + integration tests; guest reload is in `guest-trial.spec.ts`.
 
+## Belt vs full catalog
+
+| Command | Tests | When |
+|---------|------:|------|
+| `pnpm test:e2e:belt` | 12 | CI merge gate; PR/push to `main` |
+| `pnpm test:e2e` | ~27 | Ad-hoc local; optional pre-release manual |
+
+Partial spec files tag non-belt cases `@skip-belt`; the belt script uses `--grep-invert @skip-belt`. Inventory: `context/foundation/test-plan.md` §6.3 `#### Belt merge gate`.
+
 ## File Structure
 
 ```text
 e2e/
 ├── README.md                 # This file
 ├── env.ts                    # Shared E2E env helpers (playwright.config + global-setup)
-├── global-setup.ts           # Auth pool + server readiness wait
+├── global-setup.ts           # Auth pool (4 users) + server readiness wait
 ├── seed.spec.ts              # Generation exemplar (/10x-e2e quality lever)
 ├── fixtures.ts               # Worker-scoped storageState fixture
 ├── smoke.spec.ts             # Pipeline sanity (infra smoke)
 ├── pomodoro-cycle.spec.ts    # S-01: focus → start → clock → overlay → complete
 ├── guest-trial.spec.ts       # Risk #1: guest reload (guest-chromium project)
-├── mid-cycle-completion.spec.ts
 ├── mid-cycle-last-task.spec.ts
+├── mindful-session-wind-down.spec.ts
 ├── DELIBERATE-BREAK.md       # One-time VERIFY matrix (/10x-e2e)
 └── helpers/
     ├── idle-cycle.ts         # Dismiss overlays / interrupt before tests
     ├── work-cycle.ts         # setWorkDurationSec + startFocusedWorkCycle
+    ├── seed-scenario.ts      # tRPC API seed (wind-down fatigue setup)
     ├── check-in.ts
     └── user.ts               # createTestUser / postAuthWithRetry utilities
 ```
