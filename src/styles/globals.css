@@ -9,18 +9,31 @@
 	--color-shell-bottom: #16213e;
 	--color-surface-overlay: #1a1a2e;
 	--color-surface-break: #1a2e2e;
+	--color-surface-card: rgb(255 255 255 / 0.1);
+	--color-surface-card-muted: rgb(255 255 255 / 0.05);
+	--color-surface-panel: rgb(255 255 255 / 0.05);
 	--color-border-subtle: rgb(255 255 255 / 0.2);
 	--color-border-break: rgb(45 212 191 / 0.3);
+	--color-text-secondary: rgb(255 255 255 / 0.6);
+	--color-text-dimmed: rgb(255 255 255 / 0.4);
+	--color-text-section: rgb(255 255 255 / 0.8);
 	--color-accent-cta: #9333ea;
 	--color-accent-cta-hover: #a855f7;
 	--color-accent-break: #14b8a6;
 	--color-accent-success: #16a34a;
+	--color-accent-suggestion: rgb(251 191 36 / 0.8);
 	--color-energy-focused-border: rgb(129 140 248 / 0.5);
 	--color-energy-focused-bg: rgb(99 102 241 / 0.15);
 	--color-energy-steady-border: rgb(192 132 252 / 0.5);
 	--color-energy-steady-bg: rgb(168 85 247 / 0.15);
 	--color-energy-fading-border: rgb(251 113 133 / 0.4);
 	--color-energy-fading-bg: rgb(244 63 94 / 0.1);
+	--color-worktype-deep-bg: rgb(59 130 246 / 0.2);
+	--color-worktype-deep-text: #93c5fd;
+	--color-worktype-ops-bg: rgb(245 158 11 / 0.2);
+	--color-worktype-ops-text: #fcd34d;
+	--color-worktype-reactive-bg: rgb(244 63 94 / 0.2);
+	--color-worktype-reactive-text: #fda4af;
 }
 
 @keyframes overlay-enter {
@@ -35,12 +48,35 @@
 	}
 }
 
+@keyframes task-complete-delight {
+	0% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.88;
+		transform: scale(1.02);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
 .overlay-enter {
 	animation: overlay-enter 200ms ease-out both;
+}
+
+.animate-task-complete {
+	animation: task-complete-delight 400ms ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
 	.overlay-enter {
 		animation: none;
+	}
+
+	.animate-task-complete {
+		animation-duration: 50ms;
 	}
 }

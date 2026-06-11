@@ -25,12 +25,7 @@ import type {
 	DomainTask,
 	DomainTaskId,
 } from "~/lib/data-mode/types";
-
-const WORK_TYPE_CONFIG = {
-	DEEP_WORK: { label: "Deep", bg: "bg-blue-500/20", text: "text-blue-300" },
-	OPERATIONAL: { label: "Ops", bg: "bg-amber-500/20", text: "text-amber-300" },
-	REACTIVE: { label: "Reactive", bg: "bg-rose-500/20", text: "text-rose-300" },
-} as const;
+import { WORK_TYPE_CONFIG } from "~/lib/design/work-type-config";
 
 const AXIS_LABELS = { 1: "Light", 2: "Medium", 3: "Heavy" } as const;
 
@@ -63,7 +58,7 @@ function TaskBadges({
 			>
 				{config.label}
 			</span>
-			<span className="rounded-full bg-white/10 px-2 py-0.5 font-medium text-white/70 text-xs">
+			<span className="rounded-full bg-surface-card px-2 py-0.5 font-medium text-text-secondary text-xs">
 				U: {AXIS_LABELS[urgency]}
 			</span>
 			<span className="rounded-full bg-indigo-500/20 px-2 py-0.5 font-medium text-indigo-200 text-xs">
@@ -194,14 +189,14 @@ function SegmentedControl<T extends string | number>({
 			{options.map((opt) => {
 				const isActive = opt.value === value;
 				const activeColor =
-					colorMap?.[String(opt.value)] ?? "bg-purple-600 text-white";
+					colorMap?.[String(opt.value)] ?? "bg-accent-cta text-white";
 				return (
 					<button
 						aria-pressed={isActive}
 						className={`rounded-md px-2 py-1 font-medium text-xs transition ${
 							isActive
 								? activeColor
-								: "bg-white/10 text-white/60 hover:bg-white/20"
+								: "bg-surface-card text-text-secondary hover:bg-surface-card/80"
 						}`}
 						key={String(opt.value)}
 						onClick={() => onChange(opt.value)}
@@ -263,6 +258,8 @@ type SortableActiveTaskRowProps = {
 	}) => Promise<void>;
 	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void;
 	onDeleteTask: (input: { id: DomainTaskId }) => Promise<void>;
+	completingTaskId: DomainTaskId | null;
+	onBeginComplete: (taskId: DomainTaskId) => void;
 };
 
 function SortableActiveTaskRow({
@@ -295,6 +292,8 @@ function SortableActiveTaskRow({
 	onUpdateTask,
 	onFocusTask,
 	onDeleteTask,
+	completingTaskId,
+	onBeginComplete,
 }: SortableActiveTaskRowProps) {
 	const {
 		attributes,
@@ -316,11 +315,13 @@ function SortableActiveTaskRow({
 
 	return (
 		<li
-			className={`flex items-center gap-2 rounded-lg bg-white/10 px-4 py-3 ${
+			className={`flex items-center gap-2 rounded-lg border border-transparent bg-surface-card px-4 py-3 ${
 				focusedTaskId === task.id ? "ring-2 ring-purple-500" : ""
 			} ${
-				highlightedTaskId === task.id ? "ring-2 ring-amber-400/80" : ""
-			} ${isDragging ? "z-10 opacity-80" : ""}`}
+				highlightedTaskId === task.id ? "ring-2 ring-accent-suggestion" : ""
+			} ${isDragging ? "z-10 opacity-80" : ""} ${
+				completingTaskId === task.id ? "animate-task-complete" : ""
+			}`}
 			data-testid={
 				highlightedTaskId === task.id ? "suggested-task-row" : "active-task-row"
 			}
@@ -351,6 +352,7 @@ function SortableActiveTaskRow({
 						return;
 					}
 
+					onBeginComplete(task.id);
 					void onUpdateTask({
 						id: task.id,
 						status: "completed",
@@ -379,9 +381,9 @@ function SortableActiveTaskRow({
 						<span className="w-16 text-white/60 text-xs">Type</span>
 						<SegmentedControl
 							colorMap={{
-								DEEP_WORK: "bg-blue-500/30 text-blue-300",
-								OPERATIONAL: "bg-amber-500/30 text-amber-300",
-								REACTIVE: "bg-rose-500/30 text-rose-300",
+								DEEP_WORK: WORK_TYPE_CONFIG.DEEP_WORK.segmentActive,
+								OPERATIONAL: WORK_TYPE_CONFIG.OPERATIONAL.segmentActive,
+								REACTIVE: WORK_TYPE_CONFIG.REACTIVE.segmentActive,
 							}}
 							onChange={onSetEditWorkType}
 							options={[
@@ -422,8 +424,8 @@ function SortableActiveTaskRow({
 			<button
 				className={`shrink-0 rounded-lg px-2 py-1 font-medium text-xs transition ${
 					focusedTaskId === task.id
-						? "bg-purple-600 text-white"
-						: "bg-white/10 text-white/80 hover:bg-white/20"
+						? "bg-accent-cta text-white"
+						: "bg-surface-card text-text-section hover:bg-surface-card/80"
 				}`}
 				disabled={focusLocked}
 				onClick={() => onFocusTask(task.id, task)}
@@ -490,6 +492,16 @@ export function TaskList({
 	const [editEffortMinutes, setEditEffortMinutes] = useState("");
 	const [editCommitmentHorizon, setEditCommitmentHorizon] =
 		useState<CommitmentHorizon>("WHEN_POSSIBLE");
+	const [completingTaskId, setCompletingTaskId] = useState<DomainTaskId | null>(
+		null,
+	);
+
+	function beginCompleteAnimation(taskId: DomainTaskId) {
+		setCompletingTaskId(taskId);
+		window.setTimeout(() => {
+			setCompletingTaskId((current) => (current === taskId ? null : current));
+		}, 400);
+	}
 
 	const activeTasks = tasks.filter((t) => t.status === "active");
 	const completedTasks = tasks.filter((t) => t.status === "completed");
@@ -621,7 +633,7 @@ export function TaskList({
 			>
 				<div className="flex gap-2">
 					<input
-						className="flex-1 rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none"
+						className="flex-1 rounded-lg border border-border-subtle bg-surface-card px-4 py-2 text-white placeholder:text-text-dimmed focus:border-text-secondary focus:outline-none"
 						onChange={(e) => setNewTitle(e.target.value)}
 						placeholder="Add a new task..."
 						ref={addTaskInputRef}
@@ -629,7 +641,7 @@ export function TaskList({
 						value={newTitle}
 					/>
 					<button
-						className="rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition hover:bg-purple-500 disabled:opacity-50"
+						className="rounded-lg bg-accent-cta px-4 py-2 font-medium text-white transition hover:bg-accent-cta-hover disabled:opacity-50"
 						disabled={isCreating || !newTitle.trim()}
 						type="submit"
 					>
@@ -644,14 +656,14 @@ export function TaskList({
 					{showDetails ? "− Details" : "+ Details"}
 				</button>
 				{showDetails && (
-					<div className="space-y-2 rounded-lg border border-white/10 bg-white/5 p-3">
+					<div className="space-y-2 rounded-lg border border-border-subtle bg-surface-panel p-3">
 						<div className="flex items-center gap-2">
-							<span className="w-16 text-white/60 text-xs">Type</span>
+							<span className="w-16 text-text-secondary text-xs">Type</span>
 							<SegmentedControl
 								colorMap={{
-									DEEP_WORK: "bg-blue-500/30 text-blue-300",
-									OPERATIONAL: "bg-amber-500/30 text-amber-300",
-									REACTIVE: "bg-rose-500/30 text-rose-300",
+									DEEP_WORK: WORK_TYPE_CONFIG.DEEP_WORK.segmentActive,
+									OPERATIONAL: WORK_TYPE_CONFIG.OPERATIONAL.segmentActive,
+									REACTIVE: WORK_TYPE_CONFIG.REACTIVE.segmentActive,
 								}}
 								onChange={setNewWorkType}
 								options={[
@@ -677,7 +689,7 @@ export function TaskList({
 			</form>
 
 			<section>
-				<h2 className="mb-2 font-semibold text-lg text-white/80">
+				<h2 className="mb-2 font-semibold text-lg text-text-section">
 					Active ({activeTasks.length})
 				</h2>
 				{activeTasks.length === 0 ? (
@@ -695,6 +707,7 @@ export function TaskList({
 								{activeTasks.map((task) => (
 									<SortableActiveTaskRow
 										canMidCycleMarkComplete={canMidCycleMarkComplete}
+										completingTaskId={completingTaskId}
 										cycleLocked={cycleLocked}
 										dragDisabled={dragDisabled}
 										editCommitmentHorizon={editCommitmentHorizon}
@@ -710,6 +723,7 @@ export function TaskList({
 										isMutating={isMutating}
 										key={String(task.id)}
 										markCompleteLocked={markCompleteLocked}
+										onBeginComplete={beginCompleteAnimation}
 										onDeleteTask={deleteTask}
 										onFocusTask={onFocusTask}
 										onMidCycleMarkComplete={onMidCycleMarkComplete}
@@ -734,13 +748,13 @@ export function TaskList({
 
 			{completedTasks.length > 0 && (
 				<section>
-					<h2 className="mb-2 font-semibold text-lg text-white/80">
+					<h2 className="mb-2 font-semibold text-lg text-text-section">
 						Completed ({completedTasks.length})
 					</h2>
 					<ul className="space-y-2">
 						{completedTasks.map((task) => (
 							<li
-								className="flex items-center gap-2 rounded-lg bg-white/5 px-4 py-3"
+								className="flex items-center gap-2 rounded-lg border border-transparent bg-surface-card-muted px-4 py-3"
 								key={String(task.id)}
 							>
 								<button
@@ -755,7 +769,7 @@ export function TaskList({
 									}}
 									type="button"
 								/>
-								<span className="flex-1 text-white/50 line-through">
+								<span className="flex-1 text-text-dimmed line-through">
 									{task.title}
 								</span>
 								<TaskBadges
