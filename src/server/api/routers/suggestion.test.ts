@@ -31,9 +31,28 @@ type TaskRow = {
 	userId: string;
 	workType: WorkType;
 	weight: number;
+	importance: number;
+	urgency: number;
+	effortMinutes: number | null;
+	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	sortOrder: number;
 	createdAt: Date;
 };
+
+function taskDefaults(
+	weight: number,
+): Pick<
+	TaskRow,
+	"importance" | "urgency" | "effortMinutes" | "commitmentHorizon" | "weight"
+> {
+	return {
+		weight,
+		importance: 2,
+		urgency: weight,
+		effortMinutes: null,
+		commitmentHorizon: "WHEN_POSSIBLE",
+	};
+}
 
 type CheckInRow = {
 	cycleId: number;
@@ -359,9 +378,9 @@ function seedTasks() {
 			status: "active",
 			userId: USER_ID,
 			workType: "DEEP_WORK",
-			weight: 3,
 			sortOrder: 0,
 			createdAt: new Date("2026-01-01"),
+			...taskDefaults(3),
 		},
 		{
 			id: 2,
@@ -369,9 +388,9 @@ function seedTasks() {
 			status: "active",
 			userId: USER_ID,
 			workType: "REACTIVE",
-			weight: 2,
 			sortOrder: 1,
 			createdAt: new Date("2026-01-02"),
+			...taskDefaults(2),
 		},
 		{
 			id: 3,
@@ -379,9 +398,9 @@ function seedTasks() {
 			status: "active",
 			userId: USER_ID,
 			workType: "OPERATIONAL",
-			weight: 2,
 			sortOrder: 2,
 			createdAt: new Date("2026-01-03"),
+			...taskDefaults(2),
 		},
 	];
 }
@@ -520,9 +539,9 @@ describe("suggestion router", () => {
 				status: "active",
 				userId: USER_ID,
 				workType: "DEEP_WORK",
-				weight: 2,
 				sortOrder: 0,
 				createdAt: new Date(),
+				...taskDefaults(2),
 			},
 			{
 				id: 2,
@@ -530,9 +549,9 @@ describe("suggestion router", () => {
 				status: "active",
 				userId: USER_ID,
 				workType: "REACTIVE",
-				weight: 2,
 				sortOrder: 1,
 				createdAt: new Date(),
+				...taskDefaults(2),
 			},
 		];
 
@@ -574,9 +593,9 @@ describe("suggestion router", () => {
 				status: "active",
 				userId: USER_ID,
 				workType: "DEEP_WORK",
-				weight: 2,
 				sortOrder: 0,
 				createdAt: new Date(),
+				...taskDefaults(2),
 			},
 		];
 
@@ -719,9 +738,9 @@ describe("suggestion router", () => {
 				status: "active",
 				userId: USER_ID,
 				workType: "OPERATIONAL",
-				weight: 2,
 				sortOrder: 1,
 				createdAt: new Date("2026-01-01"),
+				...taskDefaults(2),
 			},
 			{
 				id: 2,
@@ -729,9 +748,9 @@ describe("suggestion router", () => {
 				status: "active",
 				userId: USER_ID,
 				workType: "OPERATIONAL",
-				weight: 2,
 				sortOrder: 0,
 				createdAt: new Date("2026-01-02"),
+				...taskDefaults(2),
 			},
 		];
 
@@ -758,9 +777,9 @@ describe("suggestion router", () => {
 				status: "active",
 				userId: USER_ID,
 				workType: "OPERATIONAL",
-				weight: 2,
 				sortOrder: 1,
 				createdAt: new Date("2026-01-01"),
+				...taskDefaults(2),
 			},
 			{
 				id: 2,
@@ -768,9 +787,9 @@ describe("suggestion router", () => {
 				status: "active",
 				userId: USER_ID,
 				workType: "REACTIVE",
-				weight: 3,
 				sortOrder: 0,
 				createdAt: new Date("2026-01-02"),
+				...taskDefaults(3),
 			},
 		];
 
@@ -817,9 +836,9 @@ describe("suggestion router", () => {
 				status: "active",
 				userId: USER_ID,
 				workType: "REACTIVE",
-				weight: 3,
 				sortOrder: 0,
 				createdAt: new Date("2026-01-01"),
+				...taskDefaults(3),
 			},
 		];
 

@@ -10,6 +10,10 @@ const baseTask: ScoringTask = {
 	id: 1,
 	workType: "DEEP_WORK",
 	weight: 3,
+	importance: 2,
+	urgency: 3,
+	effortMinutes: null,
+	commitmentHorizon: "WHEN_POSSIBLE",
 	sortOrder: 0,
 	createdAt: new Date("2026-01-01"),
 };

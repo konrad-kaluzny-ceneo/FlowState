@@ -7,10 +7,18 @@ import {
 } from "./rationale-breakdown";
 import type { ScoringContext, ScoringTask } from "./score-task";
 
+const eisenhowerDefaults = {
+	importance: 2,
+	effortMinutes: null,
+	commitmentHorizon: "WHEN_POSSIBLE" as const,
+};
+
 const deepTask: ScoringTask = {
 	id: 1,
 	workType: "DEEP_WORK",
 	weight: 3,
+	urgency: 3,
+	...eisenhowerDefaults,
 	sortOrder: 0,
 	createdAt: new Date("2026-01-01"),
 };
@@ -19,6 +27,8 @@ const operationalTask: ScoringTask = {
 	id: 2,
 	workType: "OPERATIONAL",
 	weight: 3,
+	urgency: 3,
+	...eisenhowerDefaults,
 	sortOrder: 0,
 	createdAt: new Date("2026-01-01"),
 };
@@ -27,6 +37,8 @@ const reactiveTask: ScoringTask = {
 	id: 3,
 	workType: "REACTIVE",
 	weight: 4,
+	urgency: 4,
+	...eisenhowerDefaults,
 	sortOrder: 0,
 	createdAt: new Date("2026-01-01"),
 };
