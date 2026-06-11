@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { defaultEisenhowerFields } from "~/lib/data-mode/types";
 import {
 	createEmptyGuestSnapshot,
 	GUEST_STORAGE_KEY,
@@ -73,6 +74,7 @@ describe("guest repositories", () => {
 					status: "active",
 					workType: "OPERATIONAL",
 					weight: 2,
+					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					createdAt: startedAt,
 					updatedAt: null,

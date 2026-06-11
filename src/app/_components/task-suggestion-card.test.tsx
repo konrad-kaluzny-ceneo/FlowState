@@ -201,6 +201,21 @@ describe("TaskSuggestionCard", () => {
 		expect(toggle.getAttribute("aria-expanded")).toBe("false");
 	});
 
+	it("shows ASAP badge when commitment horizon is ASAP", () => {
+		render(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={{
+					...baseSuggestion,
+					commitmentHorizon: "ASAP",
+				}}
+			/>,
+		);
+
+		expect(screen.getByTestId("suggestion-asap-badge")).toBeTruthy();
+	});
+
 	it("renders coachLine alongside expander without duplicate rationale stacking", () => {
 		render(
 			<TaskSuggestionCard

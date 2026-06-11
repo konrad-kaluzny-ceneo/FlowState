@@ -55,13 +55,18 @@ function buildOptimisticCreateRow(
 	const maxSortOrder = (existing ?? [])
 		.filter((task) => task.status === "active")
 		.reduce((max, task) => Math.max(max, task.sortOrder), -1);
+	const urgency = (input.urgency ?? input.weight ?? 2) as 1 | 2 | 3;
 	return {
 		id: tempId,
 		title: input.title,
 		userId,
 		status: "active",
 		workType: input.workType ?? "OPERATIONAL",
-		weight: input.weight ?? 2,
+		weight: urgency,
+		importance: (input.importance ?? 2) as 1 | 2 | 3,
+		urgency,
+		effortMinutes: input.effortMinutes ?? null,
+		commitmentHorizon: input.commitmentHorizon ?? "WHEN_POSSIBLE",
 		sortOrder: maxSortOrder + 1,
 		createdAt: now,
 		updatedAt: now,
@@ -217,8 +222,13 @@ export function useTaskMutations() {
 			clearError();
 			if (mode === "guest") {
 				return taskRepo.create({
-					...input,
+					title: input.title,
+					workType: input.workType,
 					weight: input.weight as 1 | 2 | 3 | undefined,
+					importance: input.importance as 1 | 2 | 3 | undefined,
+					urgency: input.urgency as 1 | 2 | 3 | undefined,
+					effortMinutes: input.effortMinutes,
+					commitmentHorizon: input.commitmentHorizon,
 				});
 			}
 			return createMutation.mutateAsync(input);
@@ -231,8 +241,15 @@ export function useTaskMutations() {
 			clearError();
 			if (mode === "guest") {
 				return taskRepo.update({
-					...input,
+					id: input.id,
+					title: input.title,
+					status: input.status,
+					workType: input.workType,
 					weight: input.weight as 1 | 2 | 3 | undefined,
+					importance: input.importance as 1 | 2 | 3 | undefined,
+					urgency: input.urgency as 1 | 2 | 3 | undefined,
+					effortMinutes: input.effortMinutes,
+					commitmentHorizon: input.commitmentHorizon,
 				});
 			}
 			if (typeof input.id !== "number" || isTempTaskId(input.id)) {

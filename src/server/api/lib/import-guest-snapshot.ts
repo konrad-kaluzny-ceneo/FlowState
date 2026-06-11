@@ -57,6 +57,7 @@ export async function importGuestSnapshot(
 		for (const [relativeIndex, guestTask] of sortedGuestTasks.entries()) {
 			const title = resolveUniqueTitle(guestTask.title, existingTitles);
 			existingTitles.add(title);
+			const urgency = guestTask.urgency ?? guestTask.weight;
 
 			const created = await tx.task.create({
 				data: {
@@ -64,7 +65,11 @@ export async function importGuestSnapshot(
 					status: guestTask.status,
 					userId,
 					workType: guestTask.workType,
-					weight: guestTask.weight,
+					weight: urgency,
+					importance: guestTask.importance ?? 2,
+					urgency,
+					effortMinutes: guestTask.effortMinutes ?? null,
+					commitmentHorizon: guestTask.commitmentHorizon ?? "WHEN_POSSIBLE",
 					sortOrder: baseOffset + relativeIndex,
 				},
 			});

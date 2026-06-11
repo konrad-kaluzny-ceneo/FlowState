@@ -20,7 +20,11 @@ import { useRef, useState } from "react";
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
-import type { DomainTask, DomainTaskId } from "~/lib/data-mode/types";
+import type {
+	CommitmentHorizon,
+	DomainTask,
+	DomainTaskId,
+} from "~/lib/data-mode/types";
 
 const WORK_TYPE_CONFIG = {
 	DEEP_WORK: { label: "Deep", bg: "bg-blue-500/20", text: "text-blue-300" },
@@ -28,21 +32,31 @@ const WORK_TYPE_CONFIG = {
 	REACTIVE: { label: "Reactive", bg: "bg-rose-500/20", text: "text-rose-300" },
 } as const;
 
-const WEIGHT_LABELS = { 1: "Light", 2: "Medium", 3: "Heavy" } as const;
+const AXIS_LABELS = { 1: "Light", 2: "Medium", 3: "Heavy" } as const;
+
+const HORIZON_OPTIONS: { value: CommitmentHorizon; label: string }[] = [
+	{ value: "ASAP", label: "ASAP" },
+	{ value: "THIS_WEEK", label: "This week" },
+	{ value: "WHEN_POSSIBLE", label: "When possible" },
+];
 
 function TaskBadges({
 	workType,
-	weight,
+	urgency,
+	importance,
+	commitmentHorizon,
 	dimmed = false,
 }: {
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
-	weight: 1 | 2 | 3;
+	urgency: 1 | 2 | 3;
+	importance: 1 | 2 | 3;
+	commitmentHorizon?: CommitmentHorizon;
 	dimmed?: boolean;
 }) {
 	const config = WORK_TYPE_CONFIG[workType];
 	return (
 		<span
-			className={`flex shrink-0 items-center gap-1 ${dimmed ? "opacity-50" : ""}`}
+			className={`flex shrink-0 flex-wrap items-center gap-1 ${dimmed ? "opacity-50" : ""}`}
 		>
 			<span
 				className={`rounded-full px-2 py-0.5 font-medium text-xs ${config.bg} ${config.text}`}
@@ -50,10 +64,116 @@ function TaskBadges({
 				{config.label}
 			</span>
 			<span className="rounded-full bg-white/10 px-2 py-0.5 font-medium text-white/70 text-xs">
-				{WEIGHT_LABELS[weight]}
+				U: {AXIS_LABELS[urgency]}
 			</span>
+			<span className="rounded-full bg-indigo-500/20 px-2 py-0.5 font-medium text-indigo-200 text-xs">
+				I: {AXIS_LABELS[importance]}
+			</span>
+			{commitmentHorizon === "ASAP" && (
+				<span className="rounded-full bg-orange-500/25 px-2 py-0.5 font-medium text-orange-200 text-xs">
+					ASAP
+				</span>
+			)}
 		</span>
 	);
+}
+
+type EisenhowerAttributeFieldsProps = {
+	urgency: 1 | 2 | 3;
+	importance: 1 | 2 | 3;
+	effortMinutes: string;
+	commitmentHorizon: CommitmentHorizon;
+	onUrgencyChange: (value: 1 | 2 | 3) => void;
+	onImportanceChange: (value: 1 | 2 | 3) => void;
+	onEffortMinutesChange: (value: string) => void;
+	onCommitmentHorizonChange: (value: CommitmentHorizon) => void;
+};
+
+function EisenhowerAttributeFields({
+	urgency,
+	importance,
+	effortMinutes,
+	commitmentHorizon,
+	onUrgencyChange,
+	onImportanceChange,
+	onEffortMinutesChange,
+	onCommitmentHorizonChange,
+}: EisenhowerAttributeFieldsProps) {
+	return (
+		<>
+			<div className="flex items-center gap-2">
+				<span className="w-16 text-white/60 text-xs">Urgency</span>
+				<SegmentedControl
+					onChange={(v) => onUrgencyChange(v as 1 | 2 | 3)}
+					options={[
+						{ value: 1 as const, label: "Light" },
+						{ value: 2 as const, label: "Medium" },
+						{ value: 3 as const, label: "Heavy" },
+					]}
+					value={urgency}
+				/>
+			</div>
+			<div className="flex items-center gap-2">
+				<span className="w-16 text-white/60 text-xs">Importance</span>
+				<SegmentedControl
+					onChange={(v) => onImportanceChange(v as 1 | 2 | 3)}
+					options={[
+						{ value: 1 as const, label: "Light" },
+						{ value: 2 as const, label: "Medium" },
+						{ value: 3 as const, label: "Heavy" },
+					]}
+					value={importance}
+				/>
+			</div>
+			<div className="flex items-center gap-2">
+				<span className="w-16 text-white/60 text-xs">Effort</span>
+				<input
+					className="w-24 rounded-md bg-white/10 px-2 py-1 text-white text-xs placeholder:text-white/40 focus:outline-none"
+					inputMode="numeric"
+					max={240}
+					min={5}
+					onChange={(e) => onEffortMinutesChange(e.target.value)}
+					placeholder="min"
+					type="number"
+					value={effortMinutes}
+				/>
+				{effortMinutes !== "" && (
+					<button
+						className="text-white/50 text-xs hover:text-white/80"
+						onClick={() => onEffortMinutesChange("")}
+						type="button"
+					>
+						Clear
+					</button>
+				)}
+			</div>
+			<div className="flex items-center gap-2">
+				<span className="w-16 text-white/60 text-xs">Horizon</span>
+				<SegmentedControl
+					colorMap={{
+						ASAP: "bg-orange-500/30 text-orange-200",
+						THIS_WEEK: "bg-sky-500/30 text-sky-200",
+						WHEN_POSSIBLE: "bg-white/20 text-white/80",
+					}}
+					onChange={(v) => onCommitmentHorizonChange(v as CommitmentHorizon)}
+					options={HORIZON_OPTIONS}
+					value={commitmentHorizon}
+				/>
+			</div>
+		</>
+	);
+}
+
+function parseEffortMinutes(value: string): number | null {
+	const trimmed = value.trim();
+	if (trimmed === "") {
+		return null;
+	}
+	const parsed = Number.parseInt(trimmed, 10);
+	if (!Number.isFinite(parsed) || parsed < 5 || parsed > 240) {
+		return null;
+	}
+	return parsed;
 }
 
 type SegmentedControlProps<T extends string | number> = {
@@ -116,7 +236,10 @@ type SortableActiveTaskRowProps = {
 	editingId: DomainTaskId | null;
 	editTitle: string;
 	editWorkType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
-	editWeight: 1 | 2 | 3;
+	editUrgency: 1 | 2 | 3;
+	editImportance: 1 | 2 | 3;
+	editEffortMinutes: string;
+	editCommitmentHorizon: CommitmentHorizon;
 	cycleLocked: boolean;
 	markCompleteLocked: boolean;
 	isMutating: boolean;
@@ -129,7 +252,10 @@ type SortableActiveTaskRowProps = {
 	onSetEditWorkType: (
 		workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE",
 	) => void;
-	onSetEditWeight: (weight: 1 | 2 | 3) => void;
+	onSetEditUrgency: (urgency: 1 | 2 | 3) => void;
+	onSetEditImportance: (importance: 1 | 2 | 3) => void;
+	onSetEditEffortMinutes: (value: string) => void;
+	onSetEditCommitmentHorizon: (value: CommitmentHorizon) => void;
 	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
 	onUpdateTask: (input: {
 		id: DomainTaskId;
@@ -147,7 +273,10 @@ function SortableActiveTaskRow({
 	editingId,
 	editTitle,
 	editWorkType,
-	editWeight,
+	editUrgency,
+	editImportance,
+	editEffortMinutes,
+	editCommitmentHorizon,
 	cycleLocked,
 	markCompleteLocked,
 	isMutating,
@@ -158,7 +287,10 @@ function SortableActiveTaskRow({
 	onSetEditingId,
 	onSetEditTitle,
 	onSetEditWorkType,
-	onSetEditWeight,
+	onSetEditUrgency,
+	onSetEditImportance,
+	onSetEditEffortMinutes,
+	onSetEditCommitmentHorizon,
 	onMidCycleMarkComplete,
 	onUpdateTask,
 	onFocusTask,
@@ -260,18 +392,16 @@ function SortableActiveTaskRow({
 							value={editWorkType}
 						/>
 					</div>
-					<div className="flex items-center gap-2">
-						<span className="w-16 text-white/60 text-xs">Weight</span>
-						<SegmentedControl
-							onChange={(v) => onSetEditWeight(v as 1 | 2 | 3)}
-							options={[
-								{ value: 1 as const, label: "Light" },
-								{ value: 2 as const, label: "Medium" },
-								{ value: 3 as const, label: "Heavy" },
-							]}
-							value={editWeight}
-						/>
-					</div>
+					<EisenhowerAttributeFields
+						commitmentHorizon={editCommitmentHorizon}
+						effortMinutes={editEffortMinutes}
+						importance={editImportance}
+						onCommitmentHorizonChange={onSetEditCommitmentHorizon}
+						onEffortMinutesChange={onSetEditEffortMinutes}
+						onImportanceChange={onSetEditImportance}
+						onUrgencyChange={onSetEditUrgency}
+						urgency={editUrgency}
+					/>
 				</div>
 			) : (
 				<button
@@ -283,7 +413,12 @@ function SortableActiveTaskRow({
 					{task.title}
 				</button>
 			)}
-			<TaskBadges weight={task.weight} workType={task.workType} />
+			<TaskBadges
+				commitmentHorizon={task.commitmentHorizon}
+				importance={task.importance}
+				urgency={task.urgency}
+				workType={task.workType}
+			/>
 			<button
 				className={`shrink-0 rounded-lg px-2 py-1 font-medium text-xs transition ${
 					focusedTaskId === task.id
@@ -340,13 +475,21 @@ export function TaskList({
 	const [newWorkType, setNewWorkType] = useState<
 		"DEEP_WORK" | "OPERATIONAL" | "REACTIVE"
 	>("OPERATIONAL");
-	const [newWeight, setNewWeight] = useState<1 | 2 | 3>(2);
+	const [newUrgency, setNewUrgency] = useState<1 | 2 | 3>(2);
+	const [newImportance, setNewImportance] = useState<1 | 2 | 3>(2);
+	const [newEffortMinutes, setNewEffortMinutes] = useState("");
+	const [newCommitmentHorizon, setNewCommitmentHorizon] =
+		useState<CommitmentHorizon>("WHEN_POSSIBLE");
 	const [editingId, setEditingId] = useState<DomainTaskId | null>(null);
 	const [editTitle, setEditTitle] = useState("");
 	const [editWorkType, setEditWorkType] = useState<
 		"DEEP_WORK" | "OPERATIONAL" | "REACTIVE"
 	>("OPERATIONAL");
-	const [editWeight, setEditWeight] = useState<1 | 2 | 3>(2);
+	const [editUrgency, setEditUrgency] = useState<1 | 2 | 3>(2);
+	const [editImportance, setEditImportance] = useState<1 | 2 | 3>(2);
+	const [editEffortMinutes, setEditEffortMinutes] = useState("");
+	const [editCommitmentHorizon, setEditCommitmentHorizon] =
+		useState<CommitmentHorizon>("WHEN_POSSIBLE");
 
 	const activeTasks = tasks.filter((t) => t.status === "active");
 	const completedTasks = tasks.filter((t) => t.status === "completed");
@@ -402,7 +545,12 @@ export function TaskList({
 		setEditingId(task.id);
 		setEditTitle(task.title);
 		setEditWorkType(task.workType);
-		setEditWeight(task.weight);
+		setEditUrgency(task.urgency);
+		setEditImportance(task.importance);
+		setEditEffortMinutes(
+			task.effortMinutes != null ? String(task.effortMinutes) : "",
+		);
+		setEditCommitmentHorizon(task.commitmentHorizon);
 	}
 
 	async function saveEdit(id: DomainTaskId) {
@@ -414,7 +562,11 @@ export function TaskList({
 			id,
 			title: editTitle.trim(),
 			workType: editWorkType,
-			weight: editWeight,
+			urgency: editUrgency,
+			weight: editUrgency,
+			importance: editImportance,
+			effortMinutes: parseEffortMinutes(editEffortMinutes),
+			commitmentHorizon: editCommitmentHorizon,
 		});
 		setEditingId(null);
 		setEditTitle("");
@@ -451,12 +603,19 @@ export function TaskList({
 						await createTask({
 							title: newTitle.trim(),
 							workType: newWorkType,
-							weight: newWeight,
+							urgency: newUrgency,
+							weight: newUrgency,
+							importance: newImportance,
+							effortMinutes: parseEffortMinutes(newEffortMinutes),
+							commitmentHorizon: newCommitmentHorizon,
 						});
 						setNewTitle("");
 						setShowDetails(false);
 						setNewWorkType("OPERATIONAL");
-						setNewWeight(2);
+						setNewUrgency(2);
+						setNewImportance(2);
+						setNewEffortMinutes("");
+						setNewCommitmentHorizon("WHEN_POSSIBLE");
 					})();
 				}}
 			>
@@ -503,18 +662,16 @@ export function TaskList({
 								value={newWorkType}
 							/>
 						</div>
-						<div className="flex items-center gap-2">
-							<span className="w-16 text-white/60 text-xs">Weight</span>
-							<SegmentedControl
-								onChange={(v) => setNewWeight(v as 1 | 2 | 3)}
-								options={[
-									{ value: 1 as const, label: "Light" },
-									{ value: 2 as const, label: "Medium" },
-									{ value: 3 as const, label: "Heavy" },
-								]}
-								value={newWeight}
-							/>
-						</div>
+						<EisenhowerAttributeFields
+							commitmentHorizon={newCommitmentHorizon}
+							effortMinutes={newEffortMinutes}
+							importance={newImportance}
+							onCommitmentHorizonChange={setNewCommitmentHorizon}
+							onEffortMinutesChange={setNewEffortMinutes}
+							onImportanceChange={setNewImportance}
+							onUrgencyChange={setNewUrgency}
+							urgency={newUrgency}
+						/>
 					</div>
 				)}
 			</form>
@@ -540,9 +697,12 @@ export function TaskList({
 										canMidCycleMarkComplete={canMidCycleMarkComplete}
 										cycleLocked={cycleLocked}
 										dragDisabled={dragDisabled}
+										editCommitmentHorizon={editCommitmentHorizon}
+										editEffortMinutes={editEffortMinutes}
+										editImportance={editImportance}
 										editingId={editingId}
 										editTitle={editTitle}
-										editWeight={editWeight}
+										editUrgency={editUrgency}
 										editWorkType={editWorkType}
 										focusedTaskId={focusedTaskId}
 										focusLocked={focusLocked}
@@ -554,9 +714,12 @@ export function TaskList({
 										onFocusTask={onFocusTask}
 										onMidCycleMarkComplete={onMidCycleMarkComplete}
 										onSaveEdit={saveEdit}
+										onSetEditCommitmentHorizon={setEditCommitmentHorizon}
+										onSetEditEffortMinutes={setEditEffortMinutes}
+										onSetEditImportance={setEditImportance}
 										onSetEditingId={setEditingId}
 										onSetEditTitle={setEditTitle}
-										onSetEditWeight={setEditWeight}
+										onSetEditUrgency={setEditUrgency}
 										onSetEditWorkType={setEditWorkType}
 										onStartEditing={startEditing}
 										onUpdateTask={updateTask}
@@ -596,8 +759,10 @@ export function TaskList({
 									{task.title}
 								</span>
 								<TaskBadges
+									commitmentHorizon={task.commitmentHorizon}
 									dimmed
-									weight={task.weight}
+									importance={task.importance}
+									urgency={task.urgency}
 									workType={task.workType}
 								/>
 								<button

@@ -218,6 +218,10 @@ export function PomodoroDashboardBody({
 								title: pomodoro.pendingSuggestion.data.title,
 								workType: pomodoro.pendingSuggestion.data.workType,
 								weight: pomodoro.pendingSuggestion.data.weight,
+								urgency: pomodoro.pendingSuggestion.data.urgency,
+								importance: pomodoro.pendingSuggestion.data.importance,
+								commitmentHorizon:
+									pomodoro.pendingSuggestion.data.commitmentHorizon,
 								rationale: pomodoro.pendingSuggestion.data.rationale,
 								breakdown: pomodoro.pendingSuggestion.data.breakdown,
 							}}
@@ -249,6 +253,10 @@ export function PomodoroDashboardBody({
 							title: pomodoro.pendingKickoffSuggestion.data.title,
 							workType: pomodoro.pendingKickoffSuggestion.data.workType,
 							weight: pomodoro.pendingKickoffSuggestion.data.weight,
+							urgency: pomodoro.pendingKickoffSuggestion.data.urgency,
+							importance: pomodoro.pendingKickoffSuggestion.data.importance,
+							commitmentHorizon:
+								pomodoro.pendingKickoffSuggestion.data.commitmentHorizon,
 							rationale: pomodoro.pendingKickoffSuggestion.data.rationale,
 							breakdown: pomodoro.pendingKickoffSuggestion.data.breakdown,
 						}}
@@ -411,7 +419,13 @@ function AuthenticatedPomodoroDashboard() {
 	} = useOnboarding();
 
 	const domainTasks = useMemo(
-		() => tasks.map((t) => ({ ...t, weight: t.weight as 1 | 2 | 3 })),
+		() =>
+			tasks.map((t) => ({
+				...t,
+				weight: t.weight as 1 | 2 | 3,
+				importance: t.importance as 1 | 2 | 3,
+				urgency: t.urgency as 1 | 2 | 3,
+			})),
 		[tasks],
 	);
 

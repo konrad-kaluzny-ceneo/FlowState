@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
+
+import { defaultEisenhowerFields } from "~/lib/data-mode/types";
 import {
 	GUEST_IMPORT_ATTEMPTED_KEY,
 	getGuestSnapshotStorageKey,
@@ -25,6 +27,7 @@ describe("guest import guard", () => {
 					status: "active",
 					workType: "OPERATIONAL",
 					weight: 2,
+					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					createdAt: new Date(),
 					updatedAt: null,
@@ -45,6 +48,7 @@ describe("guest import guard", () => {
 					status: "active",
 					workType: "OPERATIONAL",
 					weight: 2,
+					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					createdAt: new Date(),
 					updatedAt: null,
@@ -67,6 +71,7 @@ describe("guest import guard", () => {
 					status: "active",
 					workType: "OPERATIONAL",
 					weight: 2,
+					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					createdAt: new Date(),
 					updatedAt: null,
@@ -89,6 +94,7 @@ describe("guest import guard", () => {
 					status: "active",
 					workType: "OPERATIONAL",
 					weight: 2,
+					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					createdAt: new Date(),
 					updatedAt: null,

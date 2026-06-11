@@ -50,6 +50,12 @@ enum CycleEndAudioMode {
   MUTED
 }
 
+enum CommitmentHorizon {
+  ASAP
+  THIS_WEEK
+  WHEN_POSSIBLE
+}
+
 
 // --- Models ---
 
@@ -58,9 +64,13 @@ model Task {
   title     String    @db.VarChar(256)
   status    String    @default("active") @db.VarChar(20)
   userId    String    @map("user_id") @db.VarChar(255)
-  workType  WorkType  @default(OPERATIONAL) @map("work_type")
-  weight    Int       @default(2) @db.SmallInt
-  sortOrder Int       @default(0) @map("sort_order")
+  workType           WorkType           @default(OPERATIONAL) @map("work_type")
+  weight             Int                @default(2) @db.SmallInt
+  importance         Int                @default(2) @db.SmallInt
+  urgency            Int                @default(2) @db.SmallInt
+  effortMinutes      Int?               @map("effort_minutes")
+  commitmentHorizon  CommitmentHorizon  @default(WHEN_POSSIBLE) @map("commitment_horizon")
+  sortOrder          Int                @default(0) @map("sort_order")
   createdAt DateTime  @default(now()) @map("createdAt") @db.Timestamptz
   updatedAt DateTime? @updatedAt @map("updatedAt") @db.Timestamptz
 

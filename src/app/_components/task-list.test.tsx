@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
+import { defaultEisenhowerFields } from "~/lib/data-mode/types";
 
 import { TaskList } from "./task-list";
 
@@ -56,6 +57,7 @@ function makeTask(overrides: Partial<DomainTask> = {}): DomainTask {
 		updatedAt: new Date(),
 		workType: "OPERATIONAL",
 		weight: 2,
+		...defaultEisenhowerFields(2),
 		sortOrder: 0,
 		...overrides,
 	};
@@ -100,8 +102,34 @@ describe("TaskList", () => {
 			id: 1,
 			title: "Line one\nLine two",
 			workType: "OPERATIONAL",
+			urgency: 2,
 			weight: 2,
+			importance: 2,
+			effortMinutes: null,
+			commitmentHorizon: "WHEN_POSSIBLE",
 		});
+	});
+
+	it("shows Eisenhower attribute pickers in create Details panel", () => {
+		render(<TaskList {...defaultProps} />);
+
+		fireEvent.click(screen.getByRole("button", { name: "+ Details" }));
+
+		expect(screen.getByText("Urgency")).toBeTruthy();
+		expect(screen.getByText("Importance")).toBeTruthy();
+		expect(screen.getByText("Effort")).toBeTruthy();
+		expect(screen.getByText("Horizon")).toBeTruthy();
+	});
+
+	it("shows ASAP badge on active task when horizon is ASAP", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ commitmentHorizon: "ASAP" })]}
+			/>,
+		);
+
+		expect(screen.getByText("ASAP")).toBeTruthy();
 	});
 
 	it("read mode shows full long title", () => {

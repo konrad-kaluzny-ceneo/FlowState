@@ -1,5 +1,21 @@
 ﻿export type DomainTaskId = string | number;
 
+export type CommitmentHorizon = "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
+
+export function defaultEisenhowerFields(weight: 1 | 2 | 3 = 2): {
+	importance: 1 | 2 | 3;
+	urgency: 1 | 2 | 3;
+	effortMinutes: number | null;
+	commitmentHorizon: CommitmentHorizon;
+} {
+	return {
+		importance: 2,
+		urgency: weight,
+		effortMinutes: null,
+		commitmentHorizon: "WHEN_POSSIBLE",
+	};
+}
+
 export type DomainTask = {
 	id: DomainTaskId;
 	title: string;
@@ -9,6 +25,10 @@ export type DomainTask = {
 	updatedAt: Date | null;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: 1 | 2 | 3;
+	importance: 1 | 2 | 3;
+	urgency: 1 | 2 | 3;
+	effortMinutes: number | null;
+	commitmentHorizon: CommitmentHorizon;
 	sortOrder: number;
 };
 
@@ -39,20 +59,31 @@ export type DataMode = "guest" | "authenticated";
 
 export type FocusedTask = { id: DomainTaskId; title: string } | null;
 
+export type EisenhowerTaskInput = {
+	importance?: 1 | 2 | 3;
+	urgency?: 1 | 2 | 3;
+	effortMinutes?: number | null;
+	commitmentHorizon?: CommitmentHorizon;
+};
+
 export interface TaskRepository {
 	list(): Promise<DomainTask[]>;
-	create(input: {
-		title: string;
-		workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
-		weight?: 1 | 2 | 3;
-	}): Promise<DomainTask>;
-	update(input: {
-		id: DomainTaskId;
-		title?: string;
-		status?: "active" | "completed";
-		workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
-		weight?: 1 | 2 | 3;
-	}): Promise<void>;
+	create(
+		input: {
+			title: string;
+			workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+			weight?: 1 | 2 | 3;
+		} & EisenhowerTaskInput,
+	): Promise<DomainTask>;
+	update(
+		input: {
+			id: DomainTaskId;
+			title?: string;
+			status?: "active" | "completed";
+			workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+			weight?: 1 | 2 | 3;
+		} & EisenhowerTaskInput,
+	): Promise<void>;
 	delete(input: { id: DomainTaskId }): Promise<void>;
 	reorder(input: { orderedIds: DomainTaskId[] }): Promise<void>;
 }

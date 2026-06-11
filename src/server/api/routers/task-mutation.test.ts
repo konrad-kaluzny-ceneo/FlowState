@@ -13,6 +13,12 @@ type TaskRow = {
 	status: string;
 	userId: string;
 	sortOrder: number;
+	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+	weight: number;
+	importance: number;
+	urgency: number;
+	effortMinutes: number | null;
+	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	createdAt: Date;
 	updatedAt: Date | null;
 };
@@ -93,12 +99,25 @@ vi.mock("~/server/db/index", () => {
 					},
 				),
 				create: vi.fn((args: { data: Record<string, unknown> }) => {
+					const urgency = Number(args.data.urgency ?? args.data.weight ?? 2);
 					const row: TaskRow = {
 						id: nextTaskId++,
 						title: String(args.data.title),
 						status: "active",
 						userId: String(args.data.userId),
 						sortOrder: Number(args.data.sortOrder ?? 0),
+						workType:
+							(args.data.workType as TaskRow["workType"]) ?? "OPERATIONAL",
+						weight: Number(args.data.weight ?? urgency),
+						importance: Number(args.data.importance ?? 2),
+						urgency,
+						effortMinutes:
+							args.data.effortMinutes === undefined
+								? null
+								: (args.data.effortMinutes as number | null),
+						commitmentHorizon:
+							(args.data.commitmentHorizon as TaskRow["commitmentHorizon"]) ??
+							"WHEN_POSSIBLE",
 						createdAt: new Date(),
 						updatedAt: null,
 					};
@@ -119,7 +138,19 @@ vi.mock("~/server/db/index", () => {
 					(args: {
 						where: { id: number };
 						data: Partial<
-							Pick<TaskRow, "title" | "status" | "sortOrder" | "updatedAt">
+							Pick<
+								TaskRow,
+								| "title"
+								| "status"
+								| "sortOrder"
+								| "updatedAt"
+								| "weight"
+								| "urgency"
+								| "importance"
+								| "effortMinutes"
+								| "commitmentHorizon"
+								| "workType"
+							>
 						>;
 					}) => {
 						const task = allTasks.find((t) => t.id === args.where.id);
@@ -163,6 +194,24 @@ const createCaller = createCallerFactory(taskRouter);
 
 const USER_A = "user-a";
 const USER_B = "user-b";
+
+function makeTask(
+	partial: Partial<TaskRow> & Pick<TaskRow, "id" | "title" | "userId">,
+): TaskRow {
+	return {
+		status: "active",
+		sortOrder: 0,
+		workType: "OPERATIONAL",
+		weight: 2,
+		importance: 2,
+		urgency: 2,
+		effortMinutes: null,
+		commitmentHorizon: "WHEN_POSSIBLE",
+		createdAt: new Date(),
+		updatedAt: null,
+		...partial,
+	};
+}
 
 function taskCaller(userId: string) {
 	return createCaller({
@@ -231,15 +280,11 @@ describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUN
 
 			// Seed task owned by ownerUserId; findFirst with caller's userId only matches when owner === caller
 			allTasks = [
-				{
+				makeTask({
 					id: taskId,
 					title: "Original",
-					status: "active",
 					userId: scenario.ownerUserId,
-					sortOrder: 0,
-					createdAt: new Date(),
-					updatedAt: null,
-				},
+				}),
 			];
 
 			const caller = createCaller({
@@ -274,15 +319,11 @@ describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUN
 			const isOwner = scenario.ownerUserId === scenario.callerUserId;
 
 			allTasks = [
-				{
+				makeTask({
 					id: taskId,
 					title: "Task",
-					status: "active",
 					userId: scenario.ownerUserId,
-					sortOrder: 0,
-					createdAt: new Date(),
-					updatedAt: null,
-				},
+				}),
 			];
 
 			const caller = createCaller({
@@ -319,33 +360,27 @@ describe("task reorder and sortOrder", () => {
 
 	it("owner reorders active tasks and list reflects new order", async () => {
 		allTasks = [
-			{
+			makeTask({
 				id: 1,
 				title: "First",
-				status: "active",
 				userId: USER_A,
 				sortOrder: 0,
 				createdAt: new Date(2024, 0, 1),
-				updatedAt: null,
-			},
-			{
+			}),
+			makeTask({
 				id: 2,
 				title: "Second",
-				status: "active",
 				userId: USER_A,
 				sortOrder: 1,
 				createdAt: new Date(2024, 0, 2),
-				updatedAt: null,
-			},
-			{
+			}),
+			makeTask({
 				id: 3,
 				title: "Third",
-				status: "active",
 				userId: USER_A,
 				sortOrder: 2,
 				createdAt: new Date(2024, 0, 3),
-				updatedAt: null,
-			},
+			}),
 		];
 
 		await taskCaller(USER_A).reorder({ orderedIds: [3, 1, 2] });
@@ -357,33 +392,9 @@ describe("task reorder and sortOrder", () => {
 
 	it("cross-user ID in orderedIds throws NOT_FOUND", async () => {
 		allTasks = [
-			{
-				id: 1,
-				title: "A first",
-				status: "active",
-				userId: USER_A,
-				sortOrder: 0,
-				createdAt: new Date(),
-				updatedAt: null,
-			},
-			{
-				id: 2,
-				title: "B task",
-				status: "active",
-				userId: USER_B,
-				sortOrder: 0,
-				createdAt: new Date(),
-				updatedAt: null,
-			},
-			{
-				id: 3,
-				title: "A second",
-				status: "active",
-				userId: USER_A,
-				sortOrder: 1,
-				createdAt: new Date(),
-				updatedAt: null,
-			},
+			makeTask({ id: 1, title: "A first", userId: USER_A, sortOrder: 0 }),
+			makeTask({ id: 2, title: "B task", userId: USER_B, sortOrder: 0 }),
+			makeTask({ id: 3, title: "A second", userId: USER_A, sortOrder: 1 }),
 		];
 
 		await expect(
@@ -393,24 +404,14 @@ describe("task reorder and sortOrder", () => {
 
 	it("completed task ID in orderedIds throws BAD_REQUEST", async () => {
 		allTasks = [
-			{
-				id: 1,
-				title: "Active",
-				status: "active",
-				userId: USER_A,
-				sortOrder: 0,
-				createdAt: new Date(),
-				updatedAt: null,
-			},
-			{
+			makeTask({ id: 1, title: "Active", userId: USER_A, sortOrder: 0 }),
+			makeTask({
 				id: 2,
 				title: "Done",
-				status: "completed",
 				userId: USER_A,
+				status: "completed",
 				sortOrder: 1,
-				createdAt: new Date(),
-				updatedAt: null,
-			},
+			}),
 		];
 
 		await expect(
@@ -420,24 +421,8 @@ describe("task reorder and sortOrder", () => {
 
 	it("non-permutation input throws BAD_REQUEST", async () => {
 		allTasks = [
-			{
-				id: 1,
-				title: "One",
-				status: "active",
-				userId: USER_A,
-				sortOrder: 0,
-				createdAt: new Date(),
-				updatedAt: null,
-			},
-			{
-				id: 2,
-				title: "Two",
-				status: "active",
-				userId: USER_A,
-				sortOrder: 1,
-				createdAt: new Date(),
-				updatedAt: null,
-			},
+			makeTask({ id: 1, title: "One", userId: USER_A, sortOrder: 0 }),
+			makeTask({ id: 2, title: "Two", userId: USER_A, sortOrder: 1 }),
 		];
 
 		await expect(
@@ -451,33 +436,28 @@ describe("task reorder and sortOrder", () => {
 
 	it("revert completed to active assigns tail sortOrder", async () => {
 		allTasks = [
-			{
+			makeTask({
 				id: 1,
 				title: "Active A",
-				status: "active",
 				userId: USER_A,
 				sortOrder: 0,
 				createdAt: new Date(2024, 0, 1),
-				updatedAt: null,
-			},
-			{
+			}),
+			makeTask({
 				id: 2,
 				title: "Active B",
-				status: "active",
 				userId: USER_A,
 				sortOrder: 1,
 				createdAt: new Date(2024, 0, 2),
-				updatedAt: null,
-			},
-			{
+			}),
+			makeTask({
 				id: 3,
 				title: "Completed",
-				status: "completed",
 				userId: USER_A,
+				status: "completed",
 				sortOrder: 0,
 				createdAt: new Date(2024, 0, 3),
-				updatedAt: null,
-			},
+			}),
 		];
 
 		await taskCaller(USER_A).update({ id: 3, status: "active" });
@@ -492,18 +472,61 @@ describe("task reorder and sortOrder", () => {
 
 	it("create appends at tail sortOrder", async () => {
 		allTasks = [
-			{
+			makeTask({
 				id: 1,
 				title: "Existing",
-				status: "active",
 				userId: USER_A,
 				sortOrder: 4,
-				createdAt: new Date(),
-				updatedAt: null,
-			},
+			}),
 		];
 
 		const created = await taskCaller(USER_A).create({ title: "New task" });
 		expect(created.sortOrder).toBe(5);
+	});
+});
+
+describe("Eisenhower task attributes", () => {
+	beforeEach(() => {
+		allTasks = [];
+		nextTaskId = 1;
+		vi.clearAllMocks();
+	});
+
+	it("create persists all Eisenhower attributes", async () => {
+		const created = await taskCaller(USER_A).create({
+			title: "Plan release",
+			workType: "DEEP_WORK",
+			importance: 3,
+			urgency: 2,
+			effortMinutes: 45,
+			commitmentHorizon: "THIS_WEEK",
+		});
+
+		expect(created).toMatchObject({
+			title: "Plan release",
+			workType: "DEEP_WORK",
+			importance: 3,
+			urgency: 2,
+			weight: 2,
+			effortMinutes: 45,
+			commitmentHorizon: "THIS_WEEK",
+		});
+	});
+
+	it("update mirrors urgency into weight column", async () => {
+		allTasks = [
+			makeTask({
+				id: 1,
+				title: "Follow up",
+				userId: USER_A,
+				urgency: 1,
+				weight: 1,
+			}),
+		];
+
+		await taskCaller(USER_A).update({ id: 1, urgency: 3 });
+
+		const row = allTasks.find((t) => t.id === 1);
+		expect(row).toMatchObject({ urgency: 3, weight: 3 });
 	});
 });

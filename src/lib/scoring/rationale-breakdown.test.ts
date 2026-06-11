@@ -7,10 +7,18 @@ import {
 } from "./rationale-breakdown";
 import type { ScoringContext, ScoringTask } from "./score-task";
 
+const eisenhowerDefaults = {
+	importance: 2,
+	effortMinutes: null,
+	commitmentHorizon: "WHEN_POSSIBLE" as const,
+};
+
 const deepTask: ScoringTask = {
 	id: 1,
 	workType: "DEEP_WORK",
 	weight: 3,
+	urgency: 3,
+	...eisenhowerDefaults,
 	sortOrder: 0,
 	createdAt: new Date("2026-01-01"),
 };
@@ -18,7 +26,9 @@ const deepTask: ScoringTask = {
 const operationalTask: ScoringTask = {
 	id: 2,
 	workType: "OPERATIONAL",
-	weight: 3,
+	weight: 2,
+	urgency: 2,
+	...eisenhowerDefaults,
 	sortOrder: 0,
 	createdAt: new Date("2026-01-01"),
 };
@@ -26,7 +36,9 @@ const operationalTask: ScoringTask = {
 const reactiveTask: ScoringTask = {
 	id: 3,
 	workType: "REACTIVE",
-	weight: 4,
+	weight: 3,
+	urgency: 3,
+	...eisenhowerDefaults,
 	sortOrder: 0,
 	createdAt: new Date("2026-01-01"),
 };
@@ -55,8 +67,10 @@ describe("buildRationaleBreakdown", () => {
 		});
 
 		expect(breakdown.headline).toBe(headline);
-		expect(breakdown.dominant).toHaveLength(1);
-		expect(breakdown.dominant[0]?.key).toBe("override_preference");
+		expect(breakdown.dominant.length).toBeGreaterThanOrEqual(1);
+		expect(
+			breakdown.dominant.some((item) => item.key === "override_preference"),
+		).toBe(true);
 		expect(breakdown.dominant[0]?.copy).not.toBe(headline);
 	});
 
@@ -77,10 +91,13 @@ describe("buildRationaleBreakdown", () => {
 
 		expect(breakdown.dominant.map((item) => item.key)).toEqual([
 			"energy_light",
+			"eisenhower_priority",
 			"override_preference",
-			"late_day",
 		]);
-		expect(breakdown.alsoConsidered).toEqual(["Cycles completed"]);
+		expect(breakdown.alsoConsidered).toEqual([
+			"Time of day",
+			"Cycles completed",
+		]);
 	});
 
 	it("surfaces override preference in dominant when headline is kickoff-specific", () => {
@@ -139,6 +156,30 @@ describe("buildRationaleBreakdown", () => {
 			(label) => label === "Energy fit",
 		).length;
 		expect(energyFitCount).toBeLessThanOrEqual(1);
+	});
+
+	it("surfaces horizon_asap factor for ASAP tasks in expander", () => {
+		const context: ScoringContext = {
+			energy: "FOCUSED",
+			completedWorkCycles: 0,
+			interruptionCount: 0,
+			localHour: 10,
+		};
+		const asapTask: ScoringTask = {
+			...deepTask,
+			commitmentHorizon: "ASAP",
+		};
+		const headline = buildRationale("energy_deep", context);
+
+		const breakdown = buildRationaleBreakdown(asapTask, context, {
+			headline,
+			headlineKey: "energy_deep",
+		});
+
+		expect(breakdown.dominant.some((item) => item.key === "horizon_asap")).toBe(
+			true,
+		);
+		expect(FACTOR_CHIP_LABELS.horizon_asap).toBe("Due ASAP");
 	});
 
 	it("does not repeat one-liner copy in dominant when headlineKey matches top contribution", () => {

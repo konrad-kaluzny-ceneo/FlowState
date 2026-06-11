@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { TaskListData } from "~/hooks/use-task-mutations";
+import { defaultEisenhowerFields } from "~/lib/data-mode/types";
 
 type MutationLifecycle<
 	TInput = unknown,
@@ -187,13 +188,15 @@ function createWrapper() {
 function makeTask(
 	overrides: Partial<TaskListData[number]> = {},
 ): TaskListData[number] {
+	const weight = (overrides.weight ?? 2) as 1 | 2 | 3;
 	return {
 		id: 1,
 		userId: "user-1",
 		title: "Existing task",
 		status: "active",
 		workType: "OPERATIONAL",
-		weight: 2,
+		weight,
+		...defaultEisenhowerFields(weight),
 		sortOrder: 0,
 		createdAt: new Date("2026-01-01T00:00:00Z"),
 		updatedAt: new Date("2026-01-01T00:00:00Z"),

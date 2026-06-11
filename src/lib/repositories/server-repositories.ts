@@ -43,6 +43,10 @@ type TrpcTaskRow = {
 	status: string;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: number;
+	importance?: number;
+	urgency?: number;
+	effortMinutes?: number | null;
+	commitmentHorizon?: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	sortOrder: number;
 	createdAt: Date;
 	updatedAt: Date | null;
@@ -85,7 +89,15 @@ type TrpcClient = {
 };
 
 function toDomainTask(row: TrpcTaskRow): DomainTask {
-	return { ...row, weight: row.weight as 1 | 2 | 3 };
+	const urgency = (row.urgency ?? row.weight) as 1 | 2 | 3;
+	return {
+		...row,
+		weight: row.weight as 1 | 2 | 3,
+		importance: (row.importance ?? 2) as 1 | 2 | 3,
+		urgency,
+		effortMinutes: row.effortMinutes ?? null,
+		commitmentHorizon: row.commitmentHorizon ?? "WHEN_POSSIBLE",
+	};
 }
 
 export function createServerTaskRepository(client: TrpcClient): TaskRepository {

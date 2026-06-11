@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import type { CommitmentHorizon } from "~/lib/data-mode/types";
 import type { RationaleBreakdown } from "~/lib/scoring/rationale-breakdown";
 
 const WORK_TYPE_CONFIG = {
@@ -17,6 +18,9 @@ export type TaskSuggestionData = {
 	title: string;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: 1 | 2 | 3;
+	urgency?: 1 | 2 | 3;
+	importance?: 1 | 2 | 3;
+	commitmentHorizon?: CommitmentHorizon;
 	rationale: string;
 	breakdown?: RationaleBreakdown;
 };
@@ -56,24 +60,31 @@ type TaskSuggestionCardProps =
 			isAccepting?: never;
 	  };
 
-function TaskBadges({
-	workType,
-	weight,
-}: {
-	workType: TaskSuggestionData["workType"];
-	weight: TaskSuggestionData["weight"];
-}) {
-	const config = WORK_TYPE_CONFIG[workType];
+function TaskBadges({ suggestion }: { suggestion: TaskSuggestionData }) {
+	const config = WORK_TYPE_CONFIG[suggestion.workType];
+	const urgency = suggestion.urgency ?? suggestion.weight;
+	const importance = suggestion.importance ?? 2;
 	return (
-		<span className="flex shrink-0 items-center gap-1">
+		<span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
 			<span
 				className={`rounded-full px-2 py-0.5 font-medium text-xs ${config.bg} ${config.text}`}
 			>
 				{config.label}
 			</span>
 			<span className="rounded-full bg-white/10 px-2 py-0.5 font-medium text-white/70 text-xs">
-				{WEIGHT_LABELS[weight]}
+				U: {WEIGHT_LABELS[urgency]}
 			</span>
+			<span className="rounded-full bg-indigo-500/20 px-2 py-0.5 font-medium text-indigo-200 text-xs">
+				I: {WEIGHT_LABELS[importance]}
+			</span>
+			{suggestion.commitmentHorizon === "ASAP" && (
+				<span
+					className="rounded-full bg-orange-500/25 px-2 py-0.5 font-medium text-orange-200 text-xs"
+					data-testid="suggestion-asap-badge"
+				>
+					ASAP
+				</span>
+			)}
 		</span>
 	);
 }
@@ -98,7 +109,7 @@ function ReadySuggestionContent({
 		<div className="mt-4 space-y-4">
 			<div className="flex items-start justify-between gap-3">
 				<p className="font-medium text-white">{suggestion.title}</p>
-				<TaskBadges weight={suggestion.weight} workType={suggestion.workType} />
+				<TaskBadges suggestion={suggestion} />
 			</div>
 			<p className="text-sm text-white/60">{suggestion.rationale}</p>
 			{showExpander && breakdown != null && (

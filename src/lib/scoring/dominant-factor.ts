@@ -1,11 +1,36 @@
 import { buildRationale, type RationaleKey } from "./rationale";
-import { type ScoringContext, type ScoringTask, TYPE_FIT } from "./score-task";
+import {
+	computeEisenhowerBase,
+	type ScoringContext,
+	type ScoringTask,
+	TYPE_FIT,
+} from "./score-task";
 
 export function getFactorContributions(
 	task: ScoringTask,
 	context: ScoringContext,
 ): Array<{ key: RationaleKey; magnitude: number }> {
-	const base = task.weight;
+	const eisenhowerProduct = task.urgency * task.importance;
+	const base = computeEisenhowerBase(task, context);
+
+	const eisenhowerPriorityContribution =
+		eisenhowerProduct >= 6 ? eisenhowerProduct * 0.25 : 0;
+
+	const importanceFocusContribution =
+		context.energy === "FOCUSED" && task.importance >= 3
+			? eisenhowerProduct * 0.15
+			: 0;
+
+	const lowEffortContribution =
+		context.energy === "FADING" &&
+		task.effortMinutes != null &&
+		task.effortMinutes <= 30
+			? eisenhowerProduct * 0.12
+			: 0;
+
+	const horizonAsapContribution =
+		task.commitmentHorizon === "ASAP" ? eisenhowerProduct * 0.18 : 0;
+
 	const energyFit = TYPE_FIT[context.energy][task.workType];
 	const energyContribution = base * (energyFit - 1);
 
@@ -39,6 +64,22 @@ export function getFactorContributions(
 			: 0;
 
 	const contributions: Array<{ key: RationaleKey; magnitude: number }> = [
+		{
+			key: "eisenhower_priority",
+			magnitude: Math.max(0, eisenhowerPriorityContribution),
+		},
+		{
+			key: "importance_focus",
+			magnitude: Math.max(0, importanceFocusContribution),
+		},
+		{
+			key: "low_effort_fit",
+			magnitude: Math.max(0, lowEffortContribution),
+		},
+		{
+			key: "horizon_asap",
+			magnitude: Math.max(0, horizonAsapContribution),
+		},
 		{
 			key: "override_preference",
 			magnitude: Math.max(0, overrideContribution),

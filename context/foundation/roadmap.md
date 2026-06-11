@@ -4,14 +4,14 @@
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-10
+updated: 2026-06-11
 expanded: 2026-06-07
 expanded_intelligence: 2026-06-07
 expanded_story: 2026-06-07
 expanded_followup: 2026-06-07
 expanded_ux_gaps: 2026-06-07
 expanded_task_planning: 2026-06-09
-active_slices: []
+active_slices: [F-05]
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -73,7 +73,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | B-02 | fix-task-title-multiline-edit          | [FLO-54](https://linear.app/flowstate-10xdev/issue/FLO-54) | [#73](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/73) (closed) | **(bug)** task title edit uses multi-line text area so long names wrap and remain fully visible                                                                              | —                | FR-005, FR-008                                                                                                                    | done     |
 | B-03 | fix-cycle-start-interrupt-optimistic   | [FLO-55](https://linear.app/flowstate-10xdev/issue/FLO-55) | [#74](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/74) (closed) | **(bug)** Start Cycle / Interrupt update timer UI within 200ms (optimistic), not after server round-trip                                                                     | S-09             | NFR (200ms acknowledgement), FR-009, FR-012                                                                                       | done     |
 | B-04 | fix-cycle-complete-flash-after-checkin | [FLO-56](https://linear.app/flowstate-10xdev/issue/FLO-56) | [#75](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/75)          | **(bug)** after energy check-in, Cycle Complete overlay must not flash/hang until break/suggestion                                                                           | S-05, S-06       | FR-020, FR-021, NFR (200ms acknowledgement)                                                                                       | done     |
-| F-05 | eisenhower-effort-task-attributes      | [FLO-57](https://linear.app/flowstate-10xdev/issue/FLO-57) | [#78](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/78)          | (foundation) importance + urgency + effort minutes + commitment horizon on Task; deterministic scorer v2 (Eisenhower/Pareto/Ockham)                                          | S-04, S-06       | FR-017, FR-018, FR-021, proposed-FR-task-importance, proposed-FR-commitment-horizon, proposed-FR-effort-estimate                  | proposed |
+| F-05 | eisenhower-effort-task-attributes      | [FLO-57](https://linear.app/flowstate-10xdev/issue/FLO-57) | [#78](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/78)          | (foundation) importance + urgency + effort minutes + commitment horizon on Task; deterministic scorer v2 (Eisenhower/Pareto/Ockham)                                          | S-04, S-06       | FR-017, FR-018, FR-021, proposed-FR-task-importance, proposed-FR-commitment-horizon, proposed-FR-effort-estimate                  | active   |
 | S-25 | pre-suggestion-readiness               | [FLO-58](https://linear.app/flowstate-10xdev/issue/FLO-58) | [#79](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/79)          | declare Focused/Steady/Fading at kickoff and before next-task suggestion — feeds scorer instead of hardcoded STEADY                                                          | S-05, S-06, S-15 | FR-020, FR-021, FR-019, proposed-FR-pre-suggestion-readiness                                                                      | done     |
 | S-26 | task-manual-priority-order             | [FLO-59](https://linear.app/flowstate-10xdev/issue/FLO-59) | [#81](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/81)          | **drag-reorder** active tasks with persisted manual priority as suggester tie-breaker                                                                                        | S-04, S-06, S-09 | FR-021, FR-022, FR-005, NFR (200ms acknowledgement)                                                                               | done     |
 | S-27 | daily-standing-tasks-capacity-plan     | [FLO-60](https://linear.app/flowstate-10xdev/issue/FLO-60) | [#80](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/80)          | daily standing tasks roll into today's plan with focus-hours budget and capacity-aware suggestion rationale (no RRULE)                                                       | F-05, S-06, S-15 | FR-021, FR-022, FR-019, proposed-FR-daily-standing-tasks, proposed-FR-daily-focus-budget                                          | proposed |
@@ -192,7 +192,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Cap effort range (e.g. 5–240 min) and treat null as unknown in scoring? Owner: implementer. Block: no.
   - Relabel weight UI as "urgency" or keep label with tooltip? Owner: user. Block: no.
 - **Risk:** Three user-facing scales plus horizon may feel heavy at task creation — mitigate with defaults (importance 2, urgency 2, horizon when possible) and compact pickers; `weight` retained as legacy fallback in v1. Expand score 73/90 — **promote** (roadmap-expand 2026-06-09); merges importance-commitment-horizon + effort estimate from ideation batch.
-- **Status:** proposed
+- **Status:** active
 
 ## Slices
 
