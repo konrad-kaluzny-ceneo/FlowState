@@ -22,6 +22,25 @@ export async function resetCycleRecoveryGuard(page: Page) {
 	});
 }
 
+function sessionIdFromTrpcInput(input: unknown): number | undefined {
+	if (Array.isArray(input)) {
+		for (const item of input) {
+			const sessionId = sessionIdFromTrpcInput(item);
+			if (sessionId != null) {
+				return sessionId;
+			}
+		}
+		return undefined;
+	}
+	if (input && typeof input === "object" && "json" in input) {
+		const json = (input as { json?: { sessionId?: number } }).json;
+		if (typeof json?.sessionId === "number") {
+			return json.sessionId;
+		}
+	}
+	return undefined;
+}
+
 function parseSessionIdFromTrpcUrl(url: string): number | undefined {
 	try {
 		const parsed = new URL(url, "http://localhost");
@@ -29,13 +48,19 @@ function parseSessionIdFromTrpcUrl(url: string): number | undefined {
 		if (!input) {
 			return undefined;
 		}
-		const decoded = JSON.parse(decodeURIComponent(input)) as {
-			json?: { sessionId?: number };
-		};
-		return decoded.json?.sessionId;
+		return sessionIdFromTrpcInput(JSON.parse(decodeURIComponent(input)));
 	} catch {
 		return undefined;
 	}
+}
+
+function urlEncodesSessionId(url: string, sessionId: number): boolean {
+	const parsedId = parseSessionIdFromTrpcUrl(url);
+	if (parsedId === sessionId) {
+		return true;
+	}
+	const decoded = decodeURIComponent(url);
+	return new RegExp(`"sessionId"\\s*:\\s*${sessionId}\\b`).test(decoded);
 }
 
 function countCompletedWorkResponseMatches(
@@ -49,7 +74,7 @@ function countCompletedWorkResponseMatches(
 	if (sessionId == null) {
 		return true;
 	}
-	return parseSessionIdFromTrpcUrl(url) === sessionId;
+	return urlEncodesSessionId(url, sessionId);
 }
 
 export function waitForCountCompletedWork(page: Page, sessionId?: number) {
@@ -65,8 +90,37 @@ export async function resetCycleRecoveryAfterReload(page: Page) {
 	await resetCycleRecoveryGuard(page);
 }
 
+async function pollCountCompletedWork(page: Page, sessionId: number) {
+	await expect
+		.poll(
+			async () => {
+				const encoded = encodeURIComponent(
+					JSON.stringify({ json: { sessionId } }),
+				);
+				const response = await page.request.get(
+					`/api/trpc/cycle.countCompletedWork?input=${encoded}`,
+				);
+				if (!response.ok()) {
+					return null;
+				}
+				const body = (await response.json()) as {
+					result?: { data?: { json?: number } };
+				};
+				return body.result?.data?.json ?? null;
+			},
+			{ timeout: 20_000 },
+		)
+		.not.toBeNull();
+}
+
 /** After fatigue API seed — re-fetch completedWorkCycles for wind-down gate. */
 export async function rehydrateFatigueSeedState(page: Page, sessionId: number) {
+	const countPromise = waitForCountCompletedWork(page, sessionId);
 	await resetCycleRecoveryGuard(page);
-	await waitForCountCompletedWork(page, sessionId);
+	try {
+		await countPromise;
+	} catch {
+		// countCompletedWork may have fired during reload before the listener registered.
+		await pollCountCompletedWork(page, sessionId);
+	}
 }
