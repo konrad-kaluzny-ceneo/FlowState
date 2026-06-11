@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { defaultEisenhowerFields } from "~/lib/data-mode/types";
 import type { GuestSnapshotV1 } from "~/lib/guest/schema";
 
 vi.mock("~/lib/auth/server", () => ({
@@ -163,6 +164,7 @@ describe("guest.import", () => {
 					status: "active",
 					workType: "OPERATIONAL",
 					weight: 2,
+					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					createdAt: new Date("2026-05-29T10:00:00.000Z"),
 					updatedAt: null,
@@ -173,6 +175,7 @@ describe("guest.import", () => {
 					status: "active",
 					workType: "DEEP_WORK",
 					weight: 3,
+					...defaultEisenhowerFields(3),
 					sortOrder: 1,
 					createdAt: new Date("2026-05-29T10:05:00.000Z"),
 					updatedAt: null,
@@ -240,6 +243,7 @@ describe("guest.import", () => {
 					status: "active",
 					workType: "OPERATIONAL",
 					weight: 2,
+					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					createdAt: new Date("2026-05-29T10:00:00.000Z"),
 					updatedAt: null,
@@ -322,6 +326,7 @@ describe("guest.import", () => {
 					status: "active",
 					workType: "OPERATIONAL",
 					weight: 2,
+					...defaultEisenhowerFields(2),
 					sortOrder: 1,
 					createdAt: new Date("2026-05-29T10:05:00.000Z"),
 					updatedAt: null,
@@ -332,6 +337,7 @@ describe("guest.import", () => {
 					status: "active",
 					workType: "DEEP_WORK",
 					weight: 3,
+					...defaultEisenhowerFields(3),
 					sortOrder: 0,
 					createdAt: new Date("2026-05-29T10:10:00.000Z"),
 					updatedAt: null,

@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { defaultEisenhowerFields } from "~/lib/data-mode/types";
+
 import { MidCycleCompletionPrompt } from "./mid-cycle-completion-prompt";
 
 const otherTasks = [
@@ -13,6 +15,7 @@ const otherTasks = [
 		updatedAt: null,
 		workType: "OPERATIONAL" as const,
 		weight: 2 as const,
+		...defaultEisenhowerFields(2),
 		sortOrder: 0,
 	},
 ];

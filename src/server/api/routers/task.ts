@@ -46,7 +46,9 @@ export const taskRouter = createTRPCRouter({
 					userId: ctx.session.user.id,
 					sortOrder,
 					...(input.workType != null ? { workType: input.workType } : {}),
-					...(input.weight != null ? { weight: input.weight } : {}),
+					...(input.weight != null
+						? { weight: input.weight, urgency: input.weight }
+						: {}),
 				},
 			});
 		}),
@@ -71,7 +73,12 @@ export const taskRouter = createTRPCRouter({
 				throw new TRPCError({ code: "NOT_FOUND" });
 			}
 
-			let updateData: typeof data & { sortOrder?: number } = data;
+			let updateData: typeof data & { sortOrder?: number; urgency?: number } =
+				data;
+
+			if (data.weight != null) {
+				updateData = { ...updateData, urgency: data.weight };
+			}
 
 			if (data.status === "active" && existing.status === "completed") {
 				updateData = {

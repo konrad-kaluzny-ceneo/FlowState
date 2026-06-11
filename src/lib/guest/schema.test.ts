@@ -21,6 +21,10 @@ describe("guest schema", () => {
 					status: "active" as const,
 					workType: "DEEP_WORK" as const,
 					weight: 2,
+					importance: 3 as const,
+					urgency: 2 as const,
+					effortMinutes: 30,
+					commitmentHorizon: "ASAP" as const,
 					sortOrder: 0,
 					createdAt: new Date("2026-05-29T10:00:00.000Z"),
 					updatedAt: null,
@@ -36,9 +40,38 @@ describe("guest schema", () => {
 		expect(parsed.version).toBe(1);
 		expect(parsed.tasks).toHaveLength(1);
 		expect(parsed.tasks[0]?.title).toBe("Write tests");
+		expect(parsed.tasks[0]?.importance).toBe(3);
+		expect(parsed.tasks[0]?.urgency).toBe(2);
+		expect(parsed.tasks[0]?.effortMinutes).toBe(30);
+		expect(parsed.tasks[0]?.commitmentHorizon).toBe("ASAP");
 		expect(parsed.tasks[0]?.createdAt).toEqual(
 			new Date("2026-05-29T10:00:00.000Z"),
 		);
+	});
+
+	it("defaults Eisenhower fields for legacy snapshots", () => {
+		const raw = JSON.stringify({
+			version: 1,
+			tasks: [
+				{
+					id: "550e8400-e29b-41d4-a716-446655440000",
+					title: "Legacy task",
+					status: "active",
+					workType: "OPERATIONAL",
+					weight: 3,
+					createdAt: "2026-05-29T10:00:00.000Z",
+					updatedAt: null,
+				},
+			],
+			sessions: [],
+			cycles: [],
+		});
+
+		const parsed = parseGuestSnapshot(raw);
+		expect(parsed.tasks[0]?.urgency).toBe(3);
+		expect(parsed.tasks[0]?.importance).toBe(2);
+		expect(parsed.tasks[0]?.effortMinutes).toBeNull();
+		expect(parsed.tasks[0]?.commitmentHorizon).toBe("WHEN_POSSIBLE");
 	});
 
 	it("returns empty snapshot for corrupt JSON", () => {

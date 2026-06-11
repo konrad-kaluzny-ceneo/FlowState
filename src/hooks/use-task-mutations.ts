@@ -8,6 +8,7 @@ import {
 	useRepositories,
 } from "~/lib/data-mode/data-mode-context";
 import type { DomainTaskId } from "~/lib/data-mode/types";
+import { defaultEisenhowerFields } from "~/lib/data-mode/types";
 import { api, type RouterInputs, type RouterOutputs } from "~/trpc/react";
 
 export type TaskListData = RouterOutputs["task"]["list"];
@@ -55,13 +56,15 @@ function buildOptimisticCreateRow(
 	const maxSortOrder = (existing ?? [])
 		.filter((task) => task.status === "active")
 		.reduce((max, task) => Math.max(max, task.sortOrder), -1);
+	const weight = (input.weight ?? 2) as 1 | 2 | 3;
 	return {
 		id: tempId,
 		title: input.title,
 		userId,
 		status: "active",
 		workType: input.workType ?? "OPERATIONAL",
-		weight: input.weight ?? 2,
+		weight,
+		...defaultEisenhowerFields(weight),
 		sortOrder: maxSortOrder + 1,
 		createdAt: now,
 		updatedAt: now,

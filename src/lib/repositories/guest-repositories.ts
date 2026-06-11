@@ -19,6 +19,10 @@ function toDomainTask(task: {
 	status: string;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: number;
+	importance: 1 | 2 | 3;
+	urgency: 1 | 2 | 3;
+	effortMinutes: number | null;
+	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	sortOrder: number;
 	createdAt: Date;
 	updatedAt: Date | null;
@@ -32,6 +36,10 @@ function toDomainTask(task: {
 		updatedAt: task.updatedAt,
 		workType: task.workType,
 		weight: task.weight as 1 | 2 | 3,
+		importance: task.importance,
+		urgency: task.urgency,
+		effortMinutes: task.effortMinutes,
+		commitmentHorizon: task.commitmentHorizon,
 		sortOrder: task.sortOrder,
 	};
 }
@@ -89,6 +97,7 @@ export function createGuestTaskRepository(): TaskRepository {
 			const snapshot = loadSnapshot();
 			const now = new Date();
 			const rawWeight = input.weight ?? 2;
+			const urgency = Math.min(3, Math.max(1, rawWeight)) as 1 | 2 | 3;
 			const maxSortOrder = snapshot.tasks
 				.filter((task) => task.status === "active")
 				.reduce((max, task) => Math.max(max, task.sortOrder), -1);
@@ -97,7 +106,11 @@ export function createGuestTaskRepository(): TaskRepository {
 				title: input.title,
 				status: "active" as const,
 				workType: input.workType ?? "OPERATIONAL",
-				weight: Math.min(3, Math.max(1, rawWeight)) as 1 | 2 | 3,
+				weight: urgency,
+				importance: 2 as const,
+				urgency,
+				effortMinutes: null,
+				commitmentHorizon: "WHEN_POSSIBLE" as const,
 				sortOrder: maxSortOrder + 1,
 				createdAt: now,
 				updatedAt: null,
@@ -139,7 +152,16 @@ export function createGuestTaskRepository(): TaskRepository {
 						...(input.status != null ? { status: input.status } : {}),
 						...(input.workType != null ? { workType: input.workType } : {}),
 						...(input.weight != null
-							? { weight: Math.min(3, Math.max(1, input.weight)) as 1 | 2 | 3 }
+							? (() => {
+									const nextUrgency = Math.min(3, Math.max(1, input.weight)) as
+										| 1
+										| 2
+										| 3;
+									return {
+										weight: nextUrgency,
+										urgency: nextUrgency,
+									};
+								})()
 							: {}),
 						sortOrder,
 						updatedAt: new Date(),

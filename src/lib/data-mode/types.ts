@@ -1,5 +1,21 @@
 ﻿export type DomainTaskId = string | number;
 
+export type CommitmentHorizon = "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
+
+export function defaultEisenhowerFields(weight: 1 | 2 | 3 = 2): {
+	importance: 1 | 2 | 3;
+	urgency: 1 | 2 | 3;
+	effortMinutes: number | null;
+	commitmentHorizon: CommitmentHorizon;
+} {
+	return {
+		importance: 2,
+		urgency: weight,
+		effortMinutes: null,
+		commitmentHorizon: "WHEN_POSSIBLE",
+	};
+}
+
 export type DomainTask = {
 	id: DomainTaskId;
 	title: string;
@@ -9,6 +25,10 @@ export type DomainTask = {
 	updatedAt: Date | null;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: 1 | 2 | 3;
+	importance: 1 | 2 | 3;
+	urgency: 1 | 2 | 3;
+	effortMinutes: number | null;
+	commitmentHorizon: CommitmentHorizon;
 	sortOrder: number;
 };
 

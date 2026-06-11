@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { defaultEisenhowerFields } from "~/lib/data-mode/types";
 import { GUEST_STORAGE_KEY } from "~/lib/guest/schema";
 import {
 	clearGuestSnapshot,
@@ -25,6 +26,7 @@ describe("guest store", () => {
 					status: "active",
 					workType: "OPERATIONAL",
 					weight: 2,
+					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					createdAt: new Date("2026-05-29T10:00:00.000Z"),
 					updatedAt: null,
@@ -47,6 +49,7 @@ describe("guest store", () => {
 					status: "active",
 					workType: "OPERATIONAL",
 					weight: 2,
+					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					createdAt: new Date(),
 					updatedAt: null,

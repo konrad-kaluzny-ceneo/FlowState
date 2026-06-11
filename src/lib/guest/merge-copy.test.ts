@@ -21,6 +21,10 @@ function makeTask(partial: {
 		...partial,
 		workType: "OPERATIONAL",
 		weight: 2,
+		importance: 2,
+		urgency: 2,
+		effortMinutes: null,
+		commitmentHorizon: "WHEN_POSSIBLE",
 		sortOrder: partial.sortOrder ?? 0,
 		updatedAt: null,
 	};

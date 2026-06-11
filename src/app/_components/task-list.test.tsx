@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
+import { defaultEisenhowerFields } from "~/lib/data-mode/types";
 
 import { TaskList } from "./task-list";
 
@@ -56,6 +57,7 @@ function makeTask(overrides: Partial<DomainTask> = {}): DomainTask {
 		updatedAt: new Date(),
 		workType: "OPERATIONAL",
 		weight: 2,
+		...defaultEisenhowerFields(2),
 		sortOrder: 0,
 		...overrides,
 	};

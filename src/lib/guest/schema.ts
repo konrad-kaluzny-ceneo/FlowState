@@ -4,6 +4,12 @@ import { getMinWorkDurationSec } from "~/lib/duration-bounds";
 
 export const GUEST_STORAGE_KEY = "flowstate:guest-v1";
 
+export const commitmentHorizonSchema = z.enum([
+	"ASAP",
+	"THIS_WEEK",
+	"WHEN_POSSIBLE",
+]);
+
 export const guestTaskSchema = z.object({
 	id: z.string().uuid(),
 	title: z.string().min(1).max(256),
@@ -12,6 +18,10 @@ export const guestTaskSchema = z.object({
 		.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"])
 		.default("OPERATIONAL"),
 	weight: z.number().int().min(1).max(3).default(2),
+	importance: z.number().int().min(1).max(3).optional(),
+	urgency: z.number().int().min(1).max(3).optional(),
+	effortMinutes: z.number().int().min(5).max(240).nullable().optional(),
+	commitmentHorizon: commitmentHorizonSchema.optional(),
 	sortOrder: z.number().int().min(0).optional(),
 	createdAt: z.coerce.date(),
 	updatedAt: z.coerce.date().nullable(),
@@ -23,6 +33,10 @@ export type GuestTask = {
 	status: "active" | "completed";
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: number;
+	importance: 1 | 2 | 3;
+	urgency: 1 | 2 | 3;
+	effortMinutes: number | null;
+	commitmentHorizon: z.infer<typeof commitmentHorizonSchema>;
 	sortOrder: number;
 	createdAt: Date;
 	updatedAt: Date | null;
@@ -31,10 +45,19 @@ export type GuestTask = {
 function normalizeGuestTasks(
 	tasks: Array<z.infer<typeof guestTaskSchema>>,
 ): GuestTask[] {
-	return tasks.map((task, index) => ({
-		...task,
-		sortOrder: task.sortOrder ?? index,
-	}));
+	return tasks.map((task, index) => {
+		const weight = task.weight;
+		const urgency = (task.urgency ?? weight) as 1 | 2 | 3;
+		return {
+			...task,
+			importance: (task.importance ?? 2) as 1 | 2 | 3,
+			urgency,
+			effortMinutes: task.effortMinutes ?? null,
+			commitmentHorizon: task.commitmentHorizon ?? "WHEN_POSSIBLE",
+			sortOrder: task.sortOrder ?? index,
+			weight: urgency,
+		};
+	});
 }
 
 export const guestSessionSchema = z.object({

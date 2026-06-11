@@ -411,7 +411,13 @@ function AuthenticatedPomodoroDashboard() {
 	} = useOnboarding();
 
 	const domainTasks = useMemo(
-		() => tasks.map((t) => ({ ...t, weight: t.weight as 1 | 2 | 3 })),
+		() =>
+			tasks.map((t) => ({
+				...t,
+				weight: t.weight as 1 | 2 | 3,
+				importance: t.importance as 1 | 2 | 3,
+				urgency: t.urgency as 1 | 2 | 3,
+			})),
 		[tasks],
 	);
 

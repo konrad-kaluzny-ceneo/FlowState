@@ -23,6 +23,10 @@ function mapSnapshotToTasks(): DomainTask[] {
 			updatedAt: task.updatedAt,
 			workType: task.workType,
 			weight: task.weight as 1 | 2 | 3,
+			importance: task.importance,
+			urgency: task.urgency,
+			effortMinutes: task.effortMinutes,
+			commitmentHorizon: task.commitmentHorizon,
 			sortOrder: task.sortOrder,
 		}));
 }

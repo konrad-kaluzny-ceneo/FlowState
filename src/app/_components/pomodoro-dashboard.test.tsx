@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
+import { defaultEisenhowerFields } from "~/lib/data-mode/types";
 
 import { PomodoroDashboardBody } from "./pomodoro-dashboard";
 
@@ -29,6 +30,7 @@ const tasks: DomainTask[] = [
 		updatedAt: null,
 		workType: "OPERATIONAL",
 		weight: 2,
+		...defaultEisenhowerFields(2),
 		sortOrder: 0,
 	},
 ];
