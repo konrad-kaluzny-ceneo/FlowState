@@ -670,6 +670,56 @@ describe("suggestion router", () => {
 		expect(fading).toMatchObject({ taskId: 2, workType: "REACTIVE" });
 	});
 
+	it("kickoff next prefers higher Eisenhower product when session context is equal", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		tasks = [
+			{
+				id: 1,
+				title: "Low matrix score",
+				status: "active",
+				userId: USER_ID,
+				workType: "OPERATIONAL",
+				sortOrder: 0,
+				createdAt: new Date("2026-01-01"),
+				weight: 2,
+				importance: 2,
+				urgency: 2,
+				effortMinutes: null,
+				commitmentHorizon: "WHEN_POSSIBLE",
+			},
+			{
+				id: 2,
+				title: "High matrix score",
+				status: "active",
+				userId: USER_ID,
+				workType: "OPERATIONAL",
+				sortOrder: 1,
+				createdAt: new Date("2026-01-02"),
+				weight: 2,
+				importance: 3,
+				urgency: 2,
+				effortMinutes: null,
+				commitmentHorizon: "WHEN_POSSIBLE",
+			},
+		];
+
+		const result = await caller().next({
+			context: "kickoff",
+			sessionId: 1,
+			localHour: 10,
+			energy: "STEADY",
+		});
+
+		expect(result).toMatchObject({
+			taskId: 2,
+			importance: 3,
+			urgency: 2,
+			commitmentHorizon: "WHEN_POSSIBLE",
+		});
+	});
+
 	it("kickoff next uses kickoff_resume after completed work cycles", async () => {
 		sessions = [
 			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },

@@ -3,6 +3,11 @@ import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
+const workTypeSchema = z.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"]);
+const axisSchema = z.number().int().min(1).max(3);
+const effortMinutesSchema = z.number().int().min(5).max(240).nullable();
+const commitmentHorizonSchema = z.enum(["ASAP", "THIS_WEEK", "WHEN_POSSIBLE"]);
+
 async function nextActiveSortOrder(
 	db: {
 		task: {
@@ -33,22 +38,30 @@ export const taskRouter = createTRPCRouter({
 		.input(
 			z.object({
 				title: z.string().min(1).max(256),
-				workType: z.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"]).optional(),
-				weight: z.number().int().min(1).max(3).optional(),
+				workType: workTypeSchema.optional(),
+				weight: axisSchema.optional(),
+				importance: axisSchema.optional(),
+				urgency: axisSchema.optional(),
+				effortMinutes: effortMinutesSchema.optional(),
+				commitmentHorizon: commitmentHorizonSchema.optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
 			const sortOrder = await nextActiveSortOrder(ctx.db, ctx.session.user.id);
+			const urgency = input.urgency ?? input.weight ?? 2;
+			const importance = input.importance ?? 2;
 
 			return await ctx.db.task.create({
 				data: {
 					title: input.title,
 					userId: ctx.session.user.id,
 					sortOrder,
+					importance,
+					urgency,
+					weight: urgency,
+					effortMinutes: input.effortMinutes ?? null,
+					commitmentHorizon: input.commitmentHorizon ?? "WHEN_POSSIBLE",
 					...(input.workType != null ? { workType: input.workType } : {}),
-					...(input.weight != null
-						? { weight: input.weight, urgency: input.weight }
-						: {}),
 				},
 			});
 		}),
@@ -59,8 +72,12 @@ export const taskRouter = createTRPCRouter({
 				id: z.number(),
 				title: z.string().min(1).max(256).optional(),
 				status: z.enum(["active", "completed"]).optional(),
-				workType: z.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"]).optional(),
-				weight: z.number().int().min(1).max(3).optional(),
+				workType: workTypeSchema.optional(),
+				weight: axisSchema.optional(),
+				importance: axisSchema.optional(),
+				urgency: axisSchema.optional(),
+				effortMinutes: effortMinutesSchema.optional(),
+				commitmentHorizon: commitmentHorizonSchema.optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -76,7 +93,9 @@ export const taskRouter = createTRPCRouter({
 			let updateData: typeof data & { sortOrder?: number; urgency?: number } =
 				data;
 
-			if (data.weight != null) {
+			if (data.urgency != null) {
+				updateData = { ...updateData, weight: data.urgency };
+			} else if (data.weight != null) {
 				updateData = { ...updateData, urgency: data.weight };
 			}
 
