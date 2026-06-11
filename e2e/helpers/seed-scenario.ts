@@ -9,15 +9,8 @@ import { expect, type Page } from "@playwright/test";
 
 import { MIN_WORK_DURATION_SEC } from "../../src/lib/duration-bounds";
 import { rehydrateFatigueSeedState } from "./cycle-recovery";
+import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
 import { forgetFakeClock, resetFakeClock } from "./work-cycle";
-
-async function dismissKickoffReadinessIfVisible(page: Page) {
-	const overlay = page.getByTestId("kickoff-readiness-overlay");
-	if (await overlay.isVisible().catch(() => false)) {
-		await page.getByTestId("kickoff-readiness-skip-btn").click();
-		await expect(overlay).toBeHidden({ timeout: 5_000 });
-	}
-}
 
 const FATIGUE_COMPLETED_WORK_CYCLES = 3;
 

@@ -479,7 +479,7 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 ## Progress
 
-> Convention: `- [ ]` pending, `- [x]` done. Append ` ??? <commit sha>` when a step lands. Do not rename step titles.
+> Convention: `- [ ]` pending, `- [x]` done. Append `→ <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Test-Plan Doc Sync
 
