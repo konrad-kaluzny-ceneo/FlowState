@@ -5,7 +5,6 @@
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import type { CheckInEnergyUi } from "./helpers/check-in";
-import { ensureIdleCycle } from "./helpers/idle-cycle";
 import {
 	acceptKickoffSuggestion,
 	completeKickoffReadiness,
@@ -13,6 +12,8 @@ import {
 	expectKickoffVisible,
 	waitForKickoffSuggestion,
 } from "./helpers/kickoff";
+import { dismissFirstRunIfVisible } from "./helpers/onboarding";
+import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import { addTaskWithAttributes } from "./helpers/work-cycle";
 
 async function prepareSessionStartKickoff(
@@ -21,6 +22,16 @@ async function prepareSessionStartKickoff(
 	reactiveTask: string,
 	readinessEnergy: CheckInEnergyUi | "skip" = "skip",
 ) {
+	await resetWorkerSessionViaApi(page);
+	const cleanReload = page.waitForResponse(
+		(response) => response.url().includes("cycle.getActive") && response.ok(),
+		{ timeout: 20_000 },
+	);
+	await page.reload();
+	await cleanReload;
+	await expect(page.getByTestId("task-list")).toBeVisible();
+	await dismissFirstRunIfVisible(page);
+
 	await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
 	await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
 
@@ -30,6 +41,7 @@ async function prepareSessionStartKickoff(
 	);
 	await page.reload();
 	await getActiveAfterReload;
+	await dismissFirstRunIfVisible(page);
 	await completeKickoffReadiness(page, readinessEnergy);
 	await waitForKickoffSuggestion(page, { readinessCompleted: true });
 }
@@ -39,7 +51,6 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
 		await waitForCycleGetActive(page);
-		await ensureIdleCycle(page);
 	});
 
 	test("shows kickoff card with rationale and highlighted row on session-start idle", async ({
@@ -63,7 +74,7 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 		).toBeVisible();
 	});
 
-	test("FOCUSED energy selects deep-work task on mixed pool", async ({
+	test("FOCUSED energy selects deep-work task on mixed pool @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -80,7 +91,7 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 		).toBeVisible();
 	});
 
-	test("accept path pre-focuses task and shows work-type duration chips", async ({
+	test("accept path pre-focuses task and shows work-type duration chips @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -103,7 +114,7 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 		);
 	});
 
-	test("duration chip tap stages work duration for the next start", async ({
+	test("duration chip tap stages work duration for the next start @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -127,7 +138,7 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 		await expect(page.getByTestId("timer-countdown")).toHaveText("45:00");
 	});
 
-	test("override path shows acknowledgement banner and clears suggestion highlight", async ({
+	test("override path shows acknowledgement banner and clears suggestion highlight @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);

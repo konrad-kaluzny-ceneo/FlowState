@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -142,5 +142,145 @@ describe("usePomodoroCycle guest recovery", () => {
 		await waitFor(() => {
 			expect(result.current.state).toBe("completed");
 		});
+	});
+});
+
+describe("usePomodoroCycle guest catchUp", () => {
+	function setVisibilityState(state: DocumentVisibilityState) {
+		Object.defineProperty(document, "visibilityState", {
+			configurable: true,
+			get: () => state,
+		});
+	}
+
+	afterEach(() => {
+		vi.useRealTimers();
+		setVisibilityState("visible");
+	});
+
+	beforeEach(() => {
+		localStorage.clear();
+		resetActiveCycleRecoveryForTests();
+		vi.useRealTimers();
+		setVisibilityState("visible");
+	});
+
+	it("sets catchUp when guest cycle expires while tab is hidden", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+		setVisibilityState("hidden");
+
+		vi.useFakeTimers();
+		try {
+			const { tasks } = createGuestRepositories();
+			const task = await tasks.create({ title: "Guest hidden tab" });
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			act(() => {
+				result.current.selectTask(task.id, {
+					id: task.id,
+					title: task.title,
+				});
+			});
+
+			await act(async () => {
+				await result.current.start(60);
+			});
+
+			await act(async () => {
+				vi.advanceTimersByTime(61_000);
+			});
+
+			expect(result.current.state).toBe("completed");
+			expect(result.current.catchUp).toMatchObject({
+				endedWhileHidden: true,
+				gate: "WORK_CONFIRM",
+			});
+			expect(result.current.catchUp?.cycleEndedAtMs).toBeGreaterThan(0);
+		} finally {
+			vi.useRealTimers();
+			vi.stubGlobal("Worker", FakeWorker);
+		}
+	});
+
+	it("sets catchUp via visibility recalc when guest tab was hidden while running", async () => {
+		vi.stubGlobal(
+			"Worker",
+			class {
+				constructor() {
+					throw new Error("Worker blocked");
+				}
+			},
+		);
+
+		const durationSec = 60;
+		const startMs = Date.now() - 30_000;
+		const { tasks, cycles } = createGuestRepositories();
+		const task = await tasks.create({ title: "Guest visibility recalc" });
+		const cycle = await cycles.create({
+			kind: "WORK",
+			configuredDurationSec: durationSec,
+			taskId: task.id,
+		});
+
+		const snapshotKey = GUEST_STORAGE_KEY;
+		const raw = localStorage.getItem(snapshotKey);
+		if (raw == null) {
+			throw new Error("expected guest snapshot in localStorage");
+		}
+		const snapshot = JSON.parse(raw) as {
+			cycles: Array<{ id: string; startedAt: string }>;
+		};
+		const startedAt = new Date(startMs).toISOString();
+		snapshot.cycles = snapshot.cycles.map((entry) =>
+			entry.id === cycle.id ? { ...entry, startedAt } : entry,
+		);
+		localStorage.setItem(snapshotKey, JSON.stringify(snapshot));
+
+		const endTimeMs = startMs + durationSec * 1000;
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		vi.useFakeTimers();
+		vi.setSystemTime(startMs + 30_000);
+
+		try {
+			setVisibilityState("hidden");
+			await act(async () => {
+				document.dispatchEvent(new Event("visibilitychange"));
+			});
+
+			vi.setSystemTime(endTimeMs + 5_000);
+
+			setVisibilityState("visible");
+			await act(async () => {
+				document.dispatchEvent(new Event("visibilitychange"));
+			});
+
+			expect(result.current.state).toBe("completed");
+			expect(result.current.catchUp).toMatchObject({
+				endedWhileHidden: true,
+				gate: "WORK_CONFIRM",
+				cycleEndedAtMs: endTimeMs,
+			});
+		} finally {
+			vi.useRealTimers();
+			vi.stubGlobal("Worker", FakeWorker);
+		}
 	});
 });

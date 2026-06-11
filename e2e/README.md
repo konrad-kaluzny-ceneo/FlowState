@@ -1,10 +1,10 @@
 # E2E Tests (Playwright)
 
-End-to-end tests run against the real app with per-test API authentication via Neon Auth.
+End-to-end tests run against the real app with worker-scoped auth via Neon Auth.
 
 ## Prerequisites
 
-1. A valid `.env` with real Neon values:
+1. A valid `.env` with real Neon values (one-time setup — not per test run):
 
 ```env
 DATABASE_URL="postgresql://..."
@@ -19,12 +19,28 @@ NEON_AUTH_COOKIE_SECRET="your-secret-at-least-32-characters-long"
 pnpm exec playwright install chromium --with-deps
 ```
 
-No shared test-user credentials are required — each authenticated spec creates a fresh user via `e2e/fixtures.ts`.
+## Environment variables
+
+| Variable | Default | Set by | Purpose |
+|----------|---------|--------|---------|
+| *(Neon secrets above)* | — | you (`.env`/`.env.local`) | App + auth; loaded by Playwright via dotenv |
+| `CI` | unset | you / `ci.yml` | **Reporter only** (`list` vs `html`) + `forbidOnly`; does not change server mode or workers |
+| `GITHUB_ACTIONS` | unset | GitHub automatically | Prod server (`next start`), no reuse |
+| `E2E_WORKERS` | `4` | `ci.yml` sets `"4"`; override locally | Parallel workers (max 4, auth pool size) |
+| `E2E_PORT` | `3001` | optional | App URL for tests |
+| `E2E_REUSE_SERVER` | unset | optional, local only | Reuse manual `next dev` on `E2E_PORT` (blocked on GHA) |
+| `E2E_PRODUCTION_SERVER` | unset | optional, **local only** | `build && next start` (GHA uses `GITHUB_ACTIONS` instead) |
+| `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER` | `1` on dev | Playwright `webServer.env` (dev) or `ci.yml` + build (GHA) | Main-thread timer for stable Playwright clocks |
+
+You do **not** need to export E2E flags manually for a normal local run — only Neon secrets in `.env`.
 
 ## Running Tests
 
 ```bash
-# Local (fast): Playwright starts next dev on port 3001, or reuses one already running
+# Belt (CI merge gate — 12 tests, --grep-invert @skip-belt)
+set CI=true && pnpm test:e2e:belt
+
+# Full catalog (ad-hoc local / pre-release; includes @skip-belt tests)
 set CI=true && pnpm test:e2e
 
 # Reuse your own dev server (fastest iteration — start once, run specs many times)
@@ -33,13 +49,13 @@ pnpm exec next dev --turbo -p 3001
 # other terminal:
 set CI=true && set E2E_REUSE_SERVER=1 && pnpm test:e2e
 
-# Production parity (slow — full build, same as CI)
+# Production parity locally (slow — full build; GHA does this automatically)
 set CI=true && set E2E_PRODUCTION_SERVER=1 && pnpm test:e2e
 
 # Single spec (seed exemplar)
 set CI=true && pnpm exec playwright test e2e/seed.spec.ts
 
-# Override worker count (default: 1 in CI for Neon Auth rate limits)
+# Reduce parallelism if Neon Auth returns 429 (default is 4 workers)
 set E2E_WORKERS=1 && set CI=true && pnpm test:e2e
 
 # Show HTML report after a run (omit CI=true)
@@ -48,11 +64,11 @@ pnpm exec playwright show-report
 
 ## How Auth Works
 
-1. **`e2e/fixtures.ts`** extends Playwright's `page` fixture: `createTestUser` + `signInAsUser` via API (`POST /api/auth/sign-up/email`, `POST /api/auth/sign-in/email`).
-2. Cookies and localStorage are applied before each test — no sign-in UI, no shared `storageState` file.
-3. **`guest-trial.spec.ts`** runs in the `guest-chromium` project without auth.
+1. **`e2e/global-setup.ts`** creates 4 Neon Auth users once per run and saves `storageState` to `e2e/.auth/worker-{0..3}.json`.
+2. **`e2e/fixtures.ts`** assigns each worker a slot from that pool (no per-test sign-up UI).
+3. **`guest-*.spec.ts`** runs in the `guest-chromium` project without auth.
 
-See `AGENTS.md` § E2E Testing Rules and `context/foundation/test-plan.md` §6.3 for the full cookbook.
+See `AGENTS.md` and `context/foundation/test-plan.md` §6.3 for the full cookbook.
 
 ## Account recovery (S-07)
 
@@ -62,39 +78,49 @@ See `AGENTS.md` § E2E Testing Rules and `context/foundation/test-plan.md` §6.3
 
 **`e2e/seed.spec.ts`** is the canonical template for new E2E specs (Risk #3 / #7 exemplars). Model new tests on this file — provenance header, fixture auth, helpers, business-outcome assertions. Risk #1 auth reload is covered by Vitest hook + integration tests; guest reload is in `guest-trial.spec.ts`.
 
+## Belt vs full catalog
+
+| Command | Tests | When |
+|---------|------:|------|
+| `pnpm test:e2e:belt` | 12 | CI merge gate; PR/push to `main` |
+| `pnpm test:e2e` | ~27 | Ad-hoc local; optional pre-release manual |
+
+Partial spec files tag non-belt cases `@skip-belt`; the belt script uses `--grep-invert @skip-belt`. Inventory: `context/foundation/test-plan.md` §6.3 `#### Belt merge gate`.
+
 ## File Structure
 
 ```text
 e2e/
 ├── README.md                 # This file
+├── env.ts                    # Shared E2E env helpers (playwright.config + global-setup)
+├── global-setup.ts           # Auth pool (4 users) + server readiness wait
 ├── seed.spec.ts              # Generation exemplar (/10x-e2e quality lever)
-├── fixtures.ts               # Per-test API auth fixture
+├── fixtures.ts               # Worker-scoped storageState fixture
 ├── smoke.spec.ts             # Pipeline sanity (infra smoke)
 ├── pomodoro-cycle.spec.ts    # S-01: focus → start → clock → overlay → complete
 ├── guest-trial.spec.ts       # Risk #1: guest reload (guest-chromium project)
-├── mid-cycle-completion.spec.ts
 ├── mid-cycle-last-task.spec.ts
+├── mindful-session-wind-down.spec.ts
 ├── DELIBERATE-BREAK.md       # One-time VERIFY matrix (/10x-e2e)
 └── helpers/
     ├── idle-cycle.ts         # Dismiss overlays / interrupt before tests
     ├── work-cycle.ts         # setWorkDurationSec + startFocusedWorkCycle
+    ├── seed-scenario.ts      # tRPC API seed (wind-down fatigue setup)
     ├── check-in.ts
-    └── user.ts               # createTestUser / signInAsUser utilities
+    └── user.ts               # createTestUser / postAuthWithRetry utilities
 ```
 
 ## CI
 
-GitHub Actions runs `pnpm check`, `pnpm typecheck`, `pnpm test`, then `CI=true pnpm test:e2e` with production build parity (`GITHUB_ACTIONS` in `playwright.config.ts`).
+GitHub Actions job `e2e` runs `pnpm test:e2e:belt` after `pnpm build`, with `E2E_WORKERS=4`, `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1`, and Neon secrets from repository settings.
 
 Required repository secrets: `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`. Use a Neon **dev branch** — never production credentials in public forks.
-
-Set `E2E_WORKERS: "1"` in CI to avoid Neon Auth rate limits on parallel sign-up.
 
 ## Notes
 
 - Tests run against `http://localhost:3001` by default (`E2E_PORT` overrides).
-- **Local:** `next dev --turbo` with `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1`. Set `E2E_PRODUCTION_SERVER=1` to force `build && next start`.
-- **CI (GitHub Actions):** always production build + start.
+- **Local:** Playwright starts `next dev --turbo` with `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` injected via `webServer.env`.
+- **CI (GitHub Actions):** separate build step + `next start`; timer flag baked at build time via job env.
 - `page.clock` advances the countdown in specs that use it (Web Workers are not clock-mocked in e2e).
 - Pomodoro specs reset stray cycles in `beforeEach` (interrupt / dismiss overlay) so **Focus** is not disabled by a leftover `RUNNING` cycle.
 - Short work cycles: fill `work-duration-min` and `work-duration-sec` via `setWorkDurationSec` in `e2e/helpers/work-cycle.ts`.

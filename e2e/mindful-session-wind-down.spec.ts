@@ -7,7 +7,16 @@ import type { Page } from "@playwright/test";
 
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
+import {
+	rehydrateFatigueSeedState,
+	resetCycleRecoveryAfterReload,
+} from "./helpers/cycle-recovery";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
+import { completeKickoffReadiness } from "./helpers/kickoff";
+import {
+	resetWorkerSessionViaApi,
+	seedWindDownFatigueScenario,
+} from "./helpers/seed-scenario";
 import { waitForSuggestionNext } from "./helpers/suggestion";
 import {
 	advanceClockThroughWorkSec,
@@ -25,46 +34,66 @@ import {
 	advanceClockThroughFastWork,
 	clickStartCycle,
 	completeWorkCycleWithCheckIn,
+	ensureFakeClock,
 	focusTask,
+	forgetFakeClock,
+	resetFakeClock,
 	setShortBreakDurationSec,
 	setWorkDurationSec,
 } from "./helpers/work-cycle";
 
 async function startFastWorkCycle(page: Page, taskTitle: string) {
+	if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
+		await completeKickoffReadiness(page, "skip");
+	}
 	await focusTask(page, taskTitle);
 	await setShortBreakDurationSec(page, 1);
 	await setWorkDurationSec(page, 1);
 	await clickStartCycle(page);
-	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+	await expect(page.getByTestId("timer-panel-running")).toBeVisible({
+		timeout: 15_000,
+	});
+}
+
+async function seedFatigueAndAdvanceToWindDownGate(
+	page: Page,
+	taskTitle: string,
+) {
+	const seed = await seedWindDownFatigueScenario(page, taskTitle, 1);
+	await ensureFakeClock(page);
+	await rehydrateFatigueSeedState(page, seed.sessionId);
+	await advanceClockThroughFastWork(page);
 }
 
 test.describe("Mindful session wind-down (S-16)", () => {
+	test.describe.configure({ mode: "serial" });
+
 	test.beforeEach(async ({ page }) => {
+		forgetFakeClock(page);
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
 		await waitForCycleGetActive(page);
+		await resetWorkerSessionViaApi(page);
+		forgetFakeClock(page);
+		const cleanReload = page.waitForResponse(
+			(response) => response.url().includes("cycle.getActive") && response.ok(),
+			{ timeout: 20_000 },
+		);
+		await page.reload();
+		await cleanReload;
+		await resetCycleRecoveryAfterReload(page);
+		await resetFakeClock(page);
 		await ensureIdleCycle(page);
 	});
 
 	test("fatigue path triggers wind-down and blocks break until keep going", async ({
 		page,
 	}) => {
-		test.setTimeout(180_000);
+		test.setTimeout(90_000);
 
-		const ts = Date.now();
-		const taskTitle = `E2E WindDown Fatigue ${ts}`;
+		const taskTitle = `E2E WindDown Fatigue ${Date.now()}`;
 
-		await addTask(page, taskTitle);
-		await startFastWorkCycle(page, taskTitle);
-
-		for (let cycle = 0; cycle < 3; cycle++) {
-			await advanceClockThroughFastWork(page);
-			await completeSteadyWorkCycleAndResumeIdle(page);
-			await clickStartCycle(page);
-			await expect(page.getByTestId("timer-panel-running")).toBeVisible();
-		}
-
-		await advanceClockThroughFastWork(page);
+		await seedFatigueAndAdvanceToWindDownGate(page, taskTitle);
 		await submitFadingCheckInExpectingWindDown(page);
 		await expectWindDownVisible(page, {
 			rationale: /energy dipping after 4 cycles/,
@@ -73,7 +102,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		await expect(page.getByTestId("task-suggestion-card")).toBeHidden();
 	});
 
-	test("interruption path triggers wind-down with interruptions rationale", async ({
+	test("interruption path triggers wind-down with interruptions rationale @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(90_000);
@@ -96,7 +125,9 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		});
 	});
 
-	test("keep going proceeds to break and suggestion", async ({ page }) => {
+	test("keep going proceeds to break and suggestion @skip-belt", async ({
+		page,
+	}) => {
 		test.setTimeout(180_000);
 
 		const ts = Date.now();
@@ -134,22 +165,11 @@ test.describe("Mindful session wind-down (S-16)", () => {
 	test("end session path ends session without break or suggestion", async ({
 		page,
 	}) => {
-		test.setTimeout(180_000);
+		test.setTimeout(90_000);
 
-		const ts = Date.now();
-		const taskTitle = `E2E WindDown End ${ts}`;
+		const taskTitle = `E2E WindDown End ${Date.now()}`;
 
-		await addTask(page, taskTitle);
-		await startFastWorkCycle(page, taskTitle);
-
-		for (let cycle = 0; cycle < 3; cycle++) {
-			await advanceClockThroughFastWork(page);
-			await completeSteadyWorkCycleAndResumeIdle(page);
-			await clickStartCycle(page);
-			await expect(page.getByTestId("timer-panel-running")).toBeVisible();
-		}
-
-		await advanceClockThroughFastWork(page);
+		await seedFatigueAndAdvanceToWindDownGate(page, taskTitle);
 		await submitFadingCheckInExpectingWindDown(page);
 		await endSessionViaWindDown(page);
 
@@ -161,7 +181,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		await expect(page.getByTestId("task-list")).toBeVisible();
 	});
 
-	test("keep going suppresses wind-down until next check-in", async ({
+	test("keep going suppresses wind-down until next check-in @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(240_000);
@@ -198,7 +218,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		await expect(page.getByText("Short Break")).toBeVisible();
 	});
 
-	test("steady or focused energy with fatigue skips wind-down", async ({
+	test("steady or focused energy with fatigue skips wind-down @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(180_000);
@@ -233,7 +253,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		});
 	});
 
-	test("fading on first cycle without fatigue or interruptions skips wind-down", async ({
+	test("fading on first cycle without fatigue or interruptions skips wind-down @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);

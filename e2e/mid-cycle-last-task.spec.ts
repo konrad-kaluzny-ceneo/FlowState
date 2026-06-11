@@ -5,7 +5,9 @@
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
-import { ensureIdleCycle } from "./helpers/idle-cycle";
+import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
+import { completeKickoffReadiness } from "./helpers/kickoff";
+import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import {
 	markTaskCompleteMidCycle,
 	startFocusedWorkCycle,
@@ -16,7 +18,17 @@ test.describe("Mid-cycle last task (Risk #3)", () => {
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
 		await waitForCycleGetActive(page);
-		await ensureIdleCycle(page);
+		await resetWorkerSessionViaApi(page);
+		const cleanReload = page.waitForResponse(
+			(response) => response.url().includes("cycle.getActive") && response.ok(),
+			{ timeout: 20_000 },
+		);
+		await page.reload();
+		await cleanReload;
+		await resetCycleRecoveryAfterReload(page);
+		if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
+			await completeKickoffReadiness(page, "skip");
+		}
 	});
 
 	test("only end-break option when no other active tasks", async ({ page }) => {

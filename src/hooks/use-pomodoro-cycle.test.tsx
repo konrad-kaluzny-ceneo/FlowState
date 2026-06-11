@@ -634,6 +634,31 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.remainingMs).toBeGreaterThan(0);
 	});
 
+	it("resumes imported guest RUNNING cycle after sign-in merge", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 501,
+			taskId: 12,
+			task: { id: 12, title: "Guest Cycle Merge task" },
+			configuredDurationSec: 1800,
+			startedAt: new Date(Date.now() - 30_000),
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		expect(getActiveCycle).toHaveBeenCalled();
+		expect(result.current.focusedTask).toMatchObject({
+			id: 12,
+			title: "Guest Cycle Merge task",
+		});
+		expect(result.current.remainingMs).toBeGreaterThan(0);
+	});
+
 	it("calls interrupt and returns to idle", async () => {
 		activeCycleData = makeActiveCycle({
 			id: 10,

@@ -2,6 +2,12 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 import { splitSecToMinSec } from "../../src/lib/duration-input";
 import { completeCheckIn } from "./check-in";
+import {
+	dismissKickoffReadinessIfVisible,
+	dismissTaskSuggestionIfVisible,
+	waitForTimerPanelIdle,
+} from "./idle-cycle";
+import { dismissFirstRunIfVisible } from "./onboarding";
 
 /** Advance fake clock through a 1s work cycle (+ buffer for completion tick). */
 export const FAST_WORK_CLOCK_MS = 2500;
@@ -11,12 +17,31 @@ export const FAST_BREAK_CLOCK_MS = 2500;
 
 const clockInstalledPages = new WeakSet<Page>();
 
-/** Install Playwright fake timers once per page — re-install resets active cycle end times. */
+/** Call after navigation/reload so the next ensureFakeClock installs fresh timers. */
+export function forgetFakeClock(page: Page) {
+	clockInstalledPages.delete(page);
+}
+
+/** Install Playwright fake timers once per test phase — never re-sync to wall clock mid-cycle. */
 export async function ensureFakeClock(page: Page) {
-	if (!clockInstalledPages.has(page)) {
-		await page.clock.install();
-		clockInstalledPages.add(page);
+	if (clockInstalledPages.has(page)) {
+		return;
 	}
+	await page.clock.install();
+	clockInstalledPages.add(page);
+}
+
+/** Fresh fake timers between tests on a reused worker page (clears pending intervals). */
+export async function resetFakeClock(page: Page) {
+	forgetFakeClock(page);
+	await page.clock.install();
+	clockInstalledPages.add(page);
+}
+
+/** 1s work + 1s break — pair with ensureFakeClock + advanceClockThroughFast*. */
+export async function configureFastPomodoroDurations(page: Page) {
+	await setShortBreakDurationSec(page, 1);
+	await setWorkDurationSec(page, 1);
 }
 
 async function waitForTaskCreateSettled(addButton: Locator) {
@@ -65,6 +90,8 @@ export async function waitForCycleCreateSettled(page: Page) {
 
 /** Click Start Cycle and await server create on authenticated dashboards. */
 export async function clickStartCycle(page: Page) {
+	await dismissFirstRunIfVisible(page);
+	await dismissKickoffReadinessIfVisible(page);
 	const createSettled = waitForCycleCreateSettled(page);
 	await page.getByRole("button", { name: "Start Cycle" }).click();
 	await createSettled;
@@ -81,6 +108,8 @@ export async function startFocusedWorkCycle(
 	taskTitle: string,
 	durationSec: number,
 ) {
+	await dismissFirstRunIfVisible(page);
+	await dismissKickoffReadinessIfVisible(page);
 	await page.getByPlaceholder("Add a new task...").fill(taskTitle);
 	await page.getByRole("button", { name: "Add", exact: true }).click();
 	const taskRow = page
@@ -91,16 +120,27 @@ export async function startFocusedWorkCycle(
 	await waitForTaskCreateSettled(
 		page.getByRole("button", { name: "Add", exact: true }),
 	);
-	await taskRow.getByRole("button", { name: "Focus" }).click();
-	await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
+	await dismissKickoffReadinessIfVisible(page);
+	await dismissTaskSuggestionIfVisible(page);
+	const focusBtn = taskRow.getByRole("button", { name: "Focus" });
+	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
+	await focusBtn.click();
+	await waitForTimerPanelIdle(page);
+	await dismissKickoffReadinessIfVisible(page);
 	await setWorkDurationSec(page, durationSec);
+	await dismissKickoffReadinessIfVisible(page);
 	await clickStartCycle(page);
-	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+	await expect(page.getByTestId("timer-panel-running")).toBeVisible({
+		timeout: 15_000,
+	});
 }
 
 export async function addTask(page: Page, title: string) {
 	const addButton = page.getByRole("button", { name: "Add", exact: true });
+	await dismissFirstRunIfVisible(page);
+	await dismissKickoffReadinessIfVisible(page);
 	await page.getByPlaceholder("Add a new task...").fill(title);
+	await dismissKickoffReadinessIfVisible(page);
 	await addButton.click();
 	await expect(
 		page.getByRole("listitem").filter({ hasText: title }).first(),
@@ -143,6 +183,11 @@ export async function advanceClockThroughFastBreak(page: Page) {
 	await page.clock.runFor(FAST_BREAK_CLOCK_MS);
 }
 
+export async function advanceClockThroughBreakSec(page: Page, seconds: number) {
+	await ensureFakeClock(page);
+	await page.clock.runFor(seconds * 1000 + 500);
+}
+
 type TaskWorkTypeLabel = "Deep" | "Ops" | "Reactive";
 type TaskWeightLabel = "Light" | "Medium" | "Heavy";
 
@@ -152,16 +197,24 @@ export async function addTaskWithAttributes(
 	workType: TaskWorkTypeLabel,
 	weight: TaskWeightLabel,
 ) {
+	await dismissFirstRunIfVisible(page);
+	await dismissKickoffReadinessIfVisible(page);
 	const addForm = page.getByTestId("task-list").locator("form");
 	const detailsToggle = addForm.getByRole("button", { name: "+ Details" });
 	if (await detailsToggle.isVisible()) {
+		await dismissFirstRunIfVisible(page);
+		await dismissKickoffReadinessIfVisible(page);
 		await detailsToggle.click();
 	}
+	await dismissKickoffReadinessIfVisible(page);
 	await addForm.getByRole("button", { name: workType }).click();
+	await dismissKickoffReadinessIfVisible(page);
 	await addForm.getByRole("button", { name: weight }).click();
 	await page.getByPlaceholder("Add a new task...").fill(title);
 	const addButton = addForm.getByRole("button", { name: "Add" });
+	await dismissKickoffReadinessIfVisible(page);
 	await addButton.click();
+	await dismissKickoffReadinessIfVisible(page);
 	await expect(
 		page.getByRole("listitem").filter({ hasText: title }).first(),
 	).toBeVisible();
@@ -169,12 +222,16 @@ export async function addTaskWithAttributes(
 }
 
 export async function focusTask(page: Page, taskTitle: string) {
+	await dismissKickoffReadinessIfVisible(page);
 	const taskRow = page
 		.getByRole("listitem")
 		.filter({ hasText: taskTitle })
 		.first();
-	await taskRow.getByRole("button", { name: "Focus" }).click();
-	await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
+	await expect(taskRow).toBeVisible({ timeout: 15_000 });
+	const focusBtn = taskRow.getByRole("button", { name: "Focus" });
+	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
+	await focusBtn.click();
+	await waitForTimerPanelIdle(page);
 }
 
 async function dismissWindDownIfVisible(page: Page) {
@@ -191,6 +248,7 @@ export async function completeWorkCycleWithCheckIn(
 	await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
 		timeout: 15_000,
 	});
+	await dismissKickoffReadinessIfVisible(page);
 	await page.getByRole("button", { name: "Continue later" }).click();
 	await expect(page.getByText("Short Break")).toBeHidden();
 	await completeCheckIn(page, energy);

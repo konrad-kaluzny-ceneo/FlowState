@@ -6,24 +6,49 @@
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
-import { ensureIdleCycle } from "./helpers/idle-cycle";
+import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
+import {
+	dismissKickoffReadinessIfVisible,
+	ensureIdleCycle,
+} from "./helpers/idle-cycle";
+import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import {
 	addTasks,
 	advanceClockThroughFastWork,
+	forgetFakeClock,
 	markTaskCompleteMidCycle,
 	startFocusedWorkCycle,
 } from "./helpers/work-cycle";
+
+test.describe.configure({ mode: "serial" });
+
+test.beforeEach(async ({ page }) => {
+	forgetFakeClock(page);
+	// API reset before navigation — avoid hydrating a stale RUNNING cycle (R3 → R7).
+	await resetWorkerSessionViaApi(page);
+	await page.goto("/");
+	await expect(page.getByTestId("task-list")).toBeVisible();
+	await waitForCycleGetActive(page);
+	const cleanReload = page.waitForResponse(
+		(response) => response.url().includes("cycle.getActive") && response.ok(),
+		{ timeout: 20_000 },
+	);
+	await page.reload();
+	await cleanReload;
+	await resetCycleRecoveryAfterReload(page);
+	await ensureIdleCycle(page);
+});
+
+test.afterEach(async ({ page }) => {
+	forgetFakeClock(page);
+	await resetWorkerSessionViaApi(page);
+});
 
 test.describe("Seed exemplar — Risk #3 mid-cycle prompt", () => {
 	test("completing a task mid-cycle surfaces FR-015 choices", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
-
-		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
-		await waitForCycleGetActive(page);
-		await ensureIdleCycle(page);
 
 		const ts = Date.now();
 		const task1 = `Seed R3 A ${ts}`;
@@ -49,11 +74,6 @@ test.describe("Seed exemplar — Risk #7 check-in gate", () => {
 	}) => {
 		test.setTimeout(60_000);
 
-		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
-		await waitForCycleGetActive(page);
-		await ensureIdleCycle(page);
-
 		const taskTitle = `E2E Seed R7 ${Date.now()}`;
 
 		await startFocusedWorkCycle(page, taskTitle, 1);
@@ -62,6 +82,7 @@ test.describe("Seed exemplar — Risk #7 check-in gate", () => {
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
 			timeout: 15_000,
 		});
+		await dismissKickoffReadinessIfVisible(page);
 		await page.getByRole("button", { name: "Continue later" }).click();
 
 		await expect(page.getByText("Short Break")).toBeHidden();

@@ -1,10 +1,10 @@
 ---
 change_id: suggestion-rationale-expander
 title: Suggestion rationale expander
-status: impl_reviewed
+status: archived
 created: 2026-06-10
 updated: 2026-06-10
-archived_at: null
+archived_at: 2026-06-10T19:30:00Z
 ---
 
 ## Notes
