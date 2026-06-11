@@ -11,7 +11,7 @@ expanded_story: 2026-06-07
 expanded_followup: 2026-06-07
 expanded_ux_gaps: 2026-06-07
 expanded_task_planning: 2026-06-09
-active_slices: []
+active_slices: [F-04]
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -54,7 +54,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-09 | optimistic-task-mutations              | [FLO-24](https://linear.app/flowstate-10xdev/issue/FLO-24) | [#35](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/35) (closed) | see task list and task actions update immediately while logged in (optimistic UI), with rollback on server error — matching perceived speed of local guest storage           | S-01, F-02       | NFR (200ms acknowledgement), FR-004–FR-008                                                                                        | done     |
 | S-10 | google-oauth-provider                  | [FLO-20](https://linear.app/flowstate-10xdev/issue/FLO-20) | [#20](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/20) (closed) | sign in or sign up with a Google account in one click, alongside the existing email/password flow                                                                            | F-02             | FR-001, FR-002                                                                                                                    | done     |
 | F-03 | align-prisma-config                    | [FLO-22](https://linear.app/flowstate-10xdev/issue/FLO-22) | [#33](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/33)          | (foundation) `prisma.config.ts` aligned with Prisma 7: `dotenv/config`, `env()` helper, unpooled URL for CLI migrations; runtime adapter unchanged                           | —                | —                                                                                                                                 | proposed |
-| F-04 | impeccable-design-foundation           | [FLO-25](https://linear.app/flowstate-10xdev/issue/FLO-25) | [#36](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/36)          | (foundation) `DESIGN.md` via Impeccable shape + document — tokens, typography, color, motion, component patterns for downstream craft                                        | S-09             | Secondary Success Criteria, NFR (200ms acknowledgement), proposed-FR-visual-design-system                                         | proposed |
+| F-04 | impeccable-design-foundation           | [FLO-25](https://linear.app/flowstate-10xdev/issue/FLO-25) | [#36](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/36)          | (foundation) `DESIGN.md` via Impeccable shape + document — tokens, typography, color, motion, component patterns for downstream craft                                        | S-09             | Secondary Success Criteria, NFR (200ms acknowledgement), proposed-FR-visual-design-system                                         | active |
 | S-11 | first-run-wedge-onboarding             | [FLO-26](https://linear.app/flowstate-10xdev/issue/FLO-26) | [#37](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/37)          | on first visit, follow a dismissible first-run flow that teaches the check-in → suggestion wedge and lands ready to accept or override the first real suggestion             | S-06, S-08       | FR-003b, FR-017, FR-018, FR-021, proposed-FR-first-run-guidance                                                                   | done     |
 | S-12 | wedge-overlay-visual-polish            | [FLO-28](https://linear.app/flowstate-10xdev/issue/FLO-28) | [#38](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/38)          | complete a work cycle and move through check-in and next-task suggestion inside a calm, cohesive designed flow — overlays no longer feel like unstyled defaults              | S-09, F-04       | FR-013, FR-015, FR-020, FR-021, FR-022, NFR (suggestion feedback ≥1s visible)                                                     | proposed |
 | S-13 | focus-home-visual-craft                | [FLO-29](https://linear.app/flowstate-10xdev/issue/FLO-29) | [#39](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/39)          | open FlowState and see a cohesive branded home with active and completed tasks visually distinct at a glance — not T3 boilerplate                                            | S-09, F-04       | FR-008, US-01, Secondary Success Criteria                                                                                         | proposed |
@@ -174,7 +174,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Calm/minimal vs bolder personality — which direction fits the mindfulness wedge? Owner: user. Block: no.
   - Does `DESIGN.md` live at repo root or under `context/foundation/`? Owner: implementer. Block: no.
 - **Risk:** Open-ended shape discovery stalls without a locked calm/focus product voice — scope discovery to wedge surfaces (home, task list, cycle transitions) only.
-- **Status:** proposed
+- **Status:** active
 
 ### F-05: Eisenhower effort task attributes (scorer v2 substrate)
 
