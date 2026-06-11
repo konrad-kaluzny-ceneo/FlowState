@@ -1,9 +1,27 @@
+import type { DragEndEvent } from "@dnd-kit/core";
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
 
 import { TaskList } from "./task-list";
+
+const dndTestState = {
+	onDragEndRef: null as ((event: DragEndEvent) => void) | null,
+};
+
+vi.mock("@dnd-kit/core", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@dnd-kit/core")>();
+	const React = await import("react");
+
+	function DndContext(props: ComponentProps<typeof actual.DndContext>) {
+		dndTestState.onDragEndRef = props.onDragEnd ?? null;
+		return React.createElement(actual.DndContext, props);
+	}
+
+	return { ...actual, DndContext };
+});
 
 const updateTask = vi.fn().mockResolvedValue(undefined);
 const createTask = vi.fn().mockResolvedValue(undefined);
@@ -95,5 +113,41 @@ describe("TaskList", () => {
 		const titleButton = screen.getByRole("button", { name: longTitle });
 		expect(titleButton.textContent).toBe(longTitle);
 		expect(longTitle.length).toBeGreaterThanOrEqual(120);
+	});
+
+	it("shows drag handles when reorder is allowed", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({ id: 1, title: "First", sortOrder: 0 }),
+					makeTask({ id: 2, title: "Second", sortOrder: 1 }),
+				]}
+			/>,
+		);
+
+		const handles = screen.getAllByTestId("task-drag-handle");
+		expect(handles).toHaveLength(2);
+		expect(handles[0]?.getAttribute("aria-label")).toBe("Drag to reorder");
+		expect(handles[0]).not.toHaveProperty("disabled", true);
+	});
+
+	it("calls reorderTasks when drag ends with a new order", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({ id: 1, title: "First", sortOrder: 0 }),
+					makeTask({ id: 2, title: "Second", sortOrder: 1 }),
+				]}
+			/>,
+		);
+
+		dndTestState.onDragEndRef?.({
+			active: { id: "1" },
+			over: { id: "2" },
+		} as DragEndEvent);
+
+		expect(reorderTasks).toHaveBeenCalledWith({ orderedIds: [2, 1] });
 	});
 });
