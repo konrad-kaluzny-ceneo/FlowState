@@ -543,14 +543,14 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 #### Automated
 
-- [ ] 5.1 `pnpm check` passes
-- [ ] 5.2 `pnpm test` passes
-- [ ] 5.3 `set CI=true && pnpm test:e2e:belt` passes
-- [ ] 5.4 `set CI=true && pnpm test:e2e` passes post-demotion
-- [ ] 5.5 All 10 demoted e2e files deleted
+- [x] 5.1 `pnpm check` passes — 8e7c547
+- [x] 5.2 `pnpm test` passes — 8e7c547
+- [x] 5.3 `set CI=true && pnpm test:e2e:belt` passes — 6ed9bda
+- [x] 5.4 `set CI=true && pnpm test:e2e` passes post-demotion — 6ed9bda
+- [x] 5.5 All 10 demoted e2e files deleted — 6ed9bda
 
 #### Manual
 
-- [ ] 5.6 AGENTS.md and e2e/README.md updated
-- [ ] 5.7 test-plan ?3 Phase 7 marked complete
+- [x] 5.6 AGENTS.md and e2e/README.md updated — 6ed9bda
+- [x] 5.7 test-plan §3 Phase 7 marked complete — 6ed9bda
 - [ ] 5.8 CI e2e job confirmed on pushed branch
