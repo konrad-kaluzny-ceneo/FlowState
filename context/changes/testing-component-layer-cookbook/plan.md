@@ -410,14 +410,14 @@ None — test-only and documentation changes.
 
 #### Manual
 
-- [x] 1.4 Presentational tests use props-only pattern (no vi.mock on component modules)
+- [x] 1.4 Presentational tests use props-only pattern (no vi.mock on component modules) — 83a68d6
 
 ### Phase 2: Guest Flow & Auth Wiring Components
 
 #### Automated
 
-- [x] 2.1 `pnpm exec vitest run` guest-merge-ui-context, guest-import-on-mount, oauth-session-verifier, user-menu tests
-- [x] 2.2 `pnpm test`
+- [x] 2.1 `pnpm exec vitest run` guest-merge-ui-context, guest-import-on-mount, oauth-session-verifier, user-menu tests — 8724266
+- [x] 2.2 `pnpm test` — 8724266
 
 #### Manual
 
