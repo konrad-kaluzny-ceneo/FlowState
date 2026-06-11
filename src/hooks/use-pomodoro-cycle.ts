@@ -73,6 +73,9 @@ export type SuggestionResult = {
 	title: string;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: 1 | 2 | 3;
+	urgency: 1 | 2 | 3;
+	importance: 1 | 2 | 3;
+	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	rationaleKey: string;
 	rationale: string;
 	breakdown: RationaleBreakdown;
@@ -91,6 +94,9 @@ export type KickoffSuggestionResult = {
 	title: string;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: 1 | 2 | 3;
+	urgency: 1 | 2 | 3;
+	importance: 1 | 2 | 3;
+	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	rationaleKey: string;
 	rationale: string;
 	breakdown: RationaleBreakdown;
@@ -794,6 +800,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						title: result.title,
 						workType: result.workType,
 						weight: result.weight,
+						urgency: (result.urgency ?? result.weight) as 1 | 2 | 3,
+						importance: (result.importance ?? 2) as 1 | 2 | 3,
+						commitmentHorizon: result.commitmentHorizon ?? "WHEN_POSSIBLE",
 						rationaleKey: result.rationaleKey,
 						rationale: result.rationale,
 						breakdown: result.breakdown,
@@ -860,7 +869,15 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						setPendingKickoffSuggestion({ status: "empty" });
 						setKickoffSuggestedTaskId(null);
 					} else if (!("cycleId" in result)) {
-						setPendingKickoffSuggestion({ status: "ready", data: result });
+						setPendingKickoffSuggestion({
+							status: "ready",
+							data: {
+								...result,
+								urgency: (result.urgency ?? result.weight) as 1 | 2 | 3,
+								importance: (result.importance ?? 2) as 1 | 2 | 3,
+								commitmentHorizon: result.commitmentHorizon ?? "WHEN_POSSIBLE",
+							},
+						});
 						setKickoffSuggestedTaskId(result.taskId);
 					}
 				} catch {

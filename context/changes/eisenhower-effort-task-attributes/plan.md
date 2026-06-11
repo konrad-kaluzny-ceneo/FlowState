@@ -473,8 +473,8 @@ Scorer adds constant-time arithmetic per candidate task — negligible vs existi
 
 #### Automated
 
-- [ ] 4.1 Guest + merge + mutation tests pass: `pnpm exec vitest run src/lib/guest/merge-copy.test.ts src/server/api/routers/guest.test.ts src/hooks/use-task-mutations.test.tsx`
-- [ ] 4.2 Full unit suite: `pnpm test`
+- [x] 4.1 Guest + merge + mutation tests pass: `pnpm exec vitest run src/lib/guest/merge-copy.test.ts src/server/api/routers/guest.test.ts src/hooks/use-task-mutations.test.tsx` — 5dcc18b
+- [x] 4.2 Full unit suite: `pnpm test` — 5dcc18b
 
 ### Phase 5: Task list UI and suggestion card badges
 
