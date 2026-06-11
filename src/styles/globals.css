@@ -4,4 +4,49 @@
 	--font-sans:
 		var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
 		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+	--color-shell-top: #1a1a2e;
+	--color-shell-bottom: #16213e;
+	--color-surface-card: rgb(255 255 255 / 0.1);
+	--color-surface-card-muted: rgb(255 255 255 / 0.05);
+	--color-surface-panel: rgb(255 255 255 / 0.05);
+	--color-border-subtle: rgb(255 255 255 / 0.2);
+	--color-text-secondary: rgb(255 255 255 / 0.6);
+	--color-text-dimmed: rgb(255 255 255 / 0.4);
+	--color-text-section: rgb(255 255 255 / 0.8);
+	--color-accent-cta: #9333ea;
+	--color-accent-cta-hover: #a855f7;
+	--color-accent-success: #16a34a;
+	--color-accent-suggestion: rgb(251 191 36 / 0.8);
+	--color-worktype-deep-bg: rgb(59 130 246 / 0.2);
+	--color-worktype-deep-text: #93c5fd;
+	--color-worktype-ops-bg: rgb(245 158 11 / 0.2);
+	--color-worktype-ops-text: #fcd34d;
+	--color-worktype-reactive-bg: rgb(244 63 94 / 0.2);
+	--color-worktype-reactive-text: #fda4af;
+}
+
+@keyframes task-complete-delight {
+	0% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.88;
+		transform: scale(1.02);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+.animate-task-complete {
+	animation: task-complete-delight 400ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-task-complete {
+		animation-duration: 50ms;
+	}
 }
