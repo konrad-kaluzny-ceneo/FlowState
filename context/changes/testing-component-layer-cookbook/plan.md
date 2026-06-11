@@ -421,14 +421,14 @@ None — test-only and documentation changes.
 
 #### Manual
 
-- [x] 2.3 Mocks stop at tRPC/auth boundary (no real network)
+- [x] 2.3 Mocks stop at tRPC/auth boundary (no real network) — 8724266
 
 ### Phase 3: Shell & Dashboard Integration Smokes
 
 #### Automated
 
-- [x] 3.1 `pnpm exec vitest run` home-shell and pomodoro-dashboard tests
-- [x] 3.2 `pnpm test`
+- [x] 3.1 `pnpm exec vitest run` home-shell and pomodoro-dashboard tests — 1bf6820
+- [x] 3.2 `pnpm test` — 1bf6820
 
 #### Manual
 

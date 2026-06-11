@@ -162,6 +162,71 @@ describe("guest repositories", () => {
 		expect(titlesBySortOrder).toEqual(["Third", "First", "Second"]);
 	});
 
+	it("deletes a task from the guest snapshot", async () => {
+		const { tasks } = createGuestRepositories();
+		const created = await tasks.create({ title: "Delete me" });
+
+		await tasks.delete({ id: created.id });
+
+		const list = await tasks.list();
+		expect(list).toHaveLength(0);
+	});
+
+	it("reactivates completed task at the tail sortOrder", async () => {
+		const { tasks } = createGuestRepositories();
+		const task = await tasks.create({ title: "Reopen me" });
+
+		await tasks.update({ id: task.id, status: "completed" });
+		await tasks.create({ title: "Active tail" });
+		await tasks.update({ id: task.id, status: "active" });
+
+		const list = await tasks.list();
+		expect(list.map((item) => item.title)).toEqual([
+			"Active tail",
+			"Reopen me",
+		]);
+		expect(list[1]?.sortOrder).toBe(1);
+	});
+
+	it("completes a running cycle and optionally marks task done", async () => {
+		const { tasks, cycles } = createGuestRepositories();
+		const task = await tasks.create({ title: "Complete me" });
+		const cycle = await cycles.create({
+			kind: "WORK",
+			configuredDurationSec: 900,
+			taskId: task.id,
+		});
+
+		await cycles.complete({ cycleId: cycle.id, markTaskDone: true });
+
+		const active = await cycles.getActive();
+		expect(active).toBeNull();
+
+		const updatedTask = (await tasks.list()).find(
+			(item) => item.id === task.id,
+		);
+		expect(updatedTask?.status).toBe("completed");
+	});
+
+	it("rejects invalid reorder requests", async () => {
+		const { tasks } = createGuestRepositories();
+		const first = await tasks.create({ title: "First" });
+		const second = await tasks.create({ title: "Second" });
+
+		await expect(tasks.reorder({ orderedIds: [first.id] })).rejects.toThrow(
+			"Invalid reorder",
+		);
+		await expect(
+			tasks.reorder({ orderedIds: [first.id, first.id] }),
+		).rejects.toThrow("Invalid reorder");
+		await expect(
+			tasks.reorder({ orderedIds: [first.id, "missing-id"] }),
+		).rejects.toThrow("Task not found or not active");
+		await expect(
+			tasks.reorder({ orderedIds: [first.id, second.id, second.id] }),
+		).rejects.toThrow("Invalid reorder");
+	});
+
 	it("returns cycle with null task when taskId is missing from snapshot", async () => {
 		const sessionId = crypto.randomUUID();
 		const startedAt = new Date();
