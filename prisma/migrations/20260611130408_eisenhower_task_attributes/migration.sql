@@ -7,5 +7,6 @@ ADD COLUMN     "effort_minutes" INTEGER,
 ADD COLUMN     "importance" SMALLINT NOT NULL DEFAULT 2,
 ADD COLUMN     "urgency" SMALLINT NOT NULL DEFAULT 2;
 
--- Backfill: migrate legacy weight into urgency (importance defaults to 2)
-UPDATE "flow_state_task" SET urgency = weight;
+-- Backfill: migrate legacy weight into urgency (clamp to 1–3 invariant)
+UPDATE "flow_state_task"
+SET urgency = LEAST(3, GREATEST(1, weight));
