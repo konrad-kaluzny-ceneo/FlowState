@@ -20,6 +20,8 @@ dotenv.config({
 const e2ePort = getE2ePort();
 const e2eBaseUrl = getE2eBaseUrl();
 const useProductionServer = isProductionE2eServer();
+/** Trial run: `set E2E_PROBE=1` — tight timeouts to surface slow steps (not for CI). */
+const e2eProbe = process.env.E2E_PROBE === "1";
 
 // NEXT_PUBLIC_* is baked at build time — export before `pnpm build` on production e2e path.
 const e2eBuildEnv =
@@ -42,9 +44,17 @@ export default defineConfig({
 	retries: 0,
 	workers: getE2eWorkerCount(),
 	reporter: process.env.CI ? "list" : "html",
+	...(e2eProbe
+		? {
+				timeout: 20_000,
+				expect: { timeout: 4_000 },
+				globalTimeout: 180_000,
+			}
+		: {}),
 	use: {
 		baseURL: e2eBaseUrl,
 		trace: "on-first-retry",
+		...(e2eProbe ? { actionTimeout: 5_000, navigationTimeout: 10_000 } : {}),
 	},
 	projects: [
 		{

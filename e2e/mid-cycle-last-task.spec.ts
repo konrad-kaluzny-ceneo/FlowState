@@ -5,6 +5,7 @@
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
+import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { completeKickoffReadiness } from "./helpers/kickoff";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import {
@@ -24,7 +25,7 @@ test.describe("Mid-cycle last task (Risk #3)", () => {
 		);
 		await page.reload();
 		await cleanReload;
-		await expect(page.getByTestId("task-list")).toBeVisible();
+		await resetCycleRecoveryAfterReload(page);
 		if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
 			await completeKickoffReadiness(page, "skip");
 		}

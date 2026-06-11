@@ -5,10 +5,12 @@
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
+import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import {
 	dismissKickoffReadinessIfVisible,
 	ensureIdleCycle,
 } from "./helpers/idle-cycle";
+import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import {
 	advanceClockThroughFastWork,
 	startFocusedWorkCycle,
@@ -19,6 +21,14 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
 		await waitForCycleGetActive(page);
+		await resetWorkerSessionViaApi(page);
+		const cleanReload = page.waitForResponse(
+			(response) => response.url().includes("cycle.getActive") && response.ok(),
+			{ timeout: 20_000 },
+		);
+		await page.reload();
+		await cleanReload;
+		await resetCycleRecoveryAfterReload(page);
 		await ensureIdleCycle(page);
 	});
 

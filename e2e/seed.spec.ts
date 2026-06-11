@@ -6,6 +6,7 @@
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
+import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import {
 	dismissKickoffReadinessIfVisible,
 	ensureIdleCycle,
@@ -32,13 +33,9 @@ test.beforeEach(async ({ page }) => {
 	);
 	await page.reload();
 	await cleanReload;
-	await expect(page.getByTestId("task-list")).toBeVisible();
+	await resetCycleRecoveryAfterReload(page);
 	await resetFakeClock(page);
 	await ensureIdleCycle(page);
-});
-
-test.afterEach(async ({ page }) => {
-	await resetWorkerSessionViaApi(page);
 });
 
 test.describe("Seed exemplar — Risk #3 mid-cycle prompt", () => {

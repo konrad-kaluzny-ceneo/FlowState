@@ -3,6 +3,7 @@ import { expect, type Page } from "@playwright/test";
 import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
 import {
 	clickStartCycle,
+	ensureFakeClock,
 	focusTask,
 	markTaskCompleteMidCycle,
 	setShortBreakDurationSec,
@@ -86,7 +87,7 @@ export async function startWorkCycleForMidCycleSwitches(
 }
 
 export async function advanceClockThroughWorkSec(page: Page, seconds: number) {
-	await page.clock.install();
+	await ensureFakeClock(page);
 	await page.clock.runFor(seconds * 1000 + 500);
 }
 

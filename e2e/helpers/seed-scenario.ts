@@ -8,6 +8,7 @@
 import { expect, type Page } from "@playwright/test";
 
 import { MIN_WORK_DURATION_SEC } from "../../src/lib/duration-bounds";
+import { rehydrateFatigueSeedState } from "./cycle-recovery";
 import { forgetFakeClock, resetFakeClock } from "./work-cycle";
 
 async function dismissKickoffReadinessIfVisible(page: Page) {
@@ -211,20 +212,24 @@ export async function seedWindDownFatigueScenario(
 		(response) => response.url().includes("cycle.getActive") && response.ok(),
 		{ timeout: 20_000 },
 	);
-	const countWorkAfterReload = page.waitForResponse(
-		(response) =>
-			response.url().includes("cycle.countCompletedWork") && response.ok(),
-		{ timeout: 20_000 },
-	);
 	await page.reload();
 	await getActiveAfterReload;
-	await countWorkAfterReload;
-	await resetFakeClock(page);
 	await expect(page.getByTestId("task-list")).toBeVisible();
 	await dismissKickoffReadinessIfVisible(page);
+	await rehydrateFatigueSeedState(page, session.id);
+	await resetFakeClock(page);
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible({
 		timeout: 15_000,
 	});
+
+	const completedWorkCount = await trpcQuery<number>(
+		page,
+		"cycle.countCompletedWork",
+		{ sessionId: session.id },
+	);
+	expect(completedWorkCount).toBeGreaterThanOrEqual(
+		FATIGUE_COMPLETED_WORK_CYCLES,
+	);
 
 	return {
 		taskId: task.id,

@@ -13,6 +13,7 @@ import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
 import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
 import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preference";
+import { useE2eExposeCycleRecovery } from "~/hooks/use-e2e-expose-cycle-recovery";
 import { useOnboarding } from "~/hooks/use-onboarding-state";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
 import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
@@ -57,6 +58,7 @@ function PomodoroDashboardBody({
 		[cycleEndAudioMode],
 	);
 	const pomodoro = usePomodoroCycle({ getCycleEndAudioMode });
+	useE2eExposeCycleRecovery();
 
 	const activeTaskIds = useMemo(
 		() => new Set(tasks.filter((t) => t.status === "active").map((t) => t.id)),

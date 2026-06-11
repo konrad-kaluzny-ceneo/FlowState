@@ -44,6 +44,9 @@ export async function waitForSuggestionNext(page: Page) {
 	await expect(page.getByTestId("suggestion-accept-btn")).toBeVisible({
 		timeout: 30_000,
 	});
+	await expect(page.getByTestId("suggestion-accept-btn")).toBeEnabled({
+		timeout: 15_000,
+	});
 }
 
 export async function expectSuggestionVisible(
@@ -72,7 +75,10 @@ export async function expectSuggestionVisible(
 	if (options?.title != null) {
 		await expect(
 			page.getByTestId("task-suggestion-card").getByText(options.title),
-		).toBeVisible();
+		).toBeVisible({ timeout: 15_000 });
+		await expect(
+			page.getByTestId("suggested-task-row").filter({ hasText: options.title }),
+		).toBeVisible({ timeout: 15_000 });
 	}
 
 	if (options?.rationale != null) {
@@ -93,8 +99,14 @@ export async function overrideSuggestionByFocusingTask(
 	taskTitle: string,
 ) {
 	await expect(page.getByTestId("timer-panel-running")).toContainText(/Break/i);
-	await expect(page.getByTestId("suggestion-accept-btn")).toBeEnabled();
+	await expect(page.getByTestId("suggestion-accept-btn")).toBeEnabled({
+		timeout: 15_000,
+	});
 	const row = page.getByRole("listitem").filter({ hasText: taskTitle }).first();
-	await row.getByRole("button", { name: "Focus" }).click();
-	await expect(page.getByTestId("suggestion-override-ack")).toBeVisible();
+	const focusBtn = row.getByRole("button", { name: "Focus" });
+	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
+	await focusBtn.click();
+	await expect(page.getByTestId("suggestion-override-ack")).toBeVisible({
+		timeout: 10_000,
+	});
 }

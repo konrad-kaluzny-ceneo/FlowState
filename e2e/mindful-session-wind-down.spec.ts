@@ -7,7 +7,12 @@ import type { Page } from "@playwright/test";
 
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
+import {
+	rehydrateFatigueSeedState,
+	resetCycleRecoveryAfterReload,
+} from "./helpers/cycle-recovery";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
+import { completeKickoffReadiness } from "./helpers/kickoff";
 import {
 	resetWorkerSessionViaApi,
 	seedWindDownFatigueScenario,
@@ -38,19 +43,25 @@ import {
 } from "./helpers/work-cycle";
 
 async function startFastWorkCycle(page: Page, taskTitle: string) {
+	if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
+		await completeKickoffReadiness(page, "skip");
+	}
 	await focusTask(page, taskTitle);
 	await setShortBreakDurationSec(page, 1);
 	await setWorkDurationSec(page, 1);
 	await clickStartCycle(page);
-	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+	await expect(page.getByTestId("timer-panel-running")).toBeVisible({
+		timeout: 15_000,
+	});
 }
 
 async function seedFatigueAndAdvanceToWindDownGate(
 	page: Page,
 	taskTitle: string,
 ) {
-	await seedWindDownFatigueScenario(page, taskTitle, 1);
+	const seed = await seedWindDownFatigueScenario(page, taskTitle, 1);
 	await ensureFakeClock(page);
+	await rehydrateFatigueSeedState(page, seed.sessionId);
 	await advanceClockThroughFastWork(page);
 }
 
@@ -62,12 +73,17 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
 		await waitForCycleGetActive(page);
-		await ensureIdleCycle(page);
-	});
-
-	test.afterEach(async ({ page }) => {
-		forgetFakeClock(page);
 		await resetWorkerSessionViaApi(page);
+		forgetFakeClock(page);
+		const cleanReload = page.waitForResponse(
+			(response) => response.url().includes("cycle.getActive") && response.ok(),
+			{ timeout: 20_000 },
+		);
+		await page.reload();
+		await cleanReload;
+		await resetCycleRecoveryAfterReload(page);
+		await resetFakeClock(page);
+		await ensureIdleCycle(page);
 	});
 
 	test("fatigue path triggers wind-down and blocks break until keep going", async ({

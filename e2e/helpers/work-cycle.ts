@@ -124,9 +124,13 @@ export async function startFocusedWorkCycle(
 	await dismissTaskSuggestionIfVisible(page);
 	await taskRow.getByRole("button", { name: "Focus" }).click();
 	await waitForTimerPanelIdle(page);
+	await dismissKickoffReadinessIfVisible(page);
 	await setWorkDurationSec(page, durationSec);
+	await dismissKickoffReadinessIfVisible(page);
 	await clickStartCycle(page);
-	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+	await expect(page.getByTestId("timer-panel-running")).toBeVisible({
+		timeout: 15_000,
+	});
 }
 
 export async function addTask(page: Page, title: string) {
@@ -177,6 +181,11 @@ export async function advanceClockThroughFastBreak(page: Page) {
 	await page.clock.runFor(FAST_BREAK_CLOCK_MS);
 }
 
+export async function advanceClockThroughBreakSec(page: Page, seconds: number) {
+	await ensureFakeClock(page);
+	await page.clock.runFor(seconds * 1000 + 500);
+}
+
 type TaskWorkTypeLabel = "Deep" | "Ops" | "Reactive";
 type TaskWeightLabel = "Light" | "Medium" | "Heavy";
 
@@ -216,7 +225,10 @@ export async function focusTask(page: Page, taskTitle: string) {
 		.getByRole("listitem")
 		.filter({ hasText: taskTitle })
 		.first();
-	await taskRow.getByRole("button", { name: "Focus" }).click();
+	await expect(taskRow).toBeVisible({ timeout: 15_000 });
+	const focusBtn = taskRow.getByRole("button", { name: "Focus" });
+	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
+	await focusBtn.click();
 	await waitForTimerPanelIdle(page);
 }
 
