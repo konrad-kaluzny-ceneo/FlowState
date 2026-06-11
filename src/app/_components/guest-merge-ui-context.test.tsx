@@ -18,6 +18,23 @@ describe("GuestMergeUiProvider", () => {
 		sessionStorage.clear();
 	});
 
+	it("hydrates merge success state from sessionStorage on mount", () => {
+		const copy = buildMergeSuccessCopy({
+			importedTasks: 3,
+			importedCycles: 1,
+			previewTitles: ["Task C"],
+		});
+		sessionStorage.setItem(
+			"flowstate:merge-success-pending",
+			JSON.stringify(copy),
+		);
+
+		const { result } = renderHook(() => useGuestMergeUi(), { wrapper });
+
+		expect(result.current.mergeSuccessVisible).toBe(true);
+		expect(result.current.mergeSuccessCopy).toEqual(copy);
+	});
+
 	it("exposes merge success state after showMergeSuccess", () => {
 		const { result } = renderHook(() => useGuestMergeUi(), { wrapper });
 		const copy = buildMergeSuccessCopy({

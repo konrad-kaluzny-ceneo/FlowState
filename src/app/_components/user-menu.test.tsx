@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { UserMenu } from "./user-menu";
 
@@ -14,8 +14,17 @@ vi.mock("~/lib/auth/client", () => ({
 }));
 
 describe("UserMenu", () => {
+	const originalLocation = window.location;
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+
+	afterEach(() => {
+		Object.defineProperty(window, "location", {
+			configurable: true,
+			value: originalLocation,
+		});
 	});
 
 	it("renders user name and sign-out control", () => {

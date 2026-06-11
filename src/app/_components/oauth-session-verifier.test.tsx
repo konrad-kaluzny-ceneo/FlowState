@@ -48,4 +48,21 @@ describe("OAuthSessionVerifier", () => {
 		});
 		expect(refresh).toHaveBeenCalledTimes(1);
 	});
+
+	it("does not refresh router when session exchange fails", async () => {
+		window.history.replaceState(
+			{},
+			"",
+			`/?${NEON_AUTH_SESSION_VERIFIER_PARAM}=test-verifier`,
+		);
+		getSession.mockRejectedValue(new Error("session exchange failed"));
+
+		const { container } = render(<OAuthSessionVerifier />);
+
+		await waitFor(() => {
+			expect(getSession).toHaveBeenCalledTimes(1);
+		});
+		expect(refresh).not.toHaveBeenCalled();
+		expect(container.firstChild).toBeNull();
+	});
 });

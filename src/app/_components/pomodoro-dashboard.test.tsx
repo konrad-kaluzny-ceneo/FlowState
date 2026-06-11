@@ -179,4 +179,36 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		expect(screen.getByTestId("wind-down-overlay")).toBeTruthy();
 	});
+
+	it("shows kickoff suggestion card when suggestion gate is enabled", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTaskId: null,
+				pendingKickoffSuggestion: {
+					status: "ready",
+					data: {
+						taskId: "task-1",
+						title: "Suggested task",
+						workType: "OPERATIONAL",
+						weight: 2,
+						rationale: "Best next task",
+						breakdown: null,
+					},
+				},
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
+	});
 });
