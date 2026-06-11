@@ -2,6 +2,14 @@ import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
 
+import {
+	getE2eBaseUrl,
+	getE2ePort,
+	getE2eWorkerCount,
+	isProductionE2eServer,
+	shouldReuseExistingServer,
+} from "./e2e/env";
+
 // Load .env and .env.local (same precedence as Next.js)
 dotenv.config({ path: path.resolve(import.meta.dirname, ".env") });
 dotenv.config({
@@ -9,12 +17,9 @@ dotenv.config({
 	override: true,
 });
 
-const e2ePort = process.env.E2E_PORT ?? "3001";
-const e2eBaseUrl = `http://localhost:${e2ePort}`;
-
-/** GitHub Actions / explicit E2E_PRODUCTION_SERVER=1 → build + next start. Otherwise next dev (fast local). */
-const useProductionServer =
-	process.env.E2E_PRODUCTION_SERVER === "1" || !!process.env.GITHUB_ACTIONS;
+const e2ePort = getE2ePort();
+const e2eBaseUrl = getE2eBaseUrl();
+const useProductionServer = isProductionE2eServer();
 
 // NEXT_PUBLIC_* is baked at build time — export before `pnpm build` on production e2e path.
 const e2eBuildEnv =
@@ -29,24 +34,13 @@ const webServerCommand = useProductionServer
 		: `${e2eBuildEnv}pnpm build && pnpm exec next start -p ${e2ePort}`
 	: `pnpm exec next dev --turbo -p ${e2ePort}`;
 
-const AUTH_POOL_SIZE = 4;
-
-const workerCount = (() => {
-	const raw = process.env.E2E_WORKERS
-		? Number.parseInt(process.env.E2E_WORKERS, 10)
-		: process.env.CI
-			? 1
-			: AUTH_POOL_SIZE;
-	return Math.min(raw, AUTH_POOL_SIZE);
-})();
-
 export default defineConfig({
 	testDir: "./e2e",
 	globalSetup: "./e2e/global-setup.ts",
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: 0,
-	workers: workerCount,
+	workers: getE2eWorkerCount(),
 	reporter: process.env.CI ? "list" : "html",
 	use: {
 		baseURL: e2eBaseUrl,
@@ -71,13 +65,14 @@ export default defineConfig({
 	webServer: {
 		command: webServerCommand,
 		url: e2eBaseUrl,
-		// Reuse only when E2E_REUSE_SERVER=1 (manual dev must set MAIN_THREAD_TIMER).
-		// global-setup may start the server; reuse when already listening.
-		reuseExistingServer: true,
+		reuseExistingServer: shouldReuseExistingServer(),
 		timeout: useProductionServer ? 300_000 : 120_000,
 		env: {
 			...process.env,
-			NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: "1",
+			// Dev-only: prod bundles bake this at build time (ci.yml job env / e2eBuildEnv).
+			...(useProductionServer
+				? {}
+				: { NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: "1" }),
 		},
 	},
 });

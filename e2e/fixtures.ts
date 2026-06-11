@@ -2,13 +2,14 @@ import path from "node:path";
 
 import { test as base, expect } from "@playwright/test";
 
+import { AUTH_POOL_SIZE } from "./env";
+
 const AUTH_DIR = path.join(import.meta.dirname, ".auth");
-const WORKER_POOL_SIZE = 4;
 
 /** Auth specs: worker-scoped storageState from global-setup auth pool. */
 export const test = base.extend({
 	context: async ({ browser }, use, testInfo) => {
-		const workerSlot = testInfo.workerIndex % WORKER_POOL_SIZE;
+		const workerSlot = testInfo.workerIndex % AUTH_POOL_SIZE;
 		const storageState = path.join(AUTH_DIR, `worker-${workerSlot}.json`);
 		const context = await browser.newContext({ storageState });
 		await use(context);
