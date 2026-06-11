@@ -26,7 +26,7 @@ import {
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import { api } from "~/trpc/react";
 
-function PomodoroDashboardBody({
+export function PomodoroDashboardBody({
 	tasks,
 	refreshTasks,
 	enableCheckInGate = false,

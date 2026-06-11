@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-11 (E2E belt merge gate — Phase 7 shipped)
+> Last updated: 2026-06-11 (Component layer cookbook — Phase 6 shipped)
 
 ## 1. Strategy
 
@@ -31,6 +31,10 @@ Tests follow three non-negotiable principles for this project:
    (`pnpm test:e2e`) remains available ad-hoc locally and for optional
    pre-release manual runs. New feature slices default to Vitest/component
    proofs unless `/10x-research` proves browser-only signal.
+5. **Belt vs component first.** Before adding a Playwright spec to the merge
+   gate, confirm the risk cannot be covered at the component or hook layer
+   (§6.9 decision tree). Ask: "Does merge gate need a new belt row, or is
+   component smoke + an existing belt seed enough?"
 
 Hot-spot scope used for likelihood weighting: `src/`, `e2e/`, `prisma/`.
 
@@ -77,7 +81,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 3 | Isolation, abuse & guest merge | Lock per-user isolation, IDOR rejection, and guest→account merge integrity | #4, #5, #6 | integration | complete | testing-isolation-abuse-guest-merge |
 | 4 | Quality-gates wiring | Enforce lint, typecheck, unit/integration, and critical e2e in CI on every PR | cross-cutting | CI gates | complete | testing-quality-gates-wiring |
 | 5 | Mutation oracle hardening | Raise covered-code mutation score from ~58% by killing survived mutants in hooks and server routers — tests exist but assertions are too weak | #1, #2, #3, #4, #5, #6 | unit + integration (targeted Stryker runs) | not started | — |
-| 6 | Uncovered UI & auth paths | Exercise task-list, dashboard, and auth action paths so no-coverage mutants drop — largest score drag but narrower than Phase 5 per test | #1, #3, #5 | component smoke + integration | not started | — |
+| 6 | Uncovered UI & auth paths | Exercise task-list, dashboard, and auth action paths so no-coverage mutants drop — largest score drag but narrower than Phase 5 per test | #1, #3, #5 | component smoke + integration | complete | testing-component-layer-cookbook |
 | 7 | E2E belt merge gate | Replace full-catalog CI gate with 12-test belt; Vitest backfill then delete 10 demoted e2e files | #1–#7 (belt entry points + integration-only #4/#6) | Playwright belt + Vitest/component backfill | complete | testing-e2e-belt-fast |
 
 ## 4. Stack
@@ -90,6 +94,7 @@ plus the MCP/tools actually exposed in the current session.
 | Layer | Tool | Version | Notes |
 |-------|------|---------|-------|
 | unit + integration | Vitest | 4.1.7 | jsdom environment; co-located `*.test.ts(x)` under `src/`; fast-check for properties |
+| component + hook (RTL) | Vitest + React Testing Library | 4.1.7 | Co-located `*.test.tsx` under `src/app/_components/` and `src/hooks/`; `render` for UI smoke, `renderHook` for state machines — see §6.9 |
 | API / server integration | Vitest + tRPC createCaller | 4.1.7 | Router isolation tests pattern already in repo; exclude `e2e/` from Vitest |
 | e2e merge gate (belt) | Playwright | 1.60.0 | `pnpm test:e2e:belt` — 12 scenarios (§6.3 `#### Belt merge gate` table); CI job `e2e` runs belt; worker-scoped auth (`e2e/.auth/worker-{n}.json`), 4 workers |
 | e2e full catalog | Playwright | 1.60.0 | `set CI=true && pnpm test:e2e` — ad-hoc local + optional pre-release manual (~27 tests post-demotion); not required on merge |
@@ -259,6 +264,14 @@ CI merge gate — **12 tests across 10 spec files** (change `testing-e2e-belt-fa
 - **Deferred e2e — `check-in-gate.spec.ts` (Risk #7 dedicated gate oracle)**: UI path — complete 1s WORK cycle → S-01 overlay → "Continue later" → assert `check-in-overlay` visible and "Short Break" hidden until `completeCheckIn(page, "steady")` → assert break `timer-panel-running`. Network persistence oracle — match batched tRPC POST body on `/api/trpc` for `STEADY` + numeric `cycleId` (not `/api/trpc/checkIn.create` URL; app uses `httpBatchStreamLink`). Prior attempts failed on `waitForRequest` timeout and `response.json()` on batch stream. Re-add when e2e infra supports batched mutation oracles.
 - **Deferred**: guest-mode Playwright check-in/mid-cycle proofs; escape/refresh skip-vector e2e; server-side `cycle.complete` check-in prerequisite; `interruptionCount` increment; CI gate wiring (Phase 4 test-plan row).
 
+**Phase 6 — Uncovered UI & auth paths** (shipped 2026-06-11, change `testing-component-layer-cookbook`)
+
+- Risks covered: **#1** (dashboard/shell smoke), **#3** (overlay visibility matrix), **#5** (guest import UI + auth actions).
+- Layers: co-located component smoke for every `src/app/_components/*.tsx`; auth server-action tests (`sign-in/action.test.ts`, `sign-up/actions.test.ts`); guest-repository branch extensions.
+- **Cookbook**: §6.9 component test entry; §4 stack row; §1 principle #5 belt-vs-component checklist.
+- **Explicit limitation**: §3 Phase 5 mutation oracle hardening (`testing-mutation-oracle-hardening`) remains separate — this change adds coverage and documentation, not full survived-mutant cleanup.
+- **Narrowed Stryker**: targeted runs on `pomodoro-dashboard.tsx`, `home-shell.tsx`, `sign-in/action.ts`, `sign-up/actions.ts` (exit 0). Survivors on merge-overlay mount wiring, dashboard branch composition, and auth catch/optional-chaining paths reviewed as non-user-visible or deferred to Phase 5 oracle hardening per §6.7 review rule.
+
 **Phase 7 — E2E belt merge gate** (shipped 2026-06-11, change `testing-e2e-belt-fast`)
 
 - Goal: replace full-catalog CI gate (~49 tests) with 12-test belt (§6.3 `#### Belt merge gate` table); Vitest backfill then delete 10 demoted e2e files.
@@ -273,7 +286,7 @@ CI merge gate — **12 tests across 10 spec files** (change `testing-e2e-belt-fa
 - **When to use**: any user tap that must feel instant while a mutation or query is in flight — cycle start/interrupt, optimistic task updates, etc.
 - **Deferred-mock oracle**: block the repository/mock with a manual `release` (or `mockImplementation` that awaits a deferred promise); assert UI state flips **before** `release`; optionally assert rollback or server reconciliation after `release` or on rejection.
 - **Reference tests**: `src/hooks/use-pomodoro-cycle.test.tsx` — `"transitions to running before createCycle resolves"`, `"returns to idle before interruptCycle resolves"`, `"restores running state when interruptCycle fails after optimistic interrupt"`, `"interrupt during pending create cancels server cycle when create settles"`.
-- **Component smoke**: unbounded text fields — co-located test that edit mode uses `textarea` and read mode shows full content; see `src/app/_components/task-list.test.tsx`.
+- **Component smoke**: unbounded text fields and overlay layout — follow §6.9; canonical example `src/app/_components/task-list.test.tsx`.
 - **Run**: `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx src/app/_components/task-list.test.tsx`
 
 ### 6.7 Mutation testing (Stryker)
@@ -292,6 +305,25 @@ CI merge gate — **12 tests across 10 spec files** (change `testing-e2e-belt-fa
   3. `src/app/auth/` — sign-in/sign-up actions and schema validation (pre-S-08 merge flows)
 - **Strong areas** (use as oracle examples): `src/workers/timer-worker-logic.ts` (100%), `src/lib/duration-input.ts` (92%), `src/server/api/lib/active-session.ts` (92%).
 - **Known anomaly**: one RuntimeError in hook layer during full run — Vitest runner crash on a conditional mutant; investigate separately, not a coverage gap.
+
+### 6.9 Adding a component test
+
+- **Location**: co-located next to the component — `src/app/_components/<name>.test.tsx`; hook integration stays in `src/hooks/<name>.test.tsx`.
+- **Naming**: mirror source file — `guest-banner.test.tsx` beside `guest-banner.tsx`.
+- **Decision tree** (dumb vs composite vs hook):
+  1. **Presentational** (props in, callbacks out) → `render` + `vi.fn()` handlers; **no** `vi.mock` on the component module.
+  2. **Composite with hook side effects** (task list, dashboard shell) → `vi.mock("~/hooks/...")` at the nearest boundary; assert DOM + mock call args.
+  3. **State machine / optimistic / recovery** → `renderHook` in `src/hooks/`; component test only asserts mount visibility or overlay gates if needed.
+  4. **Before adding belt e2e** → apply §1 principle #5; prefer component + existing belt seed (`e2e/seed.spec.ts`) when signal is layout-only.
+- **When to mock hooks**: mock when the component orchestrates hook return values into DOM (dashboard, task list); do **not** mock for dumb overlays (`MidCycleCompletionPrompt`, `CheckInOverlay`).
+- **Reference tests**:
+  - Dumb overlay: `src/app/_components/mid-cycle-completion-prompt.test.tsx`
+  - Hook-mock composite: `src/app/_components/task-list.test.tsx`
+  - Hook integration: `src/hooks/use-pomodoro-cycle.test.tsx`
+  - Dashboard overlay matrix: `src/app/_components/pomodoro-dashboard.test.tsx`
+- **Run locally**: `pnpm exec vitest run src/app/_components/<name>.test.tsx` or `pnpm test`.
+- **Anti-patterns**: belt e2e for overlay layout-only regressions; snapshot-only tests with no user-visible oracle; duplicating hook state-machine cases already in `use-pomodoro-cycle.test.tsx`.
+- **Latency oracles**: see §6.8 and `context/foundation/lessons.md` L-04 for per-surface edit-control smoke.
 
 ## 7. What We Deliberately Don't Test
 
@@ -312,6 +344,7 @@ contributors should respect these unless the underlying assumption changes.
 - Mutation baseline last run: 2026-06-06 (`reports/mutation/mutation.html` — 33.1% total / 58.2% covered)
 - CI quality gates wired: 2026-06-11 (`.github/workflows/ci.yml` — belt merge gate `pnpm test:e2e:belt`, 4 workers, build cache)
 - Belt merge-gate shipped: 2026-06-11 (`testing-e2e-belt-fast`)
+- Phase 6 component layer shipped: 2026-06-11 (`testing-component-layer-cookbook`) — co-located `_components` + auth action smokes; narrowed Stryker on dashboard/shell/auth paths
 - **Next session:** §3 Phase 5 (`testing-mutation-oracle-hardening`) — Stryker survived-mutant oracles
 
 Refresh (`/10x-test-plan --refresh`) when:

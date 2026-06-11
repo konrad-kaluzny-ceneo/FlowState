@@ -404,66 +404,66 @@ None — test-only and documentation changes.
 
 #### Automated
 
-- [ ] 1.1 `pnpm exec vitest run` guest-banner, kickoff-duration-chips, empty-active-tasks-guide tests
-- [ ] 1.2 `pnpm check`
-- [ ] 1.3 `pnpm test`
+- [x] 1.1 `pnpm exec vitest run` guest-banner, kickoff-duration-chips, empty-active-tasks-guide tests — 83a68d6
+- [x] 1.2 `pnpm check` — 83a68d6
+- [x] 1.3 `pnpm test` — 83a68d6
 
 #### Manual
 
-- [ ] 1.4 Presentational tests use props-only pattern (no vi.mock on component modules)
+- [x] 1.4 Presentational tests use props-only pattern (no vi.mock on component modules) — 83a68d6
 
 ### Phase 2: Guest Flow & Auth Wiring Components
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec vitest run` guest-merge-ui-context, guest-import-on-mount, oauth-session-verifier, user-menu tests
-- [ ] 2.2 `pnpm test`
+- [x] 2.1 `pnpm exec vitest run` guest-merge-ui-context, guest-import-on-mount, oauth-session-verifier, user-menu tests — 8724266
+- [x] 2.2 `pnpm test` — 8724266
 
 #### Manual
 
-- [ ] 2.3 Mocks stop at tRPC/auth boundary (no real network)
+- [x] 2.3 Mocks stop at tRPC/auth boundary (no real network) — 8724266
 
 ### Phase 3: Shell & Dashboard Integration Smokes
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run` home-shell and pomodoro-dashboard tests
-- [ ] 3.2 `pnpm test`
+- [x] 3.1 `pnpm exec vitest run` home-shell and pomodoro-dashboard tests — 1bf6820
+- [x] 3.2 `pnpm test` — 1bf6820
 
 #### Manual
 
-- [ ] 3.3 Dashboard tests do not duplicate use-pomodoro-cycle state machine cases
+- [x] 3.3 Dashboard tests do not duplicate use-pomodoro-cycle state machine cases — 1bf6820
 
 ### Phase 4: Auth Actions & Repository Gaps
 
 #### Automated
 
-- [ ] 4.1 `pnpm exec vitest run` sign-in/action, sign-up/actions, guest-repositories tests
-- [ ] 4.2 `pnpm test`
+- [x] 4.1 `pnpm exec vitest run` sign-in/action, sign-up/actions, guest-repositories tests — 2dcac33
+- [x] 4.2 `pnpm test` — 2dcac33
 
 #### Manual
 
-- [ ] 4.3 Auth action tests mock ~/lib/auth/server (no Neon calls)
+- [x] 4.3 Auth action tests mock ~/lib/auth/server (no Neon calls) — 2dcac33
 
 ### Phase 5: Test-Plan Cookbook & Phase 6 Closure
 
 #### Automated
 
-- [ ] 5.1 `pnpm check` and `pnpm test` after any incidental TS edits
+- [x] 5.1 `pnpm check` and `pnpm test` after any incidental TS edits — 4968eae
 
 #### Manual
 
-- [ ] 5.2 Spot-read §6.9 — contributor can add component test from cookbook alone
-- [ ] 5.3 §3 Phase 6 row marked complete with change folder
+- [x] 5.2 Spot-read §6.9 — contributor can add component test from cookbook alone — 4968eae
+- [x] 5.3 §3 Phase 6 row marked complete with change folder — 4968eae
 
 ### Phase 6: Narrowed Stryker & Baseline Update
 
 #### Automated
 
-- [ ] 6.1 Narrowed Stryker runs on new/changed source files
-- [ ] 6.2 `pnpm test`
-- [ ] 6.3 `pnpm check`
+- [x] 6.1 Narrowed Stryker runs on new/changed source files — 9df083c
+- [x] 6.2 `pnpm test` — 9df083c
+- [x] 6.3 `pnpm check` — 9df083c
 
 #### Manual
 
-- [ ] 6.4 Survivors in mutation report reviewed per §6.7 review rule
+- [x] 6.4 Survivors in mutation report reviewed per §6.7 review rule — 9df083c
