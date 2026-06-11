@@ -118,6 +118,18 @@ export async function resetWorkerSessionViaApi(page: Page) {
 	for (const task of tasks) {
 		await trpcMutation(page, "task.delete", { id: task.id });
 	}
+	await expect
+		.poll(
+			async () => {
+				const active = await trpcQuery<{ id: number } | null>(
+					page,
+					"cycle.getActive",
+				);
+				return active == null;
+			},
+			{ timeout: 10_000 },
+		)
+		.toBe(true);
 }
 
 async function interruptActiveCycleIfRunning(page: Page) {

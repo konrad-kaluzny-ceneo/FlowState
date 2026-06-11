@@ -122,7 +122,9 @@ export async function startFocusedWorkCycle(
 	);
 	await dismissKickoffReadinessIfVisible(page);
 	await dismissTaskSuggestionIfVisible(page);
-	await taskRow.getByRole("button", { name: "Focus" }).click();
+	const focusBtn = taskRow.getByRole("button", { name: "Focus" });
+	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
+	await focusBtn.click();
 	await waitForTimerPanelIdle(page);
 	await dismissKickoffReadinessIfVisible(page);
 	await setWorkDurationSec(page, durationSec);

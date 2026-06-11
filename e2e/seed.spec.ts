@@ -17,9 +17,10 @@ import {
 	advanceClockThroughFastWork,
 	forgetFakeClock,
 	markTaskCompleteMidCycle,
-	resetFakeClock,
 	startFocusedWorkCycle,
 } from "./helpers/work-cycle";
+
+test.describe.configure({ mode: "serial" });
 
 test.beforeEach(async ({ page }) => {
 	forgetFakeClock(page);
@@ -34,7 +35,6 @@ test.beforeEach(async ({ page }) => {
 	await page.reload();
 	await cleanReload;
 	await resetCycleRecoveryAfterReload(page);
-	await resetFakeClock(page);
 	await ensureIdleCycle(page);
 });
 
