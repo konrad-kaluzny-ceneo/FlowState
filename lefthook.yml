@@ -3,6 +3,10 @@ pre-commit:
   commands:
     lint:
       glob: "*.{ts,tsx,js,jsx,json,css}"
+      exclude:
+        - ".cursor/skills/impeccable/**"
+        - ".github/skills/impeccable/**"
+        - ".kiro/skills/impeccable/**"
       run: pnpm exec biome check --write {staged_files} && git add {staged_files}
     typecheck:
       run: pnpm typecheck

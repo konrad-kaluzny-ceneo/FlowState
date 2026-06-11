@@ -254,3 +254,7 @@ reports
 .playwright-cli
 auth.json
 .tmp-backlog-sync
+
+# Impeccable skills (duplicate harness installs; canonical copy under .cursor/skills/)
+.github/skills/
+.kiro/skills/
