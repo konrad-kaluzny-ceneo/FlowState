@@ -493,10 +493,10 @@ Scorer adds constant-time arithmetic per candidate task — negligible vs existi
 
 #### Automated
 
-- [ ] 6.1 Factor + breakdown tests pass: `pnpm exec vitest run src/lib/scoring/dominant-factor.test.ts src/lib/scoring/rationale-breakdown.test.ts`
-- [ ] 6.2 Full unit suite: `pnpm test`
-- [ ] 6.3 Lint passes: `pnpm check`
+- [x] 6.1 Factor + breakdown tests pass: `pnpm exec vitest run src/lib/scoring/dominant-factor.test.ts src/lib/scoring/rationale-breakdown.test.ts` — 5b604ce
+- [x] 6.2 Full unit suite: `pnpm test` — 5b604ce
+- [x] 6.3 Lint passes: `pnpm check` — 5b604ce
 
 #### Manual
 
-- [ ] 6.4 Expander shows task-attribute chip when ASAP + high-importance task suggested
+- [x] 6.4 Expander shows task-attribute chip when ASAP + high-importance task suggested — 5b604ce

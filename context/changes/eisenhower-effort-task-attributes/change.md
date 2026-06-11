@@ -1,7 +1,7 @@
 ---
 change_id: eisenhower-effort-task-attributes
 title: Eisenhower effort task attributes (scorer v2 substrate)
-status: implementing
+status: impl_reviewed
 created: 2026-06-11
 updated: 2026-06-11
 archived_at: null
