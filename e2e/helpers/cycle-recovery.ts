@@ -22,17 +22,34 @@ export async function resetCycleRecoveryGuard(page: Page) {
 	});
 }
 
+function parseSessionIdFromTrpcUrl(url: string): number | undefined {
+	try {
+		const parsed = new URL(url, "http://localhost");
+		const input = parsed.searchParams.get("input");
+		if (!input) {
+			return undefined;
+		}
+		const decoded = JSON.parse(decodeURIComponent(input)) as {
+			json?: { sessionId?: number };
+		};
+		return decoded.json?.sessionId;
+	} catch {
+		return undefined;
+	}
+}
+
 function countCompletedWorkResponseMatches(
 	response: { url: () => string; ok: () => boolean },
 	sessionId?: number,
 ) {
-	if (!response.url().includes("cycle.countCompletedWork") || !response.ok()) {
+	const url = response.url();
+	if (!url.includes("cycle.countCompletedWork") || !response.ok()) {
 		return false;
 	}
 	if (sessionId == null) {
 		return true;
 	}
-	return response.url().includes(String(sessionId));
+	return parseSessionIdFromTrpcUrl(url) === sessionId;
 }
 
 export function waitForCountCompletedWork(page: Page, sessionId?: number) {

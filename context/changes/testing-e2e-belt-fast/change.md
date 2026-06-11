@@ -1,7 +1,7 @@
 ---
 change_id: testing-e2e-belt-fast
 title: E2E belt merge gate
-status: implemented
+status: impl_reviewed
 created: 2026-06-10
 updated: 2026-06-11
 archived_at: null

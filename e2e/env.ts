@@ -23,10 +23,14 @@ export function shouldReuseExistingServer(): boolean {
 }
 
 export function getE2eWorkerCount(): number {
-	const raw = process.env.E2E_WORKERS
-		? Number.parseInt(process.env.E2E_WORKERS, 10)
-		: AUTH_POOL_SIZE;
-	return Math.min(raw, AUTH_POOL_SIZE);
+	if (!process.env.E2E_WORKERS) {
+		return AUTH_POOL_SIZE;
+	}
+	const parsed = Number.parseInt(process.env.E2E_WORKERS, 10);
+	if (!Number.isFinite(parsed) || parsed < 1) {
+		return AUTH_POOL_SIZE;
+	}
+	return Math.min(parsed, AUTH_POOL_SIZE);
 }
 
 export function getE2eStartupTimeoutMs(): number {

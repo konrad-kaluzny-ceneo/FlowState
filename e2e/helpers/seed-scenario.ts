@@ -117,7 +117,14 @@ async function drainActiveCycles(page: Page, timeoutMs = 15_000) {
 		}
 		try {
 			await trpcMutation(page, "cycle.interrupt", { cycleId: active.id });
-		} catch {
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			const isRace =
+				isTransientTrpcError(error) ||
+				/not found|already completed|no active cycle/i.test(message);
+			if (!isRace) {
+				throw error;
+			}
 			// Stale read or concurrent completion — retry until deadline.
 		}
 		await new Promise((resolve) => setTimeout(resolve, 100));

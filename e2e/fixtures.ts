@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 
 import { test as base, expect } from "@playwright/test";
@@ -11,6 +12,11 @@ export const test = base.extend({
 	context: async ({ browser }, use, testInfo) => {
 		const workerSlot = testInfo.workerIndex % AUTH_POOL_SIZE;
 		const storageState = path.join(AUTH_DIR, `worker-${workerSlot}.json`);
+		if (!fs.existsSync(storageState)) {
+			throw new Error(
+				`Missing auth state at ${storageState}. Re-run Playwright (global-setup provisions the worker auth pool).`,
+			);
+		}
 		const context = await browser.newContext({ storageState });
 		await use(context);
 		await context.close();
