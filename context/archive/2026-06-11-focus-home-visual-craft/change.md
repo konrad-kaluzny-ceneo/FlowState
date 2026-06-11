@@ -1,10 +1,10 @@
 ---
 change_id: focus-home-visual-craft
 title: Branded home shell and task-list clarity
-status: implemented
+status: archived
 created: 2026-06-11
 updated: 2026-06-11
-archived_at: null
+archived_at: 2026-06-11T16:45:00Z
 ---
 
 ## Notes
