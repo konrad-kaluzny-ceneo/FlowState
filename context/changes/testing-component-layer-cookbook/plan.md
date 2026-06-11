@@ -449,7 +449,7 @@ None — test-only and documentation changes.
 
 #### Automated
 
-- [x] 5.1 `pnpm check` and `pnpm test` after any incidental TS edits
+- [x] 5.1 `pnpm check` and `pnpm test` after any incidental TS edits — 4968eae
 
 #### Manual
 
