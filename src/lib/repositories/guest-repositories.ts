@@ -97,7 +97,14 @@ export function createGuestTaskRepository(): TaskRepository {
 			const snapshot = loadSnapshot();
 			const now = new Date();
 			const rawWeight = input.weight ?? 2;
-			const urgency = Math.min(3, Math.max(1, rawWeight)) as 1 | 2 | 3;
+			const urgency = Math.min(3, Math.max(1, input.urgency ?? rawWeight)) as
+				| 1
+				| 2
+				| 3;
+			const importance = Math.min(3, Math.max(1, input.importance ?? 2)) as
+				| 1
+				| 2
+				| 3;
 			const maxSortOrder = snapshot.tasks
 				.filter((task) => task.status === "active")
 				.reduce((max, task) => Math.max(max, task.sortOrder), -1);
@@ -107,10 +114,10 @@ export function createGuestTaskRepository(): TaskRepository {
 				status: "active" as const,
 				workType: input.workType ?? "OPERATIONAL",
 				weight: urgency,
-				importance: 2 as const,
+				importance,
 				urgency,
-				effortMinutes: null,
-				commitmentHorizon: "WHEN_POSSIBLE" as const,
+				effortMinutes: input.effortMinutes ?? null,
+				commitmentHorizon: input.commitmentHorizon ?? "WHEN_POSSIBLE",
 				sortOrder: maxSortOrder + 1,
 				createdAt: now,
 				updatedAt: null,
@@ -146,22 +153,34 @@ export function createGuestTaskRepository(): TaskRepository {
 						sortOrder = maxActiveSortOrder + 1;
 					}
 
+					const nextUrgency =
+						input.urgency != null
+							? (Math.min(3, Math.max(1, input.urgency)) as 1 | 2 | 3)
+							: input.weight != null
+								? (Math.min(3, Math.max(1, input.weight)) as 1 | 2 | 3)
+								: null;
+
 					return {
 						...task,
 						...(input.title != null ? { title: input.title } : {}),
 						...(input.status != null ? { status: input.status } : {}),
 						...(input.workType != null ? { workType: input.workType } : {}),
-						...(input.weight != null
-							? (() => {
-									const nextUrgency = Math.min(3, Math.max(1, input.weight)) as
+						...(input.importance != null
+							? {
+									importance: Math.min(3, Math.max(1, input.importance)) as
 										| 1
 										| 2
-										| 3;
-									return {
-										weight: nextUrgency,
-										urgency: nextUrgency,
-									};
-								})()
+										| 3,
+								}
+							: {}),
+						...(nextUrgency != null
+							? { weight: nextUrgency, urgency: nextUrgency }
+							: {}),
+						...(input.effortMinutes !== undefined
+							? { effortMinutes: input.effortMinutes }
+							: {}),
+						...(input.commitmentHorizon != null
+							? { commitmentHorizon: input.commitmentHorizon }
 							: {}),
 						sortOrder,
 						updatedAt: new Date(),

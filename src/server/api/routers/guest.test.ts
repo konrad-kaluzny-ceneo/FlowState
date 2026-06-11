@@ -14,6 +14,10 @@ type TaskRow = {
 	userId: string;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: 1 | 2 | 3;
+	importance: 1 | 2 | 3;
+	urgency: 1 | 2 | 3;
+	effortMinutes: number | null;
+	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	sortOrder: number;
 };
 
@@ -144,6 +148,7 @@ describe("guest.import", () => {
 				userId: "user-1",
 				workType: "OPERATIONAL",
 				weight: 2,
+				...defaultEisenhowerFields(2),
 				sortOrder: 2,
 			},
 		];
@@ -356,6 +361,42 @@ describe("guest.import", () => {
 			"Guest second",
 		]);
 		expect(imported.map((task) => task.sortOrder)).toEqual([3, 4]);
+	});
+
+	it("preserves Eisenhower task attributes on import", async () => {
+		const snapshot: GuestSnapshotV1 = {
+			version: 1,
+			tasks: [
+				{
+					id: "550e8400-e29b-41d4-a716-446655440030",
+					title: "ASAP deep work",
+					status: "active",
+					workType: "DEEP_WORK",
+					weight: 3,
+					importance: 3,
+					urgency: 3,
+					effortMinutes: 45,
+					commitmentHorizon: "ASAP",
+					sortOrder: 0,
+					createdAt: new Date("2026-05-29T10:00:00.000Z"),
+					updatedAt: null,
+				},
+			],
+			sessions: [],
+			cycles: [],
+		};
+
+		const result = await guestCaller().import(snapshot);
+
+		expect(result.importedTasks).toBe(1);
+		const imported = tasks.find((task) => task.title === "ASAP deep work");
+		expect(imported).toMatchObject({
+			importance: 3,
+			urgency: 3,
+			weight: 3,
+			effortMinutes: 45,
+			commitmentHorizon: "ASAP",
+		});
 	});
 
 	it("sets taskId null when guest cycle references unmapped task UUID", async () => {
