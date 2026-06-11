@@ -523,21 +523,21 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 #### Automated
 
-- [ ] 4.1 `pnpm check` passes
-- [ ] 4.2 `pnpm test` passes
-- [ ] 4.3 `merge-success-overlay.test.tsx` passes
-- [ ] 4.4 `first-run-overlay.test.tsx` passes
-- [ ] 4.5 `check-in-overlay.test.tsx` passes
-- [ ] 4.6 `wind-down-overlay.test.tsx` passes
-- [ ] 4.7 `use-pomodoro-cycle-guest.test.tsx` catchUp parity passes
-- [ ] 4.8 Task-list DnD smoke passes
-- [ ] 4.9 `cycle-audio-preference-control.test.tsx` UI smoke passes
-- [ ] 4.10 Guest merge cycle resume hook test passes
+- [x] 4.1 `pnpm check` passes — 277cf9d
+- [x] 4.2 `pnpm test` passes — 277cf9d
+- [x] 4.3 `merge-success-overlay.test.tsx` passes — 277cf9d
+- [x] 4.4 `first-run-overlay.test.tsx` passes — 277cf9d
+- [x] 4.5 `check-in-overlay.test.tsx` passes — 277cf9d
+- [x] 4.6 `wind-down-overlay.test.tsx` passes — 277cf9d
+- [x] 4.7 `use-pomodoro-cycle-guest.test.tsx` catchUp parity passes — 277cf9d
+- [x] 4.8 Task-list DnD smoke passes — 277cf9d
+- [x] 4.9 `cycle-audio-preference-control.test.tsx` UI smoke passes — 277cf9d
+- [x] 4.10 Guest merge cycle resume hook test passes — 277cf9d
 
 #### Manual
 
-- [ ] 4.11 Vitest backfill matrix complete per research.md
-- [ ] 4.12 No demoted e2e files deleted yet
+- [x] 4.11 Vitest backfill matrix complete per research.md — 277cf9d
+- [x] 4.12 No demoted e2e files deleted yet — 277cf9d
 
 ### Phase 5: Demotion + Docs
 
