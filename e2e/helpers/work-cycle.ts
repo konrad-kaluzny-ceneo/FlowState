@@ -209,7 +209,11 @@ export async function addTaskWithAttributes(
 	await dismissKickoffReadinessIfVisible(page);
 	await addForm.getByRole("button", { name: workType }).click();
 	await dismissKickoffReadinessIfVisible(page);
-	await addForm.getByRole("button", { name: weight }).click();
+	const urgencyRow = addForm
+		.locator("div")
+		.filter({ hasText: /^Urgency/ })
+		.first();
+	await urgencyRow.getByRole("button", { name: weight }).click();
 	await page.getByPlaceholder("Add a new task...").fill(title);
 	const addButton = addForm.getByRole("button", { name: "Add" });
 	await dismissKickoffReadinessIfVisible(page);
