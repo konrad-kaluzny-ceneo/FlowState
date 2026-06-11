@@ -404,9 +404,9 @@ None — test-only and documentation changes.
 
 #### Automated
 
-- [x] 1.1 `pnpm exec vitest run` guest-banner, kickoff-duration-chips, empty-active-tasks-guide tests
-- [x] 1.2 `pnpm check`
-- [x] 1.3 `pnpm test`
+- [x] 1.1 `pnpm exec vitest run` guest-banner, kickoff-duration-chips, empty-active-tasks-guide tests — 83a68d6
+- [x] 1.2 `pnpm check` — 83a68d6
+- [x] 1.3 `pnpm test` — 83a68d6
 
 #### Manual
 
