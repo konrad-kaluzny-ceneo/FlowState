@@ -24,10 +24,11 @@ test.describe.configure({ mode: "serial" });
 
 test.beforeEach(async ({ page }) => {
 	forgetFakeClock(page);
+	// API reset before navigation — avoid hydrating a stale RUNNING cycle (R3 → R7).
+	await resetWorkerSessionViaApi(page);
 	await page.goto("/");
 	await expect(page.getByTestId("task-list")).toBeVisible();
 	await waitForCycleGetActive(page);
-	await resetWorkerSessionViaApi(page);
 	const cleanReload = page.waitForResponse(
 		(response) => response.url().includes("cycle.getActive") && response.ok(),
 		{ timeout: 20_000 },
@@ -36,6 +37,11 @@ test.beforeEach(async ({ page }) => {
 	await cleanReload;
 	await resetCycleRecoveryAfterReload(page);
 	await ensureIdleCycle(page);
+});
+
+test.afterEach(async ({ page }) => {
+	forgetFakeClock(page);
+	await resetWorkerSessionViaApi(page);
 });
 
 test.describe("Seed exemplar — Risk #3 mid-cycle prompt", () => {

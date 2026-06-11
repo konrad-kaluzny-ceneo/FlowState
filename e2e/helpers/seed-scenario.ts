@@ -110,41 +110,46 @@ async function endActiveSessionIfAny(page: Page) {
 	}
 }
 
+/** Interrupt every RUNNING cycle until getActive is null (retries races with UI sync). */
+async function drainActiveCycles(page: Page, timeoutMs = 15_000) {
+	const deadline = Date.now() + timeoutMs;
+
+	while (Date.now() < deadline) {
+		const active = await trpcQuery<{ id: number } | null>(
+			page,
+			"cycle.getActive",
+		);
+		if (active == null) {
+			return;
+		}
+		try {
+			await trpcMutation(page, "cycle.interrupt", { cycleId: active.id });
+		} catch {
+			// Stale read or concurrent completion — retry until deadline.
+		}
+		await new Promise((resolve) => setTimeout(resolve, 100));
+	}
+
+	const remaining = await trpcQuery<{ id: number } | null>(
+		page,
+		"cycle.getActive",
+	);
+	if (remaining != null) {
+		throw new Error(
+			`cycle.getActive still returned id ${remaining.id} after drain`,
+		);
+	}
+}
+
 /** Clears pooled-worker DB session/cycle state before UI idle cleanup. */
 export async function resetWorkerSessionViaApi(page: Page) {
-	await interruptActiveCycleIfRunning(page);
+	await drainActiveCycles(page);
 	await endActiveSessionIfAny(page);
 	const tasks = await trpcQuery<Array<{ id: number }>>(page, "task.list");
 	for (const task of tasks) {
 		await trpcMutation(page, "task.delete", { id: task.id });
 	}
-	await expect
-		.poll(
-			async () => {
-				const active = await trpcQuery<{ id: number } | null>(
-					page,
-					"cycle.getActive",
-				);
-				return active == null;
-			},
-			{ timeout: 10_000 },
-		)
-		.toBe(true);
-}
-
-async function interruptActiveCycleIfRunning(page: Page) {
-	const active = await trpcQuery<{ id: number } | null>(
-		page,
-		"cycle.getActive",
-	);
-	if (active == null) {
-		return;
-	}
-	try {
-		await trpcMutation(page, "cycle.interrupt", { cycleId: active.id });
-	} catch {
-		// Cycle may have completed between getActive and interrupt.
-	}
+	await drainActiveCycles(page);
 }
 
 async function createCompletedWorkCycle(
