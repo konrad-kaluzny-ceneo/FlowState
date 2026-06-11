@@ -553,4 +553,4 @@ Delete 10 demoted e2e specs, trim wind-down UI helpers if seed covers belt, upda
 
 - [x] 5.6 AGENTS.md and e2e/README.md updated — 6ed9bda
 - [x] 5.7 test-plan §3 Phase 7 marked complete — 6ed9bda
-- [ ] 5.8 CI e2e job confirmed on pushed branch
+- [x] 5.8 CI e2e job confirmed on pushed branch — 37d352e (run 27335099368)
