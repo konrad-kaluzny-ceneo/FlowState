@@ -444,14 +444,14 @@ Scorer adds constant-time arithmetic per candidate task — negligible vs existi
 
 #### Automated
 
-- [x] 1.1 Migration applies and client generates: `pnpm prisma migrate dev` + `pnpm db:generate`
-- [x] 1.2 Types compile: `pnpm typecheck`
-- [x] 1.3 Lint passes: `pnpm check`
-- [x] 1.4 Guest schema tests pass: `pnpm exec vitest run src/lib/guest/schema.test.ts`
+- [x] 1.1 Migration applies and client generates: `pnpm prisma migrate dev` + `pnpm db:generate` — ff31081
+- [x] 1.2 Types compile: `pnpm typecheck` — ff31081
+- [x] 1.3 Lint passes: `pnpm check` — ff31081
+- [x] 1.4 Guest schema tests pass: `pnpm exec vitest run src/lib/guest/schema.test.ts` — ff31081
 
 #### Manual
 
-- [x] 1.5 Backfill verified: sample rows show urgency = former weight in Prisma Studio
+- [x] 1.5 Backfill verified: sample rows show urgency = former weight in Prisma Studio — ff31081
 
 ### Phase 2: Scorer v2 core
 
