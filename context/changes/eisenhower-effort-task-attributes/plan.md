@@ -457,17 +457,17 @@ Scorer adds constant-time arithmetic per candidate task — negligible vs existi
 
 #### Automated
 
-- [ ] 2.1 Scorer unit tests pass: `pnpm exec vitest run src/lib/scoring/score-task.test.ts`
-- [ ] 2.2 Types compile: `pnpm typecheck`
-- [ ] 2.3 Lint passes: `pnpm check`
+- [x] 2.1 Scorer unit tests pass: `pnpm exec vitest run src/lib/scoring/score-task.test.ts` — 316da96
+- [x] 2.2 Types compile: `pnpm typecheck` — 316da96
+- [x] 2.3 Lint passes: `pnpm check` — 316da96
 
 ### Phase 3: Task API and suggestion mapping
 
 #### Automated
 
-- [ ] 3.1 Task + suggestion router tests pass: `pnpm exec vitest run src/server/api/routers/task-mutation.test.ts src/server/api/routers/suggestion.test.ts`
-- [ ] 3.2 Full unit suite: `pnpm test`
-- [ ] 3.3 Lint passes: `pnpm check`
+- [x] 3.1 Task + suggestion router tests pass: `pnpm exec vitest run src/server/api/routers/task-mutation.test.ts src/server/api/routers/suggestion.test.ts` — 62dba23
+- [x] 3.2 Full unit suite: `pnpm test` — 62dba23
+- [x] 3.3 Lint passes: `pnpm check` — 62dba23
 
 ### Phase 4: Guest parity and merge import
 
