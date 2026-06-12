@@ -5,6 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-12
 active_slice_started: 2026-06-12
+expanded_task_ux: 2026-06-12
 expanded_wellness: 2026-06-11
 expanded: 2026-06-07
 expanded_intelligence: 2026-06-07
@@ -80,6 +81,8 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-27 | daily-standing-tasks-capacity-plan     | [FLO-60](https://linear.app/flowstate-10xdev/issue/FLO-60) | [#80](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/80)          | daily standing tasks roll into today's plan with focus-hours budget and capacity-aware suggestion rationale (no RRULE)                                                       | F-05, S-06, S-15 | FR-021, FR-022, FR-019, proposed-FR-daily-standing-tasks, proposed-FR-daily-focus-budget                                          | proposed |
 | F-06 | serene-pastel-rebrand                  | [FLO-62](https://linear.app/flowstate-10xdev/issue/FLO-62) | [#97](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/97)          | (foundation) `DESIGN.md` + token pivot to Serene Pastel Well-being light-default; remap home, overlays, task cards, auth; optional calm dark sub-phase                         | F-04, S-13       | Secondary Success Criteria, NFR (200ms acknowledgement), proposed-FR-visual-design-system                                         | done     |
 | S-28 | wellness-illustration-foundation       | [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) | [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98)          | see Calm Garden illustration system on home sprig, blob atmosphere, and Empty Garden Bed empty state with shared SVG primitives                                              | F-06             | Secondary Success Criteria, proposed-FR-empty-state-guidance, proposed-FR-calm-garden-illustrations                               | proposed |
+| S-29 | task-create-persona-presets            | [FLO-64](https://linear.app/flowstate-10xdev/issue/FLO-64) | [#105](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/105)        | add a task by choosing Deep planning, Mail & admin, or Hotfix urgent persona presets (icons + F-05 pre-fill) or Custom for full attributes                                   | F-05, F-06, S-13 | FR-004, FR-005, FR-017, FR-018, FR-035, FR-036, FR-037                                                                            | ready    |
+| S-30 | daily-work-timing-recap                | [FLO-65](https://linear.app/flowstate-10xdev/issue/FLO-65) | [#106](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/106)        | see Last 24 hours work timing and Today's plan on home for daily standup — list-only, no charts                                                                               | S-02             | proposed-FR-daily-work-timing, FR-008, FR-019, FR-043, NFR (90-day session retention)                                             | ready    |
 
 
 ## Streams
@@ -100,6 +103,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | I      | Calm focus UX (post-MVP)       | `S-22` ∥ `S-23` ∥ `S-20`; `S-24` (product gate)                  | Tab-return catch-up, scoring transparency, quiet audio, reversible pause. Expanded via `/10x-roadmap-expand` 2026-06-07 (UX gaps batch). Merges: P-204+P-205→S-11, P-206→S-20.                                                                                |
 | J      | Task planning & richer scoring | `**S-26` (high)** ∥ `S-25` ∥ `S-23`; `F-05` → `S-27`             | Expanded `/10x-roadmap-expand` 2026-06-09. User-priority drag-drop first; Eisenhower substrate before daily standing + capacity.                                                                                                                              |
 | K      | Wellness re-skin (post-MVP)    | `F-06` → `S-28`                                                  | Serene Pastel token pivot (light-default) then Calm Garden illustration foundation. Expanded `/10x-roadmap-expand` 2026-06-11 (well-being batch). P-103 wedge craft not committed.                                                                           |
+| L      | Task UX + daily standup        | `S-29` ∥ `S-30`; complements `S-27`                              | Expanded `/10x-roadmap-expand` 2026-06-12 (task UX gaps). Persona presets reduce F-05 create overload; daily timing recap from Cycle entity — not analytics dashboard.                                                                                      |
 
 
 ## Baseline
@@ -694,6 +698,57 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Illustration components add bundle weight or inconsistent sizing if blob/line-art primitives lack shared viewBox and aria-hidden defaults. Expand score 63/90 — **promote** (roadmap-expand 2026-06-11 wellness batch P-102).
 - **Status:** proposed
 
+### S-29: Task create persona presets
+
+- **Outcome:** user can add or edit a task by choosing one of three persona presets — **Deep planning**, **Mail & admin**, **Hotfix urgent** — each with work-type icon and color, pre-filling workType plus F-05 importance, urgency, effort, and commitment horizon; or tap **Custom** to expand the full attribute panel (replacing the hidden + Details toggle).
+- **Change ID:** task-create-persona-presets
+- **Linear:** [FLO-64](https://linear.app/flowstate-10xdev/issue/FLO-64)
+- **GitHub:** [#105](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/105)
+- **PRD refs:** FR-004, FR-005, FR-017, FR-018, FR-035, FR-036, FR-037
+- **Prerequisites:** F-05, F-06, S-13
+- **Parallel with:** S-28
+- **Blockers:** —
+- **Unknowns:**
+  - Exact Deep planning / Mail & admin / Hotfix → workType + importance/urgency/effort/horizon mapping? Owner: user. Block: no.
+  - Apply presets on inline edit or create-only v1? Owner: user. Block: no.
+  - Icons: Lucide vs Calm Garden SVG from S-28? Owner: implementer. Block: no.
+- **Risk:** Preset bundles could mis-rank niche tasks if users never discover Custom — mitigate with visible pre-fill and Custom as co-primary path. Expand score 77/90 — **promote** (roadmap-expand 2026-06-12 P-101).
+- **Status:** ready
+
+### S-30: Daily work timing recap
+
+- **Outcome:** user sees on home a calm collapsible daily recap: **Last 24 hours** lists tasks worked with first cycle start, last cycle end, and total focused minutes (from WORK cycles plus tasks marked done in the window); **Today** lists active tasks still on plan (enriched with S-27 daily-standing items when that slice ships) — list-only, copy-friendly for standup, no charts or analytics dashboard.
+- **Change ID:** daily-work-timing-recap
+- **Linear:** [FLO-65](https://linear.app/flowstate-10xdev/issue/FLO-65)
+- **GitHub:** [#106](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/106)
+- **PRD refs:** proposed-FR-daily-work-timing, FR-008, FR-019, FR-043, NFR (90-day session retention)
+- **Prerequisites:** S-02
+- **Parallel with:** S-27
+- **Blockers:** —
+- **Unknowns:**
+  - Rolling last-24h vs local-calendar day for done section? Owner: user. Block: no.
+  - Include INTERRUPTED work cycles or COMPLETED only? Owner: implementer. Block: no.
+  - Guest mode parity from local cycle blob? Owner: implementer. Block: no.
+- **Risk:** Cycle-only timing misses tasks completed without a finished work cycle — include mark-done via updatedAt with clear labeling; guard against overlap with S-17 session narrative prose. Expand score 52/90 — **revise then promote** (roadmap-expand 2026-06-12 P-102).
+- **Status:** ready
+
+## Follow-up scope merges (batch 5 — task UX + daily standup)
+
+> `/10x-roadmap-expand` task UX pass 2026-06-12 — **Commit** synced to Linear + GitHub.
+
+
+| Proposal | Score | Action | Target |
+| --- | --- | --- | --- |
+| P-101 Task create persona presets | 77 | **accept → commit** | S-29 |
+| P-102 Daily work timing recap | 52 | **accept → commit** (revise) | S-30 |
+| P-103 Persona preset user defaults | 46 | **park** → phase 2 of S-29 | — |
+| P-104 Daily standup mega-surface | 39 | **reject** | merged into S-30 |
+| P-105 Preset cards + Custom expand (visual-ui) | 64–65 | merge | S-29 |
+
+**Goal:** reduce F-05 create overload with named persona presets; surface cycle-derived task timing for daily standup without analytics dashboards.
+
+**Recommended `/10x-plan` order:** `S-29` (task-create-persona-presets) → `S-30` (daily-work-timing-recap) — both `ready`; pairs with active S-17 and proposed S-27.
+
 ## Follow-up scope merges (batch 4 — wellness re-skin)
 
 > `/10x-roadmap-expand` well-being pass 2026-06-11 — **Commit** synced to Linear + GitHub.
@@ -763,10 +818,12 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | F-03 | align-prisma-config | FlowState — Prisma 7 config alignment | **yes** | Hygiene only |
 | S-27 | daily-standing-tasks-capacity-plan | FlowState — daily standing + focus budget | **yes** | F-05 done; FR-043 |
 | S-28 | wellness-illustration-foundation | FlowState — Calm Garden illustrations | **yes** | F-06 done; FR-044 |
+| S-29 | task-create-persona-presets | FlowState — task create persona presets | **yes** | F-05/F-06/S-13 done; user-reported create overload |
+| S-30 | daily-work-timing-recap | FlowState — daily work timing recap | **yes** | S-02 done; complements S-27 |
 | S-24 | cycle-pause-resume | FlowState — cycle pause/resume | **no** | Blocked: FR-019 pause semantics (PRD OQ3) |
 | *(shipped)* | F-01–F-06, S-01–S-16, S-18–S-20, S-22–S-23, S-25–S-26, B-01–B-04 | — | no | See ## Done |
 
-**Recommended next:** `/10x-plan session-narrative-summary` on **S-17**.
+**Recommended next:** `/10x-plan session-narrative-summary` on **S-17** (active). After ship: `/10x-plan task-create-persona-presets` on **S-29** (highest user-reported UX gap).
 
 ## Bugs
 
