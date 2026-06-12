@@ -5,34 +5,102 @@
 		var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
 		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-	--color-shell-top: #1a1a2e;
-	--color-shell-bottom: #16213e;
-	--color-surface-overlay: #1a1a2e;
-	--color-surface-break: #1a2e2e;
-	--color-surface-card: rgb(255 255 255 / 0.1);
-	--color-surface-card-muted: rgb(255 255 255 / 0.05);
-	--color-surface-panel: rgb(255 255 255 / 0.05);
-	--color-border-subtle: rgb(255 255 255 / 0.2);
-	--color-border-break: rgb(45 212 191 / 0.3);
-	--color-text-secondary: rgb(255 255 255 / 0.6);
-	--color-text-dimmed: rgb(255 255 255 / 0.4);
-	--color-text-section: rgb(255 255 255 / 0.8);
-	--color-accent-cta: #9333ea;
-	--color-accent-cta-hover: #a855f7;
-	--color-accent-break: #14b8a6;
-	--color-accent-success: #16a34a;
-	--color-accent-suggestion: rgb(251 191 36 / 0.8);
-	--color-energy-focused-border: rgb(129 140 248 / 0.5);
-	--color-energy-focused-bg: rgb(99 102 241 / 0.15);
-	--color-energy-steady-border: rgb(192 132 252 / 0.5);
-	--color-energy-steady-bg: rgb(168 85 247 / 0.15);
-	--color-energy-fading-border: rgb(251 113 133 / 0.4);
-	--color-energy-fading-bg: rgb(244 63 94 / 0.1);
-	--color-worktype-deep-bg: rgb(59 130 246 / 0.2);
+	/* Shell & surfaces — light-default (Serene Pastel) */
+	--color-shell-top: #faf8f5;
+	--color-shell-bottom: #f0ebf8;
+	--color-surface-overlay: #ffffff;
+	--color-surface-break: #e8f4f2;
+	--color-surface-card: #ffffff;
+	--color-surface-card-muted: #f5f3f8;
+	--color-surface-panel: #f8f6fc;
+	--color-border-subtle: #e5e0eb;
+	--color-border-break: rgb(61 143 130 / 0.3);
+	--color-card-border: #e5e0eb;
+	--color-card-shadow: rgb(45 42 53 / 0.08);
+
+	/* Text hierarchy */
+	--color-text-primary: #2d2a35;
+	--color-text-secondary: #5c5768;
+	--color-text-dimmed: #9b96a8;
+	--color-text-section: #3d3848;
+
+	/* Scrim & focus */
+	--color-scrim: rgb(248 246 243 / 0.72);
+	--color-focus-ring: #7c6ead;
+
+	/* Semantic accents */
+	--color-accent-cta: #5e5290;
+	--color-accent-cta-hover: #6e619f;
+	--color-on-cta: #ffffff;
+	--color-accent-break: #3d8f82;
+	--color-accent-success: #3a8f65;
+	--color-accent-suggestion: rgb(212 160 23 / 0.8);
+
+	/* Segmented controls */
+	--color-segment-active: #5e5290;
+	--color-segment-inactive: #e8e4ef;
+
+	/* Energy identity */
+	--color-energy-focused-border: rgb(91 127 196 / 0.4);
+	--color-energy-focused-bg: rgb(91 127 196 / 0.1);
+	--color-energy-steady-border: rgb(94 82 144 / 0.4);
+	--color-energy-steady-bg: rgb(94 82 144 / 0.1);
+	--color-energy-fading-border: rgb(178 106 130 / 0.35);
+	--color-energy-fading-bg: rgb(178 106 130 / 0.08);
+
+	/* Work-type badges */
+	--color-worktype-deep-bg: rgb(61 90 143 / 0.12);
+	--color-worktype-deep-text: #3d5a8f;
+	--color-worktype-ops-bg: rgb(181 130 42 / 0.12);
+	--color-worktype-ops-text: #8a6520;
+	--color-worktype-reactive-bg: rgb(178 68 90 / 0.12);
+	--color-worktype-reactive-text: #9e3d52;
+}
+
+/* Calm dark — overrides same semantic tokens */
+[data-theme="dark"] {
+	--color-shell-top: #1e2433;
+	--color-shell-bottom: #252b3d;
+	--color-surface-overlay: #2a3142;
+	--color-surface-break: #263a38;
+	--color-surface-card: #2a3142;
+	--color-surface-card-muted: #232936;
+	--color-surface-panel: #252b3d;
+	--color-border-subtle: rgb(255 255 255 / 0.12);
+	--color-border-break: rgb(74 154 142 / 0.35);
+	--color-card-border: rgb(255 255 255 / 0.1);
+	--color-card-shadow: rgb(0 0 0 / 0.2);
+
+	--color-text-primary: #f5f3f0;
+	--color-text-secondary: rgb(245 243 240 / 0.65);
+	--color-text-dimmed: rgb(245 243 240 / 0.45);
+	--color-text-section: rgb(245 243 240 / 0.85);
+
+	--color-scrim: rgb(30 36 51 / 0.78);
+	--color-focus-ring: #a99dc8;
+
+	--color-accent-cta: #9b8fc4;
+	--color-accent-cta-hover: #a99dc8;
+	--color-on-cta: #ffffff;
+	--color-accent-break: #4a9a8e;
+	--color-accent-success: #4a9468;
+	--color-accent-suggestion: rgb(212 175 55 / 0.75);
+
+	--color-segment-active: #9b8fc4;
+	--color-segment-inactive: rgb(255 255 255 / 0.08);
+
+	--color-energy-focused-border: rgb(129 140 248 / 0.45);
+	--color-energy-focused-bg: rgb(99 102 241 / 0.12);
+	--color-energy-steady-border: rgb(155 143 196 / 0.45);
+	--color-energy-steady-bg: rgb(155 143 196 / 0.12);
+	--color-energy-fading-border: rgb(212 154 170 / 0.4);
+	--color-energy-fading-bg: rgb(212 154 170 / 0.08);
+
+	--color-worktype-deep-bg: rgb(147 197 253 / 0.15);
 	--color-worktype-deep-text: #93c5fd;
-	--color-worktype-ops-bg: rgb(245 158 11 / 0.2);
+	--color-worktype-ops-bg: rgb(252 211 77 / 0.15);
 	--color-worktype-ops-text: #fcd34d;
-	--color-worktype-reactive-bg: rgb(244 63 94 / 0.2);
+	--color-worktype-reactive-bg: rgb(253 164 175 / 0.15);
 	--color-worktype-reactive-text: #fda4af;
 }
 

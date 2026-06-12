@@ -2,41 +2,50 @@
 name: FlowState
 description: Calm mindful Pomodoro for dynamic knowledge workers
 colors:
-  shell-top: "#1a1a2e"
-  shell-bottom: "#16213e"
-  surface-overlay: "#1a1a2e"
-  surface-break: "#1a2e2e"
-  surface-card: "#ffffff1a"
-  border-subtle: "#ffffff33"
-  border-break: "#2dd4bf4d"
-  text-primary: "#ffffff"
-  text-secondary: "#ffffff99"
-  text-dimmed: "#ffffff66"
-  accent-cta: "#9333ea"
-  accent-cta-hover: "#a855f7"
-  accent-break: "#14b8a6"
-  accent-success: "#16a34a"
-  accent-suggestion: "#fbbf24"
-  energy-focused: "#6366f1"
-  energy-steady: "#9333ea"
-  energy-fading: "#f472b6"
-  worktype-deep-bg: "#3b82f633"
-  worktype-deep-text: "#93c5fd"
-  worktype-ops-bg: "#f59e0b33"
-  worktype-ops-text: "#fcd34d"
-  worktype-reactive-bg: "#f43f5e33"
-  worktype-reactive-text: "#fda4af"
+  shell-top: "#FAF8F5"
+  shell-bottom: "#F0EBF8"
+  surface-overlay: "#FFFFFF"
+  surface-break: "#E8F4F2"
+  surface-card: "#FFFFFF"
+  surface-card-muted: "#F5F3F8"
+  border-subtle: "#E5E0EB"
+  border-break: "#3D8F824D"
+  text-primary: "#2D2A35"
+  text-secondary: "#5C5768"
+  text-dimmed: "#9B96A8"
+  text-section: "#3D3848"
+  scrim: "#F8F6F3B8"
+  accent-cta: "#5E5290"
+  accent-cta-hover: "#6E619F"
+  on-cta: "#FFFFFF"
+  accent-break: "#3D8F82"
+  accent-success: "#3A8F65"
+  accent-suggestion: "#D4A017CC"
+  focus-ring: "#7C6EAD"
+  segment-active: "#5E5290"
+  segment-inactive: "#E8E4EF"
+  card-border: "#E5E0EB"
+  card-shadow: "#2D2A3514"
+  energy-focused: "#5B7FC4"
+  energy-steady: "#5E5290"
+  energy-fading: "#B26A82"
+  worktype-deep-bg: "#3D5A8F1F"
+  worktype-deep-text: "#3D5A8F"
+  worktype-ops-bg: "#B5822A1F"
+  worktype-ops-text: "#8A6520"
+  worktype-reactive-bg: "#B2445A1F"
+  worktype-reactive-text: "#9E3D52"
 typography:
   display:
     fontFamily: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif"
     fontSize: "3.75rem"
-    fontWeight: 700
+    fontWeight: 600
     lineHeight: 1
     letterSpacing: "normal"
   heading:
     fontFamily: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif"
     fontSize: "1.5rem"
-    fontWeight: 700
+    fontWeight: 600
     lineHeight: 1.25
     letterSpacing: "normal"
   body:
@@ -54,7 +63,7 @@ typography:
   timer:
     fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
     fontSize: "3.75rem"
-    fontWeight: 700
+    fontWeight: 600
     lineHeight: 1
     letterSpacing: "normal"
 rounded:
@@ -70,12 +79,12 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.accent-cta}"
-    textColor: "{colors.text-primary}"
+    textColor: "{colors.on-cta}"
     rounded: "{rounded.lg}"
     padding: "0.75rem 1.5rem"
   button-primary-hover:
     backgroundColor: "{colors.accent-cta-hover}"
-    textColor: "{colors.text-primary}"
+    textColor: "{colors.on-cta}"
     rounded: "{rounded.lg}"
     padding: "0.75rem 1.5rem"
   button-secondary:
@@ -97,116 +106,150 @@ components:
 
 ## Overview
 
-FlowState is a calm, dark-surface Pomodoro app for interrupt-driven knowledge workers. The visual system prioritizes **focus clarity** over decoration: a navy gradient shell, glass-morphism task surfaces, purple primary actions, and semantic accents for break (teal), success (green), and suggestion highlight (amber). Craft targets are wedge surfaces only — home shell, task list hierarchy, and cycle transition overlays.
+FlowState is a calm, **light-default** Pomodoro app for interrupt-driven knowledge workers. The visual system prioritizes **focus clarity** over decoration: a linen-to-lavender shell gradient, solid white task cards with soft elevation, muted plum-lavender primary actions, and semantic accents for break (teal), success (green), and suggestion highlight (amber). A **calm dark** variant on `#1E2433` uses desaturated pastels for low-light sessions.
 
-Implementation uses Tailwind CSS v4 with tokens mapped to `src/styles/globals.css` `@theme { }` in S-12/S-13. This document is the canonical spec; F-04 does not migrate inline utilities.
+Craft targets are wedge surfaces only — home shell, task list hierarchy, and cycle transition overlays. Implementation uses Tailwind CSS v4 with semantic tokens in `src/styles/globals.css` `@theme { }`; calm dark overrides the same `--color-*` variables under `[data-theme="dark"]` on `<html>`.
+
+## Theme behavior
+
+| Preference | Resolution | Persistence |
+| --- | --- | --- |
+| Light | `data-theme="light"` | `localStorage` key `flowstate-theme` |
+| Dark | `data-theme="dark"` | same |
+| System | `matchMedia('(prefers-color-scheme: dark)')` | same |
+
+A blocking inline script in `layout.tsx` `<head>` sets `data-theme` before first paint to prevent FOUC. Default when no preference stored: **light**. Theme toggle lives in the authenticated user menu (Phase 2); logged-out auth pages respect script/system preference without a toggle.
 
 ## Colors
 
-### Shell & surfaces
+### Light-default (canonical)
+
+#### Shell & surfaces
 
 | Token | Value | Usage |
 | --- | --- | --- |
-| `shell-top` / `shell-bottom` | `#1a1a2e` → `#16213e` | Page background gradient (home, auth) |
-| `surface-overlay` | `#1a1a2e` | Modal/overlay card fill |
-| `surface-break` | `#1a2e2e` | Break-state overlays and timer tint |
-| `surface-card` | `white/10` | Task rows, nested panels |
-| `border-subtle` | `white/20` | Cards, inputs, overlay borders |
-| `border-break` | `teal-400/30` | Break-variant overlay border |
+| `shell-top` / `shell-bottom` | `#FAF8F5` → `#F0EBF8` | Page background gradient |
+| `surface-overlay` | `#FFFFFF` | Modal/overlay card fill |
+| `surface-break` | `#E8F4F2` | Break-state overlays and timer tint |
+| `surface-card` | `#FFFFFF` | Task rows, nested panels |
+| `surface-card-muted` | `#F5F3F8` | Completed rows, subdued panels |
+| `border-subtle` / `card-border` | `#E5E0EB` | Cards, inputs, overlay borders |
+| `border-break` | `#3D8F82` at 30% | Break-variant overlay border |
+| `scrim` | `rgba(248,246,243,0.72)` | Overlay backdrop (mist) |
 
-### Text hierarchy
+#### Text hierarchy
 
 | Token | Tailwind | Usage |
 | --- | --- | --- |
-| Primary | `text-white` | Headings, task titles, timer |
-| Secondary | `text-white/60` | Subcopy, overlay descriptions |
-| Dimmed | `text-white/40` | Completed tasks, metadata |
-| Coach | `text-purple-200/70 text-xs` | Inline coach lines |
+| Primary | `text-primary` | Headings, task titles, timer |
+| Secondary | `text-text-secondary` | Subcopy, overlay descriptions |
+| Dimmed | `text-text-dimmed` | Completed tasks, metadata |
+| Section | `text-text-section` | "Active" / "Completed" labels |
 
-### Semantic accents
+#### Semantic accents
 
 | Token | Value | Usage |
 | --- | --- | --- |
-| `accent-cta` | `purple-600` | Primary buttons (timer, task actions, overlays) |
-| `accent-cta-hover` | `purple-500` | Primary hover |
-| `accent-break` | `teal-500` | Break timer, break complete states |
-| `accent-success` | `green-600` | Mark done, completion actions |
-| `accent-suggestion` | `amber-400/80` ring | Suggested task row highlight |
+| `accent-cta` | `#5E5290` | Primary buttons |
+| `accent-cta-hover` | `#6E619F` | Primary hover |
+| `on-cta` | `#FFFFFF` | Text on filled CTAs |
+| `accent-break` | `#3D8F82` | Break timer, break complete |
+| `accent-success` | `#3A8F65` | Mark done, completion |
+| `accent-suggestion` | `amber` ring | Suggested task row highlight |
+| `focus-ring` | `#7C6EAD` | Selected task focus ring |
 
-**Auth unification (S-13 implements):** Sign-in (`blue-600`) and sign-up (`indigo-600`) today diverge from home purple. Migrate both to `accent-cta` / `accent-cta-hover` tokens.
+**CTA contrast:** Muted plum CTA requires explicit `text-on-cta` — never `text-primary` on filled buttons.
 
-### Energy identity (S-12 implements)
+### Calm dark
 
-| State | Border tint | Background wash | Icon (optional) |
-| --- | --- | --- | --- |
-| Focused | `indigo-400/50` | `indigo-500/15` | Spark / target |
-| Steady | `purple-400/50` | `purple-500/15` | Balance / dash |
-| Fading | `rose-400/40` | `rose-500/10` | Moon / rest |
+| Token | Value | Notes |
+| --- | --- | --- |
+| Shell | `#1E2433` → `#252B3D` | Subtle gradient, not navy glass |
+| `surface-card` | `#2A3142` | Elevated from shell |
+| `surface-card-muted` | `#232936` | Completed rows |
+| `text-primary` | `#F5F3F0` | Light ink |
+| `accent-cta` | `#9B8FC4` | Desaturated plum-lavender |
+| `accent-break` | `#4A9A8E` | Desaturated teal |
+| `accent-success` | `#4A9468` | Desaturated green |
+| `scrim` | `rgba(30,36,51,0.78)` | Subdued backdrop |
+| `focus-ring` | `#A99DC8` | Visible on dark cards |
 
-### Work-type badge palette (single source — replace duplicated `WORK_TYPE_CONFIG`)
+Work-type and energy badge tokens retokenize per theme — dark-designed washes fail contrast on light `#FFFFFF` cards.
 
-| Type | Label | Background | Text |
-| --- | --- | --- | --- |
-| DEEP_WORK | Deep | `blue-500/20` | `blue-300` |
-| OPERATIONAL | Ops | `amber-500/20` | `amber-300` |
-| REACTIVE | Reactive | `rose-500/20` | `rose-300` |
+### Energy identity
 
-### Task list hierarchy (S-13 implements)
+| State | Light border/bg | Dark border/bg |
+| --- | --- | --- |
+| Focused | indigo wash | desaturated indigo |
+| Steady | plum wash | desaturated plum |
+| Fading | rose wash | desaturated rose |
+
+Each state uses `energy-*-border` + `energy-*-bg` token pairs. Label + optional icon required — color alone is insufficient.
+
+### Work-type badge palette (`work-type-config.ts`)
+
+| Type | Light bg/text | Dark bg/text |
+| --- | --- | --- |
+| DEEP_WORK | `#3D5A8F` wash | `#93c5fd` on indigo wash |
+| OPERATIONAL | amber wash | `#fcd34d` on amber wash |
+| REACTIVE | rose wash | `#fda4af` on rose wash |
+
+### Task list hierarchy
 
 | State | Background | Text | Other |
 | --- | --- | --- | --- |
-| Active row | `bg-white/10` | `text-white` | Standard weight |
-| Completed row | `bg-white/5` | `text-white/40` | `line-through` |
-| Selected/focused | — | — | **`ring-purple-500`** (e2e contract — preserve class name until tests updated) |
-| Section headings | — | `text-white/80 font-semibold` | "Active" vs "Completed" labels |
+| Active row | `bg-surface-card` | `text-primary` | Standard weight |
+| Completed row | `bg-surface-card-muted` | `text-text-dimmed` | `line-through` |
+| Selected/focused | — | — | `ring-2 ring-focus` |
+| Section headings | — | `text-text-section font-semibold` | "Active" vs "Completed" |
 
 ## Typography
 
 | Role | Classes | Usage |
 | --- | --- | --- |
-| Page wordmark | `text-4xl font-bold` | Home header |
-| Overlay heading | `text-2xl font-bold text-white` | Check-in, cycle complete |
-| Timer display | `font-mono text-6xl font-bold` | Countdown |
-| Body | `text-sm text-white/60` | Descriptions, coach copy |
+| Page wordmark | `text-4xl font-semibold` | Home header |
+| Overlay heading | `text-2xl font-semibold text-primary` | Check-in, cycle complete |
+| Timer display | `font-mono text-6xl font-semibold` | Countdown |
+| Body | `text-sm text-text-secondary` | Descriptions, coach copy |
 | Label / badge | `text-xs font-semibold` | Work-type chips, metadata |
 | Button | `font-semibold` | CTAs, energy options |
 
-Font stack: Geist Sans via `next/font/google` (`--font-geist-sans`). No display/body pairing — one family throughout (product register).
+Font stack: Geist Sans via `next/font/google` (`--font-geist-sans`). Wedge headings softened from `font-bold` to `font-semibold` per well-being register.
 
 ## Elevation
 
-| Level | Treatment | Usage |
+| Level | Light treatment | Dark treatment |
 | --- | --- | --- |
-| Base | Shell gradient | Page background |
-| Raised | `bg-white/10 border border-white/20` | Task rows, inline panels |
-| Overlay scrim | `fixed inset-0 bg-black/60 z-50–z-65` | All modal overlays |
-| Overlay card | `rounded-xl border border-white/20 bg-[#1a1a2e] p-8 shadow-xl` | Overlay content |
-| Floating | `shadow-xl` on overlay cards only | No drop shadows on list rows |
+| Base | Linen/lavender shell gradient | `#1E2433` shell |
+| Raised | `bg-surface-card border border-card-border shadow-sm` | `bg-surface-card border border-border-subtle` |
+| Overlay scrim | `fixed inset-0 bg-scrim` | Same token, dark value |
+| Overlay card | `rounded-xl border bg-surface-overlay p-8 shadow-xl` | Elevated dark card |
+| Floating | `shadow-xl` on overlay cards only | No row drop shadows |
 
-No blur/backdrop-filter on cards — glass effect is opacity-based only.
+No glassmorphism or backdrop-blur on cards — solid surfaces with border + soft shadow (light) or flat elevation (dark).
 
 ## Components
 
-### Overlay primitive (S-12 extracts shared pattern)
+### Overlay primitive
 
 ```
-Scrim: fixed inset-0 bg-black/60 flex items-center justify-center p-4
-Card:  w-full max-w-md rounded-xl border border-white/20 bg-shell p-8 text-center shadow-xl
+Scrim: fixed inset-0 bg-scrim flex items-center justify-center p-4
+Card:  w-full max-w-md rounded-xl border border-border-subtle bg-surface-overlay p-8 text-center shadow-xl
 ```
 
 Variants: break card uses `surface-break` + `border-break`. All overlays preserve existing `data-testid` values.
 
 ### Segmented control
 
-Active chip: `bg-purple-600 text-white`. Inactive: `bg-white/10 text-white/70 hover:bg-white/15`. Used in duration picker and audio preference.
+Active chip: `bg-segment-active text-on-cta`. Inactive: `bg-segment-inactive text-text-secondary`. Used in duration picker and audio preference.
 
 ### Primary / secondary CTA
 
-- **Primary:** `bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg px-6 py-3`
-- **Secondary:** `border border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-lg px-6 py-3`
-- **Destructive/interrupt:** `bg-red-600 hover:bg-red-500` (timer interrupt only)
+- **Primary:** `bg-accent-cta hover:bg-accent-cta-hover text-on-cta font-semibold rounded-lg px-6 py-3`
+- **Secondary:** `border border-border-subtle bg-surface-card hover:bg-surface-card-muted text-primary font-semibold rounded-lg px-6 py-3`
+- **Destructive/interrupt:** `bg-red-600 hover:bg-red-500 text-on-cta` (timer interrupt only)
 
-### Motion spec (S-12/S-13 implement; F-04 documents)
+### Motion spec
 
 | Interaction | Duration | Easing | Notes |
 | --- | --- | --- | --- |
@@ -220,33 +263,32 @@ Active chip: `bg-purple-600 text-white`. Inactive: `bg-white/10 text-white/70 ho
 
 ### E2E contract preservation
 
-Until S-12 coordinates test updates, preserve:
+Preserve all existing `data-testid` attributes on wedge components.
 
-- All existing `data-testid` attributes on wedge components
-- Focus ring class `ring-purple-500` on selected task rows (asserted in `e2e/task-suggestion.spec.ts`, `e2e/session-kickoff.spec.ts`)
-
-Token name for focus ring may be `--color-focus-ring` in `@theme`; Tailwind utility must still emit `ring-purple-500` or tests must update in same PR.
+Focus ring: semantic utility `ring-2 ring-focus` on selected task rows. Update assertions in `e2e/task-suggestion.spec.ts` and `e2e/session-kickoff.spec.ts` in Phase 6 (same slice as token migration).
 
 ### Future patterns (not implemented)
 
-**Focus-shell dimming during WORK:** When a work cycle is active, optionally dim task list chrome (opacity ~0.5) to keep timer as hero. Parked roadmap item — spec only, no F-04/S-12 implementation.
+**Focus-shell dimming during WORK:** When a work cycle is active, optionally dim task list chrome (opacity ~0.5) to keep timer as hero. Parked roadmap item — spec only.
 
 ## Do's and Don'ts
 
 ### Do
 
-- Use semantic tokens from this doc; map to `@theme` in `globals.css` during S-12/S-13
-- Keep active/completed task distinction readable at a glance (opacity + weight + strikethrough)
+- Use semantic tokens from this doc; map to `@theme` in `globals.css`
+- Keep active/completed task distinction readable at a glance
+- Use `text-on-cta` on filled primary buttons
 - Differentiate energy states with tint + label (+ optional icon)
-- Unify auth CTAs to `accent-cta` when S-13 touches auth pages
-- Respect `prefers-reduced-motion`
+- Unify auth CTAs to `accent-cta` / `accent-cta-hover`
+- Respect `prefers-reduced-motion` and theme preference
 - Preserve `data-testid` contracts
 
 ### Don't
 
 - Add decorative motion unrelated to state change
-- Introduce shadcn/Radix or `cn()` unless a future slice explicitly adopts them
-- Use blue/indigo auth accents after token migration
+- Introduce shadcn/Radix or `cn()` unless a future slice adopts them
+- Use blue/indigo auth accents
 - Ship surprise/arcade completion animations (FR-016)
+- Use `text-white` or polarity-assuming opacity utilities on wedge surfaces
+- Assume dark-surface contrast ratios on light cards
 - Rename e2e-tested classes without updating Playwright specs in the same slice
-- Scope creep into non-wedge surfaces during S-12/S-13 craft passes
