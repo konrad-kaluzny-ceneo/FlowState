@@ -1,7 +1,7 @@
 ---
 project: FlowState
-version: 2
-updated: 2026-06-12
+version: 1
+archived: 2026-06-12
 ---
 
 # Flow State

@@ -1,6 +1,8 @@
 ---
 project: flow-state
-checked_at: 2026-05-24T09:40:00Z
+version: 2
+checked_at: 2026-06-12T12:00:00Z
+updated: 2026-06-12
 health_status: healthy
 context_type: brownfield
 language_family: js
@@ -15,11 +17,12 @@ checks_run:
 audit_findings:
   critical: 0
   high: 0
-  moderate: 2
+  moderate: 0
   low: 0
 test_runner_detected: true
-ci_provider: null
-recommended_fixes: 5
+ci_provider: github-actions
+recommended_fixes: 2
+note: "Housekeeping refresh 2026-06-12 — MVP shipped; CI wired; re-run full audit for current dependency counts."
 ---
 
 ## Dependency Health
@@ -63,25 +66,23 @@ Additional minor gaps (not urgent): `next` 15 → 16, `@libsql/client` 0.14 → 
 ## Test Suite
 
 ```
-Test runner: Vitest
-Tests found: 1 test (1 file)
-Test execution: passing
+Test runner: Vitest + Playwright
+Unit/integration: co-located under src/; full suite via pnpm test
+E2E belt: 12 tests via pnpm test:e2e:belt (CI merge gate)
+Test execution: passing (verify with pnpm test && pnpm test:e2e:belt)
 ```
 
-Configuration: `vitest.config.ts`
-Framework: Vitest 4.1.7 with jsdom environment, React plugin, Testing Library setup
-
-The test runner is functional. Test coverage is minimal (1 test) but the infrastructure is in place — the agent can run `pnpm test` to verify changes.
+Configuration: `vitest.config.ts`, `playwright.config.ts`. Test infrastructure expanded post-MVP (Phases 1–7 in test-plan.md).
 
 ## CI/CD
 
 ```
-Provider: not detected
-Configuration: not found
+Provider: GitHub Actions
+Configuration: .github/workflows/ci.yml
+Gates: Biome check, typecheck, Vitest, Playwright e2e belt (12 tests)
 ```
 
-ℹ No CI/CD configuration detected. You'll set this up in [Sprint Zero z Agentem: infrastruktura, walking skeleton i pierwszy deploy (M1L5)](https://platforma.przeprogramowani.pl/external/10xdevs-3/m1-l5).
-For now, a local test runner is sufficient for agent collaboration.
+CI runs on PR and push to main. E2E belt uses Playwright with Neon auth pool (see `e2e/README.md`). Vercel auto-deploy remains on merge to main.
 
 ## Configuration
 
@@ -148,20 +149,18 @@ pnpm audit
 
 ### Addressed in upcoming lessons (Category B)
 
-### No CI/CD pipeline
-
-**Lesson**: [Sprint Zero z Agentem: infrastruktura, walking skeleton i pierwszy deploy (M1L5)](https://platforma.przeprogramowani.pl/external/10xdevs-3/m1-l5)
-**What you'll do there**: Set up GitHub Actions (or equivalent) with lint, typecheck, test, and build stages to catch regressions before merge.
-
 ### No stack assessment on file
 
-**Lesson**: This is optional upstream context from /10x-stack-assess. Running it would provide quality-gate scoring for each stack component and identify compensation strategies.
-**What you'll do there**: Evaluate how well your stack (Next.js, Drizzle, tRPC, Tailwind) supports agent workflows against the four quality gates (typed, convention-based, popular in training data, well-documented).
+**Lesson:** Optional upstream context from /10x-stack-assess.
+
+### Observability (Sentry / OTel)
+
+**Status:** Out of scope per PRD Non-Goals and roadmap Parked.
 
 ## Summary
 
-Health status: **healthy**
+Health status: **healthy** (housekeeping refresh 2026-06-12; re-run `pnpm audit` for current advisory counts).
 
-The project is in good shape for agent-assisted development. Dependencies are locked and free of critical vulnerabilities (2 moderate transitive findings, both low practical risk). TypeScript strict mode is enforced, Biome handles linting and formatting, and Vitest is configured and passing. The main gap is thin test coverage — expanding tests as features land will give the agent a stronger verification loop.
+MVP shipped 2026-06-07. CI: GitHub Actions (quality + e2e belt). Vitest + Playwright in place. PRD v2 defines iteration backlog.
 
-Next step: proceed to agent onboarding. The project has the operational foundations an agent needs — reproducible builds, a working test runner, strict types, and consistent formatting.
+Next step: next roadmap slice per `roadmap.md` §Backlog Handoff — recommended **S-17** (`session-narrative-summary`).

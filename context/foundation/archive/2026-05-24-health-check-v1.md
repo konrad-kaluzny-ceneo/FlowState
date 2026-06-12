@@ -1,5 +1,7 @@
 ---
-project: .bootstrap-scaffold
+project: flow-state
+version: 1
+archived: 2026-05-24
 checked_at: 2026-05-23T12:00:00Z
 health_status: healthy
 context_type: brownfield
