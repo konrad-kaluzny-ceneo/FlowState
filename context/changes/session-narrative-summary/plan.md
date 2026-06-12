@@ -167,8 +167,8 @@ Deliver FR-040 session narrative: in-flow one-line summary during active session
 
 #### Automated
 
-- [ ] 2.1 session.end closure persistence + getLastEnded
-- [ ] 2.2 cycle intention + session stats queries + router tests
+- [x] 2.1 session.end closure persistence + getLastEnded
+- [x] 2.2 cycle intention + session stats queries + router tests
 
 ### Phase 3: In-flow summary + cycle intention
 

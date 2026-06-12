@@ -34,6 +34,35 @@ export const cycleRouter = createTRPCRouter({
 			});
 		}),
 
+	countTasksCompletedInSession: protectedProcedure
+		.input(z.object({ sessionId: z.number().int() }))
+		.query(async ({ ctx, input }) => {
+			return ctx.db.cycle.count({
+				where: {
+					userId: ctx.session.user.id,
+					sessionId: input.sessionId,
+					kind: "WORK",
+					state: "COMPLETED",
+					task: { status: "completed" },
+				},
+			});
+		}),
+
+	getLatestCheckInEnergy: protectedProcedure
+		.input(z.object({ sessionId: z.number().int() }))
+		.query(async ({ ctx, input }) => {
+			const checkIn = await ctx.db.checkIn.findFirst({
+				where: {
+					userId: ctx.session.user.id,
+					cycle: { sessionId: input.sessionId },
+				},
+				orderBy: { respondedAt: "desc" },
+				select: { energy: true },
+			});
+
+			return checkIn?.energy ?? null;
+		}),
+
 	getActive: protectedProcedure.query(async ({ ctx }) => {
 		return ctx.db.cycle.findFirst({
 			where: {
@@ -56,6 +85,7 @@ export const cycleRouter = createTRPCRouter({
 					.min(minWorkCycleSec)
 					.max(90 * 60),
 				taskId: z.number().int().optional(),
+				intention: z.string().max(80).optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -101,6 +131,9 @@ export const cycleRouter = createTRPCRouter({
 							kind: input.kind,
 							configuredDurationSec: input.configuredDurationSec,
 							taskId: input.taskId ?? null,
+							...(input.intention != null
+								? { intention: input.intention }
+								: {}),
 						},
 					});
 

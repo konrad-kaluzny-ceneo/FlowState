@@ -1889,7 +1889,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		}
 
 		try {
-			await sessions.end();
+			await sessions.end({});
 		} catch {
 			setError("Could not end the session. Try again.");
 			return;

@@ -54,6 +54,7 @@ export type DomainSession = {
 	endedAt: Date | null;
 	lastActivityAt: Date;
 	interruptionCount: number;
+	closureLine?: string | null;
 };
 
 export type DataMode = "guest" | "authenticated";
@@ -97,6 +98,7 @@ export interface CycleRepository {
 		kind: "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 		configuredDurationSec: number;
 		taskId?: DomainTaskId;
+		intention?: string | null;
 	}): Promise<
 		Omit<DomainActiveCycle, "task"> & { task?: DomainActiveCycle["task"] }
 	>;
@@ -114,7 +116,7 @@ export interface CycleRepository {
 
 export interface SessionRepository {
 	getOrCreateActive(): Promise<DomainSession>;
-	end(): Promise<DomainSession>;
+	end(input?: { closureLine?: string | null }): Promise<DomainSession>;
 }
 
 export type Repositories = {

@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
@@ -36,38 +37,59 @@ export const sessionRouter = createTRPCRouter({
 		return findOrCreateActiveSession(ctx.db, ctx.session.user.id);
 	}),
 
-	end: protectedProcedure.mutation(async ({ ctx }) => {
-		const { count } = await ctx.db.session.updateMany({
-			where: {
-				userId: ctx.session.user.id,
-				state: "ACTIVE",
-				archivedAt: null,
-			},
-			data: {
-				state: "ENDED_BY_USER",
-				endedAt: new Date(),
-			},
-		});
-
-		if (count === 0) {
-			throw new TRPCError({
-				code: "NOT_FOUND",
-				message: "No active session to end",
+	end: protectedProcedure
+		.input(
+			z.object({
+				closureLine: z.string().max(120).optional(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const { count } = await ctx.db.session.updateMany({
+				where: {
+					userId: ctx.session.user.id,
+					state: "ACTIVE",
+					archivedAt: null,
+				},
+				data: {
+					state: "ENDED_BY_USER",
+					endedAt: new Date(),
+					...(input.closureLine != null
+						? { closureLine: input.closureLine }
+						: {}),
+				},
 			});
-		}
 
-		const ended = await ctx.db.session.findFirst({
+			if (count === 0) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "No active session to end",
+				});
+			}
+
+			const ended = await ctx.db.session.findFirst({
+				where: {
+					userId: ctx.session.user.id,
+					state: "ENDED_BY_USER",
+				},
+				orderBy: { endedAt: "desc" },
+			});
+
+			if (ended == null) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			return ended;
+		}),
+
+	getLastEnded: protectedProcedure.query(async ({ ctx }) => {
+		return ctx.db.session.findFirst({
 			where: {
 				userId: ctx.session.user.id,
-				state: "ENDED_BY_USER",
+				archivedAt: null,
+				endedAt: { not: null },
+				state: { in: ["ENDED_BY_USER", "ENDED_BY_TIMEOUT"] },
 			},
 			orderBy: { endedAt: "desc" },
 		});
-
-		if (ended == null) {
-			throw new TRPCError({ code: "NOT_FOUND" });
-		}
-
-		return ended;
 	}),
 });
