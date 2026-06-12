@@ -1,7 +1,7 @@
 ---
 change_id: session-narrative-summary
 title: Session narrative summary
-status: planned
+status: plan_reviewed
 created: 2026-06-12
 updated: 2026-06-12
 archived_at: null

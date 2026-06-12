@@ -104,7 +104,7 @@ Deliver FR-040 session narrative: in-flow one-line summary during active session
 - `use-pomodoro-cycle.ts`:
   - After successful `sessions.end()`, set `pendingClosureLine` before state reset; show overlay
   - `onWindDownEndSession` path: same closure after end
-  - Timeout detection: when `getOrCreateActive` returns new session id, fetch prior ended session closure (if not shown)
+  - Timeout detection: when `getOrCreateActive` returns new session id, call `getLastEnded` **before** resetting client session counters; show closure once per ended session id (dedupe key in sessionStorage)
 - Persist `closureLine` via extended `session.end` mutation
 - Guest: compute + store closure on `guestSession.end()`
 - E2E: `e2e/session-closure.spec.ts` — end session → see closure → dismiss
@@ -122,7 +122,7 @@ Deliver FR-040 session narrative: in-flow one-line summary during active session
 - `src/app/_components/return-handoff-banner.tsx` (new): dismissible strip; mount in `home-shell.tsx` with mutual-exclusion vs active gates (pattern: `FirstRunOverlay`)
 - On mount (auth): `session.getLastEnded`; compose handoff via builder + active tasks with `resumeNote`
 - Guest: scan blob sessions for max `endedAt`; compose from local tasks
-- Dismiss: `localStorage` key `flowstate:handoff-dismissed-at`
+- Dismiss: `localStorage` key `flowstate:handoff-dismissed:{sessionId}` (per ended session, not global)
 - E2E: `e2e/session-return-handoff.spec.ts` — mock/storage seed ended session >8h ago → banner → dismiss
 
 ### Success Criteria
