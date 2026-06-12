@@ -64,7 +64,7 @@ function TaskBadges({ suggestion }: { suggestion: TaskSuggestionData }) {
 	const urgency = suggestion.urgency ?? suggestion.weight;
 	const importance = suggestion.importance ?? 2;
 	return (
-		<span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+		<span className="flex flex-wrap items-center gap-1">
 			<span
 				className={`rounded-full px-2 py-0.5 font-medium text-xs ${config.bg} ${config.text}`}
 			>
@@ -106,7 +106,7 @@ function ReadySuggestionContent({
 
 	return (
 		<div className="mt-4 space-y-4">
-			<div className="flex items-start justify-between gap-3">
+			<div className="space-y-2">
 				<p className="font-medium text-primary">{suggestion.title}</p>
 				<TaskBadges suggestion={suggestion} />
 			</div>

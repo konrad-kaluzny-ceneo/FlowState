@@ -58,7 +58,7 @@ function TaskBadges({
 			>
 				{config.label}
 			</span>
-			<span className="rounded-full bg-surface-card px-2 py-0.5 font-medium text-text-secondary text-xs">
+			<span className="rounded-full bg-surface-panel px-2 py-0.5 font-medium text-text-secondary text-xs">
 				U: {AXIS_LABELS[urgency]}
 			</span>
 			<span className="rounded-full bg-worktype-deep-bg px-2 py-0.5 font-medium text-worktype-deep-text text-xs">
@@ -96,8 +96,10 @@ function EisenhowerAttributeFields({
 }: EisenhowerAttributeFieldsProps) {
 	return (
 		<>
-			<div className="flex items-center gap-2">
-				<span className="w-16 text-text-secondary text-xs">Urgency</span>
+			<div className="flex flex-wrap items-center gap-2">
+				<span className="w-16 shrink-0 text-text-secondary text-xs">
+					Urgency
+				</span>
 				<SegmentedControl
 					onChange={(v) => onUrgencyChange(v as 1 | 2 | 3)}
 					options={[
@@ -108,8 +110,10 @@ function EisenhowerAttributeFields({
 					value={urgency}
 				/>
 			</div>
-			<div className="flex items-center gap-2">
-				<span className="w-16 text-text-secondary text-xs">Importance</span>
+			<div className="flex flex-wrap items-center gap-2">
+				<span className="w-16 shrink-0 text-text-secondary text-xs">
+					Importance
+				</span>
 				<SegmentedControl
 					onChange={(v) => onImportanceChange(v as 1 | 2 | 3)}
 					options={[
@@ -120,8 +124,10 @@ function EisenhowerAttributeFields({
 					value={importance}
 				/>
 			</div>
-			<div className="flex items-center gap-2">
-				<span className="w-16 text-text-secondary text-xs">Effort</span>
+			<div className="flex flex-wrap items-center gap-2">
+				<span className="w-16 shrink-0 text-text-secondary text-xs">
+					Effort
+				</span>
 				<input
 					className="w-24 rounded-md bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
 					inputMode="numeric"
@@ -142,12 +148,14 @@ function EisenhowerAttributeFields({
 					</button>
 				)}
 			</div>
-			<div className="flex items-center gap-2">
-				<span className="w-16 text-text-secondary text-xs">Horizon</span>
+			<div className="flex flex-wrap items-center gap-2">
+				<span className="w-16 shrink-0 text-text-secondary text-xs">
+					Horizon
+				</span>
 				<SegmentedControl
 					colorMap={{
 						ASAP: "bg-worktype-reactive-bg text-worktype-reactive-text",
-						THIS_WEEK: "bg-sky-500/30 text-sky-200",
+						THIS_WEEK: "bg-worktype-deep-bg text-worktype-deep-text",
 						WHEN_POSSIBLE: "bg-surface-panel text-text-section",
 					}}
 					onChange={(v) => onCommitmentHorizonChange(v as CommitmentHorizon)}
@@ -185,7 +193,7 @@ function SegmentedControl<T extends string | number>({
 	colorMap,
 }: SegmentedControlProps<T>) {
 	return (
-		<div className="flex gap-1">
+		<div className="flex flex-wrap gap-1">
 			{options.map((opt) => {
 				const isActive = opt.value === value;
 				const activeColor =
@@ -196,7 +204,7 @@ function SegmentedControl<T extends string | number>({
 						className={`rounded-md px-2 py-1 font-medium text-xs transition ${
 							isActive
 								? activeColor
-								: "bg-surface-card text-text-secondary hover:bg-surface-card/80"
+								: "bg-surface-panel text-text-secondary hover:bg-surface-card-muted"
 						}`}
 						key={String(opt.value)}
 						onClick={() => onChange(opt.value)}
@@ -315,7 +323,7 @@ function SortableActiveTaskRow({
 
 	return (
 		<li
-			className={`flex items-center gap-2 rounded-lg border border-transparent bg-surface-card px-4 py-3 ${
+			className={`flex flex-col gap-2 rounded-lg border border-transparent bg-surface-card px-4 py-3 ${
 				focusedTaskId === task.id ? "ring-2 ring-focus" : ""
 			} ${
 				highlightedTaskId === task.id ? "ring-2 ring-accent-suggestion" : ""
@@ -328,122 +336,132 @@ function SortableActiveTaskRow({
 			ref={setNodeRef}
 			style={style}
 		>
-			<button
-				aria-label="Drag to reorder"
-				className={`shrink-0 cursor-grab px-1 text-text-dimmed transition hover:text-text-secondary active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30 ${
-					dragDisabled ? "pointer-events-none" : ""
-				}`}
-				data-testid="task-drag-handle"
-				disabled={dragDisabled}
-				ref={setActivatorNodeRef}
-				type="button"
-				{...attributes}
-				{...listeners}
-			>
-				⋮⋮
-			</button>
-			<button
-				aria-label="Mark complete"
-				className="h-5 w-5 shrink-0 rounded border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
-				disabled={markCompleteLocked || isMutating}
-				onClick={() => {
-					if (canMidCycleMarkComplete && onMidCycleMarkComplete != null) {
-						onMidCycleMarkComplete(task.id, task);
-						return;
-					}
+			<div className="flex min-w-0 items-start gap-2">
+				<button
+					aria-label="Drag to reorder"
+					className={`mt-0.5 shrink-0 cursor-grab px-1 text-text-dimmed transition hover:text-text-secondary active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30 ${
+						dragDisabled ? "pointer-events-none" : ""
+					}`}
+					data-testid="task-drag-handle"
+					disabled={dragDisabled}
+					ref={setActivatorNodeRef}
+					type="button"
+					{...attributes}
+					{...listeners}
+				>
+					⋮⋮
+				</button>
+				<button
+					aria-label="Mark complete"
+					className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
+					disabled={markCompleteLocked || isMutating}
+					onClick={() => {
+						if (canMidCycleMarkComplete && onMidCycleMarkComplete != null) {
+							onMidCycleMarkComplete(task.id, task);
+							return;
+						}
 
-					onBeginComplete(task.id);
-					void onUpdateTask({
-						id: task.id,
-						status: "completed",
-					});
-				}}
-				type="button"
-			/>
-			{editingId === task.id ? (
-				<div className="flex-1 space-y-2">
-					{/* textarea (not input): titles are unbounded; multiline + wrap in read mode (B-02) */}
-					<textarea
-						className="w-full resize-y rounded bg-surface-panel px-2 py-1 text-primary focus:outline-none"
-						onBlur={() => void onSaveEdit(task.id)}
-						onChange={(e) => onSetEditTitle(e.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === "Enter" && !e.shiftKey) {
-								e.preventDefault();
-								void onSaveEdit(task.id);
-							}
-							if (e.key === "Escape") onSetEditingId(null);
-						}}
-						rows={2}
-						value={editTitle}
-					/>
-					<div className="flex items-center gap-2">
-						<span className="w-16 text-text-secondary text-xs">Type</span>
-						<SegmentedControl
-							colorMap={{
-								DEEP_WORK: WORK_TYPE_CONFIG.DEEP_WORK.segmentActive,
-								OPERATIONAL: WORK_TYPE_CONFIG.OPERATIONAL.segmentActive,
-								REACTIVE: WORK_TYPE_CONFIG.REACTIVE.segmentActive,
+						onBeginComplete(task.id);
+						void onUpdateTask({
+							id: task.id,
+							status: "completed",
+						});
+					}}
+					type="button"
+				/>
+				{editingId === task.id ? (
+					<div className="min-w-0 flex-1 space-y-2">
+						{/* textarea (not input): titles are unbounded; multiline + wrap in read mode (B-02) */}
+						<textarea
+							className="w-full resize-y rounded bg-surface-panel px-2 py-1 text-primary focus:outline-none"
+							onBlur={() => void onSaveEdit(task.id)}
+							onChange={(e) => onSetEditTitle(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" && !e.shiftKey) {
+									e.preventDefault();
+									void onSaveEdit(task.id);
+								}
+								if (e.key === "Escape") onSetEditingId(null);
 							}}
-							onChange={onSetEditWorkType}
-							options={[
-								{ value: "DEEP_WORK" as const, label: "Deep" },
-								{ value: "OPERATIONAL" as const, label: "Ops" },
-								{ value: "REACTIVE" as const, label: "Reactive" },
-							]}
-							value={editWorkType}
+							rows={2}
+							value={editTitle}
+						/>
+						<div className="flex flex-wrap items-center gap-2">
+							<span className="w-16 shrink-0 text-text-secondary text-xs">
+								Type
+							</span>
+							<SegmentedControl
+								colorMap={{
+									DEEP_WORK: WORK_TYPE_CONFIG.DEEP_WORK.segmentActive,
+									OPERATIONAL: WORK_TYPE_CONFIG.OPERATIONAL.segmentActive,
+									REACTIVE: WORK_TYPE_CONFIG.REACTIVE.segmentActive,
+								}}
+								onChange={onSetEditWorkType}
+								options={[
+									{ value: "DEEP_WORK" as const, label: "Deep" },
+									{ value: "OPERATIONAL" as const, label: "Ops" },
+									{ value: "REACTIVE" as const, label: "Reactive" },
+								]}
+								value={editWorkType}
+							/>
+						</div>
+						<EisenhowerAttributeFields
+							commitmentHorizon={editCommitmentHorizon}
+							effortMinutes={editEffortMinutes}
+							importance={editImportance}
+							onCommitmentHorizonChange={onSetEditCommitmentHorizon}
+							onEffortMinutesChange={onSetEditEffortMinutes}
+							onImportanceChange={onSetEditImportance}
+							onUrgencyChange={onSetEditUrgency}
+							urgency={editUrgency}
 						/>
 					</div>
-					<EisenhowerAttributeFields
-						commitmentHorizon={editCommitmentHorizon}
-						effortMinutes={editEffortMinutes}
-						importance={editImportance}
-						onCommitmentHorizonChange={onSetEditCommitmentHorizon}
-						onEffortMinutesChange={onSetEditEffortMinutes}
-						onImportanceChange={onSetEditImportance}
-						onUrgencyChange={onSetEditUrgency}
-						urgency={editUrgency}
+				) : (
+					<button
+						className="min-w-0 flex-1 cursor-pointer whitespace-pre-wrap break-words text-left text-primary disabled:cursor-default disabled:opacity-70"
+						disabled={cycleLocked}
+						onClick={() => onStartEditing(task)}
+						type="button"
+					>
+						{task.title}
+					</button>
+				)}
+			</div>
+			{editingId !== task.id && (
+				<div className="flex flex-wrap items-center justify-between gap-2 pl-9">
+					<TaskBadges
+						commitmentHorizon={task.commitmentHorizon}
+						importance={task.importance}
+						urgency={task.urgency}
+						workType={task.workType}
 					/>
+					<div className="flex shrink-0 items-center gap-1">
+						<button
+							className={`rounded-lg px-2 py-1 font-medium text-xs transition ${
+								focusedTaskId === task.id
+									? "bg-accent-cta text-on-cta"
+									: "bg-surface-panel text-text-section hover:bg-surface-card-muted"
+							}`}
+							disabled={focusLocked}
+							onClick={() => onFocusTask(task.id, task)}
+							type="button"
+						>
+							{focusedTaskId === task.id ? "Focused" : "Focus"}
+						</button>
+						<button
+							aria-label="Delete task"
+							className="shrink-0 px-1 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+							disabled={cycleLocked || isMutating}
+							onClick={() => {
+								void onDeleteTask({ id: task.id });
+							}}
+							type="button"
+						>
+							✕
+						</button>
+					</div>
 				</div>
-			) : (
-				<button
-					className="flex-1 cursor-pointer whitespace-pre-wrap break-words text-left text-primary disabled:cursor-default disabled:opacity-70"
-					disabled={cycleLocked}
-					onClick={() => onStartEditing(task)}
-					type="button"
-				>
-					{task.title}
-				</button>
 			)}
-			<TaskBadges
-				commitmentHorizon={task.commitmentHorizon}
-				importance={task.importance}
-				urgency={task.urgency}
-				workType={task.workType}
-			/>
-			<button
-				className={`shrink-0 rounded-lg px-2 py-1 font-medium text-xs transition ${
-					focusedTaskId === task.id
-						? "bg-accent-cta text-on-cta"
-						: "bg-surface-card text-text-section hover:bg-surface-card/80"
-				}`}
-				disabled={focusLocked}
-				onClick={() => onFocusTask(task.id, task)}
-				type="button"
-			>
-				{focusedTaskId === task.id ? "Focused" : "Focus"}
-			</button>
-			<button
-				aria-label="Delete task"
-				className="shrink-0 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
-				disabled={cycleLocked || isMutating}
-				onClick={() => {
-					void onDeleteTask({ id: task.id });
-				}}
-				type="button"
-			>
-				✕
-			</button>
 		</li>
 	);
 }
@@ -754,42 +772,46 @@ export function TaskList({
 					<ul className="space-y-2">
 						{completedTasks.map((task) => (
 							<li
-								className="flex items-center gap-2 rounded-lg border border-transparent bg-surface-card-muted px-4 py-3"
+								className="flex flex-col gap-2 rounded-lg border border-transparent bg-surface-card-muted px-4 py-3"
 								key={String(task.id)}
 							>
-								<button
-									aria-label="Revert to active"
-									className="h-5 w-5 shrink-0 rounded border-2 border-accent-success bg-accent-success/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={cycleLocked || isMutating}
-									onClick={() => {
-										void updateTask({
-											id: task.id,
-											status: "active",
-										});
-									}}
-									type="button"
-								/>
-								<span className="flex-1 text-text-dimmed line-through">
-									{task.title}
-								</span>
-								<TaskBadges
-									commitmentHorizon={task.commitmentHorizon}
-									dimmed
-									importance={task.importance}
-									urgency={task.urgency}
-									workType={task.workType}
-								/>
-								<button
-									aria-label="Delete task"
-									className="shrink-0 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
-									disabled={cycleLocked || isMutating}
-									onClick={() => {
-										void deleteTask({ id: task.id });
-									}}
-									type="button"
-								>
-									✕
-								</button>
+								<div className="flex min-w-0 items-start gap-2">
+									<button
+										aria-label="Revert to active"
+										className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-accent-success bg-accent-success/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
+										disabled={cycleLocked || isMutating}
+										onClick={() => {
+											void updateTask({
+												id: task.id,
+												status: "active",
+											});
+										}}
+										type="button"
+									/>
+									<span className="min-w-0 flex-1 text-text-dimmed line-through">
+										{task.title}
+									</span>
+								</div>
+								<div className="flex flex-wrap items-center justify-between gap-2 pl-7">
+									<TaskBadges
+										commitmentHorizon={task.commitmentHorizon}
+										dimmed
+										importance={task.importance}
+										urgency={task.urgency}
+										workType={task.workType}
+									/>
+									<button
+										aria-label="Delete task"
+										className="shrink-0 px-1 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+										disabled={cycleLocked || isMutating}
+										onClick={() => {
+											void deleteTask({ id: task.id });
+										}}
+										type="button"
+									>
+										✕
+									</button>
+								</div>
 							</li>
 						))}
 					</ul>
