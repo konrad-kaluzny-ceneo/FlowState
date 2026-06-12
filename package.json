@@ -23,6 +23,11 @@
 		"test:e2e:a11y": "playwright test e2e/accessibility.spec.ts",
 		"test:watch": "vitest",
 		"typecheck": "tsc --noEmit",
+		"depcruise": "depcruise src",
+		"depcruise:e2e": "depcruise --no-config e2e",
+		"depcruise:graph": "depcruise --output-type mermaid --output-to reports/dependency-graph.mmd src",
+		"depcruise:archi": "depcruise --output-type archi --output-to reports/dependency-archi.dot src",
+		"depcruise:report": "depcruise --output-type err-html --output-to reports/dependency-report.html src",
 		"prepare": "lefthook install"
 	},
 	"dependencies": {
@@ -58,6 +63,7 @@
 		"@types/react": "^19.2.15",
 		"@types/react-dom": "^19.2.3",
 		"@vitejs/plugin-react": "^6.0.2",
+		"dependency-cruiser": "^17.4.3",
 		"dotenv": "^17.4.2",
 		"fast-check": "^4.8.0",
 		"jsdom": "^29.1.1",
