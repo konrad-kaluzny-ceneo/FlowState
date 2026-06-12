@@ -174,15 +174,15 @@ Deliver FR-040 session narrative: in-flow one-line summary during active session
 
 #### Automated
 
-- [ ] 3.1 Hook narrative context + intention capture on first cycle
-- [ ] 3.2 Dashboard in-flow strip + component tests
+- [x] 3.1 Hook narrative context + intention capture on first cycle
+- [x] 3.2 Dashboard in-flow strip + component tests
 
 ### Phase 4: Session closure overlay
 
 #### Automated
 
-- [ ] 4.1 SessionClosureOverlay + endSession/wind-down/timeout hooks
-- [ ] 4.2 Guest closure parity
+- [x] 4.1 SessionClosureOverlay + endSession/wind-down/timeout hooks
+- [x] 4.2 Guest closure parity
 - [ ] 4.3 E2E session-closure.spec.ts
 
 ### Phase 5: 8h return handoff banner

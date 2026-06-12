@@ -4,9 +4,11 @@ import { Suspense, useCallback, useMemo } from "react";
 
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
+import { CycleIntentionPrompt } from "~/app/_components/cycle-intention-prompt";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { KickoffReadinessOverlay } from "~/app/_components/kickoff-readiness-overlay";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
+import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
 import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
 import { TaskList } from "~/app/_components/task-list";
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
@@ -140,6 +142,16 @@ export function PomodoroDashboardBody({
 		catchUp?.gate === "SUGGESTION_ACCEPT" &&
 		pomodoro.pendingSuggestion.status === "ready";
 
+	const showInFlowSummary =
+		pomodoro.inFlowSummaryLine != null &&
+		!showSuggestionCard &&
+		!showKickoffCard &&
+		!pomodoro.awaitingCheckIn &&
+		!pomodoro.awaitingWindDown &&
+		!pomodoro.isPostCheckInTransitioning &&
+		!pomodoro.awaitingKickoffReadiness &&
+		!pomodoro.awaitingCycleIntention;
+
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8">
 			{pomodoro.error != null && (
@@ -190,6 +202,15 @@ export function PomodoroDashboardBody({
 					remainingMs={pomodoro.remainingMs}
 					state={pomodoro.state}
 				/>
+			)}
+
+			{showInFlowSummary && (
+				<p
+					className="w-full max-w-lg rounded-lg border border-border-subtle bg-surface-panel/50 px-4 py-2 text-center text-sm text-text-secondary"
+					data-testid="session-inflow-summary"
+				>
+					{pomodoro.inFlowSummaryLine}
+				</p>
 			)}
 
 			{showSuggestionCard &&
@@ -358,6 +379,20 @@ export function PomodoroDashboardBody({
 						onSubmit={pomodoro.submitKickoffReadiness}
 					/>
 				)}
+
+			{pomodoro.awaitingCycleIntention && (
+				<CycleIntentionPrompt
+					onSkip={pomodoro.skipCycleIntention}
+					onSubmit={pomodoro.submitCycleIntention}
+				/>
+			)}
+
+			{pomodoro.pendingClosureLine != null && (
+				<SessionClosureOverlay
+					closureLine={pomodoro.pendingClosureLine}
+					onDismiss={pomodoro.dismissSessionClosure}
+				/>
+			)}
 
 			{enableCheckInGate &&
 				pomodoro.awaitingCheckIn &&

@@ -105,9 +105,18 @@ vi.mock("~/trpc/react", () => ({
 			client: {
 				cycle: {
 					countCompletedWork: { query: vi.fn().mockResolvedValue(0) },
+					countTasksCompletedInSession: {
+						query: vi.fn().mockResolvedValue(0),
+					},
+					getLatestCheckInEnergy: {
+						query: vi.fn().mockResolvedValue(null),
+					},
 					list: { query: vi.fn().mockResolvedValue([]) },
 				},
 				task: { list: { query: taskListQuery } },
+				session: {
+					getLastEnded: { query: vi.fn().mockResolvedValue(null) },
+				},
 			},
 		}),
 		checkIn: {
@@ -203,6 +212,40 @@ async function completeKickoffReadinessGate(result: PomodoroCycleHookResult) {
 	});
 }
 
+/** Skips first-cycle intention gate when present; does not wait for running. */
+async function beginWorkCycle(
+	result: PomodoroCycleHookResult,
+	durationSec: number,
+	options?: { intention?: string },
+) {
+	await act(async () => {
+		await result.current.start(durationSec);
+	});
+
+	if (result.current.awaitingCycleIntention) {
+		await act(async () => {
+			if (options?.intention != null) {
+				await result.current.submitCycleIntention(options.intention);
+			} else {
+				await result.current.skipCycleIntention();
+			}
+		});
+	}
+}
+
+/** beginWorkCycle + wait until timer is running (real timers only). */
+async function startWorkCycle(
+	result: PomodoroCycleHookResult,
+	durationSec: number,
+	options?: { intention?: string },
+) {
+	await beginWorkCycle(result, durationSec, options);
+
+	await waitFor(() => {
+		expect(result.current.state).toBe("running");
+	});
+}
+
 async function driveWorkCycleToCheckIn(result: PomodoroCycleHookResult) {
 	await waitFor(() => {
 		expect(result.current.state).toBe("running");
@@ -266,6 +309,7 @@ function mockInterruptCycleDeferred() {
 
 describe("usePomodoroCycle", () => {
 	beforeEach(() => {
+		sessionStorage.clear();
 		resetActiveCycleRecoveryForTests();
 		activeCycleData = null;
 		fakeWorkers.length = 0;
@@ -340,9 +384,7 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
-		await act(async () => {
-			await result.current.start(60);
-		});
+		await startWorkCycle(result, 60);
 
 		expect(getOrCreateSession).toHaveBeenCalled();
 		expect(createCycle).toHaveBeenCalledWith({
@@ -351,6 +393,43 @@ describe("usePomodoroCycle", () => {
 			taskId: 7,
 		});
 		expect(result.current.state).toBe("running");
+	});
+
+	it("opens cycle intention gate on first work cycle start", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		await act(async () => {
+			await result.current.start(60);
+		});
+
+		expect(result.current.awaitingCycleIntention).toBe(true);
+		expect(result.current.state).toBe("idle");
+		expect(createCycle).not.toHaveBeenCalled();
+	});
+
+	it("persists cycle intention on first work cycle create", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		await startWorkCycle(result, 60, { intention: "Ship closure overlay" });
+
+		expect(createCycle).toHaveBeenCalledWith({
+			kind: "WORK",
+			configuredDurationSec: 60,
+			taskId: 7,
+			intention: "Ship closure overlay",
+		});
 	});
 
 	it("transitions to running before createCycle resolves (optimistic start)", async () => {
@@ -364,9 +443,16 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
+		await act(async () => {
+			await result.current.start(60);
+		});
+		await waitFor(() => {
+			expect(result.current.awaitingCycleIntention).toBe(true);
+		});
+
 		let startPromise!: Promise<void>;
 		act(() => {
-			startPromise = result.current.start(60);
+			startPromise = result.current.skipCycleIntention();
 		});
 
 		await waitFor(() => {
@@ -431,9 +517,16 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
+		await act(async () => {
+			await result.current.start(60);
+		});
+		await waitFor(() => {
+			expect(result.current.awaitingCycleIntention).toBe(true);
+		});
+
 		let startPromise!: Promise<void>;
 		act(() => {
-			startPromise = result.current.start(60);
+			startPromise = result.current.skipCycleIntention();
 		});
 
 		await waitFor(() => {
@@ -485,9 +578,16 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
+		await act(async () => {
+			await result.current.start(60);
+		});
+		await waitFor(() => {
+			expect(result.current.awaitingCycleIntention).toBe(true);
+		});
+
 		let startPromise!: Promise<void>;
 		act(() => {
-			startPromise = result.current.start(60);
+			startPromise = result.current.skipCycleIntention();
 		});
 
 		await waitFor(() => {
@@ -572,9 +672,7 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
-		await act(async () => {
-			await result.current.start(60);
-		});
+		await startWorkCycle(result, 60);
 
 		const worker = fakeWorkers[fakeWorkers.length - 1];
 		expect(worker).toBeDefined();
@@ -595,9 +693,7 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
-		await act(async () => {
-			await result.current.start(60);
-		});
+		await startWorkCycle(result, 60);
 
 		const worker = fakeWorkers[fakeWorkers.length - 1];
 		act(() => {
@@ -761,9 +857,7 @@ describe("usePomodoroCycle", () => {
 				result.current.selectTask(7, { id: 7, title: "Write tests" });
 			});
 
-			await act(async () => {
-				await result.current.start(60);
-			});
+			await startWorkCycle(result, 60);
 
 			// Complete the work cycle
 			act(() => {
@@ -919,9 +1013,7 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
-		await act(async () => {
-			await result.current.start(60);
-		});
+		await beginWorkCycle(result, 60);
 
 		expect(result.current.error).toMatch(/Could not start/);
 		expect(result.current.state).toBe("idle");
@@ -946,9 +1038,7 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Tests" });
 		});
 
-		await act(async () => {
-			await result.current.start(60);
-		});
+		await beginWorkCycle(result, 60);
 
 		expect(result.current.state).toBe("running");
 
@@ -1029,9 +1119,7 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
-		await act(async () => {
-			await result.current.start(60);
-		});
+		await startWorkCycle(result, 60);
 
 		expect(result.current.hasActiveSession).toBe(true);
 		expect(result.current.state).toBe("running");
@@ -1048,10 +1136,43 @@ describe("usePomodoroCycle", () => {
 			await result.current.endSession();
 		});
 
-		expect(endSession).toHaveBeenCalled();
+		expect(endSession).toHaveBeenCalledWith({
+			closureLine: "Session complete — 0 cycles. Take a breath.",
+		});
+		expect(result.current.pendingClosureLine).toBe(
+			"Session complete — 0 cycles. Take a breath.",
+		);
 		expect(result.current.state).toBe("idle");
 		expect(result.current.hasActiveSession).toBe(false);
 		expect(result.current.focusedTask).toBeNull();
+	});
+
+	it("dismissSessionClosure clears pending closure overlay", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		await startWorkCycle(result, 60);
+
+		await act(async () => {
+			await result.current.interrupt();
+		});
+
+		await act(async () => {
+			await result.current.endSession();
+		});
+
+		expect(result.current.pendingClosureLine).not.toBeNull();
+
+		act(() => {
+			result.current.dismissSessionClosure();
+		});
+
+		expect(result.current.pendingClosureLine).toBeNull();
 	});
 
 	it("endSession interrupts running cycle before ending session", async () => {
@@ -1882,9 +2003,7 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
-		await act(async () => {
-			await result.current.start(60);
-		});
+		await startWorkCycle(result, 60);
 
 		expect(result.current.hasActiveSession).toBe(true);
 
@@ -2041,9 +2160,7 @@ describe("usePomodoroCycle", () => {
 				result.current.selectTask(7, { id: 7, title: "Write tests" });
 			});
 
-			await act(async () => {
-				await result.current.start(60);
-			});
+			await startWorkCycle(result, 60);
 
 			expect(result.current.pendingKickoffSuggestion.status).toBe("idle");
 		});
@@ -2471,6 +2588,7 @@ describe("usePomodoroCycle catchUp", () => {
 	});
 
 	beforeEach(() => {
+		sessionStorage.clear();
 		resetActiveCycleRecoveryForTests();
 		activeCycleData = null;
 		fakeWorkers.length = 0;
@@ -2519,9 +2637,7 @@ describe("usePomodoroCycle catchUp", () => {
 				result.current.selectTask(7, { id: 7, title: "Write tests" });
 			});
 
-			await act(async () => {
-				await result.current.start(60);
-			});
+			await beginWorkCycle(result, 60);
 
 			await act(async () => {
 				vi.advanceTimersByTime(61_000);
@@ -2560,9 +2676,7 @@ describe("usePomodoroCycle catchUp", () => {
 				result.current.selectTask(7, { id: 7, title: "Write tests" });
 			});
 
-			await act(async () => {
-				await result.current.start(60);
-			});
+			await beginWorkCycle(result, 60);
 
 			await act(async () => {
 				vi.advanceTimersByTime(61_000);
@@ -2601,9 +2715,7 @@ describe("usePomodoroCycle catchUp", () => {
 				result.current.selectTask(7, { id: 7, title: "Write tests" });
 			});
 
-			await act(async () => {
-				await result.current.start(60);
-			});
+			await beginWorkCycle(result, 60);
 
 			await act(async () => {
 				vi.advanceTimersByTime(61_000);
@@ -2714,9 +2826,7 @@ describe("usePomodoroCycle catchUp", () => {
 				result.current.selectTask(7, { id: 7, title: "Write tests" });
 			});
 
-			await act(async () => {
-				await result.current.start(60);
-			});
+			await beginWorkCycle(result, 60);
 
 			await act(async () => {
 				vi.advanceTimersByTime(61_000);
