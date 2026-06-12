@@ -486,14 +486,14 @@ No database migration. Existing users see light-default on first visit (or syste
 
 #### Automated
 
-- [x] 6.1 `pnpm check` passes
-- [x] 6.2 `pnpm typecheck` passes
-- [x] 6.3 `pnpm test` passes
-- [x] 6.4 `set CI=true && pnpm test:e2e:belt` passes
-- [x] 6.5 `set CI=true && pnpm test:e2e:a11y` passes
-- [x] 6.6 Duration picker unit test uses aria-pressed assertion
+- [x] 6.1 `pnpm check` passes — 92f431a
+- [x] 6.2 `pnpm typecheck` passes — 92f431a
+- [x] 6.3 `pnpm test` passes — 92f431a
+- [x] 6.4 `set CI=true && pnpm test:e2e:belt` passes — 92f431a
+- [x] 6.5 `set CI=true && pnpm test:e2e:a11y` passes — 92f431a
+- [x] 6.6 Duration picker unit test uses aria-pressed assertion — 92f431a
 
 #### Manual
 
-- [x] 6.7 `@skip-belt` e2e focus ring specs pass locally
-- [x] 6.8 Axe report free of critical/serious wedge violations
+- [x] 6.7 `@skip-belt` e2e focus ring specs pass locally — 92f431a
+- [x] 6.8 Axe report free of critical/serious wedge violations — 92f431a
