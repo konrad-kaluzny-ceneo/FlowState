@@ -68,6 +68,7 @@ function buildOptimisticCreateRow(
 		effortMinutes: input.effortMinutes ?? null,
 		commitmentHorizon: input.commitmentHorizon ?? "WHEN_POSSIBLE",
 		sortOrder: maxSortOrder + 1,
+		resumeNote: input.resumeNote ?? null,
 		createdAt: now,
 		updatedAt: now,
 	};

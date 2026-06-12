@@ -12,7 +12,10 @@ import type { DomainTask, DomainTaskId } from "~/lib/data-mode/types";
 type MidCycleCompletionPromptProps = {
 	pendingTask: FocusedTask;
 	otherActiveTasks: DomainTask[];
-	onContinueWithTask: (taskId: DomainTaskId) => Promise<void>;
+	onContinueWithTask: (
+		taskId: DomainTaskId,
+		resumeNote: string | null,
+	) => Promise<void>;
 	onEndCycleAndBreak: () => Promise<void>;
 	isSubmitting?: boolean;
 };
@@ -27,6 +30,7 @@ export function MidCycleCompletionPrompt({
 	const [selectedTaskId, setSelectedTaskId] = useState<DomainTaskId | null>(
 		null,
 	);
+	const [resumeNote, setResumeNote] = useState("");
 
 	const hasOtherTasks = otherActiveTasks.length > 0;
 
@@ -58,7 +62,10 @@ export function MidCycleCompletionPrompt({
 											: "border-border-subtle bg-surface-panel text-text-section hover:border-border-subtle hover:bg-surface-card-muted"
 									}`}
 									disabled={isSubmitting}
-									onClick={() => setSelectedTaskId(task.id)}
+									onClick={() => {
+										setSelectedTaskId(task.id);
+										setResumeNote("");
+									}}
 									type="button"
 								>
 									{task.title}
@@ -66,6 +73,37 @@ export function MidCycleCompletionPrompt({
 							</li>
 						))}
 					</ul>
+				)}
+
+				{hasOtherTasks && selectedTaskId != null && (
+					<div className="mt-4 space-y-2">
+						<label
+							className="block text-sm text-text-secondary"
+							htmlFor="mid-cycle-resume-note"
+						>
+							Where will you pick up? (optional)
+						</label>
+						<textarea
+							className="w-full resize-none rounded-lg border border-border-subtle bg-surface-panel px-3 py-2 text-primary text-sm focus:outline-none focus:ring-2 focus:ring-focus-ring"
+							data-testid="mid-cycle-resume-note"
+							disabled={isSubmitting}
+							id="mid-cycle-resume-note"
+							maxLength={120}
+							onChange={(event) => setResumeNote(event.target.value)}
+							placeholder="One line — where you left off on the next task"
+							rows={2}
+							value={resumeNote}
+						/>
+						<button
+							className="text-sm text-text-dimmed underline-offset-2 hover:text-text-secondary hover:underline"
+							data-testid="mid-cycle-resume-skip"
+							disabled={isSubmitting}
+							onClick={() => setResumeNote("")}
+							type="button"
+						>
+							Skip note
+						</button>
+					</div>
 				)}
 
 				<div className="mt-8 flex flex-col gap-3">
@@ -76,7 +114,11 @@ export function MidCycleCompletionPrompt({
 							disabled={selectedTaskId == null || isSubmitting}
 							onClick={() => {
 								if (selectedTaskId != null) {
-									void onContinueWithTask(selectedTaskId);
+									const trimmed = resumeNote.trim();
+									void onContinueWithTask(
+										selectedTaskId,
+										trimmed.length > 0 ? trimmed : null,
+									);
 								}
 							}}
 							type="button"

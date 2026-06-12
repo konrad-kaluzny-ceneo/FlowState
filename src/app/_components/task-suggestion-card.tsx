@@ -21,6 +21,7 @@ export type TaskSuggestionData = {
 	importance?: 1 | 2 | 3;
 	commitmentHorizon?: CommitmentHorizon;
 	rationale: string;
+	resumeNote?: string | null;
 	breakdown?: RationaleBreakdown;
 };
 
@@ -112,6 +113,14 @@ function ReadySuggestionContent({
 				</p>
 				<TaskBadges suggestion={suggestion} />
 			</div>
+			{suggestion.resumeNote != null && suggestion.resumeNote.length > 0 && (
+				<p
+					className="text-sm text-text-dimmed italic"
+					data-testid="suggestion-resume-note"
+				>
+					Left off: {suggestion.resumeNote}
+				</p>
+			)}
 			<p className="text-sm text-text-secondary">{suggestion.rationale}</p>
 			{showExpander && breakdown != null && (
 				<div className="space-y-2">

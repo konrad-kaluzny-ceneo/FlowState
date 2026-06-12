@@ -24,6 +24,7 @@ function toDomainTask(task: {
 	effortMinutes: number | null;
 	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	sortOrder: number;
+	resumeNote: string | null;
 	createdAt: Date;
 	updatedAt: Date | null;
 }): DomainTask {
@@ -41,6 +42,7 @@ function toDomainTask(task: {
 		effortMinutes: task.effortMinutes,
 		commitmentHorizon: task.commitmentHorizon,
 		sortOrder: task.sortOrder,
+		resumeNote: task.resumeNote ?? null,
 	};
 }
 
@@ -119,6 +121,7 @@ export function createGuestTaskRepository(): TaskRepository {
 				effortMinutes: input.effortMinutes ?? null,
 				commitmentHorizon: input.commitmentHorizon ?? "WHEN_POSSIBLE",
 				sortOrder: maxSortOrder + 1,
+				resumeNote: input.resumeNote ?? null,
 				createdAt: now,
 				updatedAt: null,
 			};
@@ -160,6 +163,8 @@ export function createGuestTaskRepository(): TaskRepository {
 								? (Math.min(3, Math.max(1, input.weight)) as 1 | 2 | 3)
 								: null;
 
+					const nextStatus = input.status ?? task.status;
+
 					return {
 						...task,
 						...(input.title != null ? { title: input.title } : {}),
@@ -182,6 +187,10 @@ export function createGuestTaskRepository(): TaskRepository {
 						...(input.commitmentHorizon != null
 							? { commitmentHorizon: input.commitmentHorizon }
 							: {}),
+						...(input.resumeNote !== undefined
+							? { resumeNote: input.resumeNote }
+							: {}),
+						...(nextStatus === "completed" ? { resumeNote: null } : {}),
 						sortOrder,
 						updatedAt: new Date(),
 					};

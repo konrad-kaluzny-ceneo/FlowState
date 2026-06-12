@@ -224,6 +224,7 @@ export function PomodoroDashboardBody({
 									pomodoro.pendingSuggestion.data.commitmentHorizon,
 								rationale: pomodoro.pendingSuggestion.data.rationale,
 								breakdown: pomodoro.pendingSuggestion.data.breakdown,
+								resumeNote: pomodoro.pendingSuggestion.data.resumeNote,
 							}}
 						/>
 					</div>
@@ -259,6 +260,7 @@ export function PomodoroDashboardBody({
 								pomodoro.pendingKickoffSuggestion.data.commitmentHorizon,
 							rationale: pomodoro.pendingKickoffSuggestion.data.rationale,
 							breakdown: pomodoro.pendingKickoffSuggestion.data.breakdown,
+							resumeNote: pomodoro.pendingKickoffSuggestion.data.resumeNote,
 						}}
 					/>
 				) : pomodoro.pendingKickoffSuggestion.status === "empty" ? (
@@ -301,9 +303,13 @@ export function PomodoroDashboardBody({
 			{pomodoro.midCyclePendingTask != null && (
 				<MidCycleCompletionPrompt
 					isSubmitting={pomodoro.isMidCycleSubmitting}
-					onContinueWithTask={async (taskId) => {
+					onContinueWithTask={async (taskId, resumeNote) => {
 						const nextTask = tasks.find((t) => t.id === taskId);
-						await pomodoro.onMidCycleContinueWithTask(taskId, nextTask ?? null);
+						await pomodoro.onMidCycleContinueWithTask(
+							taskId,
+							nextTask ?? null,
+							resumeNote,
+						);
 					}}
 					onEndCycleAndBreak={pomodoro.onMidCycleEndCycleAndBreak}
 					otherActiveTasks={midCycleOtherActiveTasks}

@@ -79,6 +79,7 @@ export type SuggestionResult = {
 	rationaleKey: string;
 	rationale: string;
 	breakdown: RationaleBreakdown;
+	resumeNote: string | null;
 };
 
 export type PendingSuggestion =
@@ -100,6 +101,7 @@ export type KickoffSuggestionResult = {
 	rationaleKey: string;
 	rationale: string;
 	breakdown: RationaleBreakdown;
+	resumeNote: string | null;
 };
 
 export type PendingKickoffSuggestion =
@@ -806,6 +808,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						rationaleKey: result.rationaleKey,
 						rationale: result.rationale,
 						breakdown: result.breakdown,
+						resumeNote: result.resumeNote ?? null,
 					},
 				});
 				setSuggestedTaskId(result.taskId);
@@ -1639,7 +1642,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	);
 
 	const onMidCycleContinueWithTask = useCallback(
-		async (nextTaskId: DomainTaskId, nextTask: FocusedTask) => {
+		async (
+			nextTaskId: DomainTaskId,
+			nextTask: FocusedTask,
+			resumeNote: string | null = null,
+		) => {
 			if (midCyclePendingTask == null || activeCycle == null) {
 				return;
 			}
@@ -1653,6 +1660,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					id: midCyclePendingTask.id,
 					status: "completed",
 				});
+				if (resumeNote != null && resumeNote.length > 0) {
+					await tasks.update({
+						id: nextTaskId,
+						resumeNote,
+					});
+				}
 				const rebound = await cycles.rebindTask({
 					cycleId,
 					taskId: nextTaskId,

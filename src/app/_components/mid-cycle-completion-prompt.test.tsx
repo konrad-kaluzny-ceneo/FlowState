@@ -17,6 +17,7 @@ const otherTasks = [
 		weight: 2 as const,
 		...defaultEisenhowerFields(2),
 		sortOrder: 0,
+		resumeNote: null,
 	},
 ];
 
@@ -70,6 +71,27 @@ describe("MidCycleCompletionPrompt", () => {
 		expect(continueBtn).toHaveProperty("disabled", false);
 
 		fireEvent.click(continueBtn);
-		expect(onContinue).toHaveBeenCalledWith(2);
+		expect(onContinue).toHaveBeenCalledWith(2, null);
+	});
+
+	it("passes trimmed resume note on continue", () => {
+		const onContinue = vi.fn().mockResolvedValue(undefined);
+
+		render(
+			<MidCycleCompletionPrompt
+				onContinueWithTask={onContinue}
+				onEndCycleAndBreak={vi.fn().mockResolvedValue(undefined)}
+				otherActiveTasks={otherTasks}
+				pendingTask={{ id: 1, title: "First task" }}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "Second task" }));
+		fireEvent.change(screen.getByTestId("mid-cycle-resume-note"), {
+			target: { value: "  pick up API work  " },
+		});
+		fireEvent.click(screen.getByTestId("mid-cycle-continue-btn"));
+
+		expect(onContinue).toHaveBeenCalledWith(2, "pick up API work");
 	});
 });

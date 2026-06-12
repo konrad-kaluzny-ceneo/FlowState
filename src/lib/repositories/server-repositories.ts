@@ -28,6 +28,7 @@ type UpdateTaskInput = {
 	status?: "active" | "completed";
 	workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight?: 1 | 2 | 3;
+	resumeNote?: string | null;
 };
 
 type CreateCycleInput = {
@@ -48,6 +49,7 @@ type TrpcTaskRow = {
 	effortMinutes?: number | null;
 	commitmentHorizon?: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	sortOrder: number;
+	resumeNote?: string | null;
 	createdAt: Date;
 	updatedAt: Date | null;
 };
@@ -97,6 +99,7 @@ function toDomainTask(row: TrpcTaskRow): DomainTask {
 		urgency,
 		effortMinutes: row.effortMinutes ?? null,
 		commitmentHorizon: row.commitmentHorizon ?? "WHEN_POSSIBLE",
+		resumeNote: row.resumeNote ?? null,
 	};
 }
 

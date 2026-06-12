@@ -71,6 +71,7 @@ export async function importGuestSnapshot(
 					effortMinutes: guestTask.effortMinutes ?? null,
 					commitmentHorizon: guestTask.commitmentHorizon ?? "WHEN_POSSIBLE",
 					sortOrder: baseOffset + relativeIndex,
+					resumeNote: guestTask.resumeNote ?? null,
 				},
 			});
 

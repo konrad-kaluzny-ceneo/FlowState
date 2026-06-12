@@ -71,6 +71,7 @@ model Task {
   effortMinutes      Int?               @map("effort_minutes")
   commitmentHorizon  CommitmentHorizon  @default(WHEN_POSSIBLE) @map("commitment_horizon")
   sortOrder          Int                @default(0) @map("sort_order")
+  resumeNote         String?            @map("resume_note") @db.VarChar(120)
   createdAt DateTime  @default(now()) @map("createdAt") @db.Timestamptz
   updatedAt DateTime? @updatedAt @map("updatedAt") @db.Timestamptz
 

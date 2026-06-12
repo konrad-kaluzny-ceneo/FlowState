@@ -76,6 +76,7 @@ describe("guest repositories", () => {
 					weight: 2,
 					...defaultEisenhowerFields(2),
 					sortOrder: 0,
+					resumeNote: null,
 					createdAt: startedAt,
 					updatedAt: null,
 				},
