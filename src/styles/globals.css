@@ -20,6 +20,7 @@
 
 	/* Text hierarchy */
 	--color-text-primary: #2d2a35;
+	--color-primary: #2d2a35;
 	--color-text-secondary: #5c5768;
 	--color-text-dimmed: #9b96a8;
 	--color-text-section: #3d3848;
@@ -72,6 +73,7 @@
 	--color-card-shadow: rgb(0 0 0 / 0.2);
 
 	--color-text-primary: #f5f3f0;
+	--color-primary: #f5f3f0;
 	--color-text-secondary: rgb(245 243 240 / 0.65);
 	--color-text-dimmed: rgb(245 243 240 / 0.45);
 	--color-text-section: rgb(245 243 240 / 0.85);

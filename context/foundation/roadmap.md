@@ -4,7 +4,7 @@
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-11
+updated: 2026-06-12
 expanded_wellness: 2026-06-11
 expanded: 2026-06-07
 expanded_intelligence: 2026-06-07
@@ -78,7 +78,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-25 | pre-suggestion-readiness               | [FLO-58](https://linear.app/flowstate-10xdev/issue/FLO-58) | [#79](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/79)          | declare Focused/Steady/Fading at kickoff and before next-task suggestion — feeds scorer instead of hardcoded STEADY                                                          | S-05, S-06, S-15 | FR-020, FR-021, FR-019, proposed-FR-pre-suggestion-readiness                                                                      | done     |
 | S-26 | task-manual-priority-order             | [FLO-59](https://linear.app/flowstate-10xdev/issue/FLO-59) | [#81](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/81)          | **drag-reorder** active tasks with persisted manual priority as suggester tie-breaker                                                                                        | S-04, S-06, S-09 | FR-021, FR-022, FR-005, NFR (200ms acknowledgement)                                                                               | done     |
 | S-27 | daily-standing-tasks-capacity-plan     | [FLO-60](https://linear.app/flowstate-10xdev/issue/FLO-60) | [#80](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/80)          | daily standing tasks roll into today's plan with focus-hours budget and capacity-aware suggestion rationale (no RRULE)                                                       | F-05, S-06, S-15 | FR-021, FR-022, FR-019, proposed-FR-daily-standing-tasks, proposed-FR-daily-focus-budget                                          | proposed |
-| F-06 | serene-pastel-rebrand                  | [FLO-62](https://linear.app/flowstate-10xdev/issue/FLO-62) | [#97](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/97)          | (foundation) `DESIGN.md` + token pivot to Serene Pastel Well-being light-default; remap home, overlays, task cards, auth; optional calm dark sub-phase                         | F-04, S-13       | Secondary Success Criteria, NFR (200ms acknowledgement), proposed-FR-visual-design-system                                         | in review |
+| F-06 | serene-pastel-rebrand                  | [FLO-62](https://linear.app/flowstate-10xdev/issue/FLO-62) | [#97](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/97)          | (foundation) `DESIGN.md` + token pivot to Serene Pastel Well-being light-default; remap home, overlays, task cards, auth; optional calm dark sub-phase                         | F-04, S-13       | Secondary Success Criteria, NFR (200ms acknowledgement), proposed-FR-visual-design-system                                         | done     |
 | S-28 | wellness-illustration-foundation       | [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) | [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98)          | see Calm Garden illustration system on home sprig, blob atmosphere, and Empty Garden Bed empty state with shared SVG primitives                                              | F-06             | Secondary Success Criteria, proposed-FR-empty-state-guidance, proposed-FR-calm-garden-illustrations                               | proposed |
 
 
@@ -213,7 +213,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Ship light-only default or include optional calm dark variant in DESIGN.md? Owner: user. Block: no.
   - Migrate e2e focus-ring assertions to new token utility or preserve legacy class alias? Owner: implementer. Block: no.
 - **Risk:** Token rename or focus-ring utility changes break Playwright contracts (`ring-purple-500`, `data-testid`) unless updated in the same slice. Expand score 75/90 — **promote** (roadmap-expand 2026-06-11 wellness batch P-101).
-- **Status:** in review
+- **Status:** done
 
 ## Slices
 
@@ -927,6 +927,7 @@ Items tagged `needs-research` are non-trivial — they require external research
 
 ## Done
 
+- **F-06: (foundation) `DESIGN.md` and `globals.css` `@theme` pivot from dark navy glass to Serene Pastel Well-being as the canonical light-default palette; remap `home-shell`, `overlay-shell` scrims, task cards, and auth CTAs; optional calm dark mode sub-phase (desaturated pastels on `#1E2433`, not current navy).** — Archived 2026-06-12 → `context/archive/2026-06-12-serene-pastel-rebrand/` ([PR #99](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/99)). Lesson: migrate e2e focus-ring to semantic `ring-focus` in the same slice; add axe wedge scan as separate CI step.
 - **S-12: user completes a work cycle and moves through check-in and next-task suggestion inside a calm, cohesive designed flow — cycle-end, check-in, mid-cycle, and suggestion surfaces no longer feel like unstyled overlay defaults.** — Archived 2026-06-11 → `context/archive/2026-06-11-wedge-overlay-visual-polish/` ([PR #96](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/96)). Lesson: shared `overlay-shell` + merged `@theme` with S-13; preserve all wedge `data-testid` contracts.
 - **S-13: user opens FlowState (guest or logged in) and sees a cohesive branded home — not T3 boilerplate or hardcoded gradients — with active and completed tasks visually distinct at a glance; when marking a task done, user sees a brief calm completion moment (sub-second restrained motion per FR-016 — not surprise arcade animation).** — Archived 2026-06-11 → `context/archive/2026-06-11-focus-home-visual-craft/` ([PR #95](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/95)). Lesson: add home/task @theme tokens only; defer auth pages and overlay surfaces to parallel S-12.
 - **F-04: (foundation) `DESIGN.md` captures FlowState's visual system — color, typography, spacing, motion, and component patterns — produced via `/impeccable shape` discovery and `/impeccable document`, so downstream craft slices stay on-brand.** — Archived 2026-06-11 → `context/archive/2026-06-11-impeccable-design-foundation/` ([PR #94](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/94)). Lesson: exclude vendor Impeccable scripts from Biome; track skills under `.cursor` only.
