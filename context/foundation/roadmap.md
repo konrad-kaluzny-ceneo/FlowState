@@ -513,7 +513,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Show resume on manual re-select during active cycle or only when idle? Owner: user. Block: no.
 - **Risk:** A free-form notes field can drift into generic CRUD unless display is gated to wedge surfaces and length is strictly bounded (~120 chars). Mid-cycle completion capture adds transition fatigue if not gated to "pick next task" path only. Follow-up P-203+P-204 merged (61+59/90 revise).
 - **Orchestrator doubts:** Resolve schema choice (`resumeNote` vs snapshot) in `/10x-plan` before implementation — blocks clean S-17 handoff composition.
-- **Status:** active
+- **Status:** done — shipped via [PR #102](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/102) (2026-06-12)
 
 ### S-19: Suggestion override acknowledgement
 
@@ -927,6 +927,7 @@ Items tagged `needs-research` are non-trivial — they require external research
 
 ## Done
 
+- **S-18: user can attach or capture at interruption time a one-line "where I left off" note (~120 chars) when switching focus mid-cycle or when marking a task done mid-cycle and choosing the next task to continue the cycle (not when choosing "end cycle and break") — skippable at capture — and see it in the suggestion card and when manually re-selecting that task from the active list or focus picker; manual edit on task row remains supported.** — Archived 2026-06-12 → `context/archive/2026-06-12-task-resume-context-note/` ([PR #102](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/102)). Lesson: persistent `Task.resumeNote` on next task at mid-cycle continue; display-only on wedge surfaces; clears on task complete.
 - **F-06: (foundation) `DESIGN.md` and `globals.css` `@theme` pivot from dark navy glass to Serene Pastel Well-being as the canonical light-default palette; remap `home-shell`, `overlay-shell` scrims, task cards, and auth CTAs; optional calm dark mode sub-phase (desaturated pastels on `#1E2433`, not current navy).** — Archived 2026-06-12 → `context/archive/2026-06-12-serene-pastel-rebrand/` ([PR #99](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/99)). Lesson: migrate e2e focus-ring to semantic `ring-focus` in the same slice; add axe wedge scan as separate CI step.
 - **S-12: user completes a work cycle and moves through check-in and next-task suggestion inside a calm, cohesive designed flow — cycle-end, check-in, mid-cycle, and suggestion surfaces no longer feel like unstyled overlay defaults.** — Archived 2026-06-11 → `context/archive/2026-06-11-wedge-overlay-visual-polish/` ([PR #96](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/96)). Lesson: shared `overlay-shell` + merged `@theme` with S-13; preserve all wedge `data-testid` contracts.
 - **S-13: user opens FlowState (guest or logged in) and sees a cohesive branded home — not T3 boilerplate or hardcoded gradients — with active and completed tasks visually distinct at a glance; when marking a task done, user sees a brief calm completion moment (sub-second restrained motion per FR-016 — not surprise arcade animation).** — Archived 2026-06-11 → `context/archive/2026-06-11-focus-home-visual-craft/` ([PR #95](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/95)). Lesson: add home/task @theme tokens only; defer auth pages and overlay surfaces to parallel S-12.

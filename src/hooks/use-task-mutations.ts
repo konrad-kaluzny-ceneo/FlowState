@@ -251,6 +251,7 @@ export function useTaskMutations() {
 					urgency: input.urgency as 1 | 2 | 3 | undefined,
 					effortMinutes: input.effortMinutes,
 					commitmentHorizon: input.commitmentHorizon,
+					resumeNote: input.resumeNote,
 				});
 			}
 			if (typeof input.id !== "number" || isTempTaskId(input.id)) {

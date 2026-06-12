@@ -15,7 +15,7 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
@@ -134,6 +134,7 @@ function EisenhowerAttributeFields({
 					max={240}
 					min={5}
 					onChange={(e) => onEffortMinutesChange(e.target.value)}
+					onMouseDown={(e) => e.preventDefault()}
 					placeholder="min"
 					type="number"
 					value={effortMinutes}
@@ -249,8 +250,9 @@ type SortableActiveTaskRowProps = {
 	isMutating: boolean;
 	canMidCycleMarkComplete: boolean;
 	focusLocked: boolean;
-	onStartEditing: (task: DomainTask) => void;
-	onSaveEdit: (id: DomainTaskId) => void;
+	editPanelRef?: React.RefObject<HTMLDivElement | null>;
+	onCommitEdit: () => void | Promise<void>;
+	onStartEditing: (task: DomainTask) => void | Promise<void>;
 	onSetEditingId: (id: DomainTaskId | null) => void;
 	onSetEditTitle: (title: string) => void;
 	onSetEditWorkType: (
@@ -266,7 +268,7 @@ type SortableActiveTaskRowProps = {
 		id: DomainTaskId;
 		status?: "completed";
 	}) => Promise<void>;
-	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void;
+	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void | Promise<void>;
 	onDeleteTask: (input: { id: DomainTaskId }) => Promise<void>;
 	completingTaskId: DomainTaskId | null;
 	onBeginComplete: (taskId: DomainTaskId) => void;
@@ -290,8 +292,9 @@ function SortableActiveTaskRow({
 	isMutating,
 	canMidCycleMarkComplete,
 	focusLocked,
+	editPanelRef,
+	onCommitEdit,
 	onStartEditing,
-	onSaveEdit,
 	onSetEditingId,
 	onSetEditTitle,
 	onSetEditWorkType,
@@ -374,16 +377,26 @@ function SortableActiveTaskRow({
 					type="button"
 				/>
 				{editingId === task.id ? (
-					<div className="min-w-0 flex-1 space-y-2">
+					// biome-ignore lint/a11y/noStaticElementInteractions: focus-outside commit when leaving edit panel
+					<div
+						className="min-w-0 flex-1 space-y-2"
+						onBlur={(event) => {
+							const next = event.relatedTarget;
+							if (next instanceof Node && event.currentTarget.contains(next)) {
+								return;
+							}
+							void onCommitEdit();
+						}}
+						ref={editPanelRef}
+					>
 						{/* textarea (not input): titles are unbounded; multiline + wrap in read mode (B-02) */}
 						<textarea
 							className="w-full resize-y rounded bg-surface-panel px-2 py-1 text-primary focus:outline-none"
-							onBlur={() => void onSaveEdit(task.id)}
 							onChange={(e) => onSetEditTitle(e.target.value)}
 							onKeyDown={(e) => {
 								if (e.key === "Enter" && !e.shiftKey) {
 									e.preventDefault();
-									void onSaveEdit(task.id);
+									void onCommitEdit();
 								}
 								if (e.key === "Escape") onSetEditingId(null);
 							}}
@@ -443,7 +456,7 @@ function SortableActiveTaskRow({
 						}`}
 						onClick={() => {
 							if (cycleLocked) return;
-							onStartEditing(task);
+							void onStartEditing(task);
 						}}
 						type="button"
 					>
@@ -478,7 +491,7 @@ function SortableActiveTaskRow({
 									: "bg-surface-panel text-text-section hover:bg-surface-card-muted"
 							}`}
 							disabled={focusLocked}
-							onClick={() => onFocusTask(task.id, task)}
+							onClick={() => void onFocusTask(task.id, task)}
 							type="button"
 						>
 							{focusedTaskId === task.id ? "Focused" : "Focus"}
@@ -607,7 +620,88 @@ export function TaskList({
 		});
 	}
 
-	function startEditing(task: DomainTask) {
+	const editPanelRef = useRef<HTMLDivElement | null>(null);
+	const commitInFlightRef = useRef<Promise<void> | null>(null);
+
+	const commitEditIfDirty = useCallback(async () => {
+		if (commitInFlightRef.current) {
+			await commitInFlightRef.current;
+			return;
+		}
+
+		if (editingId == null) {
+			return;
+		}
+
+		const run = async () => {
+			if (!editTitle.trim()) {
+				setEditingId(null);
+				setEditTitle("");
+				setEditResumeNote("");
+				return;
+			}
+
+			await updateTask({
+				id: editingId,
+				title: editTitle.trim(),
+				workType: editWorkType,
+				urgency: editUrgency,
+				weight: editUrgency,
+				importance: editImportance,
+				effortMinutes: parseEffortMinutes(editEffortMinutes),
+				commitmentHorizon: editCommitmentHorizon,
+				resumeNote:
+					editResumeNote.trim().length > 0 ? editResumeNote.trim() : null,
+			});
+			setEditingId(null);
+			setEditTitle("");
+			setEditResumeNote("");
+		};
+
+		commitInFlightRef.current = run();
+		try {
+			await commitInFlightRef.current;
+		} finally {
+			commitInFlightRef.current = null;
+		}
+	}, [
+		editingId,
+		editTitle,
+		editWorkType,
+		editUrgency,
+		editImportance,
+		editEffortMinutes,
+		editCommitmentHorizon,
+		editResumeNote,
+		updateTask,
+	]);
+
+	useEffect(() => {
+		if (editingId == null) {
+			return;
+		}
+
+		const handlePointerDown = (event: PointerEvent) => {
+			const panel = editPanelRef.current;
+			if (panel == null) {
+				return;
+			}
+			if (event.target instanceof Node && panel.contains(event.target)) {
+				return;
+			}
+			void commitEditIfDirty();
+		};
+
+		document.addEventListener("pointerdown", handlePointerDown);
+		return () => {
+			document.removeEventListener("pointerdown", handlePointerDown);
+		};
+	}, [editingId, commitEditIfDirty]);
+
+	async function startEditing(task: DomainTask) {
+		if (editingId != null) {
+			await commitEditIfDirty();
+		}
 		setEditingId(task.id);
 		setEditTitle(task.title);
 		setEditWorkType(task.workType);
@@ -620,27 +714,15 @@ export function TaskList({
 		setEditResumeNote(task.resumeNote ?? "");
 	}
 
-	async function saveEdit(id: DomainTaskId) {
-		if (!editTitle.trim()) {
-			return;
-		}
-
-		await updateTask({
-			id,
-			title: editTitle.trim(),
-			workType: editWorkType,
-			urgency: editUrgency,
-			weight: editUrgency,
-			importance: editImportance,
-			effortMinutes: parseEffortMinutes(editEffortMinutes),
-			commitmentHorizon: editCommitmentHorizon,
-			resumeNote:
-				editResumeNote.trim().length > 0 ? editResumeNote.trim() : null,
-		});
-		setEditingId(null);
-		setEditTitle("");
-		setEditResumeNote("");
-	}
+	const handleFocusTask = useCallback(
+		async (taskId: DomainTaskId, task: DomainTask) => {
+			if (editingId != null) {
+				await commitEditIfDirty();
+			}
+			onFocusTask(taskId, task);
+		},
+		[commitEditIfDirty, editingId, onFocusTask],
+	);
 
 	return (
 		<div className="w-full max-w-lg space-y-6" data-testid="task-list">
@@ -772,6 +854,9 @@ export function TaskList({
 										editEffortMinutes={editEffortMinutes}
 										editImportance={editImportance}
 										editingId={editingId}
+										editPanelRef={
+											editingId === task.id ? editPanelRef : undefined
+										}
 										editResumeNote={editResumeNote}
 										editTitle={editTitle}
 										editUrgency={editUrgency}
@@ -783,10 +868,10 @@ export function TaskList({
 										key={String(task.id)}
 										markCompleteLocked={markCompleteLocked}
 										onBeginComplete={beginCompleteAnimation}
+										onCommitEdit={commitEditIfDirty}
 										onDeleteTask={deleteTask}
-										onFocusTask={onFocusTask}
+										onFocusTask={handleFocusTask}
 										onMidCycleMarkComplete={onMidCycleMarkComplete}
-										onSaveEdit={saveEdit}
 										onSetEditCommitmentHorizon={setEditCommitmentHorizon}
 										onSetEditEffortMinutes={setEditEffortMinutes}
 										onSetEditImportance={setEditImportance}
