@@ -1,5 +1,11 @@
 import type { DragEndEvent } from "@dnd-kit/core";
-import { fireEvent, render, screen } from "@testing-library/react";
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -29,6 +35,7 @@ const createTask = vi.fn().mockResolvedValue(undefined);
 const deleteTask = vi.fn().mockResolvedValue(undefined);
 const reorderTasks = vi.fn().mockResolvedValue(undefined);
 const clearError = vi.fn();
+const onFocusTask = vi.fn();
 
 vi.mock("~/hooks/use-task-mutations", () => ({
 	useTaskMutations: () => ({
@@ -69,7 +76,7 @@ const defaultProps = {
 	tasks: [makeTask()],
 	onRefresh: vi.fn().mockResolvedValue(undefined),
 	focusedTaskId: null,
-	onFocusTask: vi.fn(),
+	onFocusTask,
 	cycleState: "idle" as const,
 };
 
@@ -111,6 +118,126 @@ describe("TaskList", () => {
 			commitmentHorizon: "WHEN_POSSIBLE",
 			resumeNote: null,
 		});
+	});
+
+	it("saves resumeNote when clicking outside the edit panel", async () => {
+		render(<TaskList {...defaultProps} />);
+
+		fireEvent.click(screen.getByRole("button", { name: "Short title" }));
+
+		const resumeNote = screen.getByLabelText("Where you left off (optional)");
+		fireEvent.change(resumeNote, {
+			target: { value: "Picked up mid refactor" },
+		});
+		fireEvent.pointerDown(document.body);
+
+		await waitFor(() => {
+			expect(updateTask).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: 1,
+					resumeNote: "Picked up mid refactor",
+				}),
+			);
+		});
+	});
+
+	it("saves before focusing another task while editing", async () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({ id: 1, title: "First" }),
+					makeTask({ id: 2, title: "Second", sortOrder: 1 }),
+				]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "First" }));
+		const resumeNote = screen.getByLabelText("Where you left off (optional)");
+		fireEvent.change(resumeNote, {
+			target: { value: "Context for first" },
+		});
+
+		const rows = screen.getAllByTestId("active-task-row");
+		fireEvent.click(
+			within(rows[1] as HTMLElement).getByRole("button", { name: "Focus" }),
+		);
+
+		await waitFor(() => {
+			expect(updateTask).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: 1,
+					resumeNote: "Context for first",
+				}),
+			);
+		});
+		expect(onFocusTask).toHaveBeenCalledWith(
+			2,
+			expect.objectContaining({ id: 2 }),
+		);
+	});
+
+	it("saves the prior task before opening edit on another task", async () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({ id: 1, title: "First" }),
+					makeTask({ id: 2, title: "Second", sortOrder: 1 }),
+				]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "First" }));
+		const resumeNote = screen.getByLabelText("Where you left off (optional)");
+		fireEvent.change(resumeNote, {
+			target: { value: "Draft note" },
+		});
+
+		fireEvent.click(screen.getByRole("button", { name: "Second" }));
+
+		await waitFor(() => {
+			expect(updateTask).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: 1,
+					resumeNote: "Draft note",
+				}),
+			);
+		});
+	});
+
+	it("discards edits on Escape without calling updateTask", () => {
+		render(<TaskList {...defaultProps} />);
+
+		fireEvent.click(screen.getByRole("button", { name: "Short title" }));
+		const textarea = screen
+			.getByTestId("active-task-row")
+			.querySelector("textarea");
+		fireEvent.change(textarea as HTMLTextAreaElement, {
+			target: { value: "Changed title" },
+		});
+		fireEvent.keyDown(textarea as HTMLTextAreaElement, { key: "Escape" });
+
+		expect(updateTask).not.toHaveBeenCalled();
+		expect(screen.getByRole("button", { name: "Short title" })).toBeTruthy();
+	});
+
+	it("persists attribute changes when committing after SegmentedControl edit", async () => {
+		render(<TaskList {...defaultProps} />);
+
+		fireEvent.click(screen.getByRole("button", { name: "Short title" }));
+		fireEvent.click(screen.getByRole("button", { name: "Deep" }));
+		fireEvent.pointerDown(document.body);
+
+		await waitFor(() => {
+			expect(updateTask).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: 1,
+					workType: "DEEP_WORK",
+				}),
+			);
+		});
+		expect(updateTask).toHaveBeenCalledTimes(1);
 	});
 
 	it("shows Eisenhower attribute pickers in create Details panel", () => {
