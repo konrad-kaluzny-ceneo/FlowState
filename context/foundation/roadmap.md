@@ -4,6 +4,7 @@ version: 2
 status: draft
 created: 2026-05-26
 updated: 2026-06-12
+active_slice_started: 2026-06-12
 expanded_wellness: 2026-06-11
 expanded: 2026-06-07
 expanded_intelligence: 2026-06-07
@@ -11,7 +12,7 @@ expanded_story: 2026-06-07
 expanded_followup: 2026-06-07
 expanded_ux_gaps: 2026-06-07
 expanded_task_planning: 2026-06-09
-active_slices: []
+active_slices: [S-17]
 prd_version: 2
 main_goal: quality
 top_blocker: none
@@ -62,7 +63,7 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-15 | session-kickoff-suggestion             | [FLO-30](https://linear.app/flowstate-10xdev/issue/FLO-30) | [#41](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/41)          | kickoff suggestion + work-type duration presets + remembered per-type defaults (tap-to-apply only)                                                                           | S-06             | FR-021, FR-019, FR-009, FR-010, FR-017, proposed-FR-session-start-guidance                                                        | done     |
 | S-16 | mindful-session-wind-down              | [FLO-31](https://linear.app/flowstate-10xdev/issue/FLO-31) | [#42](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/42)          | receive an optional, dismissible prompt to end the session with rationale when energy is Fading and fatigue signals align — and override to continue                         | S-05, S-06       | FR-020, FR-021, FR-019                                                                                                            | done     |
 | S-18 | task-resume-context-note               | [FLO-33](https://linear.app/flowstate-10xdev/issue/FLO-33) | [#44](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/44)          | capture resume note at mid-cycle switch and mid-cycle completion; show on suggestion card and manual refocus                                                                 | S-06             | FR-015, FR-019, FR-021, FR-022, FR-028                                                                                            | done     |
-| S-17 | session-narrative-summary              | [FLO-32](https://linear.app/flowstate-10xdev/issue/FLO-32) | [#43](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/43)          | in-flow narrative + closure + 8h return handoff composing S-18 resume note (max two clauses, no charts)                                                                      | S-02, S-05, S-18 | FR-019, FR-020, FR-012, FR-040, NFR (90-day retention)                                                                              | proposed |
+| S-17 | session-narrative-summary              | [FLO-32](https://linear.app/flowstate-10xdev/issue/FLO-32) | [#43](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/43)          | in-flow narrative + closure + 8h return handoff composing S-18 resume note (max two clauses, no charts)                                                                      | S-02, S-05, S-18 | FR-019, FR-020, FR-012, FR-040, NFR (90-day retention)                                                                              | active   |
 | S-19 | suggestion-override-acknowledgement    | [FLO-34](https://linear.app/flowstate-10xdev/issue/FLO-34) | [#45](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/45) (closed) | validating acknowledgement on post-check-in and kickoff suggestion override — same FR-022 story                                                                              | S-06             | FR-022, FR-021, FR-019, proposed-FR-session-start-guidance                                                                        | done     |
 | S-20 | persistent-quiet-cycle-audio           | [FLO-35](https://linear.app/flowstate-10xdev/issue/FLO-35) | [#46](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/46)          | persistent mute/soften cycle chime; optional title/favicon pulse when muted + tab backgrounded; pair with S-22                                                               | S-01             | FR-013, FR-014, NFR (200ms acknowledgement)                                                                                       | done     |
 | S-21 | mindful-transition-copy                | [FLO-36](https://linear.app/flowstate-10xdev/issue/FLO-36) | [#47](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/47)          | skippable break/re-entry copy; re-entry variant keyed to last check-in energy (Focused/Steady/Fading)                                                                        | S-02, S-05, S-12 | FR-014, FR-011, FR-012, FR-020                                                                                                    | proposed |
@@ -491,7 +492,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - When handoff has both open task and resume note, prefer resume note over task title? Owner: user. Block: no.
 - **Risk:** Summary line plus suggestion rationale may feel redundant — show summary between cycles only (not overlapping suggestion card). Return handoff must not surface streaks, totals, or comparative stats (parked analytics). Follow-up P-202 merged (63/90 revise).
 - **Orchestrator doubts:** Sequencing S-18 before or in parallel with S-17 handoff phase — do not block entire S-17 on S-18 if closure ships first.
-- **Status:** proposed
+- **Status:** active
 
 ### S-18: Task resume context note
 
