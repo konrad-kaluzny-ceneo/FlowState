@@ -162,6 +162,6 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 			/noted/i,
 		);
 		await expect(page.getByTestId("suggested-task-row")).toHaveCount(0);
-		await expect(reactiveRow).toHaveClass(/ring-purple-500/);
+		await expect(reactiveRow).toHaveClass(/ring-focus/);
 	});
 });

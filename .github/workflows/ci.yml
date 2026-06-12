@@ -102,3 +102,6 @@ jobs:
 
       - name: E2E tests
         run: pnpm test:e2e:belt
+
+      - name: E2E accessibility
+        run: pnpm test:e2e:a11y

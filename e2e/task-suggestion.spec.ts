@@ -154,6 +154,6 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 			.getByRole("listitem")
 			.filter({ hasText: reactiveTask })
 			.first();
-		await expect(reactiveRow).toHaveClass(/ring-purple-500/);
+		await expect(reactiveRow).toHaveClass(/ring-focus/);
 	});
 });

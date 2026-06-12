@@ -20,6 +20,7 @@
 		"test:mutate": "stryker run",
 		"test:e2e": "playwright test",
 		"test:e2e:belt": "playwright test --grep-invert @skip-belt",
+		"test:e2e:a11y": "playwright test e2e/accessibility.spec.ts",
 		"test:watch": "vitest",
 		"typecheck": "tsc --noEmit",
 		"prepare": "lefthook install"
@@ -45,6 +46,7 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
+		"@axe-core/playwright": "^4.11.3",
 		"@biomejs/biome": "^2.4.15",
 		"@fast-check/vitest": "^0.4.1",
 		"@playwright/test": "^1.60.0",

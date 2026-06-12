@@ -473,27 +473,27 @@ No database migration. Existing users see light-default on first visit (or syste
 
 #### Automated
 
-- [x] 5.1 `pnpm exec vitest run src/app/_components/duration-picker.test.tsx` passes
-- [x] 5.2 `pnpm check` passes
-- [x] 5.3 `pnpm test` passes
+- [x] 5.1 `pnpm exec vitest run src/app/_components/duration-picker.test.tsx` passes — bcc3574
+- [x] 5.2 `pnpm check` passes — bcc3574
+- [x] 5.3 `pnpm test` passes — bcc3574
 
 #### Manual
 
-- [x] 5.4 Segmented controls readable in both themes
-- [x] 5.5 Timer panel focal treatment intact in both themes
+- [x] 5.4 Segmented controls readable in both themes — bcc3574
+- [x] 5.5 Timer panel focal treatment intact in both themes — bcc3574
 
 ### Phase 6: Test contracts + axe CI
 
 #### Automated
 
-- [ ] 6.1 `pnpm check` passes
-- [ ] 6.2 `pnpm typecheck` passes
-- [ ] 6.3 `pnpm test` passes
-- [ ] 6.4 `set CI=true && pnpm test:e2e:belt` passes
-- [ ] 6.5 `set CI=true && pnpm test:e2e:a11y` passes
-- [ ] 6.6 Duration picker unit test uses aria-pressed assertion
+- [x] 6.1 `pnpm check` passes
+- [x] 6.2 `pnpm typecheck` passes
+- [x] 6.3 `pnpm test` passes
+- [x] 6.4 `set CI=true && pnpm test:e2e:belt` passes
+- [x] 6.5 `set CI=true && pnpm test:e2e:a11y` passes
+- [x] 6.6 Duration picker unit test uses aria-pressed assertion
 
 #### Manual
 
-- [ ] 6.7 `@skip-belt` e2e focus ring specs pass locally
-- [ ] 6.8 Axe report free of critical/serious wedge violations
+- [x] 6.7 `@skip-belt` e2e focus ring specs pass locally
+- [x] 6.8 Axe report free of critical/serious wedge violations

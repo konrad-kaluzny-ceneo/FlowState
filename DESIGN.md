@@ -265,7 +265,9 @@ Active chip: `bg-segment-active text-on-cta`. Inactive: `bg-segment-inactive tex
 
 Preserve all existing `data-testid` attributes on wedge components.
 
-Focus ring: semantic utility `ring-2 ring-focus` on selected task rows. Update assertions in `e2e/task-suggestion.spec.ts` and `e2e/session-kickoff.spec.ts` in Phase 6 (same slice as token migration).
+Focus ring: semantic utility `ring-2 ring-focus` on selected/focused task rows. Asserted in `e2e/task-suggestion.spec.ts` and `e2e/session-kickoff.spec.ts` (`@skip-belt`).
+
+Accessibility: `e2e/accessibility.spec.ts` scans the authenticated task list wedge via `@axe-core/playwright`. CI runs `pnpm test:e2e:a11y` after the belt; fails on `critical` or `serious` violations.
 
 ### Future patterns (not implemented)
 
