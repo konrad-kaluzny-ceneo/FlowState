@@ -418,28 +418,28 @@ No database migration. Existing users see light-default on first visit (or syste
 
 #### Automated
 
-- [x] 1.1 `pnpm check` passes
-- [x] 1.2 `pnpm typecheck` passes
-- [x] 1.3 New `@theme` tokens compile (text-primary, bg-scrim, ring-focus)
+- [x] 1.1 `pnpm check` passes — bcaba46
+- [x] 1.2 `pnpm typecheck` passes — bcaba46
+- [x] 1.3 New `@theme` tokens compile (text-primary, bg-scrim, ring-focus) — bcaba46
 
 #### Manual
 
-- [x] 1.4 CSS variable overrides visibly change shell gradient when toggling `data-theme` in devtools
-- [x] 1.5 DESIGN.md frontmatter colors match globals.css values
+- [x] 1.4 CSS variable overrides visibly change shell gradient when toggling `data-theme` in devtools — bcaba46
+- [x] 1.5 DESIGN.md frontmatter colors match globals.css values — bcaba46
 
 ### Phase 2: Theme toggle
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec vitest run src/app/_components/user-menu.test.tsx` passes
-- [ ] 2.2 `pnpm check` passes
-- [ ] 2.3 `pnpm test` passes
+- [x] 2.1 `pnpm exec vitest run src/app/_components/user-menu.test.tsx` passes
+- [x] 2.2 `pnpm check` passes
+- [x] 2.3 `pnpm test` passes
 
 #### Manual
 
-- [ ] 2.4 Toggle Light → Dark → System updates `<html data-theme>` without full reload
-- [ ] 2.5 Hard reload preserves last selected theme
-- [ ] 2.6 System mode tracks OS preference change
+- [x] 2.4 Toggle Light → Dark → System updates `<html data-theme>` without full reload
+- [x] 2.5 Hard reload preserves last selected theme
+- [x] 2.6 System mode tracks OS preference change
 
 ### Phase 3: Home + task + auth remap
 
