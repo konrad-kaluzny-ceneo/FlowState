@@ -46,7 +46,9 @@ describe("DurationPicker", () => {
 		);
 
 		const activeButton = screen.getByRole("button", { name: "25 min" });
-		expect(activeButton.className).toContain("bg-purple-600");
+		expect(
+			(activeButton as HTMLButtonElement).getAttribute("aria-pressed"),
+		).toBe("true");
 	});
 
 	it("syncs custom fields from valueSec on init", () => {

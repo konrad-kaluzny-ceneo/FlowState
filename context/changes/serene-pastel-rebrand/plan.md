@@ -459,28 +459,28 @@ No database migration. Existing users see light-default on first visit (or syste
 
 #### Automated
 
-- [x] 4.1 `pnpm exec vitest run src/app/_components/overlay-shell.test.tsx` passes
-- [x] 4.2 Orphan overlay smoke tests pass
-- [x] 4.3 `pnpm check` passes
-- [x] 4.4 `pnpm test` passes
+- [x] 4.1 `pnpm exec vitest run src/app/_components/overlay-shell.test.tsx` passes — a8b6dc3
+- [x] 4.2 Orphan overlay smoke tests pass — a8b6dc3
+- [x] 4.3 `pnpm check` passes — a8b6dc3
+- [x] 4.4 `pnpm test` passes — a8b6dc3
 
 #### Manual
 
-- [x] 4.5 Overlays readable in light and dark themes
-- [x] 4.6 Orphan overlays match wedge overlay family
+- [x] 4.5 Overlays readable in light and dark themes — a8b6dc3
+- [x] 4.6 Orphan overlays match wedge overlay family — a8b6dc3
 
 ### Phase 5: Timer + segmented chrome
 
 #### Automated
 
-- [ ] 5.1 `pnpm exec vitest run src/app/_components/duration-picker.test.tsx` passes
-- [ ] 5.2 `pnpm check` passes
-- [ ] 5.3 `pnpm test` passes
+- [x] 5.1 `pnpm exec vitest run src/app/_components/duration-picker.test.tsx` passes
+- [x] 5.2 `pnpm check` passes
+- [x] 5.3 `pnpm test` passes
 
 #### Manual
 
-- [ ] 5.4 Segmented controls readable in both themes
-- [ ] 5.5 Timer panel focal treatment intact in both themes
+- [x] 5.4 Segmented controls readable in both themes
+- [x] 5.5 Timer panel focal treatment intact in both themes
 
 ### Phase 6: Test contracts + axe CI
 

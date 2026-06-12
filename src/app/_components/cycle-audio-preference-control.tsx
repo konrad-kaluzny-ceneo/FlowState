@@ -50,10 +50,10 @@ export function CycleAudioPreferenceControl({
 
 	return (
 		<fieldset
-			className="mt-4 border-white/10 border-t pt-4"
+			className="mt-4 border-border-subtle border-t pt-4"
 			data-testid="cycle-audio-preference"
 		>
-			<legend className="mb-2 w-full text-center text-sm text-white/70">
+			<legend className="mb-2 w-full text-center text-sm text-text-secondary">
 				Cycle end audio
 			</legend>
 			<div className="flex justify-center gap-1">
@@ -64,8 +64,8 @@ export function CycleAudioPreferenceControl({
 							aria-pressed={isActive}
 							className={`rounded-md px-3 py-1.5 font-medium text-sm transition ${
 								isActive
-									? "bg-purple-600 text-white"
-									: "bg-white/10 text-white/60 hover:bg-white/20"
+									? "bg-segment-active text-on-cta"
+									: "bg-segment-inactive text-text-secondary hover:bg-surface-panel"
 							} disabled:cursor-not-allowed disabled:opacity-50`}
 							data-testid={`cycle-audio-preference-${opt.value}`}
 							disabled={disabled}

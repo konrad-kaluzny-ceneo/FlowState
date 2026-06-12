@@ -86,33 +86,39 @@ export function DurationPicker({
 	return (
 		<div>
 			<div className="flex flex-wrap justify-center gap-2">
-				{presets.map((preset) => (
-					<button
-						className={`rounded-lg px-3 py-2 text-sm transition ${
-							valueSec === preset.sec
-								? "bg-purple-600 text-white"
-								: "bg-white/10 text-white/80 hover:bg-white/20"
-						}`}
-						key={preset.sec}
-						onClick={() => {
-							setTouched(false);
-							onChangeSec(preset.sec);
-						}}
-						type="button"
-					>
-						{preset.label}
-					</button>
-				))}
+				{presets.map((preset) => {
+					const isActive = valueSec === preset.sec;
+					return (
+						<button
+							aria-pressed={isActive}
+							className={`rounded-lg px-3 py-2 text-sm transition ${
+								isActive
+									? "bg-segment-active text-on-cta"
+									: "bg-segment-inactive text-text-secondary hover:bg-surface-panel"
+							}`}
+							key={preset.sec}
+							onClick={() => {
+								setTouched(false);
+								onChangeSec(preset.sec);
+							}}
+							type="button"
+						>
+							{preset.label}
+						</button>
+					);
+				})}
 			</div>
 
 			<div className="mt-4 flex flex-col items-center gap-1">
-				<span className="text-sm text-white/70">Custom ({boundsLabel})</span>
-				<div className="flex items-center gap-2 text-sm text-white/70">
+				<span className="text-sm text-text-secondary">
+					Custom ({boundsLabel})
+				</span>
+				<div className="flex items-center gap-2 text-sm text-text-secondary">
 					<input
-						className={`w-14 rounded border bg-white/10 px-2 py-1 text-center text-white ${
+						className={`w-14 rounded border bg-surface-panel px-2 py-1 text-center text-primary ${
 							showError
 								? "border-red-400 outline-1 outline-red-400/50"
-								: "border-white/20"
+								: "border-border-subtle"
 						}`}
 						data-testid={`${testIdPrefix}-min`}
 						min={0}
@@ -120,12 +126,12 @@ export function DurationPicker({
 						type="number"
 						value={minutesStr}
 					/>
-					<span className="text-white/50">min</span>
+					<span className="text-text-dimmed">min</span>
 					<input
-						className={`w-14 rounded border bg-white/10 px-2 py-1 text-center text-white ${
+						className={`w-14 rounded border bg-surface-panel px-2 py-1 text-center text-primary ${
 							showError
 								? "border-red-400 outline-1 outline-red-400/50"
-								: "border-white/20"
+								: "border-border-subtle"
 						}`}
 						data-testid={`${testIdPrefix}-sec`}
 						min={0}
@@ -133,10 +139,10 @@ export function DurationPicker({
 						type="number"
 						value={secondsStr}
 					/>
-					<span className="text-white/50">sec</span>
+					<span className="text-text-dimmed">sec</span>
 				</div>
 				{showError && (
-					<p className="text-center text-red-400 text-xs">
+					<p className="text-center text-red-600 text-xs">
 						Must be within {boundsLabel}
 					</p>
 				)}
