@@ -96,6 +96,7 @@ model Session {
   lastActivityAt   DateTime     @default(now()) @map("last_activity_at") @db.Timestamptz
   interruptionCount Int         @default(0) @map("interruption_count")
   archivedAt       DateTime?    @map("archived_at") @db.Timestamptz
+  closureLine      String?      @map("closure_line") @db.VarChar(120)
 
   cycles              Cycle[]
   suggestionDecisions SuggestionDecision[]
@@ -115,6 +116,7 @@ model Cycle {
   configuredDurationSec Int       @map("configured_duration_sec")
   startedAt            DateTime   @default(now()) @map("started_at") @db.Timestamptz
   endedAt              DateTime?  @map("ended_at") @db.Timestamptz
+  intention            String?    @db.VarChar(80)
 
   session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   task    Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)

@@ -160,8 +160,8 @@ Deliver FR-040 session narrative: in-flow one-line summary during active session
 
 #### Automated
 
-- [ ] 1.1 Prisma migration (Cycle.intention, Session.closureLine) + generate
-- [ ] 1.2 narrative-builder + narrative-copy modules + unit tests
+- [x] 1.1 Prisma migration (Cycle.intention, Session.closureLine) + generate
+- [x] 1.2 narrative-builder + narrative-copy modules + unit tests
 
 ### Phase 2: Server queries + tRPC
 

@@ -72,6 +72,7 @@ export const guestSessionSchema = z.object({
 	endedAt: z.coerce.date().nullable(),
 	lastActivityAt: z.coerce.date(),
 	interruptionCount: z.number().int().default(0),
+	closureLine: z.string().max(120).nullable().optional(),
 });
 
 export const guestCycleSchema = z.object({
@@ -87,6 +88,7 @@ export const guestCycleSchema = z.object({
 		.max(90 * 60),
 	startedAt: z.coerce.date(),
 	endedAt: z.coerce.date().nullable(),
+	intention: z.string().max(80).nullable().optional(),
 });
 
 export const guestSnapshotV1Schema = z.object({
