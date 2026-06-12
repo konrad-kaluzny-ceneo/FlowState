@@ -32,6 +32,7 @@ const tasks: DomainTask[] = [
 		weight: 2,
 		...defaultEisenhowerFields(2),
 		sortOrder: 0,
+		resumeNote: null,
 	},
 ];
 

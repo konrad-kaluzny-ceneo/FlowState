@@ -30,6 +30,7 @@ export type DomainTask = {
 	effortMinutes: number | null;
 	commitmentHorizon: CommitmentHorizon;
 	sortOrder: number;
+	resumeNote: string | null;
 };
 
 export type DomainActiveCycle = {
@@ -73,6 +74,7 @@ export interface TaskRepository {
 			title: string;
 			workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 			weight?: 1 | 2 | 3;
+			resumeNote?: string | null;
 		} & EisenhowerTaskInput,
 	): Promise<DomainTask>;
 	update(
@@ -82,6 +84,7 @@ export interface TaskRepository {
 			status?: "active" | "completed";
 			workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 			weight?: 1 | 2 | 3;
+			resumeNote?: string | null;
 		} & EisenhowerTaskInput,
 	): Promise<void>;
 	delete(input: { id: DomainTaskId }): Promise<void>;

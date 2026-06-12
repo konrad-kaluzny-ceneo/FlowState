@@ -243,6 +243,7 @@ type SortableActiveTaskRowProps = {
 	editImportance: 1 | 2 | 3;
 	editEffortMinutes: string;
 	editCommitmentHorizon: CommitmentHorizon;
+	editResumeNote: string;
 	cycleLocked: boolean;
 	markCompleteLocked: boolean;
 	isMutating: boolean;
@@ -259,6 +260,7 @@ type SortableActiveTaskRowProps = {
 	onSetEditImportance: (importance: 1 | 2 | 3) => void;
 	onSetEditEffortMinutes: (value: string) => void;
 	onSetEditCommitmentHorizon: (value: CommitmentHorizon) => void;
+	onSetEditResumeNote: (value: string) => void;
 	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
 	onUpdateTask: (input: {
 		id: DomainTaskId;
@@ -282,6 +284,7 @@ function SortableActiveTaskRow({
 	editImportance,
 	editEffortMinutes,
 	editCommitmentHorizon,
+	editResumeNote,
 	cycleLocked,
 	markCompleteLocked,
 	isMutating,
@@ -296,6 +299,7 @@ function SortableActiveTaskRow({
 	onSetEditImportance,
 	onSetEditEffortMinutes,
 	onSetEditCommitmentHorizon,
+	onSetEditResumeNote,
 	onMidCycleMarkComplete,
 	onUpdateTask,
 	onFocusTask,
@@ -386,6 +390,21 @@ function SortableActiveTaskRow({
 							rows={2}
 							value={editTitle}
 						/>
+						<label
+							className="block text-text-secondary text-xs"
+							htmlFor={`task-resume-note-edit-${String(task.id)}`}
+						>
+							Where you left off (optional)
+						</label>
+						<textarea
+							className="w-full resize-none rounded bg-surface-panel px-2 py-1 text-primary text-sm focus:outline-none"
+							id={`task-resume-note-edit-${String(task.id)}`}
+							maxLength={120}
+							onChange={(event) => onSetEditResumeNote(event.target.value)}
+							placeholder="One line for when you return to this task"
+							rows={2}
+							value={editResumeNote}
+						/>
 						<div className="flex flex-wrap items-center gap-2">
 							<span className="w-16 shrink-0 text-text-secondary text-xs">
 								Type
@@ -432,6 +451,17 @@ function SortableActiveTaskRow({
 					</button>
 				)}
 			</div>
+			{editingId !== task.id &&
+				focusedTaskId === task.id &&
+				task.resumeNote != null &&
+				task.resumeNote.length > 0 && (
+					<p
+						className="pl-9 text-sm text-text-dimmed italic"
+						data-testid="task-resume-note"
+					>
+						{task.resumeNote}
+					</p>
+				)}
 			{editingId !== task.id && (
 				<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-9">
 					<TaskBadges
@@ -515,6 +545,7 @@ export function TaskList({
 	const [editEffortMinutes, setEditEffortMinutes] = useState("");
 	const [editCommitmentHorizon, setEditCommitmentHorizon] =
 		useState<CommitmentHorizon>("WHEN_POSSIBLE");
+	const [editResumeNote, setEditResumeNote] = useState("");
 	const [completingTaskId, setCompletingTaskId] = useState<DomainTaskId | null>(
 		null,
 	);
@@ -586,6 +617,7 @@ export function TaskList({
 			task.effortMinutes != null ? String(task.effortMinutes) : "",
 		);
 		setEditCommitmentHorizon(task.commitmentHorizon);
+		setEditResumeNote(task.resumeNote ?? "");
 	}
 
 	async function saveEdit(id: DomainTaskId) {
@@ -602,9 +634,12 @@ export function TaskList({
 			importance: editImportance,
 			effortMinutes: parseEffortMinutes(editEffortMinutes),
 			commitmentHorizon: editCommitmentHorizon,
+			resumeNote:
+				editResumeNote.trim().length > 0 ? editResumeNote.trim() : null,
 		});
 		setEditingId(null);
 		setEditTitle("");
+		setEditResumeNote("");
 	}
 
 	return (
@@ -737,6 +772,7 @@ export function TaskList({
 										editEffortMinutes={editEffortMinutes}
 										editImportance={editImportance}
 										editingId={editingId}
+										editResumeNote={editResumeNote}
 										editTitle={editTitle}
 										editUrgency={editUrgency}
 										editWorkType={editWorkType}
@@ -755,6 +791,7 @@ export function TaskList({
 										onSetEditEffortMinutes={setEditEffortMinutes}
 										onSetEditImportance={setEditImportance}
 										onSetEditingId={setEditingId}
+										onSetEditResumeNote={setEditResumeNote}
 										onSetEditTitle={setEditTitle}
 										onSetEditUrgency={setEditUrgency}
 										onSetEditWorkType={setEditWorkType}

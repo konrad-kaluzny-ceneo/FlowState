@@ -236,4 +236,21 @@ describe("TaskSuggestionCard", () => {
 		expect(screen.getByTestId("suggestion-rationale-toggle")).toBeTruthy();
 		expect(screen.getAllByText(baseSuggestion.rationale)).toHaveLength(1);
 	});
+
+	it("shows resume note below title when present", () => {
+		render(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={{
+					...baseSuggestion,
+					resumeNote: "left off at auth middleware",
+				}}
+			/>,
+		);
+
+		expect(screen.getByTestId("suggestion-resume-note").textContent).toContain(
+			"left off at auth middleware",
+		);
+	});
 });

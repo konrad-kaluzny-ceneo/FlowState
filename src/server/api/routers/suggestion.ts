@@ -210,6 +210,7 @@ export const suggestionRouter = createTRPCRouter({
 					rationaleKey,
 					rationale,
 					breakdown,
+					resumeNote: task.resumeNote,
 				};
 			}
 
@@ -292,6 +293,7 @@ export const suggestionRouter = createTRPCRouter({
 				rationaleKey,
 				rationale,
 				breakdown,
+				resumeNote: task.resumeNote,
 			};
 		}),
 

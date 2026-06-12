@@ -7,6 +7,7 @@ const workTypeSchema = z.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"]);
 const axisSchema = z.number().int().min(1).max(3);
 const effortMinutesSchema = z.number().int().min(5).max(240).nullable();
 const commitmentHorizonSchema = z.enum(["ASAP", "THIS_WEEK", "WHEN_POSSIBLE"]);
+const resumeNoteSchema = z.string().max(120).nullable().optional();
 
 async function nextActiveSortOrder(
 	db: {
@@ -44,6 +45,7 @@ export const taskRouter = createTRPCRouter({
 				urgency: axisSchema.optional(),
 				effortMinutes: effortMinutesSchema.optional(),
 				commitmentHorizon: commitmentHorizonSchema.optional(),
+				resumeNote: resumeNoteSchema,
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -62,6 +64,9 @@ export const taskRouter = createTRPCRouter({
 					effortMinutes: input.effortMinutes ?? null,
 					commitmentHorizon: input.commitmentHorizon ?? "WHEN_POSSIBLE",
 					...(input.workType != null ? { workType: input.workType } : {}),
+					...(input.resumeNote !== undefined
+						? { resumeNote: input.resumeNote }
+						: {}),
 				},
 			});
 		}),
@@ -78,6 +83,7 @@ export const taskRouter = createTRPCRouter({
 				urgency: axisSchema.optional(),
 				effortMinutes: effortMinutesSchema.optional(),
 				commitmentHorizon: commitmentHorizonSchema.optional(),
+				resumeNote: resumeNoteSchema,
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -104,6 +110,10 @@ export const taskRouter = createTRPCRouter({
 					...updateData,
 					sortOrder: await nextActiveSortOrder(ctx.db, ctx.session.user.id),
 				};
+			}
+
+			if (data.status === "completed") {
+				updateData = { ...updateData, resumeNote: null };
 			}
 
 			await ctx.db.task.update({
