@@ -51,7 +51,7 @@ function TaskBadges({
 	const config = WORK_TYPE_CONFIG[workType];
 	return (
 		<span
-			className={`flex shrink-0 flex-wrap items-center gap-1 ${dimmed ? "opacity-50" : ""}`}
+			className={`flex min-w-0 flex-wrap items-center gap-1 ${dimmed ? "opacity-60" : ""}`}
 		>
 			<span
 				className={`rounded-full px-2 py-0.5 font-medium text-xs ${config.bg} ${config.text}`}
@@ -323,7 +323,7 @@ function SortableActiveTaskRow({
 
 	return (
 		<li
-			className={`flex flex-col gap-2 rounded-lg border border-transparent bg-surface-card px-4 py-3 ${
+			className={`flex max-w-full flex-col gap-2 overflow-hidden rounded-lg border border-transparent bg-surface-card px-4 py-3 ${
 				focusedTaskId === task.id ? "ring-2 ring-focus" : ""
 			} ${
 				highlightedTaskId === task.id ? "ring-2 ring-accent-suggestion" : ""
@@ -336,7 +336,7 @@ function SortableActiveTaskRow({
 			ref={setNodeRef}
 			style={style}
 		>
-			<div className="flex min-w-0 items-start gap-2">
+			<div className="flex w-full min-w-0 items-start gap-2">
 				<button
 					aria-label="Drag to reorder"
 					className={`mt-0.5 shrink-0 cursor-grab px-1 text-text-dimmed transition hover:text-text-secondary active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30 ${
@@ -418,9 +418,14 @@ function SortableActiveTaskRow({
 					</div>
 				) : (
 					<button
-						className="min-w-0 flex-1 cursor-pointer whitespace-pre-wrap break-words text-left text-primary disabled:cursor-default disabled:opacity-70"
-						disabled={cycleLocked}
-						onClick={() => onStartEditing(task)}
+						aria-disabled={cycleLocked}
+						className={`min-w-0 flex-1 basis-0 cursor-pointer overflow-hidden whitespace-pre-wrap break-all text-left text-primary ${
+							cycleLocked ? "cursor-default" : ""
+						}`}
+						onClick={() => {
+							if (cycleLocked) return;
+							onStartEditing(task);
+						}}
 						type="button"
 					>
 						{task.title}
@@ -428,7 +433,7 @@ function SortableActiveTaskRow({
 				)}
 			</div>
 			{editingId !== task.id && (
-				<div className="flex flex-wrap items-center justify-between gap-2 pl-9">
+				<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-9">
 					<TaskBadges
 						commitmentHorizon={task.commitmentHorizon}
 						importance={task.importance}
@@ -772,10 +777,10 @@ export function TaskList({
 					<ul className="space-y-2">
 						{completedTasks.map((task) => (
 							<li
-								className="flex flex-col gap-2 rounded-lg border border-transparent bg-surface-card-muted px-4 py-3"
+								className="flex max-w-full flex-col gap-2 overflow-hidden rounded-lg border border-transparent bg-surface-card-muted px-4 py-3"
 								key={String(task.id)}
 							>
-								<div className="flex min-w-0 items-start gap-2">
+								<div className="flex w-full min-w-0 items-start gap-2">
 									<button
 										aria-label="Revert to active"
 										className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-accent-success bg-accent-success/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
@@ -788,11 +793,11 @@ export function TaskList({
 										}}
 										type="button"
 									/>
-									<span className="min-w-0 flex-1 text-text-dimmed line-through">
+									<span className="min-w-0 flex-1 basis-0 overflow-hidden whitespace-pre-wrap break-all text-text-secondary line-through">
 										{task.title}
 									</span>
 								</div>
-								<div className="flex flex-wrap items-center justify-between gap-2 pl-7">
+								<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-7">
 									<TaskBadges
 										commitmentHorizon={task.commitmentHorizon}
 										dimmed

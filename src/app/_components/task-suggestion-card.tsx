@@ -107,7 +107,9 @@ function ReadySuggestionContent({
 	return (
 		<div className="mt-4 space-y-4">
 			<div className="space-y-2">
-				<p className="font-medium text-primary">{suggestion.title}</p>
+				<p className="overflow-hidden whitespace-pre-wrap break-all font-medium text-primary">
+					{suggestion.title}
+				</p>
 				<TaskBadges suggestion={suggestion} />
 			</div>
 			<p className="text-sm text-text-secondary">{suggestion.rationale}</p>
