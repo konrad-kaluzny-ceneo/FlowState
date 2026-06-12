@@ -5,6 +5,7 @@ version: 1
 status: draft
 created: 2026-05-26
 updated: 2026-06-11
+expanded_wellness: 2026-06-11
 expanded: 2026-06-07
 expanded_intelligence: 2026-06-07
 expanded_story: 2026-06-07
@@ -77,6 +78,8 @@ The product *wedge* — the one trait that, if removed, makes FlowState indistin
 | S-25 | pre-suggestion-readiness               | [FLO-58](https://linear.app/flowstate-10xdev/issue/FLO-58) | [#79](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/79)          | declare Focused/Steady/Fading at kickoff and before next-task suggestion — feeds scorer instead of hardcoded STEADY                                                          | S-05, S-06, S-15 | FR-020, FR-021, FR-019, proposed-FR-pre-suggestion-readiness                                                                      | done     |
 | S-26 | task-manual-priority-order             | [FLO-59](https://linear.app/flowstate-10xdev/issue/FLO-59) | [#81](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/81)          | **drag-reorder** active tasks with persisted manual priority as suggester tie-breaker                                                                                        | S-04, S-06, S-09 | FR-021, FR-022, FR-005, NFR (200ms acknowledgement)                                                                               | done     |
 | S-27 | daily-standing-tasks-capacity-plan     | [FLO-60](https://linear.app/flowstate-10xdev/issue/FLO-60) | [#80](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/80)          | daily standing tasks roll into today's plan with focus-hours budget and capacity-aware suggestion rationale (no RRULE)                                                       | F-05, S-06, S-15 | FR-021, FR-022, FR-019, proposed-FR-daily-standing-tasks, proposed-FR-daily-focus-budget                                          | proposed |
+| F-06 | serene-pastel-rebrand                  | [FLO-62](https://linear.app/flowstate-10xdev/issue/FLO-62) | [#97](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/97)          | (foundation) `DESIGN.md` + token pivot to Serene Pastel Well-being light-default; remap home, overlays, task cards, auth; optional calm dark sub-phase                         | F-04, S-13       | Secondary Success Criteria, NFR (200ms acknowledgement), proposed-FR-visual-design-system                                         | ready    |
+| S-28 | wellness-illustration-foundation       | [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) | [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98)          | see Calm Garden illustration system on home sprig, blob atmosphere, and Empty Garden Bed empty state with shared SVG primitives                                              | F-06             | Secondary Success Criteria, proposed-FR-empty-state-guidance, proposed-FR-calm-garden-illustrations                               | proposed |
 
 
 ## Streams
@@ -96,6 +99,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | H      | Story & mindfulness (post-MVP) | `S-19` ∥ `S-20`; `S-21` (after `S-12`); `S-22` pairs with `S-20` | Wedge narrative beats — override acknowledgement, quiet audio, paired break/re-entry copy. Follow-up batch 2 (2026-06-07): P-201→S-19, P-202→S-17, P-203+P-204→S-18, P-205→S-15, P-206→S-21, P-208→S-20 acceptance; P-207 **rejected** (duplicate S-13+S-17). |
 | I      | Calm focus UX (post-MVP)       | `S-22` ∥ `S-23` ∥ `S-20`; `S-24` (product gate)                  | Tab-return catch-up, scoring transparency, quiet audio, reversible pause. Expanded via `/10x-roadmap-expand` 2026-06-07 (UX gaps batch). Merges: P-204+P-205→S-11, P-206→S-20.                                                                                |
 | J      | Task planning & richer scoring | `**S-26` (high)** ∥ `S-25` ∥ `S-23`; `F-05` → `S-27`             | Expanded `/10x-roadmap-expand` 2026-06-09. User-priority drag-drop first; Eisenhower substrate before daily standing + capacity.                                                                                                                              |
+| K      | Wellness re-skin (post-MVP)    | `F-06` → `S-28`                                                  | Serene Pastel token pivot (light-default) then Calm Garden illustration foundation. Expanded `/10x-roadmap-expand` 2026-06-11 (well-being batch). P-103 wedge craft not committed.                                                                           |
 
 
 ## Baseline
@@ -193,6 +197,23 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Relabel weight UI as "urgency" or keep label with tooltip? Owner: user. Block: no.
 - **Risk:** Three user-facing scales plus horizon may feel heavy at task creation — mitigate with defaults (importance 2, urgency 2, horizon when possible) and compact pickers; `weight` retained as legacy fallback in v1. Expand score 73/90 — **promote** (roadmap-expand 2026-06-09); merges importance-commitment-horizon + effort estimate from ideation batch.
 - **Status:** done
+
+### F-06: Serene Pastel Well-being rebrand
+
+- **Outcome:** (foundation) `DESIGN.md` and `globals.css` `@theme` pivot from dark navy glass to **Serene Pastel Well-being** as the canonical light-default palette; remap `home-shell`, `overlay-shell` scrims, task cards, and auth CTAs; optional calm dark mode sub-phase (desaturated pastels on `#1E2433`, not current navy).
+- **Change ID:** serene-pastel-rebrand
+- **Linear:** [FLO-62](https://linear.app/flowstate-10xdev/issue/FLO-62)
+- **GitHub:** [#97](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/97)
+- **PRD refs:** Secondary Success Criteria, NFR (200ms acknowledgement), proposed-FR-visual-design-system
+- **Unlocks:** S-28 (wellness-illustration-foundation), downstream calm-garden wedge craft (P-103, not committed)
+- **Prerequisites:** F-04, S-13
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Ship light-only default or include optional calm dark variant in DESIGN.md? Owner: user. Block: no.
+  - Migrate e2e focus-ring assertions to new token utility or preserve legacy class alias? Owner: implementer. Block: no.
+- **Risk:** Token rename or focus-ring utility changes break Playwright contracts (`ring-purple-500`, `data-testid`) unless updated in the same slice. Expand score 75/90 — **promote** (roadmap-expand 2026-06-11 wellness batch P-101).
+- **Status:** ready
 
 ## Slices
 
@@ -657,6 +678,38 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Daily reset semantics can drift into full recurring-product scope — bound to suggestion pool only; no auto-spawn at midnight without user opening app. Expand score 64/90 — **revise then promote**; safe reframe of parked P-109.
 - **Status:** proposed
 
+### S-28: Calm Garden illustration foundation
+
+- **Outcome:** user sees reusable **Calm Garden** botanical graphics (pastel blob backdrops + single-weight line-art) on wedge surfaces — home hero sprig, Empty Garden Bed empty state, and shared illustration primitives in `src/lib/design/illustrations/`.
+- **Change ID:** wellness-illustration-foundation
+- **Linear:** [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63)
+- **GitHub:** [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98)
+- **PRD refs:** Secondary Success Criteria, proposed-FR-empty-state-guidance, proposed-FR-calm-garden-illustrations
+- **Prerequisites:** F-06
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Prefer inline SVG React components or static assets under public/? Owner: implementer. Block: no.
+  - Any botanical motif to avoid (religious, clinical, overly floral)? Owner: user. Block: no.
+- **Risk:** Illustration components add bundle weight or inconsistent sizing if blob/line-art primitives lack shared viewBox and aria-hidden defaults. Expand score 63/90 — **promote** (roadmap-expand 2026-06-11 wellness batch P-102).
+- **Status:** proposed
+
+## Follow-up scope merges (batch 4 — wellness re-skin)
+
+> `/10x-roadmap-expand` well-being pass 2026-06-11 — **Commit** synced to Linear + GitHub.
+
+
+| Proposal | Score | Action | Target |
+| --- | --- | --- | --- |
+| P-101 Serene Pastel design foundation | 75 | **accept → commit** | F-06 |
+| P-102 Calm Garden illustration foundation | 63 | **accept → commit** | S-28 |
+| P-103 Wedge surfaces garden craft | ~62 | not committed | — (home overlays + auth + empty states merged slice) |
+| calm-dark-mode-option | 42 | merge into F-06 | sub-phase of serene-pastel-rebrand |
+
+**Goal:** friendly pastel well-being aesthetic replacing dark navy gloom; Calm Garden graphics on key surfaces.
+
+**Recommended `/10x-plan` order:** `F-06` (serene-pastel-rebrand) → `S-28` (wellness-illustration-foundation).
+
 ## Follow-up scope merges (batch 3)
 
 > `/10x-roadmap-expand` task-planning pass 2026-06-09 — **Commit** synced to Linear + GitHub.
@@ -740,6 +793,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-25       | pre-suggestion-readiness               | FLO-58 | #79    | FlowState — pre-suggestion readiness gate                                      | yes                   | Fixes S-15 hardcoded STEADY                                                |
 | S-26       | task-manual-priority-order             | FLO-59 | #81    | FlowState — drag-reorder task priority                                         | yes                   | **High user priority** — plan first                                        |
 | S-27       | daily-standing-tasks-capacity-plan     | FLO-60 | #80    | FlowState — daily standing + focus budget                                      | no                    | Requires F-05; anti-RRULE guard                                            |
+| F-06       | serene-pastel-rebrand                  | FLO-62 | #97    | FlowState — Serene Pastel Well-being rebrand (DESIGN.md + tokens)              | yes                   | Gates S-28; optional calm dark sub-phase; expand P-101 75/90               |
+| S-28       | wellness-illustration-foundation       | FLO-63 | #98    | FlowState — Calm Garden illustration foundation                                | no                    | Requires F-06; expand P-102 63/90                                          |
 
 
 ## Bugs
