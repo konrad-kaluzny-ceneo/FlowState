@@ -79,14 +79,14 @@
 	--color-scrim: rgb(30 36 51 / 0.78);
 	--color-focus-ring: #a99dc8;
 
-	--color-accent-cta: #9b8fc4;
-	--color-accent-cta-hover: #a99dc8;
+	--color-accent-cta: #6e619f;
+	--color-accent-cta-hover: #7c6ead;
 	--color-on-cta: #ffffff;
 	--color-accent-break: #4a9a8e;
 	--color-accent-success: #4a9468;
 	--color-accent-suggestion: rgb(212 175 55 / 0.75);
 
-	--color-segment-active: #9b8fc4;
+	--color-segment-active: #7c6ead;
 	--color-segment-inactive: rgb(255 255 255 / 0.08);
 
 	--color-energy-focused-border: rgb(129 140 248 / 0.45);

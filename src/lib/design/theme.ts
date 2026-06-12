@@ -23,9 +23,13 @@ export function readStoredThemePreference(): ThemePreference | null {
 		return null;
 	}
 
-	const stored = localStorage.getItem(THEME_STORAGE_KEY);
-	if (stored === "light" || stored === "dark" || stored === "system") {
-		return stored;
+	try {
+		const stored = localStorage.getItem(THEME_STORAGE_KEY);
+		if (stored === "light" || stored === "dark" || stored === "system") {
+			return stored;
+		}
+	} catch {
+		return null;
 	}
 
 	return null;

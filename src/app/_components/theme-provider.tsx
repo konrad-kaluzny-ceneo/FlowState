@@ -58,7 +58,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 	const setTheme = useCallback(
 		(next: ThemePreference) => {
 			setPreference(next);
-			localStorage.setItem(THEME_STORAGE_KEY, next);
+			try {
+				localStorage.setItem(THEME_STORAGE_KEY, next);
+			} catch {
+				// Private/locked storage — preference still applies for this session
+			}
 			syncResolved(next);
 		},
 		[syncResolved],
