@@ -1,3 +1,9 @@
+---
+project: FlowState
+version: 2
+updated: 2026-06-12
+---
+
 # Test Plan
 
 > Phased test rollout for this project. Strategy is frozen at the top
@@ -6,7 +12,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-11 (Component layer cookbook — Phase 6 shipped)
+> Last updated: 2026-06-12 (PRD v2 / post-MVP housekeeping — risk source rows refreshed)
 
 ## 1. Strategy
 
@@ -50,11 +56,11 @@ research's job, see §1 principle #3).
 |---|-------------------------|--------|------------|--------------------------------|
 | 1 | Page refresh or crash during an active Pomodoro leaves the user with a missing or wrong task list or cycle state | High | High | PRD guardrail (no silent data loss); interview Q1; roadmap S-01 NFR (crash/refresh recovery); Stryker 2026-06-06 — hot-spot dir `src/hooks/` (170 survived mutants on covered code); hot-spot dir `src/app/_components/` (359 no-coverage mutants) |
 | 2 | Work cycle elapsed time drifts beyond ±2 seconds when the browser tab is backgrounded | High | High | PRD NFR (timer drift ≤ ±2s); interview Q3; hot-spot dir `src/hooks/` (21 commits/30d; 170 survived mutants); hot-spot dir `src/workers/` (5 commits/30d; timer-worker-logic 100% mutation score) |
-| 3 | Marking a task done mid-cycle offers wrong choices or skips the mindful break/end prompt | Medium | High | PRD FR-015; roadmap S-03 active; interview Q4; Stryker 2026-06-06 — hot-spot dir `src/app/_components/` (359 no-coverage mutants including task-list UI) |
+| 3 | Marking a task done mid-cycle offers wrong choices or skips the mindful break/end prompt | Medium | High | PRD FR-015; roadmap S-03 done |
 | 4 | Authenticated user reads or mutates another user's tasks, sessions, or cycles | High | High | PRD guardrail (strict per-user isolation); PRD access control; Stryker 2026-06-06 — hot-spot dir `src/server/api/routers/` (~150 survived mutants despite Phase 3 integration) |
-| 5 | Guest trial tasks or cycles are lost or silently overwritten on sign-in merge | High | Medium | PRD FR-003c; roadmap S-08 proposed; PRD guardrail (no silent data loss); Stryker 2026-06-06 — hot-spot dir `src/lib/repositories/` (192 no-coverage mutants in guest persistence layer) |
+| 5 | Guest trial tasks or cycles are lost or silently overwritten on sign-in merge | High | Medium | PRD FR-003c; roadmap S-08 done; PRD guardrail (no silent data loss) |
 | 6 | Attacker with a valid session manipulates resource IDs to access another user's tasks or cycles (IDOR) | High | Medium | PRD access control (abuse lens — ownership not just authentication) |
-| 7 | End-of-cycle check-in can be skipped or declared energy fails to persist for the next suggestion | Medium | Medium | PRD FR-020; roadmap S-05 active |
+| 7 | End-of-cycle check-in can be skipped or declared energy fails to persist for the next suggestion | Medium | Medium | PRD FR-020; roadmap S-05 done |
 
 ### Risk Response Guidance
 

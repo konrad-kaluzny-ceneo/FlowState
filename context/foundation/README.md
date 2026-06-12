@@ -19,7 +19,9 @@ Foundation docs are **not** auto-loaded into the agent's context window. They ar
 
 ## Archive convention
 
-When a foundation doc is fully superseded — replaced by a new approach rather than refined — move it to `foundation/archive/YYYY-MM-DD-<doc>.md` and write the replacement at the original path. The archive folder is a historical record; nothing reads from it routinely.
+When a foundation doc is fully superseded — replaced by a new approach rather than refined — move it to `foundation/archive/YYYY-MM-DD-<doc>-v<N>.md` and write the replacement at the original path with an incremented `version:` in frontmatter. The archive folder is a historical record; nothing reads from it routinely.
+
+**Current baseline (2026-06-12):** all foundation docs are `version: 2` (post-MVP iteration phase). v1 snapshots live in `foundation/archive/2026-06-12-*-v1.md` (plus `2026-05-24-health-check-v1.md`).
 
 ## Anti-pattern
 

@@ -1,7 +1,7 @@
 ---
 starter_id: t3
-version: 2
-updated: 2026-06-12
+version: 1
+archived: 2026-06-12
 package_manager: pnpm
 project_name: flow-state
 hints:
