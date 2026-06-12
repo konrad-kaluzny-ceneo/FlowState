@@ -3,12 +3,12 @@ import { ForgotPasswordForm } from "./forgot-password-form";
 
 export default function ForgotPasswordPage() {
 	return (
-		<main className="flex min-h-screen items-center justify-center bg-linear-to-b from-[#1a1a2e] to-[#16213e] px-4">
-			<div className="w-full max-w-md rounded-lg bg-white/5 p-8 shadow-xl backdrop-blur-sm">
-				<h1 className="mb-2 text-center font-bold text-2xl text-white">
+		<main className="flex min-h-screen items-center justify-center bg-linear-to-b from-shell-top to-shell-bottom px-4">
+			<div className="w-full max-w-md rounded-lg border border-border-subtle bg-surface-card p-8 shadow-xl">
+				<h1 className="mb-2 text-center font-semibold text-2xl text-primary">
 					Reset your password
 				</h1>
-				<p className="mb-6 text-center text-sm text-white/60">
+				<p className="mb-6 text-center text-sm text-text-secondary">
 					Enter your email and we&apos;ll send you a link to reset your
 					password.
 				</p>

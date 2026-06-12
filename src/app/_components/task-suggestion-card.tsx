@@ -70,15 +70,15 @@ function TaskBadges({ suggestion }: { suggestion: TaskSuggestionData }) {
 			>
 				{config.label}
 			</span>
-			<span className="rounded-full bg-white/10 px-2 py-0.5 font-medium text-white/70 text-xs">
+			<span className="rounded-full bg-surface-panel px-2 py-0.5 font-medium text-text-secondary text-xs">
 				U: {WEIGHT_LABELS[urgency]}
 			</span>
-			<span className="rounded-full bg-indigo-500/20 px-2 py-0.5 font-medium text-indigo-200 text-xs">
+			<span className="rounded-full bg-worktype-deep-bg px-2 py-0.5 font-medium text-worktype-deep-text text-xs">
 				I: {WEIGHT_LABELS[importance]}
 			</span>
 			{suggestion.commitmentHorizon === "ASAP" && (
 				<span
-					className="rounded-full bg-orange-500/25 px-2 py-0.5 font-medium text-orange-200 text-xs"
+					className="rounded-full bg-worktype-reactive-bg px-2 py-0.5 font-medium text-worktype-reactive-text text-xs"
 					data-testid="suggestion-asap-badge"
 				>
 					ASAP
@@ -107,15 +107,15 @@ function ReadySuggestionContent({
 	return (
 		<div className="mt-4 space-y-4">
 			<div className="flex items-start justify-between gap-3">
-				<p className="font-medium text-white">{suggestion.title}</p>
+				<p className="font-medium text-primary">{suggestion.title}</p>
 				<TaskBadges suggestion={suggestion} />
 			</div>
-			<p className="text-sm text-white/60">{suggestion.rationale}</p>
+			<p className="text-sm text-text-secondary">{suggestion.rationale}</p>
 			{showExpander && breakdown != null && (
 				<div className="space-y-2">
 					<button
 						aria-expanded={rationaleExpanded}
-						className="text-sm text-white/50 underline-offset-2 transition hover:text-white/70 hover:underline"
+						className="text-sm text-text-dimmed underline-offset-2 transition hover:text-text-secondary hover:underline"
 						data-testid="suggestion-rationale-toggle"
 						onClick={() => onRationaleExpandedChange(!rationaleExpanded)}
 						type="button"
@@ -124,7 +124,7 @@ function ReadySuggestionContent({
 					</button>
 					{rationaleExpanded && (
 						<div
-							className="space-y-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/50"
+							className="space-y-2 rounded-lg border border-border-subtle bg-surface-panel p-3 text-sm text-text-dimmed"
 							data-testid="suggestion-rationale-expander"
 						>
 							{breakdown.dominant.length > 0 && (
@@ -136,11 +136,11 @@ function ReadySuggestionContent({
 							)}
 							{breakdown.alsoConsidered.length > 0 && (
 								<div className="space-y-1">
-									<p className="text-white/40 text-xs">Also considered:</p>
+									<p className="text-text-dimmed text-xs">Also considered:</p>
 									<div className="flex flex-wrap gap-1.5">
 										{breakdown.alsoConsidered.map((label) => (
 											<span
-												className="rounded-full bg-white/10 px-2 py-0.5 text-white/50 text-xs"
+												className="rounded-full bg-surface-panel px-2 py-0.5 text-text-dimmed text-xs"
 												key={label}
 											>
 												{label}
@@ -202,10 +202,12 @@ export function TaskSuggestionCard(props: TaskSuggestionCardProps) {
 			variant="suggestion"
 		>
 			<div data-testid="task-suggestion-card">
-				<h2 className="font-bold text-lg text-white">Suggested next task</h2>
+				<h2 className="font-semibold text-lg text-primary">
+					Suggested next task
+				</h2>
 				{props.status === "ready" && props.coachLine != null && (
 					<p
-						className="mt-1 text-purple-200/70 text-xs"
+						className="mt-1 text-accent-cta/70 text-xs"
 						data-testid="suggestion-coach-line"
 					>
 						{props.coachLine}
@@ -216,15 +218,17 @@ export function TaskSuggestionCard(props: TaskSuggestionCardProps) {
 					<div className="mt-4 space-y-3">
 						{showSkeleton ? (
 							<>
-								<div className="h-5 w-3/4 animate-pulse rounded bg-white/10" />
-								<div className="h-4 w-full animate-pulse rounded bg-white/10" />
-								<div className="h-10 w-full animate-pulse rounded-lg bg-white/10" />
+								<div className="h-5 w-3/4 animate-pulse rounded bg-surface-panel" />
+								<div className="h-4 w-full animate-pulse rounded bg-surface-panel" />
+								<div className="h-10 w-full animate-pulse rounded-lg bg-surface-panel" />
 							</>
 						) : (
-							<p className="text-sm text-white/50">Finding a good match…</p>
+							<p className="text-sm text-text-dimmed">Finding a good match…</p>
 						)}
 						{showSlowMessage && (
-							<p className="text-sm text-white/60">Still working on it…</p>
+							<p className="text-sm text-text-secondary">
+								Still working on it…
+							</p>
 						)}
 					</div>
 				)}
@@ -240,14 +244,14 @@ export function TaskSuggestionCard(props: TaskSuggestionCardProps) {
 				)}
 
 				{props.status === "empty" && (
-					<p className="mt-4 text-sm text-white/60">
+					<p className="mt-4 text-sm text-text-secondary">
 						No active tasks — add one or end session.
 					</p>
 				)}
 
 				{props.status === "error" && (
 					<div className="mt-4 space-y-3">
-						<p className="text-red-200/80 text-sm">
+						<p className="text-red-600 text-sm">
 							Could not load a suggestion. Your break is still running.
 						</p>
 						<button

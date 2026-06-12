@@ -56,10 +56,10 @@ function HomeShellContent({ isAuthenticated }: { isAuthenticated: boolean }) {
 					isFirstRunVisible && !cycleCompleteVisible && !mergeSuccessVisible
 				}
 			/>
-			<main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-shell-top to-shell-bottom text-white">
+			<main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-shell-top to-shell-bottom text-primary">
 				<div className="container flex flex-col items-center justify-center gap-8 px-4 py-16">
 					<header className="space-y-2 text-center">
-						<h1 className="font-bold text-4xl tracking-tight">FlowState</h1>
+						<h1 className="font-semibold text-4xl tracking-tight">FlowState</h1>
 						<p className="text-sm text-text-secondary">
 							Manage your tasks. Stay in flow.
 						</p>

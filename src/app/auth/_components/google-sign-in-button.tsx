@@ -33,7 +33,7 @@ export function GoogleSignInButton({
 	return (
 		<button
 			aria-disabled={isLoading}
-			className="flex w-full items-center justify-center gap-3 rounded-md border border-white/10 bg-white px-4 py-2.5 font-medium text-gray-800 text-sm transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-[#1a1a2e] disabled:cursor-not-allowed disabled:opacity-50"
+			className="flex w-full items-center justify-center gap-3 rounded-md border border-border-subtle bg-surface-card px-4 py-2.5 font-medium text-primary text-sm transition-colors hover:bg-surface-panel focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2 focus:ring-offset-shell-top disabled:cursor-not-allowed disabled:opacity-50"
 			disabled={isLoading}
 			onClick={handleClick}
 			type="button"

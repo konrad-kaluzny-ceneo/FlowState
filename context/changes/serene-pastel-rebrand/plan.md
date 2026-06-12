@@ -431,29 +431,29 @@ No database migration. Existing users see light-default on first visit (or syste
 
 #### Automated
 
-- [x] 2.1 `pnpm exec vitest run src/app/_components/user-menu.test.tsx` passes
-- [x] 2.2 `pnpm check` passes
-- [x] 2.3 `pnpm test` passes
+- [x] 2.1 `pnpm exec vitest run src/app/_components/user-menu.test.tsx` passes — e153c76
+- [x] 2.2 `pnpm check` passes — e153c76
+- [x] 2.3 `pnpm test` passes — e153c76
 
 #### Manual
 
-- [x] 2.4 Toggle Light → Dark → System updates `<html data-theme>` without full reload
-- [x] 2.5 Hard reload preserves last selected theme
-- [x] 2.6 System mode tracks OS preference change
+- [x] 2.4 Toggle Light → Dark → System updates `<html data-theme>` without full reload — e153c76
+- [x] 2.5 Hard reload preserves last selected theme — e153c76
+- [x] 2.6 System mode tracks OS preference change — e153c76
 
 ### Phase 3: Home + task + auth remap
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` passes
-- [ ] 3.2 `pnpm check` passes
-- [ ] 3.3 `pnpm test` passes
+- [x] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` passes
+- [x] 3.2 `pnpm check` passes
+- [x] 3.3 `pnpm test` passes
 
 #### Manual
 
-- [ ] 3.4 Home page readable in light and dark themes with correct hierarchy
-- [ ] 3.5 Auth pages unified plum CTA in both themes
-- [ ] 3.6 Selected task focus ring visible on light cards
+- [x] 3.4 Home page readable in light and dark themes with correct hierarchy
+- [x] 3.5 Auth pages unified plum CTA in both themes
+- [x] 3.6 Selected task focus ring visible on light cards
 
 ### Phase 4: Overlays + orphan consolidation
 

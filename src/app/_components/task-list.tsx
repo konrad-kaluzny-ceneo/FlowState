@@ -61,11 +61,11 @@ function TaskBadges({
 			<span className="rounded-full bg-surface-card px-2 py-0.5 font-medium text-text-secondary text-xs">
 				U: {AXIS_LABELS[urgency]}
 			</span>
-			<span className="rounded-full bg-indigo-500/20 px-2 py-0.5 font-medium text-indigo-200 text-xs">
+			<span className="rounded-full bg-worktype-deep-bg px-2 py-0.5 font-medium text-worktype-deep-text text-xs">
 				I: {AXIS_LABELS[importance]}
 			</span>
 			{commitmentHorizon === "ASAP" && (
-				<span className="rounded-full bg-orange-500/25 px-2 py-0.5 font-medium text-orange-200 text-xs">
+				<span className="rounded-full bg-worktype-reactive-bg px-2 py-0.5 font-medium text-worktype-reactive-text text-xs">
 					ASAP
 				</span>
 			)}
@@ -97,7 +97,7 @@ function EisenhowerAttributeFields({
 	return (
 		<>
 			<div className="flex items-center gap-2">
-				<span className="w-16 text-white/60 text-xs">Urgency</span>
+				<span className="w-16 text-text-secondary text-xs">Urgency</span>
 				<SegmentedControl
 					onChange={(v) => onUrgencyChange(v as 1 | 2 | 3)}
 					options={[
@@ -109,7 +109,7 @@ function EisenhowerAttributeFields({
 				/>
 			</div>
 			<div className="flex items-center gap-2">
-				<span className="w-16 text-white/60 text-xs">Importance</span>
+				<span className="w-16 text-text-secondary text-xs">Importance</span>
 				<SegmentedControl
 					onChange={(v) => onImportanceChange(v as 1 | 2 | 3)}
 					options={[
@@ -121,9 +121,9 @@ function EisenhowerAttributeFields({
 				/>
 			</div>
 			<div className="flex items-center gap-2">
-				<span className="w-16 text-white/60 text-xs">Effort</span>
+				<span className="w-16 text-text-secondary text-xs">Effort</span>
 				<input
-					className="w-24 rounded-md bg-white/10 px-2 py-1 text-white text-xs placeholder:text-white/40 focus:outline-none"
+					className="w-24 rounded-md bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
 					inputMode="numeric"
 					max={240}
 					min={5}
@@ -134,7 +134,7 @@ function EisenhowerAttributeFields({
 				/>
 				{effortMinutes !== "" && (
 					<button
-						className="text-white/50 text-xs hover:text-white/80"
+						className="text-text-dimmed text-xs hover:text-text-section"
 						onClick={() => onEffortMinutesChange("")}
 						type="button"
 					>
@@ -143,12 +143,12 @@ function EisenhowerAttributeFields({
 				)}
 			</div>
 			<div className="flex items-center gap-2">
-				<span className="w-16 text-white/60 text-xs">Horizon</span>
+				<span className="w-16 text-text-secondary text-xs">Horizon</span>
 				<SegmentedControl
 					colorMap={{
-						ASAP: "bg-orange-500/30 text-orange-200",
+						ASAP: "bg-worktype-reactive-bg text-worktype-reactive-text",
 						THIS_WEEK: "bg-sky-500/30 text-sky-200",
-						WHEN_POSSIBLE: "bg-white/20 text-white/80",
+						WHEN_POSSIBLE: "bg-surface-panel text-text-section",
 					}}
 					onChange={(v) => onCommitmentHorizonChange(v as CommitmentHorizon)}
 					options={HORIZON_OPTIONS}
@@ -189,7 +189,7 @@ function SegmentedControl<T extends string | number>({
 			{options.map((opt) => {
 				const isActive = opt.value === value;
 				const activeColor =
-					colorMap?.[String(opt.value)] ?? "bg-accent-cta text-white";
+					colorMap?.[String(opt.value)] ?? "bg-accent-cta text-on-cta";
 				return (
 					<button
 						aria-pressed={isActive}
@@ -316,7 +316,7 @@ function SortableActiveTaskRow({
 	return (
 		<li
 			className={`flex items-center gap-2 rounded-lg border border-transparent bg-surface-card px-4 py-3 ${
-				focusedTaskId === task.id ? "ring-2 ring-purple-500" : ""
+				focusedTaskId === task.id ? "ring-2 ring-focus" : ""
 			} ${
 				highlightedTaskId === task.id ? "ring-2 ring-accent-suggestion" : ""
 			} ${isDragging ? "z-10 opacity-80" : ""} ${
@@ -330,7 +330,7 @@ function SortableActiveTaskRow({
 		>
 			<button
 				aria-label="Drag to reorder"
-				className={`shrink-0 cursor-grab px-1 text-white/40 transition hover:text-white/70 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30 ${
+				className={`shrink-0 cursor-grab px-1 text-text-dimmed transition hover:text-text-secondary active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30 ${
 					dragDisabled ? "pointer-events-none" : ""
 				}`}
 				data-testid="task-drag-handle"
@@ -344,7 +344,7 @@ function SortableActiveTaskRow({
 			</button>
 			<button
 				aria-label="Mark complete"
-				className="h-5 w-5 shrink-0 rounded border-2 border-white/40 transition hover:border-green-400 hover:bg-green-400/20 disabled:cursor-not-allowed disabled:opacity-40"
+				className="h-5 w-5 shrink-0 rounded border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
 				disabled={markCompleteLocked || isMutating}
 				onClick={() => {
 					if (canMidCycleMarkComplete && onMidCycleMarkComplete != null) {
@@ -364,7 +364,7 @@ function SortableActiveTaskRow({
 				<div className="flex-1 space-y-2">
 					{/* textarea (not input): titles are unbounded; multiline + wrap in read mode (B-02) */}
 					<textarea
-						className="w-full resize-y rounded bg-white/10 px-2 py-1 text-white focus:outline-none"
+						className="w-full resize-y rounded bg-surface-panel px-2 py-1 text-primary focus:outline-none"
 						onBlur={() => void onSaveEdit(task.id)}
 						onChange={(e) => onSetEditTitle(e.target.value)}
 						onKeyDown={(e) => {
@@ -378,7 +378,7 @@ function SortableActiveTaskRow({
 						value={editTitle}
 					/>
 					<div className="flex items-center gap-2">
-						<span className="w-16 text-white/60 text-xs">Type</span>
+						<span className="w-16 text-text-secondary text-xs">Type</span>
 						<SegmentedControl
 							colorMap={{
 								DEEP_WORK: WORK_TYPE_CONFIG.DEEP_WORK.segmentActive,
@@ -407,7 +407,7 @@ function SortableActiveTaskRow({
 				</div>
 			) : (
 				<button
-					className="flex-1 cursor-pointer whitespace-pre-wrap break-words text-left text-white disabled:cursor-default disabled:opacity-70"
+					className="flex-1 cursor-pointer whitespace-pre-wrap break-words text-left text-primary disabled:cursor-default disabled:opacity-70"
 					disabled={cycleLocked}
 					onClick={() => onStartEditing(task)}
 					type="button"
@@ -424,7 +424,7 @@ function SortableActiveTaskRow({
 			<button
 				className={`shrink-0 rounded-lg px-2 py-1 font-medium text-xs transition ${
 					focusedTaskId === task.id
-						? "bg-accent-cta text-white"
+						? "bg-accent-cta text-on-cta"
 						: "bg-surface-card text-text-section hover:bg-surface-card/80"
 				}`}
 				disabled={focusLocked}
@@ -435,7 +435,7 @@ function SortableActiveTaskRow({
 			</button>
 			<button
 				aria-label="Delete task"
-				className="shrink-0 text-white/40 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+				className="shrink-0 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
 				disabled={cycleLocked || isMutating}
 				onClick={() => {
 					void onDeleteTask({ id: task.id });
@@ -594,7 +594,7 @@ export function TaskList({
 				>
 					{error}
 					<button
-						className="ml-3 underline hover:text-white"
+						className="ml-3 underline hover:text-primary"
 						onClick={clearError}
 						type="button"
 					>
@@ -633,7 +633,7 @@ export function TaskList({
 			>
 				<div className="flex gap-2">
 					<input
-						className="flex-1 rounded-lg border border-border-subtle bg-surface-card px-4 py-2 text-white placeholder:text-text-dimmed focus:border-text-secondary focus:outline-none"
+						className="flex-1 rounded-lg border border-border-subtle bg-surface-card px-4 py-2 text-primary placeholder:text-text-dimmed focus:border-text-secondary focus:outline-none"
 						onChange={(e) => setNewTitle(e.target.value)}
 						placeholder="Add a new task..."
 						ref={addTaskInputRef}
@@ -641,7 +641,7 @@ export function TaskList({
 						value={newTitle}
 					/>
 					<button
-						className="rounded-lg bg-accent-cta px-4 py-2 font-medium text-white transition hover:bg-accent-cta-hover disabled:opacity-50"
+						className="rounded-lg bg-accent-cta px-4 py-2 font-medium text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50"
 						disabled={isCreating || !newTitle.trim()}
 						type="submit"
 					>
@@ -649,7 +649,7 @@ export function TaskList({
 					</button>
 				</div>
 				<button
-					className="text-white/50 text-xs transition hover:text-white/80"
+					className="text-text-dimmed text-xs transition hover:text-text-section"
 					onClick={() => setShowDetails(!showDetails)}
 					type="button"
 				>
@@ -759,7 +759,7 @@ export function TaskList({
 							>
 								<button
 									aria-label="Revert to active"
-									className="h-5 w-5 shrink-0 rounded border-2 border-green-400 bg-green-400/30 transition hover:border-white/40 hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
+									className="h-5 w-5 shrink-0 rounded border-2 border-accent-success bg-accent-success/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
 									disabled={cycleLocked || isMutating}
 									onClick={() => {
 										void updateTask({
@@ -781,7 +781,7 @@ export function TaskList({
 								/>
 								<button
 									aria-label="Delete task"
-									className="shrink-0 text-white/40 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+									className="shrink-0 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
 									disabled={cycleLocked || isMutating}
 									onClick={() => {
 										void deleteTask({ id: task.id });
