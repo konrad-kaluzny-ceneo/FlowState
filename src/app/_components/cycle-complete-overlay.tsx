@@ -44,10 +44,10 @@ export function CycleCompleteOverlay({
 		return (
 			<OverlayScrim testId="cycle-complete-overlay">
 				<OverlayCard variant="break">
-					<h2 className="font-bold text-2xl text-teal-100">
+					<h2 className="font-semibold text-2xl text-accent-break">
 						Break&apos;s over!
 					</h2>
-					<p className="mt-2 text-sm text-teal-200/70">
+					<p className="mt-2 text-sm text-text-secondary">
 						{cycleKind === "LONG_BREAK" ? "Long break" : "Short break"} complete
 						— ready for the next cycle.
 					</p>
@@ -86,9 +86,11 @@ export function CycleCompleteOverlay({
 	return (
 		<OverlayScrim testId="cycle-complete-overlay">
 			<OverlayCard>
-				<h2 className="font-bold text-2xl text-white">Cycle Complete!</h2>
+				<h2 className="font-semibold text-2xl text-primary">Cycle Complete!</h2>
 				{focusedTask != null && (
-					<p className="mt-2 text-sm text-white/70">{focusedTask.title}</p>
+					<p className="mt-2 text-sm text-text-secondary">
+						{focusedTask.title}
+					</p>
 				)}
 				<div className="mt-8 flex flex-col gap-3">
 					<button
@@ -109,7 +111,7 @@ export function CycleCompleteOverlay({
 					</button>
 				</div>
 				{!canMarkTaskDone && (
-					<p className="mt-4 text-white/50 text-xs">
+					<p className="mt-4 text-text-dimmed text-xs">
 						This task is no longer active — you can only continue later.
 					</p>
 				)}

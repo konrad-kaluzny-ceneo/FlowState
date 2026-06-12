@@ -86,13 +86,16 @@ export function SignInForm() {
 				)}
 
 				<div className="flex flex-col gap-1.5">
-					<label className="font-medium text-sm text-white/80" htmlFor="email">
+					<label
+						className="font-medium text-sm text-text-section"
+						htmlFor="email"
+					>
 						Email
 					</label>
 					<input
 						aria-required="true"
 						autoComplete="email"
-						className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+						className="rounded-md border border-border-subtle bg-surface-panel px-3 py-2 text-primary transition placeholder:text-text-dimmed focus:border-focus-ring focus:outline-none focus:ring-1 focus:ring-focus"
 						defaultValue={state.email}
 						id="email"
 						maxLength={254}
@@ -105,14 +108,14 @@ export function SignInForm() {
 
 				<div className="flex flex-col gap-1.5">
 					<label
-						className="font-medium text-sm text-white/80"
+						className="font-medium text-sm text-text-section"
 						htmlFor="password"
 					>
 						Password
 					</label>
 					<input
 						autoComplete="current-password"
-						className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+						className="rounded-md border border-border-subtle bg-surface-panel px-3 py-2 text-primary transition placeholder:text-text-dimmed focus:border-focus-ring focus:outline-none focus:ring-1 focus:ring-focus"
 						id="password"
 						maxLength={128}
 						name="password"
@@ -122,7 +125,7 @@ export function SignInForm() {
 					/>
 					<div className="flex justify-end">
 						<Link
-							className="text-blue-400 text-sm underline-offset-2 hover:underline"
+							className="text-accent-cta text-sm underline-offset-2 hover:underline"
 							href="/auth/forgot-password"
 						>
 							Forgot password?
@@ -132,7 +135,7 @@ export function SignInForm() {
 
 				<button
 					aria-disabled={isPending}
-					className="mt-2 rounded-md bg-blue-600 px-4 py-2.5 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+					className="mt-2 rounded-md bg-accent-cta px-4 py-2.5 font-medium text-on-cta transition hover:bg-accent-cta-hover focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2 focus:ring-offset-shell-top disabled:cursor-not-allowed disabled:opacity-50"
 					disabled={isPending}
 					type="submit"
 				>
@@ -151,10 +154,10 @@ export function SignInForm() {
 				/>
 			</div>
 
-			<p className="mt-6 text-center text-sm text-white/60">
+			<p className="mt-6 text-center text-sm text-text-secondary">
 				Don&apos;t have an account?{" "}
 				<Link
-					className="text-blue-400 underline-offset-2 hover:underline"
+					className="text-accent-cta underline-offset-2 hover:underline"
 					href="/auth/sign-up"
 				>
 					Sign up

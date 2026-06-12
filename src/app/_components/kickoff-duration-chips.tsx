@@ -35,17 +35,18 @@ export function KickoffDurationChips({
 			className="flex w-full max-w-lg flex-col items-center gap-2"
 			data-testid="kickoff-duration-chips"
 		>
-			<p className="text-sm text-white/70">Suggested work duration</p>
+			<p className="text-sm text-text-secondary">Suggested work duration</p>
 			<button
 				aria-label={
 					remembered
 						? `Your usual duration, ${formatMinutesLabel(chipSec)}`
 						: formatMinutesLabel(chipSec)
 				}
+				aria-pressed={selectedSec === chipSec}
 				className={`rounded-lg px-4 py-2 text-sm transition ${
 					selectedSec === chipSec
-						? "bg-purple-600 text-white"
-						: "bg-white/10 text-white/80 hover:bg-white/20"
+						? "bg-segment-active text-on-cta"
+						: "bg-segment-inactive text-text-secondary hover:bg-surface-panel"
 				}`}
 				data-testid="kickoff-duration-chip"
 				onClick={() => onSelect(chipSec)}

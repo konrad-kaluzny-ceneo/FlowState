@@ -19,9 +19,9 @@ function InvalidLinkMessage() {
 			>
 				This reset link is invalid or has expired.
 			</div>
-			<p className="text-center text-sm text-white/60">
+			<p className="text-center text-sm text-text-secondary">
 				<Link
-					className="text-blue-400 underline-offset-2 hover:underline"
+					className="text-accent-cta underline-offset-2 hover:underline"
 					href="/auth/forgot-password"
 				>
 					Request a new reset link
@@ -72,9 +72,9 @@ export function ResetPasswordForm() {
 						</button>
 					</div>
 				)}
-				<p className="text-center text-sm text-white/60">
+				<p className="text-center text-sm text-text-secondary">
 					<Link
-						className="text-blue-400 underline-offset-2 hover:underline"
+						className="text-accent-cta underline-offset-2 hover:underline"
 						href="/auth/forgot-password"
 					>
 						Request a new reset link
@@ -116,7 +116,7 @@ export function ResetPasswordForm() {
 						{state.errors.form.includes("invalid or has expired") && (
 							<p className="mt-2">
 								<Link
-									className="text-blue-400 underline-offset-2 hover:underline"
+									className="text-accent-cta underline-offset-2 hover:underline"
 									href="/auth/forgot-password"
 								>
 									Request a new reset link
@@ -128,7 +128,7 @@ export function ResetPasswordForm() {
 
 				<div className="flex flex-col gap-1.5">
 					<label
-						className="font-medium text-sm text-white/80"
+						className="font-medium text-sm text-text-section"
 						htmlFor="password"
 					>
 						New password
@@ -139,7 +139,7 @@ export function ResetPasswordForm() {
 						}
 						aria-invalid={!!state.errors.password}
 						autoComplete="new-password"
-						className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+						className="rounded-md border border-border-subtle bg-surface-panel px-3 py-2 text-primary transition placeholder:text-text-dimmed focus:border-focus-ring focus:outline-none focus:ring-1 focus:ring-focus"
 						id="password"
 						maxLength={128}
 						minLength={8}
@@ -161,7 +161,7 @@ export function ResetPasswordForm() {
 
 				<div className="flex flex-col gap-1.5">
 					<label
-						className="font-medium text-sm text-white/80"
+						className="font-medium text-sm text-text-section"
 						htmlFor="confirmPassword"
 					>
 						Confirm password
@@ -174,7 +174,7 @@ export function ResetPasswordForm() {
 						}
 						aria-invalid={!!state.errors.confirmPassword}
 						autoComplete="new-password"
-						className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+						className="rounded-md border border-border-subtle bg-surface-panel px-3 py-2 text-primary transition placeholder:text-text-dimmed focus:border-focus-ring focus:outline-none focus:ring-1 focus:ring-focus"
 						id="confirmPassword"
 						maxLength={128}
 						minLength={8}
@@ -196,7 +196,7 @@ export function ResetPasswordForm() {
 
 				<button
 					aria-disabled={isPending}
-					className="mt-2 rounded-md bg-blue-600 px-4 py-2.5 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+					className="mt-2 rounded-md bg-accent-cta px-4 py-2.5 font-medium text-on-cta transition hover:bg-accent-cta-hover focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2 focus:ring-offset-shell-top disabled:cursor-not-allowed disabled:opacity-50"
 					disabled={isPending}
 					type="submit"
 				>
@@ -204,9 +204,9 @@ export function ResetPasswordForm() {
 				</button>
 			</form>
 
-			<p className="mt-6 text-center text-sm text-white/60">
+			<p className="mt-6 text-center text-sm text-text-secondary">
 				<Link
-					className="text-blue-400 underline-offset-2 hover:underline"
+					className="text-accent-cta underline-offset-2 hover:underline"
 					href="/auth/sign-in"
 				>
 					Back to sign in

@@ -40,6 +40,9 @@ You do **not** need to export E2E flags manually for a normal local run — only
 # Belt (CI merge gate — 12 tests, --grep-invert @skip-belt)
 set CI=true && pnpm test:e2e:belt
 
+# Accessibility wedge scan (CI step after belt)
+set CI=true && pnpm test:e2e:a11y
+
 # Full catalog (ad-hoc local / pre-release; includes @skip-belt tests)
 set CI=true && pnpm test:e2e
 

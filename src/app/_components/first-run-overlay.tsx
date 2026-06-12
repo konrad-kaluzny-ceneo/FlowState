@@ -1,5 +1,10 @@
 "use client";
 
+import {
+	OverlayCard,
+	OverlayScrim,
+	overlayButtonClass,
+} from "~/app/_components/overlay-shell";
 import { type FirstRunMode, getFirstRunCopy } from "~/lib/onboarding/copy";
 
 type FirstRunOverlayProps = {
@@ -20,23 +25,19 @@ export function FirstRunOverlay({
 	const { title, body, dismissLabel } = getFirstRunCopy(mode);
 
 	return (
-		<div
-			className="fixed inset-0 z-[55] flex items-center justify-center bg-black/60 p-4"
-			data-testid="first-run-overlay"
-			role="dialog"
-		>
-			<div className="w-full max-w-md rounded-xl border border-white/20 bg-[#1a1a2e] p-8 text-center shadow-xl">
-				<h2 className="font-bold text-2xl text-white">{title}</h2>
-				<p className="mt-4 text-sm text-white/70">{body}</p>
+		<OverlayScrim role="dialog" testId="first-run-overlay" zIndex={58}>
+			<OverlayCard>
+				<h2 className="font-semibold text-2xl text-primary">{title}</h2>
+				<p className="mt-4 text-sm text-text-secondary">{body}</p>
 				<button
-					className="mt-8 w-full rounded-lg bg-purple-600 py-3 font-semibold text-white transition hover:bg-purple-500"
+					className={`${overlayButtonClass.primaryFull} mt-8`}
 					data-testid="first-run-dismiss-btn"
 					onClick={onDismiss}
 					type="button"
 				>
 					{dismissLabel}
 				</button>
-			</div>
-		</div>
+			</OverlayCard>
+		</OverlayScrim>
 	);
 }

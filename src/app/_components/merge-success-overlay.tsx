@@ -1,5 +1,10 @@
 "use client";
 
+import {
+	OverlayCard,
+	OverlayScrim,
+	overlayButtonClass,
+} from "~/app/_components/overlay-shell";
 import type { MergeSuccessCopy } from "~/lib/guest/merge-copy";
 
 type MergeSuccessOverlayProps = {
@@ -68,14 +73,10 @@ export function MergeSuccessOverlay({
 		parseMergeSuccessBody(body);
 
 	return (
-		<div
-			className="fixed inset-0 z-[55] flex items-center justify-center bg-black/60 p-4"
-			data-testid="merge-success-overlay"
-			role="dialog"
-		>
-			<div className="w-full max-w-md rounded-xl border border-white/20 bg-[#1a1a2e] p-8 text-center shadow-xl">
-				<h2 className="font-bold text-2xl text-white">{title}</h2>
-				<div className="mt-4 text-left text-sm text-white/70">
+		<OverlayScrim role="dialog" testId="merge-success-overlay" zIndex={58}>
+			<OverlayCard>
+				<h2 className="font-semibold text-2xl text-primary">{title}</h2>
+				<div className="mt-4 text-left text-sm text-text-secondary">
 					{countLine.length > 0 && <p>{countLine}</p>}
 					{previewTitles.length > 0 && (
 						<ul className="mt-3 list-disc space-y-1 pl-5">
@@ -85,19 +86,19 @@ export function MergeSuccessOverlay({
 						</ul>
 					)}
 					{overflowHint != null && (
-						<p className="mt-2 text-white/60">{overflowHint}</p>
+						<p className="mt-2 text-text-dimmed">{overflowHint}</p>
 					)}
 					{unlockLine.length > 0 && <p className="mt-4">{unlockLine}</p>}
 				</div>
 				<button
-					className="mt-8 w-full rounded-lg bg-purple-600 py-3 font-semibold text-white transition hover:bg-purple-500"
+					className={`${overlayButtonClass.primaryFull} mt-8`}
 					data-testid="merge-success-dismiss-btn"
 					onClick={onDismiss}
 					type="button"
 				>
 					{dismissLabel}
 				</button>
-			</div>
-		</div>
+			</OverlayCard>
+		</OverlayScrim>
 	);
 }

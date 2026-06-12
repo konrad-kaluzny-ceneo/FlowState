@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 import { OverlayCard, OverlayScrim } from "./overlay-shell";
 
 describe("overlay-shell", () => {
-	it("renders scrim with test id and dialog role", () => {
-		render(
+	it("renders scrim with test id, dialog role, and bg-scrim token", () => {
+		const { container } = render(
 			<OverlayScrim role="dialog" testId="test-overlay">
 				<span>content</span>
 			</OverlayScrim>,
@@ -13,6 +13,7 @@ describe("overlay-shell", () => {
 
 		expect(screen.getByTestId("test-overlay")).toBeTruthy();
 		expect(screen.getByRole("dialog")).toBeTruthy();
+		expect(container.querySelector(".bg-scrim")).toBeTruthy();
 	});
 
 	it("renders card variants with design tokens", () => {

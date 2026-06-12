@@ -58,13 +58,13 @@ export function SignUpForm() {
 			)}
 
 			<div className="flex flex-col gap-1.5">
-				<label className="text-sm text-white/80" htmlFor="name">
+				<label className="text-sm text-text-section" htmlFor="name">
 					Name
 				</label>
 				<input
 					aria-describedby={state.errors.name ? "name-error" : undefined}
 					aria-invalid={!!state.errors.name}
-					className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+					className="rounded-md border border-border-subtle bg-surface-panel px-3 py-2 text-primary placeholder:text-text-dimmed focus:border-focus-ring focus:outline-none focus:ring-1 focus:ring-focus"
 					defaultValue={state.values.name}
 					id="name"
 					maxLength={100}
@@ -81,13 +81,13 @@ export function SignUpForm() {
 			</div>
 
 			<div className="flex flex-col gap-1.5">
-				<label className="text-sm text-white/80" htmlFor="email">
+				<label className="text-sm text-text-section" htmlFor="email">
 					Email
 				</label>
 				<input
 					aria-describedby={state.errors.email ? "email-error" : undefined}
 					aria-invalid={!!state.errors.email}
-					className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+					className="rounded-md border border-border-subtle bg-surface-panel px-3 py-2 text-primary placeholder:text-text-dimmed focus:border-focus-ring focus:outline-none focus:ring-1 focus:ring-focus"
 					defaultValue={state.values.email}
 					id="email"
 					maxLength={254}
@@ -104,7 +104,7 @@ export function SignUpForm() {
 			</div>
 
 			<div className="flex flex-col gap-1.5">
-				<label className="text-sm text-white/80" htmlFor="password">
+				<label className="text-sm text-text-section" htmlFor="password">
 					Password
 				</label>
 				<input
@@ -112,7 +112,7 @@ export function SignUpForm() {
 						state.errors.password ? "password-error" : undefined
 					}
 					aria-invalid={!!state.errors.password}
-					className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+					className="rounded-md border border-border-subtle bg-surface-panel px-3 py-2 text-primary placeholder:text-text-dimmed focus:border-focus-ring focus:outline-none focus:ring-1 focus:ring-focus"
 					id="password"
 					maxLength={128}
 					minLength={8}
@@ -130,7 +130,7 @@ export function SignUpForm() {
 
 			<button
 				aria-disabled={isPending}
-				className="mt-2 rounded-md bg-indigo-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-[#1a1a2e] disabled:cursor-not-allowed disabled:opacity-50"
+				className="mt-2 rounded-md bg-accent-cta px-4 py-2.5 font-medium text-on-cta transition-colors hover:bg-accent-cta-hover focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2 focus:ring-offset-shell-top disabled:cursor-not-allowed disabled:opacity-50"
 				disabled={isPending}
 				type="submit"
 			>
@@ -148,10 +148,10 @@ export function SignUpForm() {
 				/>
 			</div>
 
-			<p className="mt-2 text-center text-sm text-white/60">
+			<p className="mt-2 text-center text-sm text-text-secondary">
 				Already have an account?{" "}
 				<Link
-					className="text-indigo-400 hover:text-indigo-300"
+					className="text-accent-cta hover:text-accent-cta-hover"
 					href="/auth/sign-in"
 				>
 					Sign in

@@ -21,9 +21,9 @@ export function EmptyActiveTasksGuide({
 }: EmptyActiveTasksGuideProps) {
 	return (
 		<div className="space-y-2" data-testid="empty-active-tasks-guide">
-			<p className="text-sm text-white/50">{getEmptyGuideMessage(mode)}</p>
+			<p className="text-sm text-text-dimmed">{getEmptyGuideMessage(mode)}</p>
 			<button
-				className="text-sm text-white/50 underline transition hover:text-white/80"
+				className="text-sm text-text-dimmed underline transition hover:text-text-section"
 				data-testid="empty-active-tasks-add-btn"
 				onClick={onAddTaskClick}
 				type="button"

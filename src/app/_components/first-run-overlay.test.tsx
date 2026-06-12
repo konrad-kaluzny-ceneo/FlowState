@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { getFirstRunCopy } from "~/lib/onboarding/copy";
-
 import { FirstRunOverlay } from "./first-run-overlay";
 
 describe("FirstRunOverlay authenticated", () => {
@@ -14,6 +13,15 @@ describe("FirstRunOverlay authenticated", () => {
 		);
 
 		expect(screen.getByTestId("first-run-overlay")).toBeTruthy();
+		expect(screen.getByTestId("first-run-overlay").className).toContain(
+			"bg-scrim",
+		);
+		expect(screen.getByTestId("first-run-dismiss-btn").className).toContain(
+			"w-full",
+		);
+		expect(screen.getByTestId("first-run-dismiss-btn").className).toContain(
+			"bg-accent-cta",
+		);
 		expect(screen.getByRole("heading", { name: copy.title })).toBeTruthy();
 		expect(screen.getByText(copy.body)).toBeTruthy();
 		expect(screen.getByTestId("first-run-dismiss-btn")).toBeTruthy();

@@ -6,6 +6,8 @@ import { Geist } from "next/font/google";
 import { auth } from "~/lib/auth/server";
 import { TRPCReactProvider } from "~/trpc/react";
 import { OAuthSessionVerifier } from "./_components/oauth-session-verifier";
+import { ThemeProvider } from "./_components/theme-provider";
+import { ThemeScript } from "./_components/theme-script";
 import { UserMenu } from "./_components/user-menu";
 
 export const dynamic = "force-dynamic";
@@ -39,16 +41,26 @@ export default async function RootLayout({
 	}
 
 	return (
-		<html className={`${geist.variable}`} lang="en">
+		<html
+			className={`${geist.variable}`}
+			data-theme="light"
+			lang="en"
+			suppressHydrationWarning
+		>
+			<head>
+				<ThemeScript />
+			</head>
 			<body>
 				<TRPCReactProvider>
-					<OAuthSessionVerifier />
-					{userName && (
-						<header className="fixed top-0 right-0 z-50 p-4">
-							<UserMenu userName={userName} />
-						</header>
-					)}
-					{children}
+					<ThemeProvider>
+						<OAuthSessionVerifier />
+						{userName && (
+							<header className="fixed top-0 right-0 z-50 p-4">
+								<UserMenu userName={userName} />
+							</header>
+						)}
+						{children}
+					</ThemeProvider>
 				</TRPCReactProvider>
 			</body>
 		</html>
