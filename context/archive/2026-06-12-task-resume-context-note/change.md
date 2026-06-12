@@ -1,9 +1,9 @@
 ---
 change_id: task-resume-context-note
 title: Task resume context note
-status: impl_reviewed
+status: archived
 updated: 2026-06-12
-archived_at: null
+archived_at: 2026-06-12T13:50:00Z
 ---
 
 ## Notes
