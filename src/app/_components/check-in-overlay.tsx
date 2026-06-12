@@ -30,10 +30,10 @@ export function CheckInOverlay({
 			zIndex={60}
 		>
 			<OverlayCard>
-				<h2 className="font-bold text-2xl text-white">
+				<h2 className="font-semibold text-2xl text-primary">
 					How&apos;s your energy?
 				</h2>
-				<p className="mt-2 text-sm text-white/60">
+				<p className="mt-2 text-sm text-text-secondary">
 					Select one before your break starts.
 				</p>
 				<EnergySelector

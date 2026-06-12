@@ -16,7 +16,7 @@ const CARD_VARIANT_CLASS: Record<OverlayCardVariant, string> = {
 	default: "border-border-subtle bg-surface-overlay",
 	break: "border-border-break bg-surface-break",
 	suggestion:
-		"border-border-subtle bg-surface-overlay ring-1 ring-amber-400/20",
+		"border-border-subtle bg-surface-overlay ring-1 ring-accent-suggestion",
 };
 
 type OverlayScrimProps = {
@@ -36,7 +36,7 @@ export function OverlayScrim({
 }: OverlayScrimProps) {
 	return (
 		<div
-			className={`overlay-enter fixed inset-0 ${Z_INDEX_CLASS[zIndex]} flex items-center justify-center bg-black/60 p-4`}
+			className={`overlay-enter fixed inset-0 ${Z_INDEX_CLASS[zIndex]} flex items-center justify-center bg-scrim p-4`}
 			data-cycle-id={cycleId}
 			data-testid={testId}
 			role={role}
@@ -77,17 +77,17 @@ export function OverlayCard({
 
 export const overlayButtonClass = {
 	primary:
-		"rounded-lg bg-accent-cta py-3 font-semibold text-white transition hover:bg-accent-cta-hover disabled:opacity-50",
+		"rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50",
 	primaryFull:
-		"w-full rounded-lg bg-accent-cta py-3 font-semibold text-white transition hover:bg-accent-cta-hover disabled:opacity-50",
+		"w-full rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50",
 	secondary:
-		"rounded-lg border border-border-subtle bg-white/5 py-3 font-semibold text-white transition hover:bg-white/10 disabled:opacity-50",
+		"rounded-lg border border-border-subtle bg-surface-panel py-3 font-semibold text-primary transition hover:bg-surface-card-muted disabled:opacity-50",
 	secondaryFull:
-		"w-full rounded-lg border border-border-subtle bg-white/5 py-3 font-semibold text-white transition hover:bg-white/10 disabled:opacity-50",
+		"w-full rounded-lg border border-border-subtle bg-surface-panel py-3 font-semibold text-primary transition hover:bg-surface-card-muted disabled:opacity-50",
 	success:
-		"rounded-lg bg-accent-success py-3 font-semibold text-white transition hover:bg-green-500 disabled:opacity-50",
+		"rounded-lg bg-accent-success py-3 font-semibold text-on-cta transition hover:opacity-90 disabled:opacity-50",
 	breakPrimary:
-		"w-full rounded-lg bg-accent-break py-3 font-semibold text-white transition hover:bg-teal-500 disabled:opacity-50",
+		"w-full rounded-lg bg-accent-break py-3 font-semibold text-on-cta transition hover:opacity-90 disabled:opacity-50",
 	breakSecondary:
-		"w-full rounded-lg border border-border-break py-3 font-semibold text-teal-100 transition hover:bg-teal-500/20 disabled:opacity-50",
+		"w-full rounded-lg border border-border-break py-3 font-semibold text-accent-break transition hover:bg-surface-panel disabled:opacity-50",
 } as const;

@@ -445,29 +445,29 @@ No database migration. Existing users see light-default on first visit (or syste
 
 #### Automated
 
-- [x] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` passes
-- [x] 3.2 `pnpm check` passes
-- [x] 3.3 `pnpm test` passes
+- [x] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` passes — 5686f21
+- [x] 3.2 `pnpm check` passes — 5686f21
+- [x] 3.3 `pnpm test` passes — 5686f21
 
 #### Manual
 
-- [x] 3.4 Home page readable in light and dark themes with correct hierarchy
-- [x] 3.5 Auth pages unified plum CTA in both themes
-- [x] 3.6 Selected task focus ring visible on light cards
+- [x] 3.4 Home page readable in light and dark themes with correct hierarchy — 5686f21
+- [x] 3.5 Auth pages unified plum CTA in both themes — 5686f21
+- [x] 3.6 Selected task focus ring visible on light cards — 5686f21
 
 ### Phase 4: Overlays + orphan consolidation
 
 #### Automated
 
-- [ ] 4.1 `pnpm exec vitest run src/app/_components/overlay-shell.test.tsx` passes
-- [ ] 4.2 Orphan overlay smoke tests pass
-- [ ] 4.3 `pnpm check` passes
-- [ ] 4.4 `pnpm test` passes
+- [x] 4.1 `pnpm exec vitest run src/app/_components/overlay-shell.test.tsx` passes
+- [x] 4.2 Orphan overlay smoke tests pass
+- [x] 4.3 `pnpm check` passes
+- [x] 4.4 `pnpm test` passes
 
 #### Manual
 
-- [ ] 4.5 Overlays readable in light and dark themes
-- [ ] 4.6 Orphan overlays match wedge overlay family
+- [x] 4.5 Overlays readable in light and dark themes
+- [x] 4.6 Orphan overlays match wedge overlay family
 
 ### Phase 5: Timer + segmented chrome
 

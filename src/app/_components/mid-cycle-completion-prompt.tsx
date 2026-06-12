@@ -33,15 +33,15 @@ export function MidCycleCompletionPrompt({
 	return (
 		<OverlayScrim testId="mid-cycle-prompt-overlay">
 			<OverlayCard centered={false}>
-				<h2 className="text-center font-bold text-2xl text-white">
+				<h2 className="text-center font-semibold text-2xl text-primary">
 					Task complete
 				</h2>
 				{pendingTask != null && (
-					<p className="mt-2 text-center text-sm text-white/70">
+					<p className="mt-2 text-center text-sm text-text-secondary">
 						{pendingTask.title}
 					</p>
 				)}
-				<p className="mt-4 text-center text-sm text-white/60">
+				<p className="mt-4 text-center text-sm text-text-secondary">
 					{hasOtherTasks
 						? "Continue this cycle with another task, or end now for a break."
 						: "No other active tasks — end the cycle and take a break."}
@@ -54,8 +54,8 @@ export function MidCycleCompletionPrompt({
 								<button
 									className={`w-full rounded-lg border px-4 py-3 text-left transition ${
 										selectedTaskId === task.id
-											? "border-purple-500 bg-purple-500/20 text-white"
-											: "border-border-subtle bg-white/5 text-white/80 hover:border-white/40"
+											? "border-focus-ring bg-energy-steady-bg text-primary"
+											: "border-border-subtle bg-surface-panel text-text-section hover:border-border-subtle hover:bg-surface-card-muted"
 									}`}
 									disabled={isSubmitting}
 									onClick={() => setSelectedTaskId(task.id)}

@@ -28,10 +28,12 @@ export function WindDownOverlay({
 	return (
 		<OverlayScrim role="dialog" testId="wind-down-overlay" zIndex={58}>
 			<OverlayCard>
-				<h2 className="font-bold text-2xl text-white">{WIND_DOWN_TITLE}</h2>
-				<p className="mt-4 text-sm text-white/70">{WIND_DOWN_BODY}</p>
+				<h2 className="font-semibold text-2xl text-primary">
+					{WIND_DOWN_TITLE}
+				</h2>
+				<p className="mt-4 text-sm text-text-secondary">{WIND_DOWN_BODY}</p>
 				<p
-					className="mt-2 text-purple-200/70 text-xs"
+					className="mt-2 text-accent-cta/70 text-xs"
 					data-testid="wind-down-rationale"
 				>
 					{rationale}
@@ -47,7 +49,7 @@ export function WindDownOverlay({
 						{WIND_DOWN_KEEP_GOING_LABEL}
 					</button>
 					<button
-						className="w-full rounded-lg border border-border-subtle py-3 text-sm text-white/60 transition hover:border-red-400/40 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+						className="w-full rounded-lg border border-border-subtle py-3 text-sm text-text-secondary transition hover:border-red-400/40 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
 						data-testid="wind-down-end-session-btn"
 						disabled={isSubmitting}
 						onClick={onEndSession}

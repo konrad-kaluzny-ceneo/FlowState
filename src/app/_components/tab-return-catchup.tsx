@@ -34,14 +34,14 @@ export function TabReturnCatchUp({
 		<div
 			className={`rounded-t-xl border border-b-0 px-6 py-4 text-center ${
 				isBreakGate
-					? "border-teal-400/30 bg-[#1a2e2e] text-teal-100"
-					: "border-purple-400/30 bg-[#1a1a2e] text-purple-100"
+					? "border-border-break bg-surface-break text-accent-break"
+					: "border-border-subtle bg-surface-overlay text-accent-cta"
 			} ${className ?? ""}`}
 			data-testid="tab-return-catchup"
 		>
 			<p className="font-semibold text-sm tracking-wide">{copy.headline}</p>
-			<p className="mt-1 text-xs opacity-80">{endedAgo}</p>
-			<p className="mt-2 text-sm opacity-90">{copy.subcopy}</p>
+			<p className="mt-1 text-text-dimmed text-xs">{endedAgo}</p>
+			<p className="mt-2 text-sm text-text-secondary">{copy.subcopy}</p>
 		</div>
 	);
 }
