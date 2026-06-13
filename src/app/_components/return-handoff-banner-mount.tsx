@@ -4,17 +4,6 @@ import { ReturnHandoffBanner } from "~/app/_components/return-handoff-banner";
 import { useReturnHandoff } from "~/hooks/use-return-handoff";
 import { useTestIdVisible } from "~/hooks/use-test-id-visible";
 
-const WEDGE_GATE_TEST_IDS = [
-	"cycle-complete-overlay",
-	"first-run-overlay",
-	"merge-success-overlay",
-	"check-in-overlay",
-	"task-suggestion-card",
-	"session-closure-overlay",
-	"wind-down-overlay",
-	"kickoff-readiness-overlay",
-] as const;
-
 function useWedgeGateSuppressed(): boolean {
 	const cycleComplete = useTestIdVisible("cycle-complete-overlay");
 	const firstRun = useTestIdVisible("first-run-overlay");
@@ -60,5 +49,3 @@ export function ReturnHandoffBannerMount({
 		/>
 	);
 }
-
-export { WEDGE_GATE_TEST_IDS };

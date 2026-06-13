@@ -10,6 +10,9 @@ import {
 export const RETURN_HANDOFF_THRESHOLD_MS = 8 * 60 * 60 * 1000;
 
 export function getReturnHandoffThresholdMs(): number {
+	if (process.env.NODE_ENV === "production") {
+		return RETURN_HANDOFF_THRESHOLD_MS;
+	}
 	const override = process.env.NEXT_PUBLIC_E2E_RETURN_HANDOFF_THRESHOLD_MS;
 	if (override != null && override.length > 0) {
 		const parsed = Number(override);

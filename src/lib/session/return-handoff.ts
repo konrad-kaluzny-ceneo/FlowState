@@ -22,28 +22,40 @@ export function readDismissedHandoffSessionIds(): string[] {
 		return [];
 	}
 
-	const dismissed: string[] = [];
-	for (let i = 0; i < localStorage.length; i++) {
-		const key = localStorage.key(i);
-		if (key?.startsWith(HANDOFF_DISMISS_PREFIX)) {
-			dismissed.push(key.slice(HANDOFF_DISMISS_PREFIX.length));
+	try {
+		const dismissed: string[] = [];
+		for (let i = 0; i < localStorage.length; i++) {
+			const key = localStorage.key(i);
+			if (key?.startsWith(HANDOFF_DISMISS_PREFIX)) {
+				dismissed.push(key.slice(HANDOFF_DISMISS_PREFIX.length));
+			}
 		}
+		return dismissed;
+	} catch {
+		return [];
 	}
-	return dismissed;
 }
 
 export function isHandoffDismissed(sessionId: number | string): boolean {
 	if (typeof window === "undefined") {
 		return false;
 	}
-	return localStorage.getItem(handoffDismissStorageKey(sessionId)) != null;
+	try {
+		return localStorage.getItem(handoffDismissStorageKey(sessionId)) != null;
+	} catch {
+		return false;
+	}
 }
 
 export function markHandoffDismissed(sessionId: number | string): void {
 	if (typeof window === "undefined") {
 		return;
 	}
-	localStorage.setItem(handoffDismissStorageKey(sessionId), "1");
+	try {
+		localStorage.setItem(handoffDismissStorageKey(sessionId), "1");
+	} catch {
+		// Private mode / quota — degrade gracefully
+	}
 }
 
 export type HandoffTaskContext = {

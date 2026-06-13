@@ -19,6 +19,18 @@ import {
 } from "~/lib/session/return-handoff";
 import { api } from "~/trpc/react";
 
+function guestHasActiveSession(): boolean {
+	return loadSnapshot().sessions.some((session) => session.state === "ACTIVE");
+}
+
+function getGuestActiveSessionSnapshot(): boolean {
+	return guestHasActiveSession();
+}
+
+function getGuestActiveSessionServerSnapshot(): boolean {
+	return false;
+}
+
 type UseReturnHandoffResult = {
 	handoffLine: string | null;
 	visible: boolean;
@@ -52,6 +64,19 @@ export function useReturnHandoff(
 		enabled: isAuthenticated,
 		staleTime: 30_000,
 	});
+
+	const { data: activeCycle } = api.cycle.getActive.useQuery(undefined, {
+		enabled: isAuthenticated,
+		staleTime: 10_000,
+	});
+
+	const guestHasActive = useSyncExternalStore(
+		subscribeGuestStore,
+		getGuestActiveSessionSnapshot,
+		getGuestActiveSessionServerSnapshot,
+	);
+
+	const inLiveSession = isAuthenticated ? activeCycle != null : guestHasActive;
 
 	const { tasks: guestTasks } = useGuestDomainTasks();
 	const guestLastEnded = useSyncExternalStore(
@@ -101,7 +126,7 @@ export function useReturnHandoff(
 			dismissedSessionIds,
 		});
 
-	const visible = gateOpen && !suppressed;
+	const visible = gateOpen && !suppressed && !inLiveSession;
 
 	const dismiss = useCallback(() => {
 		if (endedSession == null) {
