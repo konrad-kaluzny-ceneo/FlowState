@@ -40,7 +40,7 @@
 - **Location**: `src/app/_components/task-list.test.tsx`
 - **Detail**: No tests for preset click → `createTask` payload, selection state, or reset. Phase 3 per plan; manual 1.3 is the interim guard.
 - **Fix**: Complete manual 1.3; prioritize Phase 3 preset oracles.
-- **Decision**: DEFERRED — Phase 3 scope per plan; manual 1.3 gates until then.
+- **Decision**: FIXED — Phase 3 oracles in `task-list.test.tsx` + `persona-presets.test.ts`; 21 tests in task-list suite.
 
 ### F3 — Manual Phase 1 verification still pending
 
@@ -50,7 +50,7 @@
 - **Location**: `plan.md` Progress 1.3–1.4
 - **Detail**: 1.3 and 1.4 remain `- [ ]` — correctly not rubber-stamped.
 - **Fix**: Browser QA for all three presets + Custom panel parity.
-- **Decision**: OPEN — owner: user/manual QA before closing Phase 1 manual rows.
+- **Decision**: FIXED — guest-mode browser QA (2026-06-13): Deep planning via Custom panel (Deep/Medium/Heavy/60 min/This week); Mail & admin and Hotfix urgent post-Add badges (Ops U:Medium I:Medium; Reactive U:Heavy I:Medium ASAP); Custom panel shows Type + Eisenhower fields.
 
 ### F4 — Icon mapping lives in picker, not preset module
 
@@ -91,11 +91,11 @@
 ═══════════════════════════════════════════════════════════
 
   Accepted:  F1 (Fix A — expand-only Custom v1)     (1)
-  Deferred:  F2 → Phase 3 oracles                   (1)
-  Open:      F3 manual 1.3–1.4                      (1)
+  Fixed:     F2 Phase 3 oracles                      (1)
+  Fixed:     F3 manual 1.3–1.4 browser QA           (1)
   Dismissed: F4                                     (1)
   Fixed:     F5 checks re-run                       (1)
 
-  ► Phase 1 code: APPROVED — proceed Phase 2
+  ► Phase 1 manual + Phase 3 oracles: COMPLETE
 ═══════════════════════════════════════════════════════════
 ```

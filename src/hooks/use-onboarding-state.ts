@@ -34,9 +34,11 @@ type OnboardingContextValue = {
 	dismissFirstRun: () => void;
 	markCheckInCoachSeen: () => void;
 	markSuggestionCoachSeen: () => void;
+	markPresetCoachDismissed: () => void;
 	isFirstRunVisible: boolean;
 	shouldShowCheckInCoach: boolean;
 	shouldShowSuggestionCoach: boolean;
+	shouldShowPresetCoach: boolean;
 };
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
@@ -85,6 +87,12 @@ function useOnboardingState(scope: OnboardingScope): OnboardingContextValue {
 		);
 	}, []);
 
+	const markPresetCoachDismissed = useCallback(() => {
+		setState(() =>
+			patchOnboardingState(scopeRef.current, { presetCoachDismissed: true }),
+		);
+	}, []);
+
 	// Pessimistic true on first render (SSR + hydration) avoids overlay flash/mismatch.
 	const [deferFirstRun, setDeferFirstRun] = useState(true);
 
@@ -112,6 +120,8 @@ function useOnboardingState(scope: OnboardingScope): OnboardingContextValue {
 
 	const shouldShowCheckInCoach = !state.checkInCoachSeen;
 	const shouldShowSuggestionCoach = !state.suggestionCoachSeen;
+	const shouldShowPresetCoach =
+		!state.presetCoachDismissed && !isFirstRunVisible;
 
 	return {
 		scope: stableScope,
@@ -119,9 +129,11 @@ function useOnboardingState(scope: OnboardingScope): OnboardingContextValue {
 		dismissFirstRun,
 		markCheckInCoachSeen,
 		markSuggestionCoachSeen,
+		markPresetCoachDismissed,
 		isFirstRunVisible,
 		shouldShowCheckInCoach,
 		shouldShowSuggestionCoach,
+		shouldShowPresetCoach,
 	};
 }
 
@@ -144,4 +156,23 @@ export function useOnboarding(): OnboardingContextValue {
 	}
 
 	return context;
+}
+
+/** Preset coach only — safe outside OnboardingProvider (e.g. isolated TaskList tests). */
+export function usePresetCoachOnboarding(): {
+	shouldShowPresetCoach: boolean;
+	markPresetCoachDismissed: () => void;
+} {
+	const context = useContext(OnboardingContext);
+	if (context == null) {
+		return {
+			shouldShowPresetCoach: false,
+			markPresetCoachDismissed: () => {},
+		};
+	}
+
+	return {
+		shouldShowPresetCoach: context.shouldShowPresetCoach,
+		markPresetCoachDismissed: context.markPresetCoachDismissed,
+	};
 }

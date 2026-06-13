@@ -24,6 +24,7 @@ describe("onboarding storage", () => {
 			firstRunDismissed: true,
 			checkInCoachSeen: true,
 			suggestionCoachSeen: false,
+			presetCoachDismissed: true,
 		};
 
 		saveOnboardingState({ mode: "guest" }, state);
@@ -66,6 +67,28 @@ describe("onboarding storage", () => {
 			firstRunDismissed: true,
 		});
 		expect(loadOnboardingState({ mode: "guest" })).toEqual(next);
+	});
+
+	it("parses and patches presetCoachDismissed", () => {
+		localStorage.setItem(
+			ONBOARDING_KEY_GUEST,
+			JSON.stringify({ v: 1, presetCoachDismissed: true }),
+		);
+
+		expect(loadOnboardingState({ mode: "guest" })).toEqual({
+			...DEFAULT_ONBOARDING_STATE,
+			presetCoachDismissed: true,
+		});
+
+		const next = patchOnboardingState(
+			{ mode: "guest" },
+			{ presetCoachDismissed: true },
+		);
+
+		expect(next.presetCoachDismissed).toBe(true);
+		expect(loadOnboardingState({ mode: "guest" }).presetCoachDismissed).toBe(
+			true,
+		);
 	});
 
 	it("isolates guest and auth keys per userId", () => {

@@ -28,6 +28,9 @@ export const CHECK_IN_COACH_LINE =
 export const SUGGESTION_COACH_LINE =
 	"Accept the suggestion or tap Focus on any other task — you're always in control.";
 
+export const PRESET_COACH_LINE =
+	"Presets pre-fill work type and priority — tap Custom if you want full control.";
+
 export type AuthPageVariant = "sign-in" | "sign-up";
 
 export type AuthValueCopy = {

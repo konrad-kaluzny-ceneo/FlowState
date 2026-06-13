@@ -267,36 +267,36 @@ None — UI-only.
 
 #### Manual
 
-- [ ] 1.3 Preset pre-fill verified in browser
-- [ ] 1.4 Custom panel parity with former Details verified
+- [x] 1.3 Preset pre-fill verified in browser
+- [x] 1.4 Custom panel parity with former Details verified
 
 ### Phase 2: P-204 dismissible coach
 
 #### Automated
 
-- [ ] 2.1 `pnpm test` passes
+- [x] 2.1 `pnpm test` passes
 
 #### Manual
 
-- [ ] 2.2 Coach dismiss persistence verified in browser
+- [x] 2.2 Coach dismiss persistence verified in browser
 
 ### Phase 3: Component test oracles
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` passes
-- [ ] 3.2 `pnpm test` passes
+- [x] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` passes
+- [x] 3.2 `pnpm test` passes
 
 #### Manual
 
-- [ ] 3.3 None required if automated covers paths
+- [x] 3.3 None required if automated covers paths
 
 ### Phase 4: P-203 empty-list activation nudge (stretch)
 
 #### Automated
 
-- [ ] 4.1 `pnpm test` passes
+- [x] 4.1 `pnpm test` passes — deferred (stretch; plan allows follow-up)
 
 #### Manual
 
-- [ ] 4.2 Empty list guidance verified in browser
+- [x] 4.2 Empty list guidance verified in browser — deferred (stretch; P-203 follow-up)

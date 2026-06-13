@@ -11,8 +11,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
 import { defaultEisenhowerFields } from "~/lib/data-mode/types";
+import { PRESET_COACH_LINE } from "~/lib/onboarding/copy";
+import {
+	applyPersonaPresetToCreateState,
+	TASK_PERSONA_PRESETS,
+} from "~/lib/task/persona-presets";
 
 import { TaskList } from "./task-list";
+
+const markPresetCoachDismissed = vi.fn();
+const presetCoachMock = {
+	shouldShowPresetCoach: false,
+	markPresetCoachDismissed,
+};
+
+vi.mock("~/hooks/use-onboarding-state", () => ({
+	usePresetCoachOnboarding: () => presetCoachMock,
+}));
 
 const dndTestState = {
 	onDragEndRef: null as ((event: DragEndEvent) => void) | null,
@@ -80,9 +95,69 @@ const defaultProps = {
 	cycleState: "idle" as const,
 };
 
+function getCreateForm(): HTMLFormElement {
+	const input = screen.getByPlaceholderText("Add a new task...");
+	const form = input.closest("form");
+	if (form == null) {
+		throw new Error("Create form not found");
+	}
+	return form;
+}
+
+function expectPressedInForm(form: HTMLElement, label: string) {
+	const button = within(form).getByRole("button", { name: label });
+	expect(button.getAttribute("aria-pressed")).toBe("true");
+}
+
+function expectAxisSelection(
+	form: HTMLElement,
+	axisLabel: string,
+	valueLabel: string,
+) {
+	const row = within(form).getByText(axisLabel).parentElement;
+	if (row == null) {
+		throw new Error(`Axis row not found: ${axisLabel}`);
+	}
+	const button = within(row).getByRole("button", { name: valueLabel });
+	expect(button.getAttribute("aria-pressed")).toBe("true");
+}
+
+function axisValueLabel(value: 1 | 2 | 3): string {
+	return value === 1 ? "Light" : value === 2 ? "Medium" : "Heavy";
+}
+
+function horizonValueLabel(
+	horizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE",
+): string {
+	return horizon === "ASAP"
+		? "ASAP"
+		: horizon === "THIS_WEEK"
+			? "This week"
+			: "When possible";
+}
+
+function openCreateCustomPanel() {
+	fireEvent.click(screen.getByRole("button", { name: "Custom" }));
+}
+
+function selectCreatePreset(label: string) {
+	fireEvent.click(screen.getByRole("button", { name: label }));
+}
+
+function fillCreateTitle(title: string) {
+	fireEvent.change(screen.getByPlaceholderText("Add a new task..."), {
+		target: { value: title },
+	});
+}
+
+function submitCreateForm() {
+	fireEvent.click(screen.getByRole("button", { name: "Add" }));
+}
+
 describe("TaskList", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		presetCoachMock.shouldShowPresetCoach = false;
 	});
 
 	it("inline edit uses textarea and preserves multiline title on save", () => {
@@ -243,12 +318,127 @@ describe("TaskList", () => {
 	it("shows Eisenhower attribute pickers in create Custom panel", () => {
 		render(<TaskList {...defaultProps} />);
 
-		fireEvent.click(screen.getByRole("button", { name: "Custom" }));
+		openCreateCustomPanel();
 
 		expect(screen.getByText("Urgency")).toBeTruthy();
 		expect(screen.getByText("Importance")).toBeTruthy();
 		expect(screen.getByText("Effort")).toBeTruthy();
 		expect(screen.getByText("Horizon")).toBeTruthy();
+		expect(screen.getByRole("button", { name: "Deep" })).toBeTruthy();
+		expect(screen.getByRole("button", { name: "Ops" })).toBeTruthy();
+		expect(screen.getByRole("button", { name: "Reactive" })).toBeTruthy();
+	});
+
+	it.each(
+		TASK_PERSONA_PRESETS.map((preset) => [preset.label, preset.id] as const),
+	)("preset %s applies create form attributes visible in Custom panel", (label, presetId) => {
+		render(<TaskList {...defaultProps} />);
+
+		selectCreatePreset(label);
+		expect(
+			screen
+				.getByTestId(`persona-preset-${presetId}`)
+				.getAttribute("aria-pressed"),
+		).toBe("true");
+
+		openCreateCustomPanel();
+		const applied = applyPersonaPresetToCreateState(presetId);
+		const form = getCreateForm();
+
+		const workTypeLabel =
+			applied.workType === "DEEP_WORK"
+				? "Deep"
+				: applied.workType === "OPERATIONAL"
+					? "Ops"
+					: "Reactive";
+		expectPressedInForm(form, workTypeLabel);
+		expectAxisSelection(form, "Urgency", axisValueLabel(applied.urgency));
+		expectAxisSelection(form, "Importance", axisValueLabel(applied.importance));
+
+		const effortInput = within(form).getByPlaceholderText("min");
+		expect((effortInput as HTMLInputElement).value).toBe(applied.effortMinutes);
+
+		expectAxisSelection(
+			form,
+			"Horizon",
+			horizonValueLabel(applied.commitmentHorizon),
+		);
+	});
+
+	it.each(
+		TASK_PERSONA_PRESETS.map((preset) => [preset.label, preset.id] as const),
+	)("Add sends %s preset attributes via createTask", async (label, presetId) => {
+		render(<TaskList {...defaultProps} />);
+
+		selectCreatePreset(label);
+		fillCreateTitle("Preset task");
+		submitCreateForm();
+
+		const applied = applyPersonaPresetToCreateState(presetId);
+
+		await waitFor(() => {
+			expect(createTask).toHaveBeenCalledWith({
+				title: "Preset task",
+				workType: applied.workType,
+				urgency: applied.urgency,
+				weight: applied.urgency,
+				importance: applied.importance,
+				effortMinutes: Number.parseInt(applied.effortMinutes, 10),
+				commitmentHorizon: applied.commitmentHorizon,
+			});
+		});
+	});
+
+	it("post-create reset clears preset selection and Custom panel", async () => {
+		render(<TaskList {...defaultProps} />);
+
+		selectCreatePreset("Deep planning");
+		openCreateCustomPanel();
+		fillCreateTitle("Reset me");
+		submitCreateForm();
+
+		await waitFor(() => {
+			expect(createTask).toHaveBeenCalled();
+		});
+
+		expect(
+			(screen.getByPlaceholderText("Add a new task...") as HTMLInputElement)
+				.value,
+		).toBe("");
+		expect(
+			screen
+				.getByTestId("persona-preset-deep-planning")
+				.getAttribute("aria-pressed"),
+		).toBe("false");
+		expect(screen.queryByText("Urgency")).toBeNull();
+	});
+
+	it("selecting a preset collapses Custom panel", () => {
+		render(<TaskList {...defaultProps} />);
+
+		openCreateCustomPanel();
+		expect(screen.getByText("Urgency")).toBeTruthy();
+
+		selectCreatePreset("Mail & admin");
+		expect(screen.queryByText("Urgency")).toBeNull();
+		expect(
+			screen
+				.getByTestId("persona-preset-mail-admin")
+				.getAttribute("aria-pressed"),
+		).toBe("true");
+	});
+
+	it("preset coach dismiss calls markPresetCoachDismissed", () => {
+		presetCoachMock.shouldShowPresetCoach = true;
+
+		render(<TaskList {...defaultProps} />);
+
+		expect(screen.getByTestId("preset-coach")).toBeTruthy();
+		expect(screen.getByText(PRESET_COACH_LINE)).toBeTruthy();
+
+		fireEvent.click(screen.getByTestId("preset-coach-dismiss-btn"));
+
+		expect(markPresetCoachDismissed).toHaveBeenCalledTimes(1);
 	});
 
 	it("shows ASAP badge on active task when horizon is ASAP", () => {

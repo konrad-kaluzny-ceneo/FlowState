@@ -19,6 +19,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
 import { PersonaPresetPicker } from "~/app/_components/persona-preset-picker";
+import { usePresetCoachOnboarding } from "~/hooks/use-onboarding-state";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import type {
@@ -27,6 +28,7 @@ import type {
 	DomainTaskId,
 } from "~/lib/data-mode/types";
 import { WORK_TYPE_CONFIG } from "~/lib/design/work-type-config";
+import { PRESET_COACH_LINE } from "~/lib/onboarding/copy";
 import {
 	applyPersonaPresetToCreateState,
 	DEFAULT_CREATE_FORM_ATTRIBUTES,
@@ -532,6 +534,8 @@ export function TaskList({
 	suggestionLoading = false,
 }: TaskListProps) {
 	const mode = useDataMode();
+	const { shouldShowPresetCoach, markPresetCoachDismissed } =
+		usePresetCoachOnboarding();
 	const addTaskInputRef = useRef<HTMLInputElement>(null);
 	const {
 		createTask,
@@ -826,6 +830,10 @@ export function TaskList({
 					</button>
 				</div>
 				<PersonaPresetPicker
+					coachLine={shouldShowPresetCoach ? PRESET_COACH_LINE : undefined}
+					onDismissCoach={
+						shouldShowPresetCoach ? markPresetCoachDismissed : undefined
+					}
 					onSelectCustom={() => {
 						setShowCustomPanel(true);
 						markCreateFormCustom();
