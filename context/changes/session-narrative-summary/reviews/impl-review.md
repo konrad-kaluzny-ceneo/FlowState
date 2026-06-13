@@ -24,7 +24,7 @@ All six plan phases are complete. Core FR-040 beats ship: in-flow summary, sessi
 | ID | Severity | Finding | Action |
 |----|----------|---------|--------|
 | F1 | WARNING | Unguarded localStorage in handoff dismiss | **Fixed** — try/catch in return-handoff.ts |
-| F2 | WARNING | E2E threshold env in production builds | **Fixed** — override disabled when NODE_ENV=production |
+| F2 | WARNING | E2E threshold env in production builds | **Fixed** — override only when env var explicitly set (CI/e2e); unset in Vercel prod |
 | F3 | WARNING | Handoff visible during active session | **Fixed** — suppress when cycle.getActive or guest ACTIVE session |
 | F4 | WARNING | Wind-down closure may use stale task counts | Accepted — client-built line; server recompute deferred |
 | F5 | OBSERVATION | localStorage dismiss keys never pruned | Accepted for MVP; per-session keys are bounded by usage |
