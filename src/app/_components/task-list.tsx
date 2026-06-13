@@ -843,7 +843,10 @@ export function TaskList({
 					showCustomPanel={showCustomPanel}
 				/>
 				{showCustomPanel && (
-					<div className="space-y-2 rounded-lg border border-border-subtle bg-surface-panel p-3">
+					<div
+						className="space-y-2 rounded-lg border border-border-subtle bg-surface-panel p-3"
+						data-testid="create-task-custom-panel"
+					>
 						<div className="flex items-center gap-2">
 							<span className="w-16 text-text-secondary text-xs">Type</span>
 							<SegmentedControl
