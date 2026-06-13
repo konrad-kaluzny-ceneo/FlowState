@@ -20,6 +20,7 @@ function parseStoredState(raw: string | null): OnboardingState {
 			firstRunDismissed: parsed.firstRunDismissed === true,
 			checkInCoachSeen: parsed.checkInCoachSeen === true,
 			suggestionCoachSeen: parsed.suggestionCoachSeen === true,
+			presetCoachDismissed: parsed.presetCoachDismissed === true,
 		};
 	} catch {
 		return { ...DEFAULT_ONBOARDING_STATE };

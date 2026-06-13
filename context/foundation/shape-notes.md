@@ -1,218 +1,187 @@
 ---
 project: "FlowState"
-version: 2
-context_type: greenfield
-created: 2026-05-23
-updated: 2026-06-12
+version: 3
+context_type: brownfield
+created: 2026-06-13
+updated: 2026-06-13
 product_type: web-app
 target_scale:
   users: small
   qps: low
   data_volume: small
 timeline_budget:
-  mvp_weeks: 6
+  delivery_weeks: 0
   hard_deadline: null
   after_hours_only: true
+  note: "0 = no fixed delivery cap; continuous after-hours iteration"
 checkpoint:
-  current_phase: 9
-  phases_completed: [1, 2, 3, 4, 5, 6, 7, 8]
-  product_phase: continuous-iteration
+  current_phase: 8
+  phases_completed: [1, 2, 3, 4, 4.5, 5, 6, 7]
+  product_phase: post-mvp-iteration
   mvp_shipped: 2026-06-07
-  prd_version: 2
+  prd_version: 3
+  prior_prd_archived: context/foundation/archive/2026-06-13-prd-v2.md
   gray_areas_resolved:
-    - topic: "pain category"
-      decision: "workflow friction + decision paralysis + coordination overhead"
-    - topic: "insight"
-      decision: "mindfulness and productivity are treated as separate concerns — tools optimize for throughput, not end-of-day mental state"
-    - topic: "primary persona scope"
-      decision: "knowledge worker in a dynamic team environment"
-    - topic: "access model"
-      decision: "login (email + password / OAuth / passwordless); flat user model — one role"
-    - topic: "MVP timeline"
-      decision: "6 weeks, hard deadline 2026-07-05, user accepted sustained-effort cost"
-    - topic: "task-pomodoro link"
-      decision: "user selects a task to focus on before starting a Pomodoro cycle"
-    - topic: "cycle-end notification"
-      decision: "in-browser audio signal + UI prompt to confirm next cycle"
-    - topic: "task completed mid-cycle"
-      decision: "user is prompted to choose: pick next task and continue cycle, or take a break now"
-    - topic: "task completion celebration"
-      decision: "full surprise animation — distinct, delightful, unexpected (nice-to-have)"
-  frs_drafted: 22
+    - topic: "PRD v3 impuls"
+      decision: "deepen wedge — better suggestions, transitions, trust; plus significant new capability and craft/polish"
+    - topic: "change category"
+      decision: "significant feature + quality craft"
+    - topic: "must preserve"
+      decision: "wedge + override freedom; no silent data loss; mindful transitions (max 1 interstitial + 1 gate per beat)"
+    - topic: "auth"
+      decision: "no changes — current model preserved"
+    - topic: "primary success"
+      decision: "full session with smooth transitions and no interstitial fatigue"
+    - topic: "delivery horizon"
+      decision: "open-ended continuous iteration — no fixed ship deadline"
+    - topic: "recap vs dashboard"
+      decision: "daily recap uses light footprint (minutes per task) — still no full analytics dashboard"
+    - topic: "business logic"
+      decision: "extend existing scoring rule with new inputs (persona preset, daily standing, capacity)"
+    - topic: "scoring weights"
+      decision: "coefficients tunable post-ship; implementer owns; Block: no"
+    - topic: "pause vs session timeout"
+      decision: "pause has own cap (~30 min) then auto-end session; pause does not count as interruption"
+    - topic: "standing reset"
+      decision: "reset at local midnight in user's browser timezone"
+    - topic: "guest narrative"
+      decision: "shorten — minimal closure in guest; full FR-040 only after merge"
+    - topic: "transition surfaces"
+      decision: "F-07 conductor defines beat priority; max 1 interstitial + 1 gate"
+  frs_drafted: 10
   quality_check_status: accepted
 ---
 
-## Vision & Problem Statement
+## Current System
 
-A knowledge worker in a dynamic team environment faces compounding cognitive load throughout the day: workflow friction from constant context-switching, decision paralysis when the task pile grows and no single task is clearly "the one right now", and coordination overhead from other people's demands arriving unpredictably. By mid-day, after repeated interruptions and context switches, the pile of open tasks feels unmanageable. The day ends with a feeling of overstimulation and lost control rather than accomplishment.
+FlowState is a shipped single-user web app (MVP 2026-06-07) for interrupt-driven knowledge work: Pomodoro cycles linked to tasks, session-aware next-task suggestions with one-line rationale, mindful check-ins at cycle boundaries, and user override at every suggestion beat. Stack: Next.js, TypeScript, tRPC, Prisma on Neon Postgres, Neon Auth (email + OAuth), guest trial with local merge. PRD v2 iteration deepened wedge overlays, context recovery, session narrative, and Serene Pastel visual system. Roadmap tracks vertical slices (S-01–S-35); active work includes persona presets (S-29).
 
-The insight that makes this product worth building: existing productivity tools treat mindfulness and productivity as separate concerns. Task managers optimize for throughput — capturing more, organizing better, tracking completion. They do not address the user's mental state at end of day. FlowState is built on the premise that a calm, focused end-of-day feeling is itself a first-class product outcome, not a side effect of getting more done.
+## Problem Statement & Motivation (delta)
+
+MVP and PRD v2 iteration proved the core loop. The gap now: transitions between wedge beats still risk interstitial fatigue; first suggestions lack trust without persona context; daily planning (standing tasks, capacity) and cycle pause are incomplete; craft (Calm Garden, focus shell) lags the wedge promise. Trigger: continuous quality iteration after MVP — deepen wedge and ship the remaining must-have surface without regressing calm end-of-day feeling.
 
 ## User & Persona
 
-**Primary persona: The Dynamic Knowledge Worker**
-
-A developer, analyst, or team contributor whose workday is genuinely interrupt-driven — pipelines finish, Slack messages arrive, fires need putting out, and meaningful work happens in the gaps between. They are not disorganized; they are operating in an environment that structurally resists sustained focus. They reach for FlowState not because they lack a to-do list, but because their to-do list doesn't help them answer "what do I do *right now*" or recover their context after an interruption.
+**Primary persona: The Dynamic Knowledge Worker** — unchanged from PRD v2. Interrupt-driven developer, analyst, or team contributor who needs "what do I do right now" and context recovery after interruption.
 
 ## Access Control
 
-Authentication: login required (email + password, OAuth, or passwordless — exact mechanism is downstream). Each user authenticates to access their own data.
-
-Role model: flat — every logged-in user has identical capabilities. No admin surface, no role-based permission boundaries in the MVP.
+No changes planned — current model preserved. Login (email + password, OAuth), flat user model, optional guest trial with merge on sign-in.
 
 ## Success Criteria
 
 ### Primary
-- A logged-in user completes a full Pomodoro session with at least one task, marks it done, and ends the session with a clear view of completed vs. open work — the full loop working end-to-end.
+- A logged-in user completes a multi-cycle session where wedge transitions (check-in → suggestion → break confirm → optional wind-down) flow without interstitial fatigue — at most one interstitial line plus one gate per transition beat, orchestrated by the transition conductor.
 
 ### Secondary
-- Pomodoro cycle lengths (work and break durations) are configurable and the setting persists across sessions.
-- The completed/active task split is visually clear at a glance.
+- Task create with persona preset completes in ≤3 taps without losing Custom expand path.
+- Daily recap (light footprint) is dismissible and does not block the next session.
+- Pause/resume preserves remaining cycle time; pause does not count as interruption; paused session auto-ends after ~30 minutes.
+- Daily standing tasks reset predictably at local midnight (browser timezone).
+- Serene Pastel + Calm Garden visuals are cohesive on home, wedge overlays, and auth.
+- Guest trial remains narrower than logged-in (no full wedge stack).
 
 ### Guardrails
-- User data (tasks, session state) must never be lost silently — a crash or refresh must not wipe work.
-- The Pomodoro timer must be accurate — a configured cycle must not drift by more than a few seconds.
-- Auth must not lock a user out of their own data — a failed login attempt must not destroy local state.
-- A user must never have access to another user's data — data isolation is strict per account.
-
-## Timeline acknowledgment
-
-Acknowledged on 2026-05-23: 6-week MVP (hard deadline 2026-07-05) requires sustained dedication over evenings/weekends; user accepted.
-
-## Functional Requirements
-
-### Authentication
-
-- FR-001: User can register an account. Priority: must-have
-  > Socrates: Counter-argument considered: "registration adds friction before value." Resolution: kept; registration is required for data isolation.
-- FR-002: User can log in to their account. Priority: must-have
-  > Socrates: Counter-argument considered: "login is mechanically implied by registration." Resolution: kept; login is the gate to user data.
-- FR-003: User can log out. Priority: must-have
-  > Socrates: Counter-argument considered: "nobody logs out on a personal device." Resolution: kept; required for session security.
-
-### Task List
-
-- FR-004: User can add a task to their list. Priority: must-have
-  > Socrates: Counter-argument considered: "tasks could be imported from existing tools instead." Resolution: kept; user needs to name what they're working on, task list is the minimal shape.
-- FR-005: User can edit a task. Priority: must-have
-  > Socrates: Counter-argument considered: "editing invites over-polishing — users might endlessly refine task names instead of starting work." Resolution: kept; editing is essential for correcting mistakes and updating scope as understanding evolves.
-- FR-006: User can delete a task. Priority: must-have
-  > Socrates: Counter-argument considered: "deletion destroys history — a completed/archived state would preserve the record for session analytics." Resolution: kept; users need a clean list to reduce cognitive load; archival is a post-MVP concern.
-- FR-007: User can mark a task as completed. Priority: must-have
-  > Socrates: Counter-argument considered: "completion is binary — what about tasks that are partially done or blocked?" Resolution: kept; binary completion is the simplest model that closes the Pomodoro loop; partial states add complexity without MVP value.
-- FR-008: User can view active tasks and completed tasks in separate, clearly distinguished lists. Priority: must-have
-  > Socrates: Counter-argument considered: "two lists add visual noise — a single list with strikethrough would be simpler." Resolution: kept; separation reinforces the end-of-day accomplishment feeling (seeing what's done vs. what remains).
-- FR-009: User can select a task to focus on before starting a Pomodoro cycle. Priority: must-have
-  > Socrates: Counter-argument considered: "manual selection defeats the purpose of the scoring suggestion — why not auto-select?" Resolution: kept; user autonomy is a core principle; the system suggests, the user decides.
-
-### Pomodoro
-
-- FR-010: User can configure the work cycle duration. Priority: must-have
-  > Socrates: Counter-argument considered: "configurability adds UI complexity — a fixed 25-minute cycle is the Pomodoro standard and simpler to build." Resolution: kept; different work types (deep work vs. admin) benefit from different cycle lengths; configurability supports the adaptive focus rule.
-- FR-011: User can configure the break cycle duration. Priority: must-have
-  > Socrates: Counter-argument considered: "break duration could be auto-calculated from session fatigue instead of user-configured." Resolution: kept; auto-calculation is a post-MVP sophistication; user-set breaks are the minimal viable control.
-- FR-012: User can start a Pomodoro cycle linked to the selected task. Priority: must-have
-  > Socrates: Counter-argument considered: "linking cycle to task adds coupling — what if the user wants to work on something untracked?" Resolution: kept; the link is what makes session context meaningful for scoring; untracked work defeats the feedback loop.
-- FR-013: User receives an in-browser audio signal and a UI prompt when a work cycle ends. Priority: must-have
-  > Socrates: Counter-argument considered: "audio signals can be disruptive in open offices or shared spaces." Resolution: kept; the signal is the mindful transition trigger — without it, cycles end silently and the user stays on autopilot. Volume/mute is a UX detail, not an FR change.
-- FR-014: User confirms the transition to the next cycle (work → break → work). Priority: must-have
-  > Socrates: Counter-argument considered: "forced confirmation adds friction — auto-transition would keep flow uninterrupted." Resolution: kept; forced confirmation IS the mindfulness mechanic — it prevents autopilot, which is the core product differentiator.
-- FR-015: When a user marks a task done mid-cycle, the system prompts them to choose: pick the next task and continue the current cycle, or end the cycle and take a break now. Priority: must-have
-  > Socrates: Counter-argument considered: "mid-cycle completion is rare — most tasks span multiple cycles, making this an edge case not worth the UI complexity." Resolution: kept; the prompt is a mindful decision point that prevents the user from mindlessly jumping to the next task without checking their state.
-
-### Delight
-
-- FR-016: User sees a full surprise animation when they complete a task. Priority: nice-to-have
-  > Socrates: Counter-argument considered: "delight features only land when the core loop is already smooth — shipping this before the Pomodoro cycle feels rock-solid risks polishing a broken experience." Resolution: kept as nice-to-have; explicitly deferred until core loop is solid.
-
-### Adaptive Focus (scoring + mindful transitions)
-
-- FR-017: User can assign a work type (deep work / admin / reactive) to a task. Priority: must-have
-  > Socrates: Counter-argument considered: "three categories may not cover all work — what about creative, collaborative, or learning tasks?" Resolution: kept; three types are the minimal taxonomy that enables meaningful scoring; more categories add decision cost at task creation without proportional scoring benefit in MVP.
-- FR-018: User can assign a weight/urgency (1–3 scale) to a task. Priority: must-have
-  > Socrates: Counter-argument considered: "users are bad at self-assessing urgency — everything becomes a 3." Resolution: kept; even imperfect urgency signals improve over no signal; the scoring formula can weight other factors (type fit, energy) more heavily if urgency clusters.
-- FR-019: System tracks session context (cycles completed, interruptions count, time of day). Priority: must-have
-  > Socrates: Counter-argument considered: "tracking interruptions requires defining what counts as an interruption — mid-cycle task switch? page refresh? manual pause?" Resolution: kept; interruption = user-initiated task change or mid-cycle completion; the definition is narrow and measurable.
-- FR-020: After each cycle, user completes a mindful check-in (declares current energy/readiness state). Priority: must-have
-  > Socrates: Counter-argument considered: "check-in fatigue — after 6+ cycles the user will click through without thinking, making the data meaningless." Resolution: kept; the check-in is intentionally minimal (one tap from 3 options); if fatigue occurs, that itself is a signal the session should end.
-- FR-021: System suggests the next task based on scoring (weight × work type fit × session context). Priority: must-have
-  > Socrates: Counter-argument considered: "a deterministic formula may feel robotic or wrong — users might distrust suggestions they can predict." Resolution: kept; predictability builds trust; the user always sees the rationale and can override; a black-box model would be worse for trust.
-- FR-022: User can accept the suggestion or manually override with a different task. Priority: must-have
-  > Socrates: Counter-argument considered: "allowing override means users can ignore the system entirely, reducing it to a fancy task list." Resolution: kept; override preserves autonomy — the value is in the suggestion + rationale, not in enforcement; forced compliance would undermine the mindfulness premise.
+- User data (tasks, session state) must never be lost silently.
+- Pomodoro timer accurate within ±2 seconds.
+- Max 1 interstitial + 1 gate per transition beat.
+- Strict per-account data isolation.
+- Wedge transitions (check-in → suggestion) perceived ≤200ms.
+- Calm recovery when network is lost on wedge gates.
 
 ## User Stories
 
-### US-01: User completes a full Pomodoro session
+### US-01: User completes session with orchestrated wedge transitions
 
-- **Given** a logged-in user with at least one active task
-- **When** they select a task, start a Pomodoro cycle, work through it, receive the end-of-cycle notification, and confirm the transition
-- **Then** the cycle completes, the break timer starts, and the user's task list reflects any tasks marked done during the session
+- **Given** a logged-in user with multiple active tasks and persona attributes set
+- **When** they run a full session through check-ins, suggestions, break confirms, and optional wind-down
+- **Then** each transition beat shows at most one interstitial line plus one gate — no stacked overlays — and they end with calm closure
+- **Before:** transition surfaces could compete on the same beat; orchestration was implicit.
 
-#### Acceptance Criteria
-- The selected task is visually highlighted as the active focus during the cycle
-- The audio signal plays and a UI prompt appears at cycle end — the timer does not auto-transition
-- Completed tasks move to the completed list immediately on marking; they do not disappear
-- A user who refreshes the page mid-session does not lose their task list or cycle configuration
+### US-02: User trusts first suggestion via persona context
 
-## Business Logic
+- **Given** a logged-in user who created tasks with persona presets
+- **When** they receive the first kickoff or post-check-in suggestion
+- **Then** the rationale cites the persona preset context and they can accept or override without penalty
+- **Before:** rationale did not reference persona preset.
 
-FlowState observes the user's session state (interruption count, completed cycles, time of day, declared energy at each transition) and suggests which task to work on next — matching work type to current focus capacity while enforcing mindful transitions between cycles.
+### US-03: User plans day with standing tasks and light recap
 
-**Inputs the rule consumes (user-facing):**
-- Task weight/urgency (1–3 scale, set by user at task creation)
-- Task work type (deep work / admin / reactive, set by user at task creation)
-- Mindful check-in response (energy/readiness declaration after each cycle)
+- **Given** a logged-in user with daily standing tasks and focus-hours budget
+- **When** they work through a session and dismiss the end-of-day recap
+- **Then** they see a light footprint of timing per task (not a dashboard) and standing items rolled at local midnight
+- **Before:** no standing tasks or daily recap.
 
-**Inputs the rule consumes (session-derived):**
-- Number of Pomodoro cycles completed in the current session
-- Number of interruptions (task switches, mid-cycle completions) in the current session
-- Time of day
+## Scope of Change
 
-**Output:**
-A ranked suggestion of which task to work on next. The suggestion favors high-weight tasks when the user declares high energy and session context supports deep work; it shifts toward lighter admin/reactive tasks when energy is low, interruptions are high, or the session is late in the day.
+### Must-have (new)
 
-**How the user encounters it:**
-After every cycle-end check-in, the system presents a suggested next task with a brief rationale ("deep work — you're fresh and uninterrupted" or "light admin — energy dipping after 4 cycles"). The user can accept with one click or override by selecting any other task from their list. The override is not penalized — it feeds back into the session context for the next suggestion.
+- [new] Persona presets at task create with Custom expand (S-29)
+- [new] First suggestion trust bridge — rationale cites persona preset (S-32)
+- [new] Wedge transition conductor — max 1 interstitial + 1 gate per beat (F-07)
+- [new] Cycle pause/resume with ~30 min pause cap then auto-end session (S-24)
+- [new] Daily standing tasks + focus-hours capacity in suggestions (S-27)
+- [new] Daily work timing recap — light footprint, dismissible (S-30)
+- [new] WORK cycle focus shell (S-31)
+- [new] Calm Garden illustration system polish (S-28)
+- [new] Optimistic wedge transitions ≤200ms perceived (S-34)
+- [new] Calm network-loss recovery on wedge gates (S-35)
 
-## Non-Functional Requirements
+### Modified
 
-- User sees acknowledgement of any action (task add, cycle start, check-in) within 200ms. Operations requiring longer processing (suggestion generation) provide continuous visible feedback if they exceed 1s.
-- A configured Pomodoro cycle does not drift by more than ±2 seconds from the set duration, regardless of whether the browser tab is active or in the background.
-- A browser crash, page refresh, or connection loss does not cause loss of: task list, cycle configuration, or current session state. The user returns to the state before the interruption.
-- One user's data (tasks, session history, check-ins) is never visible to another user. No query returns cross-account data.
-- Mental state data (check-in responses, energy patterns) does not leave the system in a form that enables user identification. It is not shared with third parties or used for purposes other than generating suggestions for the same user.
-- The product works correctly on the two latest major versions of Chrome, Firefox, Safari, and Edge (desktop).
-- Session history (completed cycles, check-ins, suggestions) remains accessible to the user for a minimum of 90 days. After that period it may be archived but not deleted without warning.
+- [modified] Scoring rule — extended inputs: persona preset attributes, daily standing flag, focus-hours capacity budget
+- [modified] Guest session narrative — shortened closure only; full narrative after merge
+- [modified] Daily standing reset — local midnight browser timezone
 
-## Non-Goals
+### Preserved
 
-- No mobile app or native push notifications — MVP is browser-only; notifications exist only within the active tab.
-- No historical analytics or dashboards — session history is stored per NFR, but no charts, trends, weekly reports, or pattern visualizations in MVP.
-- No team or social features — no shared tasks, no team visibility, no manager view. Single-user experience only.
-- No AI/ML-powered scoring — the suggestion algorithm is a simple deterministic formula (weight × type fit × session context), not a trained model. No LLM, no personalization beyond current session state.
-- No integrations with external tools — no Jira, Todoist, Google Calendar, or Slack import/export in MVP.
+- [preserved] Wedge + override freedom — suggestion with rationale; user always decides
+- [preserved] No silent data loss on refresh, crash, or guest merge
+- [preserved] Mindful transitions — check-in gate before next work cycle
+- [preserved] Deterministic scoring — no AI/ML personalization
+- [preserved] Single-user — no team features
+- [preserved] Auth model unchanged
+
+## Constraints & Preserved Behavior
+
+- Backward compatibility: existing tasks, sessions, and guest merge flows must continue working.
+- Guest scope remains narrower than logged-in — no full wedge stack for guest.
+- Scoring coefficients remain tunable by implementer without PRD block.
+- Pause does not count as interruption for scoring (FR-042 semantics preserved).
+- No regression to timer accuracy, data isolation, or auth lockout guardrails from PRD v2.
+
+## Business Logic Changes
+
+**Current rule:** FlowState observes session state and task attributes and suggests which task to work on next — matching work type and attributes to focus capacity while enforcing mindful transitions.
+
+**Change:** Extend inputs consumed by the rule:
+- Persona preset attributes at task create (feeds work-type fit and rationale)
+- Daily standing flag and focus-hours capacity budget (feeds capacity-aware rationale)
+- Transition conductor as separate orchestration rule: which surfaces may fire per beat (priority order owned by F-07 foundation slice)
+
+Output unchanged: ranked suggestion with one-line rationale; user override always available.
+
+## Non-Functional Requirements (delta)
+
+- Wedge transitions (check-in → suggestion) perceived ≤200ms.
+- Calm, non-blocking recovery when network is lost during wedge gate mutations.
+- Daily recap dismissible; does not block session start.
+- Pause cap ~30 minutes then session auto-ends.
+
+## Non-Goals (v3 horizon)
+
+- No mobile app or native push — browser-only.
+- No team or social features.
+- No AI/ML scoring.
+- No external tool import/export.
+- No full analytics dashboard — light daily footprint only, not charts/trends/weekly reports.
 
 ## Open Questions
 
-1. **What are the exact weights and thresholds in the scoring formula (v2)?** — TBD by implementer; tune after real usage. Block: no.
-2. **Which transition surfaces may fire on the same beat?** — Owner: implementer. Block: no for individual slices.
-3. **Does pause (FR-042) reset the 4-hour session inactivity timeout?** — Owner: user. Block: yes for cycle-pause-resume slice.
-4. **Local-day reset semantics for daily standing tasks (FR-043)?** — Owner: implementer. Block: yes for S-27.
-5. **Guest mode scope for session narrative and transition copy?** — Owner: user. Block: no.
+1. **Exact pause cap duration** — ~30 min proposed; confirm or tune. Owner: user. Block: no.
+2. **Scoring coefficient tuning** — tunable post-ship; no PRD lock. Owner: implementer. Block: no.
+3. **Conductor beat priority order** — documented in F-07 foundation slice. Owner: implementer. Block: no for individual slices.
 
-## Forward: post-MVP iteration (2026-06-12)
+## Timeline acknowledgment
 
-MVP shipped 2026-06-07. Product phase: **continuous iteration** under quality bias. PRD regenerated as v2 at `context/foundation/prd.md`; v1 archived at `context/foundation/archive/2026-06-12-prd-v1.md`.
-
-Shipped iteration capabilities (now must-have in PRD v2): FR-023–FR-039. Remaining backlog: FR-040–FR-044 (see roadmap S-17, S-21, S-24, S-27, S-28).
-
-Roadmap housekeeping: `main_goal: quality`, `prd_version: 2`, Backlog Handoff refreshed, S-18 before S-17 in At a glance.
-
-All elements present — no gaps. Quality check passed on 2026-05-23.
-
-- Access Control: present
-- Business Logic: present (one-sentence rule + supporting detail)
-- Project artifacts: present
-- Timeline-cost acknowledged: present (6-week timeline, acknowledged)
-- Non-Goals: present (5 entries)
-- Preserved behavior: n/a (greenfield)
+Acknowledged on 2026-06-13: PRD v3 horizon is open-ended continuous iteration (after-hours); no fixed ship deadline; quality over speed-to-MVP.

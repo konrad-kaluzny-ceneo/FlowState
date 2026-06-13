@@ -30,6 +30,7 @@ export async function seedOnboardingDismissed(page: Page, userId?: string) {
 				firstRunDismissed: true,
 				checkInCoachSeen: false,
 				suggestionCoachSeen: false,
+				presetCoachDismissed: true,
 			}),
 		);
 	}, key);
@@ -50,6 +51,15 @@ export async function dismissMergeSuccessIfVisible(
 	}
 	await page.getByTestId("merge-success-dismiss-btn").click();
 	await expect(overlay).toBeHidden({ timeout: 10_000 });
+}
+
+export async function dismissPresetCoachIfVisible(page: Page) {
+	const coach = page.getByTestId("preset-coach");
+	if (!(await coach.isVisible().catch(() => false))) {
+		return;
+	}
+	await page.getByTestId("preset-coach-dismiss-btn").click();
+	await expect(coach).toBeHidden({ timeout: 5000 });
 }
 
 export async function dismissFirstRunIfVisible(page: Page) {

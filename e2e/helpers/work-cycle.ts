@@ -7,7 +7,10 @@ import {
 	dismissTaskSuggestionIfVisible,
 	waitForTimerPanelIdle,
 } from "./idle-cycle";
-import { dismissFirstRunIfVisible } from "./onboarding";
+import {
+	dismissFirstRunIfVisible,
+	dismissPresetCoachIfVisible,
+} from "./onboarding";
 
 /** Advance fake clock through a 1s work cycle (+ buffer for completion tick). */
 export const FAST_WORK_CLOCK_MS = 2500;
@@ -206,18 +209,27 @@ export async function addTaskWithAttributes(
 	weight: TaskWeightLabel,
 ) {
 	await dismissFirstRunIfVisible(page);
+	await dismissPresetCoachIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	const addForm = page.getByTestId("task-list").locator("form");
+	const customButton = addForm.getByTestId("persona-preset-custom");
 	const detailsToggle = addForm.getByRole("button", { name: "+ Details" });
-	if (await detailsToggle.isVisible()) {
+	if (await customButton.isVisible()) {
+		await dismissKickoffReadinessIfVisible(page);
+		await customButton.click();
+		await expect(addForm.getByTestId("create-task-custom-panel")).toBeVisible();
+	} else if (await detailsToggle.isVisible()) {
 		await dismissFirstRunIfVisible(page);
 		await dismissKickoffReadinessIfVisible(page);
 		await detailsToggle.click();
 	}
 	await dismissKickoffReadinessIfVisible(page);
-	await addForm.getByRole("button", { name: workType }).click();
+	const customPanel = addForm.getByTestId("create-task-custom-panel");
+	await customPanel
+		.getByRole("button", { name: workType, exact: true })
+		.click();
 	await dismissKickoffReadinessIfVisible(page);
-	const urgencyRow = addForm
+	const urgencyRow = customPanel
 		.locator("div")
 		.filter({ hasText: /^Urgency/ })
 		.first();

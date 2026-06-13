@@ -18,6 +18,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
+import { PersonaPresetPicker } from "~/app/_components/persona-preset-picker";
+import { usePresetCoachOnboarding } from "~/hooks/use-onboarding-state";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import type {
@@ -26,6 +28,12 @@ import type {
 	DomainTaskId,
 } from "~/lib/data-mode/types";
 import { WORK_TYPE_CONFIG } from "~/lib/design/work-type-config";
+import { PRESET_COACH_LINE } from "~/lib/onboarding/copy";
+import {
+	applyPersonaPresetToCreateState,
+	DEFAULT_CREATE_FORM_ATTRIBUTES,
+	type PersonaPresetId,
+} from "~/lib/task/persona-presets";
 
 const AXIS_LABELS = { 1: "Light", 2: "Medium", 3: "Heavy" } as const;
 
@@ -526,6 +534,8 @@ export function TaskList({
 	suggestionLoading = false,
 }: TaskListProps) {
 	const mode = useDataMode();
+	const { shouldShowPresetCoach, markPresetCoachDismissed } =
+		usePresetCoachOnboarding();
 	const addTaskInputRef = useRef<HTMLInputElement>(null);
 	const {
 		createTask,
@@ -539,15 +549,52 @@ export function TaskList({
 	} = useTaskMutations();
 
 	const [newTitle, setNewTitle] = useState("");
-	const [showDetails, setShowDetails] = useState(false);
+	const [selectedPresetId, setSelectedPresetId] = useState<
+		PersonaPresetId | "custom" | null
+	>(null);
+	const [showCustomPanel, setShowCustomPanel] = useState(false);
 	const [newWorkType, setNewWorkType] = useState<
 		"DEEP_WORK" | "OPERATIONAL" | "REACTIVE"
-	>("OPERATIONAL");
-	const [newUrgency, setNewUrgency] = useState<1 | 2 | 3>(2);
-	const [newImportance, setNewImportance] = useState<1 | 2 | 3>(2);
-	const [newEffortMinutes, setNewEffortMinutes] = useState("");
+	>(DEFAULT_CREATE_FORM_ATTRIBUTES.workType);
+	const [newUrgency, setNewUrgency] = useState<1 | 2 | 3>(
+		DEFAULT_CREATE_FORM_ATTRIBUTES.urgency,
+	);
+	const [newImportance, setNewImportance] = useState<1 | 2 | 3>(
+		DEFAULT_CREATE_FORM_ATTRIBUTES.importance,
+	);
+	const [newEffortMinutes, setNewEffortMinutes] = useState(
+		DEFAULT_CREATE_FORM_ATTRIBUTES.effortMinutes,
+	);
 	const [newCommitmentHorizon, setNewCommitmentHorizon] =
-		useState<CommitmentHorizon>("WHEN_POSSIBLE");
+		useState<CommitmentHorizon>(
+			DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon,
+		);
+
+	function resetCreateFormState() {
+		setNewTitle("");
+		setSelectedPresetId(null);
+		setShowCustomPanel(false);
+		setNewWorkType(DEFAULT_CREATE_FORM_ATTRIBUTES.workType);
+		setNewUrgency(DEFAULT_CREATE_FORM_ATTRIBUTES.urgency);
+		setNewImportance(DEFAULT_CREATE_FORM_ATTRIBUTES.importance);
+		setNewEffortMinutes(DEFAULT_CREATE_FORM_ATTRIBUTES.effortMinutes);
+		setNewCommitmentHorizon(DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon);
+	}
+
+	function applyPresetToCreateForm(presetId: PersonaPresetId) {
+		const applied = applyPersonaPresetToCreateState(presetId);
+		setSelectedPresetId(presetId);
+		setShowCustomPanel(false);
+		setNewWorkType(applied.workType);
+		setNewUrgency(applied.urgency);
+		setNewImportance(applied.importance);
+		setNewEffortMinutes(applied.effortMinutes);
+		setNewCommitmentHorizon(applied.commitmentHorizon);
+	}
+
+	function markCreateFormCustom() {
+		setSelectedPresetId("custom");
+	}
 	const [editingId, setEditingId] = useState<DomainTaskId | null>(null);
 	const [editTitle, setEditTitle] = useState("");
 	const [editWorkType, setEditWorkType] = useState<
@@ -761,13 +808,7 @@ export function TaskList({
 							effortMinutes: parseEffortMinutes(newEffortMinutes),
 							commitmentHorizon: newCommitmentHorizon,
 						});
-						setNewTitle("");
-						setShowDetails(false);
-						setNewWorkType("OPERATIONAL");
-						setNewUrgency(2);
-						setNewImportance(2);
-						setNewEffortMinutes("");
-						setNewCommitmentHorizon("WHEN_POSSIBLE");
+						resetCreateFormState();
 					})();
 				}}
 			>
@@ -788,15 +829,24 @@ export function TaskList({
 						{isCreating ? "Adding..." : "Add"}
 					</button>
 				</div>
-				<button
-					className="text-text-dimmed text-xs transition hover:text-text-section"
-					onClick={() => setShowDetails(!showDetails)}
-					type="button"
-				>
-					{showDetails ? "− Details" : "+ Details"}
-				</button>
-				{showDetails && (
-					<div className="space-y-2 rounded-lg border border-border-subtle bg-surface-panel p-3">
+				<PersonaPresetPicker
+					coachLine={shouldShowPresetCoach ? PRESET_COACH_LINE : undefined}
+					onDismissCoach={
+						shouldShowPresetCoach ? markPresetCoachDismissed : undefined
+					}
+					onSelectCustom={() => {
+						setShowCustomPanel(true);
+						markCreateFormCustom();
+					}}
+					onSelectPreset={applyPresetToCreateForm}
+					selectedPresetId={selectedPresetId}
+					showCustomPanel={showCustomPanel}
+				/>
+				{showCustomPanel && (
+					<div
+						className="space-y-2 rounded-lg border border-border-subtle bg-surface-panel p-3"
+						data-testid="create-task-custom-panel"
+					>
 						<div className="flex items-center gap-2">
 							<span className="w-16 text-text-secondary text-xs">Type</span>
 							<SegmentedControl
@@ -805,7 +855,10 @@ export function TaskList({
 									OPERATIONAL: WORK_TYPE_CONFIG.OPERATIONAL.segmentActive,
 									REACTIVE: WORK_TYPE_CONFIG.REACTIVE.segmentActive,
 								}}
-								onChange={setNewWorkType}
+								onChange={(value) => {
+									markCreateFormCustom();
+									setNewWorkType(value);
+								}}
 								options={[
 									{ value: "DEEP_WORK" as const, label: "Deep" },
 									{ value: "OPERATIONAL" as const, label: "Ops" },
@@ -818,10 +871,22 @@ export function TaskList({
 							commitmentHorizon={newCommitmentHorizon}
 							effortMinutes={newEffortMinutes}
 							importance={newImportance}
-							onCommitmentHorizonChange={setNewCommitmentHorizon}
-							onEffortMinutesChange={setNewEffortMinutes}
-							onImportanceChange={setNewImportance}
-							onUrgencyChange={setNewUrgency}
+							onCommitmentHorizonChange={(value) => {
+								markCreateFormCustom();
+								setNewCommitmentHorizon(value);
+							}}
+							onEffortMinutesChange={(value) => {
+								markCreateFormCustom();
+								setNewEffortMinutes(value);
+							}}
+							onImportanceChange={(value) => {
+								markCreateFormCustom();
+								setNewImportance(value);
+							}}
+							onUrgencyChange={(value) => {
+								markCreateFormCustom();
+								setNewUrgency(value);
+							}}
 							urgency={newUrgency}
 						/>
 					</div>

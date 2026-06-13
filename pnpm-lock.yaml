@@ -44,6 +44,9 @@ importers:
       '@trpc/server':
         specifier: ^11.17.0
         version: 11.17.0(typescript@6.0.3)
+      lucide-react:
+        specifier: ^1.18.0
+        version: 1.18.0(react@19.2.6)
       next:
         specifier: ^16.2.6
         version: 16.2.6(@babel/core@7.29.7)(@playwright/test@1.60.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -3239,6 +3242,11 @@ packages:
 
   lucide-react@0.555.0:
     resolution: {integrity: sha512-D8FvHUGbxWBRQM90NZeIyhAvkFfsh3u9ekrMvJ30Z6gnpBHS6HC6ldLg7tL45hwiIz/u66eKDtdA23gwwGsAHA==, tarball: https://registry.npmjs.org/lucide-react/-/lucide-react-0.555.0.tgz}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  lucide-react@1.18.0:
+    resolution: {integrity: sha512-LZDb7H/0YfM+RJncD0hDQRCAu+vSGODqpe35TuVI8EuXaRjkczbsx7p8dY4J87F/MUSj6bpYqeI8nw8qXaAdmA==, tarball: https://registry.npmjs.org/lucide-react/-/lucide-react-1.18.0.tgz}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -6970,6 +6978,10 @@ snapshots:
   lru.min@1.1.4: {}
 
   lucide-react@0.555.0(react@19.2.6):
+    dependencies:
+      react: 19.2.6
+
+  lucide-react@1.18.0(react@19.2.6):
     dependencies:
       react: 19.2.6
 
