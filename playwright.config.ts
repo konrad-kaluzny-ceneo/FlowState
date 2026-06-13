@@ -26,8 +26,8 @@ const e2eProbe = process.env.E2E_PROBE === "1";
 // NEXT_PUBLIC_* is baked at build time — export before `pnpm build` on production e2e path.
 const e2eBuildEnv =
 	process.platform === "win32"
-		? "set NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1&& "
-		: "NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1 ";
+		? "set NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1&& set NEXT_PUBLIC_E2E_RETURN_HANDOFF_THRESHOLD_MS=1&& "
+		: "NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1 NEXT_PUBLIC_E2E_RETURN_HANDOFF_THRESHOLD_MS=1 ";
 
 /** CI pre-builds in the workflow; local production e2e still builds inline. */
 const webServerCommand = useProductionServer
@@ -82,7 +82,10 @@ export default defineConfig({
 			// Dev-only: prod bundles bake this at build time (ci.yml job env / e2eBuildEnv).
 			...(useProductionServer
 				? {}
-				: { NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: "1" }),
+				: {
+						NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: "1",
+						NEXT_PUBLIC_E2E_RETURN_HANDOFF_THRESHOLD_MS: "1",
+					}),
 		},
 	},
 });

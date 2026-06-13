@@ -20,6 +20,10 @@ vi.mock("~/app/_components/pomodoro-dashboard", () => ({
 	PomodoroDashboard: () => <div data-testid="pomodoro-dashboard" />,
 }));
 
+vi.mock("~/app/_components/return-handoff-banner-mount", () => ({
+	ReturnHandoffBannerMount: () => null,
+}));
+
 vi.mock("~/app/_components/first-run-overlay", () => ({
 	FirstRunOverlay: (props: {
 		mode: string;

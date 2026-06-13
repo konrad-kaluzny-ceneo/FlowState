@@ -16,6 +16,8 @@ export const HANDOFF_LEFT_OFF_PREFIX = "Left off:";
 
 export const HANDOFF_CONTINUE_PREFIX = "Continue:";
 
+export const HANDOFF_DISMISS_LABEL = "Dismiss";
+
 export const INTENTION_CHIP_OPTIONS = [
 	{ testId: "deep-work", label: "Deep work" },
 	{ testId: "clear-inbox", label: "Clear inbox" },

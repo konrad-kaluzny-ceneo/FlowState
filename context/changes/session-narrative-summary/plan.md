@@ -183,7 +183,7 @@ Deliver FR-040 session narrative: in-flow one-line summary during active session
 
 - [x] 4.1 SessionClosureOverlay + endSession/wind-down/timeout hooks
 - [x] 4.2 Guest closure parity
-- [ ] 4.3 E2E session-closure.spec.ts
+- [x] 4.3 E2E session-closure.spec.ts — 5a0c025
 
 ### Phase 5: 8h return handoff banner
 

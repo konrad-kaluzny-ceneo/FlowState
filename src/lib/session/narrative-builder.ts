@@ -9,6 +9,17 @@ import {
 
 export const RETURN_HANDOFF_THRESHOLD_MS = 8 * 60 * 60 * 1000;
 
+export function getReturnHandoffThresholdMs(): number {
+	const override = process.env.NEXT_PUBLIC_E2E_RETURN_HANDOFF_THRESHOLD_MS;
+	if (override != null && override.length > 0) {
+		const parsed = Number(override);
+		if (Number.isFinite(parsed) && parsed > 0) {
+			return parsed;
+		}
+	}
+	return RETURN_HANDOFF_THRESHOLD_MS;
+}
+
 export type InFlowSummaryInput = {
 	cyclesCompleted: number;
 	tasksCompleted: number;
@@ -129,7 +140,7 @@ export function shouldShowReturnHandoff(
 	}
 
 	const elapsedMs = Date.now() - input.endedAt.getTime();
-	return elapsedMs >= RETURN_HANDOFF_THRESHOLD_MS;
+	return elapsedMs >= getReturnHandoffThresholdMs();
 }
 
 function capitalize(value: string): string {
