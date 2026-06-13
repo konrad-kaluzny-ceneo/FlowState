@@ -189,13 +189,13 @@ Deliver FR-040 session narrative: in-flow one-line summary during active session
 
 #### Automated
 
-- [ ] 5.1 return-handoff module + ReturnHandoffBanner in home-shell
-- [ ] 5.2 Guest handoff parity + dismiss persistence
-- [ ] 5.3 E2E session-return-handoff.spec.ts
+- [x] 5.1 return-handoff module + ReturnHandoffBanner in home-shell — 194e15b
+- [x] 5.2 Guest handoff parity + dismiss persistence — 194e15b
+- [x] 5.3 E2E session-return-handoff.spec.ts — 194e15b
 
 ### Phase 6: Verification + test-plan cookbook
 
 #### Automated
 
-- [ ] 6.1 Full pnpm check + test + e2e belt
-- [ ] 6.2 Test-plan cookbook update (if §3 phase warrants)
+- [x] 6.1 Full pnpm check + test + e2e belt
+- [x] 6.2 Test-plan cookbook update (if §3 phase warrants)

@@ -102,7 +102,7 @@ plus the MCP/tools actually exposed in the current session.
 | unit + integration | Vitest | 4.1.7 | jsdom environment; co-located `*.test.ts(x)` under `src/`; fast-check for properties |
 | component + hook (RTL) | Vitest + React Testing Library | 4.1.7 | Co-located `*.test.tsx` under `src/app/_components/` and `src/hooks/`; `render` for UI smoke, `renderHook` for state machines — see §6.9 |
 | API / server integration | Vitest + tRPC createCaller | 4.1.7 | Router isolation tests pattern already in repo; exclude `e2e/` from Vitest |
-| e2e merge gate (belt) | Playwright | 1.60.0 | `pnpm test:e2e:belt` — 12 scenarios (§6.3 `#### Belt merge gate` table); CI job `e2e` runs belt; worker-scoped auth (`e2e/.auth/worker-{n}.json`), 4 workers |
+| e2e merge gate (belt) | Playwright | 1.60.0 | `pnpm test:e2e:belt` — 14 scenarios (§6.3 `#### Belt merge gate` table); CI job `e2e` runs belt; worker-scoped auth (`e2e/.auth/worker-{n}.json`), 4 workers |
 | e2e full catalog | Playwright | 1.60.0 | `set CI=true && pnpm test:e2e` — ad-hoc local + optional pre-release manual (~27 tests post-demotion); not required on merge |
 | property-based | fast-check | 4.8.0 | Via `@fast-check/vitest` where input spaces are wide |
 | mutation testing | Stryker + Vitest runner | 9.6.1 | `pnpm test:mutate`; HTML report at `reports/mutation/mutation.html`; thresholds high 80 / low 60 / break null |
@@ -179,7 +179,7 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 #### Belt merge gate (Phase 7 — shipped)
 
-CI merge gate — **12 tests across 10 spec files** (change `testing-e2e-belt-fast`). Partial-file tests tag non-belt cases `@skip-belt`; belt script uses `--grep-invert @skip-belt`.
+CI merge gate — **14 tests across 12 spec files** (change `testing-e2e-belt-fast`). Partial-file tests tag non-belt cases `@skip-belt`; belt script uses `--grep-invert @skip-belt`.
 
 | # | Spec | Belt scope | Tests | Risk / role |
 |---|------|------------|------:|-------------|
@@ -193,6 +193,8 @@ CI merge gate — **12 tests across 10 spec files** (change `testing-e2e-belt-fa
 | 8 | `e2e/session-kickoff.spec.ts` | `shows kickoff card...` only | 1 | S-15 entry |
 | 9 | `e2e/mindful-session-wind-down.spec.ts` | fatigue + end-session paths (API seed) | 2 | S-16 gate |
 | 10 | `e2e/account-recovery.spec.ts` | `request-password-reset API returns 2xx` only | 1 | S-07 API contract |
+| 11 | `e2e/session-closure.spec.ts` | whole file | 1 | S-17 session-end closure overlay |
+| 12 | `e2e/session-return-handoff.spec.ts` | whole file | 1 | S-17 8h return handoff banner |
 
 - **Location**: `e2e/*.spec.ts` (belt inventory above); partial specs tag non-belt cases `@skip-belt`.
 - **Run command**: `set CI=true && pnpm test:e2e:belt`
@@ -209,6 +211,7 @@ CI merge gate — **12 tests across 10 spec files** (change `testing-e2e-belt-fa
 - **Suggestion rationale expander (S-23, FR-021/FR-019)**: component tests in `src/app/_components/task-suggestion-card.test.tsx` (toggle visibility, `aria-expanded`, empty-breakdown hide, coachLine coexistence); optional e2e expand smoke in `e2e/task-suggestion.spec.ts` — `expands Why this? breakdown when secondary factors exist` clicks `suggestion-rationale-toggle`, asserts `suggestion-rationale-expander` visible (no factor-copy assertions; seeds `lastOverrideWorkType` via prior-cycle override). Breakdown oracles: `src/lib/scoring/rationale-breakdown.test.ts`, `src/lib/scoring/dominant-factor.test.ts`; API shape in `src/server/api/routers/suggestion.test.ts`. Test IDs: `suggestion-rationale-toggle`, `suggestion-rationale-expander`.
 - **Session kickoff suggestion (S-15/S-25, FR-021/FR-022)**: `e2e/session-kickoff.spec.ts` — **belt retained** (partial). Session-start idle with tasks (reload after add to refresh eligibility) completes S-25 `kickoff-readiness-overlay` (`completeKickoffReadiness(page, energy | 'skip')`) before `task-suggestion-card`; asserts kickoff rationale + `suggested-task-row`, accept → pre-focus + `kickoff-duration-chips`, chip tap stages `work-duration-min`/`sec` and `timer-countdown` at start, override via Focus shows `suggestion-override-ack`. FOCUSED energy path on mixed pool proves energy-sensitive kickoff pick. Helpers: `e2e/helpers/kickoff.ts` (`completeKickoffReadiness`, `waitForKickoffSuggestion`, `expectKickoffVisible`, `acceptKickoffSuggestion`, `expectKickoffDurationChips`); task setup via `addTaskWithAttributes` in `e2e/helpers/work-cycle.ts`. Test IDs: `kickoff-readiness-overlay`, `kickoff-readiness-skip-btn`, `check-in-energy-*` (via `EnergySelector`). Reference test: `shows kickoff card with rationale and highlighted row on session-start idle`. Run: `set CI=true && pnpm test:e2e e2e/session-kickoff.spec.ts`. Post-check-in suggestion (`task-suggestion.spec.ts`) does not use readiness helper.
 - **Mindful session wind-down (S-16, FR-019/FR-020)**: `e2e/mindful-session-wind-down.spec.ts` — **belt retained** (partial). Belt paths use `e2e/helpers/seed-scenario.ts` (`seedWindDownFatigueScenario`) for fatigue setup; `@skip-belt` tests retain UI loops via `e2e/helpers/wind-down.ts`. Belt reference tests: `fatigue path triggers wind-down and blocks break until keep going`, `end session path ends session without break or suggestion`. Run belt: `set CI=true && pnpm test:e2e:belt e2e/mindful-session-wind-down.spec.ts`; full file: `set CI=true && pnpm test:e2e e2e/mindful-session-wind-down.spec.ts`.
+- **Session narrative summary (S-17, FR-040)**: `e2e/session-closure.spec.ts` + `e2e/session-return-handoff.spec.ts` — **belt retained** (whole files). Closure: end session → `session-closure-overlay` → dismiss. Handoff: after session end + reload, `return-handoff-banner` with dismiss; Playwright sets `NEXT_PUBLIC_E2E_RETURN_HANDOFF_THRESHOLD_MS=1` (see `playwright.config.ts` / `ci.yml`) so belt does not wait 8h wall time. Unit oracles: `src/lib/session/narrative-builder.test.ts`, `src/lib/session/return-handoff.test.ts`, `src/app/_components/return-handoff-banner.test.tsx`. Test IDs: `session-closure-overlay`, `return-handoff-banner`, `return-handoff-dismiss-btn`.
 - **Quiet cycle audio (S-20, FR-013)**: demoted from e2e catalog (2026-06-11) — covered by `src/lib/audio.test.ts`, `src/hooks/use-pomodoro-cycle.test.tsx`, and `src/app/_components/cycle-audio-preference-control.test.tsx`. Tab-return catch-up: `src/app/_components/tab-return-catchup.test.tsx` and hook catchUp tests.
 - **±2s tolerance**: use `src/test-utils/countdown-tolerance.ts` in Vitest only, not Playwright reload specs (scope addendum: `context/changes/testing-critical-path-persistence-timer/reviews/scope-addendum.md`).
 - **Auth isolation**: worker-scoped `storageState` from `e2e/global-setup.ts` auth pool (4 users); `e2e/fixtures.ts` maps Playwright workers to `e2e/.auth/worker-{n}.json`.
