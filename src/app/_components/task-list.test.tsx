@@ -240,10 +240,10 @@ describe("TaskList", () => {
 		expect(updateTask).toHaveBeenCalledTimes(1);
 	});
 
-	it("shows Eisenhower attribute pickers in create Details panel", () => {
+	it("shows Eisenhower attribute pickers in create Custom panel", () => {
 		render(<TaskList {...defaultProps} />);
 
-		fireEvent.click(screen.getByRole("button", { name: "+ Details" }));
+		fireEvent.click(screen.getByRole("button", { name: "Custom" }));
 
 		expect(screen.getByText("Urgency")).toBeTruthy();
 		expect(screen.getByText("Importance")).toBeTruthy();

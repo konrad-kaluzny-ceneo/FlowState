@@ -1,11 +1,23 @@
-> Detail reference — load on demand. Index: [roadmap.md](../roadmap.md).
+> Detail reference — load on demand. Index: [roadmap.md](../roadmap.md). PRD source: [prd.md](../prd.md) v3.
 
 # Open Roadmap Questions
 
-## Open Roadmap Questions
+## Resolved in PRD v3 (2026-06-13)
 
-1. **What are the exact weights and thresholds in the scoring formula?** — Owner: implementer (first iteration, calibrate after real usage). Block: S-06 only at calibration step, not at planning. Mirrors PRD §Open Questions Q1; surfaced here so it's not lost to `/10x-plan` as a silent scope grab.
-2. **Which transition surfaces may fire on the same beat?** — Check-in gate, suggestion card, S-21 copy, S-17 narrative, S-19 ack — orchestrator rule: at most one interstitial line + one gate per transition; owner: implementer in `/10x-plan` for S-12/S-21/S-19 coordination. Block: no for individual slices; **yes** for polish pass.
-3. `**Task.resumeNote` vs interruption snapshot?** — Owner: implementer. Block: **S-18 and S-17 handoff phase**.
-4. `**weight` migration vs dual-axis defaults?** — Owner: implementer. Block: **F-05** before S-27 capacity scoring.
-5. **Drag-drop library and touch targets?** — Owner: implementer. Block: no for S-26 planning.
+| Topic | Resolution | Roadmap impact |
+| --- | --- | --- |
+| Pause vs 4h session timeout | Pause ≠ interruption; ~30 min pause cap → auto-end session | S-24 ready for `/10x-plan` |
+| Standing local-day reset | Local midnight browser timezone | S-27 plan constraint |
+| Guest FR-040/041 scope | Shortened closure in guest; full narrative after merge | S-11 extension timing |
+| Transition surface stacking | F-07 conductor; max 1 interstitial + 1 gate | B-05→F-07 chain |
+
+Detail: [`prd-v3-horizon.md`](prd-v3-horizon.md).
+
+## Still open
+
+1. **Exact pause cap duration** — ~30 min proposed. Owner: user. Block: no (S-24 plan may default 30).
+2. **Scoring coefficient values (v2 branches)** — tunable post-ship. Owner: implementer. Block: no.
+3. **Conductor beat priority order** — owner: implementer in F-07 `/10x-plan`. Block: no per slice; yes for polish pass if beats collide.
+4. **`Task.resumeNote` vs interruption snapshot** — Owner: implementer. Block: S-18/S-17 handoff (historical).
+5. **`weight` migration vs dual-axis defaults** — Owner: implementer. Block: was F-05; **done** — note for S-27 only if capacity edge cases.
+6. **Drag-drop library and touch targets** — Owner: implementer. Block: no for S-26 (done).

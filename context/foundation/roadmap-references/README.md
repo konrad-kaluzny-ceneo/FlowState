@@ -12,9 +12,12 @@ Progressive disclosure for `context/foundation/roadmap.md`. **Read the main file
 | All slice blocks in one file | [`slices.md`](slices.md) |
 | Single item (Outcome, Unknowns, Risk, …) | [`items/{ID}.md`](items/) — e.g. `items/S-17.md` |
 | Bug slice detail | [`bugs.md`](bugs.md) or `items/B-01.md` |
+| User flow map + T-01–T-05 | [`../user-flow.md`](../user-flow.md) |
+| Flow coherence recommendations (2026-06-13) | [`flow-coherence-recommendations.md`](flow-coherence-recommendations.md) |
 | `/10x-roadmap-expand` batch merge notes | [`expand-batches/README.md`](expand-batches/README.md) |
 | Research before `/10x-plan` | [`research-requirements.md`](research-requirements.md) |
 | Product open questions | [`open-questions.md`](open-questions.md) |
+| PRD v3 scope → slice map | [`prd-v3-horizon.md`](prd-v3-horizon.md) |
 | Deferred ideas | [`future-ideas.md`](future-ideas.md), [`parked.md`](parked.md) |
 | Shipped archive log | [`done.md`](done.md) |
 
@@ -27,6 +30,7 @@ Progressive disclosure for `context/foundation/roadmap.md`. **Read the main file
 | S-01…S-31 | `items/S-NN.md` | see glance |
 | S-32…S-35 | `items/S-3N.md` | proposed (expand 2026-06-12) |
 | B-01…B-04 | `items/B-0N.md` | done |
+| B-05…B-08 | `items/B-0N.md` | proposed (flow coherence 2026-06-13) |
 
 Expand outcomes (F-07, S-32–S-35) and merge scope (P-202–P-205, P-GAP-*) live in the main [`roadmap.md`](../roadmap.md) glance + scope tables and in `items/` detail cards — no separate staging folder.
 

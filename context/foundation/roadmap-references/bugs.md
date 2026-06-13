@@ -1,6 +1,8 @@
 > Detail reference — load on demand. Index: [roadmap.md](../roadmap.md).
 
-# Bugs (B-01…B-04)
+# Bugs (B-01…B-08)
+
+> Flow-coherence bugs B-05–B-08: full rationale, priorities, stream → [`flow-coherence-recommendations.md`](flow-coherence-recommendations.md).
 
 ## Bugs
 
@@ -59,3 +61,59 @@
 - **Unknowns:** Show explicit post-check-in loading shell vs hide overlay via `postCheckInTransitioning` flag — owner: `/10x-plan`. Block: no.
 - **Risk:** `awaitingCheckIn=false` + `state=completed` gap is the flash window; wind-down branch must stay excluded.
 - **Status:** done — shipped via [PR #82](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/82) (2026-06-09)
+
+### B-05: Closure stacked with kickoff readiness / check-in
+
+- **Outcome:** user can dismiss session closure in peace — no energy popup on top of or immediately after closure on the same visit.
+- **Change ID:** fix-closure-kickoff-mutex
+- **Linear:** —
+- **GitHub:** —
+- **PRD refs:** FR-040, FR-033, FR-020, guardrail interstitial fatigue
+- **Prerequisites:** —
+- **Parallel with:** S-29
+- **Blockers:** —
+- **Unknowns:** Kickoff abort token vs session-end flag — owner: `/10x-plan`. Block: no.
+- **Risk:** Without F-07 other gate pairs may still stack; B-05 scopes closure mutex + async race only. Detail: [`items/B-05.md`](items/B-05.md).
+- **Status:** proposed — P0
+
+### B-06: Timeout closure only on cycle start
+
+- **Outcome:** user sees timeout session closure on page load / return — before kickoff readiness, not deferred to next cycle start.
+- **Change ID:** fix-timeout-closure-on-load
+- **Linear:** —
+- **GitHub:** —
+- **PRD refs:** FR-019, FR-040
+- **Prerequisites:** B-05 (recommended)
+- **Parallel with:** S-29
+- **Blockers:** —
+- **Unknowns:** Timeout vs user-end copy — owner: user. Block: no.
+- **Risk:** Duplicate closure with sessionStorage dedupe — coordinate hydrate path. Detail: [`items/B-06.md`](items/B-06.md).
+- **Status:** proposed — P1
+
+### B-07: Wind-down threshold one cycle late
+
+- **Outcome:** wind-down nudge at third completed work cycle with Fading (product intent), not effectively after fourth due to counter timing.
+- **Change ID:** fix-wind-down-cycle-threshold
+- **Linear:** —
+- **GitHub:** —
+- **PRD refs:** FR-027
+- **Prerequisites:** —
+- **Parallel with:** F-07 faza 2
+- **Blockers:** —
+- **Unknowns:** Count moment at check-in vs break — owner: `/10x-plan`. Block: no.
+- **Risk:** Over-nudging if threshold lowered incorrectly. Detail: [`items/B-07.md`](items/B-07.md).
+- **Status:** proposed — P1
+
+### B-08: End session disabled while timer running
+
+- **Outcome:** user can end session calmly during a running cycle — confirm path to closure without waiting full cycle (minimal) or pause-then-end (with S-24).
+- **Change ID:** fix-graceful-session-end-while-running
+- **Linear:** —
+- **GitHub:** —
+- **PRD refs:** FR-040, FR-019, FR-012
+- **Prerequisites:** F-07; S-24 for full variant
+- **Parallel with:** —
+- **Blockers:** OQ3 for pause variant
+- **Unknowns:** Minimal interrupt→closure vs pause — owner: `/10x-plan`. Block: no for minimal.
+- **Risk:** UI-only vs backend interrupt already in `endSession()`. Detail: [`items/B-08.md`](items/B-08.md).
+- **Status:** proposed — P2
