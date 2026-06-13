@@ -3,7 +3,7 @@ project: FlowState
 version: 2
 status: draft
 created: 2026-05-26
-updated: 2026-06-12
+updated: 2026-06-13
 structure: split
 active_slices: []
 prd_version: 2
@@ -52,7 +52,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-14 | auth-merge-first-impression | [FLO-27](https://linear.app/flowstate-10xdev/issue/FLO-27) | [#40](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/40) | auth value prop + merge success moment | S-08 | FR-001–003c | done |
 | S-15 | session-kickoff-suggestion | [FLO-30](https://linear.app/flowstate-10xdev/issue/FLO-30) | [#41](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/41) | idle kickoff suggestion + duration presets | S-06 | FR-021, FR-019 | done |
 | S-16 | mindful-session-wind-down | [FLO-31](https://linear.app/flowstate-10xdev/issue/FLO-31) | [#42](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/42) | optional end-session nudge when Fading | S-05, S-06 | FR-020–021 | done |
-| S-17 | session-narrative-summary | [FLO-32](https://linear.app/flowstate-10xdev/issue/FLO-32) | [#43](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/43) | in-flow narrative + closure + 8h handoff | S-02, S-05, S-18 | FR-040, FR-019–020 | **in review** |
+| S-17 | session-narrative-summary | [FLO-32](https://linear.app/flowstate-10xdev/issue/FLO-32) | [#43](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/43) | in-flow narrative + closure + 8h handoff | S-02, S-05, S-18 | FR-040, FR-019–020 | done |
 | S-18 | task-resume-context-note | [FLO-33](https://linear.app/flowstate-10xdev/issue/FLO-33) | [#44](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/44) | resume note at interrupt / mid-cycle switch | S-06 | FR-028, FR-021 | done |
 | S-19 | suggestion-override-acknowledgement | [FLO-34](https://linear.app/flowstate-10xdev/issue/FLO-34) | [#45](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/45) | validating override acknowledgement | S-06 | FR-022 | done |
 | S-20 | persistent-quiet-cycle-audio | [FLO-35](https://linear.app/flowstate-10xdev/issue/FLO-35) | [#46](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/46) | mute/soften chime + optional title pulse | S-01 | FR-013–014 | done |
@@ -104,7 +104,6 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 
 | Roadmap ID | Change ID | Ready for `/10x-plan` | Notes |
 | ---------- | --------- | --------------------- | ----- |
-| **S-17** | session-narrative-summary | **in review** | PR open |
 | S-29 | task-create-persona-presets | **yes** | + P-203, P-204, P-105 in plan; S-32 optional phase 2 |
 | S-30 | daily-work-timing-recap | **yes** | + P-104 trail, P-111 type mix sub-phases |
 | S-31 | work-focus-shell | **yes** | = P-GAP-101 |
@@ -119,7 +118,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-35 | wedge-transition-sync-recovery | revise | P-GAP-107+108 bundle |
 | S-24 | cycle-pause-resume | **no** | FR-019 pause semantics (OQ3) |
 
-**Recommended next:** `/10x-plan session-narrative-summary` on **S-17**. Then **S-29** (+ trust bridge) → **S-31** ∥ **S-28** → **S-30**; consider **F-07** before **S-21**.
+**Recommended next:** **S-29** (+ trust bridge) → **S-31** ∥ **S-28** → **S-30**; consider **F-07** before **S-21**.
 
 ## Reference appendix (load on demand)
 

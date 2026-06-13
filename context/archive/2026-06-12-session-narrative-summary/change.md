@@ -1,10 +1,10 @@
 ---
 change_id: session-narrative-summary
 title: Session narrative summary
-status: impl_reviewed
+status: archived
 created: 2026-06-12
 updated: 2026-06-13
-archived_at: null
+archived_at: 2026-06-13T15:35:00Z
 ---
 
 ## Notes
