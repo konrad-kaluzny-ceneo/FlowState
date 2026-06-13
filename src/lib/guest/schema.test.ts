@@ -27,6 +27,7 @@ describe("guest schema", () => {
 					commitmentHorizon: "ASAP" as const,
 					sortOrder: 0,
 					resumeNote: null,
+					personaPresetId: null,
 					createdAt: new Date("2026-05-29T10:00:00.000Z"),
 					updatedAt: null,
 				},

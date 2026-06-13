@@ -27,6 +27,7 @@ function makeTask(partial: {
 		commitmentHorizon: "WHEN_POSSIBLE",
 		sortOrder: partial.sortOrder ?? 0,
 		resumeNote: null,
+		personaPresetId: null,
 		updatedAt: null,
 	};
 }

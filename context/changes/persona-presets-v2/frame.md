@@ -63,20 +63,20 @@ S-29 was not “broken”; it shipped the wrong **abstraction level** for the us
 
 Plan **persona-presets-v2** (or rescope S-32 prerequisite): schema + API for `personaPresetId`, expanded preset catalog (8–10, user-approved names), create UX with always-visible effort, row badges showing persona + effort (Custom → show simplified F-05 or “Custom” + details), and decouple effort-only edits from `custom` state. Update S-32 to consume stored id.
 
-## Proposed catalog (pending user approval)
+## Proposed catalog (user-approved 2026-06-13)
 
-| id | Label | Intent |
-| --- | --- | --- |
-| focus | Focus | Deep, uninterrupted work |
-| inbox | Inbox | Mail & messages |
-| firefight | Firefight | Urgent fix |
-| prep | Prep | Meeting / presentation prep |
-| review | Review | Code or doc review |
-| write | Write | Documentation / long-form |
-| plan | Plan | Roadmap / planning |
-| research | Research | Learning / investigation |
-| admin | Admin | Ops / chores |
-| quick | Quick | Small task (<15m) |
+| id | Label | Default effort | Intent |
+| --- | --- | --- | --- |
+| focus | Focus | 45m | Deep, uninterrupted work |
+| synchro | Synchro | 15m | Mail, Teams, catch-up on what's happening around |
+| firefight | Firefight | 30m | Urgent fix |
+| warm-up | Warm up | 15m | Preparation for work, initial work plan |
+| meeting | Meeting | 30m | Daily, planning, retro (user may override time) |
+| plan | Plan | 60m | Planning, roadmap |
+| research | Research | 45m | Learning / investigation |
+| quick | Quick | 10m | Small task |
+
+**Removed:** Write, Review, Prep, Admin — avoid Ops/Admin labels in UI.
 
 ## References
 

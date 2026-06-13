@@ -28,8 +28,8 @@ From frame investigation and codebase read:
 
 ## Desired End State
 
-- **Catalog:** ≥8 user-approved personas with short labels and distinct F-05 bundles (draft: 10 from frame brief).
-- **Create:** Preset chip → attributes + effort pre-filled; effort editable below chips without Custom; Add sends `personaPresetId` + attributes; Custom path sends `personaPresetId: null`.
+- **Catalog:** ≥8 user-approved personas with short labels and distinct F-05 bundles (8 locked — see Critical Implementation Details).
+- **Create:** Preset chip → attributes + effort pre-filled; effort editable below chips without Custom; Add sends `personaPresetId` + attributes; Custom path sends `personaPresetId: "custom"`.
 - **Rows:** Persona label + effort badge when preset identity still holds; Custom/F-05 detail otherwise; legacy tasks (`null` id) keep today's badges.
 - **Parity:** Guest blob, guest repo, guest import, tRPC, `DomainTask`, server/guest repositories all carry optional `personaPresetId`.
 - **S-32-ready:** Label lookup by id available for a follow-up rationale clause.
@@ -38,7 +38,7 @@ From frame investigation and codebase read:
 
 - `pnpm check`, `pnpm typecheck`, `pnpm test`
 - `pnpm exec vitest run src/app/_components/task-list.test.tsx`
-- `pnpm exec vitest run src/lib/task/persona-presets.test.ts` (new)
+- `pnpm exec vitest run src/lib/task/persona-presets.test.ts` (extend existing)
 - Optional: `pnpm exec vitest run src/server/api/lib/import-guest-snapshot.test.ts` if added
 - Manual: preset create with effort tweak → reload → persona + effort on row; Custom create → Custom + F-05; legacy task unchanged
 
@@ -63,22 +63,20 @@ Guest + auth parity: every layer that reads/writes `effortMinutes` today also ha
 
 ## Critical Implementation Details
 
-**Draft catalog (pending user approval — do not lock in Phase 2 until approved):**
+**Approved catalog (user sign-off 2026-06-13 — locked for Phase 2):**
 
 | id | label | workType | urgency | importance | effortMinutes | horizon |
 | --- | --- | --- | --- | --- | --- | --- |
-| focus | Focus | DEEP_WORK | 2 | 3 | 60 | THIS_WEEK |
-| inbox | Inbox | OPERATIONAL | 2 | 2 | 15 | WHEN_POSSIBLE |
+| focus | Focus | DEEP_WORK | 2 | 3 | 45 | THIS_WEEK |
+| synchro | Synchro | OPERATIONAL | 2 | 2 | 15 | WHEN_POSSIBLE |
 | firefight | Firefight | REACTIVE | 3 | 2 | 30 | ASAP |
-| prep | Prep | OPERATIONAL | 2 | 2 | 30 | THIS_WEEK |
-| review | Review | DEEP_WORK | 2 | 2 | 45 | THIS_WEEK |
-| write | Write | DEEP_WORK | 2 | 3 | 45 | THIS_WEEK |
+| warm-up | Warm up | DEEP_WORK | 1 | 2 | 15 | THIS_WEEK |
+| meeting | Meeting | OPERATIONAL | 2 | 2 | 30 | THIS_WEEK |
 | plan | Plan | DEEP_WORK | 2 | 3 | 60 | THIS_WEEK |
 | research | Research | DEEP_WORK | 1 | 2 | 45 | WHEN_POSSIBLE |
-| admin | Admin | OPERATIONAL | 2 | 1 | 15 | WHEN_POSSIBLE |
 | quick | Quick | OPERATIONAL | 1 | 1 | 10 | ASAP |
 
-S-29 ids (`deep-planning`, `mail-admin`, `hotfix-urgent`) are **replaced** in the catalog module only — no DB rows reference them yet.
+Notes: `workType` is internal scorer input only — **no Ops/Admin labels** in UI. S-29 ids (`deep-planning`, `mail-admin`, `hotfix-urgent`) replaced in catalog module; no DB rows reference them yet.
 
 **Display mode function (single oracle):**
 
@@ -92,9 +90,9 @@ function getTaskBadgeDisplayMode(task: {
 }): TaskBadgeDisplayMode
 ```
 
-- `legacy` when `personaPresetId == null`
-- `persona` when id resolves and `attributesMatchPreset(id, task, { ignoreEffort: true })`
-- `custom-detail` when user custom-created (`null` after custom — same as legacy visually but label "Custom") OR id set but non-effort attrs diverge OR unknown id
+- `legacy` when `personaPresetId == null` (pre-migration / no persona stored)
+- `persona` when id resolves to a catalog preset and `attributesMatchPreset(id, task, { ignoreEffort: true })`
+- `custom-detail` when `personaPresetId === "custom"` OR id set but non-effort attrs diverge OR unknown id (removed catalog entry — show Custom + F-05, not legacy)
 
 **Effort badge:** `rounded-full bg-surface-panel` chip, text `{effortMinutes}m`; omit when `effortMinutes == null`.
 
@@ -108,9 +106,11 @@ function getTaskBadgeDisplayMode(task: {
 
 ```ts
 personaPresetId:
-  selectedPresetId != null && selectedPresetId !== "custom"
-    ? selectedPresetId
-    : null,
+  selectedPresetId === "custom"
+    ? "custom"
+    : selectedPresetId != null
+      ? selectedPresetId
+      : null,
 ```
 
 ---
@@ -147,7 +147,7 @@ personaPresetId String? @map("persona_preset_id") @db.VarChar(32)
 
 **File:** `src/server/api/routers/task.ts`
 
-**Intent:** Add optional `personaPresetId` to create/update input schemas — `z.string().max(32).nullable().optional()`. Validate against known ids on create when non-null (use shared preset id list from `persona-presets.ts` or zod enum derived from catalog). Pass through to Prisma `create`/`update`.
+**Intent:** Add optional `personaPresetId` to create/update input schemas — `z.string().max(32).nullable().optional()`. Validate on create when non-null: allow `"custom"` or a known catalog id from `persona-presets.ts` (zod enum derived from catalog + `"custom"`). Pass through to Prisma `create`/`update`.
 
 **Contract:** Invalid id → `BAD_REQUEST`. Omit on update = no change; explicit `null` clears (future-safe; inline edit won't use in this slice).
 
@@ -169,7 +169,7 @@ personaPresetId String? @map("persona_preset_id") @db.VarChar(32)
 
 #### 5. Hooks
 
-**File:** `src/hooks/use-task-mutations.ts` — ensure create args type accepts `personaPresetId` (likely flows from repository types).
+**File:** `src/hooks/use-task-mutations.ts` — ensure create args type accepts `personaPresetId`; extend `buildOptimisticCreateRow` so auth-mode optimistic rows include `personaPresetId: input.personaPresetId ?? null` (avoids legacy F-05 flash before refetch — L-04).
 
 ### Success Criteria
 
@@ -192,9 +192,9 @@ personaPresetId String? @map("persona_preset_id") @db.VarChar(32)
 
 Replace 3-preset catalog with approved ≥8 (draft 10), new ids, and pure functions for apply/match/label.
 
-### Pre-step (manual gate)
+### Pre-step (catalog gate — satisfied)
 
-**User must approve catalog labels and attribute bundles** (table in Critical Implementation Details or frame brief) before implementing bundles. If user trims to 8, remove rows accordingly — minimum 8 presets.
+Catalog approved **2026-06-13** (8 personas locked in Critical Implementation Details and `change.md`). Proceed without re-approval; mark Progress **2.4** at Phase 2 start.
 
 ### Changes Required
 
@@ -204,7 +204,7 @@ Replace 3-preset catalog with approved ≥8 (draft 10), new ids, and pure functi
 
 **Intent:**
 
-- Expand `PersonaPresetId` union to new ids (`focus`, `inbox`, …).
+- Expand `PersonaPresetId` union to new ids (`focus`, `synchro`, …).
 - Replace `TASK_PERSONA_PRESETS` array (≥8 entries).
 - Keep `applyPersonaPresetToCreateState`, `DEFAULT_CREATE_FORM_ATTRIBUTES`.
 - Add:
@@ -225,7 +225,7 @@ Replace 3-preset catalog with approved ≥8 (draft 10), new ids, and pure functi
 
 #### 3. Unit tests
 
-**File:** `src/lib/task/persona-presets.test.ts` (new)
+**File:** `src/lib/task/persona-presets.test.ts` (extend existing)
 
 **Intent:** Match/mismatch oracles — effort-only difference → match with `ignoreEffort: true`; urgency change → no match; `getTaskBadgeDisplayMode` cases for legacy/persona/custom-detail.
 
@@ -279,7 +279,7 @@ Effort visible when preset selected; effort-only edits preserve preset selection
 
 #### Manual Verification
 
-- [ ] Select Inbox → effort 15 visible → change to 20 → still Inbox pressed → Add → row shows Inbox (after Phase 4)
+- [ ] Select Synchro → effort 15 visible → change to 20 → still Synchro pressed → Add → row shows Synchro (after Phase 4)
 
 ---
 
@@ -349,7 +349,7 @@ Complete test coverage, guest tests, document e2e impact.
 
 **File:** `src/server/api/routers/guest.test.ts` or dedicated import test
 
-**Intent:** Import guest task with `personaPresetId: "inbox"` → DB row has column set.
+**Intent:** Import guest task with `personaPresetId: "synchro"` → DB row has column set.
 
 #### 3. Guest repository tests
 
@@ -400,7 +400,7 @@ Thin exports + roadmap note so S-32 plan does not re-research persistence.
 
 **File:** `src/lib/task/persona-presets.ts`
 
-**Intent:** Ensure `getPersonaPresetLabel` is the canonical label for S-32 clause (e.g. `"Inbox — operational work fits your current energy."` template in S-32).
+**Intent:** Ensure `getPersonaPresetLabel` is the canonical label for S-32 clause (e.g. `"Synchro — operational work fits your current energy."` template in S-32). Skip rationale when `personaPresetId === "custom"`.
 
 #### 2. S-32 roadmap note
 
@@ -467,14 +467,14 @@ Negligible — one nullable varchar per task; badge logic is O(1) preset lookup.
 
 #### Automated
 
-- [ ] 1.1 `pnpm prisma migrate dev` succeeds
-- [ ] 1.2 `pnpm check` passes
-- [ ] 1.3 `pnpm typecheck` passes
-- [ ] 1.4 Task mutation tests pass
+- [x] 1.1 `pnpm prisma migrate dev` succeeds
+- [x] 1.2 `pnpm check` passes
+- [x] 1.3 `pnpm typecheck` passes
+- [x] 1.4 Task mutation tests pass
 
 #### Manual
 
-- [ ] 1.5 Prisma column verified on `Task`
+- [x] 1.5 Prisma column verified on `Task`
 
 ### Phase 2: Expanded catalog and pure helpers
 

@@ -70,7 +70,7 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 }));
 
 function makeTask(overrides: Partial<DomainTask> = {}): DomainTask {
-	const { resumeNote = null, ...rest } = overrides;
+	const { resumeNote = null, personaPresetId = null, ...rest } = overrides;
 	return {
 		id: 1,
 		title: "Short title",
@@ -83,6 +83,7 @@ function makeTask(overrides: Partial<DomainTask> = {}): DomainTask {
 		...defaultEisenhowerFields(2),
 		sortOrder: 0,
 		resumeNote,
+		personaPresetId,
 		...rest,
 	};
 }

@@ -21,6 +21,8 @@ export type TaskPersonaPreset = {
 	commitmentHorizon: CommitmentHorizon;
 };
 
+export const PERSONA_PRESET_CUSTOM_ID = "custom" as const;
+
 export const TASK_PERSONA_PRESETS: readonly TaskPersonaPreset[] = [
 	{
 		id: "deep-planning",
@@ -58,6 +60,13 @@ export const DEFAULT_CREATE_FORM_ATTRIBUTES: PersonaPresetCreateState = {
 	effortMinutes: "",
 	commitmentHorizon: "WHEN_POSSIBLE",
 };
+
+export function isStoredPersonaPresetId(id: string): boolean {
+	if (id === PERSONA_PRESET_CUSTOM_ID) {
+		return true;
+	}
+	return TASK_PERSONA_PRESETS.some((preset) => preset.id === id);
+}
 
 export function applyPersonaPresetToCreateState(
 	presetId: PersonaPresetId,

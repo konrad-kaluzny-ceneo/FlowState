@@ -7,12 +7,14 @@ export function defaultEisenhowerFields(weight: 1 | 2 | 3 = 2): {
 	urgency: 1 | 2 | 3;
 	effortMinutes: number | null;
 	commitmentHorizon: CommitmentHorizon;
+	personaPresetId: null;
 } {
 	return {
 		importance: 2,
 		urgency: weight,
 		effortMinutes: null,
 		commitmentHorizon: "WHEN_POSSIBLE",
+		personaPresetId: null,
 	};
 }
 
@@ -31,6 +33,7 @@ export type DomainTask = {
 	commitmentHorizon: CommitmentHorizon;
 	sortOrder: number;
 	resumeNote: string | null;
+	personaPresetId: string | null;
 };
 
 export type DomainActiveCycle = {
@@ -66,6 +69,7 @@ export type EisenhowerTaskInput = {
 	urgency?: 1 | 2 | 3;
 	effortMinutes?: number | null;
 	commitmentHorizon?: CommitmentHorizon;
+	personaPresetId?: string | null;
 };
 
 export interface TaskRepository {

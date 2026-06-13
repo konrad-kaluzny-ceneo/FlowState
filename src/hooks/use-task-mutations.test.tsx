@@ -189,7 +189,7 @@ function makeTask(
 	overrides: Partial<TaskListData[number]> = {},
 ): TaskListData[number] {
 	const weight = (overrides.weight ?? 2) as 1 | 2 | 3;
-	const { resumeNote = null, ...rest } = overrides;
+	const { resumeNote = null, personaPresetId = null, ...rest } = overrides;
 	return {
 		id: 1,
 		userId: "user-1",
@@ -200,6 +200,7 @@ function makeTask(
 		...defaultEisenhowerFields(weight),
 		sortOrder: 0,
 		resumeNote,
+		personaPresetId,
 		createdAt: new Date("2026-01-01T00:00:00Z"),
 		updatedAt: new Date("2026-01-01T00:00:00Z"),
 		...rest,
