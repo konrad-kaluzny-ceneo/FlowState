@@ -480,13 +480,13 @@ Negligible — one nullable varchar per task; badge logic is O(1) preset lookup.
 
 #### Automated
 
-- [x] 2.1 `pnpm exec vitest run src/lib/task/persona-presets.test.ts` passes
-- [x] 2.2 `pnpm check` passes
-- [x] 2.3 `pnpm typecheck` passes
+- [x] 2.1 `pnpm exec vitest run src/lib/task/persona-presets.test.ts` passes — f29d997
+- [x] 2.2 `pnpm check` passes — f29d997
+- [x] 2.3 `pnpm typecheck` passes — f29d997
 
 #### Manual
 
-- [x] 2.4 User approved catalog labels and bundles
+- [x] 2.4 User approved catalog labels and bundles — f29d997
 
 ### Phase 3: Create UX — effort on preset path
 
