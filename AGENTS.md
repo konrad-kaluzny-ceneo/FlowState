@@ -35,4 +35,4 @@ FlowState is a Next.js Pomodoro app on the T3-style stack. Agents run terminal c
 - Commit types: `feat`, `chore`, `fix`, `refactor`, `docs`; `test` when scoped — no trailing period. Pattern: `feat(<change-id>): title (pN)`.
 - PRs from feature branches with `Fixes #N`; must pass `@.github/workflows/ci.yml` (quality + e2e on PR/push to main). Issue sync (Linear `FLO-*` ↔ GitHub `#*`): `@.cursor/skills/update-status/SKILL.md`. `gh` account `konrad-kaluzny-ceneo`: `@.cursor/skills/github-cli/SKILL.md`.
 - Neon DB, Vercel deploy, agent hooks: `@.cursor/skills/neon-database/SKILL.md`, `@.cursor/skills/vercel/SKILL.md`, `@.cursor/hooks.json`.
-- `needs-research` tasks: research before `/10x-plan` — see `@context/foundation/roadmap.md`.
+- `needs-research` tasks: research before `/10x-plan` — see `@context/foundation/roadmap.md` (index) and `@context/foundation/roadmap-references/` (slice detail on demand).

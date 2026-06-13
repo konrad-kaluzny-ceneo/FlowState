@@ -89,11 +89,19 @@ export async function waitForCycleCreateSettled(page: Page) {
 }
 
 /** Click Start Cycle and await server create on authenticated dashboards. */
+export async function skipCycleIntentionIfVisible(page: Page) {
+	const prompt = page.getByTestId("cycle-intention-prompt");
+	if (await prompt.isVisible()) {
+		await page.getByTestId("cycle-intention-skip-btn").click();
+	}
+}
+
 export async function clickStartCycle(page: Page) {
 	await dismissFirstRunIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	const createSettled = waitForCycleCreateSettled(page);
 	await page.getByRole("button", { name: "Start Cycle" }).click();
+	await skipCycleIntentionIfVisible(page);
 	await createSettled;
 }
 

@@ -90,7 +90,7 @@ export function DataModeProvider({
 					mutate: () => utils.client.session.getOrCreateActive.mutate(),
 				},
 				end: {
-					mutate: () => utils.client.session.end.mutate(),
+					mutate: () => utils.client.session.end.mutate({}),
 				},
 			},
 		};

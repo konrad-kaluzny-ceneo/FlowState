@@ -64,6 +64,12 @@ function makePomodoroMock(
 		isAcceptingSuggestion: false,
 		isAcceptingKickoffSuggestion: false,
 		overrideAcknowledgement: null,
+		inFlowSummaryLine: null,
+		pendingClosureLine: null,
+		dismissSessionClosure: vi.fn(),
+		awaitingCycleIntention: false,
+		submitCycleIntention: vi.fn(),
+		skipCycleIntention: vi.fn(),
 		kickoffEligible: false,
 		awaitingKickoffReadiness: false,
 		kickoffReadinessSubmitting: false,
@@ -213,5 +219,97 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		);
 
 		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
+	});
+
+	it("shows in-flow summary on idle break when narrative line is present", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "idle",
+			cycleKind: "SHORT_BREAK",
+			inFlowSummaryLine: "2 cycles · 1 task done · feeling steady",
+		});
+
+		expect(screen.getByTestId("session-inflow-summary").textContent).toBe(
+			"2 cycles · 1 task done · feeling steady",
+		);
+	});
+
+	it("hides in-flow summary while check-in gate is open", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				hasActiveSession: true,
+				state: "idle",
+				cycleKind: "SHORT_BREAK",
+				inFlowSummaryLine: "2 cycles · feeling steady",
+				awaitingCheckIn: true,
+				activeCycle: { id: 42 },
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableCheckInGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.queryByTestId("session-inflow-summary")).toBeNull();
+	});
+
+	it("hides in-flow summary when suggestion card is visible", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				hasActiveSession: true,
+				state: "running",
+				cycleKind: "SHORT_BREAK",
+				inFlowSummaryLine: "2 cycles · feeling steady",
+				pendingSuggestion: {
+					status: "ready",
+					data: {
+						taskId: "task-1",
+						title: "Suggested task",
+						workType: "OPERATIONAL",
+						weight: 2,
+						rationale: "Best next task",
+						breakdown: null,
+					},
+				},
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
+		expect(screen.queryByTestId("session-inflow-summary")).toBeNull();
+	});
+
+	it("shows cycle intention prompt when awaiting first-cycle intention", () => {
+		renderBody({
+			awaitingCycleIntention: true,
+		});
+
+		expect(screen.getByTestId("cycle-intention-prompt")).toBeTruthy();
+	});
+
+	it("shows session closure overlay when pending closure line is set", () => {
+		renderBody({
+			pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
+		});
+
+		expect(screen.getByTestId("session-closure-overlay")).toBeTruthy();
+		expect(screen.getByTestId("session-closure-line").textContent).toBe(
+			"Session complete — 1 cycle. Take a breath.",
+		);
 	});
 });

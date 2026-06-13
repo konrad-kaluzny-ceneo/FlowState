@@ -35,6 +35,7 @@ type CreateCycleInput = {
 	kind: "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 	configuredDurationSec: number;
 	taskId?: number;
+	intention?: string;
 };
 
 type TrpcTaskRow = {
@@ -86,7 +87,9 @@ type TrpcClient = {
 	};
 	session: {
 		getOrCreateActive: { mutate: () => Promise<DomainSession> };
-		end: { mutate: () => Promise<DomainSession> };
+		end: {
+			mutate: (input: { closureLine?: string }) => Promise<DomainSession>;
+		};
 	};
 };
 
@@ -128,8 +131,10 @@ export function createServerCycleRepository(
 		getActive: () => client.cycle.getActive.fetch(),
 		create: (input) =>
 			client.cycle.create.mutate({
-				...input,
+				kind: input.kind,
+				configuredDurationSec: input.configuredDurationSec,
 				taskId: input.taskId != null ? toNumericId(input.taskId) : undefined,
+				...(input.intention != null ? { intention: input.intention } : {}),
 			}),
 		complete: async (input) => {
 			await client.cycle.complete.mutate({
@@ -156,6 +161,9 @@ export function createServerSessionRepository(
 ): SessionRepository {
 	return {
 		getOrCreateActive: () => client.session.getOrCreateActive.mutate(),
-		end: () => client.session.end.mutate(),
+		end: (input?: { closureLine?: string | null }) =>
+			client.session.end.mutate({
+				closureLine: input?.closureLine ?? undefined,
+			}),
 	};
 }

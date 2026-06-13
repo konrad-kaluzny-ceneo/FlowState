@@ -49,6 +49,8 @@ export const env = createEnv({
 	client: {
 		/** Set to "1" in Playwright webServer so fake timers advance the countdown. */
 		NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: z.enum(["1"]).optional(),
+		/** Milliseconds before return handoff shows; Playwright sets "1" for belt specs. */
+		NEXT_PUBLIC_E2E_RETURN_HANDOFF_THRESHOLD_MS: z.string().optional(),
 	},
 
 	/**
@@ -63,6 +65,8 @@ export const env = createEnv({
 		NODE_ENV: process.env.NODE_ENV,
 		NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER:
 			process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER,
+		NEXT_PUBLIC_E2E_RETURN_HANDOFF_THRESHOLD_MS:
+			process.env.NEXT_PUBLIC_E2E_RETURN_HANDOFF_THRESHOLD_MS,
 	},
 	/**
 	 * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

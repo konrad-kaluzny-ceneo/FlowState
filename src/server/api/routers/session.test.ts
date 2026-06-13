@@ -11,6 +11,7 @@ let sessions: Array<{
 	archivedAt: Date | null;
 	lastActivityAt: Date;
 	endedAt: Date | null;
+	closureLine: string | null;
 }> = [];
 let nextId = 1;
 
@@ -22,22 +23,37 @@ vi.mock("~/server/db/index", () => ({
 				(args: {
 					where: {
 						userId?: string;
-						state?: string;
+						state?: string | { in: string[] };
 						archivedAt?: null;
+						endedAt?: { not: null };
 					};
+					orderBy?: { endedAt: "desc" };
 				}) => {
-					return Promise.resolve(
-						sessions.find((s) => {
-							if (args.where.userId != null && s.userId !== args.where.userId)
-								return false;
-							if (args.where.state != null && s.state !== args.where.state)
-								return false;
-							if (args.where.archivedAt === null && s.archivedAt !== null) {
-								return false;
-							}
-							return true;
-						}) ?? null,
-					);
+					const matches = sessions.filter((s) => {
+						if (args.where.userId != null && s.userId !== args.where.userId)
+							return false;
+						if (typeof args.where.state === "string") {
+							if (s.state !== args.where.state) return false;
+						} else if (args.where.state?.in != null) {
+							if (!args.where.state.in.includes(s.state)) return false;
+						}
+						if (args.where.archivedAt === null && s.archivedAt !== null) {
+							return false;
+						}
+						if (args.where.endedAt?.not === null && s.endedAt == null) {
+							return false;
+						}
+						return true;
+					});
+
+					if (args.orderBy?.endedAt === "desc") {
+						matches.sort(
+							(a, b) =>
+								(b.endedAt?.getTime() ?? 0) - (a.endedAt?.getTime() ?? 0),
+						);
+					}
+
+					return Promise.resolve(matches[0] ?? null);
 				},
 			),
 			create: vi.fn((args: { data: { userId: string } }) => {
@@ -49,6 +65,7 @@ vi.mock("~/server/db/index", () => ({
 					archivedAt: null,
 					lastActivityAt: now,
 					endedAt: null,
+					closureLine: null,
 				};
 				sessions.push(session);
 				return Promise.resolve(session);
@@ -150,6 +167,7 @@ describe("session router", () => {
 					archivedAt: new Date(),
 					lastActivityAt: new Date(),
 					endedAt: null,
+					closureLine: null,
 				},
 			];
 
@@ -169,6 +187,7 @@ describe("session router", () => {
 					archivedAt: null,
 					lastActivityAt: fiveHoursAgo,
 					endedAt: null,
+					closureLine: null,
 				},
 			];
 
@@ -191,6 +210,7 @@ describe("session router", () => {
 					archivedAt: null,
 					lastActivityAt: oneHourAgo,
 					endedAt: null,
+					closureLine: null,
 				},
 			];
 
@@ -210,6 +230,7 @@ describe("session router", () => {
 					archivedAt: null,
 					lastActivityAt: new Date(),
 					endedAt: null,
+					closureLine: null,
 				},
 			];
 
@@ -237,17 +258,18 @@ describe("session router", () => {
 					archivedAt: null,
 					lastActivityAt: new Date(),
 					endedAt: null,
+					closureLine: null,
 				},
 			];
 
-			const result = await sessionCaller().end();
+			const result = await sessionCaller().end({});
 
 			expect(result.state).toBe("ENDED_BY_USER");
 			expect(result.endedAt).not.toBeNull();
 		});
 
 		it("throws NOT_FOUND when no active session exists", async () => {
-			await expect(sessionCaller().end()).rejects.toMatchObject({
+			await expect(sessionCaller().end({})).rejects.toMatchObject({
 				code: "NOT_FOUND",
 			});
 		});
@@ -261,12 +283,62 @@ describe("session router", () => {
 					archivedAt: null,
 					lastActivityAt: new Date(),
 					endedAt: new Date(),
+					closureLine: null,
 				},
 			];
 
-			await expect(sessionCaller().end()).rejects.toMatchObject({
+			await expect(sessionCaller().end({})).rejects.toMatchObject({
 				code: "NOT_FOUND",
 			});
+		});
+		it("persists closure line when provided", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					endedAt: null,
+					closureLine: null,
+				},
+			];
+
+			const result = await sessionCaller().end({
+				closureLine: "Session complete — 2 cycles.",
+			});
+
+			expect(result.closureLine).toBe("Session complete — 2 cycles.");
+		});
+	});
+
+	describe("getLastEnded", () => {
+		it("returns the most recently ended session", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ENDED_BY_USER",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					endedAt: new Date("2020-01-01"),
+					closureLine: "Older closure",
+				},
+				{
+					id: 2,
+					userId: USER_ID,
+					state: "ENDED_BY_TIMEOUT",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					endedAt: new Date("2025-06-01"),
+					closureLine: "Latest closure",
+				},
+			];
+
+			const result = await sessionCaller().getLastEnded();
+
+			expect(result?.id).toBe(2);
+			expect(result?.closureLine).toBe("Latest closure");
 		});
 	});
 });

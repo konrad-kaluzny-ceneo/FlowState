@@ -307,7 +307,7 @@ export function createGuestSessionRepository(): SessionRepository {
 			};
 		},
 
-		async end() {
+		async end(input?: { closureLine?: string | null }) {
 			const snapshot = loadSnapshot();
 			const active = snapshot.sessions.find((s) => s.state === "ACTIVE");
 
@@ -320,7 +320,14 @@ export function createGuestSessionRepository(): SessionRepository {
 				...current,
 				sessions: current.sessions.map((s) =>
 					s.id === active.id
-						? { ...s, state: "ENDED_BY_USER" as const, endedAt: now }
+						? {
+								...s,
+								state: "ENDED_BY_USER" as const,
+								endedAt: now,
+								...(input?.closureLine != null
+									? { closureLine: input.closureLine }
+									: {}),
+							}
 						: s,
 				),
 			}));
@@ -337,6 +344,7 @@ export function createGuestSessionRepository(): SessionRepository {
 				endedAt: now,
 				lastActivityAt: active.lastActivityAt,
 				interruptionCount: active.interruptionCount,
+				closureLine: input?.closureLine ?? active.closureLine ?? null,
 			};
 		},
 	};
@@ -375,6 +383,7 @@ export function createGuestCycleRepository(): CycleRepository {
 				configuredDurationSec: input.configuredDurationSec,
 				startedAt: new Date(),
 				endedAt: null,
+				...(input.intention != null ? { intention: input.intention } : {}),
 			};
 
 			const { error } = mutateSnapshot((current) => ({
