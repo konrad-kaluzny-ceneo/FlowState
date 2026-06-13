@@ -51,7 +51,13 @@ test.describe("Session return handoff (S-17)", () => {
 		await page.getByTestId("session-closure-dismiss-btn").click();
 		await expect(page.getByTestId("session-closure-overlay")).toBeHidden();
 
+		const lastEndedReady = page.waitForResponse(
+			(response) =>
+				response.url().includes("session.getLastEnded") && response.ok(),
+			{ timeout: 20_000 },
+		);
 		await page.reload();
+		await lastEndedReady;
 		await expect(page.getByTestId("task-list")).toBeVisible({
 			timeout: 20_000,
 		});

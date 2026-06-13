@@ -13,6 +13,7 @@ function useWedgeGateSuppressed(): boolean {
 	const closure = useTestIdVisible("session-closure-overlay");
 	const windDown = useTestIdVisible("wind-down-overlay");
 	const kickoffReadiness = useTestIdVisible("kickoff-readiness-overlay");
+	const timerRunning = useTestIdVisible("timer-panel-running");
 
 	return (
 		cycleComplete ||
@@ -22,7 +23,8 @@ function useWedgeGateSuppressed(): boolean {
 		suggestion ||
 		closure ||
 		windDown ||
-		kickoffReadiness
+		kickoffReadiness ||
+		timerRunning
 	);
 }
 
