@@ -549,10 +549,10 @@ describe("Eisenhower task attributes", () => {
 	it("create persists personaPresetId for known preset id", async () => {
 		const created = await taskCaller(USER_A).create({
 			title: "Deep work",
-			personaPresetId: "deep-planning",
+			personaPresetId: "focus",
 		});
 
-		expect(created.personaPresetId).toBe("deep-planning");
+		expect(created.personaPresetId).toBe("focus");
 	});
 
 	it("create rejects unknown personaPresetId", async () => {

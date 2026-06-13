@@ -141,8 +141,8 @@ function openCreateCustomPanel() {
 	fireEvent.click(screen.getByRole("button", { name: "Custom" }));
 }
 
-function selectCreatePreset(label: string) {
-	fireEvent.click(screen.getByRole("button", { name: label }));
+function selectCreatePreset(presetId: string) {
+	fireEvent.click(screen.getByTestId(`persona-preset-${presetId}`));
 }
 
 function fillCreateTitle(title: string) {
@@ -332,10 +332,10 @@ describe("TaskList", () => {
 
 	it.each(
 		TASK_PERSONA_PRESETS.map((preset) => [preset.label, preset.id] as const),
-	)("preset %s applies create form attributes visible in Custom panel", (label, presetId) => {
+	)("preset %s applies create form attributes visible in Custom panel", (_label, presetId) => {
 		render(<TaskList {...defaultProps} />);
 
-		selectCreatePreset(label);
+		selectCreatePreset(presetId);
 		expect(
 			screen
 				.getByTestId(`persona-preset-${presetId}`)
@@ -368,10 +368,10 @@ describe("TaskList", () => {
 
 	it.each(
 		TASK_PERSONA_PRESETS.map((preset) => [preset.label, preset.id] as const),
-	)("Add sends %s preset attributes via createTask", async (label, presetId) => {
+	)("Add sends %s preset attributes via createTask", async (_label, presetId) => {
 		render(<TaskList {...defaultProps} />);
 
-		selectCreatePreset(label);
+		selectCreatePreset(presetId);
 		fillCreateTitle("Preset task");
 		submitCreateForm();
 
@@ -393,7 +393,7 @@ describe("TaskList", () => {
 	it("post-create reset clears preset selection and Custom panel", async () => {
 		render(<TaskList {...defaultProps} />);
 
-		selectCreatePreset("Deep planning");
+		selectCreatePreset("focus");
 		openCreateCustomPanel();
 		fillCreateTitle("Reset me");
 		submitCreateForm();
@@ -407,9 +407,7 @@ describe("TaskList", () => {
 				.value,
 		).toBe("");
 		expect(
-			screen
-				.getByTestId("persona-preset-deep-planning")
-				.getAttribute("aria-pressed"),
+			screen.getByTestId("persona-preset-focus").getAttribute("aria-pressed"),
 		).toBe("false");
 		expect(screen.queryByText("Urgency")).toBeNull();
 	});
@@ -420,12 +418,10 @@ describe("TaskList", () => {
 		openCreateCustomPanel();
 		expect(screen.getByText("Urgency")).toBeTruthy();
 
-		selectCreatePreset("Mail & admin");
+		selectCreatePreset("synchro");
 		expect(screen.queryByText("Urgency")).toBeNull();
 		expect(
-			screen
-				.getByTestId("persona-preset-mail-admin")
-				.getAttribute("aria-pressed"),
+			screen.getByTestId("persona-preset-synchro").getAttribute("aria-pressed"),
 		).toBe("true");
 	});
 

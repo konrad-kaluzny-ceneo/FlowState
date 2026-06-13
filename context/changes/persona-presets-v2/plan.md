@@ -467,26 +467,26 @@ Negligible — one nullable varchar per task; badge logic is O(1) preset lookup.
 
 #### Automated
 
-- [x] 1.1 `pnpm prisma migrate dev` succeeds
-- [x] 1.2 `pnpm check` passes
-- [x] 1.3 `pnpm typecheck` passes
-- [x] 1.4 Task mutation tests pass
+- [x] 1.1 `pnpm prisma migrate dev` succeeds — cc50fa3
+- [x] 1.2 `pnpm check` passes — cc50fa3
+- [x] 1.3 `pnpm typecheck` passes — cc50fa3
+- [x] 1.4 Task mutation tests pass — cc50fa3
 
 #### Manual
 
-- [x] 1.5 Prisma column verified on `Task`
+- [x] 1.5 Prisma column verified on `Task` — cc50fa3
 
 ### Phase 2: Expanded catalog and pure helpers
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec vitest run src/lib/task/persona-presets.test.ts` passes
-- [ ] 2.2 `pnpm check` passes
-- [ ] 2.3 `pnpm typecheck` passes
+- [x] 2.1 `pnpm exec vitest run src/lib/task/persona-presets.test.ts` passes
+- [x] 2.2 `pnpm check` passes
+- [x] 2.3 `pnpm typecheck` passes
 
 #### Manual
 
-- [ ] 2.4 User approved catalog labels and bundles
+- [x] 2.4 User approved catalog labels and bundles
 
 ### Phase 3: Create UX — effort on preset path
 
