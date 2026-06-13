@@ -104,7 +104,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 
 | Roadmap ID | Change ID | Ready for `/10x-plan` | Notes |
 | ---------- | --------- | --------------------- | ----- |
-| **S-17** | session-narrative-summary | **yes (active)** | S-18 done; merge P-202 in plan |
+| **S-17** | session-narrative-summary | **in review** | PR open |
 | S-29 | task-create-persona-presets | **yes** | + P-203, P-204, P-105 in plan; S-32 optional phase 2 |
 | S-30 | daily-work-timing-recap | **yes** | + P-104 trail, P-111 type mix sub-phases |
 | S-31 | work-focus-shell | **yes** | = P-GAP-101 |
