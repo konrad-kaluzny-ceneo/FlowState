@@ -1,12 +1,14 @@
 ---
 project: flow-state
-version: 2
-checked_at: 2026-06-12T12:00:00Z
-updated: 2026-06-12
+version: 3
+checked_at: 2026-06-13T17:30:00Z
+updated: 2026-06-13
 health_status: healthy
 context_type: brownfield
+prd_version: 3
 language_family: js
-stack_assessment_available: false
+stack_assessment_available: true
+stack_assessment_path: context/foundation/stack-assessment.md
 checks_run:
   - lockfile
   - dependency_audit
@@ -161,6 +163,6 @@ pnpm audit
 
 Health status: **healthy** (housekeeping refresh 2026-06-12; re-run `pnpm audit` for current advisory counts).
 
-MVP shipped 2026-06-07. CI: GitHub Actions (quality + e2e belt). Vitest + Playwright in place. PRD v2 defines iteration backlog.
+MVP shipped 2026-06-07. CI: GitHub Actions (quality + e2e belt). Vitest + Playwright in place. PRD v3 defines iteration backlog. Stack assessment: [`stack-assessment.md`](stack-assessment.md).
 
 Next step: next roadmap slice per `roadmap.md` §Backlog Handoff — recommended **S-17** (`session-narrative-summary`).

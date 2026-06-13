@@ -3,7 +3,8 @@ project: FlowState
 type: lessons
 version: 2
 created: 2026-05-28
-updated: 2026-06-12
+updated: 2026-06-13
+prd_version: 3
 ---
 
 # Lessons learned

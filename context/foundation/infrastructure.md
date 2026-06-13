@@ -1,7 +1,8 @@
 ---
 project: flow-state
 version: 2
-updated: 2026-06-12
+updated: 2026-06-13
+prd_version: 3
 researched_at: 2026-05-24
 recommended_platform: Vercel
 runner_up: Railway
