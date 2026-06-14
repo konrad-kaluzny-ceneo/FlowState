@@ -24,6 +24,7 @@ export const guestTaskSchema = z.object({
 	commitmentHorizon: commitmentHorizonSchema.optional(),
 	sortOrder: z.number().int().min(0).optional(),
 	resumeNote: z.string().max(120).nullable().optional(),
+	personaPresetId: z.string().max(32).nullable().optional(),
 	createdAt: z.coerce.date(),
 	updatedAt: z.coerce.date().nullable(),
 });
@@ -40,6 +41,7 @@ export type GuestTask = {
 	commitmentHorizon: z.infer<typeof commitmentHorizonSchema>;
 	sortOrder: number;
 	resumeNote: string | null;
+	personaPresetId: string | null;
 	createdAt: Date;
 	updatedAt: Date | null;
 };
@@ -58,6 +60,7 @@ function normalizeGuestTasks(
 			commitmentHorizon: task.commitmentHorizon ?? "WHEN_POSSIBLE",
 			sortOrder: task.sortOrder ?? index,
 			resumeNote: task.resumeNote ?? null,
+			personaPresetId: task.personaPresetId ?? null,
 			weight: urgency,
 		};
 	});

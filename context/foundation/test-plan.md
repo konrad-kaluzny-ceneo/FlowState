@@ -1,7 +1,7 @@
 ---
 project: FlowState
-version: 2
-updated: 2026-06-12
+version: 3
+updated: 2026-06-13
 ---
 
 # Test Plan
@@ -12,7 +12,7 @@ updated: 2026-06-12
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-12 (PRD v2 / post-MVP housekeeping — risk source rows refreshed)
+> Last updated: 2026-06-13 (PRD v3 — risks #8–#11 + response guidance added; Phase 8 rollout row; cookbook fills on first `/10x-new` for wedge coherence)
 
 ## 1. Strategy
 
@@ -61,6 +61,10 @@ research's job, see §1 principle #3).
 | 5 | Guest trial tasks or cycles are lost or silently overwritten on sign-in merge | High | Medium | PRD FR-003c; roadmap S-08 done; PRD guardrail (no silent data loss) |
 | 6 | Attacker with a valid session manipulates resource IDs to access another user's tasks or cycles (IDOR) | High | Medium | PRD access control (abuse lens — ownership not just authentication) |
 | 7 | End-of-cycle check-in can be skipped or declared energy fails to persist for the next suggestion | Medium | Medium | PRD FR-020; roadmap S-05 done |
+| 8 | Wedge transition beats stack competing overlays (closure + kickoff, check-in + suggestion) causing interstitial fatigue | High | High | PRD v3 US-01 Primary; guardrail max 1 interstitial + 1 gate; user-flow T-01–T-05; roadmap B-05–B-08, F-07 |
+| 9 | Check-in → suggestion transition feels sluggish or shows stale UI (>200ms perceived) | Medium | Medium | PRD v3 guardrail 200ms; roadmap S-34; hot-spot dir `src/hooks/` |
+| 10 | Pause/resume loses remaining time, counts as interruption, or session never ends after long pause | High | Medium | PRD v3 US-04; pause cap ~30 min; roadmap S-24 |
+| 11 | Network loss during wedge gate (check-in, suggestion) silently drops state with no calm recovery | High | Medium | PRD v3 US-01 guardrail; roadmap S-35 |
 
 ### Risk Response Guidance
 
@@ -73,6 +77,10 @@ research's job, see §1 principle #3).
 | #5 | After sign-in, guest tasks and cycles appear in the account; title collisions get numbered suffixes; guest blob cleared only after successful merge | Merge test passes when guest blob is empty; suffix logic mirrors production string concat | Guest blob schema version; merge transaction boundary; collision suffix policy | Integration (merge procedure + repository layer) + belt `guest-merge-on-sign-in`; demote merge-success/cycle-merge e2e to Vitest | Browser merge proofs beyond one belt spec; asserting suffix algorithm by copying production helper output as oracle; integration-only merge while guest repository layer has 192 no-coverage mutants |
 | #6 | Mutating or fetching a task/cycle/session ID belonging to another user returns forbidden or not-found, not the foreign row | Logged-in user implies any ID is reachable if auth passes | ID parameters on mutations; ownership check before update/delete | Integration (cross-user ID swap on each router); **no belt e2e** | Only testing "unauthenticated → 401" without cross-user IDOR |
 | #7 | Every completed work cycle requires an energy check-in before transition; stored value is readable for the next suggestion | Check-in UI mount implies persistence; skipping modal via keyboard is acceptable UX | Cycle-end transition gate; check-in persistence model; S-05 vs S-06 boundary | Belt: `seed` + `pomodoro-cycle` check-in step; integration for persistence; dedicated gate e2e still deferred | Asserting check-in persistence only in demoted full-catalog specs; snapshot of check-in modal without asserting gate blocks transition |
+| #8 | At most one interstitial + one gate visible per transition beat; closure never stacks with kickoff/check-in on same visit | "We have a conductor" implies priority rules, not z-index stacking; B-05 hotfix alone is partial proof | Gate eligibility matrix; async races after `endSession`; hydrate vs kickoff effect order | Hook/component matrix for overlay mutex; belt extension after B-05 ships (closure + kickoff sequence) | Full F-07 e2e for every gate pair on merge gate before hotfixes land; z-index-only fix without abort tokens |
+| #9 | Check-in → suggestion handoff feels instant (≤200ms perceived) with no stale suggestion card | Optimistic UI implies rollback on mutation failure; guest path may differ | Post-check-in transition path; which mutations block render; S-25 readiness interaction | Vitest deferred-mock oracle (§6.8 pattern on wedge hooks); component smoke on suggestion overlay; belt row only if hook cannot observe perceived latency | Belt e2e timing assertions without hook deferred-mock proof; copying B-03 tests without wedge-specific race branches |
+| #10 | Pause/resume preserves remaining time; long pause (~30 min cap) ends session calmly without counting as interruption | Cap is pause duration, not interrupt count; S-24 full variant may differ from minimal B-08 path | Pause state machine in cycle hook; cap timer vs wall clock; session end on cap | Hook unit tests for pause/resume/cap; integration for persisted pause state; belt only for end-to-end cap → closure if hook gaps remain | Treating pause cap as interruption increment; e2e-only pause proofs while hook branches survive |
+| #11 | Network loss during wedge gate shows calm recovery — local state preserved, one-tap retry, no silent drop | Offline banner alone is insufficient; retry must re-use pending check-in/suggestion intent | Which mutations are wedge-critical; guest local-first boundaries; S-22 catch-up interaction | Hook tests simulating rejected/failed tRPC with pending wedge state; component smoke on recovery UI; integration for idempotent retry | Full offline Playwright on merge gate before unit recovery oracles; forcing re-entry of energy after transient failure |
 
 ## 3. Phased Rollout
 
@@ -89,6 +97,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 5 | Mutation oracle hardening | Raise covered-code mutation score from ~58% by killing survived mutants in hooks and server routers — tests exist but assertions are too weak | #1, #2, #3, #4, #5, #6 | unit + integration (targeted Stryker runs) | not started | — |
 | 6 | Uncovered UI & auth paths | Exercise task-list, dashboard, and auth action paths so no-coverage mutants drop — largest score drag but narrower than Phase 5 per test | #1, #3, #5 | component smoke + integration | complete | testing-component-layer-cookbook |
 | 7 | E2E belt merge gate | Replace full-catalog CI gate with 12-test belt; Vitest backfill then delete 10 demoted e2e files | #1–#7 (belt entry points + integration-only #4/#6) | Playwright belt + Vitest/component backfill | complete | testing-e2e-belt-fast |
+| 8 | PRD v3 wedge coherence | Orchestrated transitions, pause semantics, optimistic wedge, network recovery — belt/hook proofs for US-01/US-04 | #8, #9, #10, #11 | unit + hook + belt extensions | not started | — |
 
 ## 4. Stack
 
@@ -354,7 +363,7 @@ contributors should respect these unless the underlying assumption changes.
 - CI quality gates wired: 2026-06-11 (`.github/workflows/ci.yml` — belt merge gate `pnpm test:e2e:belt`, 4 workers, build cache)
 - Belt merge-gate shipped: 2026-06-11 (`testing-e2e-belt-fast`)
 - Phase 6 component layer shipped: 2026-06-11 (`testing-component-layer-cookbook`) — co-located `_components` + auth action smokes; narrowed Stryker on dashboard/shell/auth paths
-- **Next session:** §3 Phase 5 (`testing-mutation-oracle-hardening`) — Stryker survived-mutant oracles
+- **Next session:** §3 Phase 8 (PRD v3 wedge coherence — risks #8–#11) after F-07/B-05 land; Phase 5 mutation oracle still optional backlog
 
 Refresh (`/10x-test-plan --refresh`) when:
 

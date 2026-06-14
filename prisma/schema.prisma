@@ -72,6 +72,7 @@ model Task {
   commitmentHorizon  CommitmentHorizon  @default(WHEN_POSSIBLE) @map("commitment_horizon")
   sortOrder          Int                @default(0) @map("sort_order")
   resumeNote         String?            @map("resume_note") @db.VarChar(120)
+  personaPresetId    String?            @map("persona_preset_id") @db.VarChar(32)
   createdAt DateTime  @default(now()) @map("createdAt") @db.Timestamptz
   updatedAt DateTime? @updatedAt @map("updatedAt") @db.Timestamptz
 

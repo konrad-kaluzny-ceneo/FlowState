@@ -29,6 +29,23 @@ describe("guest repositories", () => {
 		expect(localStorage.getItem(GUEST_STORAGE_KEY)).toContain("Guest task");
 	});
 
+	it("round-trips personaPresetId on guest task create and list", async () => {
+		const { tasks } = createGuestRepositories();
+		await tasks.create({
+			title: "Preset guest task",
+			workType: "OPERATIONAL",
+			urgency: 2,
+			importance: 2,
+			effortMinutes: 15,
+			commitmentHorizon: "WHEN_POSSIBLE",
+			personaPresetId: "synchro",
+		});
+
+		const list = await tasks.list();
+		expect(list[0]?.personaPresetId).toBe("synchro");
+		expect(list[0]?.effortMinutes).toBe(15);
+	});
+
 	it("starts and retrieves an active cycle", async () => {
 		const { tasks, cycles } = createGuestRepositories();
 		const task = await tasks.create({ title: "Focus me" });

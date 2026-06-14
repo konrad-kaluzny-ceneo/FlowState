@@ -9,7 +9,7 @@ Progressive disclosure for `context/foundation/roadmap.md`. **Read the main file
 | Big picture, status, dependencies | [`../roadmap.md`](../roadmap.md) |
 | Codebase baseline at roadmap creation | [`baseline.md`](baseline.md) |
 | All foundation blocks in one file | [`foundations.md`](foundations.md) |
-| All slice blocks in one file | [`slices.md`](slices.md) |
+| All slice blocks in one file | [`slices.md`](slices.md) — **bulk only**; prefer `items/` |
 | Single item (Outcome, Unknowns, Risk, …) | [`items/{ID}.md`](items/) — e.g. `items/S-17.md` |
 | Bug slice detail | [`bugs.md`](bugs.md) or `items/B-01.md` |
 | User flow map + T-01–T-05 | [`../user-flow.md`](../user-flow.md) |
@@ -17,7 +17,8 @@ Progressive disclosure for `context/foundation/roadmap.md`. **Read the main file
 | `/10x-roadmap-expand` batch merge notes | [`expand-batches/README.md`](expand-batches/README.md) |
 | Research before `/10x-plan` | [`research-requirements.md`](research-requirements.md) |
 | Product open questions | [`open-questions.md`](open-questions.md) |
-| PRD v3 scope → slice map | [`prd-v3-horizon.md`](prd-v3-horizon.md) |
+| PRD US ↔ slice / legacy FR | [`../prd-refs.md`](../prd-refs.md) |
+| Agent context load router | [`../../README.md`](../../README.md) |
 | Deferred ideas | [`future-ideas.md`](future-ideas.md), [`parked.md`](parked.md) |
 | Shipped archive log | [`done.md`](done.md) |
 
@@ -34,9 +35,20 @@ Progressive disclosure for `context/foundation/roadmap.md`. **Read the main file
 
 Expand outcomes (F-07, S-32–S-35) and merge scope (P-202–P-205, P-GAP-*) live in the main [`roadmap.md`](../roadmap.md) glance + scope tables and in `items/` detail cards — no separate staging folder.
 
+## Load by slice type
+
+| Type | IDs (examples) | Also load |
+| --- | --- | --- |
+| Wedge / flow | F-07, B-05–B-08, S-21, S-34, S-35 | `user-flow.md`, `flow-coherence-recommendations.md`, `prd-refs.md` US-01 |
+| Persona / trust | S-29, S-32 | `prd-refs.md` US-02 |
+| Daily planning | S-27, S-30 | `prd-refs.md` US-03 |
+| Pause | S-24, B-08 | `prd-refs.md` US-04 |
+| Craft | S-28, S-31 | `DESIGN.md` |
+| Bug (done) | B-01–B-04 | item card only |
+
 ## Agent convention
 
 1. Default context budget: **only** `roadmap.md` (~160 lines).
-2. Before `/10x-plan <change-id>`: read `items/{roadmap-id}.md` for that slice + linked PRD refs.
+2. Before `/10x-plan <change-id>`: read `items/{roadmap-id}.md` + [`../prd-refs.md`](../prd-refs.md) for US mapping.
 3. Before `/10x-roadmap-expand` commit: read evaluator notes in [`expand-batches/README.md`](expand-batches/README.md) + target `items/{ID}.md`.
 4. Do not duplicate detail back into `roadmap.md` — patch the reference file and update the glance row.

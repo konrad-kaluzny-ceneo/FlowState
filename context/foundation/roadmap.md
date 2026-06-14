@@ -3,9 +3,9 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-06-13
+updated: 2026-06-14
 structure: split
-active_slices: []
+active_slices: [S-36]
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (B-05 → F-07)
@@ -64,10 +64,10 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | B-02 | fix-task-title-multiline-edit | [FLO-54](https://linear.app/flowstate-10xdev/issue/FLO-54) | [#73](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/73) | **(bug)** multiline task title edit | — | preserved | done |
 | B-03 | fix-cycle-start-interrupt-optimistic | [FLO-55](https://linear.app/flowstate-10xdev/issue/FLO-55) | [#74](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/74) | **(bug)** Start/Interrupt within 200ms | S-09 | guardrails | done |
 | B-04 | fix-cycle-complete-flash-after-checkin | [FLO-56](https://linear.app/flowstate-10xdev/issue/FLO-56) | [#75](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/75) | **(bug)** no Cycle Complete flash after check-in | S-05, S-06 | preserved | done |
-| B-05 | fix-closure-kickoff-mutex | — | [#110](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/110) | **(bug)** closure without kickoff/check-in stacking | — | **US-01** | proposed |
-| B-06 | fix-timeout-closure-on-load | — | [#111](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/111) | **(bug)** timeout closure on page load, not cycle start | B-05 | US-01 | proposed |
-| B-07 | fix-wind-down-cycle-threshold | — | [#112](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/112) | **(bug)** wind-down at 3rd completed work cycle | — | US-01 | proposed |
-| B-08 | fix-graceful-session-end-while-running | — | [#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113) | **(bug)** calm end session while timer running | F-07; S-24 full | US-04 | proposed |
+| B-05 | fix-closure-kickoff-mutex | [FLO-67](https://linear.app/flowstate-10xdev/issue/FLO-67) | [#110](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/110) | **(bug)** closure without kickoff/check-in stacking | — | **US-01** | proposed |
+| B-06 | fix-timeout-closure-on-load | [FLO-68](https://linear.app/flowstate-10xdev/issue/FLO-68) | [#111](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/111) | **(bug)** timeout closure on page load, not cycle start | B-05 | US-01 | proposed |
+| B-07 | fix-wind-down-cycle-threshold | [FLO-69](https://linear.app/flowstate-10xdev/issue/FLO-69) | [#112](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/112) | **(bug)** wind-down at 3rd completed work cycle | — | US-01 | proposed |
+| B-08 | fix-graceful-session-end-while-running | [FLO-70](https://linear.app/flowstate-10xdev/issue/FLO-70) | [#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113) | **(bug)** calm end session while timer running | F-07; S-24 full | US-04 | proposed |
 | F-05 | eisenhower-effort-task-attributes | [FLO-57](https://linear.app/flowstate-10xdev/issue/FLO-57) | [#78](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/78) | (foundation) scorer v2 substrate | S-04, S-06 | modified | done |
 | S-25 | pre-suggestion-readiness | [FLO-58](https://linear.app/flowstate-10xdev/issue/FLO-58) | [#79](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/79) | readiness gate before suggestion | S-05, S-06, S-15 | preserved | done |
 | S-26 | task-manual-priority-order | [FLO-59](https://linear.app/flowstate-10xdev/issue/FLO-59) | [#81](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/81) | drag-reorder tie-breaker | S-04, S-06, S-09 | preserved | done |
@@ -77,11 +77,12 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-29 | task-create-persona-presets | [FLO-64](https://linear.app/flowstate-10xdev/issue/FLO-64) | [#105](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/105) | persona presets + Custom expand | F-05, F-06, S-13 | **US-02** | done |
 | S-30 | daily-work-timing-recap | [FLO-65](https://linear.app/flowstate-10xdev/issue/FLO-65) | [#106](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/106) | light timing recap; dismissible footprint | S-02, S-18 | **US-03** | ready |
 | S-31 | work-focus-shell | [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) | [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107) | WORK cycle focus shell | S-13, F-06 | Secondary | ready |
-| F-07 | wedge-transition-conductor | — | [#114](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/114) | (foundation) max 1 interstitial + 1 gate per beat | B-05, S-12, S-19 | **US-01** | proposed |
-| S-32 | create-wedge-trust-bridge | — | [#115](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/115) | first suggestion cites persona preset in rationale | S-29, F-05, S-06 | **US-02** | ready |
+| F-07 | wedge-transition-conductor | [FLO-71](https://linear.app/flowstate-10xdev/issue/FLO-71) | [#114](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/114) | (foundation) max 1 interstitial + 1 gate per beat | B-05, S-12, S-19 | **US-01** | proposed |
+| S-32 | create-wedge-trust-bridge | [FLO-72](https://linear.app/flowstate-10xdev/issue/FLO-72) | [#115](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/115) | first suggestion cites persona preset in rationale | S-36, F-05, S-06 | **US-02** | ready |
 | S-33 | break-restoration-atmosphere | — | — | home break atmosphere during breaks | F-06, S-13, F-07 | US-01 craft | proposed |
-| S-34 | optimistic-wedge-transitions | — | [#116](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/116) | optimistic check-in → suggestion ≤200ms | F-07, S-06, S-09, S-25 | **US-01** | proposed |
-| S-35 | wedge-transition-sync-recovery | — | [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) | calm network-loss recovery on wedge gates | F-07, S-06, S-22 | **US-01** | proposed |
+| S-34 | optimistic-wedge-transitions | [FLO-73](https://linear.app/flowstate-10xdev/issue/FLO-73) | [#116](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/116) | optimistic check-in → suggestion ≤200ms | F-07, S-06, S-09, S-25 | **US-01** | proposed |
+| S-35 | wedge-transition-sync-recovery | [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) | [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) | calm network-loss recovery on wedge gates | F-07, S-06, S-22 | **US-01** | proposed |
+| S-36 | persona-presets-v2 | [FLO-75](https://linear.app/flowstate-10xdev/issue/FLO-75) | [#118](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/118) | 8 personas + row labels + visible effort | S-29, F-05 | **US-02** | **in review** |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -100,7 +101,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | I | Calm focus UX | S-22 ∥ S-23 ∥ S-20; S-24 | Catch-up, transparency, pause |
 | J | Task planning | S-26 ∥ S-25 ∥ S-23; F-05 → S-27 | Drag-drop, Eisenhower, standing |
 | K | Wellness re-skin | F-06 → S-28 | Pastel + Calm Garden |
-| L | Task UX + standup | S-29 ∥ S-30; S-32 after S-29; S-27 | PRD v3 US-02–03 |
+| L | Task UX + standup | S-29 → **S-36** (urgent); S-32 after S-36; S-30; S-27 | PRD v3 US-02–03 |
 | M | Coherence craft | S-31 ∥ S-28; S-30 footprint | Focus shell, atmosphere |
 | N | PRD v3 flow conductor | **B-05 → B-06 → F-07 (+B-07)** → S-21 ∥ S-33; S-34 ∥ S-35; S-24 → B-08 | US-01 — see [`prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md) |
 
@@ -113,7 +114,8 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | B-07 | fix-wind-down-cycle-threshold | **yes** | with F-07 faza 2 |
 | B-08 | fix-graceful-session-end-while-running | revise | minimal after F-07; full after S-24 |
 | S-29 | task-create-persona-presets | **done** | merged PR #109 |
-| S-32 | create-wedge-trust-bridge | **yes** | after S-29; US-02 |
+| S-36 | persona-presets-v2 | **yes — in review** | US-02; PR pending |
+| S-32 | create-wedge-trust-bridge | **yes** | after S-36; US-02 |
 | F-07 | wedge-transition-conductor | **yes** | after B-05 hotfix; US-01 must-have |
 | S-24 | cycle-pause-resume | **yes** | US-04; pause cap ~30 min (PRD v3) |
 | S-27 | daily-standing-tasks-capacity-plan | **yes** | US-03; local-midnight reset |
@@ -127,7 +129,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | F-03 | align-prisma-config | **yes** | hygiene; parallel when idle |
 | S-11 ext. | post-merge-wedge-coach | revise | guest narrative shorten; after F-07 |
 
-**Recommended next:** **B-05 → B-06** (P0) → **F-07** → **S-32** → **S-27** ∥ **S-30** ∥ **S-31** ∥ **S-28** → **S-24** → **S-34** ∥ **S-35**; **S-21** ∥ **S-33** after F-07.
+**Recommended next:** **S-36** (active, urgent) ∥ **B-05 → B-06** (P0) → **F-07** → **S-32** (after S-36) → **S-27** ∥ **S-30** ∥ **S-31** ∥ **S-28** → **S-24** → **S-34** ∥ **S-35**; **S-21** ∥ **S-33** after F-07.
 
 ## Reference appendix (load on demand)
 

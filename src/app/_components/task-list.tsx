@@ -32,6 +32,8 @@ import { PRESET_COACH_LINE } from "~/lib/onboarding/copy";
 import {
 	applyPersonaPresetToCreateState,
 	DEFAULT_CREATE_FORM_ATTRIBUTES,
+	getPersonaPresetLabel,
+	getTaskBadgeDisplayMode,
 	type PersonaPresetId,
 } from "~/lib/task/persona-presets";
 
@@ -43,24 +45,20 @@ const HORIZON_OPTIONS: { value: CommitmentHorizon; label: string }[] = [
 	{ value: "WHEN_POSSIBLE", label: "When possible" },
 ];
 
-function TaskBadges({
+function EisenhowerDetailBadges({
 	workType,
 	urgency,
 	importance,
 	commitmentHorizon,
-	dimmed = false,
 }: {
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	urgency: 1 | 2 | 3;
 	importance: 1 | 2 | 3;
-	commitmentHorizon?: CommitmentHorizon;
-	dimmed?: boolean;
+	commitmentHorizon: CommitmentHorizon;
 }) {
 	const config = WORK_TYPE_CONFIG[workType];
 	return (
-		<span
-			className={`flex min-w-0 flex-wrap items-center gap-1 ${dimmed ? "opacity-60" : ""}`}
-		>
+		<>
 			<span
 				className={`rounded-full px-2 py-0.5 font-medium text-xs ${config.bg} ${config.text}`}
 			>
@@ -77,6 +75,87 @@ function TaskBadges({
 					ASAP
 				</span>
 			)}
+		</>
+	);
+}
+
+function TaskBadges({
+	personaPresetId,
+	workType,
+	urgency,
+	importance,
+	commitmentHorizon,
+	effortMinutes,
+	dimmed = false,
+}: {
+	personaPresetId: string | null;
+	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+	urgency: 1 | 2 | 3;
+	importance: 1 | 2 | 3;
+	commitmentHorizon: CommitmentHorizon;
+	effortMinutes: number | null;
+	dimmed?: boolean;
+}) {
+	const dimClass = dimmed ? "opacity-60" : "";
+	const displayMode = getTaskBadgeDisplayMode({
+		personaPresetId,
+		workType,
+		urgency,
+		importance,
+		commitmentHorizon,
+		effortMinutes,
+	});
+
+	if (displayMode === "legacy") {
+		return (
+			<span className={`flex min-w-0 flex-wrap items-center gap-1 ${dimClass}`}>
+				<EisenhowerDetailBadges
+					commitmentHorizon={commitmentHorizon}
+					importance={importance}
+					urgency={urgency}
+					workType={workType}
+				/>
+			</span>
+		);
+	}
+
+	if (displayMode === "persona") {
+		const label = getPersonaPresetLabel(personaPresetId ?? "");
+		const config = WORK_TYPE_CONFIG[workType];
+		return (
+			<span className={`flex min-w-0 flex-wrap items-center gap-1 ${dimClass}`}>
+				<span
+					className={`rounded-full px-2 py-0.5 font-medium text-xs ${config.bg} ${config.text}`}
+					data-testid="task-persona-badge"
+				>
+					{label}
+				</span>
+				{effortMinutes != null && (
+					<span
+						className="rounded-full bg-surface-panel px-2 py-0.5 font-medium text-text-secondary text-xs"
+						data-testid="task-effort-badge"
+					>
+						{effortMinutes}m
+					</span>
+				)}
+			</span>
+		);
+	}
+
+	return (
+		<span className={`flex min-w-0 flex-wrap items-center gap-1 ${dimClass}`}>
+			<span
+				className="rounded-full bg-surface-panel px-2 py-0.5 font-medium text-text-secondary text-xs"
+				data-testid="task-custom-badge"
+			>
+				Custom
+			</span>
+			<EisenhowerDetailBadges
+				commitmentHorizon={commitmentHorizon}
+				importance={importance}
+				urgency={urgency}
+				workType={workType}
+			/>
 		</span>
 	);
 }
@@ -487,7 +566,9 @@ function SortableActiveTaskRow({
 				<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-9">
 					<TaskBadges
 						commitmentHorizon={task.commitmentHorizon}
+						effortMinutes={task.effortMinutes}
 						importance={task.importance}
+						personaPresetId={task.personaPresetId}
 						urgency={task.urgency}
 						workType={task.workType}
 					/>
@@ -807,6 +888,12 @@ export function TaskList({
 							importance: newImportance,
 							effortMinutes: parseEffortMinutes(newEffortMinutes),
 							commitmentHorizon: newCommitmentHorizon,
+							personaPresetId:
+								selectedPresetId === "custom"
+									? "custom"
+									: selectedPresetId != null
+										? selectedPresetId
+										: null,
 						});
 						resetCreateFormState();
 					})();
@@ -842,6 +929,34 @@ export function TaskList({
 					selectedPresetId={selectedPresetId}
 					showCustomPanel={showCustomPanel}
 				/>
+				{selectedPresetId != null && selectedPresetId !== "custom" && (
+					<div className="flex flex-wrap items-center gap-2">
+						<span className="w-16 shrink-0 text-text-secondary text-xs">
+							Effort
+						</span>
+						<input
+							className="w-24 rounded-md bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
+							data-testid="create-preset-effort"
+							inputMode="numeric"
+							max={240}
+							min={5}
+							onChange={(e) => setNewEffortMinutes(e.target.value)}
+							onMouseDown={(e) => e.preventDefault()}
+							placeholder="min"
+							type="number"
+							value={newEffortMinutes}
+						/>
+						{newEffortMinutes !== "" && (
+							<button
+								className="text-text-dimmed text-xs hover:text-text-section"
+								onClick={() => setNewEffortMinutes("")}
+								type="button"
+							>
+								Clear
+							</button>
+						)}
+					</div>
+				)}
 				{showCustomPanel && (
 					<div
 						className="space-y-2 rounded-lg border border-border-subtle bg-surface-panel p-3"
@@ -875,10 +990,7 @@ export function TaskList({
 								markCreateFormCustom();
 								setNewCommitmentHorizon(value);
 							}}
-							onEffortMinutesChange={(value) => {
-								markCreateFormCustom();
-								setNewEffortMinutes(value);
-							}}
+							onEffortMinutesChange={setNewEffortMinutes}
 							onImportanceChange={(value) => {
 								markCreateFormCustom();
 								setNewImportance(value);
@@ -988,7 +1100,9 @@ export function TaskList({
 									<TaskBadges
 										commitmentHorizon={task.commitmentHorizon}
 										dimmed
+										effortMinutes={task.effortMinutes}
 										importance={task.importance}
+										personaPresetId={task.personaPresetId}
 										urgency={task.urgency}
 										workType={task.workType}
 									/>

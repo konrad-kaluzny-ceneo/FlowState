@@ -1,5 +1,7 @@
 > Detail reference — load on demand. Index: [roadmap.md](../roadmap.md).
 
+> **Bulk export — do not load by default.** Prefer [`items/{ID}.md`](items/) per slice. This file duplicates item cards for offline bulk read only.
+
 # Slices (S-01…S-31)
 
 ## Slices

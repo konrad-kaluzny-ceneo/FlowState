@@ -19,6 +19,7 @@ type TaskRow = {
 	urgency: number;
 	effortMinutes: number | null;
 	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
+	personaPresetId: string | null;
 	createdAt: Date;
 	updatedAt: Date | null;
 };
@@ -118,6 +119,10 @@ vi.mock("~/server/db/index", () => {
 						commitmentHorizon:
 							(args.data.commitmentHorizon as TaskRow["commitmentHorizon"]) ??
 							"WHEN_POSSIBLE",
+						personaPresetId:
+							args.data.personaPresetId === undefined
+								? null
+								: (args.data.personaPresetId as string | null),
 						createdAt: new Date(),
 						updatedAt: null,
 					};
@@ -150,6 +155,7 @@ vi.mock("~/server/db/index", () => {
 								| "effortMinutes"
 								| "commitmentHorizon"
 								| "workType"
+								| "personaPresetId"
 							>
 						>;
 					}) => {
@@ -207,6 +213,7 @@ function makeTask(
 		urgency: 2,
 		effortMinutes: null,
 		commitmentHorizon: "WHEN_POSSIBLE",
+		personaPresetId: null,
 		createdAt: new Date(),
 		updatedAt: null,
 		...partial,
@@ -528,5 +535,32 @@ describe("Eisenhower task attributes", () => {
 
 		const row = allTasks.find((t) => t.id === 1);
 		expect(row).toMatchObject({ urgency: 3, weight: 3 });
+	});
+
+	it("create persists personaPresetId for custom sentinel", async () => {
+		const created = await taskCaller(USER_A).create({
+			title: "Custom task",
+			personaPresetId: "custom",
+		});
+
+		expect(created.personaPresetId).toBe("custom");
+	});
+
+	it("create persists personaPresetId for known preset id", async () => {
+		const created = await taskCaller(USER_A).create({
+			title: "Deep work",
+			personaPresetId: "focus",
+		});
+
+		expect(created.personaPresetId).toBe("focus");
+	});
+
+	it("create rejects unknown personaPresetId", async () => {
+		await expect(
+			taskCaller(USER_A).create({
+				title: "Bad preset",
+				personaPresetId: "not-a-preset",
+			}),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
 	});
 });

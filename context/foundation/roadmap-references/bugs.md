@@ -66,9 +66,9 @@
 
 - **Outcome:** user can dismiss session closure in peace — no energy popup on top of or immediately after closure on the same visit.
 - **Change ID:** fix-closure-kickoff-mutex
-- **Linear:** —
-- **GitHub:** —
-- **PRD refs:** FR-040, FR-033, FR-020, guardrail interstitial fatigue
+- **Linear:** [FLO-67](https://linear.app/flowstate-10xdev/issue/FLO-67)
+- **GitHub:** [#110](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/110)
+- **PRD refs:** US-01 (orchestrated transitions), guardrail interstitial fatigue
 - **Prerequisites:** —
 - **Parallel with:** S-29
 - **Blockers:** —
@@ -80,9 +80,9 @@
 
 - **Outcome:** user sees timeout session closure on page load / return — before kickoff readiness, not deferred to next cycle start.
 - **Change ID:** fix-timeout-closure-on-load
-- **Linear:** —
-- **GitHub:** —
-- **PRD refs:** FR-019, FR-040
+- **Linear:** [FLO-68](https://linear.app/flowstate-10xdev/issue/FLO-68)
+- **GitHub:** [#111](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/111)
+- **PRD refs:** US-01, US-04
 - **Prerequisites:** B-05 (recommended)
 - **Parallel with:** S-29
 - **Blockers:** —
@@ -94,9 +94,9 @@
 
 - **Outcome:** wind-down nudge at third completed work cycle with Fading (product intent), not effectively after fourth due to counter timing.
 - **Change ID:** fix-wind-down-cycle-threshold
-- **Linear:** —
-- **GitHub:** —
-- **PRD refs:** FR-027
+- **Linear:** [FLO-69](https://linear.app/flowstate-10xdev/issue/FLO-69)
+- **GitHub:** [#112](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/112)
+- **PRD refs:** US-01 (wind-down nudge)
 - **Prerequisites:** —
 - **Parallel with:** F-07 faza 2
 - **Blockers:** —
@@ -108,9 +108,9 @@
 
 - **Outcome:** user can end session calmly during a running cycle — confirm path to closure without waiting full cycle (minimal) or pause-then-end (with S-24).
 - **Change ID:** fix-graceful-session-end-while-running
-- **Linear:** —
-- **GitHub:** —
-- **PRD refs:** FR-040, FR-019, FR-012
+- **Linear:** [FLO-70](https://linear.app/flowstate-10xdev/issue/FLO-70)
+- **GitHub:** [#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113)
+- **PRD refs:** US-04 (pause/resume), US-01
 - **Prerequisites:** F-07; S-24 for full variant
 - **Parallel with:** —
 - **Blockers:** OQ3 for pause variant

@@ -1,8 +1,12 @@
 ---
 project: FlowState
 version: 2
-updated: 2026-06-12
+updated: 2026-06-13
+status: archived-ideation
+canonical: context/foundation/prd.md
 ---
+
+> **Pre-PRD ideation (Polish).** Superseded by [`prd.md`](prd.md) v3 + [`shape-notes` archive](archive/2026-06-13-shape-notes-v3-final.md). Keep for history; do not treat as active contract.
 
 # Flow State
 

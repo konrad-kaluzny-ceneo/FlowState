@@ -1,6 +1,16 @@
 "use client";
 
-import { Brain, type LucideIcon, Mail, Zap } from "lucide-react";
+import {
+	BookOpen,
+	Brain,
+	ClipboardList,
+	Coffee,
+	type LucideIcon,
+	Mail,
+	Timer,
+	Users,
+	Zap,
+} from "lucide-react";
 
 import { WORK_TYPE_CONFIG } from "~/lib/design/work-type-config";
 import {
@@ -9,9 +19,14 @@ import {
 } from "~/lib/task/persona-presets";
 
 const PRESET_ICONS: Record<PersonaPresetId, LucideIcon> = {
-	"deep-planning": Brain,
-	"mail-admin": Mail,
-	"hotfix-urgent": Zap,
+	focus: Brain,
+	synchro: Mail,
+	firefight: Zap,
+	"warm-up": Coffee,
+	meeting: Users,
+	plan: ClipboardList,
+	research: BookOpen,
+	quick: Timer,
 };
 
 type PersonaPresetPickerProps = {

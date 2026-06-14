@@ -29,6 +29,7 @@ function mapSnapshotToTasks(): DomainTask[] {
 			commitmentHorizon: task.commitmentHorizon,
 			sortOrder: task.sortOrder,
 			resumeNote: task.resumeNote ?? null,
+			personaPresetId: task.personaPresetId ?? null,
 		}));
 }
 

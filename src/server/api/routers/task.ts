@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { isStoredPersonaPresetId } from "~/lib/task/persona-presets";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const workTypeSchema = z.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"]);
@@ -8,6 +9,7 @@ const axisSchema = z.number().int().min(1).max(3);
 const effortMinutesSchema = z.number().int().min(5).max(240).nullable();
 const commitmentHorizonSchema = z.enum(["ASAP", "THIS_WEEK", "WHEN_POSSIBLE"]);
 const resumeNoteSchema = z.string().max(120).nullable().optional();
+const personaPresetIdSchema = z.string().max(32).nullable().optional();
 
 async function nextActiveSortOrder(
 	db: {
@@ -46,9 +48,17 @@ export const taskRouter = createTRPCRouter({
 				effortMinutes: effortMinutesSchema.optional(),
 				commitmentHorizon: commitmentHorizonSchema.optional(),
 				resumeNote: resumeNoteSchema,
+				personaPresetId: personaPresetIdSchema,
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			if (
+				input.personaPresetId != null &&
+				!isStoredPersonaPresetId(input.personaPresetId)
+			) {
+				throw new TRPCError({ code: "BAD_REQUEST" });
+			}
+
 			const sortOrder = await nextActiveSortOrder(ctx.db, ctx.session.user.id);
 			const urgency = input.urgency ?? input.weight ?? 2;
 			const importance = input.importance ?? 2;
@@ -67,6 +77,9 @@ export const taskRouter = createTRPCRouter({
 					...(input.resumeNote !== undefined
 						? { resumeNote: input.resumeNote }
 						: {}),
+					...(input.personaPresetId !== undefined
+						? { personaPresetId: input.personaPresetId }
+						: {}),
 				},
 			});
 		}),
@@ -84,9 +97,17 @@ export const taskRouter = createTRPCRouter({
 				effortMinutes: effortMinutesSchema.optional(),
 				commitmentHorizon: commitmentHorizonSchema.optional(),
 				resumeNote: resumeNoteSchema,
+				personaPresetId: personaPresetIdSchema,
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			if (
+				input.personaPresetId != null &&
+				!isStoredPersonaPresetId(input.personaPresetId)
+			) {
+				throw new TRPCError({ code: "BAD_REQUEST" });
+			}
+
 			const { id, ...data } = input;
 			const existing = await ctx.db.task.findFirst({
 				where: { id, userId: ctx.session.user.id },

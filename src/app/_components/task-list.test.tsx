@@ -70,7 +70,7 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 }));
 
 function makeTask(overrides: Partial<DomainTask> = {}): DomainTask {
-	const { resumeNote = null, ...rest } = overrides;
+	const { resumeNote = null, personaPresetId = null, ...rest } = overrides;
 	return {
 		id: 1,
 		title: "Short title",
@@ -83,6 +83,7 @@ function makeTask(overrides: Partial<DomainTask> = {}): DomainTask {
 		...defaultEisenhowerFields(2),
 		sortOrder: 0,
 		resumeNote,
+		personaPresetId,
 		...rest,
 	};
 }
@@ -140,8 +141,8 @@ function openCreateCustomPanel() {
 	fireEvent.click(screen.getByRole("button", { name: "Custom" }));
 }
 
-function selectCreatePreset(label: string) {
-	fireEvent.click(screen.getByRole("button", { name: label }));
+function selectCreatePreset(presetId: string) {
+	fireEvent.click(screen.getByTestId(`persona-preset-${presetId}`));
 }
 
 function fillCreateTitle(title: string) {
@@ -331,18 +332,23 @@ describe("TaskList", () => {
 
 	it.each(
 		TASK_PERSONA_PRESETS.map((preset) => [preset.label, preset.id] as const),
-	)("preset %s applies create form attributes visible in Custom panel", (label, presetId) => {
+	)("preset %s applies create form attributes visible in Custom panel", (_label, presetId) => {
 		render(<TaskList {...defaultProps} />);
 
-		selectCreatePreset(label);
+		selectCreatePreset(presetId);
 		expect(
 			screen
 				.getByTestId(`persona-preset-${presetId}`)
 				.getAttribute("aria-pressed"),
 		).toBe("true");
 
-		openCreateCustomPanel();
 		const applied = applyPersonaPresetToCreateState(presetId);
+		const presetEffortInput = screen.getByTestId("create-preset-effort");
+		expect((presetEffortInput as HTMLInputElement).value).toBe(
+			applied.effortMinutes,
+		);
+
+		openCreateCustomPanel();
 		const form = getCreateForm();
 
 		const workTypeLabel =
@@ -355,9 +361,6 @@ describe("TaskList", () => {
 		expectAxisSelection(form, "Urgency", axisValueLabel(applied.urgency));
 		expectAxisSelection(form, "Importance", axisValueLabel(applied.importance));
 
-		const effortInput = within(form).getByPlaceholderText("min");
-		expect((effortInput as HTMLInputElement).value).toBe(applied.effortMinutes);
-
 		expectAxisSelection(
 			form,
 			"Horizon",
@@ -367,10 +370,10 @@ describe("TaskList", () => {
 
 	it.each(
 		TASK_PERSONA_PRESETS.map((preset) => [preset.label, preset.id] as const),
-	)("Add sends %s preset attributes via createTask", async (label, presetId) => {
+	)("Add sends %s preset attributes via createTask", async (_label, presetId) => {
 		render(<TaskList {...defaultProps} />);
 
-		selectCreatePreset(label);
+		selectCreatePreset(presetId);
 		fillCreateTitle("Preset task");
 		submitCreateForm();
 
@@ -385,14 +388,34 @@ describe("TaskList", () => {
 				importance: applied.importance,
 				effortMinutes: Number.parseInt(applied.effortMinutes, 10),
 				commitmentHorizon: applied.commitmentHorizon,
+				personaPresetId: presetId,
 			});
 		});
+	});
+
+	it("preset effort is visible without Custom panel and effort-only edits keep preset selected", () => {
+		render(<TaskList {...defaultProps} />);
+
+		selectCreatePreset("synchro");
+		expect(screen.getByTestId("create-preset-effort")).toBeTruthy();
+		expect(screen.queryByText("Urgency")).toBeNull();
+
+		fireEvent.change(screen.getByTestId("create-preset-effort"), {
+			target: { value: "20" },
+		});
+
+		expect(
+			screen.getByTestId("persona-preset-synchro").getAttribute("aria-pressed"),
+		).toBe("true");
+		expect(
+			(screen.getByTestId("create-preset-effort") as HTMLInputElement).value,
+		).toBe("20");
 	});
 
 	it("post-create reset clears preset selection and Custom panel", async () => {
 		render(<TaskList {...defaultProps} />);
 
-		selectCreatePreset("Deep planning");
+		selectCreatePreset("focus");
 		openCreateCustomPanel();
 		fillCreateTitle("Reset me");
 		submitCreateForm();
@@ -406,9 +429,7 @@ describe("TaskList", () => {
 				.value,
 		).toBe("");
 		expect(
-			screen
-				.getByTestId("persona-preset-deep-planning")
-				.getAttribute("aria-pressed"),
+			screen.getByTestId("persona-preset-focus").getAttribute("aria-pressed"),
 		).toBe("false");
 		expect(screen.queryByText("Urgency")).toBeNull();
 	});
@@ -419,12 +440,10 @@ describe("TaskList", () => {
 		openCreateCustomPanel();
 		expect(screen.getByText("Urgency")).toBeTruthy();
 
-		selectCreatePreset("Mail & admin");
+		selectCreatePreset("synchro");
 		expect(screen.queryByText("Urgency")).toBeNull();
 		expect(
-			screen
-				.getByTestId("persona-preset-mail-admin")
-				.getAttribute("aria-pressed"),
+			screen.getByTestId("persona-preset-synchro").getAttribute("aria-pressed"),
 		).toBe("true");
 	});
 
@@ -450,6 +469,74 @@ describe("TaskList", () => {
 		);
 
 		expect(screen.getByText("ASAP")).toBeTruthy();
+	});
+
+	it("shows persona label and effort badge for preset task row", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						personaPresetId: "synchro",
+						workType: "OPERATIONAL",
+						urgency: 2,
+						importance: 2,
+						effortMinutes: 20,
+						commitmentHorizon: "WHEN_POSSIBLE",
+					}),
+				]}
+			/>,
+		);
+
+		expect(screen.getByTestId("task-persona-badge").textContent).toBe(
+			"Synchro",
+		);
+		expect(screen.getByTestId("task-effort-badge").textContent).toBe("20m");
+		expect(screen.queryByTestId("task-custom-badge")).toBeNull();
+	});
+
+	it("shows Custom badge with Eisenhower detail for custom persona tasks", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						personaPresetId: "custom",
+						workType: "DEEP_WORK",
+						urgency: 2,
+						importance: 3,
+						effortMinutes: 45,
+						commitmentHorizon: "THIS_WEEK",
+					}),
+				]}
+			/>,
+		);
+
+		expect(screen.getByTestId("task-custom-badge").textContent).toBe("Custom");
+		expect(screen.getByText("Deep")).toBeTruthy();
+		expect(screen.getByText("U: Medium")).toBeTruthy();
+		expect(screen.queryByTestId("task-persona-badge")).toBeNull();
+	});
+
+	it("legacy tasks without personaPresetId keep Eisenhower badges", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						personaPresetId: null,
+						workType: "OPERATIONAL",
+						urgency: 2,
+						importance: 2,
+					}),
+				]}
+			/>,
+		);
+
+		expect(screen.getByText("Ops")).toBeTruthy();
+		expect(screen.getByText("U: Medium")).toBeTruthy();
+		expect(screen.queryByTestId("task-persona-badge")).toBeNull();
+		expect(screen.queryByTestId("task-custom-badge")).toBeNull();
 	});
 
 	it("read mode shows full long title", () => {

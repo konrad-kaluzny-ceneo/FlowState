@@ -25,7 +25,15 @@ FlowState is a Next.js Pomodoro app on the T3-style stack. Agents run terminal c
 
 - Page UI: `_components/` co-located with the route. tRPC routers: `src/server/api/routers/<feature>.ts` — every router must be registered in `@src/server/api/root.ts`.
 - Path alias `~/` → `src/`. Tabs (size 2), LF; enforced by `@biome.json`, `@.editorconfig`, `@.gitattributes`.
-- Prisma tables: `@@map("flow_state_<name>")`; import client via `@prisma/generated`. Product requirements: `@context/foundation/prd.md`. Visual system and craft rules: `@DESIGN.md`. Use `/impeccable craft` or `/impeccable polish` for wedge surface work (S-12, S-13).
+- Prisma tables: `@@map("flow_state_<name>")`; import via `@prisma/generated`. Product: `@context/foundation/prd.md` (v3); US map: `@context/foundation/prd-refs.md`; context router: `@context/README.md`. Roadmap: `@context/foundation/roadmap.md` + `roadmap-references/items/`. Visual: `@DESIGN.md`.
+
+## Wedge domain rules
+
+For slices touching `@src/hooks/use-pomodoro-cycle.ts`, wedge overlays, or session gates:
+
+- **Transition beat:** at most one interstitial line + one gate — mutex/priority in `@context/foundation/user-flow.md` (T-01–T-05) and `@context/foundation/roadmap-references/flow-coherence-recommendations.md`. New surfaces via F-07 conductor (`wedge-transition-conductor`); no ad-hoc overlay stacks in `pomodoro-dashboard.tsx` / the cycle hook. B-05–B-08 before or inside F-07 — `@context/foundation/roadmap.md` Stream N.
+- **Pause (S-24):** freezes timer; not an interruption; ~30 min cap → calm session end. Guest + auth through `@src/lib/data-mode/`.
+- **Optimistic wedge (S-34):** same patterns as optimistic task CRUD (S-09); check-in → suggestion ≤200ms perceived.
 
 ## Testing & delivery
 

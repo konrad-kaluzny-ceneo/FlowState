@@ -72,6 +72,7 @@ export async function importGuestSnapshot(
 					commitmentHorizon: guestTask.commitmentHorizon ?? "WHEN_POSSIBLE",
 					sortOrder: baseOffset + relativeIndex,
 					resumeNote: guestTask.resumeNote ?? null,
+					personaPresetId: guestTask.personaPresetId ?? null,
 				},
 			});
 

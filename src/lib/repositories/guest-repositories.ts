@@ -25,6 +25,7 @@ function toDomainTask(task: {
 	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	sortOrder: number;
 	resumeNote: string | null;
+	personaPresetId: string | null;
 	createdAt: Date;
 	updatedAt: Date | null;
 }): DomainTask {
@@ -43,6 +44,7 @@ function toDomainTask(task: {
 		commitmentHorizon: task.commitmentHorizon,
 		sortOrder: task.sortOrder,
 		resumeNote: task.resumeNote ?? null,
+		personaPresetId: task.personaPresetId ?? null,
 	};
 }
 
@@ -122,6 +124,7 @@ export function createGuestTaskRepository(): TaskRepository {
 				commitmentHorizon: input.commitmentHorizon ?? "WHEN_POSSIBLE",
 				sortOrder: maxSortOrder + 1,
 				resumeNote: input.resumeNote ?? null,
+				personaPresetId: input.personaPresetId ?? null,
 				createdAt: now,
 				updatedAt: null,
 			};
@@ -189,6 +192,9 @@ export function createGuestTaskRepository(): TaskRepository {
 							: {}),
 						...(input.resumeNote !== undefined
 							? { resumeNote: input.resumeNote }
+							: {}),
+						...(input.personaPresetId !== undefined
+							? { personaPresetId: input.personaPresetId }
 							: {}),
 						...(nextStatus === "completed" ? { resumeNote: null } : {}),
 						sortOrder,

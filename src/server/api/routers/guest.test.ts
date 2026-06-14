@@ -19,6 +19,7 @@ type TaskRow = {
 	effortMinutes: number | null;
 	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	sortOrder: number;
+	personaPresetId: string | null;
 };
 
 type CycleRow = {
@@ -384,6 +385,7 @@ describe("guest.import", () => {
 					commitmentHorizon: "ASAP",
 					sortOrder: 0,
 					resumeNote: null,
+					personaPresetId: null,
 					createdAt: new Date("2026-05-29T10:00:00.000Z"),
 					updatedAt: null,
 				},
@@ -403,6 +405,38 @@ describe("guest.import", () => {
 			effortMinutes: 45,
 			commitmentHorizon: "ASAP",
 		});
+	});
+
+	it("preserves personaPresetId on guest import", async () => {
+		const snapshot: GuestSnapshotV1 = {
+			version: 1,
+			tasks: [
+				{
+					id: "550e8400-e29b-41d4-a716-446655440031",
+					title: "Synchro guest",
+					status: "active",
+					workType: "OPERATIONAL",
+					weight: 2,
+					importance: 2,
+					urgency: 2,
+					effortMinutes: 15,
+					commitmentHorizon: "WHEN_POSSIBLE",
+					sortOrder: 0,
+					resumeNote: null,
+					personaPresetId: "synchro",
+					createdAt: new Date("2026-05-29T10:00:00.000Z"),
+					updatedAt: null,
+				},
+			],
+			sessions: [],
+			cycles: [],
+		};
+
+		const result = await guestCaller().import(snapshot);
+
+		expect(result.importedTasks).toBe(1);
+		const imported = tasks.find((task) => task.title === "Synchro guest");
+		expect(imported?.personaPresetId).toBe("synchro");
 	});
 
 	it("sets taskId null when guest cycle references unmapped task UUID", async () => {
