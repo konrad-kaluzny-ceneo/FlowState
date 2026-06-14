@@ -497,43 +497,43 @@ Negligible — one nullable varchar per task; badge logic is O(1) preset lookup.
 
 #### Automated
 
-- [x] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` passes
+- [x] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` passes — bcc617d
 
 #### Manual
 
-- [x] 3.2 Effort visible on preset path without Custom panel
-- [x] 3.3 Effort-only change does not demote preset selection
+- [x] 3.2 Effort visible on preset path without Custom panel — bcc617d
+- [x] 3.3 Effort-only change does not demote preset selection — bcc617d
 
 ### Phase 4: Row badges — persona + effort
 
 #### Automated
 
-- [x] 4.1 Row badge tests in `task-list.test.tsx` pass
+- [x] 4.1 Row badge tests in `task-list.test.tsx` pass — bcc617d
 
 #### Manual
 
-- [x] 4.2 Preset + effort override row chrome verified in browser
-- [x] 4.3 Legacy null-id task shows F-05 badges
+- [x] 4.2 Preset + effort override row chrome verified in browser — bcc617d
+- [x] 4.3 Legacy null-id task shows F-05 badges — bcc617d
 
 ### Phase 5: Tests and e2e helper note
 
 #### Automated
 
-- [x] 5.1 `pnpm test` passes
-- [x] 5.2 `pnpm check` passes
-- [x] 5.3 `pnpm typecheck` passes
-- [x] 5.4 Guest schema/import/repository tests pass
+- [x] 5.1 `pnpm test` passes — bcc617d
+- [x] 5.2 `pnpm check` passes — bcc617d
+- [x] 5.3 `pnpm typecheck` passes — bcc617d
+- [x] 5.4 Guest schema/import/repository tests pass — bcc617d
 
 #### Manual
 
-- [x] 5.5 Guest create + merge parity verified
+- [x] 5.5 Guest create + merge parity verified — bcc617d
 
 ### Phase 6: Optional S-32 prep
 
 #### Automated
 
-- [x] 6.1 `pnpm test` passes
+- [x] 6.1 `pnpm test` passes — bcc617d
 
 #### Manual
 
-- [x] 6.2 S-32 label export documented for follow-up
+- [x] 6.2 S-32 label export documented for follow-up — bcc617d
