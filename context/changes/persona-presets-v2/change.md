@@ -1,8 +1,8 @@
 ---
 change_id: persona-presets-v2
 title: Persona presets v2 — catalog, display, effort override
-status: implementing
-updated: 2026-06-13
+status: implemented
+updated: 2026-06-14
 archived_at: null
 ---
 

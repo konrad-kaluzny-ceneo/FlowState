@@ -269,7 +269,12 @@ Effort visible when preset selected; effort-only edits preserve preset selection
 
 **File:** `src/app/_components/task-list.test.tsx`
 
-**Intent:** Update preset id references (`focus` vs `deep-planning`). Add test: select preset → effort visible without opening Custom; change effort → preset chip still `aria-pressed=true`; Add sends `personaPresetId`.
+**Intent:**
+
+- **Refactor** `"Add sends %s preset attributes via createTask"` — expect `personaPresetId: presetId` alongside F-05 fields in `createTask` call.
+- **Refactor** `"preset %s applies create form attributes visible in Custom panel"` — verify bundle via preset-path effort (`data-testid="create-preset-effort"`) and preset chip `aria-pressed`; do **not** require `openCreateCustomPanel()` for effort oracle.
+- **Add:** select preset → effort visible without opening Custom; change effort → preset chip still `aria-pressed=true`.
+- Update any remaining preset id references (`focus` vs `deep-planning`).
 
 ### Success Criteria
 
@@ -492,43 +497,43 @@ Negligible — one nullable varchar per task; badge logic is O(1) preset lookup.
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` passes
+- [x] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` passes
 
 #### Manual
 
-- [ ] 3.2 Effort visible on preset path without Custom panel
-- [ ] 3.3 Effort-only change does not demote preset selection
+- [x] 3.2 Effort visible on preset path without Custom panel
+- [x] 3.3 Effort-only change does not demote preset selection
 
 ### Phase 4: Row badges — persona + effort
 
 #### Automated
 
-- [ ] 4.1 Row badge tests in `task-list.test.tsx` pass
+- [x] 4.1 Row badge tests in `task-list.test.tsx` pass
 
 #### Manual
 
-- [ ] 4.2 Preset + effort override row chrome verified in browser
-- [ ] 4.3 Legacy null-id task shows F-05 badges
+- [x] 4.2 Preset + effort override row chrome verified in browser
+- [x] 4.3 Legacy null-id task shows F-05 badges
 
 ### Phase 5: Tests and e2e helper note
 
 #### Automated
 
-- [ ] 5.1 `pnpm test` passes
-- [ ] 5.2 `pnpm check` passes
-- [ ] 5.3 `pnpm typecheck` passes
-- [ ] 5.4 Guest schema/import/repository tests pass
+- [x] 5.1 `pnpm test` passes
+- [x] 5.2 `pnpm check` passes
+- [x] 5.3 `pnpm typecheck` passes
+- [x] 5.4 Guest schema/import/repository tests pass
 
 #### Manual
 
-- [ ] 5.5 Guest create + merge parity verified
+- [x] 5.5 Guest create + merge parity verified
 
 ### Phase 6: Optional S-32 prep
 
 #### Automated
 
-- [ ] 6.1 `pnpm test` passes
+- [x] 6.1 `pnpm test` passes
 
 #### Manual
 
-- [ ] 6.2 S-32 label export documented for follow-up
+- [x] 6.2 S-32 label export documented for follow-up

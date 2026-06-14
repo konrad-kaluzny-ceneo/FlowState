@@ -202,6 +202,7 @@ export async function advanceClockThroughBreakSec(page: Page, seconds: number) {
 type TaskWorkTypeLabel = "Deep" | "Ops" | "Reactive";
 type TaskWeightLabel = "Light" | "Medium" | "Heavy";
 
+/** Belt helpers use the Custom panel by design — persona chips are not required for belt specs. */
 export async function addTaskWithAttributes(
 	page: Page,
 	title: string,

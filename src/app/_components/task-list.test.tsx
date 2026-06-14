@@ -342,8 +342,13 @@ describe("TaskList", () => {
 				.getAttribute("aria-pressed"),
 		).toBe("true");
 
-		openCreateCustomPanel();
 		const applied = applyPersonaPresetToCreateState(presetId);
+		const presetEffortInput = screen.getByTestId("create-preset-effort");
+		expect((presetEffortInput as HTMLInputElement).value).toBe(
+			applied.effortMinutes,
+		);
+
+		openCreateCustomPanel();
 		const form = getCreateForm();
 
 		const workTypeLabel =
@@ -355,9 +360,6 @@ describe("TaskList", () => {
 		expectPressedInForm(form, workTypeLabel);
 		expectAxisSelection(form, "Urgency", axisValueLabel(applied.urgency));
 		expectAxisSelection(form, "Importance", axisValueLabel(applied.importance));
-
-		const effortInput = within(form).getByPlaceholderText("min");
-		expect((effortInput as HTMLInputElement).value).toBe(applied.effortMinutes);
 
 		expectAxisSelection(
 			form,
@@ -386,8 +388,28 @@ describe("TaskList", () => {
 				importance: applied.importance,
 				effortMinutes: Number.parseInt(applied.effortMinutes, 10),
 				commitmentHorizon: applied.commitmentHorizon,
+				personaPresetId: presetId,
 			});
 		});
+	});
+
+	it("preset effort is visible without Custom panel and effort-only edits keep preset selected", () => {
+		render(<TaskList {...defaultProps} />);
+
+		selectCreatePreset("synchro");
+		expect(screen.getByTestId("create-preset-effort")).toBeTruthy();
+		expect(screen.queryByText("Urgency")).toBeNull();
+
+		fireEvent.change(screen.getByTestId("create-preset-effort"), {
+			target: { value: "20" },
+		});
+
+		expect(
+			screen.getByTestId("persona-preset-synchro").getAttribute("aria-pressed"),
+		).toBe("true");
+		expect(
+			(screen.getByTestId("create-preset-effort") as HTMLInputElement).value,
+		).toBe("20");
 	});
 
 	it("post-create reset clears preset selection and Custom panel", async () => {
@@ -447,6 +469,74 @@ describe("TaskList", () => {
 		);
 
 		expect(screen.getByText("ASAP")).toBeTruthy();
+	});
+
+	it("shows persona label and effort badge for preset task row", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						personaPresetId: "synchro",
+						workType: "OPERATIONAL",
+						urgency: 2,
+						importance: 2,
+						effortMinutes: 20,
+						commitmentHorizon: "WHEN_POSSIBLE",
+					}),
+				]}
+			/>,
+		);
+
+		expect(screen.getByTestId("task-persona-badge").textContent).toBe(
+			"Synchro",
+		);
+		expect(screen.getByTestId("task-effort-badge").textContent).toBe("20m");
+		expect(screen.queryByTestId("task-custom-badge")).toBeNull();
+	});
+
+	it("shows Custom badge with Eisenhower detail for custom persona tasks", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						personaPresetId: "custom",
+						workType: "DEEP_WORK",
+						urgency: 2,
+						importance: 3,
+						effortMinutes: 45,
+						commitmentHorizon: "THIS_WEEK",
+					}),
+				]}
+			/>,
+		);
+
+		expect(screen.getByTestId("task-custom-badge").textContent).toBe("Custom");
+		expect(screen.getByText("Deep")).toBeTruthy();
+		expect(screen.getByText("U: Medium")).toBeTruthy();
+		expect(screen.queryByTestId("task-persona-badge")).toBeNull();
+	});
+
+	it("legacy tasks without personaPresetId keep Eisenhower badges", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						personaPresetId: null,
+						workType: "OPERATIONAL",
+						urgency: 2,
+						importance: 2,
+					}),
+				]}
+			/>,
+		);
+
+		expect(screen.getByText("Ops")).toBeTruthy();
+		expect(screen.getByText("U: Medium")).toBeTruthy();
+		expect(screen.queryByTestId("task-persona-badge")).toBeNull();
+		expect(screen.queryByTestId("task-custom-badge")).toBeNull();
 	});
 
 	it("read mode shows full long title", () => {

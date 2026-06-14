@@ -51,6 +51,35 @@ describe("guest schema", () => {
 		);
 	});
 
+	it("round-trips personaPresetId on guest tasks", () => {
+		const snapshot = {
+			version: 1 as const,
+			tasks: [
+				{
+					id: "550e8400-e29b-41d4-a716-446655440001",
+					title: "Synchro task",
+					status: "active" as const,
+					workType: "OPERATIONAL" as const,
+					weight: 2,
+					importance: 2 as const,
+					urgency: 2 as const,
+					effortMinutes: 15,
+					commitmentHorizon: "WHEN_POSSIBLE" as const,
+					sortOrder: 0,
+					resumeNote: null,
+					personaPresetId: "synchro" as const,
+					createdAt: new Date("2026-05-29T10:00:00.000Z"),
+					updatedAt: null,
+				},
+			],
+			sessions: [],
+			cycles: [],
+		};
+
+		const parsed = parseGuestSnapshot(serializeGuestSnapshot(snapshot));
+		expect(parsed.tasks[0]?.personaPresetId).toBe("synchro");
+	});
+
 	it("defaults Eisenhower fields for legacy snapshots", () => {
 		const raw = JSON.stringify({
 			version: 1,
