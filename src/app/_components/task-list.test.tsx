@@ -316,6 +316,36 @@ describe("TaskList", () => {
 		expect(updateTask).toHaveBeenCalledTimes(1);
 	});
 
+	it("allows focusing and saving effort when inline editing an existing task", async () => {
+		render(
+			<TaskList {...defaultProps} tasks={[makeTask({ effortMinutes: 30 })]} />,
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "Short title" }));
+
+		const row = screen.getByTestId("active-task-row");
+		const effortInput = within(row).getByPlaceholderText("min");
+
+		const mouseDown = new MouseEvent("mousedown", {
+			bubbles: true,
+			cancelable: true,
+		});
+		effortInput.dispatchEvent(mouseDown);
+		expect(mouseDown.defaultPrevented).toBe(false);
+
+		fireEvent.change(effortInput, { target: { value: "45" } });
+		fireEvent.pointerDown(document.body);
+
+		await waitFor(() => {
+			expect(updateTask).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: 1,
+					effortMinutes: 45,
+				}),
+			);
+		});
+	});
+
 	it("shows Eisenhower attribute pickers in create Custom panel", () => {
 		render(<TaskList {...defaultProps} />);
 

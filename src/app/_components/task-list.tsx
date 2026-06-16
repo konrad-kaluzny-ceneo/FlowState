@@ -221,7 +221,6 @@ function EisenhowerAttributeFields({
 					max={240}
 					min={5}
 					onChange={(e) => onEffortMinutesChange(e.target.value)}
-					onMouseDown={(e) => e.preventDefault()}
 					placeholder="min"
 					type="number"
 					value={effortMinutes}
@@ -941,7 +940,6 @@ export function TaskList({
 							max={240}
 							min={5}
 							onChange={(e) => setNewEffortMinutes(e.target.value)}
-							onMouseDown={(e) => e.preventDefault()}
 							placeholder="min"
 							type="number"
 							value={newEffortMinutes}
