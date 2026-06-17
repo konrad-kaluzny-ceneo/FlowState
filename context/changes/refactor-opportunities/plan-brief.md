@@ -13,14 +13,14 @@ Verified research (V1–V30): monolithic hook (2357 LOC, 63 return fields), ad-h
 
 ## Desired End State
 
-Child changes ship in order: calm closure hotfixes → wedge conductor foundation → ACL test net + task-read unification → hook pure extracts. Each has its own branch and plan. `rollout.md` tracks status; roadmap items S-21/S-34/S-35 unblock after F-07.
+Child changes ship in order: calm closure hotfixes → wedge conductor → ACL char tests → hook pure extracts → task-read unification. Each has its own branch and plan. `rollout.md` tracks status; roadmap items S-21/S-34/S-35 unblock after F-07.
 
 ## Key Decisions Made
 
 | Decision | Choice | Why (1 sentence) | Source |
 | --- | --- | --- | --- |
 | This change scope | Meta rollout only — no `src/` edits here | Research separated exploration from implementation; each refactor has distinct blast radius | Plan |
-| Implementation order | B-05 → B-06 → F-07 → K2 ACL → K1 extracts | Matches research ranking #1–#3 and roadmap Stream N | Research / Roadmap |
+| Implementation order | B-05 → B-06 → F-07 → K2 char → K1 extracts → K2 Path C | Cheapest/independent first after F-07; char before ACL enforcement | Research / Roadmap |
 | F-07 conductor location | `src/lib/wedge/transition-conductor.ts` (pure) | Mirrors `derive-gate` pattern; hook keeps state, conductor owns priority | Plan |
 | B-05 kickoff abort | `kickoffFetchGenRef` generation token | Matches existing in-flight guard style; scopes async race without F-07 | Plan |
 | K2 path | Path C (`useDomainTasks`) before Path A (extend repos) | Fixes dual task read with lower blast radius than full repo extension | Research |
@@ -52,7 +52,7 @@ refactor-opportunities (meta)
   ├─ rollout.md ──tracks──► fix-closure-kickoff-mutex (B-05)
   │                          fix-timeout-closure-on-load (B-06)
   │                          wedge-transition-conductor (F-07)
-  │                          data-mode-acl-hardening (K2)
+  │                          data-mode-acl-hardening (K2 char → Path C)
   │                          cycle-hook-pure-extracts (K1)
   └─ optional parallel ──► sign-in-schema-extract (K4)
 ```
@@ -66,20 +66,22 @@ Each child change: `/10x-new` → research → plan → implement on `features/<
 | 1. Rollout manifest | `rollout.md` + frozen decisions | Wrong change-id breaks handoff chain |
 | 2. B-05 handoff | T-01 hotfix merged | E2E belt masks bug today — must fix spec |
 | 3. B-06 handoff | T-03 timeout closure on load | Depends on B-05 mutex patterns |
-| 4. F-07 handoff | Conductor + B-07 wind-down + dashboard integration | `data-testid` / belt parity |
-| 5. K2 ACL handoff | `data-mode-context` tests + Path C | Concurrent hook churn if before F-07 |
-| 6. K1 extracts handoff | Pure modules, stable hook API | Scope creep into API split |
-| 7. Rollout closure | All rows merged or deferred | K3 left open indefinitely |
+| 4. F-07 handoff | Conductor mechanism → dashboard enforcement → B-07 | `data-testid` / belt parity |
+| 5. K2 char | `data-mode-context` tests only (no prod) | Skipping char before Path C |
+| 6. K1 extracts | Pure modules → hook imports | Scope creep into API split |
+| 7. K2 Path C | Unified `useDomainTasks` enforcement | Dual-read regression |
+| 8. Rollout closure | All rows merged or deferred | K3 left open indefinitely |
 
 **Prerequisites:** Verified `research.md`; roadmap B-05/F-07 entries current
 
-**Estimated effort:** ~6–8 sessions across 7 phases (mostly child changes; Phase 1 ≈ 1 session)
+**Estimated effort:** ~7–9 sessions across 8 phases (mostly child changes; Phase 1 ≈ 1 session)
 
 ## Open Risks & Assumptions
 
 - B-05 without F-07 may leave other stacking pairs (wind-down + suggestion) — acceptable per B-05.md scope
 - F-07 touches belt specs — behavior-parity tests required before merge
-- `data-mode-acl-hardening` must not start until F-07 merges (no parallel with K1)
+- `data-mode-acl-hardening` must not start until F-07 merges; char (Phase 5) before Path C (Phase 7)
+- Every child change: characterization → mechanism (green) → enforcement (separate commit)
 - K1 further decomposition (timer engine module) is out of scope until pure extracts prove stable
 
 ## Success Criteria (Summary)

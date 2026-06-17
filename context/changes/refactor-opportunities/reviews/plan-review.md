@@ -47,3 +47,12 @@ Meta-rollout plan is **substantively sound**: it correctly separates orchestrati
 ## Decision
 
 **Proceed** to `/10x-implement refactor-opportunities phase 1` (manifest sign-off) then `/10x-new fix-closure-kickoff-mutex`.
+
+## Readiness gate (2026-06-17)
+
+| Gate | Status | Notes |
+|------|--------|-------|
+| 1. Characterization before touching | **Fixed** | B-05, B-06, F-07, K1, K2 char now mandate char-first commits; K2 char split to Phase 5 |
+| 2. Reversible commits, cheapest first | **Fixed** | K2 char → K1 → K2 Path C reorder; per-child commit tables in Implementation discipline |
+| 3. Automated + manual per phase | **Pass** | All 8 phases have both; B-06 and Phase 2 gained explicit automated oracles |
+| 4. Mechanism green, enforcement separate | **Fixed** | Discipline table + F-07 / B-05 / K1 / K2 Path C commit splits |
