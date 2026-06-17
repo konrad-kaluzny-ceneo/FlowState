@@ -62,10 +62,10 @@ Land Vitest tests that document current buggy behavior for both failure modes. T
 
 **Intent**: Pin T-01 dashboard symptom — kickoff readiness and check-in overlays must not render while closure is pending.
 
-**Contract**: Add tests under existing `PomodoroDashboardBody` describe block using `makePomodoroMock` / `renderBody` patterns (see closure test at `:305–314`):
+**Contract**: Add tests under existing `PomodoroDashboardBody` describe block using `makePomodoroMock` with **explicit `render()`** (not default `renderBody()` — it hardcodes `enableSuggestionGate: false` and `enableCheckInGate: false` at `:119–123`). Follow the check-in overlay test pattern at `:142–158` to pass gate props.
 
-- **During closure:** When `pendingClosureLine` is non-null AND `awaitingKickoffReadiness` is true (with `enableSuggestionGate`), `kickoff-readiness-overlay` must **not** be in the document. Closure overlay remains visible.
-- **During closure (check-in):** When `pendingClosureLine` is non-null AND `awaitingCheckIn` is true with `activeCycle` set (with `enableCheckInGate`), `check-in-overlay` must **not** be in the document.
+- **During closure:** When `pendingClosureLine` is non-null AND `awaitingKickoffReadiness` is true, render with `enableSuggestionGate` — `kickoff-readiness-overlay` must **not** be in the document. Closure overlay remains visible.
+- **During closure (check-in):** When `pendingClosureLine` is non-null AND `awaitingCheckIn` is true with `activeCycle` set, render with `enableCheckInGate` — `check-in-overlay` must **not** be in the document.
 - **After dismiss (dashboard layer):** When `pendingClosureLine` is null but `awaitingKickoffReadiness` is true after simulated closure dismiss path, kickoff overlay may render — this case is owned by hook race test; optional dashboard smoke only if it adds signal without duplicating hook test.
 
 Tests fail on current code (kickoff renders without `!pendingClosureLine` guard).
@@ -170,7 +170,7 @@ Add `!pendingClosureLine` to kickoff and check-in overlay render guards so closu
 
 #### Manual Verification:
 
-- Local: start work cycle → interrupt → end session → closure visible with no kickoff overlay on top → dismiss → idle calm (no immediate kickoff popup on same visit)
+- Local: start work cycle → end session while running → closure visible with no kickoff overlay on top → dismiss → idle calm (no immediate kickoff popup on same visit)
 
 **Implementation Note**: After completing this phase and manual verification, proceed to Phase 4.
 
@@ -192,6 +192,7 @@ Remove the belt mask that hides T-01 and assert kickoff readiness stays absent a
 
 **Contract**:
 
+- **Drop the interrupt step** (lines 40–43) and click `end-session-btn` while the cycle is still running — `endSession()` auto-interrupts per hook (`use-pomodoro-cycle.ts:2087–2103`). This avoids post-interrupt idle kickoff (legitimate product path) blocking navigation without masking T-01.
 - Remove `await dismissKickoffReadinessIfVisible(page)` at line 45
 - Remove unused `dismissKickoffReadinessIfVisible` import from `./helpers/idle-cycle` (line 8) if no longer referenced
 - After closure dismiss assertion (`:55–57`), add `await expect(page.getByTestId("kickoff-readiness-overlay")).toHaveCount(0)` — pattern from `e2e/task-suggestion.spec.ts:71`
@@ -226,7 +227,7 @@ Remove the belt mask that hides T-01 and assert kickoff readiness stays absent a
 
 ### Manual Testing Steps:
 
-1. Authenticated user with active tasks: start cycle → interrupt → end session → verify closure alone on screen
+1. Authenticated user with active tasks: start cycle → end session while running → verify closure alone on screen
 2. Dismiss closure → verify no kickoff readiness overlay on same page visit
 3. Reload page fresh → verify kickoff can still appear on legitimate idle recovery (no over-blocking)
 
