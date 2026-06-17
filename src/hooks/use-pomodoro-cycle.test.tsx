@@ -2497,6 +2497,62 @@ describe("usePomodoroCycle", () => {
 					expect.objectContaining({ context: "kickoff" }),
 				);
 			});
+
+			// fix-closure-kickoff-mutex p2: flip to it() when gen guard lands
+			it.fails("does not reopen awaitingKickoffReadiness when endSession races getOrCreateActive", async () => {
+				taskListQuery.mockResolvedValue(activeTaskList);
+
+				let releaseGetOrCreate!: () => void;
+				const blockedGetOrCreate = new Promise<{ id: number }>((resolve) => {
+					releaseGetOrCreate = () => {
+						resolve({ id: 1 });
+					};
+				});
+				getOrCreateSession.mockImplementation(() => blockedGetOrCreate);
+
+				activeCycleData = makeActiveCycle({
+					id: 20,
+					kind: "SHORT_BREAK",
+					configuredDurationSec: 300,
+					taskId: null,
+					task: null,
+				});
+
+				const { result } = renderHook(() => usePomodoroCycle(), {
+					wrapper: createWrapper(),
+				});
+
+				await waitFor(() => {
+					expect(result.current.state).toBe("running");
+				});
+
+				act(() => {
+					fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+						data: { type: "complete" },
+					} as MessageEvent);
+				});
+
+				await act(async () => {
+					await result.current.confirmComplete(false);
+				});
+
+				await waitFor(() => {
+					expect(getOrCreateSession).toHaveBeenCalled();
+				});
+
+				await act(async () => {
+					await result.current.endSession();
+				});
+
+				expect(result.current.pendingClosureLine).not.toBeNull();
+
+				await act(async () => {
+					releaseGetOrCreate();
+					await blockedGetOrCreate;
+				});
+
+				expect(result.current.awaitingKickoffReadiness).toBe(false);
+			});
 		});
 
 		it("keeps kickoff and post-check-in suggestion states independent", async () => {

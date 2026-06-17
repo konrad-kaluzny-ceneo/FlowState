@@ -257,13 +257,13 @@ None — behavioral fix only; no schema or API changes. `sessionStorage` `wasClo
 
 #### Automated
 
-- [ ] 1.1 Dashboard mutex char tests exist and fail (expected red)
-- [ ] 1.2 Hook race char test exists and fails (expected red)
-- [ ] 1.3 `pnpm check` passes on test-only commit
+- [x] 1.1 Dashboard mutex char tests exist and fail (expected red)
+- [x] 1.2 Hook race char test exists and fails (expected red)
+- [x] 1.3 `pnpm check` passes on test-only commit
 
 #### Manual
 
-- [ ] 1.4 Failing test output confirms T-01 oracle before Phase 2
+- [x] 1.4 Failing test output confirms T-01 oracle before Phase 2
 
 ### Phase 2: Hook mechanism (gen guard + predicate)
 
