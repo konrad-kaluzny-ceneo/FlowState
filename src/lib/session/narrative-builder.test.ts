@@ -76,6 +76,30 @@ describe("buildClosureLine", () => {
 			}),
 		).toBe("Session complete — 1 cycle. Take a breath.");
 	});
+
+	it("mentions pause for pause-cap-ended sessions", () => {
+		expect(
+			buildClosureLine({
+				cyclesCompleted: 2,
+				tasksCompleted: 1,
+				latestEnergy: "STEADY",
+				endedBy: "pause_cap",
+			}),
+		).toBe(
+			"Your pause ran long — session complete — 2 cycles, 1 task done. Feeling steady.",
+		);
+	});
+
+	it("uses calm fallback copy for pause cap without energy", () => {
+		expect(
+			buildClosureLine({
+				cyclesCompleted: 1,
+				tasksCompleted: 0,
+				latestEnergy: null,
+				endedBy: "pause_cap",
+			}),
+		).toBe("Your pause ran long — session complete — 1 cycle. Take a breath.");
+	});
 });
 
 describe("buildReturnHandoff", () => {

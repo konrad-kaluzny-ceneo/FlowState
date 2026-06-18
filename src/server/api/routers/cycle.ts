@@ -312,7 +312,7 @@ export const cycleRouter = createTRPCRouter({
 				where: {
 					id: input.cycleId,
 					userId: ctx.session.user.id,
-					state: "RUNNING",
+					state: { in: ["RUNNING", "PAUSED"] },
 				},
 				data: { state: "INTERRUPTED", endedAt: new Date() },
 			});
@@ -320,7 +320,7 @@ export const cycleRouter = createTRPCRouter({
 			if (count === 0) {
 				throw new TRPCError({
 					code: "BAD_REQUEST",
-					message: "Cycle is not running",
+					message: "Cycle is not running or paused",
 				});
 			}
 

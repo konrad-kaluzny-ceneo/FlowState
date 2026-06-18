@@ -323,6 +323,10 @@ function mockInterruptCycleDeferred() {
 }
 
 describe("usePomodoroCycle", () => {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	beforeEach(() => {
 		sessionStorage.clear();
 		resetActiveCycleRecoveryForTests();
@@ -898,6 +902,49 @@ describe("usePomodoroCycle", () => {
 
 		expect(result.current.remainingMs).toBe(180_000);
 		expect(fakeWorkers).toHaveLength(0);
+	});
+
+	it("ends session with pause_cap closure when paused past cap", async () => {
+		const { PAUSE_CAP_MS } = await import("~/lib/pause-cap");
+
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		pauseCycle.mockImplementationOnce(
+			async (input: {
+				cycleId: number | string;
+				remainingDurationSec: number;
+			}) => ({
+				...makeActiveCycle({ id: input.cycleId as number }),
+				state: "PAUSED" as const,
+				remainingDurationSec: input.remainingDurationSec,
+				pausedAt: new Date(Date.now() - PAUSE_CAP_MS - 1000),
+			}),
+		);
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.pause();
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		expect(endSession).toHaveBeenCalled();
+		expect(interruptCycle).toHaveBeenCalledWith({ cycleId: 10 });
+		expect(result.current.pendingClosureLine).toContain("Your pause ran long");
 	});
 
 	it("restores running state when pauseCycle fails after optimistic pause", async () => {

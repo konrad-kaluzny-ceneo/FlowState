@@ -455,8 +455,11 @@ export function createGuestCycleRepository(): CycleRepository {
 			const endedAt = new Date();
 			const { error } = mutateSnapshot((snapshot) => {
 				const cycle = snapshot.cycles.find((c) => c.id === input.cycleId);
-				if (cycle == null || cycle.state !== "RUNNING") {
-					throw new Error("Cycle is not running");
+				if (
+					cycle == null ||
+					(cycle.state !== "RUNNING" && cycle.state !== "PAUSED")
+				) {
+					throw new Error("Cycle is not running or paused");
 				}
 
 				return {

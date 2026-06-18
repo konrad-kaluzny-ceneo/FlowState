@@ -31,6 +31,7 @@ import {
 } from "~/lib/duration-storage";
 import { loadSnapshot } from "~/lib/guest/store";
 import type { OnboardingScope } from "~/lib/onboarding/types";
+import { PAUSE_CAP_MS } from "~/lib/pause-cap";
 import type { RationaleBreakdown } from "~/lib/scoring/rationale-breakdown";
 import {
 	buildClosureLine,
@@ -376,6 +377,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const overrideAckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
+	const pauseCapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const tabWasHiddenWhileRunningRef = useRef(false);
 	const cancelPendingStartRef = useRef(false);
 	const pendingCreateRef = useRef<Promise<CreatedActiveCycle> | null>(null);
@@ -643,7 +645,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	);
 
 	const buildSessionClosureLine = useCallback(
-		(endedBy: "user" | "timeout") =>
+		(endedBy: "user" | "timeout" | "pause_cap") =>
 			buildClosureLine({
 				cyclesCompleted: completedWorkCycles,
 				tasksCompleted: narrativeTasksCompleted,
@@ -709,6 +711,50 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		},
 		[mode, utils, buildSessionClosureLine, presentClosureOverlay],
 	);
+
+	const clearPauseCapTimer = useCallback(() => {
+		if (pauseCapTimerRef.current != null) {
+			clearTimeout(pauseCapTimerRef.current);
+			pauseCapTimerRef.current = null;
+		}
+	}, []);
+
+	const endSessionRef = useRef<
+		(options?: { endedBy?: "user" | "pause_cap" }) => Promise<void>
+	>(async () => {});
+
+	const schedulePauseCapTimer = useCallback(
+		(pausedAt: Date | null | undefined) => {
+			clearPauseCapTimer();
+			if (pausedAt == null) {
+				return;
+			}
+
+			const delay = pausedAt.getTime() + PAUSE_CAP_MS - Date.now();
+			if (delay <= 0) {
+				void endSessionRef.current({ endedBy: "pause_cap" });
+				return;
+			}
+
+			pauseCapTimerRef.current = setTimeout(() => {
+				pauseCapTimerRef.current = null;
+				void endSessionRef.current({ endedBy: "pause_cap" });
+			}, delay);
+		},
+		[clearPauseCapTimer],
+	);
+
+	const pausedAtMs = activeCycle?.pausedAt?.getTime() ?? null;
+
+	useEffect(() => {
+		if (state !== "paused" || pausedAtMs == null) {
+			clearPauseCapTimer();
+			return;
+		}
+
+		schedulePauseCapTimer(new Date(pausedAtMs));
+		return clearPauseCapTimer;
+	}, [state, pausedAtMs, schedulePauseCapTimer, clearPauseCapTimer]);
 
 	const recoverActiveCycle = useCallback(async () => {
 		if (activeCycleRecoveredForMode === mode || recoveredRef.current) {
@@ -2318,84 +2364,114 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		stopWorker,
 	]);
 
-	const endSession = useCallback(async () => {
-		setError(null);
-		const endingSessionId = _activeSessionId;
-		const closureLine = buildSessionClosureLine("user");
+	const endSession = useCallback(
+		async (options?: { endedBy?: "user" | "pause_cap" }) => {
+			const endedBy = options?.endedBy ?? "user";
+			setError(null);
+			clearPauseCapTimer();
+			const endingSessionId = _activeSessionId;
+			const closureLine = buildSessionClosureLine(
+				endedBy === "pause_cap" ? "pause_cap" : "user",
+			);
 
-		// If a cycle is running, interrupt it first
-		if (activeCycle != null && state === "running") {
-			const cycleId = activeCycle.id;
-			const isOptimisticCycle =
-				mode === "authenticated" && typeof cycleId === "number" && cycleId < 0;
+			if (activeCycle != null && state === "running") {
+				const cycleId = activeCycle.id;
+				const isOptimisticCycle =
+					mode === "authenticated" &&
+					typeof cycleId === "number" &&
+					cycleId < 0;
 
-			stopWorker();
-			endTimeRef.current = null;
+				stopWorker();
+				endTimeRef.current = null;
 
-			if (isOptimisticCycle) {
-				cancelPendingStartRef.current = true;
-			} else {
-				try {
-					await cycles.interrupt({ cycleId });
-				} catch {
-					// Best effort — continue ending session
+				if (isOptimisticCycle) {
+					cancelPendingStartRef.current = true;
+				} else {
+					try {
+						await cycles.interrupt({ cycleId });
+					} catch {
+						// Best effort — continue ending session
+					}
+				}
+			} else if (activeCycle != null && state === "paused") {
+				const cycleId = activeCycle.id;
+				const isOptimisticCycle =
+					mode === "authenticated" &&
+					typeof cycleId === "number" &&
+					cycleId < 0;
+
+				if (!isOptimisticCycle) {
+					try {
+						await cycles.interrupt({ cycleId });
+					} catch {
+						// Best effort — terminalize paused cycle without interrupt count
+					}
 				}
 			}
-		}
 
-		try {
-			await sessions.end({ closureLine });
-		} catch {
-			setError("Could not end the session. Try again.");
-			return;
-		}
+			try {
+				await sessions.end({ closureLine });
+			} catch {
+				setError("Could not end the session. Try again.");
+				return;
+			}
 
-		if (endingSessionId != null) {
-			presentClosureOverlay(closureLine, endingSessionId);
-		}
+			if (endingSessionId != null) {
+				presentClosureOverlay(closureLine, endingSessionId);
+			}
 
-		setState("idle");
-		setRemainingMs(0);
-		setActiveCycle(null);
-		setCycleKind(null);
-		setFocusedTaskId(null);
-		setFocusedTask(null);
-		setPreFocusedTask(null);
-		setHasActiveSession(false);
-		setCompletedWorkCycles(0);
-		setActiveSessionId(null);
-		setAwaitingCycleIntention(false);
-		cycleIntentionHandledRef.current = false;
-		setSessionIntention(null);
-		setNarrativeTasksCompleted(0);
-		setNarrativeLatestEnergy(null);
-		pendingStartDurationRef.current = null;
-		setAwaitingWindDown(false);
-		setWindDownDismissed(false);
-		setWindDownRationale(null);
-		pendingWindDownMarkTaskDoneRef.current = null;
-		pendingWindDownWorkCycleIdRef.current = null;
-		clearSuggestion();
-		clearKickoffSuggestion();
-		clearKickoffIdleFlags();
+			setState("idle");
+			setRemainingMs(0);
+			setActiveCycle(null);
+			setCycleKind(null);
+			setFocusedTaskId(null);
+			setFocusedTask(null);
+			setPreFocusedTask(null);
+			setHasActiveSession(false);
+			setCompletedWorkCycles(0);
+			setActiveSessionId(null);
+			setAwaitingCycleIntention(false);
+			cycleIntentionHandledRef.current = false;
+			setSessionIntention(null);
+			setNarrativeTasksCompleted(0);
+			setNarrativeLatestEnergy(null);
+			pendingStartDurationRef.current = null;
+			setAwaitingWindDown(false);
+			setWindDownDismissed(false);
+			setWindDownRationale(null);
+			pendingWindDownMarkTaskDoneRef.current = null;
+			pendingWindDownWorkCycleIdRef.current = null;
+			clearSuggestion();
+			clearKickoffSuggestion();
+			clearKickoffIdleFlags();
 
-		await Promise.all([invalidateServerCycle(), utils.task.list.invalidate()]);
-	}, [
-		_activeSessionId,
-		activeCycle,
-		state,
-		mode,
-		cycles,
-		sessions,
-		stopWorker,
-		buildSessionClosureLine,
-		presentClosureOverlay,
-		invalidateServerCycle,
-		utils.task.list,
-		clearSuggestion,
-		clearKickoffSuggestion,
-		clearKickoffIdleFlags,
-	]);
+			await Promise.all([
+				invalidateServerCycle(),
+				utils.task.list.invalidate(),
+			]);
+		},
+		[
+			_activeSessionId,
+			activeCycle,
+			state,
+			mode,
+			cycles,
+			sessions,
+			stopWorker,
+			buildSessionClosureLine,
+			presentClosureOverlay,
+			invalidateServerCycle,
+			utils.task.list,
+			clearSuggestion,
+			clearKickoffSuggestion,
+			clearKickoffIdleFlags,
+			clearPauseCapTimer,
+		],
+	);
+
+	useEffect(() => {
+		endSessionRef.current = endSession;
+	}, [endSession]);
 
 	const dismissSessionClosure = useCallback(() => {
 		setPendingClosureLine(null);

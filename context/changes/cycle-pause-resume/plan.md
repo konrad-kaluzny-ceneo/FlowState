@@ -492,8 +492,8 @@ Existing cycles remain `RUNNING | COMPLETED | INTERRUPTED`; new fields nullable.
 
 #### Automated
 
-- [x] 5.1 Timer panel component tests pass
-- [x] 5.2 `pnpm check` passes
+- [x] 5.1 Timer panel component tests pass — 38c5b9e
+- [x] 5.2 `pnpm check` passes — 38c5b9e
 
 #### Manual
 
@@ -503,9 +503,9 @@ Existing cycles remain `RUNNING | COMPLETED | INTERRUPTED`; new fields nullable.
 
 #### Automated
 
-- [ ] 6.1 Narrative pause_cap tests pass
-- [ ] 6.2 Hook cap timer tests pass
-- [ ] 6.3 `pnpm test` passes
+- [x] 6.1 Narrative pause_cap tests pass
+- [x] 6.2 Hook cap timer tests pass
+- [x] 6.3 `pnpm test` passes
 
 #### Manual
 
