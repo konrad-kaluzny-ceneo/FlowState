@@ -27,8 +27,9 @@ Maintainer runs `pnpm change-impact -- src/hooks/use-pomodoro-cycle.ts` and gets
 | Runtime | Node ESM under `scripts/change-impact/` | Matches `scripts/agent-hooks/` precedent | Stack assess |
 | Default `--since` | `2026-04-01` | Aligns with Mom Test replay window and product epoch | Plan |
 | Default path | `src/hooks/use-pomodoro-cycle.ts` | Reference hub from opportunity map | Shape |
-| Default `--top` | 8 | One screen; `--strict` raises to 15 | Plan |
-| Depcruise | Optional fan-out count via spawn; never fail | `reports/` may be absent; E2E not in graph | Stack assess |
+| Default `--top` | 8 | One screen; `--strict` raises to 15 + `context/` rows |
+| `--strict` (v1) | Expanded co-change table only | PRD FR-004 quiet/diff threshold deferred to v2 |
+| Depcruise | Optional direct-dependent count via full JSON graph | `--focus` is regex neighborhood, not architect fan-out; E2E not in graph | Stack assess |
 | CI / lefthook | Out of scope | Habit validation first (≥3 manual uses) | PRD non-goals |
 
 ## Scope
@@ -54,10 +55,10 @@ pnpm change-impact [--since] [--top N] [--strict] [--] [path]
         │
         ├─► git log co-change counter (subprocess)
         ├─► static prefix → test commands (timer hub catalog)
-        └─► optional: pnpm depcruise --focus (fan-out count only)
+        └─► optional: pnpm exec depcruise src --output-type json (direct dependents count)
                 │
                 ▼
-           stdout report (≤40 lines default)
+           stdout report (≤40 lines default; `--strict` may expand)
 ```
 
 Reuse project-root resolution patterns from `scripts/agent-hooks/lib/input.mjs`. Windows-safe git spawn (`shell: false`).
@@ -76,12 +77,12 @@ Reuse project-root resolution patterns from `scripts/agent-hooks/lib/input.mjs`.
 
 ## Open Risks & Assumptions
 
-- Quiet-mode line threshold (FR-004) deferred — v1 uses `--top` / `--strict` only; no staged-diff integration.
+- Quiet-mode / staged-diff line threshold (PRD FR-004 default quiet) deferred to v2 — v1 `--strict` = top-15 + `context/` rows + E2E labels only.
 - Maintainer habit unconfirmed until 3 manual uses before CI promotion (PRD OQ3).
 - Assumes git is on PATH in dev environment (same as lefthook/agents).
 
 ## Success Criteria (Summary)
 
 - `pnpm change-impact` on default path completes <30s with co-change table + test block.
-- `pnpm check` and `pnpm test` green after adding script tests.
+- `pnpm check`, `pnpm typecheck`, and `pnpm test` green after adding script tests.
 - Zero changes to FlowState app runtime behavior.

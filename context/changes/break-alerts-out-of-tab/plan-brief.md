@@ -24,8 +24,11 @@ When a break timer starts and the app tab is not focused, the user gets at most 
 | Trigger moment | Break start (`startBreakAfterWorkComplete`) | Work-end alone fires before check-in gate; health-check T2 | Research / Plan |
 | Permission UX | First timed session explain | One-time, skippable; settings fallback | Shape |
 | Out-of-tab master toggle | Single setting, default on | One-action disable; matches FR-004 | PRD |
-| Hook edit timing | After Phases 1–2 tests green | User request + health-check recommendation | Plan |
+| Hook preference wiring | Injected `getOutOfTabBreakAlertsEnabled` from dashboard | Hook lacks `userId`; mirror `getCycleEndAudioMode` | Plan review F1 |
+| Denied permission UX | Settings helper + “Try again” | Toggle alone cannot re-grant browser permission | PRD FR-001 / F2 |
+| Alert placement | Sync after `startWorker`, before invalidate | Async gap lets user refocus and miss alert | Plan review F4 |
 | Fire-mode auto-suppress | Deferred | Settings disable enough for MVP | PRD OQ1 |
+| Hook edit timing | After Phases 1–2 tests green | User request + health-check recommendation | Plan |
 | E2E in belt | `@skip-belt` first | Notification permission flaky; belt keeps in-tab regression | Health-check |
 
 ## Scope
@@ -36,7 +39,7 @@ When a break timer starts and the app tab is not focused, the user gets at most 
 
 ## Architecture / Approach
 
-New pure module under `src/lib/break-out-of-tab-alert/` owns permission checks, notification text, and “should fire” guards. UI adds a toggle in break settings and a first-session overlay. **Single hook touch:** call the module at the end of `startBreakAfterWorkComplete` when `document.visibilityState !== "visible"`. Reuse existing `createAudioManager().playAlarm` for background audio (respect `CycleEndAudioMode` — skip when `muted`).
+New pure module under `src/lib/break-out-of-tab-alert/` owns permission checks, notification text, and “should fire” guards. UI adds a toggle in break settings, denied-permission helper, and a first-session overlay (after first-run / cycle-intention). Dashboard passes `getOutOfTabBreakAlertsEnabled` into the hook (mirror audio getter). **Single hook touch:** call the module **synchronously after** `startWorker(endTime)` inside `startBreakAfterWorkComplete` when `document.visibilityState !== "visible"`. Reuse `createAudioManager().playAlarm` for background audio (respect `CycleEndAudioMode` — skip when `muted`).
 
 ## Phases at a Glance
 
@@ -52,8 +55,9 @@ New pure module under `src/lib/break-out-of-tab-alert/` owns permission checks, 
 
 ## Open Risks & Assumptions
 
-- Browser notification permission may stay denied — MVP relies on settings copy + best-effort audio fallback.
-- Headless Playwright notification assertions may be flaky — belt case stays in-tab regression only until stable.
+- Browser notification permission may stay denied — MVP relies on settings helper + “Try again” + best-effort audio fallback.
+- Auth check-in gate delays break start until on-tab interaction; alert fires if tab is hidden during async break creation, not at work expiry.
+- Headless Playwright notification assertions may be flaky — run e2e via explicit file path (`@skip-belt`); belt stays in-tab regression only.
 - Success validated by 2-week self-assessment (friction owner), not analytics.
 
 ## Success Criteria (Summary)

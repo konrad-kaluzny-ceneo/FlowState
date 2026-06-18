@@ -83,7 +83,7 @@ Grounding: plan paths ✓, symbols ✓ (`fetchKickoffSuggestion`, `fetchPostChec
   - Strength: Matches manual step 3 and duration chips UX.
   - Tradeoff: Slightly broader assertions.
   - Confidence: HIGH.
-- **Decision**: PENDING
+- **Decision**: FIXED — plan updated (Phase 1 test cases, Phase 2 pre-focus cleanup)
 
 ### F-06 — Do not use `retrySuggestion` / `fetchSuggestion` for post-check-in refetch
 
@@ -95,7 +95,7 @@ Grounding: plan paths ✓, symbols ✓ (`fetchKickoffSuggestion`, `fetchPostChec
   - Strength: Prevents implementer shortcut that wipes kickoff state.
   - Tradeoff: Documentation only.
   - Confidence: HIGH.
-- **Decision**: PENDING
+- **Decision**: FIXED — plan updated (Critical Implementation Details, Phase 2 contract)
 
 ### F-07 — Phase 1 needs `rerender` hook pattern
 
@@ -107,7 +107,7 @@ Grounding: plan paths ✓, symbols ✓ (`fetchKickoffSuggestion`, `fetchPostChec
   - Strength: Makes Phase 1 executable without implementer guesswork.
   - Tradeoff: New test pattern in file.
   - Confidence: HIGH.
-- **Decision**: PENDING
+- **Decision**: FIXED — plan updated (Phase 1 contract with rerender snippet)
 
 ### F-08 — Zero-task path should assert `empty`, not `idle`
 
@@ -119,7 +119,7 @@ Grounding: plan paths ✓, symbols ✓ (`fetchKickoffSuggestion`, `fetchPostChec
   - Strength: Prevents wrong UX (hidden card vs empty message).
   - Tradeoff: Stricter assertion.
   - Confidence: HIGH.
-- **Decision**: PENDING
+- **Decision**: FIXED — plan updated (Phase 1 named case, Testing Strategy)
 
 ### F-09 — Post-check-in during break: correctly scoped
 
@@ -136,7 +136,7 @@ Grounding: plan paths ✓, symbols ✓ (`fetchKickoffSuggestion`, `fetchPostChec
 - **Location**: Key Discoveries — override test cite
 - **Detail**: Plan cites `1896-1940`; override test is at `2133-2198`.
 - **Fix**: Update reference when editing plan.
-- **Decision**: PENDING
+- **Decision**: FIXED — plan reference corrected
 
 ### F-11 — E2E kickoff-delete feasible
 
@@ -158,12 +158,12 @@ Grounding: plan paths ✓, symbols ✓ (`fetchKickoffSuggestion`, `fetchPostChec
 
 ```
 ═══════════════════════════════════════════════════════════
-  TRIAGE PENDING
+  TRIAGE COMPLETE
 ═══════════════════════════════════════════════════════════
 
-  Pending:   F-01, F-02, F-03, F-04, F-05, F-06, F-07, F-08, F-10  (9)
+  Fixed:     F-01, F-02, F-03, F-04, F-05, F-06, F-07, F-08, F-10  (9)
   Accepted:  F-09, F-11, F-12                                      (3)
 
-  ► Verdict after fixes: SOUND (ready for /10x-implement)
+  ► Verdict: SOUND — ready for /10x-implement fix-stale-suggestion-after-delete phase 1
 ═══════════════════════════════════════════════════════════
 ```

@@ -293,9 +293,9 @@ Document Playwright pattern; keep belt focused on in-tab regression.
 
 **File**: `e2e/break-out-of-tab-alert.spec.ts`
 
-**Intent**: `@skip-belt` spec — grant notifications, `runWhileHidden` from `e2e/helpers/visibility.ts`, fast timer helpers from `e2e/helpers/work-cycle.ts`, assert notification event or DOM side effect; assert toggle suppresses.
+**Intent**: `@skip-belt` spec — `context.grantPermissions(['notifications'])` where supported, `runWhileHidden` from `e2e/helpers/visibility.ts`, fast timer helpers from `e2e/helpers/work-cycle.ts`, assert notification event, `page.evaluate` Notification mock, or DOM side effect; assert toggle suppresses.
 
-**Contract**: Tag `@skip-belt`; use existing auth fixture pattern; do not fail belt on notification API absence in CI.
+**Contract**: Tag `@skip-belt` on file; use existing auth fixture pattern; do not fail belt on notification API absence in CI. If native grant is flaky in headless, fall back to in-page Notification stub for assert-only path.
 
 #### 2. Test plan cookbook (optional one line)
 
@@ -318,7 +318,7 @@ Document Playwright pattern; keep belt focused on in-tab regression.
 #### Automated Verification
 
 - `pnpm exec vitest run src/lib/break-out-of-tab-alert/**/*.test.ts` passes
-- `set CI=true; pnpm exec playwright test e2e/break-out-of-tab-alert.spec.ts --grep-invert @skip-belt` or explicit file run passes locally
+- `set CI=true; pnpm exec playwright test e2e/break-out-of-tab-alert.spec.ts` passes locally (explicit file — **do not** use `--grep-invert @skip-belt` on a fully tagged spec)
 - `set CI=true; pnpm test:e2e:belt` passes (no belt regression)
 
 #### Manual Verification
@@ -343,9 +343,11 @@ Document Playwright pattern; keep belt focused on in-tab regression.
 ### Manual Testing Steps
 
 1. Enable notifications; start Pomodoro; switch tab; complete work cycle through check-in; confirm break notification.
-2. Disable toggle; repeat — no notification.
-3. Set cycle audio to muted; confirm no background audio but notification still fires (if permission granted).
-4. Guest mode — same flows with guest storage keys.
+2. Auth + check-in: stay on-tab for check-in, then switch tab before break timer appears; confirm break-start notification.
+3. Disable toggle; repeat — no notification.
+4. Set cycle audio to muted; confirm no background audio but notification still fires (if permission granted).
+5. Deny notification permission (browser settings); toggle on; break start hidden → no throw, best-effort audio only.
+6. Guest mode — same flows with guest storage keys.
 
 ## Performance Considerations
 
@@ -391,6 +393,8 @@ No schema migration. localStorage keys additive; default enabled preserves curre
 
 - [ ] 2.3 First-session prompt appears once; “Not now” does not re-show on refresh
 - [ ] 2.4 Toggle off persists in localStorage (guest and auth scopes isolated)
+- [ ] 2.5 Denied permission → settings helper + “Try again” visible
+- [ ] 2.6 First auth start → no overlay stack with first-run / cycle-intention
 
 ### Phase 3: Hook integration (break start)
 

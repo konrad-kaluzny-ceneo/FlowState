@@ -27,7 +27,7 @@ Mom Test git replay (4/5 commits with new co-change signal) and stack assessment
 
 ### Verification
 
-- Automated: `pnpm check`, `pnpm typecheck`, `pnpm exec vitest run scripts/change-impact/**/*.test.ts`
+- Automated: `pnpm check`, `pnpm typecheck`, `pnpm exec vitest run scripts/change-impact/lib/git-cochange.test.ts scripts/change-impact/lib/test-catalog.test.ts`
 - Manual: run on `use-pomodoro-cycle.ts`; confirm dashboard + hook test + e2e spec appear in co-change top rows; compare with Mom Test replay table
 
 ## What We're NOT Doing
@@ -75,7 +75,7 @@ Implement co-change aggregation and minimal CLI that prints ranked paths.
 
 **File**: `scripts/change-impact/lib/project-root.mjs`
 
-**Intent**: Resolve repo root from `cwd` (walk up for `.git`) or env vars matching agent-hooks behavior.
+**Intent**: Resolve repo root by walking up from `cwd` for `.git`; if not found, fall back to agent-hooks env vars (`CURSOR_PROJECT_DIR`, `CLAUDE_PROJECT_DIR`).
 
 **Contract**: Export `resolveProjectRoot(cwd?) → string`; throws if not inside a git work tree.
 
@@ -148,15 +148,15 @@ Deduplicate commands; max 4 lines in block.
 
 **Intent**: Build ≤40-line stdout string from co-change rows, catalog, metadata.
 
-**Contract**: Export `formatReport({ targetPath, since, rows, testCommands, fanOutCount?, strict })`; include header `Timer change-impact digest` and footer `Advisory only — see context/map/repo-map.md`.
+**Contract**: Export `formatReport({ targetPath, since, rows, testCommands, fanOutCount?, strict })`; include header `Timer change-impact digest` and footer `Advisory only — see context/map/repo-map.md`. Default mode ≤40 lines; `--strict` may exceed — emit expanded footer per Critical Details.
 
 #### 3. CLI flag wiring
 
 **File**: `scripts/change-impact/run.mjs`
 
-**Intent**: Wire `--since` default `2026-04-01`, `--top` default 8 (15 if `--strict`), `--strict` boolean.
+**Intent**: Wire `--since` default `2026-04-01`, `--top` default 8 (15 if `--strict`), `--strict` boolean (expanded table per FR-004 v1 deviation — not diff-size quiet mode).
 
-**Contract**: `--help` documents flags; unknown flags → exit 1 with usage.
+**Contract**: `--help` documents flags and v1 `--strict` semantics; unknown flags → exit 1 with usage.
 
 ### Success Criteria
 
@@ -189,7 +189,7 @@ Unit-test pure modules; add optional fan-out count; document in AGENTS.md.
 
 **Intent**: Test co-change counting from fixture commit file lists (no real git in unit tests).
 
-**Contract**: Use `// @vitest-environment node`; mock `runGit` or test exported `aggregateCommits(nameLists, targetPath)`.
+**Contract**: Use `// @vitest-environment node` (required — global config is jsdom); mock `runGit` or test exported `aggregateCommits(nameLists, targetPath)` only; no DOM/React imports.
 
 **File**: `scripts/change-impact/lib/test-catalog.test.ts`
 
@@ -199,9 +199,9 @@ Unit-test pure modules; add optional fan-out count; document in AGENTS.md.
 
 **File**: `scripts/change-impact/lib/depcruise-fanout.mjs`
 
-**Intent**: Run `pnpm exec depcruise --focus <path> --output-type json` or parse existing config output; return `{ fanOutCount: number | null }`.
+**Intent**: Spawn `pnpm exec depcruise src --output-type json --output-to -` (uses `.dependency-cruiser.cjs`); parse JSON and count direct dependents of target path (import edges into module matching escaped path regex).
 
-**Contract**: On failure or timeout >10s, return null; never throw to CLI (FR-005 nice-to-have).
+**Contract**: Return `{ fanOutCount: number | null, label: string }` where label is `Direct dependents (depcruise): N`; on failure or timeout >10s, return null; never throw to CLI (FR-005 nice-to-have). Do not use `--focus` alone as fan-out total.
 
 #### 3. AGENTS.md maintainer section
 
@@ -218,6 +218,7 @@ Unit-test pure modules; add optional fan-out count; document in AGENTS.md.
 - `pnpm exec vitest run scripts/change-impact/lib/git-cochange.test.ts scripts/change-impact/lib/test-catalog.test.ts`
 - `pnpm test` passes (full suite)
 - `pnpm check` passes
+- `pnpm typecheck` passes
 
 #### Manual Verification
 
@@ -232,7 +233,7 @@ Unit-test pure modules; add optional fan-out count; document in AGENTS.md.
 
 ### Unit Tests
 
-- Co-change aggregation: empty history, single commit, duplicate paths across commits, path normalization
+- Co-change aggregation: empty history, single commit, duplicate paths across commits, path normalization (`./` strip, forward slashes), merge commits excluded via `--no-merges`
 - Test catalog: hook-only rows, e2e row triggers belt, deduplication
 
 ### Integration Tests
@@ -295,10 +296,11 @@ Not applicable — new dev tooling only.
 
 #### Automated
 
-- [ ] 3.1 Vitest runs for `scripts/change-impact/lib/*.test.ts`
+- [ ] 3.1 `pnpm exec vitest run scripts/change-impact/lib/git-cochange.test.ts scripts/change-impact/lib/test-catalog.test.ts`
 - [ ] 3.2 Full `pnpm test` passes
 - [ ] 3.3 `pnpm check` passes
+- [ ] 3.4 `pnpm typecheck` passes
 
 #### Manual
 
-- [ ] 3.4 Fan-out line present or graceful skip; Mom Test `4f6ae9f` scenario checked with `--strict`
+- [ ] 3.5 Fan-out line present or graceful skip; Mom Test `4f6ae9f` scenario checked with `--strict`

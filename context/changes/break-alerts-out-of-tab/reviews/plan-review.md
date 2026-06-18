@@ -6,7 +6,7 @@
 **Reviewer:** Cursor Agent (`/10x-plan-review`, sub-agent code verification)  
 **Plan:** `context/changes/break-alerts-out-of-tab/plan.md`  
 **Brief:** `context/changes/break-alerts-out-of-tab/plan-brief.md`  
-**Verdict:** READY WITH FIXES
+**Verdict:** READY WITH FIXES → **READY TO IMPLEMENT** (post-edit 2026-06-18)
 
 ## Summary
 
@@ -19,10 +19,10 @@ The plan correctly targets `startBreakAfterWorkComplete` as the sole break-start
 | Dimension | Verdict | Notes |
 |-----------|---------|-------|
 | Internal consistency | PASS | Trigger timing, visibility guard, and scope boundaries align |
-| Feasibility | WARNING | Hook lacks OnboardingScope; async placement underspecified |
+| Feasibility | PASS | F1/F4 addressed in plan edit |
 | Scope discipline | PASS | Work Mode Guard deferred; break-start only |
 | Pattern compliance | PASS | Mirrors cycle-audio-preference; co-located tests |
-| Success criteria | WARNING | Phase 4 grep-invert on `@skip-belt` spec is vacuous |
+| Success criteria | PASS | F6 e2e criterion fixed |
 
 ## Findings
 
@@ -53,9 +53,9 @@ The plan correctly targets `startBreakAfterWorkComplete` as the sole break-start
 - [x] Scope boundaries clear (no Work Mode Guard, no service worker)
 - [x] Phase ordering — lib → UI → hook last
 - [x] Progress section mirrors phase Success Criteria
-- [ ] Authenticated pref wiring specified (F1 open)
-- [ ] Denied-permission UX specified (F2 open)
-- [ ] Phase 4 e2e success criterion valid (F6 open)
+- [x] Authenticated pref wiring specified (F1 — plan Phase 2 §6 + Phase 3 §1-3)
+- [x] Denied-permission UX specified (F2 — plan Phase 2 §2)
+- [x] Phase 4 e2e success criterion valid (F6 — explicit file run)
 
 ## Triage (recommended before implement)
 
@@ -69,7 +69,6 @@ The plan correctly targets `startBreakAfterWorkComplete` as the sole break-start
 
 ## Decision
 
-**Apply F1 + F2 + F4 plan edits (~15 min), then `/10x-implement break-alerts-out-of-tab phase 1`.**  
-Or proceed with F1/F2/F4 as implement-time contract if acknowledged.
+**Plan edits applied (F1–F6, F3, F5, F9, F10). Proceed to `/10x-implement break-alerts-out-of-tab phase 1`.**
 
-**Next:** Triage findings in chat, or run `/10x-plan-review break-alerts-out-of-tab` resume on this file after edits.
+**Next:** `/10x-implement break-alerts-out-of-tab phase 1` (feature branch/worktree first per AGENTS.md).
