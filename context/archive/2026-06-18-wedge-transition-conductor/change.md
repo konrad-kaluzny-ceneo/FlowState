@@ -1,10 +1,10 @@
 ---
 change_id: wedge-transition-conductor
 title: Wedge transition conductor
-status: impl_reviewed
+status: archived
 created: 2026-06-18
 updated: 2026-06-18
-archived_at: null
+archived_at: 2026-06-18T16:20:00Z
 ---
 
 ## Notes
