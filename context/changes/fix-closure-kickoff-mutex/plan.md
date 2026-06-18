@@ -211,6 +211,10 @@ Remove the belt mask that hides T-01 and assert kickoff readiness stays absent a
 
 **Implementation Note**: Phase 4 completes B-05 implementation. Ready for PR / merge gate.
 
+### Phase 4 addendum (2026-06-18, impl review)
+
+**Interrupt step retained.** Original contract called for dropping the interrupt step and clicking `end-session-btn` while the cycle is still running (`endSession()` auto-interrupts). Implementation keeps the explicit interrupt (lines 37–43) because `end-session-btn` is **disabled while a cycle is running** — the belt cannot reach end session without interrupt first. This is not a T-01 mask: post-interrupt idle kickoff is a legitimate path, and the belt now asserts `kickoff-readiness-overlay` count 0 after closure dismiss (line 56) without `dismissKickoffReadinessIfVisible`. Work duration uses 30s via `startFocusedWorkCycle(page, taskTitle, 30)`.
+
 ---
 
 ## Testing Strategy
