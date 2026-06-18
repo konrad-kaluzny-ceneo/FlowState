@@ -211,6 +211,10 @@ Remove the belt mask that hides T-01 and assert kickoff readiness stays absent a
 
 **Implementation Note**: Phase 4 completes B-05 implementation. Ready for PR / merge gate.
 
+### Phase 4 addendum (2026-06-18, impl review)
+
+**Interrupt step retained.** Original contract called for dropping the interrupt step and clicking `end-session-btn` while the cycle is still running (`endSession()` auto-interrupts). Implementation keeps the explicit interrupt (lines 37–43) because `end-session-btn` is **disabled while a cycle is running** — the belt cannot reach end session without interrupt first. This is not a T-01 mask: post-interrupt idle kickoff is a legitimate path, and the belt now asserts `kickoff-readiness-overlay` count 0 after closure dismiss (line 56) without `dismissKickoffReadinessIfVisible`. Work duration uses 30s via `startFocusedWorkCycle(page, taskTitle, 30)`.
+
 ---
 
 ## Testing Strategy
@@ -269,33 +273,33 @@ None — behavioral fix only; no schema or API changes. `sessionStorage` `wasClo
 
 #### Automated
 
-- [ ] 2.1 Hook race char test passes; kickoff suite green
-- [ ] 2.2 `pnpm test` passes
-- [ ] 2.3 `pnpm check` passes
+- [x] 2.1 Hook race char test passes; kickoff suite green
+- [x] 2.2 `pnpm test` passes
+- [x] 2.3 `pnpm check` passes
 
 #### Manual
 
-- [ ] 2.4 Dashboard mutex char tests still fail (expected until Phase 3)
+- [x] 2.4 Dashboard mutex char tests still fail (expected until Phase 3)
 
 ### Phase 3: Dashboard enforcement (mutex guards)
 
 #### Automated
 
-- [ ] 3.1 `pomodoro-dashboard.test.tsx` all green including mutex tests
-- [ ] 3.2 `use-pomodoro-cycle.test.tsx` all green
-- [ ] 3.3 `pnpm test`, `pnpm check`, `pnpm typecheck` pass
+- [x] 3.1 `pomodoro-dashboard.test.tsx` all green including mutex tests
+- [x] 3.2 `use-pomodoro-cycle.test.tsx` all green
+- [x] 3.3 `pnpm test`, `pnpm check`, `pnpm typecheck` pass
 
 #### Manual
 
-- [ ] 3.4 End session → closure → dismiss → no kickoff on same visit (local)
+- [x] 3.4 End session → closure → dismiss → no kickoff on same visit (local)
 
 ### Phase 4: Belt assertion (session-closure.spec.ts)
 
 #### Automated
 
-- [ ] 4.1 `set CI=true && pnpm test:e2e:belt -- e2e/session-closure.spec.ts` passes
-- [ ] 4.2 `pnpm test` and `pnpm check` pass
+- [x] 4.1 `set CI=true && pnpm test:e2e:belt -- e2e/session-closure.spec.ts` passes
+- [x] 4.2 `pnpm test` and `pnpm check` pass
 
 #### Manual
 
-- [ ] 4.3 Belt run shows no pre-dismiss kickoff mask; post-dismiss kickoff count 0
+- [x] 4.3 Belt run shows no pre-dismiss kickoff mask; post-dismiss kickoff count 0

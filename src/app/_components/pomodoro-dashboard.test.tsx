@@ -313,8 +313,7 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		);
 	});
 
-	// fix-closure-kickoff-mutex p3: flip to it() when dashboard mutex guards land
-	it.fails("does not show kickoff readiness overlay while session closure is pending", () => {
+	it("does not show kickoff readiness overlay while session closure is pending", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
 				pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
@@ -336,8 +335,7 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.queryByTestId("kickoff-readiness-overlay")).toBeNull();
 	});
 
-	// fix-closure-kickoff-mutex p3: flip to it() when dashboard mutex guards land
-	it.fails("does not show check-in overlay while session closure is pending", () => {
+	it("does not show check-in overlay while session closure is pending", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
 				pendingClosureLine: "Session complete — 1 cycle. Take a breath.",

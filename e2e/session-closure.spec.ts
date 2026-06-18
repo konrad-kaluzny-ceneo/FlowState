@@ -4,10 +4,7 @@
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
-import {
-	dismissKickoffReadinessIfVisible,
-	ensureIdleCycle,
-} from "./helpers/idle-cycle";
+import { ensureIdleCycle } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import { startFocusedWorkCycle } from "./helpers/work-cycle";
 
@@ -31,7 +28,7 @@ test.describe("Session closure (S-17)", () => {
 		test.setTimeout(60_000);
 
 		const taskTitle = `E2E Closure ${Date.now()}`;
-		await startFocusedWorkCycle(page, taskTitle, 1);
+		await startFocusedWorkCycle(page, taskTitle, 30);
 
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible({
 			timeout: 15_000,
@@ -41,8 +38,10 @@ test.describe("Session closure (S-17)", () => {
 		await expect(page.getByTestId("timer-panel-running")).toBeHidden({
 			timeout: 15_000,
 		});
+		await expect(page.getByTestId("end-session-btn")).toBeEnabled({
+			timeout: 15_000,
+		});
 
-		await dismissKickoffReadinessIfVisible(page);
 		await page.getByTestId("end-session-btn").click();
 
 		await expect(page.getByTestId("session-closure-overlay")).toBeVisible({
@@ -54,6 +53,7 @@ test.describe("Session closure (S-17)", () => {
 
 		await page.getByTestId("session-closure-dismiss-btn").click();
 		await expect(page.getByTestId("session-closure-overlay")).toBeHidden();
+		await expect(page.getByTestId("kickoff-readiness-overlay")).toHaveCount(0);
 		await expect(page.getByTestId("end-session-btn")).toBeHidden();
 	});
 });

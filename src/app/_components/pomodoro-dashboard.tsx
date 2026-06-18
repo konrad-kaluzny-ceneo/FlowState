@@ -370,6 +370,7 @@ export function PomodoroDashboardBody({
 
 			{enableSuggestionGate &&
 				pomodoro.awaitingKickoffReadiness &&
+				pomodoro.pendingClosureLine == null &&
 				!pomodoro.awaitingCheckIn &&
 				!pomodoro.awaitingWindDown &&
 				!pomodoro.isPostCheckInTransitioning && (
@@ -396,6 +397,7 @@ export function PomodoroDashboardBody({
 
 			{enableCheckInGate &&
 				pomodoro.awaitingCheckIn &&
+				pomodoro.pendingClosureLine == null &&
 				pomodoro.activeCycle != null && (
 					<>
 						{showCheckInCatchUp && catchUp != null && (

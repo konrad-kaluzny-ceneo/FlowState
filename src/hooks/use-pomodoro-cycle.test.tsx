@@ -2498,8 +2498,7 @@ describe("usePomodoroCycle", () => {
 				);
 			});
 
-			// fix-closure-kickoff-mutex p2: flip to it() when gen guard lands
-			it.fails("does not reopen awaitingKickoffReadiness when endSession races getOrCreateActive", async () => {
+			it("does not reopen awaitingKickoffReadiness when endSession races getOrCreateActive", async () => {
 				taskListQuery.mockResolvedValue(activeTaskList);
 
 				let releaseGetOrCreate!: () => void;
