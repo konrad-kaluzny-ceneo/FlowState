@@ -1,7 +1,20 @@
 import { execSync } from "node:child_process";
 
+export class GitScopeError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "GitScopeError";
+	}
+}
+
 function git(args: string, cwd: string): string {
-	return execSync(`git ${args}`, { cwd, encoding: "utf8" }).trim();
+	try {
+		return execSync(`git ${args}`, { cwd, encoding: "utf8" }).trim();
+	} catch {
+		throw new GitScopeError(
+			`git ${args} failed — ensure the repo is checked out and base branch is fetched`,
+		);
+	}
 }
 
 export function resolveRepoUrl(cwd: string): string {
@@ -33,4 +46,9 @@ export function getDiffStat(base: string, cwd: string): string {
 
 export function getCurrentBranch(cwd: string): string {
 	return git("rev-parse --abbrev-ref HEAD", cwd);
+}
+
+export function changeIdFromBranch(branch: string): string | undefined {
+	const match = /^features\/(.+)$/.exec(branch);
+	return match?.[1];
 }

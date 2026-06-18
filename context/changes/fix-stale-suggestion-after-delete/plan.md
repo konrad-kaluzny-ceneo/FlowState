@@ -25,7 +25,7 @@ When the user deletes the task FlowState just suggested (kickoff idle path), the
 
 - `PomodoroDashboardBody` already computes `activeTaskIds` (`pomodoro-dashboard.tsx:66–69`) but uses it only for `canMarkTaskDone`.
 - `retryKickoffSuggestion` / `retrySuggestion` already encapsulate refetch with stored energy / cycle id (`use-pomodoro-cycle.ts:2651–2662`).
-- Override path clears highlight only, not card — delete fix must invalidate `pending*` status, not just `suggestedTaskId` (`use-pomodoro-cycle.test.tsx:1896–1940`).
+- Override path clears highlight only, not card — delete fix must invalidate `pending*` status, not just `suggestedTaskId` (`use-pomodoro-cycle.test.tsx:2133–2198`).
 - S-09 explicitly left suggestion bridge out of scope (`context/archive/2026-06-07-optimistic-task-mutations/plan.md:225–226`).
 
 ## What We're NOT Doing
@@ -49,9 +49,15 @@ Char-before-touch: failing Vitest in Phase 1, enforcement in Phase 2.
 
 ## Critical Implementation Details
 
-**Effect ordering:** Run invalidation when `activeTaskIds` or `pending*Suggestion.status === "ready"` changes. Increment generation refs before refetch (same as `clearSuggestion`) so a slow in-flight `suggestion.next` cannot repopulate a deleted id.
+**Options ref:** Mirror `getCycleEndAudioModeRef` — maintain `activeTaskIdsRef` updated from `options.activeTaskIds` in a `useEffect`; read the ref from the invalidation effect and accept guards (avoid closing over unstable `options` in callbacks).
 
-**Accept guard:** In `acceptSuggestion` / `acceptKickoffSuggestion`, no-op when `activeTaskIds` is provided and suggested id ∉ set — prevents race if user clicks Accept in the same frame as delete.
+**Effect ordering:** Run invalidation when membership or ready-state changes. Effect deps: `activeTaskIds` reference (or serialized id string), `pendingKickoffSuggestion.status`, `pendingSuggestion.status`, and each ready suggestion's `taskId`. Inside the effect, no-op when suggested id ∈ set. Increment generation refs before refetch so a slow in-flight `suggestion.next` cannot repopulate a deleted id.
+
+**Post-check-in refetch:** Call `fetchPostCheckInSuggestion` directly with `suggestionCycleIdRef` — do **not** use `retrySuggestion` / `fetchSuggestion` (those call `clearKickoffSuggestion()` and would wipe kickoff idle flags).
+
+**Kickoff refetch guard:** If refetch is needed but `_activeSessionId == null`, set `pendingKickoffSuggestion` to `empty` instead of calling `fetchKickoffSuggestion`.
+
+**Accept guard:** In `acceptSuggestion` / `acceptKickoffSuggestion`, no-op when `activeTaskIdsRef.current` is set and suggested id ∉ set — prevents race if user clicks Accept in the same frame as delete.
 
 ## Phase 1: Characterization (stale suggestion oracle)
 
@@ -67,7 +73,7 @@ Vitest documents kickoff-idle invalidation when the suggested task disappears fr
 
 **Intent**: Allow dashboard to supply live task membership for sync.
 
-**Contract**: Extend `UsePomodoroCycleOptions` with optional `activeTaskIds?: ReadonlySet<DomainTaskId>`. No behaviour change yet — types + destructuring only if needed for test wrapper.
+**Contract**: Extend `UsePomodoroCycleOptions` with optional `activeTaskIds?: ReadonlySet<DomainTaskId>`. Add `activeTaskIdsRef` + sync `useEffect` (mirror `getCycleEndAudioModeRef`). No invalidation behaviour yet — types + ref wiring only if needed for test wrapper.
 
 #### 2. Characterization tests
 
@@ -75,11 +81,24 @@ Vitest documents kickoff-idle invalidation when the suggested task disappears fr
 
 **Intent**: Pin expected behaviour before enforcement.
 
-**Contract**: New describe `"stale suggestion invalidation"`. Cases:
+**Contract**: New describe `"stale suggestion invalidation"`. Use dynamic props:
 
-- **Kickoff ready + suggested id removed from `activeTaskIds`:** after `waitFor`, `pendingKickoffSuggestion.status` is not `ready` (expects refetch → new ready/empty/loading, or direct `empty` when no tasks left).
+```tsx
+const { result, rerender } = renderHook(
+  (props) => usePomodoroCycle(props),
+  { wrapper: createWrapper(), initialProps: { activeTaskIds: new Set([7, 9]) } },
+);
+// … reach kickoff ready via completeKickoffReadinessGate …
+rerender({ activeTaskIds: new Set([7]) });
+```
+
+Cases:
+
+- **Kickoff ready + suggested id removed from `activeTaskIds`:** after `waitFor`, `pendingKickoffSuggestion.status` is not `ready` (refetch → loading/ready, or `empty` when no tasks left).
+- **Kickoff ready + last task removed (`activeTaskIds.size === 0`):** status is `empty` (shows “No active tasks”), not `idle` (which hides the card).
 - **Kickoff ready + unrelated task removed:** `pendingKickoffSuggestion.status` stays `ready`.
-- **Pre-focus cleanup:** accept kickoff suggestion, remove suggested id from `activeTaskIds` → `preFocusedTask` null, `hasPreFocusedKickoff` false.
+- **Pre-focus cleanup:** accept kickoff suggestion, remove suggested id from `activeTaskIds` → `preFocusedTask` null, `hasPreFocusedKickoff` false, `focusedTaskId` null, `stagedKickoffDurationSec` null.
+- **Accept guard:** with kickoff `ready` and suggested id ∉ `activeTaskIds`, `acceptKickoffSuggestion()` → `preFocusedTask` null, `recordDecisionMutation` not called.
 
 Tests **fail** on current code.
 
@@ -106,12 +125,12 @@ Implement invalidation effect, wire dashboard, add accept guards; green tests.
 
 **Intent**: Single sync point when live tasks no longer contain the suggested id.
 
-**Contract**: Add internal `invalidateStaleSuggestion(activeTaskIds: ReadonlySet<DomainTaskId>)` (name flexible) called from `useEffect` when `options.activeTaskIds` is defined. For each context (`pendingKickoffSuggestion`, `pendingSuggestion`) with `status === "ready"`:
+**Contract**: Add internal `invalidateStaleSuggestion()` (name flexible) called from `useEffect` when `activeTaskIdsRef.current` is defined. Effect deps per Critical Implementation Details. For each context (`pendingKickoffSuggestion`, `pendingSuggestion`) with `status === "ready"`:
 
 - If `data.taskId ∈ activeTaskIds` → no-op.
-- Else clear pre-focus when `preFocusedTask?.id === data.taskId` (also reset `hasPreFocused*`, `stagedKickoffDurationSec`).
+- Else clear pre-focus when `preFocusedTask?.id === data.taskId` (also reset `hasPreFocused*`, `focusedTaskId`, `focusedTask`, `stagedKickoffDurationSec`).
 - If `activeTaskIds.size === 0` → `setPending*({ status: "empty" })` and clear highlight ids.
-- Else → bump appropriate fetch gen ref, set `loading`, call existing fetch helper (`fetchKickoffSuggestion` with `_activeSessionId` + `lastKickoffEnergyRef`; post-check-in with `suggestionCycleIdRef` + `fetchPostCheckInSuggestion`).
+- Else → bump appropriate fetch gen ref, set `loading`, call `fetchKickoffSuggestion` with `_activeSessionId` + `lastKickoffEnergyRef` (if `_activeSessionId == null`, set `empty` instead), or `fetchPostCheckInSuggestion` with `suggestionCycleIdRef` for post-check-in. Do **not** use `retrySuggestion` / `fetchSuggestion`.
 
 Do **not** call `recordSuggestionDecision`.
 
@@ -121,7 +140,7 @@ Do **not** call `recordSuggestionDecision`.
 
 **Intent**: Block accept of a task that no longer exists on the list.
 
-**Contract**: At top of `acceptSuggestion` / `acceptKickoffSuggestion`, return early when `options.activeTaskIds` is set and suggested `data.taskId` ∉ set.
+**Contract**: At top of `acceptSuggestion` / `acceptKickoffSuggestion`, return early when `activeTaskIdsRef.current` is set and suggested `data.taskId` ∉ set.
 
 #### 3. Dashboard wiring
 
@@ -161,8 +180,9 @@ Do **not** call `recordSuggestionDecision`.
 ### Unit Tests:
 
 - Kickoff invalidation when suggested id leaves `activeTaskIds`
+- Zero tasks remaining → `empty` (not `idle`)
 - No invalidation when unrelated task deleted
-- Pre-focus cleared on stale id
+- Pre-focus + focus + chips cleared on stale id
 - Accept no-op when id missing from set
 
 ### Integration Tests:

@@ -12,7 +12,10 @@ Mom Test + shape locked a narrow MVP. Stack assessment and health-check confirm 
 
 - **Break start entry point:** `startBreakAfterWorkComplete` in `src/hooks/use-pomodoro-cycle.ts:1916-1940` — sets `cycleKind` to `SHORT_BREAK`/`LONG_BREAK`, `state` to `"running"`, calls `startWorker`. This is **after** check-in / `confirmComplete`, not at work-cycle expiry (`handleCycleExpired`).
 - **Work-end vs break-start:** `handleCycleExpired` (~479-503) plays `playAlarm` and sets catchUp when hidden — targets **cycle completion**, including work→check-in path. Out-of-tab alert must **not** duplicate here.
-- **Visibility tracking:** `tabWasHiddenWhileRunningRef` + `visibilitychange` listener (~861-883); Vitest mocks in `use-pomodoro-cycle.test.tsx` catchUp suite (~2868+).
+- **Visibility tracking:** `tabWasHiddenWhileRunningRef` + `visibilitychange` listener (~907-930); Vitest mocks in `use-pomodoro-cycle.test.tsx` catchUp suite (~2868+).
+- **Hook scope gap:** `usePomodoroCycle` exposes `getCycleEndAudioMode` via options but has no `OnboardingScope`/`userId` — authenticated localStorage reads need a dashboard-injected getter (mirror audio pattern).
+- **Hook test wrapper:** `createWrapper()` in `use-pomodoro-cycle.test.tsx` is QueryClient-only (no `OnboardingProvider`); prefer injected getters over `useOnboarding()` inside the hook.
+- **Auth check-in gate:** Authenticated users complete cycle-complete + check-in on-tab before `startBreakAfterWorkComplete` runs; out-of-tab alert fires only if tab is hidden at break-create time, not at work-cycle expiry.
 - **Audio:** `src/lib/audio.ts` — `playAlarm({ mode })`; `muted` skips playback; autoplay errors swallowed.
 - **Preference pattern:** `src/lib/cycle-audio-preference/storage.ts` — scoped localStorage keys for guest + user.
 - **Settings surface:** `timer-panel.tsx` — `break-settings-panel` for durations; `CycleAudioPreferenceControl` co-located on timer panel.
@@ -55,11 +58,17 @@ Follow co-located `*.test.ts` beside source; reuse `OnboardingScope` from `~/lib
 
 ## Critical Implementation Details
 
-**Trigger timing:** Fire only at the end of `startBreakAfterWorkComplete`, after `startWorker(endTime)` succeeds — when `cycleKindRef.current` is `SHORT_BREAK` or `LONG_BREAK` and `stateRef.current === "running"`. Do **not** fire from `handleCycleExpired` (work end / check-in pending).
+**Trigger timing:** Fire only inside `startBreakAfterWorkComplete`, **synchronously immediately after** `startWorker(endTime)` (~1940) and **before** `await Promise.all(invalidate...)` — when `cycleKindRef.current` is `SHORT_BREAK` or `LONG_BREAK` and `stateRef.current === "running"`. Do **not** fire from `handleCycleExpired` (work end / check-in pending). Do **not** defer alert to the end of the async function (user may refocus during network I/O).
 
 **Visibility guard:** Use `document.visibilityState !== "visible"` at fire time. Do not rely solely on `tabWasHiddenWhileRunningRef` (may reset when user briefly focuses tab between work end and break start).
 
-**Audio vs notification:** Notification when permission `granted` and out-of-tab toggle on. Background `playAlarm` when toggle on and `CycleEndAudioMode !== "muted"`. Both respect master out-of-tab toggle (FR-004).
+**Preference wiring (F1):** Add `getOutOfTabBreakAlertsEnabled?: () => boolean` to `UsePomodoroCycleOptions`. Wire from `pomodoro-dashboard.tsx` via `use-out-of-tab-break-alerts-preference` (same pattern as `getCycleEndAudioMode`). Do **not** read scoped localStorage inside the hook — it lacks `userId` for authenticated keys.
+
+**Audio vs notification:** Notification when permission `granted` and out-of-tab toggle on. Background `playAlarm` when toggle on and `CycleEndAudioMode !== "muted"`. Both respect master out-of-tab toggle (FR-004). When permission is **denied**, skip notification but still attempt background audio (best-effort; FR-001 / US-01).
+
+**Auth reach window (F5):** Work-end alarm still fires from `handleCycleExpired` while hidden. Break-start notification fires only if tab is hidden during async `cycles.create` + `startWorker` — manual tests must hide tab **after** check-in submit, not only at work expiry.
+
+**Overlay priority (F3):** Permission prompt runs after `shouldDeferFirstRun()` clears (merge-success / guest import), and after first-run / kickoff overlays dismiss — before or alongside cycle-intention on first start (pick: show permission prompt **after** cycle-intention closes, before timer actually starts). Never stack atop merge-success overlay.
 
 **Idempotency:** Module must no-op if called twice for the same break cycle (guard with last-notified cycle id or timestamp) — prevents double fire from React strict mode or retry paths.
 
@@ -151,7 +160,7 @@ Expose master toggle and one-time permission explain without touching timer stat
 
 **Intent**: Single control in break settings — “Alert me when break starts (other tab)” with `data-testid="out-of-tab-break-alerts-toggle"`.
 
-**Contract**: Co-located smoke test (`out-of-tab-break-alerts-control.test.tsx`) — toggle calls `onChange`; link/helper text mentions easy disable.
+**Contract**: Co-located smoke test (`out-of-tab-break-alerts-control.test.tsx`) — toggle calls `onChange`; link/helper text mentions easy disable. When `Notification.permission === "denied"`, show non-blocking helper explaining browser settings + “Try again” button calling `requestNotificationPermission()` (FR-001 / PRD OQ2). When `permission === "default"`, helper may link to first-session explain path.
 
 #### 3. Wire into timer panel
 
@@ -167,7 +176,7 @@ Expose master toggle and one-time permission explain without touching timer stat
 
 **Intent**: Shown once before/at first timed session start — short explain + “Enable notifications” / “Not now”; sets `notificationPromptDismissed` on either path.
 
-**Contract**: `data-testid="break-alerts-permission-prompt"`; defer if `shouldDeferFirstRun()` true (`~/lib/onboarding/defer.ts`); do not stack atop merge-success overlay.
+**Contract**: `data-testid="break-alerts-permission-prompt"`; defer if `shouldDeferFirstRun()` true (`~/lib/onboarding/defer.ts`); do not stack atop merge-success overlay. Overlay z-index follows existing wedge/onboarding patterns (`home-shell.tsx` gates).
 
 #### 5. Prompt trigger
 
@@ -175,7 +184,15 @@ Expose master toggle and one-time permission explain without touching timer stat
 
 **Intent**: On first `Start Cycle` when prompt not dismissed and `Notification.permission === "default"`, show prompt then proceed with start on dismiss.
 
-**Contract**: Prompt at most once per browser profile (storage flag); “Not now” leaves settings path documented in UI copy.
+**Contract**: Prompt at most once per browser profile (storage flag); “Not now” leaves settings path documented in UI copy. **Overlay sequence:** first-run / kickoff dismiss → cycle-intention (if shown) → permission prompt → start cycle. Manual verify on first authenticated start with check-in gate enabled.
+
+#### 6. Dashboard → hook preference bridge
+
+**File**: `src/app/_components/pomodoro-dashboard.tsx`
+
+**Intent**: Pass `getOutOfTabBreakAlertsEnabled: () => enabled` into `usePomodoroCycle` options alongside `getCycleEndAudioMode` (Phase 3 depends on this wiring; stub getter returning `true` until Phase 3 is acceptable during Phase 2 only if hook not yet called).
+
+**Contract**: Authenticated and guest scopes both resolve correctly via `use-out-of-tab-break-alerts-preference(scope)`.
 
 ### Success Criteria
 
@@ -188,8 +205,10 @@ Expose master toggle and one-time permission explain without touching timer stat
 
 - First session → prompt appears once; “Not now” does not re-show on refresh
 - Toggle off → stored in localStorage (guest and auth scopes isolated)
+- Denied permission → settings shows helper + “Try again”; toggle still controls out-of-tab audio path
+- First authenticated start → permission prompt does not stack with first-run / cycle-intention
 
-**Implementation Note**: Confirm prompt does not fight first-run overlay before Phase 3.
+**Implementation Note**: Confirm overlay sequence before Phase 3 hook wiring.
 
 ---
 
@@ -201,23 +220,39 @@ Minimal timer-hub change — call orchestrator at break start when tab hidden.
 
 ### Changes Required
 
-#### 1. Hook integration
+#### 1. Extend hook options
 
 **File**: `src/hooks/use-pomodoro-cycle.ts`
 
-**Intent**: At end of `startBreakAfterWorkComplete`, after `startWorker(endTime)`, invoke `maybeAlertBreakStart` with current visibility, preferences (read storage or inject via ref from dashboard — prefer reading storage directly in hook with onboarding scope from existing mode ref), `getCycleEndAudioModeRef.current()`, and `breakCycle.id`.
+**Intent**: Add `getOutOfTabBreakAlertsEnabled?: () => boolean` to `UsePomodoroCycleOptions`; store in ref like `getCycleEndAudioModeRef`. Default `() => true` when omitted (tests / backward compat).
 
-**Contract**: If `shouldPlayBackgroundAudio`, call `audioRef.current.playAlarm({ mode })` (same ref as existing alarm). Do not modify `handleCycleExpired` catchUp or tab-pulse logic.
+**Contract**: No `useOnboarding()` inside hook — getter only.
 
-#### 2. Hook tests (extend before or with integration)
+#### 2. Hook integration
+
+**File**: `src/hooks/use-pomodoro-cycle.ts`
+
+**Intent**: Inside `startBreakAfterWorkComplete`, **immediately after** `startWorker(endTime)` and **before** `await Promise.all(invalidate...)`, invoke `maybeAlertBreakStart` with `document.visibilityState !== "visible"`, `getOutOfTabBreakAlertsEnabledRef.current()`, `Notification.permission`, `getCycleEndAudioModeRef.current()`, and `breakCycle.id`.
+
+**Contract**: If `shouldPlayBackgroundAudio`, call `audioRef.current.playAlarm({ mode })` (same ref as existing alarm). Do not modify `handleCycleExpired` catchUp or tab-pulse logic. Do not await anything between `startWorker` and alert call.
+
+#### 3. Dashboard wiring
+
+**File**: `src/app/_components/pomodoro-dashboard.tsx`
+
+**Intent**: Pass `getOutOfTabBreakAlertsEnabled: () => outOfTabEnabled` from `use-out-of-tab-break-alerts-preference` into `usePomodoroCycle`.
+
+**Contract**: Toggle changes in settings reflected on next break start without page reload.
+
+#### 4. Hook tests (extend before or with integration)
 
 **File**: `src/hooks/use-pomodoro-cycle.test.tsx`
 
-**Intent**: Add cases in new `describe("usePomodoroCycle break out-of-tab alerts")` — mock `maybeAlertBreakStart` or `Notification`; hidden tab at break start → orchestrator called once; visible → not called; check-in pending path → not called until break starts.
+**Intent**: Add cases in new `describe("usePomodoroCycle break out-of-tab alerts")` — pass `getOutOfTabBreakAlertsEnabled: () => true/false`; mock `maybeAlertBreakStart` or `Notification`; hidden tab at break start → orchestrator called once; visible → not called; check-in pending path → not called until break starts; toggle false → not called.
 
-**Contract**: Duplicate `queryTasks` mock in describe `beforeEach` if needed so `-t` filter runs isolated (health-check note).
+**Contract**: Duplicate `queryTasks` mock in describe `beforeEach` if needed so `-t` filter runs isolated (health-check note). Use injected getter — no `OnboardingProvider` in `createWrapper()`.
 
-#### 3. Regression suite
+#### 5. Regression suite
 
 **File**: (no new files)
 
@@ -237,7 +272,9 @@ Minimal timer-hub change — call orchestrator at break start when tab hidden.
 #### Manual Verification
 
 - Two-tab manual test: start cycle, hide tab, complete work + check-in, break starts → notification + sound
+- Auth path: hide tab **after** check-in submit, before break timer visible → notification when break starts
 - Toggle off → no notification on next break
+- Denied notification permission, toggle on → no notification, best-effort background audio, timer state intact
 - In-tab break start (tab focused) → no system notification; existing in-tab behavior unchanged
 
 **Implementation Note**: Pause for manual two-tab verification before Phase 4.

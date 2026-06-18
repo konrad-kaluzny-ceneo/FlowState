@@ -3,7 +3,12 @@ import { dirname } from "node:path";
 import { parseArgs } from "node:util";
 import { Agent, CursorAgentError, type SDKMessage } from "@cursor/sdk";
 import { buildReviewPrompt } from "./build-prompt.js";
-import { getCurrentBranch, resolveRepoUrl } from "./git-scope.js";
+import {
+	changeIdFromBranch,
+	GitScopeError,
+	getCurrentBranch,
+	resolveRepoUrl,
+} from "./git-scope.js";
 
 const { values } = parseArgs({
 	options: {
@@ -22,10 +27,10 @@ if (values.help) {
 
 Usage:
   pnpm review [--base main] [--change-id <id>] [--output reports/review.md]
-  pnpm review:cloud [--ref <branch>] [--output reports/review.md]
+  pnpm review:cloud [--ref <branch>] [--change-id <id>] [--output reports/review.md]
 
 Options:
-  --base <branch>     Compare against this branch (local, default: main)
+  --base <branch>     Compare against this branch (default: main)
   --change-id <id>    Load context/changes/<id>/plan.md for plan-drift review
   --cloud             Run on Cursor cloud VM (requires repo access for API key)
   --ref <branch>      Cloud starting ref (default: current branch)
@@ -48,12 +53,43 @@ if (!apiKey?.trim()) {
 
 const cwd = process.cwd();
 const base = values.base ?? "main";
-const changeId = values["change-id"];
 const useCloud = values.cloud ?? false;
 const outputPath = values.output;
 const resumeId = values.resume;
 
-const prompt = buildReviewPrompt({ base, changeId, cwd });
+let startingRef = values.ref;
+if (!startingRef && !useCloud) {
+	try {
+		startingRef = getCurrentBranch(cwd);
+	} catch (err) {
+		if (err instanceof GitScopeError) {
+			console.error(err.message);
+			process.exit(1);
+		}
+		throw err;
+	}
+}
+
+const changeId =
+	values["change-id"] ??
+	(startingRef ? changeIdFromBranch(startingRef) : undefined);
+
+let prompt: string;
+try {
+	prompt = buildReviewPrompt({
+		base,
+		changeId,
+		cwd,
+		cloud: useCloud,
+		startingRef,
+	});
+} catch (err) {
+	if (err instanceof GitScopeError) {
+		console.error(err.message);
+		process.exit(1);
+	}
+	throw err;
+}
 
 function extractAssistantText(event: SDKMessage): string | undefined {
 	if (event.type !== "assistant") {
@@ -80,7 +116,7 @@ try {
 								repos: [
 									{
 										url: resolveRepoUrl(cwd),
-										startingRef: values.ref ?? getCurrentBranch(cwd),
+										startingRef: startingRef ?? "HEAD",
 									},
 								],
 								skipReviewerRequest: true,

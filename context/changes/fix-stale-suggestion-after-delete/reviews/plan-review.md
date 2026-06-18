@@ -6,7 +6,7 @@
 - **Mode**: Deep (sub-agent code verification)
 - **Date**: 2026-06-18
 - **Reviewer**: Cursor Agent (sub-agent [090c66a6-fb48-4f39-945e-436873ff206e](090c66a6-fb48-4f39-945e-436873ff206e))
-- **Verdict**: APPROVE WITH FIXES
+- **Verdict**: SOUND (after triage fixes applied)
 - **Findings**: 0 critical, 4 major, 4 minor, 3 nit
 
 ## Verdicts
@@ -35,7 +35,7 @@ Grounding: plan paths ✓, symbols ✓ (`fetchKickoffSuggestion`, `fetchPostChec
   - Strength: Matches established hook options pattern; stable callback deps.
   - Tradeoff: One extra ref + effect.
   - Confidence: HIGH.
-- **Decision**: PENDING
+- **Decision**: FIXED — plan updated (Critical Implementation Details, Phase 1/2 contracts)
 
 ### F-02 — Effect dependency list under-specified
 
@@ -47,7 +47,7 @@ Grounding: plan paths ✓, symbols ✓ (`fetchKickoffSuggestion`, `fetchPostChec
   - Strength: Covers transition-to-ready with stale membership.
   - Tradeoff: Slightly broader effect surface; guard with id ∉ set check inside.
   - Confidence: HIGH.
-- **Decision**: PENDING
+- **Decision**: FIXED — plan updated (Critical Implementation Details, Phase 2 contract)
 
 ### F-03 — Kickoff refetch needs `_activeSessionId` null guard
 
@@ -59,7 +59,7 @@ Grounding: plan paths ✓, symbols ✓ (`fetchKickoffSuggestion`, `fetchPostChec
   - Strength: Prevents silent no-op leaving stale `ready`.
   - Tradeoff: Edge case only; must document in contract.
   - Confidence: HIGH.
-- **Decision**: PENDING
+- **Decision**: FIXED — plan updated (Critical Implementation Details, Phase 2 contract)
 
 ### F-04 — Accept-guard test missing from phase contracts
 
@@ -71,7 +71,7 @@ Grounding: plan paths ✓, symbols ✓ (`fetchKickoffSuggestion`, `fetchPostChec
   - Strength: Locks race guard from Critical Implementation Details.
   - Tradeoff: One more test case in large file.
   - Confidence: HIGH.
-- **Decision**: PENDING
+- **Decision**: FIXED — plan updated (Phase 1 test cases)
 
 ### F-05 — Pre-focus cleanup scope incomplete in test contract
 

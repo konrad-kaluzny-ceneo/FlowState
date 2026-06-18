@@ -26,6 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - uses: pnpm/action-setup@v4
@@ -48,14 +50,28 @@ jobs:
             exit 1
           fi
           mkdir -p reports
-          pnpm review:cloud \
-            --ref "${{ github.head_ref || github.ref_name }}" \
+          HEAD_REF="${{ github.head_ref || github.ref_name }}"
+          REVIEW_ARGS=(
+            --ref "$HEAD_REF"
             --output reports/review.md
+          )
+          if [[ "$HEAD_REF" == features/* ]]; then
+            REVIEW_ARGS+=(--change-id "${HEAD_REF#features/}")
+          fi
+          pnpm review:cloud "${REVIEW_ARGS[@]}"
 
       - name: Post PR comment
-        if: github.event_name == 'pull_request' && always() && steps.review.outcome == 'success'
+        if: github.event_name == 'pull_request' && steps.review.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          body="$(cat reports/review.md)"
-          gh pr comment "${{ github.event.pull_request.number }}" --body "$body"
+          PR="${{ github.event.pull_request.number }}"
+          REPO="${{ github.repository }}"
+          COMMENT_ID="$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
+            -q '.[] | select(.body | contains("<!-- cursor-review -->")) | .id' | head -1)"
+          if [ -n "$COMMENT_ID" ]; then
+            jq -n --rawfile body reports/review.md '{body: $body}' | \
+              gh api --method PATCH "repos/${REPO}/issues/comments/${COMMENT_ID}" --input -
+          else
+            gh pr comment "$PR" --body-file reports/review.md
+          fi

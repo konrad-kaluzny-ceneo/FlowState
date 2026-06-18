@@ -57,7 +57,8 @@ No changes to `useTaskMutations` or server routers.
 ## Open Risks & Assumptions
 
 - User report may have been kickoff idle (Path B), not break (Path A delete is disabled).
-- Refetch during kickoff requires valid `_activeSessionId` and `lastKickoffEnergyRef` — both should exist whenever kickoff suggestion is `ready`.
+- Refetch during kickoff requires valid `_activeSessionId` and `lastKickoffEnergyRef` — plan-review adds explicit `empty` fallback when session id missing.
+- Plan updated 2026-06-18 after plan-review (F-01–F-08): ref pattern, effect deps, accept-guard tests, `empty` vs `idle` oracle.
 
 ## Success Criteria (Summary)
 

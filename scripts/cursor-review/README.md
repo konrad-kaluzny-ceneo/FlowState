@@ -22,7 +22,7 @@ $env:CURSOR_API_KEY = "cursor_..."   # or load from .env.local
 pnpm review
 ```
 
-With change plan context (plan drift):
+With change plan context (plan drift). Auto-detected from `features/<change-id>` branch names; override explicitly:
 
 ```powershell
 pnpm review --change-id fix-stale-suggestion-after-delete
@@ -48,7 +48,7 @@ Runs on a Cursor VM against the GitHub repo. Useful when the runner has no full 
 pnpm review:cloud --ref features/my-change-id
 ```
 
-For GitHub Actions, add repository secret `CURSOR_API_KEY` and use workflow `.github/workflows/cursor-review.yml` (manual dispatch or PR trigger).
+For GitHub Actions, add repository secret `CURSOR_API_KEY`. Workflow `.github/workflows/cursor-review.yml` checks out the PR head commit, runs a cloud agent (scope computed inside the VM), auto-passes `--change-id` for `features/*` branches, and updates a single PR comment on each push.
 
 ## Runtime choice
 

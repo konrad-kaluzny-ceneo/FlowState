@@ -36,7 +36,7 @@ Mom Test git replay (4/5 commits with new co-change signal) and stack assessment
 - Full depcruise graph or HTML report in output
 - Replacing or auto-generating `repo-map.md`
 - Timer-hub paths outside `src/hooks/use-pomodoro-cycle.ts`, `src/app/_components/pomodoro-dashboard.tsx`, `src/lib/wedge/**` validation warnings (accept any repo path, but catalog optimized for hub)
-- Staged-diff / line-count quiet mode integration (defer — v1 uses `--top` and `--strict` only)
+- Staged-diff / line-count quiet mode and PRD FR-004 default-quiet behavior (defer to v2 — see **PRD FR-004 v1 deviation** below)
 - TypeScript product changes or new npm dependencies beyond existing stack
 
 ## Implementation Approach
@@ -45,11 +45,21 @@ Three phases: (1) git co-change core + CLI entry, (2) report formatter + test ca
 
 ## Critical Implementation Details
 
-**Git co-change algorithm:** For each commit touching the target path since `--since`, collect all other changed paths in that commit (via `git log --name-only` or per-commit `git diff-tree`). Increment counter per co-path; exclude the target path itself; normalize to forward slashes; filter to `src/` and `e2e/` only for default display (drop pure `context/` rows from top table unless `--strict`).
+**PRD FR-004 v1 deviation:** PRD FR-004 describes `--strict` as diff-size warnings plus a default quiet mode (suppress output below a line threshold). v1 **does not** implement staged-diff or quiet mode. v1 `--strict` means only: (1) raise `--top` default from 8 → 15, (2) include `context/` co-change rows in the table, (3) print E2E `(co-change — not in depcruise graph)` labels inline. Diff-threshold quiet mode is v2; document this deviation in AGENTS.md maintainer section.
+
+**Git co-change algorithm:** For each commit touching the target path since `--since`, collect all other changed paths in that commit via `git log --name-only --no-merges`. Increment counter per co-path; exclude the target path itself; normalize paths to forward slashes and repo-relative form (strip leading `./`); skip merge commits to avoid duplicate inflation. Filter to `src/` and `e2e/` only for default display (drop pure `context/` rows from top table unless `--strict`).
 
 **Windows git:** Use `git` on PATH with `spawnSync("git", args, { shell: false, encoding: "utf8" })` — same safety model as `spawn-pnpm.mjs`.
 
+**Project root resolution:** Walk up from `cwd` until `.git` directory found; if none, fall back to env vars used by agent-hooks (`CURSOR_PROJECT_DIR`, `CLAUDE_PROJECT_DIR`). Extends agent-hooks pattern — agent-hooks does not walk `.git` today, but subdir runs from `scripts/` require walk-up.
+
+**Output length NFR:** Default mode targets ≤40 lines. `--strict` may exceed one screen (top 15 + `context/` rows + E2E labels); print a one-line footer when row count exceeds 40: `Expanded (--strict) — see context/map/repo-map.md for full blast radius`.
+
 **E2E labeling:** Any row under `e2e/` must print `(co-change — not in depcruise graph)` in `--strict` mode or in test-catalog footnote once.
+
+**Vitest outside `src/`:** First co-located tests under `scripts/change-impact/`. Global `vitest.config.ts` uses jsdom + `setupFiles` for app tests — script tests must declare `// @vitest-environment node` and test pure parsers only (no React/DOM). If ESM import friction appears, add a vitest `projects` split in a follow-up; not required for v1 if mocks stay on exported pure helpers.
+
+**Depcruise fan-out metric (optional, Phase 3):** Run full graph JSON, not `--focus` neighborhood alone. Command: `pnpm exec depcruise src --output-type json --output-to -` (or reuse existing `pnpm depcruise` config). Count **direct dependents**: modules with an import edge pointing at the target file (regex-escaped path in module id). Label stdout line `Direct dependents (depcruise): N — see repo-map §4 for architect fan-out`; do not claim repo-map “19 fan-out” total from `--focus` depth-1 output.
 
 ---
 
