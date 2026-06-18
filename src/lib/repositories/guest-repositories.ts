@@ -54,10 +54,12 @@ function toDomainCycle(
 		sessionId: string;
 		taskId: string | null;
 		kind: "WORK" | "SHORT_BREAK" | "LONG_BREAK";
-		state: "RUNNING" | "COMPLETED" | "INTERRUPTED";
+		state: "RUNNING" | "PAUSED" | "COMPLETED" | "INTERRUPTED";
 		configuredDurationSec: number;
 		startedAt: Date;
 		endedAt: Date | null;
+		pausedAt?: Date | null;
+		remainingDurationSec?: number | null;
 	},
 	snapshot: ReturnType<typeof loadSnapshot>,
 ): DomainActiveCycle {
@@ -76,6 +78,8 @@ function toDomainCycle(
 		configuredDurationSec: cycle.configuredDurationSec,
 		startedAt: cycle.startedAt,
 		endedAt: cycle.endedAt,
+		pausedAt: cycle.pausedAt ?? null,
+		remainingDurationSec: cycle.remainingDurationSec ?? null,
 		task: task != null ? { id: task.id, title: task.title } : null,
 	};
 }
@@ -360,7 +364,10 @@ export function createGuestCycleRepository(): CycleRepository {
 	return {
 		async getActive() {
 			const snapshot = loadSnapshot();
-			const cycle = snapshot.cycles.find((c) => c.state === "RUNNING") ?? null;
+			const cycle =
+				snapshot.cycles.find(
+					(c) => c.state === "RUNNING" || c.state === "PAUSED",
+				) ?? null;
 			return cycle != null ? toDomainCycle(cycle, snapshot) : null;
 		},
 
@@ -373,10 +380,10 @@ export function createGuestCycleRepository(): CycleRepository {
 				throw new Error("No active guest session");
 			}
 
-			const existingRunning = snapshot.cycles.find(
-				(c) => c.state === "RUNNING",
+			const existingActive = snapshot.cycles.find(
+				(c) => c.state === "RUNNING" || c.state === "PAUSED",
 			);
-			if (existingRunning != null) {
+			if (existingActive != null) {
 				throw new Error("A cycle is already running");
 			}
 
@@ -448,8 +455,11 @@ export function createGuestCycleRepository(): CycleRepository {
 			const endedAt = new Date();
 			const { error } = mutateSnapshot((snapshot) => {
 				const cycle = snapshot.cycles.find((c) => c.id === input.cycleId);
-				if (cycle == null || cycle.state !== "RUNNING") {
-					throw new Error("Cycle is not running");
+				if (
+					cycle == null ||
+					(cycle.state !== "RUNNING" && cycle.state !== "PAUSED")
+				) {
+					throw new Error("Cycle is not running or paused");
 				}
 
 				return {
@@ -465,6 +475,88 @@ export function createGuestCycleRepository(): CycleRepository {
 			if (error != null) {
 				throw new Error(error);
 			}
+		},
+
+		async pause(input) {
+			const pausedAt = new Date();
+			const { error } = mutateSnapshot((snapshot) => {
+				const cycle = snapshot.cycles.find((c) => c.id === input.cycleId);
+				if (cycle == null || cycle.state !== "RUNNING") {
+					throw new Error("Cycle is not running");
+				}
+
+				return {
+					...snapshot,
+					cycles: snapshot.cycles.map((c) =>
+						c.id === input.cycleId
+							? {
+									...c,
+									state: "PAUSED" as const,
+									pausedAt,
+									remainingDurationSec: input.remainingDurationSec,
+								}
+							: c,
+					),
+				};
+			});
+
+			if (error != null) {
+				throw new Error(error);
+			}
+
+			const snapshot = loadSnapshot();
+			const cycle = snapshot.cycles.find((c) => c.id === input.cycleId);
+			if (cycle == null) {
+				throw new Error("Cycle not found");
+			}
+
+			return toDomainCycle(cycle, snapshot);
+		},
+
+		async resume(input) {
+			const now = new Date();
+			const { error } = mutateSnapshot((snapshot) => {
+				const cycle = snapshot.cycles.find((c) => c.id === input.cycleId);
+				if (cycle == null || cycle.state !== "PAUSED") {
+					throw new Error("Cycle is not paused");
+				}
+
+				const remainingDurationSec = Math.min(
+					cycle.configuredDurationSec,
+					Math.max(0, cycle.remainingDurationSec ?? 0),
+				);
+				const resumedStartedAt = new Date(
+					now.getTime() -
+						(cycle.configuredDurationSec - remainingDurationSec) * 1000,
+				);
+
+				return {
+					...snapshot,
+					cycles: snapshot.cycles.map((c) =>
+						c.id === input.cycleId
+							? {
+									...c,
+									state: "RUNNING" as const,
+									startedAt: resumedStartedAt,
+									pausedAt: null,
+									remainingDurationSec: null,
+								}
+							: c,
+					),
+				};
+			});
+
+			if (error != null) {
+				throw new Error(error);
+			}
+
+			const snapshot = loadSnapshot();
+			const cycle = snapshot.cycles.find((c) => c.id === input.cycleId);
+			if (cycle == null) {
+				throw new Error("Cycle not found");
+			}
+
+			return toDomainCycle(cycle, snapshot);
 		},
 
 		async rebindTask(input) {

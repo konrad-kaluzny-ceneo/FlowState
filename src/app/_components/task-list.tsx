@@ -312,7 +312,7 @@ type TaskListProps = {
 	focusedTaskId: DomainTaskId | null;
 	highlightedTaskId?: DomainTaskId | null;
 	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void;
-	cycleState: "idle" | "running" | "completed";
+	cycleState: "idle" | "running" | "paused" | "completed";
 	cycleKind?: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null;
 	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
 	suggestionLoading?: boolean;
@@ -699,19 +699,24 @@ export function TaskList({
 
 	const activeTasks = tasks.filter((t) => t.status === "active");
 	const completedTasks = tasks.filter((t) => t.status === "completed");
-	const cycleLocked = cycleState === "running" || cycleState === "completed";
+	const cycleLocked =
+		cycleState === "running" ||
+		cycleState === "paused" ||
+		cycleState === "completed";
 	const isBreakCycle =
 		cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
 	const focusLocked =
-		(cycleState === "running" && cycleKind === "WORK") ||
+		((cycleState === "running" || cycleState === "paused") &&
+			cycleKind === "WORK") ||
 		cycleState === "completed" ||
 		(isBreakCycle && suggestionLoading);
 	const markCompleteLocked =
 		cycleState === "completed" ||
 		isBreakCycle ||
-		(cycleState === "running" && cycleKind !== "WORK");
+		((cycleState === "running" || cycleState === "paused") &&
+			cycleKind !== "WORK");
 	const canMidCycleMarkComplete =
-		cycleState === "running" &&
+		(cycleState === "running" || cycleState === "paused") &&
 		cycleKind === "WORK" &&
 		onMidCycleMarkComplete != null;
 	const dragDisabled = cycleLocked || isMutating;

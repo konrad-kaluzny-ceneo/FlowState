@@ -5,7 +5,9 @@ import { TimerPanel } from "./timer-panel";
 
 const defaultProps = {
 	focusedTask: { id: 1, title: "Write docs" },
-	onInterrupt: vi.fn(),
+	onInterrupt: vi.fn().mockResolvedValue(undefined),
+	onPause: vi.fn().mockResolvedValue(undefined),
+	onResume: vi.fn().mockResolvedValue(undefined),
 	onStart: vi.fn().mockResolvedValue(undefined),
 	remainingMs: 0,
 	state: "idle" as const,
@@ -92,5 +94,74 @@ describe("TimerPanel", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Start Cycle" }));
 
 		expect(onStart).toHaveBeenCalledWith(15 * 60);
+	});
+
+	it("shows Pause and Interrupt when running", () => {
+		render(
+			<TimerPanel {...defaultProps} remainingMs={125_000} state="running" />,
+		);
+
+		expect(screen.getByTestId("timer-panel-running")).toBeTruthy();
+		expect(screen.getByTestId("timer-pause")).toBeTruthy();
+		expect(screen.getByTestId("timer-interrupt")).toBeTruthy();
+		expect(screen.queryByTestId("timer-resume")).toBeNull();
+	});
+
+	it("calls onPause when Pause is clicked", () => {
+		const onPause = vi.fn().mockResolvedValue(undefined);
+		render(
+			<TimerPanel
+				{...defaultProps}
+				onPause={onPause}
+				remainingMs={125_000}
+				state="running"
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("timer-pause"));
+
+		expect(onPause).toHaveBeenCalledOnce();
+	});
+
+	it("shows Resume and frozen countdown when paused", () => {
+		render(
+			<TimerPanel {...defaultProps} remainingMs={90_000} state="paused" />,
+		);
+
+		expect(screen.getByTestId("timer-panel-paused")).toBeTruthy();
+		expect(screen.getByTestId("timer-countdown").textContent).toBe("01:30");
+		expect(screen.getByTestId("timer-resume")).toBeTruthy();
+		expect(screen.queryByTestId("timer-pause")).toBeNull();
+		expect(screen.queryByTestId("timer-interrupt")).toBeNull();
+	});
+
+	it("calls onResume when Resume is clicked", () => {
+		const onResume = vi.fn().mockResolvedValue(undefined);
+		render(
+			<TimerPanel
+				{...defaultProps}
+				onResume={onResume}
+				remainingMs={90_000}
+				state="paused"
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("timer-resume"));
+
+		expect(onResume).toHaveBeenCalledOnce();
+	});
+
+	it("uses break labels on a paused short break", () => {
+		render(
+			<TimerPanel
+				{...defaultProps}
+				cycleKind="SHORT_BREAK"
+				remainingMs={300_000}
+				state="paused"
+			/>,
+		);
+
+		expect(screen.getByText("Break paused")).toBeTruthy();
+		expect(screen.getByRole("button", { name: "Resume break" })).toBeTruthy();
 	});
 });

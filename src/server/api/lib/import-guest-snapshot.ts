@@ -32,9 +32,9 @@ export async function importGuestSnapshot(
 	}
 
 	return db.$transaction(async (tx) => {
-		// Avoid duplicate RUNNING cycles when import is retried after a partial client failure.
+		// Avoid duplicate active cycles when import is retried after a partial client failure.
 		await tx.cycle.updateMany({
-			where: { userId, state: "RUNNING" },
+			where: { userId, state: { in: ["RUNNING", "PAUSED"] } },
 			data: { state: "COMPLETED", endedAt: new Date() },
 		});
 
@@ -116,11 +116,13 @@ export async function importGuestSnapshot(
 				guestCycle.configuredDurationSec * 1000;
 			const isExpired = expiresAt <= now;
 			const state =
-				guestCycle.state === "RUNNING" && !isExpired
-					? "RUNNING"
-					: guestCycle.state === "RUNNING" && isExpired
-						? "COMPLETED"
-						: guestCycle.state;
+				guestCycle.state === "PAUSED"
+					? "PAUSED"
+					: guestCycle.state === "RUNNING" && !isExpired
+						? "RUNNING"
+						: guestCycle.state === "RUNNING" && isExpired
+							? "COMPLETED"
+							: guestCycle.state;
 			const endedAt =
 				state === "COMPLETED" || state === "INTERRUPTED"
 					? (guestCycle.endedAt ?? new Date(expiresAt))
@@ -136,6 +138,12 @@ export async function importGuestSnapshot(
 					configuredDurationSec: guestCycle.configuredDurationSec,
 					startedAt: guestCycle.startedAt,
 					endedAt,
+					...(state === "PAUSED"
+						? {
+								pausedAt: guestCycle.pausedAt ?? new Date(),
+								remainingDurationSec: guestCycle.remainingDurationSec ?? 0,
+							}
+						: {}),
 				},
 			});
 

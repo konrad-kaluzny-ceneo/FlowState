@@ -28,24 +28,40 @@ export async function completeKickoffReadiness(
 	});
 }
 
+function isKickoffSuggestionNextResponse(response: {
+	url: () => string;
+	ok: () => boolean;
+	request: () => { postData: () => string | null };
+}): boolean {
+	if (!response.url().includes("suggestion.next") || !response.ok()) {
+		return false;
+	}
+	const postData = response.request().postData();
+	return postData?.includes('"context":"kickoff"') ?? false;
+}
+
+/** Register before dismissing kickoff readiness — response can finish before the click settles. */
+export function waitForKickoffSuggestionResponse(page: Page) {
+	return page.waitForResponse(
+		(response) => isKickoffSuggestionNextResponse(response),
+		{ timeout: 20_000 },
+	);
+}
+
 export async function waitForKickoffSuggestion(
 	page: Page,
 	options?: { readinessCompleted?: boolean },
 ) {
-	if (options?.readinessCompleted !== true) {
-		await completeKickoffReadiness(page, "skip");
+	if (options?.readinessCompleted === true) {
+		await expect(page.getByTestId("task-suggestion-card")).toBeVisible({
+			timeout: 20_000,
+		});
+		return;
 	}
 
-	await page.waitForResponse(
-		(response) => {
-			if (!response.url().includes("suggestion.next") || !response.ok()) {
-				return false;
-			}
-			const postData = response.request().postData();
-			return postData?.includes('"context":"kickoff"') ?? false;
-		},
-		{ timeout: 20_000 },
-	);
+	const responsePromise = waitForKickoffSuggestionResponse(page);
+	await completeKickoffReadiness(page, "skip");
+	await responsePromise;
 }
 
 export async function expectKickoffVisible(

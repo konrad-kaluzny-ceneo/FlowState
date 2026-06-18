@@ -27,7 +27,8 @@ export type WedgeConductorInput = {
 	isPostCheckInTransitioning: boolean;
 	activeCycle: unknown | null;
 	returnHandoffGateOpen: boolean;
-	state: "idle" | "running" | "completed";
+	cyclePaused: boolean;
+	state: "idle" | "running" | "paused" | "completed";
 };
 
 export type WedgeConductorOutput = {
@@ -42,7 +43,7 @@ export type WedgeConductorOutput = {
 
 export type KickoffEligibilityInput = {
 	mode: "guest" | "authenticated";
-	state: "idle" | "running" | "completed";
+	state: "idle" | "running" | "paused" | "completed";
 	cycleKind: string | null;
 	focusedTaskId: string | number | null;
 	awaitingCheckIn: boolean;
@@ -54,6 +55,7 @@ export type KickoffEligibilityInput = {
 	sessionStartIdleFlag: boolean;
 	postBreakIdleFlag: boolean;
 	returnHandoffGateOpen: boolean;
+	cyclePaused: boolean;
 };
 
 const GATE_PRIORITY: WedgeGate[] = [
@@ -68,6 +70,17 @@ const GATE_PRIORITY: WedgeGate[] = [
 function gateCandidates(
 	input: WedgeConductorInput,
 ): Partial<Record<WedgeGate, boolean>> {
+	if (input.cyclePaused) {
+		return {
+			session_closure: false,
+			wind_down: false,
+			check_in: false,
+			cycle_intention: false,
+			kickoff_readiness: false,
+			cycle_complete: false,
+		};
+	}
+
 	const showSessionClosure = input.pendingClosureLine != null;
 
 	const showWindDown =
@@ -152,6 +165,10 @@ export function resolveWedgeBeat(
 export function computeKickoffEligible(
 	input: KickoffEligibilityInput,
 ): boolean {
+	if (input.cyclePaused || input.state === "paused") {
+		return false;
+	}
+
 	if (input.returnHandoffGateOpen) {
 		return false;
 	}

@@ -10,7 +10,7 @@ import {
 	completeKickoffReadiness,
 	expectKickoffDurationChips,
 	expectKickoffVisible,
-	waitForKickoffSuggestion,
+	waitForKickoffSuggestionResponse,
 } from "./helpers/kickoff";
 import { dismissFirstRunIfVisible } from "./helpers/onboarding";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
@@ -42,8 +42,9 @@ async function prepareSessionStartKickoff(
 	await page.reload();
 	await getActiveAfterReload;
 	await dismissFirstRunIfVisible(page);
+	const kickoffSettled = waitForKickoffSuggestionResponse(page);
 	await completeKickoffReadiness(page, readinessEnergy);
-	await waitForKickoffSuggestion(page, { readinessCompleted: true });
+	await kickoffSettled;
 }
 
 test.describe("Session kickoff suggestion (S-15)", () => {

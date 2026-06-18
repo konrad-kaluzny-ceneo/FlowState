@@ -31,7 +31,7 @@ export type ClosureLineInput = {
 	cyclesCompleted: number;
 	tasksCompleted: number;
 	latestEnergy: EnergyLevel | null;
-	endedBy: "user" | "timeout";
+	endedBy: "user" | "timeout" | "pause_cap";
 };
 
 export type ReturnHandoffInput = {
@@ -94,6 +94,13 @@ export function buildClosureLine(input: ClosureLineInput): string {
 	const taskPart = formatTaskCount(input.tasksCompleted);
 	const statsParts = [cyclePart, taskPart].filter(Boolean).join(", ");
 	const energyPart = formatEnergy(input.latestEnergy);
+
+	if (input.endedBy === "pause_cap") {
+		if (energyPart) {
+			return `Your pause ran long — session complete — ${statsParts}. ${capitalize(energyPart)}.`;
+		}
+		return `Your pause ran long — session complete — ${statsParts}. Take a breath.`;
+	}
 
 	if (energyPart) {
 		return `${CLOSURE_PREFIX} — ${statsParts}. ${capitalize(energyPart)}.`;

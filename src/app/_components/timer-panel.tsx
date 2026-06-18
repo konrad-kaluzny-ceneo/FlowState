@@ -35,6 +35,8 @@ type TimerPanelProps = {
 	remainingMs: number;
 	focusedTask: FocusedTask;
 	onStart: (durationSec: number) => Promise<void>;
+	onPause: () => Promise<void>;
+	onResume: () => Promise<void>;
 	onInterrupt: () => Promise<void>;
 	isStarting?: boolean;
 	cycleKind?: CycleKind | null;
@@ -49,6 +51,8 @@ export function TimerPanel({
 	remainingMs,
 	focusedTask,
 	onStart,
+	onPause,
+	onResume,
 	onInterrupt,
 	isStarting = false,
 	cycleKind = null,
@@ -80,7 +84,12 @@ export function TimerPanel({
 	const breakMinSec = getMinBreakDurationSec();
 	const breakMaxSec = getMaxBreakDurationSec();
 
-	if (focusedTask == null && state !== "running" && state !== "completed") {
+	if (
+		focusedTask == null &&
+		state !== "running" &&
+		state !== "paused" &&
+		state !== "completed"
+	) {
 		return null;
 	}
 
@@ -88,10 +97,11 @@ export function TimerPanel({
 		return null;
 	}
 
-	if (state === "running") {
+	if (state === "running" || state === "paused") {
 		const isBreak = cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
 		const breakLabel =
 			cycleKind === "LONG_BREAK" ? "Long Break" : "Short Break";
+		const isPaused = state === "paused";
 
 		return (
 			<section
@@ -100,10 +110,16 @@ export function TimerPanel({
 						? "border-border-break bg-surface-break"
 						: "border-border-subtle bg-surface-card"
 				}`}
-				data-testid="timer-panel-running"
+				data-testid={isPaused ? "timer-panel-paused" : "timer-panel-running"}
 			>
 				<p className="text-sm text-text-secondary">
-					{isBreak ? breakLabel : "Focusing on"}
+					{isPaused
+						? isBreak
+							? "Break paused"
+							: "Paused"
+						: isBreak
+							? breakLabel
+							: "Focusing on"}
 				</p>
 				{!isBreak && (
 					<p className="mt-1 font-medium text-lg text-primary">
@@ -118,13 +134,35 @@ export function TimerPanel({
 				>
 					{formatRemainingMs(remainingMs)}
 				</p>
-				<button
-					className="mt-6 rounded-lg border border-border-subtle px-4 py-2 text-sm text-text-section transition hover:border-red-400/60 hover:text-red-600"
-					onClick={() => void onInterrupt()}
-					type="button"
-				>
-					{isBreak ? "End break early" : "Interrupt"}
-				</button>
+				{isPaused ? (
+					<button
+						className="mt-6 w-full rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover"
+						data-testid="timer-resume"
+						onClick={() => void onResume()}
+						type="button"
+					>
+						{isBreak ? "Resume break" : "Resume"}
+					</button>
+				) : (
+					<div className="mt-6 flex flex-col gap-3">
+						<button
+							className="w-full rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover"
+							data-testid="timer-pause"
+							onClick={() => void onPause()}
+							type="button"
+						>
+							{isBreak ? "Pause break" : "Pause"}
+						</button>
+						<button
+							className="rounded-lg border border-border-subtle px-4 py-2 text-sm text-text-section transition hover:border-red-400/60 hover:text-red-600"
+							data-testid="timer-interrupt"
+							onClick={() => void onInterrupt()}
+							type="button"
+						>
+							{isBreak ? "End break early" : "Interrupt"}
+						</button>
+					</div>
+				)}
 			</section>
 		);
 	}

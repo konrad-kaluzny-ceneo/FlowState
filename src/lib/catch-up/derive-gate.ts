@@ -1,10 +1,11 @@
 import type { CatchUpGate } from "./types";
 
 export type CatchUpGateSnapshot = {
-	state: "idle" | "running" | "completed";
+	state: "idle" | "running" | "paused" | "completed";
 	cycleKind: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null;
 	awaitingCheckIn: boolean;
 	pendingSuggestionStatus: "idle" | "loading" | "ready" | "empty" | "error";
+	cyclePaused?: boolean;
 };
 
 function isBreakKind(
@@ -16,6 +17,10 @@ function isBreakKind(
 export function deriveCatchUpGate(
 	snapshot: CatchUpGateSnapshot,
 ): CatchUpGate | null {
+	if (snapshot.cyclePaused || snapshot.state === "paused") {
+		return null;
+	}
+
 	if (snapshot.awaitingCheckIn) {
 		return "CHECK_IN";
 	}

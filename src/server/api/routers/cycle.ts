@@ -67,7 +67,7 @@ export const cycleRouter = createTRPCRouter({
 		return ctx.db.cycle.findFirst({
 			where: {
 				userId: ctx.session.user.id,
-				state: "RUNNING",
+				state: { in: ["RUNNING", "PAUSED"] },
 			},
 			orderBy: { startedAt: "desc" },
 			include: { task: true },
@@ -113,11 +113,14 @@ export const cycleRouter = createTRPCRouter({
 
 			try {
 				return await ctx.db.$transaction(async (tx) => {
-					const existingRunning = await tx.cycle.findFirst({
-						where: { userId: ctx.session.user.id, state: "RUNNING" },
+					const existingActive = await tx.cycle.findFirst({
+						where: {
+							userId: ctx.session.user.id,
+							state: { in: ["RUNNING", "PAUSED"] },
+						},
 					});
 
-					if (existingRunning) {
+					if (existingActive) {
 						throw new TRPCError({
 							code: "CONFLICT",
 							message: "A cycle is already running",
@@ -309,9 +312,75 @@ export const cycleRouter = createTRPCRouter({
 				where: {
 					id: input.cycleId,
 					userId: ctx.session.user.id,
+					state: { in: ["RUNNING", "PAUSED"] },
+				},
+				data: {
+					state: "INTERRUPTED",
+					endedAt: new Date(),
+					pausedAt: null,
+					remainingDurationSec: null,
+				},
+			});
+
+			if (count === 0) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Cycle is not running or paused",
+				});
+			}
+
+			await ctx.db.session.update({
+				where: { id: cycle.sessionId },
+				data: { lastActivityAt: new Date() },
+			});
+
+			const updated = await ctx.db.cycle.findFirst({
+				where: { id: input.cycleId },
+			});
+
+			if (!updated) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			return updated;
+		}),
+
+	pause: protectedProcedure
+		.input(
+			z.object({
+				cycleId: z.number().int(),
+				remainingDurationSec: z.number().int().min(0),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const cycle = await ctx.db.cycle.findFirst({
+				where: { id: input.cycleId, userId: ctx.session.user.id },
+			});
+
+			if (!cycle) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			if (input.remainingDurationSec > cycle.configuredDurationSec) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Remaining duration exceeds configured cycle duration",
+				});
+			}
+
+			const pausedAt = new Date();
+
+			const { count } = await ctx.db.cycle.updateMany({
+				where: {
+					id: input.cycleId,
+					userId: ctx.session.user.id,
 					state: "RUNNING",
 				},
-				data: { state: "INTERRUPTED", endedAt: new Date() },
+				data: {
+					state: "PAUSED",
+					pausedAt,
+					remainingDurationSec: input.remainingDurationSec,
+				},
 			});
 
 			if (count === 0) {
@@ -328,6 +397,66 @@ export const cycleRouter = createTRPCRouter({
 
 			const updated = await ctx.db.cycle.findFirst({
 				where: { id: input.cycleId },
+				include: { task: true },
+			});
+
+			if (!updated) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			return updated;
+		}),
+
+	resume: protectedProcedure
+		.input(z.object({ cycleId: z.number().int() }))
+		.mutation(async ({ ctx, input }) => {
+			const cycle = await ctx.db.cycle.findFirst({
+				where: { id: input.cycleId, userId: ctx.session.user.id },
+			});
+
+			if (!cycle) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			const now = new Date();
+			const remainingDurationSec = Math.min(
+				cycle.configuredDurationSec,
+				Math.max(0, cycle.remainingDurationSec ?? 0),
+			);
+			const resumedStartedAt = new Date(
+				now.getTime() -
+					(cycle.configuredDurationSec - remainingDurationSec) * 1000,
+			);
+
+			const { count } = await ctx.db.cycle.updateMany({
+				where: {
+					id: input.cycleId,
+					userId: ctx.session.user.id,
+					state: "PAUSED",
+				},
+				data: {
+					state: "RUNNING",
+					startedAt: resumedStartedAt,
+					pausedAt: null,
+					remainingDurationSec: null,
+				},
+			});
+
+			if (count === 0) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Cycle is not paused",
+				});
+			}
+
+			await ctx.db.session.update({
+				where: { id: cycle.sessionId },
+				data: { lastActivityAt: new Date() },
+			});
+
+			const updated = await ctx.db.cycle.findFirst({
+				where: { id: input.cycleId },
+				include: { task: true },
 			});
 
 			if (!updated) {

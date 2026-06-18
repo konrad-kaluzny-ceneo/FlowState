@@ -12,6 +12,8 @@ const endSession = vi.fn();
 const createCycle = vi.fn();
 const completeCycle = vi.fn();
 const interruptCycle = vi.fn();
+const pauseCycle = vi.fn();
+const resumeCycle = vi.fn();
 const rebindTask = vi.fn();
 const updateTask = vi.fn();
 const getActiveCycle = vi.fn();
@@ -85,6 +87,8 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 			create: createCycle,
 			complete: completeCycle,
 			interrupt: interruptCycle,
+			pause: pauseCycle,
+			resume: resumeCycle,
 			rebindTask,
 		},
 		tasks: {
@@ -319,6 +323,10 @@ function mockInterruptCycleDeferred() {
 }
 
 describe("usePomodoroCycle", () => {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	beforeEach(() => {
 		sessionStorage.clear();
 		resetActiveCycleRecoveryForTests();
@@ -343,6 +351,20 @@ describe("usePomodoroCycle", () => {
 		}));
 		completeCycle.mockResolvedValue(undefined);
 		interruptCycle.mockResolvedValue(undefined);
+		pauseCycle.mockImplementation(
+			async (input: {
+				cycleId: number | string;
+				remainingDurationSec: number;
+			}) => ({
+				...makeActiveCycle({ id: input.cycleId as number }),
+				state: "PAUSED" as const,
+				remainingDurationSec: input.remainingDurationSec,
+				pausedAt: new Date(),
+			}),
+		);
+		resumeCycle.mockImplementation(async () =>
+			makeActiveCycle({ state: "RUNNING", startedAt: new Date() }),
+		);
 		updateTask.mockResolvedValue(undefined);
 		createCheckInMutate.mockResolvedValue({
 			id: 1,
@@ -487,6 +509,56 @@ describe("usePomodoroCycle", () => {
 
 		expect(createCycle).toHaveBeenCalled();
 		expect(result.current.state).toBe("running");
+	});
+
+	it("awaits create before pause persists to server during optimistic start", async () => {
+		const { releaseCreateCycle } = mockCreateCycleDeferred();
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		await act(async () => {
+			await result.current.start(60);
+		});
+		await waitFor(() => {
+			expect(result.current.awaitingCycleIntention).toBe(true);
+		});
+
+		let startPromise!: Promise<void>;
+		act(() => {
+			startPromise = result.current.skipCycleIntention();
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		let pausePromise!: Promise<void>;
+		act(() => {
+			pausePromise = result.current.pause();
+		});
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+		expect(pauseCycle).not.toHaveBeenCalled();
+
+		await act(async () => {
+			releaseCreateCycle();
+			await startPromise;
+			await pausePromise;
+		});
+
+		expect(pauseCycle).toHaveBeenCalledWith({
+			cycleId: 42,
+			remainingDurationSec: expect.any(Number),
+		});
+		expect(result.current.state).toBe("paused");
 	});
 
 	it("restores running state when interruptCycle fails after optimistic interrupt", async () => {
@@ -789,6 +861,171 @@ describe("usePomodoroCycle", () => {
 
 		expect(interruptCycle).toHaveBeenCalledWith({ cycleId: 10 });
 		expect(result.current.state).toBe("idle");
+	});
+
+	it("pause freezes remaining and enters paused state", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		const beforePause = result.current.remainingMs;
+
+		await act(async () => {
+			await result.current.pause();
+		});
+
+		expect(pauseCycle).toHaveBeenCalledWith({
+			cycleId: 10,
+			remainingDurationSec: expect.any(Number),
+		});
+		expect(result.current.state).toBe("paused");
+		expect(
+			Math.abs(result.current.remainingMs - beforePause),
+		).toBeLessThanOrEqual(2000);
+
+		const frozenRemaining = result.current.remainingMs;
+		const worker = fakeWorkers[fakeWorkers.length - 1];
+		act(() => {
+			worker?.emitTick();
+		});
+		expect(result.current.remainingMs).toBe(frozenRemaining);
+	});
+
+	it("resume restores running countdown from paused remaining", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.pause();
+		});
+
+		const pausedRemaining = result.current.remainingMs;
+
+		await act(async () => {
+			await result.current.resume();
+		});
+
+		expect(resumeCycle).toHaveBeenCalledWith({ cycleId: 10 });
+		expect(result.current.state).toBe("running");
+		expect(
+			Math.abs(result.current.remainingMs - pausedRemaining),
+		).toBeLessThanOrEqual(2000);
+	});
+
+	it("hydrates PAUSED cycle from getActive without starting countdown", async () => {
+		activeCycleData = makeActiveCycle({
+			state: "PAUSED",
+			remainingDurationSec: 180,
+			pausedAt: new Date(),
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("paused");
+		});
+
+		expect(result.current.remainingMs).toBe(180_000);
+		expect(fakeWorkers).toHaveLength(0);
+	});
+
+	it("ends session with pause_cap closure when paused past cap", async () => {
+		const { PAUSE_CAP_MS } = await import("~/lib/pause-cap");
+
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		pauseCycle.mockImplementationOnce(
+			async (input: {
+				cycleId: number | string;
+				remainingDurationSec: number;
+			}) => ({
+				...makeActiveCycle({ id: input.cycleId as number }),
+				state: "PAUSED" as const,
+				remainingDurationSec: input.remainingDurationSec,
+				pausedAt: new Date(Date.now() - PAUSE_CAP_MS - 1000),
+			}),
+		);
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.pause();
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		expect(endSession).toHaveBeenCalled();
+		expect(interruptCycle).toHaveBeenCalledWith({ cycleId: 10 });
+		expect(result.current.pendingClosureLine).toContain("Your pause ran long");
+	});
+
+	it("restores running state when pauseCycle fails after optimistic pause", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		pauseCycle.mockRejectedValueOnce(new Error("network"));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.pause();
+		});
+
+		expect(pauseCycle).toHaveBeenCalledWith({
+			cycleId: 10,
+			remainingDurationSec: expect.any(Number),
+		});
+		expect(result.current.state).toBe("running");
+		expect(result.current.remainingMs).toBeGreaterThan(0);
+		expect(result.current.error).toMatch(/Could not pause/);
 	});
 
 	it("confirmComplete calls complete and auto-starts break", async () => {

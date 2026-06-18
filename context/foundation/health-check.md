@@ -2,13 +2,19 @@
 project: flow-state
 version: 3
 checked_at: 2026-06-13T17:30:00Z
-updated: 2026-06-13
+updated: 2026-06-18
 health_status: healthy
 context_type: brownfield
 prd_version: 3
 language_family: js
 stack_assessment_available: true
 stack_assessment_path: context/foundation/stack-assessment.md
+change_thread_health_checks:
+  - id: break-alerts-out-of-tab
+    checked_at: 2026-06-18T20:32:00Z
+    thread_health: needs-attention
+    focus: "timer visibility / audio tests — break-out-of-tab MVP gaps"
+    stack_assessment_ref: context/foundation/stack-assessment.md#change-thread-assessment-break-alerts-outside-active-tab-narrow-mvp
 checks_run:
   - lockfile
   - dependency_audit
@@ -166,3 +172,132 @@ Health status: **healthy** (housekeeping refresh 2026-06-12; re-run `pnpm audit`
 MVP shipped 2026-06-07. CI: GitHub Actions (quality + e2e belt). Vitest + Playwright in place. PRD v3 defines iteration backlog. Stack assessment: [`stack-assessment.md`](stack-assessment.md).
 
 Next step: next roadmap slice per `roadmap.md` §Backlog Handoff — recommended **S-17** (`session-narrative-summary`).
+
+---
+
+## Change thread health check: Break alerts (timer visibility / audio)
+
+**Checked:** 2026-06-18  
+**Thread:** `break-alerts-out-of-tab`  
+**Focus:** Test coverage for out-of-tab break alerts (PRD change thread + stack-assessment gaps T2–T4)  
+**Baseline report above:** unchanged — project remains **healthy** for general agent work.
+
+> **Thread verdict: needs-attention** — existing timer visibility/audio tests cover **work-cycle catch-up on tab return**, not **break-start reachability while the tab stays hidden**. Safe to plan the slice; budget new tests before shipping FR-002/FR-003.
+
+### Execution snapshot (2026-06-18)
+
+Commands run locally (read-only audit):
+
+```text
+pnpm exec vitest run src/lib/audio.test.ts src/lib/cycle-end-tab-pulse.test.ts src/hooks/use-cycle-end-audio-preference.test.tsx
+  → 13 passed
+
+pnpm exec vitest run src/app/_components/tab-return-catchup.test.tsx src/app/_components/cycle-audio-preference-control.test.tsx
+  → 6 passed
+
+pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx
+  → 68 passed (includes 6 catchUp + playAlarm/visibility cases)
+
+pnpm exec vitest run src/hooks/use-pomodoro-cycle-guest.test.tsx -t "catchUp"
+  → 2 passed
+```
+
+**Note:** `vitest run … -t catchUp` on the auth hook file **alone** fails (6/6) — `queryTasks` mock lives in parent `describe`; full file run is the reliable gate. Fix describe isolation optional, not blocking MVP.
+
+### Coverage inventory
+
+| Layer | Location | Count / status | Covers today | Gap vs break-alerts MVP |
+|-------|----------|----------------|--------------|-------------------------|
+| Unit | `src/lib/audio.test.ts` | 6 tests ✓ | `playAlarm` normal/soft/muted; autoplay `NotAllowedError` swallowed | No break-start trigger; no background-tab contract |
+| Unit | `src/lib/cycle-end-tab-pulse.test.ts` | 5 tests ✓ | Title/favicon pulse module | Hook fires pulse **WORK + soft/muted only** — not break start |
+| Unit | `src/lib/cycle-audio-preference/storage.test.ts` | ✓ | Scoped localStorage (guest + user) | Pattern for out-of-tab toggle — **not implemented** |
+| Hook | `src/hooks/use-pomodoro-cycle.test.tsx` | 68 tests ✓ | Hidden **work** expiry → `catchUp` + `playAlarm`; visibility recalc; muted while hidden | **No break-start** alert; **no `Notification`**; catchUp is **on return**, not out-of-tab ping |
+| Hook | `src/hooks/use-pomodoro-cycle-guest.test.tsx` | 2 catchUp ✓ | Guest hidden-tab catchUp | Same gap as auth hook |
+| Component | `src/app/_components/tab-return-catchup.test.tsx` | 4 tests ✓ | Copy when user **returns** (`tab-return-catchup`) | In-tab overlay after return — not system notification while away |
+| Component | `src/app/_components/cycle-audio-preference-control.test.tsx` | 2 tests ✓ | In-app audio mode toggle | No notification permission / out-of-tab disable UI |
+| E2E helper | `e2e/helpers/visibility.ts` | Present | `runWhileHidden` mocks `visibilityState` + `visibilitychange` | **Zero imports** in active `e2e/*.spec.ts` |
+| E2E belt | `e2e/pomodoro-cycle.spec.ts` et al. | Belt green (CI) | In-tab Pomodoro flows | `background-tab-return.spec.ts` **demoted 2026-06-11** per `test-plan.md` §6 — Vitest backfill; **no belt guard for out-of-tab** |
+
+### Stack-assessment cross-reference
+
+| Stack-assessment gap | Health-check finding |
+|--------------------|----------------------|
+| **T2** Break-start vs work-end timing | Hook tests assert catchUp on **cycle expiry while hidden**, not when `SHORT_BREAK`/`LONG_BREAK` **starts running** after check-in gate. No test pins the hook transition the slice must wire. |
+| **T3** E2E notification + background tab | `runWhileHidden` exists but unused; no `context.grantPermissions(['notifications'])` in e2e; no spec asserts one notification per break start. |
+| **T4** Graceful degradation | `audio.test.ts` covers autoplay block; **no test** for denied notification + blocked audio leaving timer state consistent. |
+
+`test-plan.md` explicitly documents intentional **e2e demotion** for background-tab and quiet-audio (Vitest authority). Break-alerts MVP **re-opens out-of-tab behavior** — cookbook §6 should gain a new entry when the slice ships; until then agents must not assume belt covers hidden-tab break reach.
+
+### Recommended fixes (thread — Category A)
+
+Fix before implementing break-alerts slice (`/10x-new` → `/10x-plan`):
+
+#### 1. Unit tests for notification helper (FR-002)
+
+**Impact:** Without tests, agents will ship notification logic only in the hook — hard to test permission states and “one ping per break start.”  
+**Effort:** moderate (15–30 min)  
+**Fix:**
+
+```bash
+# After adding e.g. src/lib/break-out-of-tab-alert/:
+pnpm exec vitest run src/lib/break-out-of-tab-alert.test.ts
+# Cases: granted + hidden → notify once; visible → no notify; denied → no throw; preference off → skip
+```
+
+#### 2. Hook tests at break-start + hidden (FR-002, FR-003, T2)
+
+**Impact:** Prevents wiring alerts to `handleCycleExpired` (work end) instead of break running.  
+**Effort:** moderate  
+**Fix:**
+
+```bash
+# Extend use-pomodoro-cycle.test.tsx (or co-located *.test.ts):
+# — check-in pending → no out-of-tab alert
+# — break running + visibility hidden → notification helper invoked once + playAlarm
+pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx
+```
+
+#### 3. E2E spec with `runWhileHidden` + notifications (T3)
+
+**Impact:** Belt stays in-tab; thread needs at least one Playwright spec before CI promotion of notification behavior.  
+**Effort:** moderate  
+**Fix:**
+
+```bash
+# New e2e/break-out-of-tab-alert.spec.ts — tag @skip-belt initially if flaky
+# Use e2e/helpers/visibility.ts runWhileHidden + context.grantPermissions(['notifications'])
+# Assert: at most one notification event; settings toggle suppresses next break
+set CI=true; pnpm exec playwright test e2e/break-out-of-tab-alert.spec.ts
+```
+
+#### 4. Belt regression guard while editing timer hub
+
+**Impact:** FR-005 preservation — in-tab catchUp/audio must not regress.  
+**Effort:** quick (run existing suites)  
+**Fix:**
+
+```bash
+pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx src/hooks/use-pomodoro-cycle-guest.test.tsx src/lib/audio.test.ts
+set CI=true; pnpm test:e2e:belt
+```
+
+#### 5. Optional — catchUp describe isolation
+
+**Impact:** `vitest -t catchUp` fails without parent mocks — slows targeted debugging.  
+**Effort:** quick  
+**Fix:** Duplicate minimal `queryTasks` mock in catchUp `beforeEach` or extract shared test harness.
+
+### Category B (thread)
+
+- **Promote notification e2e to belt** — only after `@skip-belt` spec is stable across CI workers (Neon auth + notification permission variability).
+- **Update `test-plan.md` §6 cookbook** — add break-out-of-tab pattern when slice merges (location, reference test, run command).
+
+### Thread summary
+
+**Thread health: needs-attention** (does not downgrade baseline **healthy**).
+
+**Strengths:** Solid Vitest coverage for audio modes, autoplay failure, catchUp-on-hidden-expiry, guest parity, and tab-return UI; E2E visibility helper ready; full hook file (68 tests) passes.
+
+**Gaps for break-alerts MVP:** no Notification tests; no break-start trigger tests; no active E2E using `runWhileHidden`; intentional historical demotion of background-tab e2e must be superseded by a new thread-specific spec.
+
+**Recommended next step for this thread:** `/10x-new break-alerts-out-of-tab` → `/10x-plan` with test sub-phases 1–3 above before editing `use-pomodoro-cycle.ts`.

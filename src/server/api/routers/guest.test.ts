@@ -22,16 +22,20 @@ type TaskRow = {
 	personaPresetId: string | null;
 };
 
+type CycleWhereState = string | { in: string[] };
+
 type CycleRow = {
 	id: number;
 	sessionId: number;
 	userId: string;
 	taskId: number | null;
 	kind: "WORK";
-	state: "RUNNING" | "COMPLETED" | "INTERRUPTED";
+	state: "RUNNING" | "PAUSED" | "COMPLETED" | "INTERRUPTED";
 	configuredDurationSec: number;
 	startedAt: Date;
 	endedAt: Date | null;
+	pausedAt?: Date | null;
+	remainingDurationSec?: number | null;
 };
 
 let tasks: TaskRow[] = [];
@@ -84,9 +88,30 @@ vi.mock("~/server/db/index", () => ({
 				cycle: {
 					updateMany: vi.fn(
 						(args: {
-							where: { userId?: string; state?: string };
-							data: Partial<Pick<CycleRow, "state" | "endedAt">>;
+							where: { userId?: string; state?: CycleWhereState };
+							data: Partial<
+								Pick<
+									CycleRow,
+									| "state"
+									| "endedAt"
+									| "pausedAt"
+									| "remainingDurationSec"
+									| "startedAt"
+								>
+							>;
 						}) => {
+							const matchesState = (
+								cycleState: CycleRow["state"],
+								whereState?: CycleWhereState,
+							): boolean => {
+								if (whereState == null) {
+									return true;
+								}
+								if (typeof whereState === "string") {
+									return cycleState === whereState;
+								}
+								return whereState.in.includes(cycleState);
+							};
 							let count = 0;
 							for (const cycle of cycles) {
 								if (
@@ -95,10 +120,7 @@ vi.mock("~/server/db/index", () => ({
 								) {
 									continue;
 								}
-								if (
-									args.where.state != null &&
-									cycle.state !== args.where.state
-								) {
+								if (!matchesState(cycle.state, args.where.state)) {
 									continue;
 								}
 								Object.assign(cycle, args.data);

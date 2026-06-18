@@ -4,16 +4,20 @@ vi.mock("~/lib/auth/server", () => ({
 	auth: { getSession: vi.fn() },
 }));
 
+type CycleWhereState = string | { in: string[] };
+
 type CycleRecord = {
 	id: number;
 	sessionId: number;
 	userId: string;
 	taskId: number | null;
 	kind: "WORK" | "SHORT_BREAK" | "LONG_BREAK";
-	state: "RUNNING" | "COMPLETED" | "INTERRUPTED";
+	state: "RUNNING" | "PAUSED" | "COMPLETED" | "INTERRUPTED";
 	configuredDurationSec: number;
 	startedAt: Date;
 	endedAt: Date | null;
+	pausedAt?: Date | null;
+	remainingDurationSec?: number | null;
 };
 
 type TaskRecord = {
@@ -37,19 +41,45 @@ let nextCycleId = 1;
 let nextSessionId = 1;
 
 vi.mock("~/server/db/index", () => {
+	const matchesState = (
+		cycleState: CycleRecord["state"],
+		whereState?: CycleWhereState,
+	): boolean => {
+		if (whereState == null) {
+			return true;
+		}
+		if (typeof whereState === "string") {
+			return cycleState === whereState;
+		}
+		return whereState.in.includes(cycleState);
+	};
+
 	const findCycle = (where: {
 		id?: number;
 		userId?: string;
-		state?: string;
+		state?: CycleWhereState;
 	}) => {
 		return (
 			cycles.find((c) => {
 				if (where.id != null && c.id !== where.id) return false;
 				if (where.userId != null && c.userId !== where.userId) return false;
-				if (where.state != null && c.state !== where.state) return false;
+				if (!matchesState(c.state, where.state)) return false;
 				return true;
 			}) ?? null
 		);
+	};
+
+	const findLatestCycle = (where: {
+		userId?: string;
+		state?: CycleWhereState;
+	}) => {
+		const matching = cycles.filter((c) => {
+			if (where.userId != null && c.userId !== where.userId) return false;
+			if (!matchesState(c.state, where.state)) return false;
+			return true;
+		});
+		matching.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+		return matching[0] ?? null;
 	};
 
 	return {
@@ -60,11 +90,15 @@ vi.mock("~/server/db/index", () => {
 						where: {
 							id?: number;
 							userId?: string;
-							state?: string;
+							state?: CycleWhereState;
 						};
+						orderBy?: { startedAt: "desc" };
 						include?: { task: boolean };
 					}) => {
-						const cycle = findCycle(args.where);
+						const cycle =
+							args.orderBy?.startedAt === "desc" && args.where.id == null
+								? findLatestCycle(args.where)
+								: findCycle(args.where);
 						if (!cycle) return Promise.resolve(null);
 						if (args.include?.task && cycle.taskId != null) {
 							const task = tasks.find((t) => t.id === cycle.taskId) ?? null;
@@ -150,7 +184,17 @@ vi.mock("~/server/db/index", () => {
 				update: vi.fn(
 					(args: {
 						where: { id: number };
-						data: Partial<Pick<CycleRecord, "state" | "endedAt" | "taskId">>;
+						data: Partial<
+							Pick<
+								CycleRecord,
+								| "state"
+								| "endedAt"
+								| "taskId"
+								| "pausedAt"
+								| "remainingDurationSec"
+								| "startedAt"
+							>
+						>;
 						include?: { task: boolean };
 					}) => {
 						const cycle = cycles.find((c) => c.id === args.where.id);
@@ -171,16 +215,24 @@ vi.mock("~/server/db/index", () => {
 						where: {
 							id?: number;
 							userId?: string;
-							state?: string;
+							state?: CycleWhereState;
 						};
-						data: Partial<Pick<CycleRecord, "state" | "endedAt">>;
+						data: Partial<
+							Pick<
+								CycleRecord,
+								| "state"
+								| "endedAt"
+								| "pausedAt"
+								| "remainingDurationSec"
+								| "startedAt"
+							>
+						>;
 					}) => {
 						const matching = cycles.filter((c) => {
 							if (args.where.id != null && c.id !== args.where.id) return false;
 							if (args.where.userId != null && c.userId !== args.where.userId)
 								return false;
-							if (args.where.state != null && c.state !== args.where.state)
-								return false;
+							if (!matchesState(c.state, args.where.state)) return false;
 							return true;
 						});
 						for (const cycle of matching) {
@@ -451,6 +503,225 @@ describe("cycle router lifecycle", () => {
 		await expect(caller().interrupt({ cycleId: 1 })).rejects.toMatchObject({
 			code: "NOT_FOUND",
 		});
+	});
+
+	it("pause transitions RUNNING to PAUSED with remaining duration", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+		];
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
+
+		const updated = await caller().pause({
+			cycleId: 1,
+			remainingDurationSec: 600,
+		});
+
+		expect(updated.state).toBe("PAUSED");
+		expect(updated.remainingDurationSec).toBe(600);
+		expect(updated.pausedAt).not.toBeNull();
+		expect(sessions[0]?.interruptionCount).toBe(0);
+	});
+
+	it("resume transitions PAUSED to RUNNING and clears pause fields", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+		];
+		const pausedAt = new Date("2026-06-18T10:00:00Z");
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "PAUSED",
+				configuredDurationSec: 1500,
+				startedAt: new Date("2026-06-18T09:00:00Z"),
+				endedAt: null,
+				pausedAt,
+				remainingDurationSec: 600,
+			},
+		];
+
+		const updated = await caller().resume({ cycleId: 1 });
+
+		expect(updated.state).toBe("RUNNING");
+		expect(updated.pausedAt).toBeNull();
+		expect(updated.remainingDurationSec).toBeNull();
+		expect(updated.startedAt.getTime()).toBeGreaterThan(pausedAt.getTime());
+		const expectedEndMs =
+			updated.startedAt.getTime() + updated.configuredDurationSec * 1000;
+		expect(expectedEndMs - Date.now()).toBeGreaterThanOrEqual(590_000);
+		expect(expectedEndMs - Date.now()).toBeLessThanOrEqual(610_000);
+	});
+
+	it("getActive returns PAUSED cycle", async () => {
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "PAUSED",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+				pausedAt: new Date(),
+				remainingDurationSec: 420,
+			},
+		];
+
+		const result = await caller().getActive();
+		expect(result).toMatchObject({
+			id: 1,
+			state: "PAUSED",
+			remainingDurationSec: 420,
+		});
+	});
+
+	it("create throws CONFLICT when user already has PAUSED cycle", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+		];
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "PAUSED",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+				pausedAt: new Date(),
+				remainingDurationSec: 300,
+			},
+		];
+
+		await expect(
+			caller().create({
+				sessionId: 1,
+				kind: "WORK",
+				configuredDurationSec: 1500,
+			}),
+		).rejects.toMatchObject({ code: "CONFLICT" });
+	});
+
+	it("pause throws BAD_REQUEST when cycle is not running", async () => {
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "PAUSED",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+				pausedAt: new Date(),
+				remainingDurationSec: 300,
+			},
+		];
+
+		await expect(
+			caller().pause({ cycleId: 1, remainingDurationSec: 100 }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+
+	it("pause throws BAD_REQUEST when remaining duration exceeds configured duration", async () => {
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 600,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
+
+		await expect(
+			caller().pause({ cycleId: 1, remainingDurationSec: 601 }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+
+	it("resume throws BAD_REQUEST when cycle is not paused", async () => {
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
+
+		await expect(caller().resume({ cycleId: 1 })).rejects.toMatchObject({
+			code: "BAD_REQUEST",
+		});
+	});
+
+	it("pause throws NOT_FOUND for another user's cycle", async () => {
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: "other-user",
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
+
+		await expect(
+			caller().pause({ cycleId: 1, remainingDurationSec: 100 }),
+		).rejects.toMatchObject({ code: "NOT_FOUND" });
 	});
 
 	it("complete throws BAD_REQUEST when cycle is not RUNNING", async () => {

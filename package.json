@@ -28,7 +28,9 @@
 		"depcruise:graph": "depcruise --output-type mermaid --output-to reports/dependency-graph.mmd src",
 		"depcruise:archi": "depcruise --output-type archi --output-to reports/dependency-archi.dot src",
 		"depcruise:report": "depcruise --output-type err-html --output-to reports/dependency-report.html src",
-		"prepare": "lefthook install"
+		"prepare": "lefthook install",
+		"review": "tsx scripts/cursor-review/review.ts",
+		"review:cloud": "tsx scripts/cursor-review/review.ts --cloud"
 	},
 	"dependencies": {
 		"@dnd-kit/core": "^6.3.1",
@@ -54,6 +56,8 @@
 	"devDependencies": {
 		"@axe-core/playwright": "^4.11.3",
 		"@biomejs/biome": "^2.4.15",
+		"@connectrpc/connect-node": "^1.7.0",
+		"@cursor/sdk": "^1.0.19",
 		"@fast-check/vitest": "^0.4.1",
 		"@playwright/test": "^1.60.0",
 		"@stryker-mutator/core": "^9.6.1",
