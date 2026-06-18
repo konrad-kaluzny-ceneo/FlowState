@@ -312,4 +312,51 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 			"Session complete — 1 cycle. Take a breath.",
 		);
 	});
+
+	// fix-closure-kickoff-mutex p3: flip to it() when dashboard mutex guards land
+	it.fails("does not show kickoff readiness overlay while session closure is pending", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
+				awaitingKickoffReadiness: true,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("session-closure-overlay")).toBeTruthy();
+		expect(screen.queryByTestId("kickoff-readiness-overlay")).toBeNull();
+	});
+
+	// fix-closure-kickoff-mutex p3: flip to it() when dashboard mutex guards land
+	it.fails("does not show check-in overlay while session closure is pending", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
+				awaitingCheckIn: true,
+				activeCycle: { id: 42 },
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableCheckInGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("session-closure-overlay")).toBeTruthy();
+		expect(screen.queryByTestId("check-in-overlay")).toBeNull();
+	});
 });
