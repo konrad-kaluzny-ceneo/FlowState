@@ -511,6 +511,56 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.state).toBe("running");
 	});
 
+	it("awaits create before pause persists to server during optimistic start", async () => {
+		const { releaseCreateCycle } = mockCreateCycleDeferred();
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		await act(async () => {
+			await result.current.start(60);
+		});
+		await waitFor(() => {
+			expect(result.current.awaitingCycleIntention).toBe(true);
+		});
+
+		let startPromise!: Promise<void>;
+		act(() => {
+			startPromise = result.current.skipCycleIntention();
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		let pausePromise!: Promise<void>;
+		act(() => {
+			pausePromise = result.current.pause();
+		});
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+		expect(pauseCycle).not.toHaveBeenCalled();
+
+		await act(async () => {
+			releaseCreateCycle();
+			await startPromise;
+			await pausePromise;
+		});
+
+		expect(pauseCycle).toHaveBeenCalledWith({
+			cycleId: 42,
+			remainingDurationSec: expect.any(Number),
+		});
+		expect(result.current.state).toBe("paused");
+	});
+
 	it("restores running state when interruptCycle fails after optimistic interrupt", async () => {
 		activeCycleData = makeActiveCycle({
 			id: 10,

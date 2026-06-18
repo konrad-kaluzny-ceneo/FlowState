@@ -1626,6 +1626,42 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		await submitCycleIntention(null);
 	}, [submitCycleIntention]);
 
+	const resolvePersistedCycleId =
+		useCallback(async (): Promise<DomainTaskId | null> => {
+			let cycle = activeCycleRef.current;
+			if (cycle == null) {
+				return null;
+			}
+
+			if (
+				mode === "authenticated" &&
+				typeof cycle.id === "number" &&
+				cycle.id < 0 &&
+				pendingCreateRef.current != null
+			) {
+				try {
+					await pendingCreateRef.current;
+				} catch {
+					return null;
+				}
+				cycle = activeCycleRef.current;
+			}
+
+			if (cycle == null) {
+				return null;
+			}
+
+			if (
+				mode === "authenticated" &&
+				typeof cycle.id === "number" &&
+				cycle.id < 0
+			) {
+				return null;
+			}
+
+			return cycle.id;
+		}, [mode]);
+
 	const interrupt = useCallback(async () => {
 		if (activeCycle == null) {
 			return;
@@ -1716,7 +1752,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			return;
 		}
 
-		const cycleId = activeCycle.id;
 		const savedEndTime = endTimeRef.current;
 		const frozenRemainingMs =
 			savedEndTime != null
@@ -1755,6 +1790,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		}
 
 		try {
+			const cycleId = await resolvePersistedCycleId();
+			if (cycleId == null) {
+				throw new Error("Cycle not persisted");
+			}
+
 			const updated = await cycles.pause({ cycleId, remainingDurationSec });
 			setActiveCycle(updated);
 			if (mode !== "authenticated") {
@@ -1787,6 +1827,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		startWorker,
 		state,
 		stopWorker,
+		resolvePersistedCycleId,
 	]);
 
 	const resume = useCallback(async () => {
@@ -1794,7 +1835,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			return;
 		}
 
-		const cycleId = activeCycle.id;
 		const frozenRemainingMs =
 			activeCycle.remainingDurationSec != null
 				? activeCycle.remainingDurationSec * 1000
@@ -1830,6 +1870,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		}
 
 		try {
+			const cycleId = await resolvePersistedCycleId();
+			if (cycleId == null) {
+				throw new Error("Cycle not persisted");
+			}
+
 			const updated = await cycles.resume({ cycleId });
 			setActiveCycle(updated);
 			if (mode !== "authenticated") {
@@ -1865,6 +1910,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		startWorker,
 		state,
 		stopWorker,
+		resolvePersistedCycleId,
 	]);
 
 	const startBreakAfterWorkComplete = useCallback(
