@@ -1,10 +1,10 @@
 ---
 change_id: fix-timeout-closure-on-load
 title: Timeout session closure on page load
-status: impl_reviewed
+status: archived
 created: 2026-06-18
 updated: 2026-06-18
-archived_at: null
+archived_at: 2026-06-18T15:00:00Z
 ---
 
 ## Notes
