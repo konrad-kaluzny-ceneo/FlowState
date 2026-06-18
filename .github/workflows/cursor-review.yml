@@ -50,11 +50,16 @@ jobs:
             exit 1
           fi
           mkdir -p reports
+          HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
           HEAD_REF="${{ github.head_ref || github.ref_name }}"
+          PR_URL="${{ github.event.pull_request.html_url || '' }}"
           REVIEW_ARGS=(
-            --ref "$HEAD_REF"
+            --ref "$HEAD_SHA"
             --output reports/review.md
           )
+          if [ -n "$PR_URL" ]; then
+            REVIEW_ARGS+=(--pr-url "$PR_URL")
+          fi
           if [[ "$HEAD_REF" == features/* ]]; then
             REVIEW_ARGS+=(--change-id "${HEAD_REF#features/}")
           fi

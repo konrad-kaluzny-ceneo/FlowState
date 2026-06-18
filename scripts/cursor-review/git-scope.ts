@@ -48,7 +48,14 @@ export function getCurrentBranch(cwd: string): string {
 	return git("rev-parse --abbrev-ref HEAD", cwd);
 }
 
+export function isCommitSha(ref: string): boolean {
+	return /^[0-9a-f]{7,40}$/i.test(ref);
+}
+
 export function changeIdFromBranch(branch: string): string | undefined {
+	if (isCommitSha(branch)) {
+		return undefined;
+	}
 	const match = /^features\/(.+)$/.exec(branch);
 	return match?.[1];
 }

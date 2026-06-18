@@ -1,7 +1,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { Agent, CursorAgentError, type SDKMessage } from "@cursor/sdk";
+import { config as loadEnv } from "dotenv";
 import { buildReviewPrompt } from "./build-prompt.js";
 import {
 	changeIdFromBranch,
@@ -16,6 +17,7 @@ const { values } = parseArgs({
 		"change-id": { type: "string" },
 		cloud: { type: "boolean", default: false },
 		ref: { type: "string" },
+		"pr-url": { type: "string" },
 		output: { type: "string" },
 		resume: { type: "string" },
 		help: { type: "boolean", default: false },
@@ -27,13 +29,14 @@ if (values.help) {
 
 Usage:
   pnpm review [--base main] [--change-id <id>] [--output reports/review.md]
-  pnpm review:cloud [--ref <branch>] [--change-id <id>] [--output reports/review.md]
+  pnpm review:cloud [--ref <sha-or-branch>] [--pr-url <url>] [--change-id <id>] [--output reports/review.md]
 
 Options:
   --base <branch>     Compare against this branch (default: main)
   --change-id <id>    Load context/changes/<id>/plan.md for plan-drift review
   --cloud             Run on Cursor cloud VM (requires repo access for API key)
-  --ref <branch>      Cloud starting ref (default: current branch)
+  --ref <sha|branch>  Cloud starting ref — prefer commit SHA (default: current branch)
+  --pr-url <url>      Attach cloud agent to an existing GitHub PR (CI use)
   --output <path>     Save review markdown to file (reports/ is gitignored)
   --resume <agentId>  Continue a previous agent conversation
   --help              Show this help
@@ -42,6 +45,9 @@ Requires CURSOR_API_KEY in the environment (see scripts/cursor-review/README.md)
 `);
 	process.exit(0);
 }
+
+loadEnv({ path: join(process.cwd(), ".env.local") });
+loadEnv({ path: join(process.cwd(), ".env") });
 
 const apiKey = process.env.CURSOR_API_KEY;
 if (!apiKey?.trim()) {
@@ -56,6 +62,7 @@ const base = values.base ?? "main";
 const useCloud = values.cloud ?? false;
 const outputPath = values.output;
 const resumeId = values.resume;
+const prUrl = values["pr-url"];
 
 let startingRef = values.ref;
 if (!startingRef && !useCloud) {
@@ -114,10 +121,15 @@ try {
 					? {
 							cloud: {
 								repos: [
-									{
-										url: resolveRepoUrl(cwd),
-										startingRef: startingRef ?? "HEAD",
-									},
+									prUrl
+										? {
+												url: resolveRepoUrl(cwd),
+												prUrl,
+											}
+										: {
+												url: resolveRepoUrl(cwd),
+												startingRef: startingRef ?? "HEAD",
+											},
 								],
 								skipReviewerRequest: true,
 							},

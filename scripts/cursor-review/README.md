@@ -5,20 +5,23 @@ Headless code review for FlowState using [`@cursor/sdk`](https://cursor.com/docs
 ## Setup
 
 1. Create an API key: [Cursor Dashboard → Integrations](https://cursor.com/dashboard/integrations) (user key) or Team → Service accounts (CI).
-2. Add to `.env.local` (not committed):
+2. Add to `.env.local` in the repo root (gitignored, loaded automatically by `pnpm review`):
 
    ```bash
    CURSOR_API_KEY="cursor_..."
    ```
 
+   CI uses the GitHub secret `CURSOR_API_KEY` — not `.env.local`.
+
 3. Node **22.13+** required (matches CI).
+
+`@cursor/sdk` local runtime also needs `@connectrpc/connect-node` (declared in this repo's `devDependencies` — upstream SDK omits it from published deps).
 
 ## Local review (feature branch)
 
 Compare current branch to `main` and stream the review to the terminal:
 
 ```powershell
-$env:CURSOR_API_KEY = "cursor_..."   # or load from .env.local
 pnpm review
 ```
 
@@ -42,11 +45,21 @@ pnpm review --resume agent-abc123
 
 ## Cloud review (PR / CI)
 
-Runs on a Cursor VM against the GitHub repo. Useful when the runner has no full dev setup.
+Runs on a Cursor VM against the GitHub repo. Prefer **commit SHA** over branch names — Cursor validates branch existence against GitHub and may reject names like `features/foo` even when the branch exists.
 
 ```powershell
-pnpm review:cloud --ref features/my-change-id
+$sha = git rev-parse HEAD
+pnpm review:cloud --ref $sha --change-id my-change-id
 ```
+
+On a PR, CI passes `--pr-url` so the agent attaches to the pull request directly.
+
+### Cloud troubleshooting
+
+| Error | Fix |
+| --- | --- |
+| `Failed to verify existence of branch` | Use `--ref $(git rev-parse HEAD)` instead of branch name; ensure repo is connected in [Cursor Integrations](https://cursor.com/dashboard/integrations) and API key has GitHub access |
+| `Missing CURSOR_API_KEY` | Set in `.env.local` and export in PowerShell before `pnpm review` |
 
 For GitHub Actions, add repository secret `CURSOR_API_KEY`. Workflow `.github/workflows/cursor-review.yml` checks out the PR head commit, runs a cloud agent (scope computed inside the VM), auto-passes `--change-id` for `features/*` branches, and updates a single PR comment on each push.
 
