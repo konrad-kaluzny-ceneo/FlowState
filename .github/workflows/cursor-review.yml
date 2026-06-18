@@ -43,6 +43,10 @@ jobs:
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         run: |
+          if [ ! -f scripts/cursor-review/review.ts ]; then
+            echo "Missing scripts/cursor-review/review.ts — commit the Cursor SDK scripts before enabling this workflow."
+            exit 1
+          fi
           mkdir -p reports
           pnpm review:cloud \
             --ref "${{ github.head_ref || github.ref_name }}" \
