@@ -1076,6 +1076,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		!awaitingWindDown &&
 		!isPostCheckInTransitioning &&
 		pendingSuggestion.status === "idle" &&
+		pendingClosureLine == null &&
 		hasActiveTasks &&
 		(sessionStartIdleFlag || postBreakIdleFlag);
 
@@ -1099,11 +1100,18 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		}
 
 		void (async () => {
+			const gen = kickoffFetchGenRef.current;
 			try {
 				const session = await sessions.getOrCreateActive();
+				if (gen !== kickoffFetchGenRef.current) {
+					return;
+				}
 				setActiveSessionId(session.id);
 				setAwaitingKickoffReadiness(true);
 			} catch {
+				if (gen !== kickoffFetchGenRef.current) {
+					return;
+				}
 				setPendingKickoffSuggestion({ status: "error" });
 			}
 		})();
