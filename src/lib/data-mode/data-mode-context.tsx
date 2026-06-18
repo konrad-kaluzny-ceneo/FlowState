@@ -100,7 +100,10 @@ export function DataModeProvider({
 					mutate: () => utils.client.session.getOrCreateActive.mutate(),
 				},
 				end: {
-					mutate: () => utils.client.session.end.mutate({}),
+					mutate: (input?: { closureLine?: string | null }) =>
+						utils.client.session.end.mutate({
+							closureLine: input?.closureLine ?? undefined,
+						}),
 				},
 			},
 		};

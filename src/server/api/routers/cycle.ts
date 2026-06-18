@@ -314,7 +314,12 @@ export const cycleRouter = createTRPCRouter({
 					userId: ctx.session.user.id,
 					state: { in: ["RUNNING", "PAUSED"] },
 				},
-				data: { state: "INTERRUPTED", endedAt: new Date() },
+				data: {
+					state: "INTERRUPTED",
+					endedAt: new Date(),
+					pausedAt: null,
+					remainingDurationSec: null,
+				},
 			});
 
 			if (count === 0) {
@@ -354,6 +359,13 @@ export const cycleRouter = createTRPCRouter({
 
 			if (!cycle) {
 				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			if (input.remainingDurationSec > cycle.configuredDurationSec) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Remaining duration exceeds configured cycle duration",
+				});
 			}
 
 			const pausedAt = new Date();
@@ -407,6 +419,14 @@ export const cycleRouter = createTRPCRouter({
 			}
 
 			const now = new Date();
+			const remainingDurationSec = Math.min(
+				cycle.configuredDurationSec,
+				Math.max(0, cycle.remainingDurationSec ?? 0),
+			);
+			const resumedStartedAt = new Date(
+				now.getTime() -
+					(cycle.configuredDurationSec - remainingDurationSec) * 1000,
+			);
 
 			const { count } = await ctx.db.cycle.updateMany({
 				where: {
@@ -416,7 +436,7 @@ export const cycleRouter = createTRPCRouter({
 				},
 				data: {
 					state: "RUNNING",
-					startedAt: now,
+					startedAt: resumedStartedAt,
 					pausedAt: null,
 					remainingDurationSec: null,
 				},

@@ -612,6 +612,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			void audioRef.current.preload(POMODORO_ALARM_URL).catch(() => {});
 
 			if (cycle.state === "PAUSED") {
+				stopWorker();
 				const frozenRemainingMs = pausedRemainingMs(cycle);
 				setState("paused");
 				stateRef.current = "paused";
@@ -641,7 +642,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			stateRef.current = "running";
 			startWorker(endTime);
 		},
-		[setCatchUpFromExpiry, startWorker],
+		[setCatchUpFromExpiry, startWorker, stopWorker],
 	);
 
 	const buildSessionClosureLine = useCallback(
@@ -731,15 +732,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			}
 
 			const delay = pausedAt.getTime() + PAUSE_CAP_MS - Date.now();
-			if (delay <= 0) {
-				void endSessionRef.current({ endedBy: "pause_cap" });
-				return;
-			}
-
-			pauseCapTimerRef.current = setTimeout(() => {
-				pauseCapTimerRef.current = null;
-				void endSessionRef.current({ endedBy: "pause_cap" });
-			}, delay);
+			pauseCapTimerRef.current = setTimeout(
+				() => {
+					pauseCapTimerRef.current = null;
+					void endSessionRef.current({ endedBy: "pause_cap" });
+				},
+				Math.max(0, delay),
+			);
 		},
 		[clearPauseCapTimer],
 	);
@@ -1766,16 +1765,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		stopWorker();
 		endTimeRef.current = null;
 
-		const pauseSnapshot =
-			mode === "authenticated"
-				? {
-						activeCycle,
-						state,
-						cycleKind,
-						remainingMs: frozenRemainingMs,
-						endTime: savedEndTime,
-					}
-				: null;
+		const pauseSnapshot = {
+			activeCycle,
+			state,
+			cycleKind,
+			remainingMs: frozenRemainingMs,
+			endTime: savedEndTime,
+		};
 
 		if (mode === "authenticated") {
 			setState("paused");
@@ -1804,16 +1800,16 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			}
 			await invalidateServerCycle();
 		} catch {
-			if (pauseSnapshot != null) {
-				setActiveCycle(pauseSnapshot.activeCycle);
-				setState(pauseSnapshot.state);
-				stateRef.current = pauseSnapshot.state;
-				setCycleKind(pauseSnapshot.cycleKind);
-				setRemainingMs(pauseSnapshot.remainingMs);
-				if (pauseSnapshot.endTime != null) {
-					endTimeRef.current = pauseSnapshot.endTime;
-					startWorker(pauseSnapshot.endTime);
-				}
+			setActiveCycle(pauseSnapshot.activeCycle);
+			activeCycleRef.current = pauseSnapshot.activeCycle;
+			setState(pauseSnapshot.state);
+			stateRef.current = pauseSnapshot.state;
+			setCycleKind(pauseSnapshot.cycleKind);
+			cycleKindRef.current = pauseSnapshot.cycleKind;
+			setRemainingMs(pauseSnapshot.remainingMs);
+			if (pauseSnapshot.endTime != null) {
+				endTimeRef.current = pauseSnapshot.endTime;
+				startWorker(pauseSnapshot.endTime);
 			}
 			setError("Could not pause the cycle. Try again.");
 		}

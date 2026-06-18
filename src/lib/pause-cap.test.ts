@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { PAUSE_CAP_MS } from "./pause-cap";
+import { PAUSE_CAP_MS } from "~/lib/pause-cap";
 
 describe("PAUSE_CAP_MS", () => {
 	it("defaults to 30 minutes", () => {

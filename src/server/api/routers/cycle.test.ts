@@ -575,6 +575,10 @@ describe("cycle router lifecycle", () => {
 		expect(updated.pausedAt).toBeNull();
 		expect(updated.remainingDurationSec).toBeNull();
 		expect(updated.startedAt.getTime()).toBeGreaterThan(pausedAt.getTime());
+		const expectedEndMs =
+			updated.startedAt.getTime() + updated.configuredDurationSec * 1000;
+		expect(expectedEndMs - Date.now()).toBeGreaterThanOrEqual(590_000);
+		expect(expectedEndMs - Date.now()).toBeLessThanOrEqual(610_000);
 	});
 
 	it("getActive returns PAUSED cycle", async () => {
@@ -657,6 +661,26 @@ describe("cycle router lifecycle", () => {
 
 		await expect(
 			caller().pause({ cycleId: 1, remainingDurationSec: 100 }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+
+	it("pause throws BAD_REQUEST when remaining duration exceeds configured duration", async () => {
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 600,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
+
+		await expect(
+			caller().pause({ cycleId: 1, remainingDurationSec: 601 }),
 		).rejects.toMatchObject({ code: "BAD_REQUEST" });
 	});
 

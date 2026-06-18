@@ -521,6 +521,15 @@ export function createGuestCycleRepository(): CycleRepository {
 					throw new Error("Cycle is not paused");
 				}
 
+				const remainingDurationSec = Math.min(
+					cycle.configuredDurationSec,
+					Math.max(0, cycle.remainingDurationSec ?? 0),
+				);
+				const resumedStartedAt = new Date(
+					now.getTime() -
+						(cycle.configuredDurationSec - remainingDurationSec) * 1000,
+				);
+
 				return {
 					...snapshot,
 					cycles: snapshot.cycles.map((c) =>
@@ -528,7 +537,7 @@ export function createGuestCycleRepository(): CycleRepository {
 							? {
 									...c,
 									state: "RUNNING" as const,
-									startedAt: now,
+									startedAt: resumedStartedAt,
 									pausedAt: null,
 									remainingDurationSec: null,
 								}

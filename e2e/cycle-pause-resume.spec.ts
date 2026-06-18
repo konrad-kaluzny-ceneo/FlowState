@@ -35,10 +35,6 @@ test.describe("Cycle pause and resume (S-24)", () => {
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 		await expect(page.getByTestId("timer-pause")).toBeVisible();
 
-		const countdownBeforePause = await page
-			.getByTestId("timer-countdown")
-			.textContent();
-
 		const pauseSettled = page.waitForResponse(
 			(response) =>
 				response.url().includes("cycle.pause") &&
@@ -55,11 +51,14 @@ test.describe("Cycle pause and resume (S-24)", () => {
 		await expect(page.getByTestId("check-in-overlay")).not.toBeVisible();
 		await expect(page.getByTestId("task-suggestion-card")).not.toBeVisible();
 
+		const pausedCountdownA = await page
+			.getByTestId("timer-countdown")
+			.textContent();
 		await expect
 			.poll(async () => page.getByTestId("timer-countdown").textContent(), {
 				timeout: 3_000,
 			})
-			.toBe(countdownBeforePause);
+			.toBe(pausedCountdownA);
 
 		const resumeSettled = page.waitForResponse(
 			(response) =>
@@ -77,7 +76,7 @@ test.describe("Cycle pause and resume (S-24)", () => {
 		const countdownAfterResume = await page
 			.getByTestId("timer-countdown")
 			.textContent();
-		expect(countdownAfterResume).toBe(countdownBeforePause);
+		expect(countdownAfterResume).toBe(pausedCountdownA);
 
 		await expect(page.getByTestId("timer-interrupt")).toBeVisible();
 	});
