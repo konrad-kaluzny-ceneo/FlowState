@@ -1,10 +1,9 @@
 ---
 change_id: create-wedge-trust-bridge
 title: Create wedge trust bridge
-status: impl_reviewed
-created: 2026-06-18
+status: archived
 updated: 2026-06-18
-archived_at: null
+archived_at: 2026-06-18T16:55:00Z
 ---
 
 ## Notes
