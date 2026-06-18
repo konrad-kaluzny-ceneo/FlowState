@@ -90,14 +90,18 @@ export function PomodoroDashboardBody({
 		(pomodoro.cycleKind === "SHORT_BREAK" ||
 			pomodoro.cycleKind === "LONG_BREAK");
 
+	const cyclePaused = pomodoro.state === "paused";
+
 	const showSuggestionCard =
 		enableSuggestionGate &&
+		!cyclePaused &&
 		!pomodoro.awaitingWindDown &&
 		isBreakRunning &&
 		pomodoro.pendingSuggestion.status !== "idle";
 
 	const showKickoffCard =
 		enableSuggestionGate &&
+		!cyclePaused &&
 		pomodoro.state === "idle" &&
 		pomodoro.focusedTaskId == null &&
 		pomodoro.pendingKickoffSuggestion.status !== "idle" &&
@@ -111,6 +115,7 @@ export function PomodoroDashboardBody({
 
 	const showKickoffDurationChips =
 		enableSuggestionGate &&
+		!cyclePaused &&
 		pomodoro.hasPreFocusedKickoff &&
 		pomodoro.state === "idle" &&
 		pomodoro.focusedTask != null &&
@@ -139,6 +144,7 @@ export function PomodoroDashboardBody({
 				isPostCheckInTransitioning: pomodoro.isPostCheckInTransitioning,
 				activeCycle: pomodoro.activeCycle,
 				returnHandoffGateOpen: pomodoro.returnHandoffGateOpen,
+				cyclePaused,
 				state: pomodoro.state,
 			}),
 		[
@@ -155,12 +161,14 @@ export function PomodoroDashboardBody({
 			pomodoro.activeCycle,
 			pomodoro.returnHandoffGateOpen,
 			pomodoro.state,
+			cyclePaused,
 		],
 	);
 
 	const wedgeGateActive = wedgeBeat.activeGate !== "none";
 
 	const showCycleCompleteCatchUp =
+		!cyclePaused &&
 		catchUp != null &&
 		pomodoro.state === "completed" &&
 		!pomodoro.awaitingCheckIn &&
@@ -169,17 +177,20 @@ export function PomodoroDashboardBody({
 		(catchUp.gate === "WORK_CONFIRM" || catchUp.gate === "BREAK_CONFIRM");
 
 	const showCheckInCatchUp =
+		!cyclePaused &&
 		enableCheckInGate &&
 		catchUp?.gate === "CHECK_IN" &&
 		pomodoro.awaitingCheckIn &&
 		pomodoro.activeCycle != null;
 
 	const showSuggestionCatchUp =
+		!cyclePaused &&
 		enableSuggestionGate &&
 		catchUp?.gate === "SUGGESTION_ACCEPT" &&
 		pomodoro.pendingSuggestion.status === "ready";
 
 	const showInFlowSummary =
+		!cyclePaused &&
 		pomodoro.inFlowSummaryLine != null &&
 		!wedgeGateActive &&
 		!showSuggestionCard &&

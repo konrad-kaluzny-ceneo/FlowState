@@ -90,16 +90,25 @@ const useE2eClientTimer = process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER === "1";
 function cycleEndTimeMs(cycle: {
 	startedAt: Date;
 	configuredDurationSec: number;
+	state?: DomainActiveCycle["state"];
+	remainingDurationSec?: number | null;
 }): number {
+	if (cycle.state === "PAUSED" && cycle.remainingDurationSec != null) {
+		return Date.now() + cycle.remainingDurationSec * 1000;
+	}
 	if (useE2eClientTimer) {
 		return Date.now() + cycle.configuredDurationSec * 1000;
 	}
 	return cycle.startedAt.getTime() + cycle.configuredDurationSec * 1000;
 }
 
+function pausedRemainingMs(cycle: DomainActiveCycle): number {
+	return Math.max(0, (cycle.remainingDurationSec ?? 0) * 1000);
+}
+
 export type { FocusedTask };
 
-export type PomodoroCycleState = "idle" | "running" | "completed";
+export type PomodoroCycleState = "idle" | "running" | "paused" | "completed";
 
 export type CycleKind = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 
@@ -587,7 +596,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const resumeFromActiveCycle = useCallback(
 		(cycle: DomainActiveCycle) => {
-			const endTime = cycleEndTimeMs(cycle);
 			setActiveCycle(cycle);
 			setCycleKind(cycle.kind);
 			setActiveSessionId(cycle.sessionId);
@@ -600,6 +608,17 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setFocusedTaskId(cycle.taskId);
 
 			void audioRef.current.preload(POMODORO_ALARM_URL).catch(() => {});
+
+			if (cycle.state === "PAUSED") {
+				const frozenRemainingMs = pausedRemainingMs(cycle);
+				setState("paused");
+				stateRef.current = "paused";
+				setRemainingMs(frozenRemainingMs);
+				endTimeRef.current = null;
+				return;
+			}
+
+			const endTime = cycleEndTimeMs(cycle);
 
 			if (endTime <= Date.now()) {
 				setState("completed");
@@ -617,6 +636,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			}
 
 			setState("running");
+			stateRef.current = "running";
 			startWorker(endTime);
 		},
 		[setCatchUpFromExpiry, startWorker],
@@ -1131,6 +1151,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		sessionStartIdleFlag,
 		postBreakIdleFlag,
 		returnHandoffGateOpen,
+		cyclePaused: state === "paused",
 	});
 
 	useEffect(() => {
@@ -1642,6 +1663,162 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		state,
 		stopWorker,
 		clearSuggestion,
+	]);
+
+	const pause = useCallback(async () => {
+		if (activeCycle == null || state !== "running") {
+			return;
+		}
+
+		const cycleId = activeCycle.id;
+		const savedEndTime = endTimeRef.current;
+		const frozenRemainingMs =
+			savedEndTime != null
+				? Math.max(0, savedEndTime - Date.now())
+				: remainingMs;
+		const remainingDurationSec = Math.max(
+			0,
+			Math.ceil(frozenRemainingMs / 1000),
+		);
+
+		setError(null);
+		stopWorker();
+		endTimeRef.current = null;
+
+		const pauseSnapshot =
+			mode === "authenticated"
+				? {
+						activeCycle,
+						state,
+						cycleKind,
+						remainingMs: frozenRemainingMs,
+						endTime: savedEndTime,
+					}
+				: null;
+
+		if (mode === "authenticated") {
+			setState("paused");
+			stateRef.current = "paused";
+			setRemainingMs(frozenRemainingMs);
+			setActiveCycle({
+				...activeCycle,
+				state: "PAUSED",
+				pausedAt: new Date(),
+				remainingDurationSec,
+			});
+		}
+
+		try {
+			const updated = await cycles.pause({ cycleId, remainingDurationSec });
+			setActiveCycle(updated);
+			if (mode !== "authenticated") {
+				setState("paused");
+				stateRef.current = "paused";
+				setRemainingMs(frozenRemainingMs);
+			}
+			await invalidateServerCycle();
+		} catch {
+			if (pauseSnapshot != null) {
+				setActiveCycle(pauseSnapshot.activeCycle);
+				setState(pauseSnapshot.state);
+				stateRef.current = pauseSnapshot.state;
+				setCycleKind(pauseSnapshot.cycleKind);
+				setRemainingMs(pauseSnapshot.remainingMs);
+				if (pauseSnapshot.endTime != null) {
+					endTimeRef.current = pauseSnapshot.endTime;
+					startWorker(pauseSnapshot.endTime);
+				}
+			}
+			setError("Could not pause the cycle. Try again.");
+		}
+	}, [
+		activeCycle,
+		cycleKind,
+		cycles,
+		invalidateServerCycle,
+		mode,
+		remainingMs,
+		startWorker,
+		state,
+		stopWorker,
+	]);
+
+	const resume = useCallback(async () => {
+		if (activeCycle == null || state !== "paused") {
+			return;
+		}
+
+		const cycleId = activeCycle.id;
+		const frozenRemainingMs =
+			activeCycle.remainingDurationSec != null
+				? activeCycle.remainingDurationSec * 1000
+				: remainingMs;
+		const newEndTime = Date.now() + frozenRemainingMs;
+
+		const resumeSnapshot =
+			mode === "authenticated"
+				? {
+						activeCycle,
+						state,
+						cycleKind,
+						remainingMs,
+						endTime: endTimeRef.current,
+					}
+				: null;
+
+		setError(null);
+
+		if (mode === "authenticated") {
+			setState("running");
+			stateRef.current = "running";
+			endTimeRef.current = newEndTime;
+			setRemainingMs(frozenRemainingMs);
+			startWorker(newEndTime);
+			setActiveCycle({
+				...activeCycle,
+				state: "RUNNING",
+				pausedAt: null,
+				remainingDurationSec: null,
+				startedAt: new Date(),
+			});
+		}
+
+		try {
+			const updated = await cycles.resume({ cycleId });
+			setActiveCycle(updated);
+			if (mode !== "authenticated") {
+				setState("running");
+				stateRef.current = "running";
+				endTimeRef.current = newEndTime;
+				setRemainingMs(frozenRemainingMs);
+				startWorker(newEndTime);
+			} else {
+				endTimeRef.current = newEndTime;
+				startWorker(newEndTime);
+			}
+			await invalidateServerCycle();
+		} catch {
+			if (resumeSnapshot != null) {
+				setActiveCycle(resumeSnapshot.activeCycle);
+				setState(resumeSnapshot.state);
+				stateRef.current = resumeSnapshot.state;
+				setCycleKind(resumeSnapshot.cycleKind);
+				setRemainingMs(resumeSnapshot.remainingMs);
+				endTimeRef.current = null;
+				stopWorker();
+			}
+			setError("Could not resume the cycle. Try again.");
+		}
+	}, [
+		activeCycle,
+		cycleKind,
+		cycles,
+		invalidateServerCycle,
+		mode,
+		remainingMs,
+		startWorker,
+		state,
+		stopWorker,
 	]);
 
 	const startBreakAfterWorkComplete = useCallback(
@@ -2282,10 +2459,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		state === "running" &&
 		(cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK");
 
+	const cyclePaused = state === "paused";
+
 	const showSuggestionBeat =
-		isBreakRunning && pendingSuggestion.status !== "idle";
+		!cyclePaused && isBreakRunning && pendingSuggestion.status !== "idle";
 
 	const showKickoffBeat =
+		!cyclePaused &&
 		state === "idle" &&
 		focusedTaskId == null &&
 		pendingKickoffSuggestion.status !== "idle";
@@ -2407,6 +2587,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		},
 		start,
 		interrupt,
+		pause,
+		resume,
 		confirmComplete,
 		onCycleCompleteConfirm,
 		submitCheckIn,

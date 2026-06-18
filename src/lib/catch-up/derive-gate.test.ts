@@ -68,4 +68,24 @@ describe("deriveCatchUpGate", () => {
 			}),
 		).toBeNull();
 	});
+
+	it("returns null when cycle is paused (pol-12)", () => {
+		expect(
+			deriveCatchUpGate({
+				state: "paused",
+				cycleKind: "SHORT_BREAK",
+				awaitingCheckIn: true,
+				pendingSuggestionStatus: "ready",
+			}),
+		).toBeNull();
+		expect(
+			deriveCatchUpGate({
+				state: "running",
+				cycleKind: "SHORT_BREAK",
+				awaitingCheckIn: false,
+				pendingSuggestionStatus: "ready",
+				cyclePaused: true,
+			}),
+		).toBeNull();
+	});
 });

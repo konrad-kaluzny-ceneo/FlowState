@@ -12,6 +12,8 @@ const endSession = vi.fn();
 const createCycle = vi.fn();
 const completeCycle = vi.fn();
 const interruptCycle = vi.fn();
+const pauseCycle = vi.fn();
+const resumeCycle = vi.fn();
 const rebindTask = vi.fn();
 const updateTask = vi.fn();
 const getActiveCycle = vi.fn();
@@ -85,6 +87,8 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 			create: createCycle,
 			complete: completeCycle,
 			interrupt: interruptCycle,
+			pause: pauseCycle,
+			resume: resumeCycle,
 			rebindTask,
 		},
 		tasks: {
@@ -343,6 +347,20 @@ describe("usePomodoroCycle", () => {
 		}));
 		completeCycle.mockResolvedValue(undefined);
 		interruptCycle.mockResolvedValue(undefined);
+		pauseCycle.mockImplementation(
+			async (input: {
+				cycleId: number | string;
+				remainingDurationSec: number;
+			}) => ({
+				...makeActiveCycle({ id: input.cycleId as number }),
+				state: "PAUSED" as const,
+				remainingDurationSec: input.remainingDurationSec,
+				pausedAt: new Date(),
+			}),
+		);
+		resumeCycle.mockImplementation(async () =>
+			makeActiveCycle({ state: "RUNNING", startedAt: new Date() }),
+		);
 		updateTask.mockResolvedValue(undefined);
 		createCheckInMutate.mockResolvedValue({
 			id: 1,
@@ -789,6 +807,128 @@ describe("usePomodoroCycle", () => {
 
 		expect(interruptCycle).toHaveBeenCalledWith({ cycleId: 10 });
 		expect(result.current.state).toBe("idle");
+	});
+
+	it("pause freezes remaining and enters paused state", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		const beforePause = result.current.remainingMs;
+
+		await act(async () => {
+			await result.current.pause();
+		});
+
+		expect(pauseCycle).toHaveBeenCalledWith({
+			cycleId: 10,
+			remainingDurationSec: expect.any(Number),
+		});
+		expect(result.current.state).toBe("paused");
+		expect(
+			Math.abs(result.current.remainingMs - beforePause),
+		).toBeLessThanOrEqual(2000);
+
+		const frozenRemaining = result.current.remainingMs;
+		const worker = fakeWorkers[fakeWorkers.length - 1];
+		act(() => {
+			worker?.emitTick();
+		});
+		expect(result.current.remainingMs).toBe(frozenRemaining);
+	});
+
+	it("resume restores running countdown from paused remaining", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.pause();
+		});
+
+		const pausedRemaining = result.current.remainingMs;
+
+		await act(async () => {
+			await result.current.resume();
+		});
+
+		expect(resumeCycle).toHaveBeenCalledWith({ cycleId: 10 });
+		expect(result.current.state).toBe("running");
+		expect(
+			Math.abs(result.current.remainingMs - pausedRemaining),
+		).toBeLessThanOrEqual(2000);
+	});
+
+	it("hydrates PAUSED cycle from getActive without starting countdown", async () => {
+		activeCycleData = makeActiveCycle({
+			state: "PAUSED",
+			remainingDurationSec: 180,
+			pausedAt: new Date(),
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("paused");
+		});
+
+		expect(result.current.remainingMs).toBe(180_000);
+		expect(fakeWorkers).toHaveLength(0);
+	});
+
+	it("restores running state when pauseCycle fails after optimistic pause", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		pauseCycle.mockRejectedValueOnce(new Error("network"));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.pause();
+		});
+
+		expect(pauseCycle).toHaveBeenCalledWith({
+			cycleId: 10,
+			remainingDurationSec: expect.any(Number),
+		});
+		expect(result.current.state).toBe("running");
+		expect(result.current.remainingMs).toBeGreaterThan(0);
+		expect(result.current.error).toMatch(/Could not pause/);
 	});
 
 	it("confirmComplete calls complete and auto-starts break", async () => {

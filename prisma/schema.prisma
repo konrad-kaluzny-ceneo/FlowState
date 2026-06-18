@@ -29,6 +29,7 @@ enum SessionState {
 
 enum CycleState {
   RUNNING
+  PAUSED
   COMPLETED
   INTERRUPTED
 }
@@ -117,6 +118,8 @@ model Cycle {
   configuredDurationSec Int       @map("configured_duration_sec")
   startedAt            DateTime   @default(now()) @map("started_at") @db.Timestamptz
   endedAt              DateTime?  @map("ended_at") @db.Timestamptz
+  pausedAt             DateTime?  @map("paused_at") @db.Timestamptz
+  remainingDurationSec Int?       @map("remaining_duration_sec")
   intention            String?    @db.VarChar(80)
 
   session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)

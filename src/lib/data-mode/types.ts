@@ -42,10 +42,12 @@ export type DomainActiveCycle = {
 	userId: string;
 	taskId: DomainTaskId | null;
 	kind: "WORK" | "SHORT_BREAK" | "LONG_BREAK";
-	state: "RUNNING" | "COMPLETED" | "INTERRUPTED";
+	state: "RUNNING" | "PAUSED" | "COMPLETED" | "INTERRUPTED";
 	configuredDurationSec: number;
 	startedAt: Date;
 	endedAt: Date | null;
+	pausedAt?: Date | null;
+	remainingDurationSec?: number | null;
 	task: { id: DomainTaskId; title: string } | null;
 };
 
@@ -112,6 +114,11 @@ export interface CycleRepository {
 		incrementInterruption?: boolean;
 	}): Promise<void>;
 	interrupt(input: { cycleId: DomainTaskId }): Promise<void>;
+	pause(input: {
+		cycleId: DomainTaskId;
+		remainingDurationSec: number;
+	}): Promise<DomainActiveCycle>;
+	resume(input: { cycleId: DomainTaskId }): Promise<DomainActiveCycle>;
 	rebindTask(input: {
 		cycleId: DomainTaskId;
 		taskId: DomainTaskId;

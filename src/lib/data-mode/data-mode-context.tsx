@@ -79,6 +79,16 @@ export function DataModeProvider({
 						input: Parameters<typeof utils.client.cycle.interrupt.mutate>[0],
 					) => utils.client.cycle.interrupt.mutate(input),
 				},
+				pause: {
+					mutate: (
+						input: Parameters<typeof utils.client.cycle.pause.mutate>[0],
+					) => utils.client.cycle.pause.mutate(input),
+				},
+				resume: {
+					mutate: (
+						input: Parameters<typeof utils.client.cycle.resume.mutate>[0],
+					) => utils.client.cycle.resume.mutate(input),
+				},
 				rebindTask: {
 					mutate: (
 						input: Parameters<typeof utils.client.cycle.rebindTask.mutate>[0],

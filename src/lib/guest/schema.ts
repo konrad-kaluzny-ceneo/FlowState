@@ -83,7 +83,7 @@ export const guestCycleSchema = z.object({
 	sessionId: z.string().uuid(),
 	taskId: z.string().uuid().nullable(),
 	kind: z.enum(["WORK", "SHORT_BREAK", "LONG_BREAK"]),
-	state: z.enum(["RUNNING", "COMPLETED", "INTERRUPTED"]),
+	state: z.enum(["RUNNING", "PAUSED", "COMPLETED", "INTERRUPTED"]),
 	configuredDurationSec: z
 		.number()
 		.int()
@@ -91,6 +91,8 @@ export const guestCycleSchema = z.object({
 		.max(90 * 60),
 	startedAt: z.coerce.date(),
 	endedAt: z.coerce.date().nullable(),
+	pausedAt: z.coerce.date().nullable().optional(),
+	remainingDurationSec: z.number().int().min(0).nullable().optional(),
 	intention: z.string().max(80).nullable().optional(),
 });
 

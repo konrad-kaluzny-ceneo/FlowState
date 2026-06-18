@@ -20,6 +20,7 @@ const baseInput: WedgeConductorInput = {
 	isPostCheckInTransitioning: false,
 	activeCycle: null,
 	returnHandoffGateOpen: false,
+	cyclePaused: false,
 	state: "idle",
 };
 
@@ -81,6 +82,29 @@ describe("resolveWedgeBeat", () => {
 		expect(result.activeGate).toBe("cycle_complete");
 		expect(result.showCycleComplete).toBe(true);
 	});
+
+	it("suppresses all gates when cycle is paused (pol-12)", () => {
+		const result = resolveWedgeBeat({
+			...baseInput,
+			cyclePaused: true,
+			pendingClosureLine: "Session complete — take a breath.",
+			awaitingWindDown: true,
+			windDownRationale: "You've been at it for a while.",
+			awaitingCheckIn: true,
+			activeCycle: { id: 1 },
+			awaitingKickoffReadiness: true,
+			awaitingCycleIntention: true,
+			state: "completed",
+		});
+
+		expect(result.activeGate).toBe("none");
+		expect(result.showSessionClosure).toBe(false);
+		expect(result.showWindDown).toBe(false);
+		expect(result.showCheckIn).toBe(false);
+		expect(result.showCycleIntention).toBe(false);
+		expect(result.showKickoffReadiness).toBe(false);
+		expect(result.showCycleComplete).toBe(false);
+	});
 });
 
 describe("computeKickoffEligible", () => {
@@ -98,6 +122,7 @@ describe("computeKickoffEligible", () => {
 		sessionStartIdleFlag: true,
 		postBreakIdleFlag: false,
 		returnHandoffGateOpen: false,
+		cyclePaused: false,
 	};
 
 	it("returns false when return handoff gate is open (pol-10)", () => {
@@ -120,6 +145,21 @@ describe("computeKickoffEligible", () => {
 
 	it("returns true on idle session start when unblocked", () => {
 		expect(computeKickoffEligible(baseKickoff)).toBe(true);
+	});
+
+	it("returns false when cycle is paused (pol-12)", () => {
+		expect(
+			computeKickoffEligible({
+				...baseKickoff,
+				cyclePaused: true,
+			}),
+		).toBe(false);
+		expect(
+			computeKickoffEligible({
+				...baseKickoff,
+				state: "paused",
+			}),
+		).toBe(false);
 	});
 });
 

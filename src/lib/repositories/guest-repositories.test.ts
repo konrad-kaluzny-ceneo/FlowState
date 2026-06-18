@@ -78,6 +78,53 @@ describe("guest repositories", () => {
 		expect(localStorage.getItem(GUEST_STORAGE_KEY)).toContain("Persist me");
 	});
 
+	it("pause and resume preserve remaining duration in guest storage", async () => {
+		const { tasks, cycles } = createGuestRepositories();
+		const task = await tasks.create({ title: "Pause me" });
+		const created = await cycles.create({
+			kind: "WORK",
+			configuredDurationSec: 900,
+			taskId: task.id,
+		});
+
+		const paused = await cycles.pause({
+			cycleId: created.id,
+			remainingDurationSec: 420,
+		});
+		expect(paused.state).toBe("PAUSED");
+		expect(paused.remainingDurationSec).toBe(420);
+
+		const activeWhilePaused = await cycles.getActive();
+		expect(activeWhilePaused?.state).toBe("PAUSED");
+
+		const resumed = await cycles.resume({ cycleId: created.id });
+		expect(resumed.state).toBe("RUNNING");
+		expect(resumed.pausedAt ?? null).toBeNull();
+		expect(resumed.remainingDurationSec ?? null).toBeNull();
+	});
+
+	it("blocks create when a PAUSED cycle exists", async () => {
+		const { tasks, cycles } = createGuestRepositories();
+		const task = await tasks.create({ title: "Blocked" });
+		const created = await cycles.create({
+			kind: "WORK",
+			configuredDurationSec: 900,
+			taskId: task.id,
+		});
+		await cycles.pause({
+			cycleId: created.id,
+			remainingDurationSec: 300,
+		});
+
+		await expect(
+			cycles.create({
+				kind: "WORK",
+				configuredDurationSec: 600,
+				taskId: task.id,
+			}),
+		).rejects.toThrow("A cycle is already running");
+	});
+
 	it("returns expired RUNNING cycle for hook to complete on recovery", async () => {
 		const sessionId = crypto.randomUUID();
 		const taskId = crypto.randomUUID();

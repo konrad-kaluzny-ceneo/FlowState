@@ -1,7 +1,7 @@
 ---
 change_id: cycle-pause-resume
 title: Cycle pause and resume (US-04)
-status: preparing
+status: implementing
 created: 2026-06-18
 updated: 2026-06-18
 archived_at: null

@@ -93,6 +93,8 @@ function makePomodoroMock(
 		retrySuggestion: vi.fn(),
 		start: vi.fn(),
 		interrupt: vi.fn(),
+		pause: vi.fn(),
+		resume: vi.fn(),
 		confirmComplete: vi.fn(),
 		onCycleCompleteConfirm: vi.fn(),
 		submitCheckIn: vi.fn(),
@@ -159,6 +161,82 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		);
 
 		expect(screen.getByTestId("check-in-overlay")).toBeTruthy();
+	});
+
+	it("hides check-in overlay when cycle is paused (pol-12)", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "paused",
+				awaitingCheckIn: true,
+				activeCycle: { id: 42 },
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableCheckInGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.queryByTestId("check-in-overlay")).toBeNull();
+	});
+
+	it("hides break suggestion card when paused and shows after resume", () => {
+		const suggestionReady = {
+			status: "ready" as const,
+			data: {
+				taskId: "task-1",
+				title: "Suggested task",
+				workType: "OPERATIONAL" as const,
+				weight: 2 as const,
+				rationale: "Best next task",
+				breakdown: null,
+			},
+		};
+
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "paused",
+				cycleKind: "SHORT_BREAK",
+				pendingSuggestion: suggestionReady,
+			}),
+		);
+
+		const { rerender } = render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
+
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "running",
+				cycleKind: "SHORT_BREAK",
+				pendingSuggestion: suggestionReady,
+			}),
+		);
+
+		rerender(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
 	});
 
 	it("shows mid-cycle prompt when a task completion is pending", () => {

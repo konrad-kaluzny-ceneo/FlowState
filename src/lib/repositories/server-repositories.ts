@@ -90,6 +90,15 @@ type TrpcClient = {
 			}) => Promise<unknown>;
 		};
 		interrupt: { mutate: (input: { cycleId: number }) => Promise<unknown> };
+		pause: {
+			mutate: (input: {
+				cycleId: number;
+				remainingDurationSec: number;
+			}) => Promise<DomainActiveCycle>;
+		};
+		resume: {
+			mutate: (input: { cycleId: number }) => Promise<DomainActiveCycle>;
+		};
 		rebindTask: {
 			mutate: (input: {
 				cycleId: number;
@@ -160,6 +169,19 @@ export function createServerCycleRepository(
 			await client.cycle.interrupt.mutate({
 				cycleId: toNumericId(input.cycleId),
 			});
+		},
+		pause: async (input) => {
+			const cycle = await client.cycle.pause.mutate({
+				cycleId: toNumericId(input.cycleId),
+				remainingDurationSec: input.remainingDurationSec,
+			});
+			return cycle;
+		},
+		resume: async (input) => {
+			const cycle = await client.cycle.resume.mutate({
+				cycleId: toNumericId(input.cycleId),
+			});
+			return cycle;
 		},
 		rebindTask: (input) =>
 			client.cycle.rebindTask.mutate({
