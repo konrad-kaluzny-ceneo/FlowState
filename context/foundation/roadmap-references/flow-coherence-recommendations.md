@@ -44,6 +44,7 @@ Poprawki flow aplikacji: spokojne zamknięcie sesji, jeden gate na beat, sensown
 | T-03 | Timeout closure dopiero przy starcie cyklu, nie on load | B-06 |
 | T-04 | End session disabled gdy timer running | B-08; pełny po S-24 |
 | T-05 | Guest→auth shock (gęstość gate'ów) | S-11 ext. (nie nowy slice) |
+| T-06 | Return handoff (≥8h) równoległy z kickoff readiness | F-07 (pol-10); kickoff dopiero po dismiss handoff |
 
 ## F-07 expand vs bug split
 
@@ -81,13 +82,14 @@ Copy (S-21), wizualia break (S-33), pause DB (S-24), optimistic UI (S-34) — **
 **Outcome:** (foundation) every transition shows at most one calm interstitial line and one blocking gate — coordinated priority, no stacking regressions.
 
 **Scope:**
-- Moduł/hook conductor'a: closure > wind-down > check-in > suggestion > kickoff readiness > narrative line
+- Moduł/hook conductor'a: **return handoff (undismissed) > closure > wind-down > check-in > suggestion > kickoff readiness > narrative line**
+- `kickoffEligible` wyklucza aktywny return handoff banner (pol-10) — nie tylko `pendingClosureLine` (B-05)
 - Jedna macierz `isGateActive` zamiast rozproszonych warunków w dashboardzie
-- Mapowanie gate'ów S-12, S-16, S-17, S-19, S-22, S-25
-- E2E belt parity: happy path + closure + wind-down + kickoff
+- Mapowanie gate'ów S-12, S-16, S-17, S-19, S-22, S-25, S-17 return handoff
+- E2E belt parity: happy path + closure + wind-down + kickoff + **handoff → dismiss → kickoff**
 - Rozstrzygnięcie OQ2 w planie
 
-**Prerequisites:** B-05 (hotfix), S-12, S-19 (done) · **Blocks:** S-21, S-34, S-35
+**Prerequisites:** B-05 (done), B-06 (active), S-12, S-19 (done) · **Blocks:** S-21, S-34, S-35, S-11 ext.
 
 ---
 
@@ -135,25 +137,25 @@ Copy (S-21), wizualia break (S-33), pause DB (S-24), optimistic UI (S-34) — **
 
 ---
 
-### S-11 ext. — post-merge wedge coach (P2, 80%)
+### S-11 ext. — post-merge wedge coach (P2, 80%) — **active extension**
 
-**Problem:** T-05 — gość bez wedge stacku; po merge gęstość gate'ów bez mostu.
+**Problem:** T-05 / event storming hot-1 — gość bez wedge stacku; po merge gęstość gate'ów bez mostu.
 
 **Outcome:** user understands why check-in and suggestion appear after signup merge — inline subcopy on first authenticated check-in and first suggestion only (no new overlay).
 
-**Scope:** flag `hasSeenAuthenticatedWedge`; subcopy w CheckInOverlay + TaskSuggestionCard; plan follow-up w S-11 / S-14 scope. **Not** a new slice — promote P-GAP-102 / P-106 from parked to S-11 extension.
+**Scope:** flag `hasSeenAuthenticatedWedge`; subcopy w CheckInOverlay + TaskSuggestionCard; extend S-11 / S-14 acceptance — **not** a new slice. Promoted P-GAP-102 / P-106 from parked (event storming 2026-06-18).
 
-**Prerequisites:** S-08, S-11 (done); F-07 · **Parallel:** S-29
+**Prerequisites:** S-08, S-11 (done); **F-07** (stable gate ordering) · **Parallel:** S-32 · **Ship:** Stream N′ Phase 4
 
 ---
 
 ### S-21, S-33, S-24, S-34+S-35
 
-Bez zmian outcome w glance — **sequencing update only:**
+Bez zmian outcome w glance — **sequencing + S-24 scope update (event storming):**
 
 - **S-21:** blocked until F-07 merge; 74% confidence without conductor drops (stacking risk)
 - **S-33:** pair with S-21; po F-07
-- **S-24:** P3; OQ3 must resolve; enables B-08 full
+- **S-24:** P3; **pol-12** suppress wedge gates while PAUSED; **pol-8** ~30 min cap → calm closure; hybrid PAUSED schema; enables B-08 full
 - **S-34 + S-35:** bundle; revise until F-07 complete; 65% — perf/trust, not T-01 fix
 
 ## Odrzuć / odłożyć

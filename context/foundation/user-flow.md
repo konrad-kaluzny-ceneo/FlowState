@@ -133,11 +133,22 @@ Skip readiness → domyślnie **Steady**.
 |---------|-------|-------|
 | Focus ring / highlight | task focused | Wizualna kotwica „tu jestem” |
 | In-flow summary | idle między cyklami, bez gate'ów | Jedna linia: „N cycles · M tasks done · feeling X · intention” |
-| Mid-cycle complete | mark done podczas WORK | `MidCycleCompletionPrompt`: kontynuuj z innym zadaniem (resume note) LUB zakończ cykl → check-in |
-| Pause/interrupt | użytkownik | Timer idle, cykl przerwany (nie liczy się jako interruption scoring) |
 | Tab hidden + koniec | timer skończył się w tle | `TabReturnCatchUp` banner: WORK_CONFIRM |
 
-Koniec cyklu: audio (Normal/Soft/Muted) + `state = completed` + `CycleCompleteOverlay`.
+Koniec cyklu (naturalny): audio (Normal/Soft/Muted) + `state = completed` + `CycleCompleteOverlay`.
+
+#### Mid-cycle — cztery intencje użytkownika (event storming 2026-06-18)
+
+Nie mylić **Pause** (S-24, planowany) z **Interrupt** (dzisiaj w UI jako „Interrupt”). Rebind wymaga wcześniejszego mark done (FR-015) — nie jest równoległym wyjściem do naturalnego `Work Cycle Completed`.
+
+| Intencja | UI dziś | Stan cyklu | `interruptionCount` | Pozostały czas |
+|----------|---------|------------|---------------------|----------------|
+| **Interrupt** — porzucenie timera | Timer „Interrupt” | `INTERRUPTED` | nie | utracony |
+| **Rebind** — mark done → kontynuuj z innym zadaniem | `MidCycleCompletionPrompt` → continue | `RUNNING` | **tak** | zachowany |
+| **End cycle & break** — mark done → zakończ wcześniej | `MidCycleCompletionPrompt` → end break | `COMPLETED` → check-in | opcjonalnie | — |
+| **Pause / resume** (S-24) | *planowany* | `PAUSED` | nie | zachowany; cap ~30 min → calm session end |
+
+**Mid-cycle complete** (`MidCycleCompletionPrompt`): użytkownik wybiera rebind lub end & break — oba wymagają mark done w trakcie RUNNING WORK.
 
 ---
 
@@ -187,7 +198,7 @@ Koniec break: `CycleCompleteOverlay` (break variant) — Continue / Continue wit
 | Timeout | Closure przy **następnym** `getOrCreateActive` ze zmianą session id | „Sesja wygasła” — closure z `getLastEnded` |
 | Po dismiss closure | idle dashboard | Brak aktywnej sesji do następnego startu cyklu |
 
-**Return handoff:** przy powrocie ≥8h później — banner (nie overlay) z max 2 klauzulami: resume note + closure.
+**Return handoff:** przy powrocie ≥8h później — banner (nie overlay) z max 2 klauzulami: resume note + closure. **Kickoff readiness nie może startować równolegle** — kolejność: handoff → dismiss → kickoff (pol-10; fix w F-07). Nie replay closure overlay na tej samej wizycie.
 
 ---
 
@@ -248,7 +259,7 @@ Scenariusz: 6–7 cykli pracy (~2,5–3 h czystego focusu + przerwy), 3 taski uk
 
 ---
 
-## Znane tarcia i konflikty (stan 2026-06-13)
+## Znane tarcia i konflikty (stan 2026-06-18)
 
 ### T-01: Closure vs kickoff readiness / check-in
 
@@ -277,7 +288,15 @@ Użytkownik nie może zakończyć sesji w trakcie timera — musi interrupt lub 
 
 ### T-05: Guest vs authenticated cognitive split
 
-Gość nie ćwiczy check-in/sugestii — po merge pierwsze doświadczenie authenticated może zaskoczyć gęstością gate'ów.
+Gość nie ćwiczy check-in/sugestii — po merge pierwsze doświadczenie authenticated może zaskoczyć gęstością gate'ów. **Remedium:** S-11 ext. post-merge coach (inline subcopy, nie nowy overlay) — po F-07.
+
+### T-06: Return handoff vs kickoff readiness (pol-10)
+
+**Objaw:** po powrocie ≥8h użytkownik widzi return handoff banner, ale kickoff readiness może wystartować równolegle — zamiast handoff → dismiss → kickoff.
+
+**Przyczyna techniczna:** `kickoffEligible` nie uwzględnia stanu niedismissed handoff; conductor (F-07) nie ma jeszcze pol-10 w macierzy priorytetów.
+
+**Intencja produktowa:** powrót po przerwie to osobny beat wejścia — closure poprzedniej sesji jest w bannerze, nie w overlay; kickoff dopiero po świadomym dismiss.
 
 ---
 
@@ -305,6 +324,7 @@ Gość nie ćwiczy check-in/sugestii — po merge pierwsze doświadczenie authen
 | Sugestia + override ack | FR-021, FR-022, FR-029, FR-026 |
 | Wind-down | FR-027 |
 | Mid-cycle prompt | FR-015, FR-028 |
+| Pause / resume (S-24) | US-04, FR-042 (planned) |
 | Session closure + handoff | FR-040 |
 | Tab catch-up | FR-031 |
 | Cycle intention | FR-041 (re-entry copy family) |

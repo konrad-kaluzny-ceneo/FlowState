@@ -5,7 +5,7 @@ sources:
   L2: context/map/repo-map.md
   L3: context/changes/repo-map-analysis/research.md
   L4: context/changes/refactor-opportunities/plan.md
-  L5: context/domain/01-domain-distillation.md, 02-invariant-aggregate-refactor.md, 03-anti-corruption-layer.md
+  L5: context/domain/01-domain-distillation.md, 02-invariant-aggregate-refactor.md, 03-anti-corruption-layer.md, 04-event-storming.md
 repository: konrad-kaluzny-ceneo/FlowState
 ---
 
@@ -61,7 +61,7 @@ Synteza czterech artefaktów L2–L5. Wszystkie pochodzą z repozytorium **FlowS
 
 **Co refaktoryzowane (wybrana opcja i kształt docelowy):**
 
-- **#1 K5 → B-05 → B-06 → F-07:** hotfix mutex closure↔kickoff (T-01), potem timeout closure on load (T-03), potem czysty **`src/lib/wedge/transition-conductor.ts`** — priorytet beatów (OQ2: closure > wind-down > check-in > suggestion > kickoff > narracja > catch-up); dashboard konsumuje conductor zamiast rozproszonych `&&`.
+- **#1 K5 → B-05 (done) → B-06 (active) → F-07:** hotfix mutex closure↔kickoff (T-01), timeout closure on load (T-03), potem czysty **`src/lib/wedge/transition-conductor.ts`** — priorytet beatów (OQ2: **return handoff (undismissed) >** closure > wind-down > check-in > suggestion > kickoff > narracja > catch-up; **pol-10** T-06); dashboard konsumuje conductor zamiast rozproszonych `&&`.
 - **#2 K1:** pure extracts (`cycle-end-time.ts`, `cycle-kind.ts`) przy zachowaniu facade `usePomodoroCycle` (63 pola bez zmian).
 - **#3 K2:** Path C — `useDomainTasks(mode)` po char testach ACL.
 
@@ -74,7 +74,7 @@ Synteza czterech artefaktów L2–L5. Wszystkie pochodzą z repozytorium **FlowS
 | 1 | Manifest `rollout.md` + decision log | pliki istnieją | kolejność vs roadmap Stream N |
 | 2 | B-05 `fix-closure-kickoff-mutex` | char → mechanism → enforcement; CI (`check`, `test`, `e2e:belt`) | end session → closure → dismiss → brak kickoff |
 | 3 | B-06 `fix-timeout-closure-on-load` | Vitest hydrate timing | closure on load przed kickoff |
-| 4 | F-07 `wedge-transition-conductor` | `transition-conductor.test.ts`; belt green | brak stackowania overlayów |
+| 4 | F-07 `wedge-transition-conductor` | `transition-conductor.test.ts`; belt green | brak stackowania overlayów; handoff → dismiss → kickoff (T-06) |
 | 5 | K2 char | `data-mode-context.test.tsx`, zero prod diff | review guest vs auth shapes |
 | 6 | K1 extracts | `src/lib/cycle/` + hook tests | belt pomodoro |
 | 7 | K2 Path C enforcement | full `pnpm test` | spójność task list hook + TaskList |
@@ -98,7 +98,9 @@ Każda faza L4 wymaga **pauzy na manual confirmation** przed kolejną.
 | **CheckIn / SuggestionDecision** | energia na granicy WORK; rekord override | serwer OK; optimistic wedge post-check-in **ignorowany** (sekwencyjne `await`) |
 | **DataMode** | guest \| authenticated → repozytoria | zgodne z PRD dla węższego guest wedge; tRPC bypass w hooku (G8, L3) |
 
-**Niezmiennik #1 i agregat:** **I-01 beat-mutex** — „≤1 linia interstitial + ≤1 gate na transition beat” (`prd.md:62`; aktywnie naruszany T-01). Agregat docelowy: **`WedgeTransitionBeat`** (proces domenowy, niepersystowany) — `02-invariant-aggregate-refactor.md`; strażnik dziś rozproszony między dashboard (`&&`) a ~40 flagami w hooku.
+**Event storming follow-ups (2026-06-18, `04-event-storming.md`):** S-24 scope rozszerzony o **pol-12** (wycisz gate'e w PAUSED) i **pol-8** (cap ~30 min); **S-11 ext.** promoted z parked (post-merge coach); **user-flow.md** — 4 intencje mid-cycle + T-06. Produkcyjne slice'y S-27/S-30/S-32 bez zmian w rollout L4 (poza F-07/S-24 scope).
+
+**Niezmiennik #1 i agregat:** **I-01 beat-mutex** — „≤1 linia interstitial + ≤1 gate na transition beat” (`prd.md:62`; T-01 naprawiony B-05; T-06 handoff→kickoff w scope F-07). Agregat docelowy: **`WedgeTransitionBeat`** (proces domenowy, niepersystowany) — `02-invariant-aggregate-refactor.md`; strażnik dziś rozproszony między dashboard (`&&`) a ~40 flagami w hooku.
 
 **Anti-Corruption Layer:** Wybrany przeciek **#1: `@prisma/generated`** — enumy Prisma (`WorkType`, `EnergyLevel`, `CommitmentHorizon` itd.) w **14 plikach prod. przez 4 warstwy** (`lib/scoring`, `lib/session`, hooks, `app/_components`, routery) — `03-anti-corruption-layer.md`. Kontrast: dokumentacja L2/L5 wskazuje `score-task.ts` jako czystą domenę, kod importuje `@prisma/generated`. Wzorzec naprawy istnieje tylko dla `CycleEndAudioMode` (`cycle-audio-preference`); plan L4 adresuje osobno K2 (tRPC/data-mode), nie pełny ACL Prisma w tym rollout.
 
@@ -111,7 +113,7 @@ Każda faza L4 wymaga **pauzy na manual confirmation** przed kolejną.
 1. **Ranking K5 → K1 → K2** wyszedł z researchu AI (`refactor-opportunities/research.md`); **zatwierdzenie kolejności i meta-rollout** jest etapem planowania — plan L4 zamraża sekwencję B-05 → B-06 → F-07 przed K1/K2.
 2. AI rekomendowało **odrzucenie Path B** (rewrite huba na React Query) — plan L4 utrwala to jako świadomie poza scope; **Path C** (unifikacja odczytu tasków) wybrany przed rozszerzeniem repo o `checkIn`/`suggestion`.
 3. AI zaprojektowało agregat **`WedgeTransitionBeat`** (L5-02); plan L4 **upraszcza wdrożenie** do pure `transition-conductor.ts` + stan w hooku — facade 63 pól **bez splitu public API** (osobna decyzja planu vs pełny agregat w hooku z L5-02).
-4. **OQ2 priorytet beatów** (closure > wind-down > check-in > …) — zamrożony w L4 jako input do F-07; wymaga ręcznej akceptacji przed Phase 4 (brak overlay stacking).
+4. **OQ2 priorytet beatów** (return handoff > closure > wind-down > check-in > …; pol-10) — zamrożony w L4 jako input do F-07; wymaga ręcznej akceptacji przed Phase 4 (brak overlay stacking; T-06 handoff defer).
 5. Każda faza L4 ma **obowiązkową manual verification** przed następną — to jedyne explicite oznaczone punkty decyzyjne człowieka w artefaktach (Phase 1.3, 2.2, 4.3 itd.).
 
 ---

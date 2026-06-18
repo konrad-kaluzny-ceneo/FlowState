@@ -116,8 +116,8 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-29 | task-create-persona-presets | **done** | merged PR #109 |
 | S-36 | persona-presets-v2 | **done** | US-02; [PR #119](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/119) |
 | S-32 | create-wedge-trust-bridge | **yes** | after S-36; US-02 |
-| F-07 | wedge-transition-conductor | **yes** | after B-05 hotfix; US-01 must-have |
-| S-24 | cycle-pause-resume | **yes** | US-04; pause cap ~30 min (PRD v3) |
+| F-07 | wedge-transition-conductor | **yes** | after B-06; US-01; **pol-10** handoff before kickoff |
+| S-24 | cycle-pause-resume | **yes** | US-04; pause cap ~30 min; **pol-12** suppress gates while PAUSED |
 | S-27 | daily-standing-tasks-capacity-plan | **yes** | US-03; local-midnight reset |
 | S-30 | daily-work-timing-recap | **yes** | US-03; light footprint only |
 | S-31 | work-focus-shell | **yes** | Secondary craft |
@@ -146,7 +146,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | Future ideas | [`future-ideas.md`](roadmap-references/future-ideas.md) |
 | Parked | [`parked.md`](roadmap-references/parked.md) |
 | Done / archive log | [`done.md`](roadmap-references/done.md) |
-| User flow map (T-01–T-05) | [`user-flow.md`](user-flow.md) |
+| User flow map (T-01–T-06) | [`user-flow.md`](user-flow.md) |
 | Flow coherence recommendations | [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md) |
 | Agent index | [`roadmap-references/README.md`](roadmap-references/README.md) |
 

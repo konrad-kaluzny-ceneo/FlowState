@@ -186,13 +186,17 @@ Obwódka `agg-2` Session obejmuje oś 480–2680; `agg-3` Cycle — 1280–2280;
 
 ## 9. Mapowanie na artefakty L5 i rollout
 
-| Wynik warsztatu | Artefakt | Następny krok |
-|-----------------|----------|---------------|
-| I-01 beat-mutex, pol-2/9 | `02-invariant-aggregate-refactor.md` | B-05 → B-06 → F-07 (`refactor-opportunities/plan.md`) |
-| 3 intencje mid-cycle | `user-flow.md` §Interrupt | poprawić drift „pause=interrupt” w user-flow |
-| PAUSED schema | `02` G5, `prisma/schema.prisma` | S-24 cycle-pause-resume |
-| Guest ACL | `03-anti-corruption-layer.md` | K2 data-mode hardening |
-| Tablica wizualna | `event-storming-canvas/board.json` | utrzymywać przy kolejnych slice'ach |
+| Wynik warsztatu | Artefakt | Następny krok | Status |
+|-----------------|----------|---------------|--------|
+| I-01 beat-mutex, pol-2/9 | `02-invariant-aggregate-refactor.md` | B-05 → B-06 → F-07 (`refactor-opportunities/plan.md`) | B-05 done; B-06 active |
+| pol-10 / hot-7 handoff→kickoff | `F-07.md`, `user-flow.md` T-06 | F-07 conductor + `kickoffEligible` | scope w roadmapie 2026-06-18 |
+| 4 intencje mid-cycle | `user-flow.md` §4 | drift pause=interrupt naprawiony | done 2026-06-18 |
+| pol-8, pol-12 pause | `S-24.md`, `02` L9 | S-24 + F-07 `gatesWhilePaused` | scope w roadmapie 2026-06-18 |
+| hot-1 / T-05 post-merge UX | `S-11 ext.`, `flow-coherence-recommendations.md` Phase 4 | po F-07; P-GAP-102 promoted | active extension |
+| hot-2 / S-32 persona trust | `01` G12, slice S-32 | read model, nie nowe zdarzenie | S-32 ready |
+| PAUSED schema | `02` G5, `prisma/schema.prisma` | S-24 cycle-pause-resume | ready |
+| Guest ACL | `03-anti-corruption-layer.md` | K2 data-mode hardening | in rollout |
+| Tablica wizualna | `event-storming-canvas/board.json` | utrzymywać przy kolejnych slice'ach | ongoing |
 
 ---
 

@@ -223,8 +223,9 @@ erDiagram
 | G9 | WORK zawsze z taskiem | Klient wymaga; API `taskId: null` dozwolone | `use-pomodoro-cycle.ts:1306-1308`; `cycle.ts:87,133` |
 | G10 | Timeout closure przy powrocie (T-03) | Closure defer do start cyklu / getOrCreateActive | `user-flow.md:270-272`; `use-pomodoro-cycle.ts:1388-1390` |
 | G11 | Guest bez pełnego wedge stacku (`prd.md:57`) | `enableCheckInGate` tylko authenticated | `pomodoro-dashboard.tsx:485-487` — **zgodne** |
-| G12 | Persona w rationale pierwszej sugestii (US-02) | `personaPresetId` w Task; trust bridge częściowy | `prisma/schema.prisma:75`; pełna cytacja preset w rationale — **BRAK w kodzie** (planowane) |
-| G13 | Standing tasks + recap (US-03) | **BRAK w schema i UI** | `prd.md:83-88` — planowane |
+| G12 | Persona w rationale pierwszej sugestii (US-02) | `personaPresetId` w Task; trust bridge częściowy | `prisma/schema.prisma:75`; pełna cytacja preset w rationale — **BRAK w kodzie** (S-32; warsztat: rozszerz read model, nie nowe zdarzenie) |
+| G13 | Standing tasks + recap (US-03) | **BRAK w schema i UI** | `prd.md:83-88` — planowane S-27, S-30 |
+| G14 | Post-merge wedge UX shock (T-05 / hot-1) | **Świadomy split gość** bez mostu onboardingowego | S-11 ext. after F-07; `hasSeenAuthenticatedWedge` — **BRAK w kodzie** |
 
 ### Tarcia T-01–T-05 (skrót)
 

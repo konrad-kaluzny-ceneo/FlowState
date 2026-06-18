@@ -695,17 +695,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			try {
 				if (mode === "authenticated") {
 					const lastEnded = await utils.client.session.getLastEnded.query();
-					if (lastEnded != null) {
+					if (lastEnded != null && lastEnded.state === "ENDED_BY_TIMEOUT") {
 						await maybePresentTimeoutClosure(lastEnded.id);
 					}
 				} else {
 					const prior = [...loadSnapshot().sessions]
 						.reverse()
-						.find(
-							(session) =>
-								session.state === "ENDED_BY_TIMEOUT" ||
-								session.state === "ENDED_BY_USER",
-						);
+						.find((session) => session.state === "ENDED_BY_TIMEOUT");
 					if (prior != null) {
 						await maybePresentTimeoutClosure(prior.id);
 					}
