@@ -1,0 +1,57 @@
+# Advisory PR code review via Cursor SDK (cloud agent).
+# Requires repository secret: CURSOR_API_KEY
+#
+# Not a merge gate — runs in parallel with CI quality/e2e.
+
+name: Cursor code review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: cursor-review-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: cursor-review
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run cloud code review
+        id: review
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          mkdir -p reports
+          pnpm review:cloud \
+            --ref "${{ github.head_ref || github.ref_name }}" \
+            --output reports/review.md
+
+      - name: Post PR comment
+        if: github.event_name == 'pull_request' && always() && steps.review.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          body="$(cat reports/review.md)"
+          gh pr comment "${{ github.event.pull_request.number }}" --body "$body"
