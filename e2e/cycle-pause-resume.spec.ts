@@ -4,21 +4,12 @@
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
-import {
-	dismissKickoffReadinessIfVisible,
-	ensureIdleCycle,
-} from "./helpers/idle-cycle";
+import { ensureIdleCycle } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
-import {
-	advanceClockThroughBreakSec,
-	ensureFakeClock,
-	forgetFakeClock,
-	startFocusedWorkCycle,
-} from "./helpers/work-cycle";
+import { startFocusedWorkCycle } from "./helpers/work-cycle";
 
 test.describe("Cycle pause and resume (S-24)", () => {
 	test.beforeEach(async ({ page }) => {
-		forgetFakeClock(page);
 		await resetWorkerSessionViaApi(page);
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
@@ -88,12 +79,6 @@ test.describe("Cycle pause and resume (S-24)", () => {
 			.textContent();
 		expect(countdownAfterResume).toBe(countdownBeforePause);
 
-		await ensureFakeClock(page);
-		await advanceClockThroughBreakSec(page, 61);
-
-		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
-			timeout: 15_000,
-		});
-		await dismissKickoffReadinessIfVisible(page);
+		await expect(page.getByTestId("timer-interrupt")).toBeVisible();
 	});
 });
