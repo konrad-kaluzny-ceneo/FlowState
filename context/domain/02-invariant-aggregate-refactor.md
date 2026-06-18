@@ -333,7 +333,7 @@ type InterstitialKind =
 type BeatSnapshot = {
   phase: "idle" | "active" | "resolving";
   candidates: { /* flagi z hooka: closure, kickoff, check-in, ... */ };
-  suppress: { kickoffWhileClosure: boolean; checkInWhileClosure: boolean };
+  suppress: { kickoffWhileClosure: boolean; checkInWhileClosure: boolean; gatesWhilePaused: boolean; kickoffWhileHandoff: boolean };
   asyncGeneration: { kickoffEligibility: number };
 };
 
@@ -345,7 +345,7 @@ type BeatResolution = {
 ```
 
 **Priorytet OQ2** (`flow-coherence-recommendations.md:84`):  
-`closure > wind-down > check-in > suggestion accept > kickoff readiness > in-flow narrative > catch-up overlay`.
+`return handoff (undismissed) > closure > wind-down > check-in > suggestion accept > kickoff readiness > in-flow narrative > catch-up overlay`.
 
 ### Błędy domenowe (fail-fast)
 
@@ -422,6 +422,16 @@ function isGateBlockedByClosure(kind: WedgeGateKind, s: BeatSnapshot): boolean {
   if (kind === "KICKOFF_READINESS" && s.suppress.kickoffWhileClosure) return true;
   if (kind === "CHECK_IN" && s.suppress.checkInWhileClosure) return true;
   return false;
+}
+
+function isGateBlockedByHandoff(kind: WedgeGateKind, s: BeatSnapshot): boolean {
+  if (kind !== "KICKOFF_READINESS") return false;
+  return s.candidates.returnHandoffVisible && !s.candidates.handoffDismissed;
+}
+
+function isGateBlockedByPause(kind: WedgeGateKind, s: BeatSnapshot): boolean {
+  if (!s.candidates.cyclePaused) return false;
+  return s.suppress.gatesWhilePaused;
 }
 ```
 
@@ -510,6 +520,8 @@ Mapowanie błędów (dev: throw; prod: telemetry dla `BEAT_INVARIANT_VIOLATION` 
 | L6 | Closure line + dismiss-only (calm closure FR-040) | jedna linia, dismiss → `completeBeat` |
 | L7 | Catch-up CHECK_IN + awaitingCheckIn | `gate: CATCH_UP_GATE` lub `CHECK_IN` (companion banner w slocie interstitial) |
 | L8 | T-02: post-check-in transitioning | cycle-complete **suppressed** |
+| L9 | `CycleState.PAUSED` (S-24) | all wedge gates in `suppressed`; timer frozen |
+| L10 | Return handoff undismissed (T-06 / pol-10) | kickoff in `suppressed`; handoff dismiss → kickoff eligible |
 
 **Nielegalne (musi fail-fast lub suppress):**
 

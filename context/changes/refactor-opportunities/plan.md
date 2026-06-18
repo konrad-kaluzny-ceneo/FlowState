@@ -60,7 +60,7 @@ A documented, executed rollout where:
 
 **K2 path (decided):** Path C first — unify auth/guest task reads via extended `useDomainTasks(mode)`; Path A (extend repos for `checkIn`/`suggestion`) only after F-07 stabilizes hook mutations.
 
-**OQ2 beat priority (decided for F-07 plan):** closure > wind-down > check-in > suggestion accept > kickoff readiness > in-flow narrative line > catch-up overlay (catch-up remains header shell per S-22; conductor coordinates with `deriveCatchUpGate` inputs).
+**OQ2 beat priority (decided for F-07 plan):** return handoff (undismissed) > closure > wind-down > check-in > suggestion accept > kickoff readiness > in-flow narrative line > catch-up overlay (catch-up remains header shell per S-22; conductor coordinates with `deriveCatchUpGate` inputs). **pol-10:** kickoff blocked while return handoff banner visible.
 
 ## Implementation discipline
 
@@ -244,12 +244,12 @@ Foundation refactor: pure conductor module + dashboard integration; includes B-0
 #### Automated Verification:
 
 - Child change merged; `pnpm test` + `pnpm test:e2e:belt` green
-- `src/lib/wedge/transition-conductor.test.ts` covers priority matrix (including closure vs kickoff)
+- `src/lib/wedge/transition-conductor.test.ts` covers priority matrix (including closure vs kickoff, **handoff defers kickoff**)
 - B-07 wind-down threshold behavior covered (unit or belt `wind-down` specs)
 
 #### Manual Verification:
 
-- No overlay stacking on canonical wedge paths (T-01 regression suite)
+- No overlay stacking on canonical wedge paths (T-01 regression suite); return after ≥8h → handoff → dismiss → kickoff (T-06 / pol-10)
 - `rollout.md` row `wedge-transition-conductor` → `merged`
 - Roadmap items S-21, S-34, S-35 unblocked
 

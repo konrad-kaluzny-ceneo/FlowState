@@ -586,86 +586,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		[setCatchUpFromExpiry, startWorker],
 	);
 
-	const recoverActiveCycle = useCallback(async () => {
-		if (activeCycleRecoveredForMode === mode || recoveredRef.current) {
-			return;
-		}
-
-		recoveredRef.current = true;
-		activeCycleRecoveredForMode = mode;
-
-		const active = await cycles.getActive();
-
-		if (active != null) {
-			resumeFromActiveCycle(active);
-
-			// Derive completed work cycle count from server for correct break cadence
-			try {
-				if (mode === "authenticated") {
-					const count = await utils.client.cycle.countCompletedWork.query({
-						sessionId: Number(active.sessionId),
-					});
-					setCompletedWorkCycles(count);
-				} else {
-					const { loadSnapshot } = await import("~/lib/guest/store");
-					const snapshot = loadSnapshot();
-					const count = snapshot.cycles.filter(
-						(c) =>
-							c.sessionId === active.sessionId &&
-							c.kind === "WORK" &&
-							c.state === "COMPLETED",
-					).length;
-					setCompletedWorkCycles(count);
-				}
-			} catch {
-				// Best effort — counter stays at 0, worst case is wrong break type
-			}
-		} else {
-			// No active cycle — session may have timed out server-side; reset counter
-			setCompletedWorkCycles(0);
-			setSessionStartIdleFlag(true);
-		}
-	}, [
-		cycles,
-		resumeFromActiveCycle,
-		mode,
-		utils.client.cycle.countCompletedWork,
-	]);
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: reset recovery guard when auth mode changes
-	useEffect(() => {
-		recoveredRef.current = false;
-	}, [mode]);
-
-	useEffect(() => {
-		void recoverActiveCycle();
-	}, [recoverActiveCycle]);
-
-	const loadActiveTasks = useCallback(() => {
-		if (mode !== "authenticated") {
-			setHasActiveTasks(false);
-			return;
-		}
-
-		const queryTasks = utils.client.task?.list?.query;
-		if (queryTasks == null) {
-			setHasActiveTasks(false);
-			return;
-		}
-
-		void queryTasks()
-			.then((tasks) => {
-				setHasActiveTasks(tasks.some((task) => task.status === "active"));
-			})
-			.catch(() => {
-				setHasActiveTasks(false);
-			});
-	}, [mode, utils]);
-
-	useEffect(() => {
-		loadActiveTasks();
-	}, [loadActiveTasks]);
-
 	const buildSessionClosureLine = useCallback(
 		(endedBy: "user" | "timeout") =>
 			buildClosureLine({
@@ -733,6 +653,100 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		},
 		[mode, utils, buildSessionClosureLine, presentClosureOverlay],
 	);
+
+	const recoverActiveCycle = useCallback(async () => {
+		if (activeCycleRecoveredForMode === mode || recoveredRef.current) {
+			return;
+		}
+
+		recoveredRef.current = true;
+		activeCycleRecoveredForMode = mode;
+
+		const active = await cycles.getActive();
+
+		if (active != null) {
+			resumeFromActiveCycle(active);
+
+			// Derive completed work cycle count from server for correct break cadence
+			try {
+				if (mode === "authenticated") {
+					const count = await utils.client.cycle.countCompletedWork.query({
+						sessionId: Number(active.sessionId),
+					});
+					setCompletedWorkCycles(count);
+				} else {
+					const { loadSnapshot } = await import("~/lib/guest/store");
+					const snapshot = loadSnapshot();
+					const count = snapshot.cycles.filter(
+						(c) =>
+							c.sessionId === active.sessionId &&
+							c.kind === "WORK" &&
+							c.state === "COMPLETED",
+					).length;
+					setCompletedWorkCycles(count);
+				}
+			} catch {
+				// Best effort — counter stays at 0, worst case is wrong break type
+			}
+		} else {
+			// No active cycle — session may have timed out server-side; reset counter
+			setCompletedWorkCycles(0);
+
+			try {
+				if (mode === "authenticated") {
+					const lastEnded = await utils.client.session.getLastEnded.query();
+					if (lastEnded != null && lastEnded.state === "ENDED_BY_TIMEOUT") {
+						await maybePresentTimeoutClosure(lastEnded.id);
+					}
+				} else {
+					const prior = [...loadSnapshot().sessions]
+						.reverse()
+						.find((session) => session.state === "ENDED_BY_TIMEOUT");
+					if (prior != null) {
+						await maybePresentTimeoutClosure(prior.id);
+					}
+				}
+			} catch {
+				// Best effort — kickoff still available after hydrate
+			}
+
+			setSessionStartIdleFlag(true);
+		}
+	}, [cycles, resumeFromActiveCycle, mode, utils, maybePresentTimeoutClosure]);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: reset recovery guard when auth mode changes
+	useEffect(() => {
+		recoveredRef.current = false;
+	}, [mode]);
+
+	useEffect(() => {
+		void recoverActiveCycle();
+	}, [recoverActiveCycle]);
+
+	const loadActiveTasks = useCallback(() => {
+		if (mode !== "authenticated") {
+			setHasActiveTasks(false);
+			return;
+		}
+
+		const queryTasks = utils.client.task?.list?.query;
+		if (queryTasks == null) {
+			setHasActiveTasks(false);
+			return;
+		}
+
+		void queryTasks()
+			.then((tasks) => {
+				setHasActiveTasks(tasks.some((task) => task.status === "active"));
+			})
+			.catch(() => {
+				setHasActiveTasks(false);
+			});
+	}, [mode, utils]);
+
+	useEffect(() => {
+		loadActiveTasks();
+	}, [loadActiveTasks]);
 
 	const refreshNarrativeStats = useCallback(
 		async (sessionId: DomainTaskId) => {

@@ -21,6 +21,7 @@ const createCheckInMutate = vi.fn();
 const suggestionNextMutate = vi.fn();
 const recordDecisionMutate = vi.fn();
 const taskListQuery = vi.fn();
+const getLastEndedQuery = vi.fn();
 
 let activeCycleData: DomainActiveCycle | null = null;
 
@@ -115,7 +116,7 @@ vi.mock("~/trpc/react", () => ({
 				},
 				task: { list: { query: taskListQuery } },
 				session: {
-					getLastEnded: { query: vi.fn().mockResolvedValue(null) },
+					getLastEnded: { query: getLastEndedQuery },
 				},
 			},
 		}),
@@ -357,6 +358,7 @@ describe("usePomodoroCycle", () => {
 			accepted: true,
 		});
 		taskListQuery.mockResolvedValue([]);
+		getLastEndedQuery.mockResolvedValue(null);
 		rebindTask.mockImplementation(async (input) => ({
 			id: 99,
 			sessionId: 1,
@@ -1173,6 +1175,42 @@ describe("usePomodoroCycle", () => {
 		});
 
 		expect(result.current.pendingClosureLine).toBeNull();
+	});
+
+	describe("timeout closure on load (B-06)", () => {
+		it("presents closure on hydrate when last session ended by timeout", async () => {
+			activeCycleData = null;
+			getActiveCycle.mockResolvedValue(null);
+			getLastEndedQuery.mockResolvedValue({
+				id: 42,
+				state: "ENDED_BY_TIMEOUT",
+				closureLine: "Session timed out — 2 cycles. Take a breath.",
+				endedAt: new Date(),
+			});
+			taskListQuery.mockResolvedValue([
+				{
+					id: 7,
+					title: "Write tests",
+					status: "active" as const,
+					workType: "DEEP_WORK" as const,
+					weight: 2,
+					userId: "user-1",
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				},
+			]);
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingClosureLine).toBe(
+					"Session timed out — 2 cycles. Take a breath.",
+				);
+			});
+			expect(result.current.awaitingKickoffReadiness).toBe(false);
+		});
 	});
 
 	it("endSession interrupts running cycle before ending session", async () => {
