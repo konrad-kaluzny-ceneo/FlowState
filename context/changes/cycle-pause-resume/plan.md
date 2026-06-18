@@ -503,9 +503,9 @@ Existing cycles remain `RUNNING | COMPLETED | INTERRUPTED`; new fields nullable.
 
 #### Automated
 
-- [x] 6.1 Narrative pause_cap tests pass
-- [x] 6.2 Hook cap timer tests pass
-- [x] 6.3 `pnpm test` passes
+- [x] 6.1 Narrative pause_cap tests pass — 841ed07
+- [x] 6.2 Hook cap timer tests pass — 841ed07
+- [x] 6.3 `pnpm test` passes — 841ed07
 
 #### Manual
 
@@ -515,6 +515,6 @@ Existing cycles remain `RUNNING | COMPLETED | INTERRUPTED`; new fields nullable.
 
 #### Automated
 
-- [ ] 7.1 `set CI=true && pnpm test:e2e:belt` passes
-- [ ] 7.2 `pnpm test` passes
-- [ ] 7.3 `pnpm check` passes
+- [x] 7.1 `set CI=true && pnpm test:e2e:belt` passes
+- [x] 7.2 `pnpm test` passes
+- [x] 7.3 `pnpm check` passes
