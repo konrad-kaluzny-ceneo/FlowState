@@ -515,6 +515,6 @@ Existing cycles remain `RUNNING | COMPLETED | INTERRUPTED`; new fields nullable.
 
 #### Automated
 
-- [x] 7.1 `set CI=true && pnpm test:e2e:belt` passes
-- [x] 7.2 `pnpm test` passes
-- [x] 7.3 `pnpm check` passes
+- [x] 7.1 `set CI=true && pnpm test:e2e:belt` passes — 6d31560
+- [x] 7.2 `pnpm test` passes — 6d31560
+- [x] 7.3 `pnpm check` passes — 6d31560
