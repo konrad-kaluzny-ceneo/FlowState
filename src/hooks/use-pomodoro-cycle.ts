@@ -42,6 +42,10 @@ import {
 	sessionHasWorkCycle,
 } from "~/lib/session/narrative-context";
 import {
+	composeReturnHandoffLine,
+	shouldShowReturnHandoffForSession,
+} from "~/lib/session/return-handoff";
+import {
 	buildWindDownRationale,
 	shouldShowWindDownNudge,
 } from "~/lib/session/wind-down-nudge";
@@ -50,6 +54,10 @@ import {
 	OVERRIDE_ACK_VISIBLE_MS,
 } from "~/lib/suggestion/override-ack-copy";
 import { beginSuggestionFetch } from "~/lib/trpc/suggestion-priority";
+import {
+	computeKickoffEligible,
+	effectiveWorkCyclesAtCheckIn,
+} from "~/lib/wedge/transition-conductor";
 import { setWorkTypeDuration } from "~/lib/work-type-duration-storage";
 import { api } from "~/trpc/react";
 import type {
@@ -305,6 +313,34 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const suggestionNextPostCheckIn = api.suggestion.next.useMutation();
 	const suggestionNextKickoff = api.suggestion.next.useMutation();
 	const recordDecisionMutation = api.suggestion.recordDecision.useMutation();
+
+	const { data: lastEndedForHandoff } = api.session.getLastEnded.useQuery(
+		undefined,
+		{ enabled: mode === "authenticated", staleTime: 60_000 },
+	);
+	const { data: authTasksForHandoff } = api.task.list.useQuery(undefined, {
+		enabled: mode === "authenticated",
+		staleTime: 30_000,
+	});
+
+	const returnHandoffGateOpen = useMemo(() => {
+		if (mode !== "authenticated" || lastEndedForHandoff?.endedAt == null) {
+			return false;
+		}
+		if (
+			!shouldShowReturnHandoffForSession({
+				sessionId: lastEndedForHandoff.id,
+				endedAt: lastEndedForHandoff.endedAt,
+			})
+		) {
+			return false;
+		}
+		const line = composeReturnHandoffLine(
+			{ closureLine: lastEndedForHandoff.closureLine ?? null },
+			authTasksForHandoff ?? [],
+		);
+		return line != null;
+	}, [authTasksForHandoff, lastEndedForHandoff, mode]);
 
 	const stateRef = useRef(state);
 	const cycleKindRef = useRef(cycleKind);
@@ -1081,18 +1117,21 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		submitKickoffReadiness("STEADY");
 	}, [submitKickoffReadiness]);
 
-	const kickoffEligible =
-		mode === "authenticated" &&
-		state === "idle" &&
-		cycleKind === null &&
-		focusedTaskId === null &&
-		!awaitingCheckIn &&
-		!awaitingWindDown &&
-		!isPostCheckInTransitioning &&
-		pendingSuggestion.status === "idle" &&
-		pendingClosureLine == null &&
-		hasActiveTasks &&
-		(sessionStartIdleFlag || postBreakIdleFlag);
+	const kickoffEligible = computeKickoffEligible({
+		mode,
+		state,
+		cycleKind,
+		focusedTaskId,
+		awaitingCheckIn,
+		awaitingWindDown,
+		isPostCheckInTransitioning,
+		pendingSuggestionStatus: pendingSuggestion.status,
+		pendingClosureLine,
+		hasActiveTasks,
+		sessionStartIdleFlag,
+		postBreakIdleFlag,
+		returnHandoffGateOpen,
+	});
 
 	useEffect(() => {
 		const wasEligible = prevKickoffEligibleRef.current;
@@ -1994,11 +2033,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				if (mode !== "guest") {
 					try {
 						const session = await sessions.getOrCreateActive();
+						const cyclesAtCheckIn =
+							effectiveWorkCyclesAtCheckIn(completedWorkCycles);
 
 						if (
 							shouldShowWindDownNudge({
 								energy,
-								completedWorkCycles,
+								completedWorkCycles: cyclesAtCheckIn,
 								interruptionCount: session.interruptionCount,
 								dismissed: windDownDismissed,
 							})
@@ -2329,6 +2370,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		inFlowSummaryLine,
 		pendingClosureLine,
 		dismissSessionClosure,
+		returnHandoffGateOpen,
 		awaitingCycleIntention,
 		submitCycleIntention,
 		skipCycleIntention,

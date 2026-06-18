@@ -66,6 +66,7 @@ function makePomodoroMock(
 		overrideAcknowledgement: null,
 		inFlowSummaryLine: null,
 		pendingClosureLine: null,
+		returnHandoffGateOpen: false,
 		dismissSessionClosure: vi.fn(),
 		awaitingCycleIntention: false,
 		submitCycleIntention: vi.fn(),

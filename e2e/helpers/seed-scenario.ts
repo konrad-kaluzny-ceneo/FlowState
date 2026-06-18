@@ -141,10 +141,31 @@ async function drainActiveCycles(page: Page, timeoutMs = 15_000) {
 	}
 }
 
+/** Marks the last ended session handoff dismissed so pol-10 does not block kickoff in belt setup. */
+async function dismissEndedSessionHandoffInStorage(page: Page) {
+	try {
+		const lastEnded = await trpcQuery<{ id: number } | null>(
+			page,
+			"session.getLastEnded",
+		);
+		if (lastEnded?.id != null) {
+			await page.evaluate((sessionId: number) => {
+				localStorage.setItem(
+					`flowstate:handoff-dismissed:${String(sessionId)}`,
+					"1",
+				);
+			}, lastEnded.id);
+		}
+	} catch {
+		// Best effort — belt hygiene when localStorage unavailable
+	}
+}
+
 /** Clears pooled-worker DB session/cycle state before UI idle cleanup. */
 export async function resetWorkerSessionViaApi(page: Page) {
 	await drainActiveCycles(page);
 	await endActiveSessionIfAny(page);
+	await dismissEndedSessionHandoffInStorage(page);
 	const tasks = await trpcQuery<Array<{ id: number }>>(page, "task.list");
 	for (const task of tasks) {
 		await trpcMutation(page, "task.delete", { id: task.id });

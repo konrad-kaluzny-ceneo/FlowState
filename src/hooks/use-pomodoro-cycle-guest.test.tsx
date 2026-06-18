@@ -47,6 +47,16 @@ vi.mock("~/trpc/react", () => ({
 				}),
 			},
 		},
+		session: {
+			getLastEnded: {
+				useQuery: vi.fn(() => ({ data: null })),
+			},
+		},
+		task: {
+			list: {
+				useQuery: vi.fn(() => ({ data: [] })),
+			},
+		},
 	},
 }));
 
