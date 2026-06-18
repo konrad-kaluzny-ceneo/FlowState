@@ -37,6 +37,7 @@ type TaskRow = {
 	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	sortOrder: number;
 	createdAt: Date;
+	personaPresetId?: string | null;
 };
 
 function taskDefaults(
@@ -327,6 +328,23 @@ vi.mock("~/server/db/index", () => ({
 					return Promise.resolve(row);
 				},
 			),
+			count: vi.fn(
+				(args: { where: { userId?: string; suggestedTaskId?: number } }) => {
+					const n = decisions.filter((d) => {
+						if (args.where.userId != null && d.userId !== args.where.userId) {
+							return false;
+						}
+						if (
+							args.where.suggestedTaskId != null &&
+							d.suggestedTaskId !== args.where.suggestedTaskId
+						) {
+							return false;
+						}
+						return true;
+					}).length;
+					return Promise.resolve(n);
+				},
+			),
 		},
 	},
 }));
@@ -380,6 +398,7 @@ function seedTasks() {
 			workType: "DEEP_WORK",
 			sortOrder: 0,
 			createdAt: new Date("2026-01-01"),
+			personaPresetId: null,
 			...taskDefaults(3),
 		},
 		{
@@ -390,6 +409,7 @@ function seedTasks() {
 			workType: "REACTIVE",
 			sortOrder: 1,
 			createdAt: new Date("2026-01-02"),
+			personaPresetId: null,
 			...taskDefaults(2),
 		},
 		{
@@ -400,6 +420,7 @@ function seedTasks() {
 			workType: "OPERATIONAL",
 			sortOrder: 2,
 			createdAt: new Date("2026-01-03"),
+			personaPresetId: null,
 			...taskDefaults(2),
 		},
 	];
@@ -910,5 +931,124 @@ describe("suggestion router", () => {
 		const hasInterruptions =
 			dominantKeys.includes("interruptions") || chips.includes("Interruptions");
 		expect(hasInterruptions).toBe(true);
+	});
+
+	it("kickoff prepends persona trust clause on first suggestion for preset task", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		tasks = [
+			{
+				id: 1,
+				title: "Sync inbox",
+				status: "active",
+				userId: USER_ID,
+				workType: "OPERATIONAL",
+				sortOrder: 0,
+				createdAt: new Date("2026-01-01"),
+				personaPresetId: "synchro",
+				weight: 2,
+				importance: 2,
+				urgency: 2,
+				effortMinutes: 15,
+				commitmentHorizon: "WHEN_POSSIBLE",
+			},
+		];
+
+		const result = await caller().next({
+			context: "kickoff",
+			sessionId: 1,
+			localHour: 10,
+			energy: "STEADY",
+		});
+
+		expect(result?.rationale).toMatch(
+			/^Synchro — operational work fits your choice\./,
+		);
+		expectBreakdownShape(result);
+	});
+
+	it("kickoff omits persona clause after task was previously suggested", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		const taskRow = {
+			id: 1,
+			title: "Sync inbox",
+			status: "active",
+			userId: USER_ID,
+			workType: "OPERATIONAL" as const,
+			sortOrder: 0,
+			createdAt: new Date("2026-01-01"),
+			personaPresetId: "synchro",
+			weight: 2,
+			importance: 2,
+			urgency: 2,
+			effortMinutes: 15,
+			commitmentHorizon: "WHEN_POSSIBLE" as const,
+		};
+		tasks = [taskRow];
+		decisions = [
+			{
+				id: 1,
+				cycleId: null,
+				sessionId: 1,
+				context: "KICKOFF",
+				userId: USER_ID,
+				suggestedTaskId: 1,
+				chosenTaskId: 1,
+				accepted: true,
+				createdAt: new Date("2026-01-02"),
+				chosenTask: taskRow,
+			},
+		];
+
+		const result = await caller().next({
+			context: "kickoff",
+			sessionId: 1,
+			localHour: 10,
+			energy: "STEADY",
+		});
+
+		expect(result?.rationale).not.toMatch(/^Synchro —/);
+		expectBreakdownShape(result);
+	});
+
+	it("post-check-in skips persona clause for custom preset tasks", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		cycles = [
+			{
+				id: 10,
+				sessionId: 1,
+				userId: USER_ID,
+				kind: "WORK",
+				state: "COMPLETED",
+			},
+		];
+		checkIns = [{ cycleId: 10, userId: USER_ID, energy: "FOCUSED" }];
+		tasks = [
+			{
+				id: 1,
+				title: "Deep feature",
+				status: "active",
+				userId: USER_ID,
+				workType: "DEEP_WORK",
+				sortOrder: 0,
+				createdAt: new Date("2026-01-01"),
+				personaPresetId: "custom",
+				...taskDefaults(3),
+			},
+		];
+
+		const result = await caller().next({
+			context: "post_check_in",
+			cycleId: 10,
+			localHour: 10,
+		});
+
+		expect(result?.rationale).not.toMatch(/^Custom —/);
+		expect(result?.rationaleKey).toBe("energy_deep");
 	});
 });
