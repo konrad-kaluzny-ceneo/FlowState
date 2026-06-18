@@ -2,6 +2,7 @@ import { expect, type Page } from "@playwright/test";
 
 import { completeCheckIn } from "./check-in";
 import { dismissFirstRunIfVisible } from "./onboarding";
+import { dismissReturnHandoffIfVisible } from "./return-handoff";
 
 export async function dismissKickoffReadinessIfVisible(page: Page) {
 	const overlay = page.getByTestId("kickoff-readiness-overlay");
@@ -48,6 +49,7 @@ export async function waitForTimerPanelIdle(page: Page) {
 export async function ensureIdleCycle(page: Page) {
 	await expect(async () => {
 		await dismissFirstRunIfVisible(page);
+		await dismissReturnHandoffIfVisible(page);
 
 		if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
 			await page.getByTestId("kickoff-readiness-skip-btn").click();

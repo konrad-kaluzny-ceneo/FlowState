@@ -66,6 +66,7 @@ test.describe("Session return handoff (S-17)", () => {
 		await expect(page.getByTestId("return-handoff-banner")).toBeVisible({
 			timeout: 15_000,
 		});
+		await expect(page.getByTestId("kickoff-readiness-overlay")).toHaveCount(0);
 		await expect(page.getByTestId("return-handoff-line")).toContainText(
 			/Continue:|Session complete/,
 		);

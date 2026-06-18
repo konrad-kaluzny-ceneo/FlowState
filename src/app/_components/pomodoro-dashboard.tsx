@@ -26,6 +26,7 @@ import {
 	SUGGESTION_COACH_LINE,
 } from "~/lib/onboarding/copy";
 import type { OnboardingScope } from "~/lib/onboarding/types";
+import { resolveWedgeBeat } from "~/lib/wedge/transition-conductor";
 import { api } from "~/trpc/react";
 
 export function PomodoroDashboardBody({
@@ -123,6 +124,42 @@ export function PomodoroDashboardBody({
 
 	const catchUp = pomodoro.catchUp;
 
+	const wedgeBeat = useMemo(
+		() =>
+			resolveWedgeBeat({
+				enableCheckInGate,
+				enableWindDownGate,
+				enableSuggestionGate,
+				pendingClosureLine: pomodoro.pendingClosureLine,
+				awaitingCheckIn: pomodoro.awaitingCheckIn,
+				awaitingWindDown: pomodoro.awaitingWindDown,
+				windDownRationale: pomodoro.windDownRationale,
+				awaitingKickoffReadiness: pomodoro.awaitingKickoffReadiness,
+				awaitingCycleIntention: pomodoro.awaitingCycleIntention,
+				isPostCheckInTransitioning: pomodoro.isPostCheckInTransitioning,
+				activeCycle: pomodoro.activeCycle,
+				returnHandoffGateOpen: pomodoro.returnHandoffGateOpen,
+				state: pomodoro.state,
+			}),
+		[
+			enableCheckInGate,
+			enableWindDownGate,
+			enableSuggestionGate,
+			pomodoro.pendingClosureLine,
+			pomodoro.awaitingCheckIn,
+			pomodoro.awaitingWindDown,
+			pomodoro.windDownRationale,
+			pomodoro.awaitingKickoffReadiness,
+			pomodoro.awaitingCycleIntention,
+			pomodoro.isPostCheckInTransitioning,
+			pomodoro.activeCycle,
+			pomodoro.returnHandoffGateOpen,
+			pomodoro.state,
+		],
+	);
+
+	const wedgeGateActive = wedgeBeat.activeGate !== "none";
+
 	const showCycleCompleteCatchUp =
 		catchUp != null &&
 		pomodoro.state === "completed" &&
@@ -144,12 +181,9 @@ export function PomodoroDashboardBody({
 
 	const showInFlowSummary =
 		pomodoro.inFlowSummaryLine != null &&
+		!wedgeGateActive &&
 		!showSuggestionCard &&
 		!showKickoffCard &&
-		!pomodoro.awaitingCheckIn &&
-		!pomodoro.awaitingWindDown &&
-		!pomodoro.isPostCheckInTransitioning &&
-		!pomodoro.awaitingKickoffReadiness &&
 		!pomodoro.awaitingCycleIntention;
 
 	return (
@@ -350,90 +384,78 @@ export function PomodoroDashboardBody({
 				</div>
 			)}
 
-			{!pomodoro.awaitingCheckIn &&
-				!pomodoro.awaitingWindDown &&
-				!pomodoro.isPostCheckInTransitioning && (
-					<CycleCompleteOverlay
-						canMarkTaskDone={canMarkTaskDone}
-						cycleKind={pomodoro.cycleKind}
-						focusedTask={pomodoro.focusedTask}
-						isConfirming={pomodoro.isConfirming}
-						onConfirm={async (markTaskDone) => {
-							pomodoro.dismissCatchUp();
-							await pomodoro.onCycleCompleteConfirm(markTaskDone);
-						}}
-						onDismissPreFocus={pomodoro.dismissPreFocus}
-						preFocusedTask={pomodoro.preFocusedTask}
-						state={pomodoro.state}
-					/>
-				)}
+			{wedgeBeat.showCycleComplete && (
+				<CycleCompleteOverlay
+					canMarkTaskDone={canMarkTaskDone}
+					cycleKind={pomodoro.cycleKind}
+					focusedTask={pomodoro.focusedTask}
+					isConfirming={pomodoro.isConfirming}
+					onConfirm={async (markTaskDone) => {
+						pomodoro.dismissCatchUp();
+						await pomodoro.onCycleCompleteConfirm(markTaskDone);
+					}}
+					onDismissPreFocus={pomodoro.dismissPreFocus}
+					preFocusedTask={pomodoro.preFocusedTask}
+					state={pomodoro.state}
+				/>
+			)}
 
-			{enableSuggestionGate &&
-				pomodoro.awaitingKickoffReadiness &&
-				pomodoro.pendingClosureLine == null &&
-				!pomodoro.awaitingCheckIn &&
-				!pomodoro.awaitingWindDown &&
-				!pomodoro.isPostCheckInTransitioning && (
-					<KickoffReadinessOverlay
-						isSubmitting={pomodoro.kickoffReadinessSubmitting}
-						onSkip={pomodoro.skipKickoffReadiness}
-						onSubmit={pomodoro.submitKickoffReadiness}
-					/>
-				)}
+			{wedgeBeat.showKickoffReadiness && (
+				<KickoffReadinessOverlay
+					isSubmitting={pomodoro.kickoffReadinessSubmitting}
+					onSkip={pomodoro.skipKickoffReadiness}
+					onSubmit={pomodoro.submitKickoffReadiness}
+				/>
+			)}
 
-			{pomodoro.awaitingCycleIntention && (
+			{wedgeBeat.showCycleIntention && (
 				<CycleIntentionPrompt
 					onSkip={pomodoro.skipCycleIntention}
 					onSubmit={pomodoro.submitCycleIntention}
 				/>
 			)}
 
-			{pomodoro.pendingClosureLine != null && (
+			{wedgeBeat.showSessionClosure && pomodoro.pendingClosureLine != null && (
 				<SessionClosureOverlay
 					closureLine={pomodoro.pendingClosureLine}
 					onDismiss={pomodoro.dismissSessionClosure}
 				/>
 			)}
 
-			{enableCheckInGate &&
-				pomodoro.awaitingCheckIn &&
-				pomodoro.pendingClosureLine == null &&
-				pomodoro.activeCycle != null && (
-					<>
-						{showCheckInCatchUp && catchUp != null && (
-							<div className="fixed inset-x-0 top-4 z-[65] flex justify-center px-4">
-								<div className="w-full max-w-md shadow-xl">
-									<TabReturnCatchUp
-										catchUp={catchUp}
-										cycleKind={pomodoro.cycleKind}
-										taskTitle={pomodoro.focusedTask?.title}
-									/>
-								</div>
+			{wedgeBeat.showCheckIn && pomodoro.activeCycle != null && (
+				<>
+					{showCheckInCatchUp && catchUp != null && (
+						<div className="fixed inset-x-0 top-4 z-[65] flex justify-center px-4">
+							<div className="w-full max-w-md shadow-xl">
+								<TabReturnCatchUp
+									catchUp={catchUp}
+									cycleKind={pomodoro.cycleKind}
+									taskTitle={pomodoro.focusedTask?.title}
+								/>
 							</div>
-						)}
-						<CheckInOverlay
-							coachLine={checkInCoachLine}
-							cycleId={Number(pomodoro.activeCycle.id)}
-							isSubmitting={pomodoro.isConfirming}
-							onSubmit={async (energy) => {
-								pomodoro.dismissCatchUp();
-								onCheckInCoachSeen?.();
-								await pomodoro.submitCheckIn(energy);
-							}}
-						/>
-					</>
-				)}
-
-			{enableWindDownGate &&
-				pomodoro.awaitingWindDown &&
-				pomodoro.windDownRationale != null && (
-					<WindDownOverlay
+						</div>
+					)}
+					<CheckInOverlay
+						coachLine={checkInCoachLine}
+						cycleId={Number(pomodoro.activeCycle.id)}
 						isSubmitting={pomodoro.isConfirming}
-						onEndSession={() => void pomodoro.onWindDownEndSession()}
-						onKeepGoing={() => void pomodoro.onWindDownKeepGoing()}
-						rationale={pomodoro.windDownRationale}
+						onSubmit={async (energy) => {
+							pomodoro.dismissCatchUp();
+							onCheckInCoachSeen?.();
+							await pomodoro.submitCheckIn(energy);
+						}}
 					/>
-				)}
+				</>
+			)}
+
+			{wedgeBeat.showWindDown && pomodoro.windDownRationale != null && (
+				<WindDownOverlay
+					isSubmitting={pomodoro.isConfirming}
+					onEndSession={() => void pomodoro.onWindDownEndSession()}
+					onKeepGoing={() => void pomodoro.onWindDownKeepGoing()}
+					rationale={pomodoro.windDownRationale}
+				/>
+			)}
 
 			{pomodoro.hasActiveSession && (
 				<button

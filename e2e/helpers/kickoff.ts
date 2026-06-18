@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 import type { CheckInEnergyUi } from "./check-in";
+import { dismissReturnHandoffIfVisible } from "./return-handoff";
 
 const ENERGY_TEST_IDS: Record<CheckInEnergyUi, string> = {
 	focused: "check-in-energy-focused",
@@ -11,6 +12,7 @@ export async function completeKickoffReadiness(
 	page: Page,
 	energy: CheckInEnergyUi | "skip",
 ) {
+	await dismissReturnHandoffIfVisible(page);
 	await expect(page.getByTestId("kickoff-readiness-overlay")).toBeVisible({
 		timeout: 15_000,
 	});
