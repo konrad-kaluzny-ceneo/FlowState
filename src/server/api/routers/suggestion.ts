@@ -6,6 +6,10 @@ import {
 	formatKickoffRationale,
 	formatTaskRationale,
 } from "~/lib/scoring/dominant-factor";
+import {
+	buildPersonaTrustClause,
+	composeSuggestionRationale,
+} from "~/lib/scoring/persona-trust-clause";
 import { buildRationaleBreakdown } from "~/lib/scoring/rationale-breakdown";
 import { pickBestTask, type ScoringContext } from "~/lib/scoring/score-task";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
@@ -120,6 +124,27 @@ async function verifyOwnedTasks(
 	return { suggestedTask, chosenTask };
 }
 
+async function applyPersonaTrustToRationale(
+	db: DbClient,
+	userId: string,
+	task: { id: number; personaPresetId: string | null },
+	scoringRationale: string,
+): Promise<string> {
+	const personaClause = buildPersonaTrustClause(task.personaPresetId);
+	if (personaClause == null) {
+		return scoringRationale;
+	}
+
+	const priorSuggestionCount = await db.suggestionDecision.count({
+		where: { userId, suggestedTaskId: task.id },
+	});
+	if (priorSuggestionCount > 0) {
+		return scoringRationale;
+	}
+
+	return composeSuggestionRationale(scoringRationale, personaClause);
+}
+
 export const suggestionRouter = createTRPCRouter({
 	next: protectedProcedure
 		.input(nextInputSchema)
@@ -187,9 +212,14 @@ export const suggestionRouter = createTRPCRouter({
 					return null;
 				}
 
-				const { rationaleKey, rationale } = formatTaskRationale(
-					winner,
-					scoringContext,
+				const { rationaleKey, rationale: scoringRationale } =
+					formatTaskRationale(winner, scoringContext);
+
+				const rationale = await applyPersonaTrustToRationale(
+					ctx.db,
+					userId,
+					task,
+					scoringRationale,
 				);
 
 				const breakdown = buildRationaleBreakdown(winner, scoringContext, {
@@ -270,9 +300,14 @@ export const suggestionRouter = createTRPCRouter({
 				return null;
 			}
 
-			const { rationaleKey, rationale } = formatKickoffRationale(
-				winner,
-				scoringContext,
+			const { rationaleKey, rationale: scoringRationale } =
+				formatKickoffRationale(winner, scoringContext);
+
+			const rationale = await applyPersonaTrustToRationale(
+				ctx.db,
+				userId,
+				task,
+				scoringRationale,
 			);
 
 			const breakdown = buildRationaleBreakdown(winner, scoringContext, {
