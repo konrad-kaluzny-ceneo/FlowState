@@ -492,8 +492,8 @@ Existing cycles remain `RUNNING | COMPLETED | INTERRUPTED`; new fields nullable.
 
 #### Automated
 
-- [ ] 5.1 Timer panel component tests pass
-- [ ] 5.2 `pnpm check` passes
+- [x] 5.1 Timer panel component tests pass
+- [x] 5.2 `pnpm check` passes
 
 #### Manual
 

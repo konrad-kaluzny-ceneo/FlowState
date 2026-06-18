@@ -83,6 +83,7 @@ export function PomodoroDashboardBody({
 	const showTimer =
 		pomodoro.focusedTask != null ||
 		pomodoro.state === "running" ||
+		pomodoro.state === "paused" ||
 		pomodoro.state === "completed";
 
 	const isBreakRunning =
@@ -241,6 +242,8 @@ export function PomodoroDashboardBody({
 					isStarting={false}
 					onCycleEndAudioModeChange={setCycleEndAudioMode}
 					onInterrupt={pomodoro.interrupt}
+					onPause={pomodoro.pause}
+					onResume={pomodoro.resume}
 					onStart={pomodoro.start}
 					onWorkDurationManualChange={pomodoro.clearStagedKickoffDuration}
 					preferredWorkDurationSec={pomodoro.stagedKickoffDurationSec}
