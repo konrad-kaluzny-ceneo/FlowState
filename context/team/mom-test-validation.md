@@ -150,4 +150,92 @@ Source: [opportunity-map-automated.md](./opportunity-map-automated.md) (2026-06-
 
 ---
 
-**Next handoff (from opportunity map):** `/10x-shape` — scope the digest MVP (inputs, output format, one reference path) using thresholds above.
+## Validation Results (2026-06-18 — git replay)
+
+Automated replay of the last 5 timer-hub commits and co-change stats since 2026-04-01. No maintainer interview yet — behavioral evidence from git only.
+
+### Git survey (inferred from history)
+
+| Question | Answer from git | Confidence |
+|---|---|---|
+| Screener: timer-hub touch in 8 weeks? | **Yes** — 79 commits on hook / dashboard / `src/lib/wedge/` | High |
+| Commit count (8 weeks) | **11+** (79) | High |
+| Consult repo-map before edit? | **Unknown** — not observable in git | — |
+| Run belt E2E before merge? | **Unknown** — CI catches many; multiple post-merge `fix(e2e)` / `stabilize e2e` commits suggest local/CI gap at times | Medium |
+| Same-day / next-day fix for missed layer? | **≥4 chains** in 8 weeks: B-03+e2e (`dd80467`), cycle-complete-flash hook→dashboard split (`d5881f1` → `f002efb`), persistent-quiet-cycle-audio e2e fixes (`515af10`…), session-kickoff e2e fixes (`556bd7a`…) | Medium |
+| CI failure: knew vs didn't consider? | E2e stabilization fixes often land **1–3 commits after** hook/dashboard feature commits — pattern fits “layer considered late” | Medium |
+
+### Co-change baseline (hook commits since 2026-04-01)
+
+63 commits touch `use-pomodoro-cycle.ts`. Top co-changed paths:
+
+| Path | Co-change count |
+|---|---|
+| `use-pomodoro-cycle.test.tsx` | 29 (46%) |
+| `pomodoro-dashboard.tsx` | 22 (35%) |
+| `task-list.tsx` | 10 |
+| `cycle.ts` / `cycle.test.ts` | 9 / 8 |
+| `e2e/pomodoro-cycle.spec.ts` | 5 |
+| `e2e/helpers/work-cycle.ts` | 6 |
+
+**Omission rates on hook-only commits:** 65% touch hook without dashboard; 65% without any `e2e/` file; 54% without hook unit test. Many omissions are intentional scoped edits — the signal is when a large hook change skips layers that later needed fix commits.
+
+### Replay — last 5 timer-hub commits
+
+| Commit | Summary | Files touched (timer slice) | Digest delta — new co-change rows? | Follow-up rework? |
+|---|---|---|---|---|
+| `f89ff40` | F-07 transition conductor | hook, dashboard, hook+dashboard+guest tests, conductor+test, 4 e2e helpers + spec | **No** — already hit expected layers | None observed |
+| `7f0c803` | Architect-report side edit | hook only (8 lines) | **Yes** — would flag missing `hook.test` (29 co-changes) | None — trivial cleanup |
+| `4f6ae9f` | Timeout closure on load | hook + hook.test (large refactor) | **Yes** — would flag `dashboard` (22) and `e2e/pomodoro-cycle.spec` (5) not touched | No same-day fix; hook.test added in same commit |
+| `1acdc58` | Closure/kickoff mutex | dashboard + dashboard.test + `e2e/session-closure.spec` | **Yes** (from dashboard path) — would flag `hook` (22 co-changes) not touched | None observed |
+| `8103162` | Data-mode ACL hardening | hook + hook.test | **Yes** — would flag `dashboard`; likely correct omission for enum wiring | None observed |
+
+**Score: 4 / 5** commits surface at least one high-frequency co-change path not touched. Only `f89ff40` is fully aligned with the digest checklist upfront.
+
+### Draft digest output (example: `4f6ae9f` before edit)
+
+```text
+Target: src/hooks/use-pomodoro-cycle.ts
+Dependents (depcruise): pomodoro-dashboard, timer-panel, 4 overlays, guest-import, …
+Top git co-changes (since 2026-04-01):
+  29× use-pomodoro-cycle.test.tsx
+  22× pomodoro-dashboard.tsx
+  10× task-list.tsx
+  5× e2e/pomodoro-cycle.spec.ts
+Suggested tests: pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx
+                  pnpm test:e2e:belt (if dashboard or e2e co-change paths apply)
+Not touched in this commit: dashboard, e2e/* — confirm intentional
+```
+
+### Critique update (post-replay)
+
+- **Co-change signal is real** — 4/5 replays would have printed rows worth a conscious “confirm skip” decision, not just noise.
+- **Incident signal is real but indirect** — e2e stabilization fix chains exist; git cannot prove a digest would have prevented them without maintainer confirmation on 1–2 examples.
+- **Full joiner still over-scoped for v1** — depcruise fan-out duplicates repo-map for the hub; the replay win comes almost entirely from **git co-change + test command block**.
+- **7f0c803 false positive risk** — trivial hook edits would trigger test-layer warnings; digest needs a `--since` line-count or change-size threshold, or maintainers will ignore it.
+
+## Decision (2026-06-18)
+
+**Verdict: Narrow scope → proceed to `/10x-shape`**
+
+| Criterion | Result |
+|---|---|
+| ≥3/5 replay commits with new co-change signal | **Met** (4/5) |
+| ≥2 incidents / fix chains in 8 weeks | **Met** (≥4 e2e/hook/dashboard fix chains) |
+| Dry-run <30s, one screen | **Not measured** — shape phase should prototype |
+| Full three-way joiner justified | **Not yet** — co-change alone drove replay value |
+
+**Shape MVP as:**
+
+1. Input: one path under timer hub.
+2. Output: top-N git co-changed files (since date) + static test commands from repo-map.
+3. Optional second line: depcruise fan-out count only (not full graph).
+4. Skip threshold: warn on missing co-change layers only when diff > N lines or user passes `--strict`.
+
+**Do not build yet (full CI gate)** until manual CLI used on ≥3 consecutive timer slices.
+
+**Try process in parallel:** add timer-hub checklist to PR template linking repo-map §3 + test commands — costs zero code.
+
+---
+
+**Next handoff:** `/10x-shape` — scope minimal co-change digest MVP using thresholds above.

@@ -1,7 +1,7 @@
 ---
 change_id: fix-stale-suggestion-after-delete
 title: Clear task suggestion when suggested task is deleted
-status: preparing
+status: planned
 created: 2026-06-18
 updated: 2026-06-18
 archived_at: null
