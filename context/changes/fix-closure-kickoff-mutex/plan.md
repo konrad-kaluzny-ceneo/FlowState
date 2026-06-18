@@ -269,33 +269,33 @@ None — behavioral fix only; no schema or API changes. `sessionStorage` `wasClo
 
 #### Automated
 
-- [ ] 2.1 Hook race char test passes; kickoff suite green
-- [ ] 2.2 `pnpm test` passes
-- [ ] 2.3 `pnpm check` passes
+- [x] 2.1 Hook race char test passes; kickoff suite green
+- [x] 2.2 `pnpm test` passes
+- [x] 2.3 `pnpm check` passes
 
 #### Manual
 
-- [ ] 2.4 Dashboard mutex char tests still fail (expected until Phase 3)
+- [x] 2.4 Dashboard mutex char tests still fail (expected until Phase 3)
 
 ### Phase 3: Dashboard enforcement (mutex guards)
 
 #### Automated
 
-- [ ] 3.1 `pomodoro-dashboard.test.tsx` all green including mutex tests
-- [ ] 3.2 `use-pomodoro-cycle.test.tsx` all green
-- [ ] 3.3 `pnpm test`, `pnpm check`, `pnpm typecheck` pass
+- [x] 3.1 `pomodoro-dashboard.test.tsx` all green including mutex tests
+- [x] 3.2 `use-pomodoro-cycle.test.tsx` all green
+- [x] 3.3 `pnpm test`, `pnpm check`, `pnpm typecheck` pass
 
 #### Manual
 
-- [ ] 3.4 End session → closure → dismiss → no kickoff on same visit (local)
+- [x] 3.4 End session → closure → dismiss → no kickoff on same visit (local)
 
 ### Phase 4: Belt assertion (session-closure.spec.ts)
 
 #### Automated
 
-- [ ] 4.1 `set CI=true && pnpm test:e2e:belt -- e2e/session-closure.spec.ts` passes
-- [ ] 4.2 `pnpm test` and `pnpm check` pass
+- [x] 4.1 `set CI=true && pnpm test:e2e:belt -- e2e/session-closure.spec.ts` passes
+- [x] 4.2 `pnpm test` and `pnpm check` pass
 
 #### Manual
 
-- [ ] 4.3 Belt run shows no pre-dismiss kickoff mask; post-dismiss kickoff count 0
+- [x] 4.3 Belt run shows no pre-dismiss kickoff mask; post-dismiss kickoff count 0

@@ -1,9 +1,9 @@
 ---
 change_id: fix-closure-kickoff-mutex
 title: Fix closure kickoff mutex
-status: implementing
+status: implemented
 created: 2026-06-17
-updated: 2026-06-17
+updated: 2026-06-18
 archived_at: null
 ---
 
