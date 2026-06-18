@@ -11,7 +11,7 @@ Headless code review for FlowState using [`@cursor/sdk`](https://cursor.com/docs
    CURSOR_API_KEY="cursor_..."
    ```
 
-   CI uses the GitHub secret `CURSOR_API_KEY` — not `.env.local`.
+   CI uses the GitHub secret `CURSOR_API_KEY` — not `.env.local`. When the secret is unset, the `cursor-review` workflow **succeeds with a notice** and does not block CI.
 
 3. Node **22.13+** required (matches CI).
 

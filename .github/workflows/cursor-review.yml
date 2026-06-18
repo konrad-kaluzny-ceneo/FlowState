@@ -1,5 +1,6 @@
 # Advisory PR code review via Cursor SDK (cloud agent).
-# Requires repository secret: CURSOR_API_KEY
+# Optional repository secret: CURSOR_API_KEY
+# When unset, the job succeeds with a notice (does not fail CI).
 #
 # Not a merge gate — runs in parallel with CI quality/e2e.
 
@@ -24,24 +25,41 @@ jobs:
       pull-requests: write
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
+      - name: Cursor review availability
+        id: cursor_key
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          if [ -z "$CURSOR_API_KEY" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Cursor code review skipped::CURSOR_API_KEY is not configured — advisory review skipped (CI not blocked)."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.cursor_key.outputs.skip != 'true'
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - uses: pnpm/action-setup@v4
+        if: steps.cursor_key.outputs.skip != 'true'
 
       - uses: actions/setup-node@v4
+        if: steps.cursor_key.outputs.skip != 'true'
         with:
           node-version: 22
           cache: pnpm
 
       - name: Install dependencies
+        if: steps.cursor_key.outputs.skip != 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Run cloud code review
         id: review
+        if: steps.cursor_key.outputs.skip != 'true'
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         run: |
@@ -66,7 +84,7 @@ jobs:
           pnpm review:cloud "${REVIEW_ARGS[@]}"
 
       - name: Post PR comment
-        if: github.event_name == 'pull_request' && steps.review.outcome == 'success'
+        if: github.event_name == 'pull_request' && steps.cursor_key.outputs.skip != 'true' && steps.review.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
