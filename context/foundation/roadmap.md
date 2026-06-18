@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-18
 structure: split
-active_slices: []
+active_slices: [S-24]
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -59,7 +59,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-21 | mindful-transition-copy | [FLO-36](https://linear.app/flowstate-10xdev/issue/FLO-36) | [#47](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/47) | skippable break/re-entry copy by energy | F-07, S-02, S-05, S-12 | US-01 | proposed |
 | S-22 | background-tab-return-catchup | [FLO-37](https://linear.app/flowstate-10xdev/issue/FLO-37) | [#48](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/48) | catch-up when tab was backgrounded at cycle end | S-01, S-05, S-06 | preserved | done |
 | S-23 | suggestion-rationale-expander | [FLO-38](https://linear.app/flowstate-10xdev/issue/FLO-38) | [#49](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/49) | "Why this?" factor breakdown | S-06 | preserved | done |
-| S-24 | cycle-pause-resume | [FLO-39](https://linear.app/flowstate-10xdev/issue/FLO-39) | [#50](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/50) | pause/resume; suppress wedge gates while PAUSED; ~30 min cap → calm session end | S-01, S-02 | **US-04** | ready |
+| S-24 | cycle-pause-resume | [FLO-39](https://linear.app/flowstate-10xdev/issue/FLO-39) | [#50](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/50) | pause/resume; suppress wedge gates while PAUSED; ~30 min cap → calm session end | S-01, S-02 | **US-04** | active |
 | B-01 | fix-cycle-audio-toggle | [FLO-53](https://linear.app/flowstate-10xdev/issue/FLO-53) | [#72](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/72) | **(bug)** audio toggle responds + persists | S-20 | preserved | done |
 | B-02 | fix-task-title-multiline-edit | [FLO-54](https://linear.app/flowstate-10xdev/issue/FLO-54) | [#73](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/73) | **(bug)** multiline task title edit | — | preserved | done |
 | B-03 | fix-cycle-start-interrupt-optimistic | [FLO-55](https://linear.app/flowstate-10xdev/issue/FLO-55) | [#74](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/74) | **(bug)** Start/Interrupt within 200ms | S-09 | guardrails | done |
