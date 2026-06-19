@@ -220,16 +220,16 @@ None. Client-only behaviour change.
 
 #### Automated
 
-- [ ] 1.1 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` — stale invalidation tests exist and fail (red)
-- [ ] 1.2 `pnpm check` passes
+- [x] 1.1 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` — stale invalidation tests exist and fail (red) — 3676c14
+- [x] 1.2 `pnpm check` passes — 3676c14
 
 ### Phase 2: Enforcement (task-list sync)
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` — stale invalidation tests pass
-- [ ] 2.2 `pnpm check` passes
-- [ ] 2.3 `pnpm test` passes
+- [x] 2.1 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` — stale invalidation tests pass — 3676c14
+- [x] 2.2 `pnpm check` passes — 3676c14
+- [x] 2.3 `pnpm test` passes — 3676c14
 
 #### Manual
 
