@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createAudioManager } from "~/lib/audio";
+import { maybeAlertBreakStart } from "~/lib/break-out-of-tab-alert/maybe-alert-break-start";
+import { getNotificationPermission } from "~/lib/break-out-of-tab-alert/notify-break-start";
 import { deriveCatchUpGate } from "~/lib/catch-up/derive-gate";
 import type { CatchUpState } from "~/lib/catch-up/types";
 import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
@@ -288,12 +290,16 @@ async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {
 
 export type UsePomodoroCycleOptions = {
 	getCycleEndAudioMode?: () => CycleEndAudioMode;
+	getOutOfTabBreakAlertsEnabled?: () => boolean;
 	activeTaskIds?: ReadonlySet<DomainTaskId>;
 };
 
 export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const getCycleEndAudioModeRef = useRef<() => CycleEndAudioMode>(
 		options?.getCycleEndAudioMode ?? (() => "normal"),
+	);
+	const getOutOfTabBreakAlertsEnabledRef = useRef<() => boolean>(
+		options?.getOutOfTabBreakAlertsEnabled ?? (() => true),
 	);
 	const activeTaskIdsRef = useRef<ReadonlySet<DomainTaskId> | undefined>(
 		options?.activeTaskIds,
@@ -303,6 +309,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		getCycleEndAudioModeRef.current =
 			options?.getCycleEndAudioMode ?? (() => "normal");
 	}, [options?.getCycleEndAudioMode]);
+
+	useEffect(() => {
+		getOutOfTabBreakAlertsEnabledRef.current =
+			options?.getOutOfTabBreakAlertsEnabled ?? (() => true);
+	}, [options?.getOutOfTabBreakAlertsEnabled]);
 
 	useEffect(() => {
 		activeTaskIdsRef.current = options?.activeTaskIds;
@@ -582,6 +593,38 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			() => getCycleEndAudioModeRef.current(),
 		);
 	}, [setCatchUpFromExpiry, stopWorker]);
+
+	const fireBreakOutOfTabAlert = useCallback(
+		(breakKind: CycleKind, cycleId: string | number) => {
+			if (breakKind !== "SHORT_BREAK" && breakKind !== "LONG_BREAK") {
+				return;
+			}
+
+			if (!getOutOfTabBreakAlertsEnabledRef.current()) {
+				return;
+			}
+
+			const alertResult = maybeAlertBreakStart({
+				breakKind,
+				isTabHidden:
+					typeof document !== "undefined" &&
+					document.visibilityState !== "visible",
+				outOfTabEnabled: getOutOfTabBreakAlertsEnabledRef.current(),
+				notificationPermission: getNotificationPermission(),
+				cycleEndAudioMode: getCycleEndAudioModeRef.current(),
+				cycleId: String(cycleId),
+			});
+
+			if (alertResult.shouldPlayBackgroundAudio) {
+				void audioRef.current
+					.playAlarm({ mode: getCycleEndAudioModeRef.current() })
+					.catch(() => {
+						// Background break audio is best-effort when tab is hidden.
+					});
+			}
+		},
+		[],
+	);
 
 	const attachWorkerHandlers = useCallback(
 		(worker: Worker) => {
@@ -2130,6 +2173,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setState("running");
 			stateRef.current = "running";
 			startWorker(endTime);
+			fireBreakOutOfTabAlert(breakKind, breakCycle.id);
 
 			await Promise.all([
 				invalidateServerCycle(),
@@ -2147,6 +2191,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			invalidateDayPlan,
 			invalidateServerCycle,
 			startWorker,
+			fireBreakOutOfTabAlert,
 			utils.task.list,
 			_activeSessionId,
 			refreshNarrativeStats,
@@ -2446,6 +2491,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setState("running");
 			stateRef.current = "running";
 			startWorker(optimisticEndTime);
+			fireBreakOutOfTabAlert(breakKind, optimisticBreakCycle.id);
 			setAwaitingCheckIn(false);
 			setPendingMarkTaskDone(null);
 			setIsPostCheckInTransitioning(false);
@@ -2561,6 +2607,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			utils.task.list,
 			refreshNarrativeStats,
 			rollbackOptimisticCheckInTransition,
+			fireBreakOutOfTabAlert,
 		],
 	);
 

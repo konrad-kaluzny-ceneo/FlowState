@@ -1,9 +1,9 @@
 ---
 change_id: break-alerts-out-of-tab
 title: Out-of-tab break alerts (narrow MVP)
-status: planned
+status: impl_reviewed
 created: 2026-06-18
-updated: 2026-06-18
+updated: 2026-06-19
 archived_at: null
 ---
 

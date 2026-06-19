@@ -71,6 +71,18 @@ class FakeWorker {
 
 const playAlarm = vi.fn().mockResolvedValue(undefined);
 
+const { maybeAlertBreakStartMock } = vi.hoisted(() => ({
+	maybeAlertBreakStartMock: vi.fn(() => ({
+		playedNotification: false,
+		shouldPlayBackgroundAudio: false,
+	})),
+}));
+
+vi.mock("~/lib/break-out-of-tab-alert/maybe-alert-break-start", () => ({
+	maybeAlertBreakStart: maybeAlertBreakStartMock,
+	resetBreakOutOfTabAlertDedupeForTests: vi.fn(),
+}));
+
 vi.mock("~/lib/audio", () => ({
 	createAudioManager: () => ({
 		unlock: vi.fn().mockResolvedValue(undefined),
@@ -3603,5 +3615,131 @@ describe("usePomodoroCycle catchUp", () => {
 			vi.useRealTimers();
 			vi.stubGlobal("Worker", FakeWorker);
 		}
+	});
+});
+
+describe("usePomodoroCycle break out-of-tab alerts", () => {
+	function setVisibilityState(state: DocumentVisibilityState) {
+		Object.defineProperty(document, "visibilityState", {
+			configurable: true,
+			value: state,
+		});
+	}
+
+	beforeEach(() => {
+		sessionStorage.clear();
+		resetActiveCycleRecoveryForTests();
+		activeCycleData = null;
+		fakeWorkers.length = 0;
+		vi.clearAllMocks();
+		playAlarm.mockClear();
+		maybeAlertBreakStartMock.mockClear();
+		maybeAlertBreakStartMock.mockReturnValue({
+			playedNotification: true,
+			shouldPlayBackgroundAudio: true,
+		});
+		getActiveCycle.mockImplementation(async () => activeCycleData);
+		getOrCreateSession.mockResolvedValue({ id: 1 });
+		createCycle.mockImplementation(async () => ({
+			id: 42,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: 7,
+			kind: "WORK",
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: { id: 7, title: "Write tests" },
+			configuredDurationSec: 60,
+		}));
+		completeCycle.mockResolvedValue(undefined);
+		createCheckInMutate.mockResolvedValue({
+			id: 1,
+			cycleId: 11,
+			energy: "STEADY",
+			userId: "user-1",
+			respondedAt: new Date(),
+		});
+		taskListQuery.mockResolvedValue([]);
+	});
+
+	it("calls maybeAlertBreakStart when break starts with hidden tab", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 70,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 300,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		setVisibilityState("hidden");
+
+		const { result } = renderHook(
+			() =>
+				usePomodoroCycle({
+					getOutOfTabBreakAlertsEnabled: () => true,
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		await driveWorkCycleToCheckIn(result);
+
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		expect(maybeAlertBreakStartMock).toHaveBeenCalled();
+	});
+
+	it("does not call maybeAlertBreakStart when out-of-tab toggle is off", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 70,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 300,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		setVisibilityState("hidden");
+
+		const { result } = renderHook(
+			() =>
+				usePomodoroCycle({
+					getOutOfTabBreakAlertsEnabled: () => false,
+				}),
+			{ wrapper: createWrapper() },
+		);
+
+		await driveWorkCycleToCheckIn(result);
+
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		expect(maybeAlertBreakStartMock).not.toHaveBeenCalled();
 	});
 });
