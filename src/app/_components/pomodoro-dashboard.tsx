@@ -36,7 +36,10 @@ import {
 } from "~/lib/break-out-of-tab-alert/storage";
 import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
-import { useGuestDomainTasks } from "~/lib/data-mode/use-domain-tasks";
+import {
+	useDomainTasks,
+	useGuestDomainTasks,
+} from "~/lib/data-mode/use-domain-tasks";
 import {
 	CHECK_IN_COACH_LINE,
 	SUGGESTION_COACH_LINE,
@@ -44,7 +47,6 @@ import {
 import { shouldDeferFirstRun } from "~/lib/onboarding/defer";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import { resolveWedgeBeat } from "~/lib/wedge/transition-conductor";
-import { api } from "~/trpc/react";
 
 type DayPlanView = ReturnType<typeof useDayPlan>;
 
@@ -620,14 +622,13 @@ function AuthenticatedPomodoroDashboard() {
 	useEffect(() => {
 		setHasMounted(true);
 	}, []);
-	// Prefetch in page.tsx uses undefined input — keep suspense key aligned for SSR.
-	const [baseTasks] = api.task.list.useSuspenseQuery();
-	const { data: tasksWithDayStatus = baseTasks } = api.task.list.useQuery(
-		{ localDateKey: dayPlan.localDateKey },
-		{ enabled: hasMounted },
+	const { tasks: domainTasks, refresh: refreshTasks } = useDomainTasks(
+		"authenticated",
+		{
+			localDateKey: dayPlan.localDateKey,
+			hasMounted,
+		},
 	);
-	const tasks = tasksWithDayStatus;
-	const utils = api.useUtils();
 	const {
 		scope: onboardingScope,
 		shouldShowCheckInCoach,
@@ -635,17 +636,6 @@ function AuthenticatedPomodoroDashboard() {
 		markCheckInCoachSeen,
 		markSuggestionCoachSeen,
 	} = useOnboarding();
-
-	const domainTasks = useMemo(
-		() =>
-			tasks.map((t) => ({
-				...t,
-				weight: t.weight as 1 | 2 | 3,
-				importance: t.importance as 1 | 2 | 3,
-				urgency: t.urgency as 1 | 2 | 3,
-			})),
-		[tasks],
-	);
 
 	const workTypeDurationScope =
 		onboardingScope.mode === "authenticated" ? onboardingScope : undefined;
@@ -666,14 +656,7 @@ function AuthenticatedPomodoroDashboard() {
 			onboardingScope={onboardingScope}
 			onCheckInCoachSeen={markCheckInCoachSeen}
 			onSuggestionCoachSeen={markSuggestionCoachSeen}
-			refreshTasks={async () => {
-				await Promise.all([
-					utils.task.list.invalidate(),
-					utils.task.list.invalidate({
-						localDateKey: dayPlan.localDateKey,
-					}),
-				]);
-			}}
+			refreshTasks={refreshTasks}
 			setCycleEndAudioMode={setCycleEndAudioMode}
 			suggestionCoachLine={
 				shouldShowSuggestionCoach ? SUGGESTION_COACH_LINE : undefined

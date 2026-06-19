@@ -1,8 +1,4 @@
-import type {
-	CommitmentHorizon,
-	EnergyLevel,
-	WorkType,
-} from "@prisma/generated";
+import type { CommitmentHorizon, EnergyLevel, WorkType } from "~/lib/domain";
 
 export type ScoringContext = {
 	energy: EnergyLevel;

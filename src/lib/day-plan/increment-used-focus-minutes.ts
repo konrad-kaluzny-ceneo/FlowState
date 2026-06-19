@@ -1,6 +1,4 @@
-import type { PrismaClient } from "@prisma/generated";
-
-export type DayPlanDb = Pick<PrismaClient, "dayPlan">;
+import type { DayPlanDb } from "~/lib/persistence/prisma/client-types";
 
 /**
  * Atomically adds focus minutes for a user's day plan, capped at budget.

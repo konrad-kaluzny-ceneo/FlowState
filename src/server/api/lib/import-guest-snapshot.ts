@@ -1,6 +1,5 @@
-import type { PrismaClient } from "@prisma/generated";
-
 import type { GuestSnapshotV1 } from "~/lib/guest/schema";
+import type { PrismaClient } from "~/lib/persistence/prisma/client-types";
 
 export function resolveUniqueTitle(
 	title: string,

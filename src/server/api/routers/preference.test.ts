@@ -1,5 +1,5 @@
-import type { CycleEndAudioMode as PrismaCycleEndAudioMode } from "@prisma/generated";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { toPrismaCycleEndAudioMode } from "~/lib/persistence/prisma/enum-mappers";
 
 vi.mock("~/lib/auth/server", () => ({
 	auth: { getSession: vi.fn() },
@@ -7,9 +7,11 @@ vi.mock("~/lib/auth/server", () => ({
 
 type PreferenceRow = {
 	userId: string;
-	cycleEndAudioMode: PrismaCycleEndAudioMode;
+	cycleEndAudioMode: ReturnType<typeof toPrismaCycleEndAudioMode>;
 	updatedAt: Date;
 };
+
+type PrismaAudioMode = PreferenceRow["cycleEndAudioMode"];
 
 let preferences: PreferenceRow[] = [];
 
@@ -25,9 +27,9 @@ vi.mock("~/server/db/index", () => ({
 					where: { userId: string };
 					create: {
 						userId: string;
-						cycleEndAudioMode: PrismaCycleEndAudioMode;
+						cycleEndAudioMode: PrismaAudioMode;
 					};
-					update: { cycleEndAudioMode: PrismaCycleEndAudioMode };
+					update: { cycleEndAudioMode: PrismaAudioMode };
 				}) => {
 					const existing = preferences.find(
 						(p) => p.userId === args.where.userId,

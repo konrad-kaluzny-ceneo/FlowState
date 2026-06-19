@@ -1,4 +1,5 @@
 ﻿import type {
+	CommitmentHorizon,
 	CycleRepository,
 	DomainActiveCycle,
 	DomainSession,
@@ -7,6 +8,7 @@
 	SessionRepository,
 	TaskRepository,
 } from "~/lib/data-mode/types";
+import type { WorkType } from "~/lib/domain/work-type";
 
 function toNumericId(id: DomainTaskId): number {
 	const num = Number(id);
@@ -18,12 +20,12 @@ function toNumericId(id: DomainTaskId): number {
 
 type CreateTaskInput = {
 	title: string;
-	workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+	workType?: WorkType;
 	weight?: 1 | 2 | 3;
 	importance?: 1 | 2 | 3;
 	urgency?: 1 | 2 | 3;
 	effortMinutes?: number | null;
-	commitmentHorizon?: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
+	commitmentHorizon?: CommitmentHorizon;
 	resumeNote?: string | null;
 	personaPresetId?: string | null;
 	isDailyStanding?: boolean;
@@ -33,12 +35,12 @@ type UpdateTaskInput = {
 	id: number;
 	title?: string;
 	status?: "active" | "completed";
-	workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+	workType?: WorkType;
 	weight?: 1 | 2 | 3;
 	importance?: 1 | 2 | 3;
 	urgency?: 1 | 2 | 3;
 	effortMinutes?: number | null;
-	commitmentHorizon?: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
+	commitmentHorizon?: CommitmentHorizon;
 	resumeNote?: string | null;
 	personaPresetId?: string | null;
 	isDailyStanding?: boolean;
@@ -51,29 +53,10 @@ type CreateCycleInput = {
 	intention?: string;
 };
 
-type TrpcTaskRow = {
-	id: number;
-	userId: string;
-	title: string;
-	status: string;
-	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
-	weight: number;
-	importance?: number;
-	urgency?: number;
-	effortMinutes?: number | null;
-	commitmentHorizon?: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
-	sortOrder: number;
-	resumeNote?: string | null;
-	personaPresetId?: string | null;
-	isDailyStanding?: boolean;
-	createdAt: Date;
-	updatedAt: Date | null;
-};
-
 type TrpcClient = {
 	task: {
-		list: { fetch: () => Promise<TrpcTaskRow[]> };
-		create: { mutate: (input: CreateTaskInput) => Promise<TrpcTaskRow> };
+		list: { fetch: () => Promise<DomainTask[]> };
+		create: { mutate: (input: CreateTaskInput) => Promise<DomainTask> };
 		update: { mutate: (input: UpdateTaskInput) => Promise<void> };
 		delete: { mutate: (input: { id: number }) => Promise<void> };
 		reorder: { mutate: (input: { orderedIds: number[] }) => Promise<void> };
@@ -117,26 +100,21 @@ type TrpcClient = {
 	};
 };
 
-function toDomainTask(row: TrpcTaskRow): DomainTask {
-	const urgency = (row.urgency ?? row.weight) as 1 | 2 | 3;
+function normalizeDomainTask(task: DomainTask): DomainTask {
 	return {
-		...row,
-		weight: row.weight as 1 | 2 | 3,
-		importance: (row.importance ?? 2) as 1 | 2 | 3,
-		urgency,
-		effortMinutes: row.effortMinutes ?? null,
-		commitmentHorizon: row.commitmentHorizon ?? "WHEN_POSSIBLE",
-		resumeNote: row.resumeNote ?? null,
-		personaPresetId: row.personaPresetId ?? null,
-		isDailyStanding: row.isDailyStanding ?? false,
+		...task,
+		weight: task.weight as 1 | 2 | 3,
+		importance: task.importance as 1 | 2 | 3,
+		urgency: task.urgency as 1 | 2 | 3,
 	};
 }
 
 export function createServerTaskRepository(client: TrpcClient): TaskRepository {
 	return {
-		list: async () => (await client.task.list.fetch()).map(toDomainTask),
+		list: async () =>
+			(await client.task.list.fetch()).map((task) => normalizeDomainTask(task)),
 		create: async (input) =>
-			toDomainTask(await client.task.create.mutate(input)),
+			normalizeDomainTask(await client.task.create.mutate(input)),
 		update: (input) =>
 			client.task.update.mutate({
 				...input,

@@ -26,7 +26,7 @@ type CreatedActiveCycle = Omit<DomainActiveCycle, "task"> & {
 	task?: DomainActiveCycle["task"];
 };
 
-import type { EnergyLevel } from "@prisma/generated";
+import type { EnergyLevel } from "~/lib/domain/energy-level";
 import {
 	getLongBreakDuration,
 	getShortBreakDuration,

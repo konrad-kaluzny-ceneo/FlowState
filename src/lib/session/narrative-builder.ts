@@ -1,4 +1,4 @@
-import type { EnergyLevel } from "@prisma/generated";
+import type { EnergyLevel } from "~/lib/domain/energy-level";
 
 import {
 	CLOSURE_PREFIX,

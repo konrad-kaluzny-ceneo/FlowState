@@ -1,6 +1,8 @@
-import type { EnergyLevel } from "@prisma/generated";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+
+import { energyLevelSchema } from "~/lib/domain";
+import type { EnergyLevel } from "~/lib/domain/energy-level";
 
 import {
 	formatKickoffRationale,
@@ -19,6 +21,8 @@ import {
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import type { db as dbClient } from "~/server/db/index";
 
+const energyLevelSchemaZod = z.enum(energyLevelSchema);
+
 const localHourSchema = z.number().int().min(0).max(23);
 const localDateKeySchema = z
 	.string()
@@ -36,7 +40,7 @@ const nextInputSchema = z.discriminatedUnion("context", [
 		sessionId: z.number().int(),
 		localHour: localHourSchema,
 		localDateKey: localDateKeySchema,
-		energy: z.enum(["FOCUSED", "STEADY", "FADING"]),
+		energy: energyLevelSchemaZod,
 	}),
 ]);
 

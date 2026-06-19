@@ -1,6 +1,9 @@
-﻿export type DomainTaskId = string | number;
+﻿import type { CommitmentHorizon } from "~/lib/domain/commitment-horizon";
+import type { WorkType } from "~/lib/domain/work-type";
 
-export type CommitmentHorizon = "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
+export type DomainTaskId = string | number;
+
+export type { CommitmentHorizon };
 
 export function defaultEisenhowerFields(weight: 1 | 2 | 3 = 2): {
 	importance: 1 | 2 | 3;
@@ -27,7 +30,7 @@ export type DomainTask = {
 	userId: string;
 	createdAt: Date;
 	updatedAt: Date | null;
-	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+	workType: WorkType;
 	weight: 1 | 2 | 3;
 	importance: 1 | 2 | 3;
 	urgency: 1 | 2 | 3;
@@ -84,7 +87,7 @@ export interface TaskRepository {
 	create(
 		input: {
 			title: string;
-			workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+			workType?: WorkType;
 			weight?: 1 | 2 | 3;
 			resumeNote?: string | null;
 		} & EisenhowerTaskInput,
@@ -94,7 +97,7 @@ export interface TaskRepository {
 			id: DomainTaskId;
 			title?: string;
 			status?: "active" | "completed";
-			workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+			workType?: WorkType;
 			weight?: 1 | 2 | 3;
 			resumeNote?: string | null;
 		} & EisenhowerTaskInput,

@@ -101,6 +101,23 @@ function patchTask(
 	);
 }
 
+function normalizeUpdatePatch(
+	fields: Omit<UpdateTaskInput, "id">,
+): Partial<TaskListItem> {
+	const { weight, importance, urgency, ...rest } = fields;
+	const patch: Partial<TaskListItem> = { ...rest };
+	if (weight != null) {
+		patch.weight = weight as TaskListItem["weight"];
+	}
+	if (importance != null) {
+		patch.importance = importance as TaskListItem["importance"];
+	}
+	if (urgency != null) {
+		patch.urgency = urgency as TaskListItem["urgency"];
+	}
+	return patch;
+}
+
 function removeTask(list: TaskListData | undefined, id: number): TaskListData {
 	return (list ?? []).filter((task) => task.id !== id);
 }
@@ -120,7 +137,7 @@ function reorderActiveTasks(
 	const tasks = list ?? [];
 	const sortOrderById = new Map(orderedIds.map((id, index) => [id, index]));
 	const updated = tasks.map((task) => {
-		const newSortOrder = sortOrderById.get(task.id);
+		const newSortOrder = sortOrderById.get(Number(task.id));
 		if (newSortOrder !== undefined) {
 			return { ...task, sortOrder: newSortOrder };
 		}
@@ -202,7 +219,9 @@ export function useTaskMutations() {
 			await utils.task.list.cancel(listInput);
 			const previousTasks = utils.task.list.getData(listInput);
 			const { id, ...fields } = input;
-			utils.task.list.setData(listInput, (old) => patchTask(old, id, fields));
+			utils.task.list.setData(listInput, (old) =>
+				patchTask(old, id, normalizeUpdatePatch(fields)),
+			);
 			return { previousTasks, localDateKey: listInput.localDateKey };
 		},
 		onError: handleError,

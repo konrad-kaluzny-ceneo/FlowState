@@ -1,13 +1,15 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { commitmentHorizonSchema, workTypeSchema } from "~/lib/domain";
+import { mapTaskFromPrisma } from "~/lib/persistence/prisma/task-mapper";
 import { isStoredPersonaPresetId } from "~/lib/task/persona-presets";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
-const workTypeSchema = z.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"]);
+const workTypeSchemaZod = z.enum(workTypeSchema);
 const axisSchema = z.number().int().min(1).max(3);
 const effortMinutesSchema = z.number().int().min(5).max(240).nullable();
-const commitmentHorizonSchema = z.enum(["ASAP", "THIS_WEEK", "WHEN_POSSIBLE"]);
+const commitmentHorizonSchemaZod = z.enum(commitmentHorizonSchema);
 const resumeNoteSchema = z.string().max(120).nullable().optional();
 const personaPresetIdSchema = z.string().max(32).nullable().optional();
 const localDateKeySchema = z
@@ -49,7 +51,9 @@ export const taskRouter = createTRPCRouter({
 			});
 
 			if (input?.localDateKey == null) {
-				return tasks.map((task) => ({ ...task, doneForToday: false }));
+				return tasks.map((task) =>
+					mapTaskFromPrisma(task, { doneForToday: false }),
+				);
 			}
 
 			const completions = await ctx.db.taskDayCompletion.findMany({
@@ -61,22 +65,23 @@ export const taskRouter = createTRPCRouter({
 			});
 			const doneTodayIds = new Set(completions.map((row) => row.taskId));
 
-			return tasks.map((task) => ({
-				...task,
-				doneForToday: doneTodayIds.has(task.id),
-			}));
+			return tasks.map((task) =>
+				mapTaskFromPrisma(task, {
+					doneForToday: doneTodayIds.has(task.id),
+				}),
+			);
 		}),
 
 	create: protectedProcedure
 		.input(
 			z.object({
 				title: z.string().min(1).max(256),
-				workType: workTypeSchema.optional(),
+				workType: workTypeSchemaZod.optional(),
 				weight: axisSchema.optional(),
 				importance: axisSchema.optional(),
 				urgency: axisSchema.optional(),
 				effortMinutes: effortMinutesSchema.optional(),
-				commitmentHorizon: commitmentHorizonSchema.optional(),
+				commitmentHorizon: commitmentHorizonSchemaZod.optional(),
 				resumeNote: resumeNoteSchema,
 				personaPresetId: personaPresetIdSchema,
 				isDailyStanding: z.boolean().optional(),
@@ -94,7 +99,7 @@ export const taskRouter = createTRPCRouter({
 			const urgency = input.urgency ?? input.weight ?? 2;
 			const importance = input.importance ?? 2;
 
-			return await ctx.db.task.create({
+			const row = await ctx.db.task.create({
 				data: {
 					title: input.title,
 					userId: ctx.session.user.id,
@@ -116,6 +121,7 @@ export const taskRouter = createTRPCRouter({
 						: {}),
 				},
 			});
+			return mapTaskFromPrisma(row);
 		}),
 
 	update: protectedProcedure
@@ -124,12 +130,12 @@ export const taskRouter = createTRPCRouter({
 				id: z.number(),
 				title: z.string().min(1).max(256).optional(),
 				status: z.enum(["active", "completed"]).optional(),
-				workType: workTypeSchema.optional(),
+				workType: workTypeSchemaZod.optional(),
 				weight: axisSchema.optional(),
 				importance: axisSchema.optional(),
 				urgency: axisSchema.optional(),
 				effortMinutes: effortMinutesSchema.optional(),
-				commitmentHorizon: commitmentHorizonSchema.optional(),
+				commitmentHorizon: commitmentHorizonSchemaZod.optional(),
 				resumeNote: resumeNoteSchema,
 				personaPresetId: personaPresetIdSchema,
 				isDailyStanding: z.boolean().optional(),

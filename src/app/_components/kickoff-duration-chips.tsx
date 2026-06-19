@@ -1,6 +1,6 @@
 "use client";
 
-import type { WorkType } from "@prisma/generated";
+import type { WorkType } from "~/lib/domain/work-type";
 
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import {

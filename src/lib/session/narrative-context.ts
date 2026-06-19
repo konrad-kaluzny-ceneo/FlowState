@@ -1,4 +1,4 @@
-import type { EnergyLevel } from "@prisma/generated";
+import type { EnergyLevel } from "~/lib/domain/energy-level";
 
 import { loadSnapshot } from "~/lib/guest/store";
 

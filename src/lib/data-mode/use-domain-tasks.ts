@@ -1,8 +1,8 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 
-import type { DomainTask } from "~/lib/data-mode/types";
+import type { DataMode, DomainTask } from "~/lib/data-mode/types";
 import {
 	getGuestDayCompletionsStorageKey,
 	getGuestDoneForTodayTaskIds,
@@ -10,6 +10,7 @@ import {
 } from "~/lib/guest/day-completions";
 import { GUEST_STORAGE_KEY } from "~/lib/guest/schema";
 import { loadSnapshot, subscribeGuestStore } from "~/lib/guest/store";
+import { api } from "~/trpc/react";
 
 function mapSnapshotToTasks(): DomainTask[] {
 	const doneTodayIds = getGuestDoneForTodayTaskIds();
@@ -91,4 +92,70 @@ export function useGuestDomainTasks(): {
 		tasks,
 		refresh: async () => {},
 	};
+}
+
+export function useAuthenticatedDomainTasks(options?: {
+	localDateKey?: string;
+	enabled?: boolean;
+}): {
+	tasks: DomainTask[];
+	refresh: () => Promise<void>;
+} {
+	const [baseTasks] = api.task.list.useSuspenseQuery();
+	const { data: tasksWithDayStatus = baseTasks } = api.task.list.useQuery(
+		{ localDateKey: options?.localDateKey ?? "" },
+		{
+			enabled:
+				options?.enabled === true &&
+				options.localDateKey != null &&
+				options.localDateKey.length > 0,
+		},
+	);
+	const utils = api.useUtils();
+
+	const tasks = useMemo(
+		() =>
+			(options?.enabled ? tasksWithDayStatus : baseTasks).map((task) => ({
+				...task,
+				weight: task.weight as 1 | 2 | 3,
+				importance: task.importance as 1 | 2 | 3,
+				urgency: task.urgency as 1 | 2 | 3,
+			})),
+		[baseTasks, options?.enabled, tasksWithDayStatus],
+	);
+
+	return {
+		tasks,
+		refresh: async () => {
+			await Promise.all([
+				utils.task.list.invalidate(),
+				...(options?.localDateKey
+					? [
+							utils.task.list.invalidate({
+								localDateKey: options.localDateKey,
+							}),
+						]
+					: []),
+			]);
+		},
+	};
+}
+
+export function useDomainTasks(
+	mode: DataMode,
+	options?: {
+		localDateKey?: string;
+		hasMounted?: boolean;
+	},
+): {
+	tasks: DomainTask[];
+	refresh: () => Promise<void>;
+} {
+	const guest = useGuestDomainTasks();
+	const auth = useAuthenticatedDomainTasks({
+		localDateKey: options?.localDateKey,
+		enabled: options?.hasMounted === true,
+	});
+
+	return mode === "guest" ? guest : auth;
 }
