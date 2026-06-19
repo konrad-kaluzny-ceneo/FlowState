@@ -31,6 +31,16 @@ import { CycleAudioPreferenceControl } from "./cycle-audio-preference-control";
 import { DurationPicker } from "./duration-picker";
 import { OutOfTabBreakAlertsControl } from "./out-of-tab-break-alerts-control";
 
+function OutOfTabBreakAlertsSection({
+	enabled,
+	onChange,
+}: {
+	enabled: boolean;
+	onChange: (enabled: boolean) => void;
+}) {
+	return <OutOfTabBreakAlertsControl enabled={enabled} onChange={onChange} />;
+}
+
 type TimerPanelProps = {
 	state: PomodoroCycleState;
 	remainingMs: number;
@@ -168,6 +178,14 @@ export function TimerPanel({
 						</button>
 					</div>
 				)}
+				{onOutOfTabBreakAlertsChange != null && (
+					<div className="mt-6">
+						<OutOfTabBreakAlertsSection
+							enabled={outOfTabBreakAlertsEnabled}
+							onChange={onOutOfTabBreakAlertsChange}
+						/>
+					</div>
+				)}
 			</section>
 		);
 	}
@@ -223,6 +241,13 @@ export function TimerPanel({
 				/>
 			)}
 
+			{onOutOfTabBreakAlertsChange != null && (
+				<OutOfTabBreakAlertsSection
+					enabled={outOfTabBreakAlertsEnabled}
+					onChange={onOutOfTabBreakAlertsChange}
+				/>
+			)}
+
 			<div className="mt-4 border-border-subtle border-t pt-4">
 				<button
 					className="w-full text-center text-sm text-text-dimmed transition hover:text-text-secondary"
@@ -272,12 +297,6 @@ export function TimerPanel({
 								valueSec={longBreakSec}
 							/>
 						</div>
-						{onOutOfTabBreakAlertsChange != null && (
-							<OutOfTabBreakAlertsControl
-								enabled={outOfTabBreakAlertsEnabled}
-								onChange={onOutOfTabBreakAlertsChange}
-							/>
-						)}
 					</div>
 				)}
 			</div>

@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-19
 structure: split
-active_slices: []
+active_slices: [revisit-user-choices]
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -83,6 +83,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-34 | optimistic-wedge-transitions | [FLO-73](https://linear.app/flowstate-10xdev/issue/FLO-73) | [#116](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/116) | optimistic check-in → suggestion ≤200ms | F-07, S-06, S-09, S-25 | **US-01** | done |
 | S-35 | wedge-transition-sync-recovery | [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) | [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) | calm network-loss recovery on wedge gates | F-07, S-06, S-22 | **US-01** | proposed |
 | S-36 | persona-presets-v2 | [FLO-75](https://linear.app/flowstate-10xdev/issue/FLO-75) | [#118](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/118) | 8 personas + row labels + visible effort | S-29, F-05 | **US-02** | done |
+| S-37 | revisit-user-choices | — | — | see and change prior choices (MVP: out-of-tab notification prefs on timer hub) | break-alerts-out-of-tab (merged) | revisit-user-choices PRD thread | active |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -104,6 +105,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | L | Task UX + standup | S-29 → **S-36** (done); S-32 after S-36; S-30; S-27 | PRD v3 US-02–03 |
 | M | Coherence craft | S-31 ∥ S-28; S-30 footprint | Focus shell, atmosphere |
 | N | PRD v3 flow conductor | **B-05 → B-06 → F-07 (+B-07)** → S-21 ∥ S-33; S-34 ∥ S-35; S-24 → B-08 | US-01 — see [`prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md) |
+| O | Choice revisit | break-alerts-out-of-tab (merged) → **S-37** | MVP: notification prefs on timer hub; broader pattern deferred |
 
 ## Backlog Handoff
 
@@ -128,6 +130,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-35 | wedge-transition-sync-recovery | **yes** | bundle with S-34 |
 | F-03 | align-prisma-config | **yes** | hygiene; parallel when idle |
 | S-11 ext. | post-merge-wedge-coach | **yes** | after F-07; T-05 / hot-1; P-GAP-102 promoted — see [`flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md) Phase 4 |
+| S-37 | revisit-user-choices | **yes** | MVP: notification preference revisit; broader pattern deferred |
 
 **Recommended next:** **S-32** (S-36 done) ∥ **B-06** (active) → **F-07** → **S-11 ext.** ∥ **S-27** ∥ **S-30** ∥ **S-31** ∥ **S-28** → **S-24** → **S-34** ∥ **S-35**; **S-21** ∥ **S-33** after F-07.
 

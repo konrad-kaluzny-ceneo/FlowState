@@ -1,7 +1,7 @@
 ---
 project: "FlowState"
 status: living-document
-updated: 2026-06-18
+updated: 2026-06-19
 canonical: context/foundation/prd.md
 archived_snapshot: context/foundation/archive/2026-06-13-shape-notes-v3-final.md
 active_change_threads:
@@ -15,6 +15,10 @@ active_change_threads:
     prd_added: 2026-06-18
     status: prd-draft
     prd: context/foundation/prd.md#change-thread-prd-timer-change-impact-digest-narrow-mvp
+  - id: revisit-user-choices
+    shaped: 2026-06-19
+    status: shaped-complete
+    change: context/changes/revisit-user-choices/change.md
 ---
 
 # Shape notes
@@ -418,3 +422,189 @@ Single user; no auth. Tool runs locally on developer clone against local git his
 Informational only — not PRD. Node script in `scripts/` or `tools/`; git subprocess for co-change v1. Optional: read existing dependency analysis JSON if present. No new backend service.
 
 **Mom Test handoff:** Git replay 4/5; narrow co-change MVP accepted; full joiner and CI gate deferred.
+
+---
+
+## Change thread: Revisit user choices (preferences visibility & change)
+
+**Shaped:** 2026-06-19  
+**Status:** Shaped complete — ready for `/10x-prd` append  
+**Seed:** `context/changes/revisit-user-choices/change.md` — user cannot see or change prior in-session decisions (check-in status, "Not now" dismissals, out-of-tab notification prefs, etc.). Implementation pattern TBD; rollout phased after pattern is established.
+
+### Checkpoint
+
+```yaml
+context_type: brownfield
+current_phase: 8
+phases_completed: [1, 2, 3, 4, 5, 6, 7]
+gray_areas_resolved:
+  - topic: change category
+    decision: "UX gap — no visibility or reversal of prior user choices"
+  - topic: choice scope
+    decision: "All choice types eventually; establish one pattern first, then phased rollout"
+  - topic: break-alerts overlap
+    decision: "Broader pattern — this thread covers out-of-tab notifications plus other dismissals; supersedes narrow settings-only assumption in break-alerts thread"
+  - topic: insight
+    decision: "Visibility gap — user does not know what they chose, so they do not know they can change it"
+  - topic: must preserve
+    decision: "Timer/pause/cycle flow, guest+auth paths, calm non-nagware UX"
+  - topic: mvp slice
+    decision: "First slice: out-of-tab notification preference — view state + enable/disable after Not now"
+  - topic: timeline
+    decision: "~2 weeks day job"
+  - topic: blast radius
+    decision: "UI-only; read/write existing preference flags; no timer hub logic change"
+frs_drafted: 5
+quality_check_status: accepted
+product_type: web-app
+target_scale:
+  users: small
+timeline_budget:
+  delivery_weeks: 2
+  hard_deadline: null
+  after_hours_only: false
+```
+
+### Current System
+
+**What exists:** FlowState — web app for timed work sessions (Pomodoro-style cycles, breaks, task linkage). Users authenticate or use guest mode. Session overlays prompt for check-in status, onboarding steps, suggestions, wind-down, notification permission, and similar one-off decisions. Many flows offer "Not now" or equivalent dismiss actions. User choices and dismissals are persisted in various client stores (localStorage, session state, profile fields) but there is **no unified place** to review or change them after the moment passes.
+
+**Tech stack (observed):** Next.js web app, guest + authenticated data modes, client-side timer hub, wedge overlays, break-alerts permission prompt (in flight via separate slice).
+
+**Users today:** Primary friction owner / knowledge worker using FlowState during reactive work days; same persona as PRD v3.
+
+**Must preserve:** Existing timer flow, pause behavior, cycle/break cadence, guest + authenticated paths, calm UX (no nag loops or punitive re-prompts), in-tab audio modes and catch-up overlays.
+
+### Vision & Problem Statement
+
+**Pain:** During normal use the user makes decisions — selects check-in status, clicks through overlays, dismisses prompts with "Not now", skips notification setup — but afterward cannot see what they chose or find a path to change it.
+
+**Person:** Knowledge worker (friction owner) running timed sessions with frequent context switches.
+
+**Moment:** Mid-session or next day — user realizes they dismissed something they now want (e.g., out-of-tab notifications) or wants to correct an earlier status/check-in choice, but the UI offers no review or edit surface.
+
+**Cost today:** Dismissals and choices feel permanent and invisible; user either accepts wrong state or abandons the feature entirely (pattern from prior reminder apps).
+
+**Insight:** The gap is **visibility of committed user state**, not absence of the underlying features. A reusable "see what I chose + change it calmly" pattern should precede rolling out per-feature fixes.
+
+### User & Persona
+
+**Primary persona — Reactive-day knowledge worker**
+
+- Role: Developer / knowledge worker with multi-project, async-heavy days.
+- Context: Uses FlowState timer; encounters multiple optional prompts per session.
+- Moment they need this: After dismissing or selecting something, they want to verify or revise that choice without replaying the whole session flow.
+- Prior behavior: Disabled apps where "Not now" felt like a dead end with no return path.
+
+### Access Control
+
+**No changes planned — current model preserved.**
+
+Authenticated users and guest users both retain existing access boundaries. The change adds review/edit surfaces for choices each user already made; no new roles, routes, or permission tiers. Guest and authenticated users get the **same UX** for viewing and changing prior choices; persistence differs only by existing data-mode rules (local vs account-backed).
+
+### Success Criteria
+
+#### Primary
+
+- User who previously skipped the notification permission prompt can **see current out-of-tab notification state** and **enable or disable** out-of-tab break alerts without replaying the first-session explain flow.
+- Pattern is validated as reusable for subsequent choice types (check-in, wedge dismissals, etc.).
+
+#### Secondary
+
+- Revisit pattern documented in change plan / shape thread so rollout to the next choice type is mechanical, not ad hoc.
+
+#### Guardrails
+
+- Existing timer, pause, and cycle behavior unchanged — UI-only slice reads/writes existing preference flags.
+- No re-prompt spam after a conscious user decision; changing a choice is always user-initiated from a visible settings surface.
+- Calm UX preserved — no nag loops; at most one notification per break start (consistent with break-alerts thread).
+- Guest and authenticated paths both supported with same UX.
+
+### Functional Requirements
+
+#### Notification preference revisit (MVP slice)
+
+- FR-001: User can see current out-of-tab break-alert state (enabled / disabled / not configured). Priority: must-have. Change: new
+  > Socrates: No counter-argument; visibility is the core gap.
+
+- FR-002: User can enable out-of-tab break alerts from a visible settings surface on the timer hub after previously choosing "Not now" on the first-session prompt. Priority: must-have. Change: new
+  > Socrates: No counter-argument; settings path is intentional return from dead-end dismissals.
+
+- FR-003: User can disable out-of-tab break alerts in one settings action. Priority: must-have. Change: modified
+  > Socrates: No counter-argument; aligns with break-alerts thread and calm opt-out.
+
+- FR-004: Enabling from settings triggers the browser notification permission flow only when permission is not already granted. Priority: must-have. Change: new
+  > Socrates: No counter-argument; avoids permission fatigue on repeat enable.
+
+#### Preserved behavior
+
+- FR-005: Timer, pause, cycle cadence, and in-tab audio modes behave unchanged when notification preferences are viewed or edited. Priority: must-have. Change: preserved
+  > Socrates: Kept as explicit preservation FR — blast radius must stay UI-only.
+
+### User Stories
+
+#### US-01: Re-enable out-of-tab break alerts after "Not now"
+
+- **Given** a user on the timer hub who previously dismissed the first-session notification prompt
+- **When** they open notification preferences on the timer hub
+- **Then** they see the current state (not configured / disabled) and can enable out-of-tab break alerts; the browser permission prompt appears only if not yet granted
+
+**Acceptance Criteria**
+
+- Current state is visible without starting a new timed session
+- Enable action does not replay the full first-session explain overlay
+- Disable remains one action when already enabled
+- Guest and authenticated users see the same controls; persistence follows existing data-mode rules
+- No automatic re-prompt on later sessions after a conscious skip unless user opens settings
+
+**Settings surface:** Timer hub / dashboard (not a separate settings page in v1).
+
+### Business Logic
+
+**Rule:** The application always reflects the user's stored choice honestly on a findable surface and lets them change it without replaying session overlays.
+
+**Current rule (implicit today):** Dismissals and one-off selections are written to storage but not surfaced — the user cannot verify or revise them.
+
+**Change:** Introduce a visible preference readout and edit path on the timer hub; stored state is the source of truth for what the UI displays.
+
+**Inputs (user-facing):** prior dismissals and permission state already in client storage; user-initiated open of preference surface; enable/disable actions.
+
+**Output (user-facing):** accurate current-state label; successful enable/disable without forced re-onboarding.
+
+### Constraints & Preserved Behavior
+
+- **Backward compatibility:** Existing timer hub, guest merge, and break-alert storage keys continue to work; new UI reads/writes the same flags where possible.
+- **Data migration:** None required for MVP — surface existing notification dismiss/grant state.
+- **Integrations:** Browser Notification API permission model unchanged; Web Notifications only (not native push).
+- **Preserved:** Timer/pause/cycles, in-tab audio modes, catch-up overlays, calm tone, guest + auth data-mode split.
+- **Relationship to break-alerts-out-of-tab slice:** This thread owns the **revisit pattern** and settings visibility; implementation may land in the same code paths but product contract is broader than break-alerts alone.
+
+### Non-Functional Requirements
+
+- Notification preference surface is reachable in **≤ 2 user actions** from the timer hub during an active or idle session.
+- Displayed notification state matches stored state on every timer hub load (no stale labels after enable/disable).
+
+### Non-Goals
+
+- **Avoid:** Unified preferences hub covering all choice types in v1 — MVP proves the pattern on out-of-tab notifications only; broader rollout is a follow-on slice.
+- **Avoid:** Check-in status revision, wedge dismissals, and onboarding coach dismissals in v1 — deferred to phased rollout after pattern validation.
+- **Avoid:** Dedicated `/settings` page in v1 — preference surface lives on timer hub.
+- **Avoid:** Native mobile push notifications — browser Web Notifications only (consistent with PRD v3).
+- **Avoid:** Timer hub or wedge conductor refactor — UI-only slice.
+
+### Open Questions
+
+1. **Rollout order after notifications** — check-in vs wedge dismissals vs audio mode: which choice type next? Owner: user. Target: `/10x-plan` or follow-on shape append.
+2. **Implementation sequencing vs break-alerts-out-of-tab** — build revisit UI before, with, or after break-alerts permission prompt lands? Owner: maintainer. Target: `/10x-plan`.
+3. **Exact label copy for three notification states** (enabled / disabled / not configured) — Owner: user + design. Target: `/10x-plan`.
+
+### Quality cross-check
+
+| Element | Status |
+|---|---|
+| Access Control | present |
+| Business Logic (one-sentence rule) | present |
+| Project artifacts | present |
+| Timeline-cost ack | present — delivery_weeks: 2, day job |
+| Non-Goals | present |
+| Preserved behavior | present |
