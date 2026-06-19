@@ -391,8 +391,8 @@ Browser-level proof for US-03 standing + capacity path (auth worker).
 
 #### Automated
 
-- [x] 3.1 Day plan hook tests pass (rollover + remaining)
-- [x] 3.2 Cycle/day-plan integration tests pass
+- [x] 3.1 Day plan hook tests pass (rollover + remaining) — 2c8aeb0
+- [x] 3.2 Cycle/day-plan integration tests pass — 2c8aeb0
 
 #### Manual
 
