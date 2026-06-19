@@ -15,9 +15,9 @@ Meta-change: `refactor-opportunities`. Update status as child changes merge.
 | 1a | K5 / T-01 | `fix-closure-kickoff-mutex` | B-05 | — | `/10x-new fix-closure-kickoff-mutex` | not started |
 | 1b | K5 / T-03 | `fix-timeout-closure-on-load` | B-06 | B-05 merged | `/10x-new fix-timeout-closure-on-load` | not started |
 | 1c | K5 | `wedge-transition-conductor` | F-07 (+ B-07 wind-down) | B-06 merged | `/10x-new wedge-transition-conductor` | not started |
-| 3a | K2 char | `data-mode-acl-hardening` (char) | — | F-07 merged | `/10x-new data-mode-acl-hardening` | in review |
+| 3a | K2 char | `data-mode-acl-hardening` (char) | — | F-07 merged | `/10x-new data-mode-acl-hardening` | merged |
 | 2 | K1 | `cycle-hook-pure-extracts` | — | F-07 merged; K2 char landed | `/10x-new cycle-hook-pure-extracts` | not started |
-| 3b | K2 Path C | `data-mode-acl-hardening` (enforcement) | — | K1 merged | continue `data-mode-acl-hardening` branch | in review |
+| 3b | K2 Path C | `data-mode-acl-hardening` (enforcement) | — | K1 merged | continue `data-mode-acl-hardening` branch | merged |
 | — | K4 (optional) | `sign-in-schema-extract` | — | — | `/10x-new sign-in-schema-extract` | not started |
 | — | K3 (deferred) | `guest-merge-consolidation` | — | data-mode tests | TBD | deferred |
 | — | B-08 (deferred) | `fix-graceful-session-end-while-running` | B-08 | F-07; S-24 full | TBD | deferred |

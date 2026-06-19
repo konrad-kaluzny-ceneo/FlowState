@@ -1,10 +1,10 @@
 ---
 change_id: data-mode-acl-hardening
 title: Harden data-mode ACL and isolate Prisma domain enums
-status: impl_reviewed
+status: archived
 created: 2026-06-17
 updated: 2026-06-19
-archived_at: null
+archived_at: 2026-06-19T15:40:00Z
 ---
 
 ## Notes
