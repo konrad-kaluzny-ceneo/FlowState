@@ -37,6 +37,7 @@ export type DomainTask = {
 	resumeNote: string | null;
 	personaPresetId: string | null;
 	isDailyStanding: boolean;
+	doneForToday?: boolean;
 };
 
 export type DomainActiveCycle = {
@@ -100,6 +101,10 @@ export interface TaskRepository {
 	): Promise<void>;
 	delete(input: { id: DomainTaskId }): Promise<void>;
 	reorder(input: { orderedIds: DomainTaskId[] }): Promise<void>;
+	markDoneForToday(input: {
+		id: DomainTaskId;
+		localDateKey: string;
+	}): Promise<void>;
 }
 
 export interface CycleRepository {

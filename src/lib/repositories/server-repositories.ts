@@ -147,6 +147,11 @@ export function createServerTaskRepository(client: TrpcClient): TaskRepository {
 			client.task.reorder.mutate({
 				orderedIds: input.orderedIds.map(toNumericId),
 			}),
+		markDoneForToday: async (_input) => {
+			throw new Error(
+				"markDoneForToday is not supported via server repository",
+			);
+		},
 	};
 }
 

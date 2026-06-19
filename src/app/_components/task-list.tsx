@@ -36,6 +36,7 @@ import {
 	getTaskBadgeDisplayMode,
 	type PersonaPresetId,
 } from "~/lib/task/persona-presets";
+import { formatLocalDateKey } from "~/lib/time/local-date-key";
 
 const AXIS_LABELS = { 1: "Light", 2: "Medium", 3: "Heavy" } as const;
 
@@ -254,6 +255,26 @@ function EisenhowerAttributeFields({
 	);
 }
 
+function DailyStandingToggle({
+	checked,
+	onChange,
+}: {
+	checked: boolean;
+	onChange: (value: boolean) => void;
+}) {
+	return (
+		<label className="flex items-center gap-2 text-text-secondary text-xs">
+			<input
+				checked={checked}
+				data-testid="daily-standing-toggle"
+				onChange={(event) => onChange(event.target.checked)}
+				type="checkbox"
+			/>
+			Daily standing
+		</label>
+	);
+}
+
 function parseEffortMinutes(value: string): number | null {
 	const trimmed = value.trim();
 	if (trimmed === "") {
@@ -331,6 +352,7 @@ type SortableActiveTaskRowProps = {
 	editEffortMinutes: string;
 	editCommitmentHorizon: CommitmentHorizon;
 	editResumeNote: string;
+	editIsDailyStanding: boolean;
 	cycleLocked: boolean;
 	markCompleteLocked: boolean;
 	isMutating: boolean;
@@ -349,6 +371,7 @@ type SortableActiveTaskRowProps = {
 	onSetEditEffortMinutes: (value: string) => void;
 	onSetEditCommitmentHorizon: (value: CommitmentHorizon) => void;
 	onSetEditResumeNote: (value: string) => void;
+	onSetEditIsDailyStanding: (value: boolean) => void;
 	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
 	onUpdateTask: (input: {
 		id: DomainTaskId;
@@ -356,6 +379,7 @@ type SortableActiveTaskRowProps = {
 	}) => Promise<void>;
 	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void | Promise<void>;
 	onDeleteTask: (input: { id: DomainTaskId }) => Promise<void>;
+	onMarkDoneForToday: (taskId: DomainTaskId) => void;
 	completingTaskId: DomainTaskId | null;
 	onBeginComplete: (taskId: DomainTaskId) => void;
 };
@@ -373,6 +397,7 @@ function SortableActiveTaskRow({
 	editEffortMinutes,
 	editCommitmentHorizon,
 	editResumeNote,
+	editIsDailyStanding,
 	cycleLocked,
 	markCompleteLocked,
 	isMutating,
@@ -389,10 +414,12 @@ function SortableActiveTaskRow({
 	onSetEditEffortMinutes,
 	onSetEditCommitmentHorizon,
 	onSetEditResumeNote,
+	onSetEditIsDailyStanding,
 	onMidCycleMarkComplete,
 	onUpdateTask,
 	onFocusTask,
 	onDeleteTask,
+	onMarkDoneForToday,
 	completingTaskId,
 	onBeginComplete,
 }: SortableActiveTaskRowProps) {
@@ -422,7 +449,7 @@ function SortableActiveTaskRow({
 				highlightedTaskId === task.id ? "ring-2 ring-accent-suggestion" : ""
 			} ${isDragging ? "z-10 opacity-80" : ""} ${
 				completingTaskId === task.id ? "animate-task-complete" : ""
-			}`}
+			} ${task.doneForToday ? "opacity-60" : ""}`}
 			data-testid={
 				highlightedTaskId === task.id ? "suggested-task-row" : "active-task-row"
 			}
@@ -444,24 +471,46 @@ function SortableActiveTaskRow({
 				>
 					⋮⋮
 				</button>
-				<button
-					aria-label="Mark complete"
-					className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
-					disabled={markCompleteLocked || isMutating}
-					onClick={() => {
-						if (canMidCycleMarkComplete && onMidCycleMarkComplete != null) {
-							onMidCycleMarkComplete(task.id, task);
-							return;
-						}
+				{task.isDailyStanding ? (
+					task.doneForToday ? (
+						<span
+							className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-accent-success bg-accent-success/20 text-accent-success text-xs"
+							title="Done for today"
+						>
+							✓
+						</span>
+					) : (
+						<button
+							aria-label="Done for today"
+							className="mt-0.5 shrink-0 rounded border border-border-subtle px-2 py-0.5 text-text-secondary text-xs transition hover:border-accent-success hover:text-accent-success disabled:cursor-not-allowed disabled:opacity-40"
+							data-testid="done-for-today-button"
+							disabled={markCompleteLocked || isMutating}
+							onClick={() => onMarkDoneForToday(task.id)}
+							type="button"
+						>
+							Done today
+						</button>
+					)
+				) : (
+					<button
+						aria-label="Mark complete"
+						className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
+						disabled={markCompleteLocked || isMutating}
+						onClick={() => {
+							if (canMidCycleMarkComplete && onMidCycleMarkComplete != null) {
+								onMidCycleMarkComplete(task.id, task);
+								return;
+							}
 
-						onBeginComplete(task.id);
-						void onUpdateTask({
-							id: task.id,
-							status: "completed",
-						});
-					}}
-					type="button"
-				/>
+							onBeginComplete(task.id);
+							void onUpdateTask({
+								id: task.id,
+								status: "completed",
+							});
+						}}
+						type="button"
+					/>
+				)}
 				{editingId === task.id ? (
 					// biome-ignore lint/a11y/noStaticElementInteractions: focus-outside commit when leaving edit panel
 					<div
@@ -533,13 +582,17 @@ function SortableActiveTaskRow({
 							onUrgencyChange={onSetEditUrgency}
 							urgency={editUrgency}
 						/>
+						<DailyStandingToggle
+							checked={editIsDailyStanding}
+							onChange={onSetEditIsDailyStanding}
+						/>
 					</div>
 				) : (
 					<button
 						aria-disabled={cycleLocked}
 						className={`min-w-0 flex-1 basis-0 cursor-pointer overflow-hidden whitespace-pre-wrap break-all text-left text-primary ${
 							cycleLocked ? "cursor-default" : ""
-						}`}
+						} ${task.doneForToday ? "line-through opacity-70" : ""}`}
 						onClick={() => {
 							if (cycleLocked) return;
 							void onStartEditing(task);
@@ -563,14 +616,25 @@ function SortableActiveTaskRow({
 				)}
 			{editingId !== task.id && (
 				<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-9">
-					<TaskBadges
-						commitmentHorizon={task.commitmentHorizon}
-						effortMinutes={task.effortMinutes}
-						importance={task.importance}
-						personaPresetId={task.personaPresetId}
-						urgency={task.urgency}
-						workType={task.workType}
-					/>
+					<span className="flex min-w-0 flex-wrap items-center gap-1">
+						{task.isDailyStanding && (
+							<span
+								className="rounded-full bg-accent-suggestion/20 px-2 py-0.5 font-medium text-accent-suggestion text-xs"
+								data-testid="daily-standing-badge"
+							>
+								Daily
+							</span>
+						)}
+						<TaskBadges
+							commitmentHorizon={task.commitmentHorizon}
+							dimmed={task.doneForToday}
+							effortMinutes={task.effortMinutes}
+							importance={task.importance}
+							personaPresetId={task.personaPresetId}
+							urgency={task.urgency}
+							workType={task.workType}
+						/>
+					</span>
 					<div className="flex shrink-0 items-center gap-1">
 						<button
 							className={`rounded-lg px-2 py-1 font-medium text-xs transition ${
@@ -622,6 +686,7 @@ export function TaskList({
 		updateTask,
 		deleteTask,
 		reorderTasks,
+		markDoneForToday,
 		isMutating,
 		isCreating,
 		error,
@@ -649,6 +714,7 @@ export function TaskList({
 		useState<CommitmentHorizon>(
 			DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon,
 		);
+	const [newIsDailyStanding, setNewIsDailyStanding] = useState(false);
 
 	function resetCreateFormState() {
 		setNewTitle("");
@@ -659,6 +725,7 @@ export function TaskList({
 		setNewImportance(DEFAULT_CREATE_FORM_ATTRIBUTES.importance);
 		setNewEffortMinutes(DEFAULT_CREATE_FORM_ATTRIBUTES.effortMinutes);
 		setNewCommitmentHorizon(DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon);
+		setNewIsDailyStanding(false);
 	}
 
 	function applyPresetToCreateForm(presetId: PersonaPresetId) {
@@ -686,6 +753,7 @@ export function TaskList({
 	const [editCommitmentHorizon, setEditCommitmentHorizon] =
 		useState<CommitmentHorizon>("WHEN_POSSIBLE");
 	const [editResumeNote, setEditResumeNote] = useState("");
+	const [editIsDailyStanding, setEditIsDailyStanding] = useState(false);
 	const [completingTaskId, setCompletingTaskId] = useState<DomainTaskId | null>(
 		null,
 	);
@@ -784,10 +852,12 @@ export function TaskList({
 				commitmentHorizon: editCommitmentHorizon,
 				resumeNote:
 					editResumeNote.trim().length > 0 ? editResumeNote.trim() : null,
+				isDailyStanding: editIsDailyStanding,
 			});
 			setEditingId(null);
 			setEditTitle("");
 			setEditResumeNote("");
+			setEditIsDailyStanding(false);
 		};
 
 		commitInFlightRef.current = run();
@@ -805,6 +875,7 @@ export function TaskList({
 		editEffortMinutes,
 		editCommitmentHorizon,
 		editResumeNote,
+		editIsDailyStanding,
 		updateTask,
 	]);
 
@@ -844,7 +915,17 @@ export function TaskList({
 		);
 		setEditCommitmentHorizon(task.commitmentHorizon);
 		setEditResumeNote(task.resumeNote ?? "");
+		setEditIsDailyStanding(task.isDailyStanding);
 	}
+
+	const localDateKey = formatLocalDateKey();
+
+	const handleMarkDoneForToday = useCallback(
+		(taskId: DomainTaskId) => {
+			void markDoneForToday({ id: taskId, localDateKey });
+		},
+		[localDateKey, markDoneForToday],
+	);
 
 	const handleFocusTask = useCallback(
 		async (taskId: DomainTaskId, task: DomainTask) => {
@@ -898,6 +979,7 @@ export function TaskList({
 									: selectedPresetId != null
 										? selectedPresetId
 										: null,
+							isDailyStanding: newIsDailyStanding,
 						});
 						resetCreateFormState();
 					})();
@@ -932,6 +1014,10 @@ export function TaskList({
 					onSelectPreset={applyPresetToCreateForm}
 					selectedPresetId={selectedPresetId}
 					showCustomPanel={showCustomPanel}
+				/>
+				<DailyStandingToggle
+					checked={newIsDailyStanding}
+					onChange={setNewIsDailyStanding}
 				/>
 				{selectedPresetId != null && selectedPresetId !== "custom" && (
 					<div className="flex flex-wrap items-center gap-2">
@@ -1033,6 +1119,7 @@ export function TaskList({
 										editCommitmentHorizon={editCommitmentHorizon}
 										editEffortMinutes={editEffortMinutes}
 										editImportance={editImportance}
+										editIsDailyStanding={editIsDailyStanding}
 										editingId={editingId}
 										editPanelRef={
 											editingId === task.id ? editPanelRef : undefined
@@ -1051,10 +1138,12 @@ export function TaskList({
 										onCommitEdit={commitEditIfDirty}
 										onDeleteTask={deleteTask}
 										onFocusTask={handleFocusTask}
+										onMarkDoneForToday={handleMarkDoneForToday}
 										onMidCycleMarkComplete={onMidCycleMarkComplete}
 										onSetEditCommitmentHorizon={setEditCommitmentHorizon}
 										onSetEditEffortMinutes={setEditEffortMinutes}
 										onSetEditImportance={setEditImportance}
+										onSetEditIsDailyStanding={setEditIsDailyStanding}
 										onSetEditingId={setEditingId}
 										onSetEditResumeNote={setEditResumeNote}
 										onSetEditTitle={setEditTitle}

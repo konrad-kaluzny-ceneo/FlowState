@@ -50,17 +50,20 @@ const createMutateAsync = vi.fn();
 const updateMutateAsync = vi.fn();
 const deleteMutateAsync = vi.fn();
 const reorderMutateAsync = vi.fn();
+const markDoneForTodayMutateAsync = vi.fn();
 
 const mutationLifecycles: {
 	create: MutationLifecycle;
 	update: MutationLifecycle;
 	delete: MutationLifecycle;
 	reorder: MutationLifecycle;
+	markDoneForToday: MutationLifecycle;
 } = {
 	create: {},
 	update: {},
 	delete: {},
 	reorder: {},
+	markDoneForToday: {},
 };
 
 let dataMode: "authenticated" | "guest" = "authenticated";
@@ -114,6 +117,7 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 			update: taskRepoUpdate,
 			delete: taskRepoDelete,
 			reorder: taskRepoReorder,
+			markDoneForToday: vi.fn(),
 		},
 	}),
 }));
@@ -167,6 +171,15 @@ vi.mock("~/trpc/react", () => ({
 					};
 				},
 			},
+			markDoneForToday: {
+				useMutation: (opts: MutationLifecycle) => {
+					mutationLifecycles.markDoneForToday = opts;
+					return {
+						mutateAsync: markDoneForTodayMutateAsync,
+						isPending: false,
+					};
+				},
+			},
 		},
 	},
 }));
@@ -201,6 +214,7 @@ function makeTask(
 		sortOrder: 0,
 		resumeNote,
 		personaPresetId,
+		doneForToday: false,
 		createdAt: new Date("2026-01-01T00:00:00Z"),
 		updatedAt: new Date("2026-01-01T00:00:00Z"),
 		...rest,

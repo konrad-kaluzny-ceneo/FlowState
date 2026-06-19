@@ -49,6 +49,7 @@ const updateTask = vi.fn().mockResolvedValue(undefined);
 const createTask = vi.fn().mockResolvedValue(undefined);
 const deleteTask = vi.fn().mockResolvedValue(undefined);
 const reorderTasks = vi.fn().mockResolvedValue(undefined);
+const markDoneForToday = vi.fn().mockResolvedValue(undefined);
 const clearError = vi.fn();
 const onFocusTask = vi.fn();
 
@@ -58,6 +59,7 @@ vi.mock("~/hooks/use-task-mutations", () => ({
 		updateTask,
 		deleteTask,
 		reorderTasks,
+		markDoneForToday,
 		isMutating: false,
 		isCreating: false,
 		error: null,
@@ -193,6 +195,7 @@ describe("TaskList", () => {
 			effortMinutes: null,
 			commitmentHorizon: "WHEN_POSSIBLE",
 			resumeNote: null,
+			isDailyStanding: false,
 		});
 	});
 
@@ -419,6 +422,7 @@ describe("TaskList", () => {
 				effortMinutes: Number.parseInt(applied.effortMinutes, 10),
 				commitmentHorizon: applied.commitmentHorizon,
 				personaPresetId: presetId,
+				isDailyStanding: false,
 			});
 		});
 	});
@@ -631,6 +635,41 @@ describe("TaskList", () => {
 
 		expect(row.className).toContain("animate-task-complete");
 		expect(updateTask).toHaveBeenCalledWith({
+			id: 1,
+			status: "completed",
+		});
+	});
+
+	it("renders daily standing toggle in create form and badge on standing tasks", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Stand-up", isDailyStanding: true })]}
+			/>,
+		);
+
+		expect(screen.getByTestId("daily-standing-toggle")).toBeTruthy();
+		expect(screen.getByTestId("daily-standing-badge").textContent).toBe(
+			"Daily",
+		);
+		expect(screen.getByTestId("done-for-today-button")).toBeTruthy();
+	});
+
+	it("calls markDoneForToday for standing tasks instead of global complete", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Stand-up", isDailyStanding: true })]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("done-for-today-button"));
+
+		expect(markDoneForToday).toHaveBeenCalledWith({
+			id: 1,
+			localDateKey: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+		});
+		expect(updateTask).not.toHaveBeenCalledWith({
 			id: 1,
 			status: "completed",
 		});

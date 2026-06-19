@@ -10,6 +10,9 @@ const effortMinutesSchema = z.number().int().min(5).max(240).nullable();
 const commitmentHorizonSchema = z.enum(["ASAP", "THIS_WEEK", "WHEN_POSSIBLE"]);
 const resumeNoteSchema = z.string().max(120).nullable().optional();
 const personaPresetIdSchema = z.string().max(32).nullable().optional();
+const localDateKeySchema = z
+	.string()
+	.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD local date key");
 
 async function nextActiveSortOrder(
 	db: {
@@ -30,12 +33,39 @@ async function nextActiveSortOrder(
 }
 
 export const taskRouter = createTRPCRouter({
-	list: protectedProcedure.query(async ({ ctx }) => {
-		return ctx.db.task.findMany({
-			where: { userId: ctx.session.user.id },
-			orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-		});
-	}),
+	list: protectedProcedure
+		.input(
+			z
+				.object({
+					localDateKey: localDateKeySchema.optional(),
+				})
+				.optional(),
+		)
+		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const tasks = await ctx.db.task.findMany({
+				where: { userId },
+				orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+			});
+
+			if (input?.localDateKey == null) {
+				return tasks.map((task) => ({ ...task, doneForToday: false }));
+			}
+
+			const completions = await ctx.db.taskDayCompletion.findMany({
+				where: {
+					userId,
+					localDateKey: input.localDateKey,
+				},
+				select: { taskId: true },
+			});
+			const doneTodayIds = new Set(completions.map((row) => row.taskId));
+
+			return tasks.map((task) => ({
+				...task,
+				doneForToday: doneTodayIds.has(task.id),
+			}));
+		}),
 
 	create: protectedProcedure
 		.input(
@@ -215,9 +245,7 @@ export const taskRouter = createTRPCRouter({
 		.input(
 			z.object({
 				taskId: z.number().int(),
-				localDateKey: z
-					.string()
-					.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD local date key"),
+				localDateKey: localDateKeySchema,
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {

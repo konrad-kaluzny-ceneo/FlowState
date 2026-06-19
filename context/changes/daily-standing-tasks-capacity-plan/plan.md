@@ -380,8 +380,8 @@ Browser-level proof for US-03 standing + capacity path (auth worker).
 
 #### Automated
 
-- [ ] 2.1 Task list component smoke tests pass (daily toggle)
-- [ ] 2.2 Full `pnpm test` suite green
+- [x] 2.1 Task list component smoke tests pass (daily toggle)
+- [x] 2.2 Full `pnpm test` suite green
 
 #### Manual
 
