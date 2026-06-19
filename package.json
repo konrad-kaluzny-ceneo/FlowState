@@ -30,7 +30,8 @@
 		"depcruise:report": "depcruise --output-type err-html --output-to reports/dependency-report.html src",
 		"prepare": "lefthook install",
 		"review": "tsx scripts/cursor-review/review.ts",
-		"review:cloud": "tsx scripts/cursor-review/review.ts --cloud"
+		"review:cloud": "tsx scripts/cursor-review/review.ts --cloud",
+		"change-impact": "node scripts/change-impact/run.mjs"
 	},
 	"dependencies": {
 		"@dnd-kit/core": "^6.3.1",

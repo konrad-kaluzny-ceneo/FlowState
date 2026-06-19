@@ -274,12 +274,12 @@ Not applicable — new dev tooling only.
 
 #### Automated
 
-- [ ] 1.1 `pnpm check` passes
-- [ ] 1.2 `node scripts/change-impact/run.mjs -- src/hooks/use-pomodoro-cycle.ts` exits 0 from repo root
+- [x] 1.1 `pnpm check` passes
+- [x] 1.2 `node scripts/change-impact/run.mjs -- src/hooks/use-pomodoro-cycle.ts` exits 0 from repo root
 
 #### Manual
 
-- [ ] 1.3 Output lists dashboard and hook test in top rows for default path; completes in <30s
+- [x] 1.3 Output lists dashboard and hook test in top rows for default path; completes in <30s
 
 ### Phase 2: Report formatter, test catalog, and flags
 
