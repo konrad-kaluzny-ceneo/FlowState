@@ -173,4 +173,5 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **S-37: revisit user choices (notification preference revisit MVP)** — Archived 2026-06-19 → `context/archive/2026-06-19-revisit-user-choices/`. PR [#140](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/140). Lesson: 3-state readout + timer-hub placement completes break-alerts revisit path.
 - **S-27: daily standing + focus-hours budget** — Archived 2026-06-19 → `context/archive/2026-06-19-daily-standing-tasks-capacity-plan/`. Lesson: —.
