@@ -1,10 +1,10 @@
 ---
 change_id: cycle-pause-resume
 title: Cycle pause and resume (US-04)
-status: impl_reviewed
+status: archived
 created: 2026-06-18
-updated: 2026-06-18
-archived_at: null
+updated: 2026-06-19
+archived_at: 2026-06-19T12:00:00Z
 ---
 
 ## Notes
