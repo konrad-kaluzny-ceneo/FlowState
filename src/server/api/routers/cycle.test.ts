@@ -39,6 +39,14 @@ let sessions: Array<{
 }>;
 let nextCycleId = 1;
 let nextSessionId = 1;
+let dayPlans: Array<{
+	id: number;
+	userId: string;
+	localDateKey: string;
+	focusBudgetMinutes: number;
+	usedFocusMinutes: number;
+}> = [];
+let nextDayPlanId = 1;
 
 vi.mock("~/server/db/index", () => {
 	const matchesState = (
@@ -320,6 +328,39 @@ vi.mock("~/server/db/index", () => {
 					},
 				),
 			},
+			dayPlan: {
+				findUnique: vi.fn(
+					(args: {
+						where: {
+							day_plan_user_date_key: {
+								userId: string;
+								localDateKey: string;
+							};
+						};
+					}) => {
+						const { userId, localDateKey } = args.where.day_plan_user_date_key;
+						return Promise.resolve(
+							dayPlans.find(
+								(plan) =>
+									plan.userId === userId && plan.localDateKey === localDateKey,
+							) ?? null,
+						);
+					},
+				),
+				update: vi.fn(
+					(args: {
+						where: { id: number };
+						data: { usedFocusMinutes: number };
+					}) => {
+						const plan = dayPlans.find((row) => row.id === args.where.id);
+						if (plan == null) {
+							throw new Error("day plan not found");
+						}
+						plan.usedFocusMinutes = args.data.usedFocusMinutes;
+						return Promise.resolve(plan);
+					},
+				),
+			},
 			$transaction: vi.fn(
 				async (fn: (tx: typeof import("~/server/db/index").db) => unknown) => {
 					return fn((await import("~/server/db/index")).db);
@@ -362,8 +403,10 @@ describe("cycle router lifecycle", () => {
 		cycles = [];
 		tasks = [];
 		sessions = [];
+		dayPlans = [];
 		nextCycleId = 1;
 		nextSessionId = 1;
+		nextDayPlanId = 1;
 		vi.clearAllMocks();
 	});
 
@@ -453,6 +496,46 @@ describe("cycle router lifecycle", () => {
 
 		await caller().complete({ cycleId: 1, markTaskDone: true });
 		expect(tasks[0]?.status).toBe("completed");
+	});
+
+	it("complete WORK cycle with localDateKey increments day plan used minutes", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+		];
+		dayPlans = [
+			{
+				id: nextDayPlanId++,
+				userId: USER_ID,
+				localDateKey: "2026-06-19",
+				focusBudgetMinutes: 120,
+				usedFocusMinutes: 10,
+			},
+		];
+		const startedAt = new Date(Date.now() - 25 * 60 * 1000);
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt,
+				endedAt: null,
+			},
+		];
+
+		await caller().complete({ cycleId: 1, localDateKey: "2026-06-19" });
+
+		expect(dayPlans[0]?.usedFocusMinutes).toBe(35);
 	});
 
 	it("interrupt sets INTERRUPTED state", async () => {

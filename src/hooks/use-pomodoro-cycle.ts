@@ -14,6 +14,7 @@ import {
 	useRepositories,
 } from "~/lib/data-mode/data-mode-context";
 import type {
+	DataMode,
 	DomainActiveCycle,
 	DomainTaskId,
 	FocusedTask,
@@ -54,6 +55,7 @@ import {
 	OVERRIDE_ACK_LINE,
 	OVERRIDE_ACK_VISIBLE_MS,
 } from "~/lib/suggestion/override-ack-copy";
+import { formatLocalDateKey } from "~/lib/time/local-date-key";
 import { beginSuggestionFetch } from "~/lib/trpc/suggestion-priority";
 import {
 	computeKickoffEligible,
@@ -83,6 +85,38 @@ function wasClosureShown(sessionId: number | string): boolean {
 		return false;
 	}
 	return sessionStorage.getItem(closureShownStorageKey(sessionId)) === "1";
+}
+
+type CompleteCycleArgs = {
+	cycleId: number;
+	markTaskDone?: boolean;
+	incrementInterruption?: boolean;
+};
+
+function withWorkDayPlanKey(
+	input: CompleteCycleArgs,
+	options: {
+		kind: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null;
+		mode: DataMode;
+	},
+): CompleteCycleArgs & { localDateKey?: string } {
+	if (options.mode !== "authenticated" || options.kind !== "WORK") {
+		return input;
+	}
+	return { ...input, localDateKey: formatLocalDateKey() };
+}
+
+function taskPoolHasKickoffCandidates(
+	tasks: Array<{
+		status: string;
+		isDailyStanding: boolean;
+		doneForToday?: boolean;
+	}>,
+): boolean {
+	return tasks.some(
+		(task) =>
+			!task.doneForToday && (task.status === "active" || task.isDailyStanding),
+	);
 }
 
 /** E2E uses Playwright fake timers; server `startedAt` must not drive break expiry. */
@@ -445,6 +479,15 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			refreshGuest();
 		}
 	}, [mode, refreshGuest, utils.cycle.getActive]);
+
+	const invalidateDayPlan = useCallback(async () => {
+		if (mode !== "authenticated") {
+			return;
+		}
+		await utils.dayPlan.getOrCreate.invalidate({
+			localDateKey: formatLocalDateKey(),
+		});
+	}, [mode, utils.dayPlan.getOrCreate]);
 
 	const resolveServerCycleId = useCallback(async (): Promise<number> => {
 		const current = activeCycleRef.current;
@@ -864,9 +907,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			return;
 		}
 
-		void queryTasks()
+		void queryTasks({ localDateKey: formatLocalDateKey() })
 			.then((tasks) => {
-				setHasActiveTasks(tasks.some((task) => task.status === "active"));
+				setHasActiveTasks(taskPoolHasKickoffCandidates(tasks));
 			})
 			.catch(() => {
 				setHasActiveTasks(false);
@@ -1959,6 +2002,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			await Promise.all([
 				invalidateServerCycle(),
+				invalidateDayPlan(),
 				...(markTaskDone ? [utils.task.list.invalidate()] : []),
 			]);
 
@@ -1969,6 +2013,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		[
 			completedWorkCycles,
 			cycles,
+			invalidateDayPlan,
 			invalidateServerCycle,
 			startWorker,
 			utils.task.list,
@@ -1997,13 +2042,18 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			try {
 				await retryOnce(() =>
-					cycles.complete({
-						cycleId,
-						markTaskDone,
-						...(pendingIncrementInterruptionRef.current
-							? { incrementInterruption: true }
-							: {}),
-					}),
+					cycles.complete(
+						withWorkDayPlanKey(
+							{
+								cycleId,
+								markTaskDone,
+								...(pendingIncrementInterruptionRef.current
+									? { incrementInterruption: true }
+									: {}),
+							},
+							{ kind: "WORK", mode },
+						),
+					),
 				);
 			} catch {
 				setError(
@@ -2025,6 +2075,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			await Promise.all([
 				invalidateServerCycle(),
+				invalidateDayPlan(),
 				...(markTaskDone ? [utils.task.list.invalidate()] : []),
 			]);
 
@@ -2037,7 +2088,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		[
 			activeCycle,
 			cycles,
+			invalidateDayPlan,
 			invalidateServerCycle,
+			mode,
 			resolveServerCycleId,
 			stopWorker,
 			utils.task.list,
@@ -2068,13 +2121,18 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			try {
 				await retryOnce(() =>
-					cycles.complete({
-						cycleId,
-						markTaskDone,
-						...(pendingIncrementInterruptionRef.current
-							? { incrementInterruption: true }
-							: {}),
-					}),
+					cycles.complete(
+						withWorkDayPlanKey(
+							{
+								cycleId,
+								markTaskDone,
+								...(pendingIncrementInterruptionRef.current
+									? { incrementInterruption: true }
+									: {}),
+							},
+							{ kind: currentKind, mode },
+						),
+					),
 				);
 			} catch {
 				setError(
@@ -2131,6 +2189,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			activeCycle,
 			cycles,
 			invalidateServerCycle,
+			mode,
 			resolveServerCycleId,
 			startBreakAfterWorkComplete,
 			stopWorker,
@@ -2284,13 +2343,18 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					}
 
 					await retryOnce(() =>
-						cycles.complete({
-							cycleId: workCycleId,
-							markTaskDone,
-							...(pendingIncrementInterruptionRef.current
-								? { incrementInterruption: true }
-								: {}),
-						}),
+						cycles.complete(
+							withWorkDayPlanKey(
+								{
+									cycleId: workCycleId,
+									markTaskDone,
+									...(pendingIncrementInterruptionRef.current
+										? { incrementInterruption: true }
+										: {}),
+								},
+								{ kind: "WORK", mode },
+							),
+						),
 					);
 					pendingIncrementInterruptionRef.current = false;
 
@@ -2323,6 +2387,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 					await Promise.all([
 						invalidateServerCycle(),
+						invalidateDayPlan(),
 						...(markTaskDone ? [utils.task.list.invalidate()] : []),
 					]);
 
@@ -2360,6 +2425,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			startWorker,
 			createCheckIn,
 			cycles,
+			invalidateDayPlan,
 			invalidateServerCycle,
 			utils.task.list,
 			refreshNarrativeStats,
@@ -2590,10 +2656,15 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			try {
 				const cycleId = await resolveServerCycleId();
 				await retryOnce(() =>
-					cycles.complete({
-						cycleId,
-						markTaskDone: true,
-					}),
+					cycles.complete(
+						withWorkDayPlanKey(
+							{
+								cycleId,
+								markTaskDone: true,
+							},
+							{ kind: currentKind, mode },
+						),
+					),
 				);
 				await startBreakAfterWorkComplete(true);
 			} catch {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import { formatLocalDateKey } from "~/lib/time/local-date-key";
@@ -8,11 +8,35 @@ import { api } from "~/trpc/react";
 
 export function useDayPlan() {
 	const mode = useDataMode();
-	const localDateKey = formatLocalDateKey();
+	const [localDateKey, setLocalDateKey] = useState(() => formatLocalDateKey());
 	const enabled = mode === "authenticated";
 	const utils = api.useUtils();
 
 	const query = api.dayPlan.getOrCreate.useQuery({ localDateKey }, { enabled });
+
+	useEffect(() => {
+		if (!enabled) {
+			return;
+		}
+
+		const syncLocalDateKey = () => {
+			const nextKey = formatLocalDateKey();
+			setLocalDateKey((current) => {
+				if (current === nextKey) {
+					return current;
+				}
+				void utils.dayPlan.getOrCreate.invalidate({ localDateKey: nextKey });
+				void utils.task.list.invalidate({ localDateKey: nextKey });
+				return nextKey;
+			});
+		};
+
+		syncLocalDateKey();
+		document.addEventListener("visibilitychange", syncLocalDateKey);
+		return () => {
+			document.removeEventListener("visibilitychange", syncLocalDateKey);
+		};
+	}, [enabled, utils]);
 
 	const setBudgetMutation = api.dayPlan.setBudget.useMutation({
 		onSuccess: () => {

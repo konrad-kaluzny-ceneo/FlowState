@@ -19,6 +19,7 @@ const updateTask = vi.fn();
 const getActiveCycle = vi.fn();
 const invalidateGetActive = vi.fn();
 const invalidateTaskList = vi.fn();
+const invalidateDayPlan = vi.fn();
 const createCheckInMutate = vi.fn();
 const suggestionNextMutate = vi.fn();
 const recordDecisionMutate = vi.fn();
@@ -102,11 +103,16 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 	}),
 }));
 
+vi.mock("~/lib/time/local-date-key", () => ({
+	formatLocalDateKey: () => "2026-06-19",
+}));
+
 vi.mock("~/trpc/react", () => ({
 	api: {
 		useUtils: () => ({
 			cycle: { getActive: { invalidate: invalidateGetActive } },
 			task: { list: { invalidate: invalidateTaskList } },
+			dayPlan: { getOrCreate: { invalidate: invalidateDayPlan } },
 			client: {
 				cycle: {
 					countCompletedWork: { query: vi.fn().mockResolvedValue(0) },
@@ -1107,6 +1113,7 @@ describe("usePomodoroCycle", () => {
 		expect(completeCycle).toHaveBeenCalledWith({
 			cycleId: 11,
 			markTaskDone: true,
+			localDateKey: "2026-06-19",
 		});
 		// After work cycle complete, break auto-starts
 		expect(result.current.state).toBe("running");
@@ -1577,6 +1584,7 @@ describe("usePomodoroCycle", () => {
 		expect(completeCycle).toHaveBeenCalledWith({
 			cycleId: 70,
 			markTaskDone: false,
+			localDateKey: "2026-06-19",
 		});
 		expect(result.current.awaitingCheckIn).toBe(false);
 		expect(result.current.state).toBe("running");
@@ -1769,6 +1777,7 @@ describe("usePomodoroCycle", () => {
 		expect(completeCycle).toHaveBeenLastCalledWith({
 			cycleId: 74,
 			markTaskDone: false,
+			localDateKey: "2026-06-19",
 		});
 		expect(result.current.awaitingCheckIn).toBe(false);
 		expect(result.current.state).toBe("running");
@@ -1903,6 +1912,7 @@ describe("usePomodoroCycle", () => {
 			cycleId: 61,
 			markTaskDone: true,
 			incrementInterruption: true,
+			localDateKey: "2026-06-19",
 		});
 		expect(result.current.awaitingCheckIn).toBe(false);
 		expect(result.current.state).toBe("running");
