@@ -28,6 +28,7 @@ function makeTask(partial: {
 		sortOrder: partial.sortOrder ?? 0,
 		resumeNote: null,
 		personaPresetId: null,
+		isDailyStanding: false,
 		updatedAt: null,
 	};
 }

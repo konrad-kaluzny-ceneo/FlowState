@@ -70,6 +70,7 @@ function buildOptimisticCreateRow(
 		sortOrder: maxSortOrder + 1,
 		resumeNote: input.resumeNote ?? null,
 		personaPresetId: input.personaPresetId ?? null,
+		isDailyStanding: input.isDailyStanding ?? false,
 		createdAt: now,
 		updatedAt: now,
 	};

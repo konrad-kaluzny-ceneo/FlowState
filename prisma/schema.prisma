@@ -74,10 +74,12 @@ model Task {
   sortOrder          Int                @default(0) @map("sort_order")
   resumeNote         String?            @map("resume_note") @db.VarChar(120)
   personaPresetId    String?            @map("persona_preset_id") @db.VarChar(32)
+  isDailyStanding    Boolean            @default(false) @map("is_daily_standing")
   createdAt DateTime  @default(now()) @map("createdAt") @db.Timestamptz
   updatedAt DateTime? @updatedAt @map("updatedAt") @db.Timestamptz
 
   cycles Cycle[]
+  dayCompletions TaskDayCompletion[]
 
   suggestedDecisions SuggestionDecision[] @relation("SuggestedTask")
   chosenDecisions    SuggestionDecision[] @relation("ChosenTask")
@@ -85,6 +87,7 @@ model Task {
   @@index([status], name: "task_status_idx")
   @@index([userId], name: "task_user_id_idx")
   @@index([userId, sortOrder], name: "task_user_sort_order_idx")
+  @@index([userId, isDailyStanding], name: "task_user_daily_standing_idx")
   @@index([workType], name: "task_work_type_idx")
   @@map("flow_state_task")
 }
@@ -172,5 +175,33 @@ model UserPreference {
   updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("flow_state_user_preference")
+}
+
+model DayPlan {
+  id                 Int      @id @default(autoincrement())
+  userId             String   @map("user_id") @db.VarChar(255)
+  localDateKey       String   @map("local_date_key") @db.VarChar(10)
+  focusBudgetMinutes Int      @map("focus_budget_minutes")
+  usedFocusMinutes   Int      @default(0) @map("used_focus_minutes")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([userId, localDateKey], name: "day_plan_user_date_key")
+  @@index([userId], name: "day_plan_user_id_idx")
+  @@map("flow_state_day_plan")
+}
+
+model TaskDayCompletion {
+  id           Int      @id @default(autoincrement())
+  userId       String   @map("user_id") @db.VarChar(255)
+  taskId       Int      @map("task_id")
+  localDateKey String   @map("local_date_key") @db.VarChar(10)
+  completedAt  DateTime @default(now()) @map("completed_at") @db.Timestamptz
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taskId, localDateKey], name: "task_day_completion_user_task_date")
+  @@index([userId, localDateKey], name: "task_day_completion_user_date_idx")
+  @@map("flow_state_task_day_completion")
 }
 

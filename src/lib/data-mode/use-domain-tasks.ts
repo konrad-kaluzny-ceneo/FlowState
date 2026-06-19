@@ -30,6 +30,7 @@ function mapSnapshotToTasks(): DomainTask[] {
 			sortOrder: task.sortOrder,
 			resumeNote: task.resumeNote ?? null,
 			personaPresetId: task.personaPresetId ?? null,
+			isDailyStanding: task.isDailyStanding ?? false,
 		}));
 }
 

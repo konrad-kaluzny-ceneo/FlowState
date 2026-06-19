@@ -26,6 +26,7 @@ function toDomainTask(task: {
 	sortOrder: number;
 	resumeNote: string | null;
 	personaPresetId: string | null;
+	isDailyStanding?: boolean;
 	createdAt: Date;
 	updatedAt: Date | null;
 }): DomainTask {
@@ -45,6 +46,7 @@ function toDomainTask(task: {
 		sortOrder: task.sortOrder,
 		resumeNote: task.resumeNote ?? null,
 		personaPresetId: task.personaPresetId ?? null,
+		isDailyStanding: task.isDailyStanding ?? false,
 	};
 }
 
@@ -129,6 +131,7 @@ export function createGuestTaskRepository(): TaskRepository {
 				sortOrder: maxSortOrder + 1,
 				resumeNote: input.resumeNote ?? null,
 				personaPresetId: input.personaPresetId ?? null,
+				isDailyStanding: input.isDailyStanding ?? false,
 				createdAt: now,
 				updatedAt: null,
 			};
@@ -199,6 +202,9 @@ export function createGuestTaskRepository(): TaskRepository {
 							: {}),
 						...(input.personaPresetId !== undefined
 							? { personaPresetId: input.personaPresetId }
+							: {}),
+						...(input.isDailyStanding !== undefined
+							? { isDailyStanding: input.isDailyStanding }
 							: {}),
 						...(nextStatus === "completed" ? { resumeNote: null } : {}),
 						sortOrder,

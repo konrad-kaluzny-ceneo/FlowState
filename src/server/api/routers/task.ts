@@ -49,6 +49,7 @@ export const taskRouter = createTRPCRouter({
 				commitmentHorizon: commitmentHorizonSchema.optional(),
 				resumeNote: resumeNoteSchema,
 				personaPresetId: personaPresetIdSchema,
+				isDailyStanding: z.boolean().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -80,6 +81,9 @@ export const taskRouter = createTRPCRouter({
 					...(input.personaPresetId !== undefined
 						? { personaPresetId: input.personaPresetId }
 						: {}),
+					...(input.isDailyStanding != null
+						? { isDailyStanding: input.isDailyStanding }
+						: {}),
 				},
 			});
 		}),
@@ -98,6 +102,7 @@ export const taskRouter = createTRPCRouter({
 				commitmentHorizon: commitmentHorizonSchema.optional(),
 				resumeNote: resumeNoteSchema,
 				personaPresetId: personaPresetIdSchema,
+				isDailyStanding: z.boolean().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -203,6 +208,49 @@ export const taskRouter = createTRPCRouter({
 
 			await ctx.db.task.delete({
 				where: { id: input.id },
+			});
+		}),
+
+	markDoneForToday: protectedProcedure
+		.input(
+			z.object({
+				taskId: z.number().int(),
+				localDateKey: z
+					.string()
+					.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD local date key"),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const task = await ctx.db.task.findFirst({
+				where: { id: input.taskId, userId },
+			});
+
+			if (!task) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			if (!task.isDailyStanding) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Task is not marked as daily standing",
+				});
+			}
+
+			await ctx.db.taskDayCompletion.upsert({
+				where: {
+					task_day_completion_user_task_date: {
+						userId,
+						taskId: input.taskId,
+						localDateKey: input.localDateKey,
+					},
+				},
+				create: {
+					userId,
+					taskId: input.taskId,
+					localDateKey: input.localDateKey,
+				},
+				update: {},
 			});
 		}),
 });

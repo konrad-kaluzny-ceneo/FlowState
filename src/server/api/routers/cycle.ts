@@ -168,6 +168,10 @@ export const cycleRouter = createTRPCRouter({
 				cycleId: z.number().int(),
 				markTaskDone: z.boolean().optional(),
 				incrementInterruption: z.boolean().optional(),
+				localDateKey: z
+					.string()
+					.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD local date key")
+					.optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -203,6 +207,44 @@ export const cycleRouter = createTRPCRouter({
 						where: { id: cycle.taskId, userId: ctx.session.user.id },
 						data: { status: "completed" },
 					});
+				}
+
+				if (
+					cycle.kind === "WORK" &&
+					input.localDateKey != null &&
+					input.localDateKey.length > 0
+				) {
+					const elapsedSec = Math.min(
+						cycle.configuredDurationSec,
+						Math.max(
+							0,
+							Math.floor(
+								(endedAt.getTime() - cycle.startedAt.getTime()) / 1000,
+							),
+						),
+					);
+					const minutes = Math.max(1, Math.ceil(elapsedSec / 60));
+
+					const dayPlan = await tx.dayPlan.findUnique({
+						where: {
+							day_plan_user_date_key: {
+								userId: ctx.session.user.id,
+								localDateKey: input.localDateKey,
+							},
+						},
+					});
+
+					if (dayPlan) {
+						await tx.dayPlan.update({
+							where: { id: dayPlan.id },
+							data: {
+								usedFocusMinutes: Math.min(
+									dayPlan.focusBudgetMinutes,
+									dayPlan.usedFocusMinutes + minutes,
+								),
+							},
+						});
+					}
 				}
 
 				await tx.session.update({

@@ -25,6 +25,7 @@ export const guestTaskSchema = z.object({
 	sortOrder: z.number().int().min(0).optional(),
 	resumeNote: z.string().max(120).nullable().optional(),
 	personaPresetId: z.string().max(32).nullable().optional(),
+	isDailyStanding: z.boolean().optional(),
 	createdAt: z.coerce.date(),
 	updatedAt: z.coerce.date().nullable(),
 });
@@ -42,6 +43,7 @@ export type GuestTask = {
 	sortOrder: number;
 	resumeNote: string | null;
 	personaPresetId: string | null;
+	isDailyStanding?: boolean;
 	createdAt: Date;
 	updatedAt: Date | null;
 };
@@ -61,6 +63,7 @@ function normalizeGuestTasks(
 			sortOrder: task.sortOrder ?? index,
 			resumeNote: task.resumeNote ?? null,
 			personaPresetId: task.personaPresetId ?? null,
+			isDailyStanding: task.isDailyStanding ?? false,
 			weight: urgency,
 		};
 	});

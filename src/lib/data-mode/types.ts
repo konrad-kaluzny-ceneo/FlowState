@@ -8,6 +8,7 @@ export function defaultEisenhowerFields(weight: 1 | 2 | 3 = 2): {
 	effortMinutes: number | null;
 	commitmentHorizon: CommitmentHorizon;
 	personaPresetId: null;
+	isDailyStanding: false;
 } {
 	return {
 		importance: 2,
@@ -15,6 +16,7 @@ export function defaultEisenhowerFields(weight: 1 | 2 | 3 = 2): {
 		effortMinutes: null,
 		commitmentHorizon: "WHEN_POSSIBLE",
 		personaPresetId: null,
+		isDailyStanding: false,
 	};
 }
 
@@ -34,6 +36,7 @@ export type DomainTask = {
 	sortOrder: number;
 	resumeNote: string | null;
 	personaPresetId: string | null;
+	isDailyStanding: boolean;
 };
 
 export type DomainActiveCycle = {
@@ -72,6 +75,7 @@ export type EisenhowerTaskInput = {
 	effortMinutes?: number | null;
 	commitmentHorizon?: CommitmentHorizon;
 	personaPresetId?: string | null;
+	isDailyStanding?: boolean;
 };
 
 export interface TaskRepository {
