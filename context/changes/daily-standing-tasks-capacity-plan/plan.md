@@ -367,14 +367,14 @@ Browser-level proof for US-03 standing + capacity path (auth worker).
 
 #### Automated
 
-- [x] 1.1 Migration applies: `pnpm prisma migrate dev` — 7667c6e
-- [x] 1.2 `pnpm check` and `pnpm typecheck` pass — 7667c6e
-- [x] 1.3 Task mutation tests pass (standing flag) — 7667c6e
-- [x] 1.4 Day plan router tests pass — 7667c6e
+- [x] 1.1 Migration applies: `pnpm prisma migrate dev` — 5c80b16
+- [x] 1.2 `pnpm check` and `pnpm typecheck` pass — 5c80b16
+- [x] 1.3 Task mutation tests pass (standing flag) — 5c80b16
+- [x] 1.4 Day plan router tests pass — 5c80b16
 
 #### Manual
 
-- [x] 1.5 Prisma Studio shows new tables after migrate — 7667c6e
+- [x] 1.5 Prisma Studio shows new tables after migrate — 5c80b16
 
 ### Phase 2: Task UI, Day Plan Prompt & Done-for-Today
 
