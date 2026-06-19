@@ -244,9 +244,9 @@ None — client-only hook changes; no schema migration.
 
 #### Automated
 
-- [x] 1.1 `pnpm check`
-- [x] 1.2 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` — existing post-check-in tests pass
-- [x] 1.3 `pnpm test`
+- [x] 1.1 `pnpm check` — c241f8b
+- [x] 1.2 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` — existing post-check-in tests pass — c241f8b
+- [x] 1.3 `pnpm test` — c241f8b
 
 #### Manual
 

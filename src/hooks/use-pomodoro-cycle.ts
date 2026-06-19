@@ -309,7 +309,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const [stagedKickoffDurationSec, setStagedKickoffDurationSec] = useState<
 		number | null
 	>(null);
-	const [isAcceptingSuggestion, setIsAcceptingSuggestion] = useState(false);
 	const [isAcceptingKickoffSuggestion, setIsAcceptingKickoffSuggestion] =
 		useState(false);
 	const [overrideAcknowledgement, setOverrideAcknowledgement] = useState<
@@ -1367,25 +1366,19 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		],
 	);
 
-	const acceptSuggestion = useCallback(async () => {
+	const acceptSuggestion = useCallback(() => {
 		if (pendingSuggestion.status !== "ready") {
 			return;
 		}
 
 		const { data } = pendingSuggestion;
-		setIsAcceptingSuggestion(true);
 		setError(null);
-
-		try {
-			preFocusTask(data.taskId, {
-				id: data.taskId,
-				title: data.title,
-			});
-			setHasPreFocusedSuggestion(true);
-			await recordSuggestionDecision(data.taskId, data.taskId);
-		} finally {
-			setIsAcceptingSuggestion(false);
-		}
+		preFocusTask(data.taskId, {
+			id: data.taskId,
+			title: data.title,
+		});
+		setHasPreFocusedSuggestion(true);
+		void recordSuggestionDecision(data.taskId, data.taskId);
 	}, [pendingSuggestion, preFocusTask, recordSuggestionDecision]);
 
 	const acceptKickoffSuggestion = useCallback(async () => {
@@ -2885,7 +2878,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		hasPreFocusedSuggestion,
 		hasPreFocusedKickoff,
 		stagedKickoffDurationSec,
-		isAcceptingSuggestion,
 		isAcceptingKickoffSuggestion,
 		overrideAcknowledgement,
 		inFlowSummaryLine,
