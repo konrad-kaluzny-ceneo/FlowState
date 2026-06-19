@@ -29,6 +29,7 @@ import { formatRemainingMs } from "~/lib/format-remaining";
 
 import { CycleAudioPreferenceControl } from "./cycle-audio-preference-control";
 import { DurationPicker } from "./duration-picker";
+import { OutOfTabBreakAlertsControl } from "./out-of-tab-break-alerts-control";
 
 type TimerPanelProps = {
 	state: PomodoroCycleState;
@@ -44,6 +45,8 @@ type TimerPanelProps = {
 	onWorkDurationManualChange?: () => void;
 	cycleEndAudioMode?: CycleEndAudioMode;
 	onCycleEndAudioModeChange?: (mode: CycleEndAudioMode) => void;
+	outOfTabBreakAlertsEnabled?: boolean;
+	onOutOfTabBreakAlertsChange?: (enabled: boolean) => void;
 };
 
 export function TimerPanel({
@@ -60,6 +63,8 @@ export function TimerPanel({
 	onWorkDurationManualChange,
 	cycleEndAudioMode = "normal",
 	onCycleEndAudioModeChange,
+	outOfTabBreakAlertsEnabled = true,
+	onOutOfTabBreakAlertsChange,
 }: TimerPanelProps) {
 	const [workDurationSec, setWorkDurationSec] = useState(
 		() => preferredWorkDurationSec ?? getLastDuration(),
@@ -267,6 +272,12 @@ export function TimerPanel({
 								valueSec={longBreakSec}
 							/>
 						</div>
+						{onOutOfTabBreakAlertsChange != null && (
+							<OutOfTabBreakAlertsControl
+								enabled={outOfTabBreakAlertsEnabled}
+								onChange={onOutOfTabBreakAlertsChange}
+							/>
+						)}
 					</div>
 				)}
 			</div>

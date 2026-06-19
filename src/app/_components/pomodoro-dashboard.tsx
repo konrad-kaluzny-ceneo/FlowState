@@ -1,7 +1,15 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+	Suspense,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 
+import { BreakAlertsPermissionPrompt } from "~/app/_components/break-alerts-permission-prompt";
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { CycleIntentionPrompt } from "~/app/_components/cycle-intention-prompt";
@@ -19,7 +27,13 @@ import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preferen
 import { useDayPlan } from "~/hooks/use-day-plan";
 import { useE2eExposeCycleRecovery } from "~/hooks/use-e2e-expose-cycle-recovery";
 import { useOnboarding } from "~/hooks/use-onboarding-state";
+import { useOutOfTabBreakAlertsPreference } from "~/hooks/use-out-of-tab-break-alerts-preference";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
+import { getNotificationPermission } from "~/lib/break-out-of-tab-alert/notify-break-start";
+import {
+	readNotificationPromptDismissed,
+	writeNotificationPromptDismissed,
+} from "~/lib/break-out-of-tab-alert/storage";
 import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import { useGuestDomainTasks } from "~/lib/data-mode/use-domain-tasks";
@@ -27,6 +41,7 @@ import {
 	CHECK_IN_COACH_LINE,
 	SUGGESTION_COACH_LINE,
 } from "~/lib/onboarding/copy";
+import { shouldDeferFirstRun } from "~/lib/onboarding/defer";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import { resolveWedgeBeat } from "~/lib/wedge/transition-conductor";
 import { api } from "~/trpc/react";
@@ -45,6 +60,7 @@ export function PomodoroDashboardBody({
 	workTypeDurationScope,
 	cycleEndAudioMode,
 	setCycleEndAudioMode,
+	onboardingScope = { mode: "guest" },
 	onCheckInCoachSeen,
 	onSuggestionCoachSeen,
 }: {
@@ -59,19 +75,109 @@ export function PomodoroDashboardBody({
 	workTypeDurationScope?: OnboardingScope;
 	cycleEndAudioMode: CycleEndAudioMode;
 	setCycleEndAudioMode: (mode: CycleEndAudioMode) => void;
+	onboardingScope?: OnboardingScope;
 	onCheckInCoachSeen?: () => void;
 	onSuggestionCoachSeen?: () => void;
 }) {
+	const {
+		enabled: outOfTabBreakAlertsEnabled,
+		setEnabled: setOutOfTabBreakAlertsEnabled,
+	} = useOutOfTabBreakAlertsPreference(onboardingScope);
+
 	const getCycleEndAudioMode = useCallback(
 		() => cycleEndAudioMode,
 		[cycleEndAudioMode],
+	);
+	const getOutOfTabBreakAlertsEnabled = useCallback(
+		() => outOfTabBreakAlertsEnabled,
+		[outOfTabBreakAlertsEnabled],
 	);
 	const activeTaskIds = useMemo(
 		() => new Set(tasks.filter((t) => t.status === "active").map((t) => t.id)),
 		[tasks],
 	);
-	const pomodoro = usePomodoroCycle({ getCycleEndAudioMode, activeTaskIds });
+	const pomodoro = usePomodoroCycle({
+		getCycleEndAudioMode,
+		getOutOfTabBreakAlertsEnabled,
+		activeTaskIds,
+	});
 	useE2eExposeCycleRecovery();
+
+	type PendingStartAction =
+		| { kind: "start"; durationSec: number }
+		| { kind: "submit-intention"; intention: string | null };
+
+	const cycleIntentionCompletedRef = useRef(false);
+	const [permissionPromptVisible, setPermissionPromptVisible] = useState(false);
+	const [pendingStartAction, setPendingStartAction] =
+		useState<PendingStartAction | null>(null);
+
+	const needsPermissionPrompt = useCallback(() => {
+		if (typeof window === "undefined" || shouldDeferFirstRun()) {
+			return false;
+		}
+
+		if (readNotificationPromptDismissed(onboardingScope)) {
+			return false;
+		}
+
+		return getNotificationPermission() === "default";
+	}, [onboardingScope]);
+
+	const completePendingStart = useCallback(async () => {
+		const pending = pendingStartAction;
+		setPendingStartAction(null);
+		setPermissionPromptVisible(false);
+
+		if (pending == null) {
+			return;
+		}
+
+		if (pending.kind === "start") {
+			await pomodoro.start(pending.durationSec);
+			return;
+		}
+
+		await pomodoro.submitCycleIntention(pending.intention);
+	}, [pendingStartAction, pomodoro]);
+
+	const handleStartWithPermission = useCallback(
+		async (durationSec: number) => {
+			if (needsPermissionPrompt() && cycleIntentionCompletedRef.current) {
+				setPendingStartAction({ kind: "start", durationSec });
+				setPermissionPromptVisible(true);
+				return;
+			}
+
+			await pomodoro.start(durationSec);
+		},
+		[needsPermissionPrompt, pomodoro],
+	);
+
+	const handleSubmitCycleIntention = useCallback(
+		async (intention: string | null) => {
+			cycleIntentionCompletedRef.current = true;
+
+			if (needsPermissionPrompt()) {
+				setPendingStartAction({ kind: "submit-intention", intention });
+				setPermissionPromptVisible(true);
+				return;
+			}
+
+			await pomodoro.submitCycleIntention(intention);
+		},
+		[needsPermissionPrompt, pomodoro],
+	);
+
+	const handleSkipCycleIntention = useCallback(async () => {
+		await handleSubmitCycleIntention(null);
+	}, [handleSubmitCycleIntention]);
+
+	const dismissPermissionPrompt = useCallback(() => {
+		writeNotificationPromptDismissed(onboardingScope, true);
+		setPermissionPromptVisible(false);
+		void completePendingStart();
+	}, [completePendingStart, onboardingScope]);
 
 	const canMarkTaskDone =
 		pomodoro.focusedTaskId != null && activeTaskIds.has(pomodoro.focusedTaskId);
@@ -247,10 +353,12 @@ export function PomodoroDashboardBody({
 					isStarting={false}
 					onCycleEndAudioModeChange={setCycleEndAudioMode}
 					onInterrupt={pomodoro.interrupt}
+					onOutOfTabBreakAlertsChange={setOutOfTabBreakAlertsEnabled}
 					onPause={pomodoro.pause}
 					onResume={pomodoro.resume}
-					onStart={pomodoro.start}
+					onStart={handleStartWithPermission}
 					onWorkDurationManualChange={pomodoro.clearStagedKickoffDuration}
+					outOfTabBreakAlertsEnabled={outOfTabBreakAlertsEnabled}
 					preferredWorkDurationSec={pomodoro.stagedKickoffDurationSec}
 					remainingMs={pomodoro.remainingMs}
 					state={pomodoro.state}
@@ -438,10 +546,16 @@ export function PomodoroDashboardBody({
 
 			{wedgeBeat.showCycleIntention && (
 				<CycleIntentionPrompt
-					onSkip={pomodoro.skipCycleIntention}
-					onSubmit={pomodoro.submitCycleIntention}
+					onSkip={handleSkipCycleIntention}
+					onSubmit={handleSubmitCycleIntention}
 				/>
 			)}
+
+			<BreakAlertsPermissionPrompt
+				onDismiss={dismissPermissionPrompt}
+				onEnable={dismissPermissionPrompt}
+				visible={permissionPromptVisible && !wedgeBeat.showCycleIntention}
+			/>
 
 			{wedgeBeat.showSessionClosure && pomodoro.pendingClosureLine != null && (
 				<SessionClosureOverlay
@@ -549,6 +663,7 @@ function AuthenticatedPomodoroDashboard() {
 			enableCheckInGate
 			enableSuggestionGate
 			enableWindDownGate
+			onboardingScope={onboardingScope}
 			onCheckInCoachSeen={markCheckInCoachSeen}
 			onSuggestionCoachSeen={markSuggestionCoachSeen}
 			refreshTasks={async () => {
@@ -578,6 +693,7 @@ function GuestPomodoroDashboard() {
 	return (
 		<PomodoroDashboardBody
 			cycleEndAudioMode={cycleEndAudioMode}
+			onboardingScope={guestScope}
 			refreshTasks={refresh}
 			setCycleEndAudioMode={setCycleEndAudioMode}
 			tasks={tasks}

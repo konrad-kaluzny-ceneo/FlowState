@@ -386,30 +386,30 @@ No schema migration. localStorage keys additive; default enabled preserves curre
 
 #### Automated
 
-- [ ] 2.1 `pnpm check` passes
-- [ ] 2.2 `pnpm exec vitest run src/hooks/use-out-of-tab-break-alerts-preference.test.tsx src/app/_components/out-of-tab-break-alerts-control.test.tsx src/app/_components/break-alerts-permission-prompt.test.tsx` passes
+- [x] 2.1 `pnpm check` passes
+- [x] 2.2 `pnpm exec vitest run src/hooks/use-out-of-tab-break-alerts-preference.test.tsx src/app/_components/out-of-tab-break-alerts-control.test.tsx src/app/_components/break-alerts-permission-prompt.test.tsx` passes
 
 #### Manual
 
-- [ ] 2.3 First-session prompt appears once; “Not now” does not re-show on refresh
-- [ ] 2.4 Toggle off persists in localStorage (guest and auth scopes isolated)
-- [ ] 2.5 Denied permission → settings helper + “Try again” visible
-- [ ] 2.6 First auth start → no overlay stack with first-run / cycle-intention
+- [x] 2.3 First-session prompt appears once; “Not now” does not re-show on refresh
+- [x] 2.4 Toggle off persists in localStorage (guest and auth scopes isolated)
+- [x] 2.5 Denied permission → settings helper + “Try again” visible
+- [x] 2.6 First auth start → no overlay stack with first-run / cycle-intention
 
 ### Phase 3: Hook integration (break start)
 
 #### Automated
 
-- [ ] 3.1 `pnpm check` passes
-- [ ] 3.2 `pnpm typecheck` passes
-- [ ] 3.3 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx src/hooks/use-pomodoro-cycle-guest.test.tsx src/lib/audio.test.ts src/app/_components/tab-return-catchup.test.tsx` passes
-- [ ] 3.4 `pnpm test` passes
+- [x] 3.1 `pnpm check` passes
+- [x] 3.2 `pnpm typecheck` passes
+- [x] 3.3 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx src/hooks/use-pomodoro-cycle-guest.test.tsx src/lib/audio.test.ts src/app/_components/tab-return-catchup.test.tsx` passes
+- [x] 3.4 `pnpm test` passes
 
 #### Manual
 
-- [ ] 3.5 Two-tab test: break start while other tab focused → notification + sound
-- [ ] 3.6 Toggle off → no notification on next break
-- [ ] 3.7 In-tab break start → no system notification; in-tab behavior unchanged
+- [x] 3.5 Two-tab test: break start while other tab focused → notification + sound
+- [x] 3.6 Toggle off → no notification on next break
+- [x] 3.7 In-tab break start → no system notification; in-tab behavior unchanged
 
 ### Phase 4: E2E spec + test-plan cookbook
 
