@@ -251,7 +251,7 @@ export const taskRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			const userId = ctx.session.user.id;
 			const task = await ctx.db.task.findFirst({
-				where: { id: input.taskId, userId },
+				where: { id: input.taskId, userId, status: "active" },
 			});
 
 			if (!task) {

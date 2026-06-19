@@ -331,13 +331,21 @@ vi.mock("~/server/db/index", () => {
 			dayPlan: {
 				findUnique: vi.fn(
 					(args: {
-						where: {
-							day_plan_user_date_key: {
-								userId: string;
-								localDateKey: string;
-							};
-						};
+						where:
+							| { id: number }
+							| {
+									day_plan_user_date_key: {
+										userId: string;
+										localDateKey: string;
+									};
+							  };
 					}) => {
+						if ("id" in args.where) {
+							const whereById = args.where;
+							return Promise.resolve(
+								dayPlans.find((plan) => plan.id === whereById.id) ?? null,
+							);
+						}
 						const { userId, localDateKey } = args.where.day_plan_user_date_key;
 						return Promise.resolve(
 							dayPlans.find(
@@ -350,13 +358,24 @@ vi.mock("~/server/db/index", () => {
 				update: vi.fn(
 					(args: {
 						where: { id: number };
-						data: { usedFocusMinutes: number };
+						data:
+							| { usedFocusMinutes: number }
+							| { usedFocusMinutes: { increment: number } };
 					}) => {
 						const plan = dayPlans.find((row) => row.id === args.where.id);
 						if (plan == null) {
 							throw new Error("day plan not found");
 						}
-						plan.usedFocusMinutes = args.data.usedFocusMinutes;
+						const used = args.data.usedFocusMinutes;
+						if (
+							typeof used === "object" &&
+							used !== null &&
+							"increment" in used
+						) {
+							plan.usedFocusMinutes += used.increment;
+						} else if (typeof used === "number") {
+							plan.usedFocusMinutes = used;
+						}
 						return Promise.resolve(plan);
 					},
 				),

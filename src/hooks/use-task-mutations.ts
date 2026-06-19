@@ -27,7 +27,12 @@ type TaskListItem = TaskListData[number];
 type MutationContext = {
 	previousTasks: TaskListData | undefined;
 	tempId?: number;
+	localDateKey?: string;
 };
+
+function currentTaskListInput() {
+	return { localDateKey: formatLocalDateKey() };
+}
 
 function formatTaskMutationError(err: unknown): string {
 	if (err instanceof TRPCClientError && err.shape?.code === "NOT_FOUND") {
@@ -147,7 +152,10 @@ export function useTaskMutations() {
 	const handleError = useCallback(
 		(err: unknown, _input: unknown, context: MutationContext | undefined) => {
 			if (context) {
-				utils.task.list.setData(undefined, () => context.previousTasks);
+				const listInput = context.localDateKey
+					? { localDateKey: context.localDateKey }
+					: currentTaskListInput();
+				utils.task.list.setData(listInput, () => context.previousTasks);
 			}
 			setError(formatTaskMutationError(err));
 		},
@@ -156,24 +164,28 @@ export function useTaskMutations() {
 
 	const createMutation = api.task.create.useMutation({
 		onMutate: async (input) => {
-			await utils.task.list.cancel();
-			const previousTasks = utils.task.list.getData();
+			const listInput = currentTaskListInput();
+			await utils.task.list.cancel(listInput);
+			const previousTasks = utils.task.list.getData(listInput);
 			const tempId = allocateTempTaskId();
 			const optimisticRow = buildOptimisticCreateRow(
 				input,
 				tempId,
 				previousTasks,
 			);
-			utils.task.list.setData(undefined, (old) =>
+			utils.task.list.setData(listInput, (old) =>
 				appendTask(old, optimisticRow),
 			);
-			return { previousTasks, tempId };
+			return { previousTasks, tempId, localDateKey: listInput.localDateKey };
 		},
 		onError: handleError,
 		onSuccess: (serverTask, _input, context: MutationContext | undefined) => {
 			const tempId = context?.tempId;
 			if (tempId != null) {
-				utils.task.list.setData(undefined, (old) =>
+				const listInput = context?.localDateKey
+					? { localDateKey: context.localDateKey }
+					: currentTaskListInput();
+				utils.task.list.setData(listInput, (old) =>
 					replaceTempTask(old, tempId, {
 						...serverTask,
 						doneForToday: false,
@@ -186,11 +198,12 @@ export function useTaskMutations() {
 
 	const updateMutation = api.task.update.useMutation({
 		onMutate: async (input) => {
-			await utils.task.list.cancel();
-			const previousTasks = utils.task.list.getData();
+			const listInput = currentTaskListInput();
+			await utils.task.list.cancel(listInput);
+			const previousTasks = utils.task.list.getData(listInput);
 			const { id, ...fields } = input;
-			utils.task.list.setData(undefined, (old) => patchTask(old, id, fields));
-			return { previousTasks };
+			utils.task.list.setData(listInput, (old) => patchTask(old, id, fields));
+			return { previousTasks, localDateKey: listInput.localDateKey };
 		},
 		onError: handleError,
 		onSettled: handleSettled,
@@ -198,10 +211,11 @@ export function useTaskMutations() {
 
 	const deleteMutation = api.task.delete.useMutation({
 		onMutate: async (input) => {
-			await utils.task.list.cancel();
-			const previousTasks = utils.task.list.getData();
-			utils.task.list.setData(undefined, (old) => removeTask(old, input.id));
-			return { previousTasks };
+			const listInput = currentTaskListInput();
+			await utils.task.list.cancel(listInput);
+			const previousTasks = utils.task.list.getData(listInput);
+			utils.task.list.setData(listInput, (old) => removeTask(old, input.id));
+			return { previousTasks, localDateKey: listInput.localDateKey };
 		},
 		onError: handleError,
 		onSettled: handleSettled,
@@ -209,12 +223,13 @@ export function useTaskMutations() {
 
 	const reorderMutation = api.task.reorder.useMutation({
 		onMutate: async (input) => {
-			await utils.task.list.cancel();
-			const previousTasks = utils.task.list.getData();
-			utils.task.list.setData(undefined, (old) =>
+			const listInput = currentTaskListInput();
+			await utils.task.list.cancel(listInput);
+			const previousTasks = utils.task.list.getData(listInput);
+			utils.task.list.setData(listInput, (old) =>
 				reorderActiveTasks(old, input.orderedIds),
 			);
-			return { previousTasks };
+			return { previousTasks, localDateKey: listInput.localDateKey };
 		},
 		onError: handleError,
 		onSettled: handleSettled,

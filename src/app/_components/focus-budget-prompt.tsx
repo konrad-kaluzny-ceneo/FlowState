@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const DISMISS_KEY_PREFIX = "flowstate:focus-budget-dismiss:";
 
@@ -41,6 +41,10 @@ export function FocusBudgetPrompt({
 	);
 	const [customMinutes, setCustomMinutes] = useState("");
 	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		setDismissed(isDismissedForDate(localDateKey));
+	}, [localDateKey]);
 
 	const handleSetBudget = useCallback(
 		async (minutes: number) => {

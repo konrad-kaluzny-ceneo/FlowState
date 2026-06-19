@@ -21,7 +21,7 @@ export const FACTOR_CHIP_LABELS: Partial<Record<RationaleKey, string>> = {
 	importance_focus: "Important now",
 	low_effort_fit: "Quick win",
 	horizon_asap: "Due ASAP",
-	capacity_fit: "Fits today",
+	capacity_fit: "Fits your remaining focus",
 };
 
 const EXCLUDED_CHIP_KEYS = new Set<RationaleKey>([

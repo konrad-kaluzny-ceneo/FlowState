@@ -166,49 +166,27 @@ describe("dayPlan router", () => {
 		).rejects.toMatchObject({ code: "BAD_REQUEST" });
 	});
 
-	it("incrementUsed adds minutes capped at budget", async () => {
-		const caller = dayPlanCaller(USER_A);
+	it("setBudget clamps used minutes when budget decreases", async () => {
+		dayPlans.push({
+			id: nextDayPlanId++,
+			userId: USER_A,
+			localDateKey: DATE_KEY,
+			focusBudgetMinutes: 120,
+			usedFocusMinutes: 90,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		});
 
-		await caller.setBudget({
+		const result = await dayPlanCaller(USER_A).setBudget({
 			localDateKey: DATE_KEY,
 			focusBudgetMinutes: 60,
 		});
 
-		const first = await caller.incrementUsed({
-			localDateKey: DATE_KEY,
-			minutes: 25,
-		});
-		expect(first).toMatchObject({
-			usedFocusMinutes: 25,
-			remainingFocusMinutes: 35,
-		});
-
-		const second = await caller.incrementUsed({
-			localDateKey: DATE_KEY,
-			minutes: 20,
-		});
-		expect(second).toMatchObject({
-			usedFocusMinutes: 45,
-			remainingFocusMinutes: 15,
-		});
-
-		const capped = await caller.incrementUsed({
-			localDateKey: DATE_KEY,
-			minutes: 30,
-		});
-		expect(capped).toMatchObject({
+		expect(result).toMatchObject({
+			focusBudgetMinutes: 60,
 			usedFocusMinutes: 60,
 			remainingFocusMinutes: 0,
 		});
-	});
-
-	it("incrementUsed throws when budget not set", async () => {
-		await expect(
-			dayPlanCaller(USER_A).incrementUsed({
-				localDateKey: DATE_KEY,
-				minutes: 25,
-			}),
-		).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
 	});
 
 	it("setBudget for one user does not affect another user", async () => {

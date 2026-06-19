@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { incrementUsedFocusMinutes } from "~/lib/day-plan/increment-used-focus-minutes";
 import { getMinWorkDurationSec } from "~/lib/duration-bounds";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
@@ -225,26 +226,12 @@ export const cycleRouter = createTRPCRouter({
 					);
 					const minutes = Math.max(1, Math.ceil(elapsedSec / 60));
 
-					const dayPlan = await tx.dayPlan.findUnique({
-						where: {
-							day_plan_user_date_key: {
-								userId: ctx.session.user.id,
-								localDateKey: input.localDateKey,
-							},
-						},
-					});
-
-					if (dayPlan) {
-						await tx.dayPlan.update({
-							where: { id: dayPlan.id },
-							data: {
-								usedFocusMinutes: Math.min(
-									dayPlan.focusBudgetMinutes,
-									dayPlan.usedFocusMinutes + minutes,
-								),
-							},
-						});
-					}
+					await incrementUsedFocusMinutes(
+						tx,
+						ctx.session.user.id,
+						input.localDateKey,
+						minutes,
+					);
 				}
 
 				await tx.session.update({

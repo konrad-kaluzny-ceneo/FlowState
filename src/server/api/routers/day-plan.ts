@@ -1,4 +1,3 @@
-import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { remainingFocusMinutes } from "~/lib/day-plan/remaining-focus-minutes";
@@ -54,7 +53,7 @@ export const dayPlanRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			const userId = ctx.session.user.id;
 
-			const row = await ctx.db.dayPlan.upsert({
+			let row = await ctx.db.dayPlan.upsert({
 				where: {
 					day_plan_user_date_key: {
 						userId,
@@ -72,51 +71,12 @@ export const dayPlanRouter = createTRPCRouter({
 				},
 			});
 
-			return {
-				localDateKey: row.localDateKey,
-				focusBudgetMinutes: row.focusBudgetMinutes,
-				usedFocusMinutes: row.usedFocusMinutes,
-				remainingFocusMinutes: remainingFocusMinutes(
-					row.focusBudgetMinutes,
-					row.usedFocusMinutes,
-				),
-			};
-		}),
-
-	incrementUsed: protectedProcedure
-		.input(
-			z.object({
-				localDateKey: localDateKeySchema,
-				minutes: z.number().int().min(1).max(480),
-			}),
-		)
-		.mutation(async ({ ctx, input }) => {
-			const userId = ctx.session.user.id;
-			const existing = await ctx.db.dayPlan.findUnique({
-				where: {
-					day_plan_user_date_key: {
-						userId,
-						localDateKey: input.localDateKey,
-					},
-				},
-			});
-
-			if (!existing) {
-				throw new TRPCError({
-					code: "PRECONDITION_FAILED",
-					message: "Day plan budget not set for this date",
+			if (row.usedFocusMinutes > row.focusBudgetMinutes) {
+				row = await ctx.db.dayPlan.update({
+					where: { id: row.id },
+					data: { usedFocusMinutes: row.focusBudgetMinutes },
 				});
 			}
-
-			const usedFocusMinutes = Math.min(
-				existing.focusBudgetMinutes,
-				existing.usedFocusMinutes + input.minutes,
-			);
-
-			const row = await ctx.db.dayPlan.update({
-				where: { id: existing.id },
-				data: { usedFocusMinutes },
-			});
 
 			return {
 				localDateKey: row.localDateKey,
