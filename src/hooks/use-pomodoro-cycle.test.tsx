@@ -1583,9 +1583,9 @@ describe("usePomodoroCycle", () => {
 
 		await waitFor(() => {
 			assertNoCycleCompleteFlash(result);
-			expect(result.current.isPostCheckInTransitioning).toBe(true);
-			expect(result.current.state).toBe("completed");
-			expect(result.current.awaitingCheckIn).toBe(true);
+			expect(result.current.awaitingCheckIn).toBe(false);
+			expect(result.current.state).toBe("running");
+			expect(result.current.cycleKind).toBe("SHORT_BREAK");
 		});
 
 		releaseCompleteCycle();
@@ -1645,7 +1645,8 @@ describe("usePomodoroCycle", () => {
 
 		await waitFor(() => {
 			assertNoCycleCompleteFlash(result);
-			expect(result.current.isPostCheckInTransitioning).toBe(true);
+			expect(result.current.state).toBe("running");
+			expect(result.current.cycleKind).toBe("SHORT_BREAK");
 		});
 
 		releaseCompleteCycle();

@@ -167,6 +167,32 @@ function allocateOptimisticCycleId(): number {
 	return nextOptimisticCycleId;
 }
 
+function computeBreakAfterWork(completedWorkCycles: number): {
+	newCount: number;
+	breakKind: "SHORT_BREAK" | "LONG_BREAK";
+	breakDurationSec: number;
+} {
+	const newCount = completedWorkCycles + 1;
+	const breakKind: "SHORT_BREAK" | "LONG_BREAK" =
+		newCount % 4 === 0 ? "LONG_BREAK" : "SHORT_BREAK";
+	const breakDurationSec =
+		breakKind === "LONG_BREAK"
+			? getLongBreakDuration()
+			: getShortBreakDuration();
+	return { newCount, breakKind, breakDurationSec };
+}
+
+type WedgeTransitionSnapshot = {
+	awaitingCheckIn: boolean;
+	pendingMarkTaskDone: boolean | null;
+	activeCycle: DomainActiveCycle | null;
+	state: PomodoroCycleState;
+	cycleKind: CycleKind | null;
+	remainingMs: number;
+	endTime: number | null;
+	completedWorkCycles: number;
+};
+
 function isBreakKind(kind: CycleKind | null): boolean {
 	return kind === "SHORT_BREAK" || kind === "LONG_BREAK";
 }
@@ -381,6 +407,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const tabWasHiddenWhileRunningRef = useRef(false);
 	const cancelPendingStartRef = useRef(false);
 	const pendingCreateRef = useRef<Promise<CreatedActiveCycle> | null>(null);
+	const pendingBreakCreateRef = useRef<Promise<CreatedActiveCycle> | null>(
+		null,
+	);
 	const activeCycleRef = useRef(activeCycle);
 	const useWorkerRef = useRef(
 		process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER !== "1",
@@ -2118,9 +2147,52 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		],
 	);
 
+	// NFR 200ms: authenticated wedge check-in → break/suggestion (S-34); start/interrupt (B-03).
+	const captureWedgeTransitionSnapshot =
+		useCallback((): WedgeTransitionSnapshot => {
+			return {
+				awaitingCheckIn: awaitingCheckInRef.current,
+				pendingMarkTaskDone,
+				activeCycle: activeCycleRef.current,
+				state: stateRef.current,
+				cycleKind: cycleKindRef.current,
+				remainingMs,
+				endTime: endTimeRef.current,
+				completedWorkCycles,
+			};
+		}, [completedWorkCycles, pendingMarkTaskDone, remainingMs]);
+
+	const rollbackOptimisticCheckInTransition = useCallback(
+		(snapshot: WedgeTransitionSnapshot) => {
+			pendingBreakCreateRef.current = null;
+			stopWorker();
+			endTimeRef.current = snapshot.endTime;
+			setCompletedWorkCycles(snapshot.completedWorkCycles);
+			setActiveCycle(snapshot.activeCycle);
+			activeCycleRef.current = snapshot.activeCycle;
+			setState(snapshot.state);
+			stateRef.current = snapshot.state;
+			setCycleKind(snapshot.cycleKind);
+			cycleKindRef.current = snapshot.cycleKind;
+			setRemainingMs(snapshot.remainingMs);
+			if (snapshot.endTime != null && snapshot.state === "running") {
+				startWorker(snapshot.endTime);
+			}
+			setAwaitingCheckIn(snapshot.awaitingCheckIn);
+			setPendingMarkTaskDone(snapshot.pendingMarkTaskDone);
+		},
+		[startWorker, stopWorker],
+	);
+
 	const continueAfterCheckIn = useCallback(
-		async (markTaskDone: boolean, workCycleId: number) => {
-			setIsPostCheckInTransitioning(true);
+		async (
+			markTaskDone: boolean,
+			workCycleId: number,
+			options?: {
+				checkInAlreadySaved?: boolean;
+				energy?: "FOCUSED" | "STEADY" | "FADING";
+			},
+		) => {
 			clearKickoffSuggestion();
 			clearKickoffIdleFlags();
 			const gen = ++suggestionFetchGenRef.current;
@@ -2130,37 +2202,171 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setSuggestedTaskId(null);
 			setHasPreFocusedSuggestion(false);
 
-			const endSuggestionFetch = beginSuggestionFetch();
-			try {
-				await confirmComplete(markTaskDone);
-				const breakStarted =
-					stateRef.current === "running" &&
-					(cycleKindRef.current === "SHORT_BREAK" ||
-						cycleKindRef.current === "LONG_BREAK");
-				if (breakStarted) {
-					setAwaitingCheckIn(false);
-					setPendingMarkTaskDone(null);
+			if (mode !== "authenticated") {
+				setIsPostCheckInTransitioning(true);
+				const endSuggestionFetch = beginSuggestionFetch();
+				try {
+					await confirmComplete(markTaskDone);
+					const breakStarted =
+						stateRef.current === "running" &&
+						(cycleKindRef.current === "SHORT_BREAK" ||
+							cycleKindRef.current === "LONG_BREAK");
+					if (breakStarted) {
+						setAwaitingCheckIn(false);
+						setPendingMarkTaskDone(null);
+					}
+					await fetchPostCheckInSuggestion(workCycleId, gen);
+				} catch {
+					if (suggestionFetchGenRef.current !== gen) {
+						return;
+					}
+					if (suggestionCycleIdRef.current !== workCycleId) {
+						return;
+					}
+					setPendingSuggestion({ status: "error" });
+					setSuggestedTaskId(null);
+				} finally {
+					setIsPostCheckInTransitioning(false);
+					endSuggestionFetch();
 				}
-				await fetchPostCheckInSuggestion(workCycleId, gen);
-			} catch {
-				if (suggestionFetchGenRef.current !== gen) {
-					return;
-				}
-				if (suggestionCycleIdRef.current !== workCycleId) {
-					return;
-				}
-				setPendingSuggestion({ status: "error" });
-				setSuggestedTaskId(null);
-			} finally {
-				setIsPostCheckInTransitioning(false);
-				endSuggestionFetch();
+				return;
 			}
+
+			const snapshot = captureWedgeTransitionSnapshot();
+			setIsPostCheckInTransitioning(true);
+
+			const { newCount, breakKind, breakDurationSec } =
+				computeBreakAfterWork(completedWorkCycles);
+			const startedAt = new Date();
+			const optimisticEndTime = startedAt.getTime() + breakDurationSec * 1000;
+			const optimisticBreakCycle: DomainActiveCycle = {
+				id: allocateOptimisticCycleId(),
+				sessionId: _activeSessionId ?? -1,
+				userId: "",
+				taskId: null,
+				kind: breakKind,
+				state: "RUNNING",
+				configuredDurationSec: breakDurationSec,
+				startedAt,
+				endedAt: null,
+				task: null,
+			};
+
+			stopWorker();
+			endTimeRef.current = null;
+			setCompletedWorkCycles(newCount);
+			setActiveCycle(optimisticBreakCycle);
+			activeCycleRef.current = optimisticBreakCycle;
+			setCycleKind(breakKind);
+			cycleKindRef.current = breakKind;
+			setState("running");
+			stateRef.current = "running";
+			startWorker(optimisticEndTime);
+			setAwaitingCheckIn(false);
+			setPendingMarkTaskDone(null);
+			setIsPostCheckInTransitioning(false);
+
+			const endSuggestionFetch = beginSuggestionFetch();
+			const checkInAlreadySaved = options?.checkInAlreadySaved ?? false;
+			const energy = options?.energy;
+
+			void (async () => {
+				try {
+					if (!checkInAlreadySaved) {
+						if (energy == null) {
+							throw new Error("Missing check-in energy for post-check-in path");
+						}
+						await createCheckIn.mutateAsync({
+							cycleId: workCycleId,
+							energy,
+						});
+					}
+
+					await retryOnce(() =>
+						cycles.complete({
+							cycleId: workCycleId,
+							markTaskDone,
+							...(pendingIncrementInterruptionRef.current
+								? { incrementInterruption: true }
+								: {}),
+						}),
+					);
+					pendingIncrementInterruptionRef.current = false;
+
+					const createCall = cycles.create({
+						kind: breakKind,
+						configuredDurationSec: breakDurationSec,
+					});
+					pendingBreakCreateRef.current = createCall;
+					let breakCycle: CreatedActiveCycle;
+					try {
+						breakCycle = await createCall;
+					} catch (createError) {
+						pendingBreakCreateRef.current = null;
+						throw createError;
+					}
+					pendingBreakCreateRef.current = null;
+
+					const endTime = cycleEndTimeMs(breakCycle);
+					const reconciledBreak: DomainActiveCycle = {
+						...breakCycle,
+						task: null,
+					};
+					setActiveCycle(reconciledBreak);
+					activeCycleRef.current = reconciledBreak;
+					setCycleKind(breakKind);
+					cycleKindRef.current = breakKind;
+					if (Math.abs(endTime - optimisticEndTime) > 2000) {
+						startWorker(endTime);
+					}
+
+					await Promise.all([
+						invalidateServerCycle(),
+						...(markTaskDone ? [utils.task.list.invalidate()] : []),
+					]);
+
+					if (_activeSessionId != null) {
+						void refreshNarrativeStats(_activeSessionId);
+					}
+
+					await fetchPostCheckInSuggestion(workCycleId, gen);
+				} catch {
+					if (suggestionFetchGenRef.current !== gen) {
+						return;
+					}
+					if (suggestionCycleIdRef.current !== workCycleId) {
+						return;
+					}
+					rollbackOptimisticCheckInTransition(snapshot);
+					setPendingSuggestion({ status: "error" });
+					setSuggestedTaskId(null);
+					setError(
+						checkInAlreadySaved
+							? "Break could not start. Your work cycle was saved."
+							: "Could not save check-in. Try again.",
+					);
+				} finally {
+					endSuggestionFetch();
+				}
+			})();
 		},
 		[
+			mode,
 			confirmComplete,
 			fetchPostCheckInSuggestion,
 			clearKickoffSuggestion,
 			clearKickoffIdleFlags,
+			captureWedgeTransitionSnapshot,
+			completedWorkCycles,
+			_activeSessionId,
+			stopWorker,
+			startWorker,
+			createCheckIn,
+			cycles,
+			invalidateServerCycle,
+			utils.task.list,
+			refreshNarrativeStats,
+			rollbackOptimisticCheckInTransition,
 		],
 	);
 
@@ -2269,7 +2475,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				return;
 			}
 
-			setIsConfirming(true);
 			setError(null);
 
 			const markTaskDone = pendingMarkTaskDone;
@@ -2279,36 +2484,29 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				workCycleId = await resolveServerCycleId();
 			} catch {
 				setError("Could not save check-in. Try again.");
-				setIsConfirming(false);
 				return;
 			}
 
-			try {
-				await createCheckIn.mutateAsync({
-					cycleId: workCycleId,
-					energy,
-				});
-			} catch {
-				setError("Could not save check-in. Try again.");
-				setIsConfirming(false);
-				return;
-			}
+			if (mode !== "guest") {
+				try {
+					const session = await sessions.getOrCreateActive();
+					const cyclesAtCheckIn =
+						effectiveWorkCyclesAtCheckIn(completedWorkCycles);
 
-			try {
-				if (mode !== "guest") {
-					try {
-						const session = await sessions.getOrCreateActive();
-						const cyclesAtCheckIn =
-							effectiveWorkCyclesAtCheckIn(completedWorkCycles);
-
-						if (
-							shouldShowWindDownNudge({
+					if (
+						shouldShowWindDownNudge({
+							energy,
+							completedWorkCycles: cyclesAtCheckIn,
+							interruptionCount: session.interruptionCount,
+							dismissed: windDownDismissed,
+						})
+					) {
+						setIsConfirming(true);
+						try {
+							await createCheckIn.mutateAsync({
+								cycleId: workCycleId,
 								energy,
-								completedWorkCycles: cyclesAtCheckIn,
-								interruptionCount: session.interruptionCount,
-								dismissed: windDownDismissed,
-							})
-						) {
+							});
 							pendingWindDownMarkTaskDoneRef.current = markTaskDone;
 							pendingWindDownWorkCycleIdRef.current = workCycleId;
 							setWindDownRationale(
@@ -2322,17 +2520,40 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 							setAwaitingCheckIn(false);
 							setPendingMarkTaskDone(null);
 							setAwaitingWindDown(true);
-							return;
+						} catch {
+							setError("Could not save check-in. Try again.");
+						} finally {
+							setIsConfirming(false);
 						}
-					} catch {
-						// Wind-down is optional; never block check-in → break transition.
+						return;
 					}
+				} catch {
+					// Wind-down is optional; never block check-in → break transition.
 				}
+			}
 
-				await continueAfterCheckIn(markTaskDone, workCycleId);
+			if (mode === "authenticated") {
+				await continueAfterCheckIn(markTaskDone, workCycleId, { energy });
 				if (_activeSessionId != null) {
 					void refreshNarrativeStats(_activeSessionId);
 				}
+				return;
+			}
+
+			setIsConfirming(true);
+			try {
+				await createCheckIn.mutateAsync({
+					cycleId: workCycleId,
+					energy,
+				});
+				await continueAfterCheckIn(markTaskDone, workCycleId, {
+					checkInAlreadySaved: true,
+				});
+				if (_activeSessionId != null) {
+					void refreshNarrativeStats(_activeSessionId);
+				}
+			} catch {
+				setError("Could not save check-in. Try again.");
 			} finally {
 				setIsConfirming(false);
 			}
@@ -2536,7 +2757,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setWindDownRationale(null);
 			pendingWindDownMarkTaskDoneRef.current = null;
 			pendingWindDownWorkCycleIdRef.current = null;
-			await continueAfterCheckIn(markTaskDone ?? false, workCycleId);
+			await continueAfterCheckIn(markTaskDone ?? false, workCycleId, {
+				checkInAlreadySaved: true,
+			});
 		} finally {
 			setIsConfirming(false);
 		}
