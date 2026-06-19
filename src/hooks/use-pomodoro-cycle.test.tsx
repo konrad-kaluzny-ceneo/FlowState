@@ -3146,6 +3146,186 @@ describe("usePomodoroCycle", () => {
 			});
 		});
 	});
+
+	describe("stale suggestion invalidation", () => {
+		const activeTaskList = [
+			{
+				id: 7,
+				title: "Write tests",
+				status: "active" as const,
+				workType: "DEEP_WORK" as const,
+				weight: 2,
+				userId: "user-1",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			},
+		];
+
+		const kickoffSuggestion = {
+			sessionId: 1,
+			taskId: 9,
+			title: "Kickoff task",
+			workType: "DEEP_WORK" as const,
+			weight: 3,
+			rationaleKey: "kickoff_fresh",
+			rationale: "Start with deep work",
+		};
+
+		function setupKickoffMocks() {
+			taskListQuery.mockResolvedValue(activeTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestion;
+				}
+				return null;
+			});
+		}
+
+		type ActiveTaskIdsProps = {
+			activeTaskIds: ReadonlySet<number>;
+		};
+
+		async function reachKickoffReady(result: PomodoroCycleHookResult) {
+			await waitFor(() => {
+				expect(result.current.awaitingKickoffReadiness).toBe(true);
+			});
+			act(() => {
+				result.current.skipKickoffReadiness();
+			});
+			await waitFor(() => {
+				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+			});
+		}
+
+		it("clears kickoff ready when suggested id leaves activeTaskIds", async () => {
+			setupKickoffMocks();
+
+			const renderResult = renderHook(
+				(props: ActiveTaskIdsProps) =>
+					usePomodoroCycle({ activeTaskIds: props.activeTaskIds }),
+				{
+					wrapper: createWrapper(),
+					initialProps: { activeTaskIds: new Set([7, 9]) },
+				},
+			);
+
+			await reachKickoffReady(renderResult.result);
+
+			renderResult.rerender({ activeTaskIds: new Set([7]) });
+
+			await waitFor(() => {
+				expect(
+					renderResult.result.current.pendingKickoffSuggestion.status,
+				).not.toBe("ready");
+			});
+		});
+
+		it("sets kickoff empty when last active task is removed", async () => {
+			setupKickoffMocks();
+
+			const renderResult = renderHook(
+				(props: ActiveTaskIdsProps) =>
+					usePomodoroCycle({ activeTaskIds: props.activeTaskIds }),
+				{
+					wrapper: createWrapper(),
+					initialProps: { activeTaskIds: new Set([9]) },
+				},
+			);
+
+			await reachKickoffReady(renderResult.result);
+
+			renderResult.rerender({ activeTaskIds: new Set() });
+
+			await waitFor(() => {
+				expect(
+					renderResult.result.current.pendingKickoffSuggestion.status,
+				).toBe("empty");
+			});
+		});
+
+		it("keeps kickoff ready when an unrelated task is removed", async () => {
+			setupKickoffMocks();
+
+			const renderResult = renderHook(
+				(props: ActiveTaskIdsProps) =>
+					usePomodoroCycle({ activeTaskIds: props.activeTaskIds }),
+				{
+					wrapper: createWrapper(),
+					initialProps: { activeTaskIds: new Set([7, 9]) },
+				},
+			);
+
+			await reachKickoffReady(renderResult.result);
+
+			renderResult.rerender({ activeTaskIds: new Set([9]) });
+
+			await waitFor(() => {
+				expect(
+					renderResult.result.current.pendingKickoffSuggestion.status,
+				).toBe("ready");
+			});
+		});
+
+		it("clears pre-focus staging when suggested kickoff task leaves activeTaskIds", async () => {
+			setupKickoffMocks();
+
+			const renderResult = renderHook(
+				(props: ActiveTaskIdsProps) =>
+					usePomodoroCycle({ activeTaskIds: props.activeTaskIds }),
+				{
+					wrapper: createWrapper(),
+					initialProps: { activeTaskIds: new Set([7, 9]) },
+				},
+			);
+
+			await reachKickoffReady(renderResult.result);
+
+			await act(async () => {
+				await renderResult.result.current.acceptKickoffSuggestion();
+			});
+
+			expect(renderResult.result.current.hasPreFocusedKickoff).toBe(true);
+			expect(renderResult.result.current.preFocusedTask).toMatchObject({
+				id: 9,
+				title: "Kickoff task",
+			});
+
+			renderResult.rerender({ activeTaskIds: new Set([7]) });
+
+			await waitFor(() => {
+				expect(renderResult.result.current.preFocusedTask).toBeNull();
+				expect(renderResult.result.current.hasPreFocusedKickoff).toBe(false);
+				expect(renderResult.result.current.focusedTaskId).toBeNull();
+				expect(renderResult.result.current.stagedKickoffDurationSec).toBeNull();
+			});
+		});
+
+		it("no-ops acceptKickoffSuggestion when suggested id is missing from activeTaskIds", async () => {
+			setupKickoffMocks();
+
+			const renderResult = renderHook(
+				(props: ActiveTaskIdsProps) =>
+					usePomodoroCycle({ activeTaskIds: props.activeTaskIds }),
+				{
+					wrapper: createWrapper(),
+					initialProps: { activeTaskIds: new Set([7, 9]) },
+				},
+			);
+
+			await reachKickoffReady(renderResult.result);
+
+			renderResult.rerender({ activeTaskIds: new Set([7]) });
+
+			recordDecisionMutate.mockClear();
+
+			await act(async () => {
+				await renderResult.result.current.acceptKickoffSuggestion();
+			});
+
+			expect(renderResult.result.current.preFocusedTask).toBeNull();
+			expect(recordDecisionMutate).not.toHaveBeenCalled();
+		});
+	});
 });
 
 describe("usePomodoroCycle catchUp", () => {

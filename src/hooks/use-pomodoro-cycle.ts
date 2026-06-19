@@ -288,17 +288,25 @@ async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {
 
 export type UsePomodoroCycleOptions = {
 	getCycleEndAudioMode?: () => CycleEndAudioMode;
+	activeTaskIds?: ReadonlySet<DomainTaskId>;
 };
 
 export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const getCycleEndAudioModeRef = useRef<() => CycleEndAudioMode>(
 		options?.getCycleEndAudioMode ?? (() => "normal"),
 	);
+	const activeTaskIdsRef = useRef<ReadonlySet<DomainTaskId> | undefined>(
+		options?.activeTaskIds,
+	);
 
 	useEffect(() => {
 		getCycleEndAudioModeRef.current =
 			options?.getCycleEndAudioMode ?? (() => "normal");
 	}, [options?.getCycleEndAudioMode]);
+
+	useEffect(() => {
+		activeTaskIdsRef.current = options?.activeTaskIds;
+	}, [options?.activeTaskIds]);
 
 	const mode = useDataMode();
 	const { cycles, sessions, tasks, refreshGuest } = useRepositories();
@@ -1131,6 +1139,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				setPendingSuggestion({ status: "empty" });
 				setSuggestedTaskId(null);
 			} else {
+				const activeIds = activeTaskIdsRef.current;
+				if (activeIds != null && !activeIds.has(result.taskId)) {
+					setPendingSuggestion({ status: "empty" });
+					setSuggestedTaskId(null);
+					return;
+				}
 				setPendingSuggestion({
 					status: "ready",
 					data: {
@@ -1213,6 +1227,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						setPendingKickoffSuggestion({ status: "empty" });
 						setKickoffSuggestedTaskId(null);
 					} else if (!("cycleId" in result)) {
+						const activeIds = activeTaskIdsRef.current;
+						if (activeIds != null && !activeIds.has(result.taskId)) {
+							setPendingKickoffSuggestion({ status: "empty" });
+							setKickoffSuggestedTaskId(null);
+							return;
+						}
 						setPendingKickoffSuggestion({
 							status: "ready",
 							data: {
@@ -1238,6 +1258,105 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		},
 		[suggestionNextKickoff],
 	);
+
+	const kickoffReadyTaskId =
+		pendingKickoffSuggestion.status === "ready"
+			? pendingKickoffSuggestion.data.taskId
+			: null;
+	const postCheckInReadyTaskId =
+		pendingSuggestion.status === "ready" ? pendingSuggestion.data.taskId : null;
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: membership from ref; ready task ids listed explicitly
+	useEffect(() => {
+		const activeIds = activeTaskIdsRef.current;
+		if (activeIds == null) {
+			return;
+		}
+
+		const clearPreFocusForMissingTask = (taskId: DomainTaskId) => {
+			if (preFocusedTask?.id !== taskId) {
+				return;
+			}
+			setPreFocusedTask(null);
+			setFocusedTaskId(null);
+			setFocusedTask(null);
+			setStagedKickoffDurationSec(null);
+		};
+
+		if (
+			pendingKickoffSuggestion.status === "ready" &&
+			!activeIds.has(pendingKickoffSuggestion.data.taskId)
+		) {
+			const { taskId } = pendingKickoffSuggestion.data;
+			clearPreFocusForMissingTask(taskId);
+			setHasPreFocusedKickoff(false);
+
+			if (activeIds.size === 0 || _activeSessionId == null) {
+				kickoffFetchGenRef.current += 1;
+				setPendingKickoffSuggestion({ status: "empty" });
+				setKickoffSuggestedTaskId(null);
+			} else {
+				fetchKickoffSuggestion(
+					Number(_activeSessionId),
+					lastKickoffEnergyRef.current,
+				);
+			}
+		}
+
+		if (
+			pendingSuggestion.status === "ready" &&
+			!activeIds.has(pendingSuggestion.data.taskId)
+		) {
+			const { taskId } = pendingSuggestion.data;
+			clearPreFocusForMissingTask(taskId);
+			setHasPreFocusedSuggestion(false);
+			setSuggestedTaskId(null);
+
+			if (activeIds.size === 0) {
+				suggestionFetchGenRef.current += 1;
+				setPendingSuggestion({ status: "empty" });
+				return;
+			}
+
+			const cycleId = suggestionCycleIdRef.current;
+			if (cycleId == null) {
+				suggestionFetchGenRef.current += 1;
+				setPendingSuggestion({ status: "empty" });
+				return;
+			}
+
+			const gen = ++suggestionFetchGenRef.current;
+			setPendingSuggestion({ status: "loading" });
+
+			void (async () => {
+				const endSuggestionFetch = beginSuggestionFetch();
+				try {
+					await fetchPostCheckInSuggestion(cycleId, gen);
+				} catch {
+					if (suggestionFetchGenRef.current !== gen) {
+						return;
+					}
+					if (suggestionCycleIdRef.current !== cycleId) {
+						return;
+					}
+					setPendingSuggestion({ status: "error" });
+					setSuggestedTaskId(null);
+				} finally {
+					endSuggestionFetch();
+				}
+			})();
+		}
+	}, [
+		options?.activeTaskIds,
+		pendingKickoffSuggestion.status,
+		pendingSuggestion.status,
+		kickoffReadyTaskId,
+		postCheckInReadyTaskId,
+		preFocusedTask,
+		_activeSessionId,
+		fetchKickoffSuggestion,
+		fetchPostCheckInSuggestion,
+	]);
 
 	const submitKickoffReadiness = useCallback(
 		(energy: "FOCUSED" | "STEADY" | "FADING") => {
@@ -1417,6 +1536,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		}
 
 		const { data } = pendingSuggestion;
+		const activeIds = activeTaskIdsRef.current;
+		if (activeIds != null && !activeIds.has(data.taskId)) {
+			return;
+		}
+
 		setError(null);
 		preFocusTask(data.taskId, {
 			id: data.taskId,
@@ -1432,6 +1556,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		}
 
 		const { data } = pendingKickoffSuggestion;
+		const activeIds = activeTaskIdsRef.current;
+		if (activeIds != null && !activeIds.has(data.taskId)) {
+			return;
+		}
+
 		setIsAcceptingKickoffSuggestion(true);
 		setError(null);
 
