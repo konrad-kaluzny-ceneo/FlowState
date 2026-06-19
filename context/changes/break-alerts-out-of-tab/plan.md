@@ -374,13 +374,13 @@ No schema migration. localStorage keys additive; default enabled preserves curre
 
 #### Automated
 
-- [ ] 1.1 `pnpm check` passes
-- [ ] 1.2 `pnpm typecheck` passes
-- [ ] 1.3 `pnpm exec vitest run src/lib/break-out-of-tab-alert/**/*.test.ts` passes
+- [x] 1.1 `pnpm check` passes
+- [x] 1.2 `pnpm typecheck` passes
+- [x] 1.3 `pnpm exec vitest run src/lib/break-out-of-tab-alert/**/*.test.ts` passes
 
 #### Manual
 
-- [ ] 1.4 None required (pure module)
+- [x] 1.4 None required (pure module)
 
 ### Phase 2: Preferences UI + first-session permission
 
