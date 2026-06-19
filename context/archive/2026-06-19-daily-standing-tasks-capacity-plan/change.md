@@ -1,10 +1,10 @@
 ---
 change_id: daily-standing-tasks-capacity-plan
 title: Daily standing tasks and focus-hours capacity plan
-status: impl_reviewed
+status: archived
 created: 2026-06-19
 updated: 2026-06-19
-archived_at: null
+archived_at: 2026-06-19T13:58:00Z
 ---
 
 ## Notes
