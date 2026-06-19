@@ -415,10 +415,10 @@ No schema migration. localStorage keys additive; default enabled preserves curre
 
 #### Automated
 
-- [ ] 4.1 `pnpm exec vitest run src/lib/break-out-of-tab-alert/**/*.test.ts` passes
-- [ ] 4.2 Local Playwright run of `e2e/break-out-of-tab-alert.spec.ts` passes
-- [ ] 4.3 `set CI=true; pnpm test:e2e:belt` passes
+- [x] 4.1 `pnpm exec vitest run src/lib/break-out-of-tab-alert/**/*.test.ts` passes
+- [x] 4.2 Local Playwright run of `e2e/break-out-of-tab-alert.spec.ts` passes
+- [x] 4.3 `set CI=true; pnpm test:e2e:belt` passes
 
 #### Manual
 
-- [ ] 4.4 E2e spec stable across two local runs
+- [x] 4.4 E2e spec stable across two local runs

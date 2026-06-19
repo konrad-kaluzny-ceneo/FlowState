@@ -4,6 +4,14 @@ import { completeCheckIn } from "./check-in";
 import { dismissFirstRunIfVisible } from "./onboarding";
 import { dismissReturnHandoffIfVisible } from "./return-handoff";
 
+export async function dismissBreakAlertsPermissionIfVisible(page: Page) {
+	const prompt = page.getByTestId("break-alerts-permission-prompt");
+	if (await prompt.isVisible().catch(() => false)) {
+		await page.getByTestId("break-alerts-permission-not-now-btn").click();
+		await expect(prompt).toBeHidden({ timeout: 5_000 });
+	}
+}
+
 export async function dismissKickoffReadinessIfVisible(page: Page) {
 	const overlay = page.getByTestId("kickoff-readiness-overlay");
 	if (await overlay.isVisible().catch(() => false)) {

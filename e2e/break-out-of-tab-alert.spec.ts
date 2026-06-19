@@ -2,7 +2,10 @@
  * @skip-belt — documents out-of-tab break alert pattern (Notification API + hidden tab).
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
-import { completeCheckIn } from "./helpers/check-in";
+import {
+	installBreakNotificationMock,
+	readBreakNotificationShown,
+} from "./helpers/break-out-of-tab-alert";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import {
 	dismissKickoffReadinessIfVisible,
@@ -47,35 +50,7 @@ test.describe("@skip-belt Out-of-tab break alert", () => {
 		test.setTimeout(90_000);
 
 		await context.grantPermissions(["notifications"]).catch(() => {});
-
-		await page.addInitScript(() => {
-			(
-				window as unknown as { __breakNotificationShown?: boolean }
-			).__breakNotificationShown = false;
-
-			class MockNotification {
-				static permission: NotificationPermission = "granted";
-				static requestPermission() {
-					return Promise.resolve("granted" as NotificationPermission);
-				}
-
-				constructor(_title: string, _options?: NotificationOptions) {
-					(
-						window as unknown as { __breakNotificationShown?: boolean }
-					).__breakNotificationShown = true;
-				}
-
-				onclick: (() => void) | null = null;
-
-				close() {}
-			}
-
-			Object.defineProperty(globalThis, "Notification", {
-				configurable: true,
-				writable: true,
-				value: MockNotification,
-			});
-		});
+		await installBreakNotificationMock(page);
 
 		const taskTitle = `E2E break alert ${Date.now()}`;
 		await startFocusedWorkCycle(page, taskTitle, 1);
@@ -89,17 +64,13 @@ test.describe("@skip-belt Out-of-tab break alert", () => {
 		await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 
 		await runWhileHidden(page, async () => {
-			await completeCheckIn(page, "steady");
+			await expect(page.getByTestId("check-in-overlay")).toBeVisible();
+			await page.getByTestId("check-in-energy-steady").click();
 			await expect(page.getByText("Short Break")).toBeVisible({
 				timeout: 15_000,
 			});
 		});
 
-		const notificationShown = await page.evaluate(
-			() =>
-				(window as unknown as { __breakNotificationShown?: boolean })
-					.__breakNotificationShown === true,
-		);
-		expect(notificationShown).toBe(true);
+		expect(await readBreakNotificationShown(page)).toBe(true);
 	});
 });

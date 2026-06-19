@@ -3,6 +3,7 @@ import { expect, type Locator, type Page } from "@playwright/test";
 import { splitSecToMinSec } from "../../src/lib/duration-input";
 import { completeCheckIn } from "./check-in";
 import {
+	dismissBreakAlertsPermissionIfVisible,
 	dismissKickoffReadinessIfVisible,
 	dismissTaskSuggestionIfVisible,
 	waitForTimerPanelIdle,
@@ -105,6 +106,7 @@ export async function clickStartCycle(page: Page) {
 	const createSettled = waitForCycleCreateSettled(page);
 	await page.getByRole("button", { name: "Start Cycle" }).click();
 	await skipCycleIntentionIfVisible(page);
+	await dismissBreakAlertsPermissionIfVisible(page);
 	await createSettled;
 }
 
