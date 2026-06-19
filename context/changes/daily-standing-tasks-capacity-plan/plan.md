@@ -385,7 +385,7 @@ Browser-level proof for US-03 standing + capacity path (auth worker).
 
 #### Manual
 
-- [ ] 2.3 Toggle, badge, budget, done-for-today verified in UI
+- [x] 2.3 Toggle, badge, budget, done-for-today verified in UI — pending SHA
 
 ### Phase 3: Lazy Day Rollover & Capacity Consumption
 
@@ -396,26 +396,26 @@ Browser-level proof for US-03 standing + capacity path (auth worker).
 
 #### Manual
 
-- [ ] 3.3 WORK cycle decrements remaining; day rollover clears state
+- [x] 3.3 WORK cycle decrements remaining; day rollover clears state — pending SHA
 
 ### Phase 4: Suggestion Pool, Scoring & Rationale
 
 #### Automated
 
-- [x] 4.1 Scorer unit tests pass (capacity fit)
-- [x] 4.2 Dominant factor / rationale tests pass
-- [x] 4.3 Suggestion router tests pass (standing pool)
+- [x] 4.1 Scorer unit tests pass (capacity fit) — 2692789
+- [x] 4.2 Dominant factor / rationale tests pass — 2692789
+- [x] 4.3 Suggestion router tests pass (standing pool) — 2692789
 
 #### Manual
 
-- [ ] 4.4 Capacity rationale visible on kickoff and post-check-in
+- [x] 4.4 Capacity rationale visible on kickoff and post-check-in — pending SHA
 
 ### Phase 5: E2E Belt Coverage
 
 #### Automated
 
-- [ ] 5.1 Belt e2e passes with daily standing spec
+- [ ] 5.1 Belt e2e passes with daily standing spec — pending SHA
 
 #### Manual
 
-- [ ] 5.2 Playwright report reviewed locally
+- [ ] 5.2 Playwright report reviewed locally — pending SHA

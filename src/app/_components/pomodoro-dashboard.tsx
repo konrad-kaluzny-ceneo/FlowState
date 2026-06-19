@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useMemo } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
@@ -503,9 +503,17 @@ export function PomodoroDashboardBody({
 
 function AuthenticatedPomodoroDashboard() {
 	const dayPlan = useDayPlan();
-	const [tasks] = api.task.list.useSuspenseQuery({
-		localDateKey: dayPlan.localDateKey,
-	});
+	const [hasMounted, setHasMounted] = useState(false);
+	useEffect(() => {
+		setHasMounted(true);
+	}, []);
+	// Prefetch in page.tsx uses undefined input — keep suspense key aligned for SSR.
+	const [baseTasks] = api.task.list.useSuspenseQuery();
+	const { data: tasksWithDayStatus = baseTasks } = api.task.list.useQuery(
+		{ localDateKey: dayPlan.localDateKey },
+		{ enabled: hasMounted },
+	);
+	const tasks = tasksWithDayStatus;
 	const utils = api.useUtils();
 	const {
 		scope: onboardingScope,
@@ -545,9 +553,12 @@ function AuthenticatedPomodoroDashboard() {
 			onCheckInCoachSeen={markCheckInCoachSeen}
 			onSuggestionCoachSeen={markSuggestionCoachSeen}
 			refreshTasks={async () => {
-				await utils.task.list.invalidate({
-					localDateKey: dayPlan.localDateKey,
-				});
+				await Promise.all([
+					utils.task.list.invalidate(),
+					utils.task.list.invalidate({
+						localDateKey: dayPlan.localDateKey,
+					}),
+				]);
 			}}
 			setCycleEndAudioMode={setCycleEndAudioMode}
 			suggestionCoachLine={
