@@ -256,8 +256,8 @@ None — client-only hook changes; no schema migration.
 
 #### Automated
 
-- [ ] 2.1 `pnpm check`
-- [ ] 2.2 `pnpm test`
+- [x] 2.1 `pnpm check`
+- [x] 2.2 `pnpm test`
 
 #### Manual
 

@@ -2141,6 +2141,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	);
 
 	// NFR 200ms: authenticated wedge check-in → break/suggestion (S-34); start/interrupt (B-03).
+	// S-34 / L-04: authenticated wedge optimism — each tap surface needs a deferred-mock oracle in tests.
 	const captureWedgeTransitionSnapshot =
 		useCallback((): WedgeTransitionSnapshot => {
 			return {
