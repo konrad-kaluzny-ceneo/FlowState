@@ -1,8 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { energyLevelSchema } from "~/lib/domain";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+
+const energyLevelSchemaZod = z.enum(energyLevelSchema);
 
 export const checkInRouter = createTRPCRouter({
 	list: protectedProcedure.query(async ({ ctx }) => {
@@ -17,7 +20,7 @@ export const checkInRouter = createTRPCRouter({
 		.input(
 			z.object({
 				cycleId: z.number().int(),
-				energy: z.enum(["FOCUSED", "STEADY", "FADING"]),
+				energy: energyLevelSchemaZod,
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {

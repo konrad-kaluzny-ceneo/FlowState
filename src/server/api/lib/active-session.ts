@@ -1,4 +1,4 @@
-import type { Session } from "@prisma/generated";
+import type { Session } from "~/lib/persistence/prisma/client-types";
 
 import type { db } from "~/server/db/index";
 

@@ -1,4 +1,4 @@
-import type { WorkType } from "@prisma/generated";
+import type { WorkType } from "~/lib/domain/work-type";
 
 /** Work cycle length bounds (FR-010). Break bounds (FR-011). */
 

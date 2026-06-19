@@ -1,4 +1,4 @@
-import type { EnergyLevel } from "@prisma/generated";
+import type { EnergyLevel } from "~/lib/domain/energy-level";
 
 import { buildRationale } from "~/lib/scoring/rationale";
 import type { ScoringContext } from "~/lib/scoring/score-task";
