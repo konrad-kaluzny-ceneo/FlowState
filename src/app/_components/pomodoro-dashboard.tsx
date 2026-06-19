@@ -66,13 +66,12 @@ export function PomodoroDashboardBody({
 		() => cycleEndAudioMode,
 		[cycleEndAudioMode],
 	);
-	const pomodoro = usePomodoroCycle({ getCycleEndAudioMode });
-	useE2eExposeCycleRecovery();
-
 	const activeTaskIds = useMemo(
 		() => new Set(tasks.filter((t) => t.status === "active").map((t) => t.id)),
 		[tasks],
 	);
+	const pomodoro = usePomodoroCycle({ getCycleEndAudioMode, activeTaskIds });
+	useE2eExposeCycleRecovery();
 
 	const canMarkTaskDone =
 		pomodoro.focusedTaskId != null && activeTaskIds.has(pomodoro.focusedTaskId);
