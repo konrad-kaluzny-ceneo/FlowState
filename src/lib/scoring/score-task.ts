@@ -10,6 +10,7 @@ export type ScoringContext = {
 	interruptionCount: number;
 	localHour: number;
 	lastOverrideWorkType?: WorkType;
+	remainingFocusMinutes?: number | null;
 };
 
 export type ScoringTask = {
@@ -90,6 +91,15 @@ export function scoreTask(task: ScoringTask, context: ScoringContext): number {
 		context.lastOverrideWorkType === task.workType
 	) {
 		score *= 1.15;
+	}
+
+	const remaining = context.remainingFocusMinutes;
+	if (remaining != null && task.effortMinutes != null) {
+		if (task.effortMinutes <= remaining) {
+			score *= 1.15;
+		} else {
+			score *= 0.85;
+		}
 	}
 
 	return score;

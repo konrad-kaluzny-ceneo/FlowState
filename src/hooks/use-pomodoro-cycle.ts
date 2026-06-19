@@ -1119,6 +1119,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				context: "post_check_in",
 				cycleId,
 				localHour: new Date().getHours(),
+				localDateKey: formatLocalDateKey(),
 			});
 			if (suggestionFetchGenRef.current !== gen) {
 				return;
@@ -1202,6 +1203,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						context: "kickoff",
 						sessionId,
 						localHour: new Date().getHours(),
+						localDateKey: formatLocalDateKey(),
 						energy,
 					});
 					if (gen !== kickoffFetchGenRef.current) {

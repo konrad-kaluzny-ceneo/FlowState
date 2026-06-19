@@ -13,6 +13,7 @@ export type RationaleKey =
 	| "horizon_asap"
 	| "kickoff_fresh"
 	| "kickoff_resume"
+	| "capacity_fit"
 	| "default";
 
 export function buildRationale(
@@ -46,6 +47,10 @@ export function buildRationale(
 			return "Fresh session — here's a strong starting point";
 		case "kickoff_resume":
 			return "Back from break — ready for your next focus block";
+		case "capacity_fit": {
+			const minutes = context.remainingFocusMinutes ?? 0;
+			return `Fits ~${minutes} min left today`;
+		}
 		default:
 			return "Next up based on your energy and task mix";
 	}

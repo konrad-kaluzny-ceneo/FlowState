@@ -402,9 +402,9 @@ Browser-level proof for US-03 standing + capacity path (auth worker).
 
 #### Automated
 
-- [ ] 4.1 Scorer unit tests pass (capacity fit)
-- [ ] 4.2 Dominant factor / rationale tests pass
-- [ ] 4.3 Suggestion router tests pass (standing pool)
+- [x] 4.1 Scorer unit tests pass (capacity fit)
+- [x] 4.2 Dominant factor / rationale tests pass
+- [x] 4.3 Suggestion router tests pass (standing pool)
 
 #### Manual
 

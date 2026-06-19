@@ -317,4 +317,54 @@ describe("scoreTask", () => {
 		expect(withoutOverride?.id).toBe(2);
 		expect(withOverride?.id).toBe(1);
 	});
+
+	it("boosts tasks that fit remaining focus minutes", () => {
+		const quick = mkTask({
+			id: 1,
+			workType: "OPERATIONAL",
+			urgency: 2,
+			importance: 2,
+			effortMinutes: 20,
+			sortOrder: 1,
+		});
+		const heavy = mkTask({
+			id: 2,
+			workType: "OPERATIONAL",
+			urgency: 2,
+			importance: 2,
+			effortMinutes: 120,
+			sortOrder: 0,
+		});
+		const context: ScoringContext = {
+			...baseContext,
+			remainingFocusMinutes: 30,
+		};
+		expect(pickBestTask([heavy, quick], context)?.id).toBe(1);
+	});
+
+	it("penalizes tasks over remaining focus minutes", () => {
+		const quick = mkTask({
+			id: 1,
+			workType: "OPERATIONAL",
+			urgency: 2,
+			importance: 2,
+			effortMinutes: 20,
+			sortOrder: 1,
+		});
+		const heavy = mkTask({
+			id: 2,
+			workType: "OPERATIONAL",
+			urgency: 2,
+			importance: 2,
+			effortMinutes: 120,
+			sortOrder: 0,
+		});
+		const context: ScoringContext = {
+			...baseContext,
+			remainingFocusMinutes: 30,
+		};
+		expect(scoreTask(quick, context)).toBeGreaterThan(
+			scoreTask(heavy, context),
+		);
+	});
 });
