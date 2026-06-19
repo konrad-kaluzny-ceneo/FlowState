@@ -61,7 +61,6 @@ function makePomodoroMock(
 		hasPreFocusedKickoff: false,
 		hasPreFocusedSuggestion: false,
 		stagedKickoffDurationSec: null,
-		isAcceptingSuggestion: false,
 		isAcceptingKickoffSuggestion: false,
 		overrideAcknowledgement: null,
 		inFlowSummaryLine: null,

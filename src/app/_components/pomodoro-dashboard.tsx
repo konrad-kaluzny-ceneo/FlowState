@@ -275,7 +275,6 @@ export function PomodoroDashboardBody({
 						)}
 						<TaskSuggestionCard
 							coachLine={suggestionCoachLine}
-							isAccepting={pomodoro.isAcceptingSuggestion}
 							onAccept={() => {
 								pomodoro.dismissCatchUp();
 								onSuggestionCoachSeen?.();

@@ -121,7 +121,9 @@ async function drainActiveCycles(page: Page, timeoutMs = 15_000) {
 			const message = error instanceof Error ? error.message : String(error);
 			const isRace =
 				isTransientTrpcError(error) ||
-				/not found|already completed|no active cycle/i.test(message);
+				/not found|already completed|no active cycle|not running or paused/i.test(
+					message,
+				);
 			if (!isRace) {
 				throw error;
 			}

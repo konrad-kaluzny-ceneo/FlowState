@@ -288,6 +288,42 @@ function mockCompleteCycleDeferred() {
 	return { releaseCompleteCycle };
 }
 
+function mockCreateCheckInDeferred() {
+	let releaseCreateCheckIn!: () => void;
+	const checkInBlocked = new Promise<void>((resolve) => {
+		releaseCreateCheckIn = resolve;
+	});
+	createCheckInMutate.mockImplementation(async () => {
+		await checkInBlocked;
+		return {
+			id: 1,
+			cycleId: 70,
+			energy: "FOCUSED",
+			userId: "user-1",
+			respondedAt: new Date(),
+		};
+	});
+	return { releaseCreateCheckIn };
+}
+
+function mockRecordDecisionDeferred() {
+	let releaseRecordDecision!: () => void;
+	const decisionBlocked = new Promise<void>((resolve) => {
+		releaseRecordDecision = resolve;
+	});
+	recordDecisionMutate.mockImplementation(async () => {
+		await decisionBlocked;
+		return {
+			id: 1,
+			cycleId: 70,
+			suggestedTaskId: 9,
+			chosenTaskId: 9,
+			accepted: true,
+		};
+	});
+	return { releaseRecordDecision };
+}
+
 function mockCreateCycleDeferred() {
 	let releaseCreateCycle!: () => void;
 	const createBlocked = new Promise<void>((resolve) => {
@@ -1583,9 +1619,9 @@ describe("usePomodoroCycle", () => {
 
 		await waitFor(() => {
 			assertNoCycleCompleteFlash(result);
-			expect(result.current.isPostCheckInTransitioning).toBe(true);
-			expect(result.current.state).toBe("completed");
-			expect(result.current.awaitingCheckIn).toBe(true);
+			expect(result.current.awaitingCheckIn).toBe(false);
+			expect(result.current.state).toBe("running");
+			expect(result.current.cycleKind).toBe("SHORT_BREAK");
 		});
 
 		releaseCompleteCycle();
@@ -1645,7 +1681,8 @@ describe("usePomodoroCycle", () => {
 
 		await waitFor(() => {
 			assertNoCycleCompleteFlash(result);
-			expect(result.current.isPostCheckInTransitioning).toBe(true);
+			expect(result.current.state).toBe("running");
+			expect(result.current.cycleKind).toBe("SHORT_BREAK");
 		});
 
 		releaseCompleteCycle();
@@ -2911,6 +2948,192 @@ describe("usePomodoroCycle", () => {
 			expect(suggestionNextMutate).not.toHaveBeenCalledWith(
 				expect.objectContaining({ context: "kickoff" }),
 			);
+		});
+	});
+
+	describe("S-34 optimistic wedge transitions", () => {
+		it("dismisses check-in and starts break before createCheckIn resolves", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 70,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+
+			createCycle.mockImplementation(async (input) => ({
+				id: input.kind === "WORK" ? 42 : 300,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: null,
+				kind: input.kind,
+				state: "RUNNING",
+				startedAt: new Date(),
+				endedAt: null,
+				task: null,
+				configuredDurationSec: input.configuredDurationSec,
+			}));
+
+			const { releaseCreateCheckIn } = mockCreateCheckInDeferred();
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await driveWorkCycleToCheckIn(result);
+
+			let submitPromise!: Promise<void>;
+			act(() => {
+				submitPromise = result.current.submitCheckIn("FOCUSED");
+			});
+
+			await waitFor(() => {
+				assertNoCycleCompleteFlash(result);
+				expect(result.current.awaitingCheckIn).toBe(false);
+				expect(result.current.state).toBe("running");
+				expect(result.current.cycleKind).toBe("SHORT_BREAK");
+			});
+
+			await act(async () => {
+				releaseCreateCheckIn();
+				await submitPromise;
+			});
+		});
+
+		it("rolls back to check-in gate when createCheckIn fails after optimistic advance", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 71,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+
+			createCheckInMutate.mockRejectedValueOnce(new Error("network"));
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await driveWorkCycleToCheckIn(result);
+
+			await act(async () => {
+				await result.current.submitCheckIn("FOCUSED");
+			});
+
+			await waitFor(() => {
+				expect(result.current.awaitingCheckIn).toBe(true);
+				expect(result.current.error).toMatch(/check-in/i);
+			});
+		});
+
+		it("rolls back when completeCycle fails after optimistic break start", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 72,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+
+			createCycle.mockImplementation(async (input) => ({
+				id: input.kind === "WORK" ? 42 : 302,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: null,
+				kind: input.kind,
+				state: "RUNNING",
+				startedAt: new Date(),
+				endedAt: null,
+				task: null,
+				configuredDurationSec: input.configuredDurationSec,
+			}));
+
+			completeCycle.mockRejectedValue(new Error("complete failed"));
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await driveWorkCycleToCheckIn(result);
+
+			await act(async () => {
+				await result.current.submitCheckIn("FOCUSED");
+			});
+
+			await waitFor(() => {
+				expect(result.current.awaitingCheckIn).toBe(true);
+				expect(result.current.error).toMatch(/Break could not start/i);
+			});
+		});
+
+		it("acceptSuggestion pre-focuses before recordDecision resolves", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 81,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+
+			createCycle.mockImplementation(async (input) => ({
+				id: input.kind === "WORK" ? 42 : 401,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: null,
+				kind: input.kind,
+				state: "RUNNING",
+				startedAt: new Date(),
+				endedAt: null,
+				task: null,
+				configuredDurationSec: input.configuredDurationSec,
+			}));
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			act(() => {
+				fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+					data: { type: "complete" },
+				} as MessageEvent);
+			});
+
+			await act(async () => {
+				await result.current.onCycleCompleteConfirm(false);
+			});
+
+			await act(async () => {
+				await result.current.submitCheckIn("FOCUSED");
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingSuggestion.status).toBe("ready");
+			});
+
+			const { releaseRecordDecision } = mockRecordDecisionDeferred();
+
+			act(() => {
+				result.current.acceptSuggestion();
+			});
+
+			expect(result.current.preFocusedTask).toMatchObject({
+				id: 9,
+				title: "Suggested task",
+			});
+			expect(result.current.hasPreFocusedSuggestion).toBe(true);
+
+			await act(async () => {
+				releaseRecordDecision();
+				await Promise.resolve();
+			});
+
+			expect(recordDecisionMutate).toHaveBeenCalledWith({
+				context: "post_check_in",
+				cycleId: 81,
+				suggestedTaskId: 9,
+				chosenTaskId: 9,
+			});
 		});
 	});
 });
