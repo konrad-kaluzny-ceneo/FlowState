@@ -1,5 +1,7 @@
 import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 
+export type NotificationPermission = "default" | "denied" | "granted";
+
 export type BreakKind = "SHORT_BREAK" | "LONG_BREAK";
 
 export type BreakOutOfTabAlertInput = {

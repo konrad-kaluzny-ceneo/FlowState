@@ -4,6 +4,10 @@ import {
 	getNotificationPermission,
 	requestNotificationPermission,
 } from "~/lib/break-out-of-tab-alert/notify-break-start";
+import {
+	resolveOutOfTabBreakAlertStatus,
+	statusLabel,
+} from "~/lib/break-out-of-tab-alert/preference-status";
 
 type OutOfTabBreakAlertsControlProps = {
 	enabled: boolean;
@@ -17,6 +21,24 @@ export function OutOfTabBreakAlertsControl({
 	disabled = false,
 }: OutOfTabBreakAlertsControlProps) {
 	const permission = getNotificationPermission();
+	const status = resolveOutOfTabBreakAlertStatus({
+		enabled,
+		notificationPermission: permission,
+	});
+
+	const handleToggle = (next: boolean) => {
+		if (!next) {
+			onChange(false);
+			return;
+		}
+
+		void (async () => {
+			if (permission === "default") {
+				await requestNotificationPermission();
+			}
+			onChange(true);
+		})();
+	};
 
 	return (
 		<fieldset
@@ -26,12 +48,18 @@ export function OutOfTabBreakAlertsControl({
 			<legend className="mb-2 w-full text-center text-sm text-text-secondary">
 				Out-of-tab break alerts
 			</legend>
+			<p
+				className="mb-3 text-center text-text-dimmed text-xs"
+				data-testid="out-of-tab-break-alerts-status"
+			>
+				{statusLabel(status)}
+			</p>
 			<label className="flex items-center justify-center gap-2 text-sm text-text-secondary">
 				<input
 					checked={enabled}
 					data-testid="out-of-tab-break-alerts-toggle"
 					disabled={disabled}
-					onChange={(event) => onChange(event.target.checked)}
+					onChange={(event) => handleToggle(event.target.checked)}
 					type="checkbox"
 				/>
 				Alert me when break starts (other tab)
@@ -52,9 +80,10 @@ export function OutOfTabBreakAlertsControl({
 					</button>
 				</div>
 			)}
-			{permission === "default" && (
+			{permission === "default" && enabled && (
 				<p className="mt-2 text-center text-text-dimmed text-xs">
-					Enable notifications when prompted, or use browser settings later.
+					Browser permission is still needed — toggle off and on, or allow when
+					prompted.
 				</p>
 			)}
 		</fieldset>
