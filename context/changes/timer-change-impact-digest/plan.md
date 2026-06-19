@@ -274,33 +274,33 @@ Not applicable — new dev tooling only.
 
 #### Automated
 
-- [ ] 1.1 `pnpm check` passes
-- [ ] 1.2 `node scripts/change-impact/run.mjs -- src/hooks/use-pomodoro-cycle.ts` exits 0 from repo root
+- [x] 1.1 `pnpm check` passes
+- [x] 1.2 `node scripts/change-impact/run.mjs -- src/hooks/use-pomodoro-cycle.ts` exits 0 from repo root
 
 #### Manual
 
-- [ ] 1.3 Output lists dashboard and hook test in top rows for default path; completes in <30s
+- [x] 1.3 Output lists dashboard and hook test in top rows for default path; completes in <30s
 
 ### Phase 2: Report formatter, test catalog, and flags
 
 #### Automated
 
-- [ ] 2.1 `pnpm check` passes
-- [ ] 2.2 `pnpm change-impact -- --help` shows flags
+- [x] 2.1 `pnpm check` passes
+- [x] 2.2 `pnpm change-impact -- --help` shows flags
 
 #### Manual
 
-- [ ] 2.3 Default output ≤40 lines; `--strict` expands rows; test-command block includes vitest + belt
+- [x] 2.3 Default output ≤40 lines; `--strict` expands rows; test-command block includes vitest + belt
 
 ### Phase 3: Tests, optional depcruise, and documentation
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run scripts/change-impact/lib/git-cochange.test.ts scripts/change-impact/lib/test-catalog.test.ts`
-- [ ] 3.2 Full `pnpm test` passes
-- [ ] 3.3 `pnpm check` passes
-- [ ] 3.4 `pnpm typecheck` passes
+- [x] 3.1 `pnpm exec vitest run scripts/change-impact/lib/git-cochange.test.ts scripts/change-impact/lib/test-catalog.test.ts`
+- [x] 3.2 Full `pnpm test` passes
+- [x] 3.3 `pnpm check` passes
+- [x] 3.4 `pnpm typecheck` passes
 
 #### Manual
 
-- [ ] 3.5 Fan-out line present or graceful skip; Mom Test `4f6ae9f` scenario checked with `--strict`
+- [x] 3.5 Fan-out line present or graceful skip; Mom Test `4f6ae9f` scenario checked with `--strict`

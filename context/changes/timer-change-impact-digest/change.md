@@ -1,9 +1,9 @@
 ---
 change_id: timer-change-impact-digest
 title: Timer change impact digest
-status: planned
+status: impl_reviewed
 created: 2026-06-18
-updated: 2026-06-18
+updated: 2026-06-19
 archived_at: null
 ---
 
