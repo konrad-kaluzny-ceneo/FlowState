@@ -2265,15 +2265,22 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			const energy = options?.energy;
 
 			void (async () => {
+				let failureMessage =
+					"Break could not start. Your work cycle was saved.";
 				try {
 					if (!checkInAlreadySaved) {
 						if (energy == null) {
 							throw new Error("Missing check-in energy for post-check-in path");
 						}
-						await createCheckIn.mutateAsync({
-							cycleId: workCycleId,
-							energy,
-						});
+						try {
+							await createCheckIn.mutateAsync({
+								cycleId: workCycleId,
+								energy,
+							});
+						} catch {
+							failureMessage = "Could not save check-in. Try again.";
+							throw new Error("check-in-failed");
+						}
 					}
 
 					await retryOnce(() =>
@@ -2334,11 +2341,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					rollbackOptimisticCheckInTransition(snapshot);
 					setPendingSuggestion({ status: "error" });
 					setSuggestedTaskId(null);
-					setError(
-						checkInAlreadySaved
-							? "Break could not start. Your work cycle was saved."
-							: "Could not save check-in. Try again.",
-					);
+					setError(failureMessage);
 				} finally {
 					endSuggestionFetch();
 				}

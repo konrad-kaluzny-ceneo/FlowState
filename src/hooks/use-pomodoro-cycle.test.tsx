@@ -3060,7 +3060,7 @@ describe("usePomodoroCycle", () => {
 
 			await waitFor(() => {
 				expect(result.current.awaitingCheckIn).toBe(true);
-				expect(result.current.error).toMatch(/check-in/i);
+				expect(result.current.error).toMatch(/Break could not start/i);
 			});
 		});
 

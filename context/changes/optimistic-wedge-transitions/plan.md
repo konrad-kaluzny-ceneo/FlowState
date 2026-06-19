@@ -256,8 +256,8 @@ None — client-only hook changes; no schema migration.
 
 #### Automated
 
-- [x] 2.1 `pnpm check`
-- [x] 2.2 `pnpm test`
+- [x] 2.1 `pnpm check` — e94d7fa
+- [x] 2.2 `pnpm test` — e94d7fa
 
 #### Manual
 
@@ -267,9 +267,9 @@ None — client-only hook changes; no schema migration.
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` — new S-34 oracles pass
-- [ ] 3.2 `pnpm check`
-- [ ] 3.3 `pnpm test`
+- [x] 3.1 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` — new S-34 oracles pass — c07d675
+- [x] 3.2 `pnpm check` — c07d675
+- [x] 3.3 `pnpm test` — c07d675
 
 #### Manual
 

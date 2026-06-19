@@ -1,7 +1,7 @@
 ---
 change_id: optimistic-wedge-transitions
 title: Optimistic wedge transitions
-status: implementing
+status: impl_reviewed
 created: 2026-06-19
 updated: 2026-06-19
 archived_at: null
