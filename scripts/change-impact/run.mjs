@@ -2,8 +2,11 @@
 
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { getDepcruiseFanOut } from "./lib/depcruise-fanout.mjs";
+import { formatReport } from "./lib/format-report.mjs";
 import { collectCoChanges, normalizeRepoPath } from "./lib/git-cochange.mjs";
 import { resolveProjectRoot } from "./lib/project-root.mjs";
+import { suggestTestCommands } from "./lib/test-catalog.mjs";
 
 const DEFAULT_PATH = "src/hooks/use-pomodoro-cycle.ts";
 const DEFAULT_SINCE = "2026-04-01";
@@ -11,15 +14,17 @@ const DEFAULT_SINCE = "2026-04-01";
 function printUsage() {
 	console.log(`Usage: pnpm change-impact [--since YYYY-MM-DD] [--top N] [--strict] [--] [path]
 
-Read-only maintainer CLI: ranked git co-changed paths for a target file.
+Read-only maintainer CLI: ranked git co-changed paths and suggested test commands.
 
 Options:
   --since   Start date for git log (default: ${DEFAULT_SINCE})
   --top     Max rows to print (default: 8, 15 with --strict)
-  --strict  Include context/ rows and raise default top to 15
+  --strict  Include context/ rows, raise default top to 15, label e2e co-change rows
   --help    Show this help
 
-Default path: ${DEFAULT_PATH}`);
+Default path: ${DEFAULT_PATH}
+
+v1 --strict: expanded table only — no staged-diff quiet mode (see AGENTS.md).`);
 }
 
 function parseArgs(argv) {
@@ -29,6 +34,7 @@ function parseArgs(argv) {
 		strict: false,
 		path: DEFAULT_PATH,
 		help: false,
+		topExplicit: false,
 	};
 
 	const positional = [];
@@ -58,6 +64,7 @@ function parseArgs(argv) {
 				throw new Error("--top requires a positive number");
 			}
 			options.top = value;
+			options.topExplicit = true;
 			i += 1;
 			continue;
 		}
@@ -75,33 +82,11 @@ function parseArgs(argv) {
 		options.path = positional.join(" ");
 	}
 
-	if (options.strict && argv.indexOf("--top") === -1) {
+	if (options.strict && !options.topExplicit) {
 		options.top = 15;
 	}
 
 	return options;
-}
-
-function formatTable(rows, { targetPath, since }) {
-	const lines = [
-		"Timer change-impact digest",
-		`Target: ${targetPath}`,
-		`Since: ${since}`,
-		"",
-		"Co-changed paths (count):",
-	];
-
-	if (rows.length === 0) {
-		lines.push("  (none in src/, e2e/, or context/)");
-	} else {
-		for (const row of rows) {
-			lines.push(`  ${row.count.toString().padStart(3)}  ${row.path}`);
-		}
-	}
-
-	lines.push("");
-	lines.push("Advisory only — see context/map/repo-map.md");
-	return lines.join("\n");
 }
 
 async function main() {
@@ -149,7 +134,22 @@ async function main() {
 		process.exit(error.exitCode === 1 ? 1 : 2);
 	}
 
-	console.log(formatTable(rows, { targetPath, since: options.since }));
+	const testCommands = suggestTestCommands(rows, targetPath);
+	const { fanOutCount, label: fanOutLabel } = getDepcruiseFanOut(
+		root,
+		targetPath,
+	);
+	const report = formatReport({
+		targetPath,
+		since: options.since,
+		rows,
+		testCommands,
+		fanOutCount,
+		fanOutLabel,
+		strict: options.strict,
+	});
+
+	console.log(report);
 }
 
 main();

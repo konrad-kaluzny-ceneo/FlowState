@@ -285,22 +285,22 @@ Not applicable — new dev tooling only.
 
 #### Automated
 
-- [ ] 2.1 `pnpm check` passes
-- [ ] 2.2 `pnpm change-impact -- --help` shows flags
+- [x] 2.1 `pnpm check` passes
+- [x] 2.2 `pnpm change-impact -- --help` shows flags
 
 #### Manual
 
-- [ ] 2.3 Default output ≤40 lines; `--strict` expands rows; test-command block includes vitest + belt
+- [x] 2.3 Default output ≤40 lines; `--strict` expands rows; test-command block includes vitest + belt
 
 ### Phase 3: Tests, optional depcruise, and documentation
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run scripts/change-impact/lib/git-cochange.test.ts scripts/change-impact/lib/test-catalog.test.ts`
-- [ ] 3.2 Full `pnpm test` passes
-- [ ] 3.3 `pnpm check` passes
-- [ ] 3.4 `pnpm typecheck` passes
+- [x] 3.1 `pnpm exec vitest run scripts/change-impact/lib/git-cochange.test.ts scripts/change-impact/lib/test-catalog.test.ts`
+- [x] 3.2 Full `pnpm test` passes
+- [x] 3.3 `pnpm check` passes
+- [x] 3.4 `pnpm typecheck` passes
 
 #### Manual
 
-- [ ] 3.5 Fan-out line present or graceful skip; Mom Test `4f6ae9f` scenario checked with `--strict`
+- [x] 3.5 Fan-out line present or graceful skip; Mom Test `4f6ae9f` scenario checked with `--strict`

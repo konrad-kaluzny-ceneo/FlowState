@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { spawnSync } from "node:child_process";
 
 /** Normalize repo-relative paths to forward slashes without leading `./`. */

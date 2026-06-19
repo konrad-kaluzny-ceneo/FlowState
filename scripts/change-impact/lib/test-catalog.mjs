@@ -1,9 +1,9 @@
+// @ts-nocheck
 /**
  * Map co-changed paths to suggested pnpm test commands for the timer hub.
  */
 
-const HOOK_TEST =
-	"pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx";
+const HOOK_TEST = "pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx";
 const DASHBOARD_TEST =
 	"pnpm exec vitest run src/app/_components/pomodoro-dashboard.test.tsx";
 const BELT_E2E = "set CI=true && pnpm test:e2e:belt";

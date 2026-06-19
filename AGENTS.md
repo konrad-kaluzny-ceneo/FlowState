@@ -44,3 +44,15 @@ For slices touching `@src/hooks/use-pomodoro-cycle.ts`, wedge overlays, or sessi
 - PRs from feature branches with `Fixes #N`; must pass `@.github/workflows/ci.yml` (quality + e2e on PR/push to main). Issue sync (Linear `FLO-*` ↔ GitHub `#*`): `@.cursor/skills/update-status/SKILL.md`. `gh` account `konrad-kaluzny-ceneo`: `@.cursor/skills/github-cli/SKILL.md`.
 - Neon DB, Vercel deploy, agent hooks: `@.cursor/skills/neon-database/SKILL.md`, `@.cursor/skills/vercel/SKILL.md`, `@.cursor/hooks.json`.
 - `needs-research` tasks: research before `/10x-plan` — see `@context/foundation/roadmap.md` (index) and `@context/foundation/roadmap-references/` (slice detail on demand).
+
+## Maintainer tooling
+
+Before editing timer-hub files (`src/hooks/use-pomodoro-cycle.ts`, `src/app/_components/pomodoro-dashboard.tsx`, `src/lib/wedge/**`), run:
+
+```powershell
+pnpm change-impact
+```
+
+Optional path: `pnpm change-impact -- src/app/_components/pomodoro-dashboard.tsx`. Flags: `--since YYYY-MM-DD` (default `2026-04-01`), `--top N`, `--strict` (expanded table + `context/` rows + e2e co-change labels; v1 does **not** implement PRD staged-diff quiet mode).
+
+Output is **advisory only** — ranked git co-changed paths and suggested test commands. E2E blast radius comes from git co-change, not dependency-cruiser (`context/map/repo-map.md` §3). Optional line: direct depcruise dependents when the graph run succeeds.

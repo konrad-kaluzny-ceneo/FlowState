@@ -42,9 +42,7 @@ export function formatReport({
 	} else {
 		for (const row of rows) {
 			const suffix = e2eLabel(row.path, strict);
-			lines.push(
-				`  ${row.count.toString().padStart(3)}  ${row.path}${suffix}`,
-			);
+			lines.push(`  ${row.count.toString().padStart(3)}  ${row.path}${suffix}`);
 		}
 	}
 
