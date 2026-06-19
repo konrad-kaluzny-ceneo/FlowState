@@ -3,10 +3,16 @@
 import { useSyncExternalStore } from "react";
 
 import type { DomainTask } from "~/lib/data-mode/types";
+import {
+	getGuestDayCompletionsStorageKey,
+	getGuestDoneForTodayTaskIds,
+	subscribeGuestDayCompletions,
+} from "~/lib/guest/day-completions";
 import { GUEST_STORAGE_KEY } from "~/lib/guest/schema";
 import { loadSnapshot, subscribeGuestStore } from "~/lib/guest/store";
 
 function mapSnapshotToTasks(): DomainTask[] {
+	const doneTodayIds = getGuestDoneForTodayTaskIds();
 	return [...loadSnapshot().tasks]
 		.sort((a, b) => {
 			if (a.sortOrder !== b.sortOrder) {
@@ -30,6 +36,8 @@ function mapSnapshotToTasks(): DomainTask[] {
 			sortOrder: task.sortOrder,
 			resumeNote: task.resumeNote ?? null,
 			personaPresetId: task.personaPresetId ?? null,
+			isDailyStanding: task.isDailyStanding ?? false,
+			doneForToday: doneTodayIds.has(task.id),
 		}));
 }
 
@@ -43,11 +51,15 @@ function getGuestTasksSnapshot(): DomainTask[] {
 	}
 
 	const storageValue = localStorage.getItem(GUEST_STORAGE_KEY);
-	if (storageValue === cachedStorageValue) {
+	const dayCompletionsValue = localStorage.getItem(
+		getGuestDayCompletionsStorageKey(),
+	);
+	const cacheKey = `${storageValue ?? ""}|${dayCompletionsValue ?? ""}`;
+	if (cacheKey === cachedStorageValue) {
 		return cachedTasks;
 	}
 
-	cachedStorageValue = storageValue;
+	cachedStorageValue = cacheKey;
 	cachedTasks = mapSnapshotToTasks();
 	return cachedTasks;
 }
@@ -56,12 +68,21 @@ function getGuestTasksServerSnapshot(): DomainTask[] {
 	return emptyGuestTasks;
 }
 
+function subscribeGuestTasks(onStoreChange: () => void): () => void {
+	const unsubscribeStore = subscribeGuestStore(onStoreChange);
+	const unsubscribeDayCompletions = subscribeGuestDayCompletions(onStoreChange);
+	return () => {
+		unsubscribeStore();
+		unsubscribeDayCompletions();
+	};
+}
+
 export function useGuestDomainTasks(): {
 	tasks: DomainTask[];
 	refresh: () => Promise<void>;
 } {
 	const tasks = useSyncExternalStore(
-		subscribeGuestStore,
+		subscribeGuestTasks,
 		getGuestTasksSnapshot,
 		getGuestTasksServerSnapshot,
 	);

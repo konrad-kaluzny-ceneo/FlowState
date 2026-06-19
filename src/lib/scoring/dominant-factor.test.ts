@@ -64,6 +64,25 @@ describe("getFactorContributions", () => {
 			contributions.find((item) => item.key === "low_effort_fit"),
 		).toMatchObject({ magnitude: 0.72 });
 	});
+
+	it("includes capacity_fit when effort fits remaining focus minutes", () => {
+		const task: ScoringTask = {
+			...baseTask,
+			workType: "OPERATIONAL",
+			importance: 2,
+			urgency: 2,
+			weight: 2,
+			effortMinutes: 20,
+		};
+		const context: ScoringContext = {
+			...baseContext,
+			remainingFocusMinutes: 30,
+		};
+		const contributions = getFactorContributions(task, context);
+		expect(
+			contributions.find((item) => item.key === "capacity_fit"),
+		).toMatchObject({ magnitude: 0.6 });
+	});
 });
 
 describe("getDominantRationaleKey", () => {

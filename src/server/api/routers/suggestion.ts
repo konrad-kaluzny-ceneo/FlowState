@@ -12,21 +12,30 @@ import {
 } from "~/lib/scoring/persona-trust-clause";
 import { buildRationaleBreakdown } from "~/lib/scoring/rationale-breakdown";
 import { pickBestTask, type ScoringContext } from "~/lib/scoring/score-task";
+import {
+	buildSuggestionPool,
+	loadRemainingFocusMinutes,
+} from "~/lib/suggestion/build-suggestion-pool";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import type { db as dbClient } from "~/server/db/index";
 
 const localHourSchema = z.number().int().min(0).max(23);
+const localDateKeySchema = z
+	.string()
+	.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD local date key");
 
 const nextInputSchema = z.discriminatedUnion("context", [
 	z.object({
 		context: z.literal("post_check_in"),
 		cycleId: z.number().int(),
 		localHour: localHourSchema,
+		localDateKey: localDateKeySchema,
 	}),
 	z.object({
 		context: z.literal("kickoff"),
 		sessionId: z.number().int(),
 		localHour: localHourSchema,
+		localDateKey: localDateKeySchema,
 		energy: z.enum(["FOCUSED", "STEADY", "FADING"]),
 	}),
 ]);
@@ -64,6 +73,7 @@ async function buildScoringContextForSession(
 	userId: string,
 	localHour: number,
 	energy: EnergyLevel,
+	remainingFocusMinutes: number | null,
 ): Promise<ScoringContext> {
 	const lastOverride = await db.suggestionDecision.findFirst({
 		where: {
@@ -93,6 +103,7 @@ async function buildScoringContextForSession(
 		interruptionCount: session.interruptionCount,
 		localHour,
 		lastOverrideWorkType: lastOverride?.chosenTask.workType,
+		remainingFocusMinutes,
 	};
 }
 
@@ -171,14 +182,21 @@ export const suggestionRouter = createTRPCRouter({
 					});
 				}
 
-				const activeTasks = await ctx.db.task.findMany({
-					where: { userId, status: "active" },
-					orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-				});
+				const activeTasks = await buildSuggestionPool(
+					ctx.db,
+					userId,
+					input.localDateKey,
+				);
 
 				if (activeTasks.length === 0) {
 					return null;
 				}
+
+				const remainingFocusMinutes = await loadRemainingFocusMinutes(
+					ctx.db,
+					userId,
+					input.localDateKey,
+				);
 
 				const scoringContext = await buildScoringContextForSession(
 					ctx.db,
@@ -186,6 +204,7 @@ export const suggestionRouter = createTRPCRouter({
 					userId,
 					input.localHour,
 					cycle.checkIn.energy,
+					remainingFocusMinutes,
 				);
 
 				const winner = pickBestTask(
@@ -259,14 +278,21 @@ export const suggestionRouter = createTRPCRouter({
 				});
 			}
 
-			const activeTasks = await ctx.db.task.findMany({
-				where: { userId, status: "active" },
-				orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-			});
+			const activeTasks = await buildSuggestionPool(
+				ctx.db,
+				userId,
+				input.localDateKey,
+			);
 
 			if (activeTasks.length === 0) {
 				return null;
 			}
+
+			const remainingFocusMinutes = await loadRemainingFocusMinutes(
+				ctx.db,
+				userId,
+				input.localDateKey,
+			);
 
 			const scoringContext = await buildScoringContextForSession(
 				ctx.db,
@@ -274,6 +300,7 @@ export const suggestionRouter = createTRPCRouter({
 				userId,
 				input.localHour,
 				input.energy,
+				remainingFocusMinutes,
 			);
 
 			const winner = pickBestTask(

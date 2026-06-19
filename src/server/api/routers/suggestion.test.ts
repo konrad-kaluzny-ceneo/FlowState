@@ -38,13 +38,34 @@ type TaskRow = {
 	sortOrder: number;
 	createdAt: Date;
 	personaPresetId?: string | null;
+	isDailyStanding: boolean;
 };
+
+type TaskDayCompletionRow = {
+	userId: string;
+	taskId: number;
+	localDateKey: string;
+};
+
+type DayPlanRow = {
+	userId: string;
+	localDateKey: string;
+	focusBudgetMinutes: number;
+	usedFocusMinutes: number;
+};
+
+const LOCAL_DATE_KEY = "2026-06-19";
 
 function taskDefaults(
 	weight: number,
 ): Pick<
 	TaskRow,
-	"importance" | "urgency" | "effortMinutes" | "commitmentHorizon" | "weight"
+	| "importance"
+	| "urgency"
+	| "effortMinutes"
+	| "commitmentHorizon"
+	| "weight"
+	| "isDailyStanding"
 > {
 	return {
 		weight,
@@ -52,6 +73,7 @@ function taskDefaults(
 		urgency: weight,
 		effortMinutes: null,
 		commitmentHorizon: "WHEN_POSSIBLE",
+		isDailyStanding: false,
 	};
 }
 
@@ -79,6 +101,8 @@ let sessions: SessionRow[] = [];
 let tasks: TaskRow[] = [];
 let checkIns: CheckInRow[] = [];
 let decisions: DecisionRow[] = [];
+let taskDayCompletions: TaskDayCompletionRow[] = [];
+let dayPlans: DayPlanRow[] = [];
 let nextDecisionId = 1;
 
 function matchesLastOverrideWhere(
@@ -346,6 +370,49 @@ vi.mock("~/server/db/index", () => ({
 				},
 			),
 		},
+		taskDayCompletion: {
+			findMany: vi.fn(
+				(args: { where: { userId?: string; localDateKey?: string } }) => {
+					return Promise.resolve(
+						taskDayCompletions.filter((row) => {
+							if (
+								args.where.userId != null &&
+								row.userId !== args.where.userId
+							) {
+								return false;
+							}
+							if (
+								args.where.localDateKey != null &&
+								row.localDateKey !== args.where.localDateKey
+							) {
+								return false;
+							}
+							return true;
+						}),
+					);
+				},
+			),
+		},
+		dayPlan: {
+			findUnique: vi.fn(
+				(args: {
+					where: {
+						day_plan_user_date_key: {
+							userId: string;
+							localDateKey: string;
+						};
+					};
+				}) => {
+					const { userId, localDateKey } = args.where.day_plan_user_date_key;
+					return Promise.resolve(
+						dayPlans.find(
+							(plan) =>
+								plan.userId === userId && plan.localDateKey === localDateKey,
+						) ?? null,
+					);
+				},
+			),
+		},
 	},
 }));
 
@@ -433,6 +500,8 @@ describe("suggestion router", () => {
 		tasks = [];
 		checkIns = [];
 		decisions = [];
+		taskDayCompletions = [];
+		dayPlans = [];
 		nextDecisionId = 1;
 		vi.clearAllMocks();
 	});
@@ -457,6 +526,7 @@ describe("suggestion router", () => {
 			context: "post_check_in",
 			cycleId: 10,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 		});
 
 		expect(result).toMatchObject({
@@ -492,6 +562,7 @@ describe("suggestion router", () => {
 			context: "post_check_in",
 			cycleId: 10,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 		});
 		expect(result).toBeNull();
 	});
@@ -512,6 +583,7 @@ describe("suggestion router", () => {
 				context: "post_check_in",
 				cycleId: 10,
 				localHour: 10,
+				localDateKey: LOCAL_DATE_KEY,
 			}),
 		).rejects.toMatchObject({ code: "NOT_FOUND" });
 	});
@@ -535,6 +607,7 @@ describe("suggestion router", () => {
 				context: "post_check_in",
 				cycleId: 10,
 				localHour: 10,
+				localDateKey: LOCAL_DATE_KEY,
 			}),
 		).rejects.toMatchObject({ code: "BAD_REQUEST" });
 	});
@@ -640,6 +713,7 @@ describe("suggestion router", () => {
 			context: "kickoff",
 			sessionId: 1,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 			energy: "STEADY",
 		});
 
@@ -678,12 +752,14 @@ describe("suggestion router", () => {
 			context: "kickoff",
 			sessionId: 1,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 			energy: "FOCUSED",
 		});
 		const fading = await caller().next({
 			context: "kickoff",
 			sessionId: 1,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 			energy: "FADING",
 		});
 
@@ -704,11 +780,7 @@ describe("suggestion router", () => {
 				workType: "OPERATIONAL",
 				sortOrder: 0,
 				createdAt: new Date("2026-01-01"),
-				weight: 2,
-				importance: 2,
-				urgency: 2,
-				effortMinutes: null,
-				commitmentHorizon: "WHEN_POSSIBLE",
+				...taskDefaults(2),
 			},
 			{
 				id: 2,
@@ -723,6 +795,7 @@ describe("suggestion router", () => {
 				urgency: 2,
 				effortMinutes: null,
 				commitmentHorizon: "WHEN_POSSIBLE",
+				isDailyStanding: false,
 			},
 		];
 
@@ -730,6 +803,7 @@ describe("suggestion router", () => {
 			context: "kickoff",
 			sessionId: 1,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 			energy: "STEADY",
 		});
 
@@ -760,6 +834,7 @@ describe("suggestion router", () => {
 			context: "kickoff",
 			sessionId: 1,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 			energy: "STEADY",
 		});
 
@@ -829,6 +904,7 @@ describe("suggestion router", () => {
 			context: "post_check_in",
 			cycleId: 10,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 		});
 
 		expect(result).toMatchObject({
@@ -855,6 +931,7 @@ describe("suggestion router", () => {
 				urgency: 1,
 				effortMinutes: null,
 				commitmentHorizon: "WHEN_POSSIBLE",
+				isDailyStanding: false,
 			},
 			{
 				id: 2,
@@ -879,6 +956,7 @@ describe("suggestion router", () => {
 			context: "kickoff",
 			sessionId: 1,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 			energy: "STEADY",
 		});
 
@@ -921,6 +999,7 @@ describe("suggestion router", () => {
 			context: "post_check_in",
 			cycleId: 10,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 		});
 
 		expectBreakdownShape(result);
@@ -952,6 +1031,7 @@ describe("suggestion router", () => {
 				urgency: 2,
 				effortMinutes: 15,
 				commitmentHorizon: "WHEN_POSSIBLE",
+				isDailyStanding: false,
 			},
 		];
 
@@ -959,6 +1039,7 @@ describe("suggestion router", () => {
 			context: "kickoff",
 			sessionId: 1,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 			energy: "STEADY",
 		});
 
@@ -972,12 +1053,12 @@ describe("suggestion router", () => {
 		sessions = [
 			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
 		];
-		const taskRow = {
+		const taskRow: TaskRow = {
 			id: 1,
 			title: "Sync inbox",
 			status: "active",
 			userId: USER_ID,
-			workType: "OPERATIONAL" as const,
+			workType: "OPERATIONAL",
 			sortOrder: 0,
 			createdAt: new Date("2026-01-01"),
 			personaPresetId: "synchro",
@@ -985,7 +1066,8 @@ describe("suggestion router", () => {
 			importance: 2,
 			urgency: 2,
 			effortMinutes: 15,
-			commitmentHorizon: "WHEN_POSSIBLE" as const,
+			commitmentHorizon: "WHEN_POSSIBLE",
+			isDailyStanding: false,
 		};
 		tasks = [taskRow];
 		decisions = [
@@ -1007,6 +1089,7 @@ describe("suggestion router", () => {
 			context: "kickoff",
 			sessionId: 1,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 			energy: "STEADY",
 		});
 
@@ -1046,9 +1129,145 @@ describe("suggestion router", () => {
 			context: "post_check_in",
 			cycleId: 10,
 			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
 		});
 
 		expect(result?.rationale).not.toMatch(/^Custom —/);
 		expect(result?.rationaleKey).toBe("energy_deep");
+	});
+
+	it("post-check-in prefers capacity-fit task when budget is tight", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		cycles = [
+			{
+				id: 10,
+				sessionId: 1,
+				userId: USER_ID,
+				kind: "WORK",
+				state: "COMPLETED",
+			},
+		];
+		checkIns = [{ cycleId: 10, userId: USER_ID, energy: "FADING" }];
+		dayPlans = [
+			{
+				userId: USER_ID,
+				localDateKey: LOCAL_DATE_KEY,
+				focusBudgetMinutes: 120,
+				usedFocusMinutes: 90,
+			},
+		];
+		tasks = [
+			{
+				id: 1,
+				title: "Long refactor",
+				status: "active",
+				userId: USER_ID,
+				workType: "DEEP_WORK",
+				sortOrder: 0,
+				createdAt: new Date("2026-01-01"),
+				weight: 2,
+				importance: 2,
+				urgency: 2,
+				effortMinutes: 120,
+				commitmentHorizon: "WHEN_POSSIBLE",
+				isDailyStanding: false,
+			},
+			{
+				id: 2,
+				title: "Daily stand-up prep",
+				status: "active",
+				userId: USER_ID,
+				workType: "OPERATIONAL",
+				sortOrder: 1,
+				createdAt: new Date("2026-01-02"),
+				weight: 2,
+				importance: 2,
+				urgency: 2,
+				effortMinutes: 20,
+				commitmentHorizon: "WHEN_POSSIBLE",
+				isDailyStanding: true,
+			},
+		];
+
+		const result = await caller().next({
+			context: "post_check_in",
+			cycleId: 10,
+			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
+		});
+
+		expect(result).toMatchObject({
+			taskId: 2,
+		});
+		expect(
+			result?.rationaleKey === "capacity_fit" ||
+				result?.rationale.includes("min left today") ||
+				result?.breakdown.dominant.some((item) => item.key === "capacity_fit"),
+		).toBe(true);
+		expectBreakdownShape(result);
+	});
+
+	it("post-check-in excludes standing task marked done for today", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		cycles = [
+			{
+				id: 10,
+				sessionId: 1,
+				userId: USER_ID,
+				kind: "WORK",
+				state: "COMPLETED",
+			},
+		];
+		checkIns = [{ cycleId: 10, userId: USER_ID, energy: "STEADY" }];
+		taskDayCompletions = [
+			{
+				userId: USER_ID,
+				taskId: 2,
+				localDateKey: LOCAL_DATE_KEY,
+			},
+		];
+		tasks = [
+			{
+				id: 1,
+				title: "Inbox",
+				status: "active",
+				userId: USER_ID,
+				workType: "REACTIVE",
+				sortOrder: 0,
+				createdAt: new Date("2026-01-01"),
+				...taskDefaults(2),
+			},
+			{
+				id: 2,
+				title: "Daily stand-up prep",
+				status: "active",
+				userId: USER_ID,
+				workType: "OPERATIONAL",
+				sortOrder: 1,
+				createdAt: new Date("2026-01-02"),
+				effortMinutes: 15,
+				isDailyStanding: true,
+				weight: 2,
+				importance: 2,
+				urgency: 2,
+				commitmentHorizon: "WHEN_POSSIBLE",
+			},
+		];
+
+		const result = await caller().next({
+			context: "post_check_in",
+			cycleId: 10,
+			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
+		});
+
+		expect(result).toMatchObject({
+			taskId: 1,
+			title: "Inbox",
+		});
 	});
 });

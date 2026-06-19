@@ -8,6 +8,7 @@ import {
 	useRepositories,
 } from "~/lib/data-mode/data-mode-context";
 import type { DomainTaskId } from "~/lib/data-mode/types";
+import { formatLocalDateKey } from "~/lib/time/local-date-key";
 import { api, type RouterInputs, type RouterOutputs } from "~/trpc/react";
 
 export type TaskListData = RouterOutputs["task"]["list"];
@@ -19,13 +20,19 @@ type DeleteTaskInput = RouterInputs["task"]["delete"];
 type UpdateTaskArgs = Omit<UpdateTaskInput, "id"> & { id: DomainTaskId };
 type DeleteTaskArgs = { id: DomainTaskId };
 type ReorderTasksArgs = { orderedIds: DomainTaskId[] };
+type MarkDoneForTodayArgs = { id: DomainTaskId; localDateKey?: string };
 
 type TaskListItem = TaskListData[number];
 
 type MutationContext = {
 	previousTasks: TaskListData | undefined;
 	tempId?: number;
+	localDateKey?: string;
 };
+
+function currentTaskListInput() {
+	return { localDateKey: formatLocalDateKey() };
+}
 
 function formatTaskMutationError(err: unknown): string {
 	if (err instanceof TRPCClientError && err.shape?.code === "NOT_FOUND") {
@@ -70,6 +77,8 @@ function buildOptimisticCreateRow(
 		sortOrder: maxSortOrder + 1,
 		resumeNote: input.resumeNote ?? null,
 		personaPresetId: input.personaPresetId ?? null,
+		isDailyStanding: input.isDailyStanding ?? false,
+		doneForToday: false,
 		createdAt: now,
 		updatedAt: now,
 	};
@@ -143,7 +152,10 @@ export function useTaskMutations() {
 	const handleError = useCallback(
 		(err: unknown, _input: unknown, context: MutationContext | undefined) => {
 			if (context) {
-				utils.task.list.setData(undefined, () => context.previousTasks);
+				const listInput = context.localDateKey
+					? { localDateKey: context.localDateKey }
+					: currentTaskListInput();
+				utils.task.list.setData(listInput, () => context.previousTasks);
 			}
 			setError(formatTaskMutationError(err));
 		},
@@ -152,25 +164,32 @@ export function useTaskMutations() {
 
 	const createMutation = api.task.create.useMutation({
 		onMutate: async (input) => {
-			await utils.task.list.cancel();
-			const previousTasks = utils.task.list.getData();
+			const listInput = currentTaskListInput();
+			await utils.task.list.cancel(listInput);
+			const previousTasks = utils.task.list.getData(listInput);
 			const tempId = allocateTempTaskId();
 			const optimisticRow = buildOptimisticCreateRow(
 				input,
 				tempId,
 				previousTasks,
 			);
-			utils.task.list.setData(undefined, (old) =>
+			utils.task.list.setData(listInput, (old) =>
 				appendTask(old, optimisticRow),
 			);
-			return { previousTasks, tempId };
+			return { previousTasks, tempId, localDateKey: listInput.localDateKey };
 		},
 		onError: handleError,
 		onSuccess: (serverTask, _input, context: MutationContext | undefined) => {
 			const tempId = context?.tempId;
 			if (tempId != null) {
-				utils.task.list.setData(undefined, (old) =>
-					replaceTempTask(old, tempId, serverTask),
+				const listInput = context?.localDateKey
+					? { localDateKey: context.localDateKey }
+					: currentTaskListInput();
+				utils.task.list.setData(listInput, (old) =>
+					replaceTempTask(old, tempId, {
+						...serverTask,
+						doneForToday: false,
+					}),
 				);
 			}
 		},
@@ -179,11 +198,12 @@ export function useTaskMutations() {
 
 	const updateMutation = api.task.update.useMutation({
 		onMutate: async (input) => {
-			await utils.task.list.cancel();
-			const previousTasks = utils.task.list.getData();
+			const listInput = currentTaskListInput();
+			await utils.task.list.cancel(listInput);
+			const previousTasks = utils.task.list.getData(listInput);
 			const { id, ...fields } = input;
-			utils.task.list.setData(undefined, (old) => patchTask(old, id, fields));
-			return { previousTasks };
+			utils.task.list.setData(listInput, (old) => patchTask(old, id, fields));
+			return { previousTasks, localDateKey: listInput.localDateKey };
 		},
 		onError: handleError,
 		onSettled: handleSettled,
@@ -191,10 +211,11 @@ export function useTaskMutations() {
 
 	const deleteMutation = api.task.delete.useMutation({
 		onMutate: async (input) => {
-			await utils.task.list.cancel();
-			const previousTasks = utils.task.list.getData();
-			utils.task.list.setData(undefined, (old) => removeTask(old, input.id));
-			return { previousTasks };
+			const listInput = currentTaskListInput();
+			await utils.task.list.cancel(listInput);
+			const previousTasks = utils.task.list.getData(listInput);
+			utils.task.list.setData(listInput, (old) => removeTask(old, input.id));
+			return { previousTasks, localDateKey: listInput.localDateKey };
 		},
 		onError: handleError,
 		onSettled: handleSettled,
@@ -202,14 +223,37 @@ export function useTaskMutations() {
 
 	const reorderMutation = api.task.reorder.useMutation({
 		onMutate: async (input) => {
-			await utils.task.list.cancel();
-			const previousTasks = utils.task.list.getData();
-			utils.task.list.setData(undefined, (old) =>
+			const listInput = currentTaskListInput();
+			await utils.task.list.cancel(listInput);
+			const previousTasks = utils.task.list.getData(listInput);
+			utils.task.list.setData(listInput, (old) =>
 				reorderActiveTasks(old, input.orderedIds),
 			);
-			return { previousTasks };
+			return { previousTasks, localDateKey: listInput.localDateKey };
 		},
 		onError: handleError,
+		onSettled: handleSettled,
+	});
+
+	const markDoneForTodayMutation = api.task.markDoneForToday.useMutation({
+		onMutate: async (input) => {
+			const localDateKey = input.localDateKey;
+			await utils.task.list.cancel({ localDateKey });
+			const previousTasks = utils.task.list.getData({ localDateKey });
+			utils.task.list.setData({ localDateKey }, (old) =>
+				patchTask(old, input.taskId, { doneForToday: true }),
+			);
+			return { previousTasks, localDateKey };
+		},
+		onError: (err, _input, context) => {
+			if (context?.localDateKey != null) {
+				utils.task.list.setData(
+					{ localDateKey: context.localDateKey },
+					() => context.previousTasks,
+				);
+			}
+			setError(formatTaskMutationError(err));
+		},
 		onSettled: handleSettled,
 	});
 
@@ -217,7 +261,8 @@ export function useTaskMutations() {
 		createMutation.isPending ||
 		updateMutation.isPending ||
 		deleteMutation.isPending ||
-		reorderMutation.isPending;
+		reorderMutation.isPending ||
+		markDoneForTodayMutation.isPending;
 
 	const createTask = useCallback(
 		async (input: CreateTaskInput) => {
@@ -231,6 +276,7 @@ export function useTaskMutations() {
 					urgency: input.urgency as 1 | 2 | 3 | undefined,
 					effortMinutes: input.effortMinutes,
 					commitmentHorizon: input.commitmentHorizon,
+					isDailyStanding: input.isDailyStanding,
 				});
 			}
 			return createMutation.mutateAsync(input);
@@ -253,6 +299,7 @@ export function useTaskMutations() {
 					effortMinutes: input.effortMinutes,
 					commitmentHorizon: input.commitmentHorizon,
 					resumeNote: input.resumeNote,
+					isDailyStanding: input.isDailyStanding,
 				});
 			}
 			if (typeof input.id !== "number" || isTempTaskId(input.id)) {
@@ -292,11 +339,33 @@ export function useTaskMutations() {
 		[mode, taskRepo, reorderMutation, clearError],
 	);
 
+	const markDoneForToday = useCallback(
+		async (input: MarkDoneForTodayArgs) => {
+			clearError();
+			const localDateKey = input.localDateKey ?? formatLocalDateKey();
+			if (mode === "guest") {
+				return taskRepo.markDoneForToday({
+					id: input.id,
+					localDateKey,
+				});
+			}
+			if (typeof input.id !== "number" || isTempTaskId(input.id)) {
+				return;
+			}
+			return markDoneForTodayMutation.mutateAsync({
+				taskId: input.id,
+				localDateKey,
+			});
+		},
+		[mode, taskRepo, markDoneForTodayMutation, clearError],
+	);
+
 	return {
 		createTask,
 		updateTask,
 		deleteTask,
 		reorderTasks,
+		markDoneForToday,
 		isMutating,
 		isCreating: createMutation.isPending,
 		error,

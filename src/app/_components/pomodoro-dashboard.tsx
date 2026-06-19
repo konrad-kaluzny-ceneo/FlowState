@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useCallback, useMemo } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { CycleIntentionPrompt } from "~/app/_components/cycle-intention-prompt";
+import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { KickoffReadinessOverlay } from "~/app/_components/kickoff-readiness-overlay";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
@@ -15,6 +16,7 @@ import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
 import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
 import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preference";
+import { useDayPlan } from "~/hooks/use-day-plan";
 import { useE2eExposeCycleRecovery } from "~/hooks/use-e2e-expose-cycle-recovery";
 import { useOnboarding } from "~/hooks/use-onboarding-state";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
@@ -29,9 +31,12 @@ import type { OnboardingScope } from "~/lib/onboarding/types";
 import { resolveWedgeBeat } from "~/lib/wedge/transition-conductor";
 import { api } from "~/trpc/react";
 
+type DayPlanView = ReturnType<typeof useDayPlan>;
+
 export function PomodoroDashboardBody({
 	tasks,
 	refreshTasks,
+	dayPlan,
 	enableCheckInGate = false,
 	enableWindDownGate = false,
 	enableSuggestionGate = false,
@@ -45,6 +50,7 @@ export function PomodoroDashboardBody({
 }: {
 	tasks: ReturnType<typeof useGuestDomainTasks>["tasks"];
 	refreshTasks: () => Promise<void>;
+	dayPlan?: DayPlanView;
 	enableCheckInGate?: boolean;
 	enableWindDownGate?: boolean;
 	enableSuggestionGate?: boolean;
@@ -349,6 +355,16 @@ export function PomodoroDashboardBody({
 				</p>
 			)}
 
+			{dayPlan != null && (
+				<FocusBudgetPrompt
+					hasBudget={dayPlan.hasBudget}
+					isLoading={dayPlan.isLoading}
+					isSettingBudget={dayPlan.isSettingBudget}
+					localDateKey={dayPlan.localDateKey}
+					onSetBudget={dayPlan.setBudget}
+				/>
+			)}
+
 			<TaskList
 				cycleKind={pomodoro.cycleKind}
 				cycleState={pomodoro.state}
@@ -486,7 +502,18 @@ export function PomodoroDashboardBody({
 }
 
 function AuthenticatedPomodoroDashboard() {
-	const [tasks] = api.task.list.useSuspenseQuery();
+	const dayPlan = useDayPlan();
+	const [hasMounted, setHasMounted] = useState(false);
+	useEffect(() => {
+		setHasMounted(true);
+	}, []);
+	// Prefetch in page.tsx uses undefined input — keep suspense key aligned for SSR.
+	const [baseTasks] = api.task.list.useSuspenseQuery();
+	const { data: tasksWithDayStatus = baseTasks } = api.task.list.useQuery(
+		{ localDateKey: dayPlan.localDateKey },
+		{ enabled: hasMounted },
+	);
+	const tasks = tasksWithDayStatus;
 	const utils = api.useUtils();
 	const {
 		scope: onboardingScope,
@@ -519,13 +546,19 @@ function AuthenticatedPomodoroDashboard() {
 				shouldShowCheckInCoach ? CHECK_IN_COACH_LINE : undefined
 			}
 			cycleEndAudioMode={cycleEndAudioMode}
+			dayPlan={dayPlan}
 			enableCheckInGate
 			enableSuggestionGate
 			enableWindDownGate
 			onCheckInCoachSeen={markCheckInCoachSeen}
 			onSuggestionCoachSeen={markSuggestionCoachSeen}
 			refreshTasks={async () => {
-				await utils.task.list.invalidate();
+				await Promise.all([
+					utils.task.list.invalidate(),
+					utils.task.list.invalidate({
+						localDateKey: dayPlan.localDateKey,
+					}),
+				]);
 			}}
 			setCycleEndAudioMode={setCycleEndAudioMode}
 			suggestionCoachLine={

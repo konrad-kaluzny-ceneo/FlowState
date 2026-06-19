@@ -63,6 +63,14 @@ export function getFactorContributions(
 			? base * 0.15
 			: 0;
 
+	const remaining = context.remainingFocusMinutes;
+	const capacityFitContribution =
+		remaining != null &&
+		task.effortMinutes != null &&
+		task.effortMinutes <= remaining
+			? base * 0.15
+			: 0;
+
 	const contributions: Array<{ key: RationaleKey; magnitude: number }> = [
 		{
 			key: "eisenhower_priority",
@@ -83,6 +91,10 @@ export function getFactorContributions(
 		{
 			key: "override_preference",
 			magnitude: Math.max(0, overrideContribution),
+		},
+		{
+			key: "capacity_fit",
+			magnitude: Math.max(0, capacityFitContribution),
 		},
 		{
 			key: "interruptions",
@@ -131,6 +143,7 @@ const KICKOFF_FALLBACK_KEYS: RationaleKey[] = [
 	"fatigue",
 	"interruptions",
 	"late_day",
+	"capacity_fit",
 ];
 
 export function formatKickoffRationale(

@@ -5,6 +5,10 @@ import type {
 	SessionRepository,
 	TaskRepository,
 } from "~/lib/data-mode/types";
+import {
+	getGuestDoneForTodayTaskIds,
+	markGuestTaskDoneForToday,
+} from "~/lib/guest/day-completions";
 import { loadSnapshot, mutateSnapshot } from "~/lib/guest/store";
 
 const GUEST_USER_ID = "guest";
@@ -13,22 +17,26 @@ function newGuestId(): string {
 	return crypto.randomUUID();
 }
 
-function toDomainTask(task: {
-	id: string;
-	title: string;
-	status: string;
-	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
-	weight: number;
-	importance: 1 | 2 | 3;
-	urgency: 1 | 2 | 3;
-	effortMinutes: number | null;
-	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
-	sortOrder: number;
-	resumeNote: string | null;
-	personaPresetId: string | null;
-	createdAt: Date;
-	updatedAt: Date | null;
-}): DomainTask {
+function toDomainTask(
+	task: {
+		id: string;
+		title: string;
+		status: string;
+		workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+		weight: number;
+		importance: 1 | 2 | 3;
+		urgency: 1 | 2 | 3;
+		effortMinutes: number | null;
+		commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
+		sortOrder: number;
+		resumeNote: string | null;
+		personaPresetId: string | null;
+		isDailyStanding?: boolean;
+		createdAt: Date;
+		updatedAt: Date | null;
+	},
+	doneForToday = false,
+): DomainTask {
 	return {
 		id: task.id,
 		title: task.title,
@@ -45,6 +53,8 @@ function toDomainTask(task: {
 		sortOrder: task.sortOrder,
 		resumeNote: task.resumeNote ?? null,
 		personaPresetId: task.personaPresetId ?? null,
+		isDailyStanding: task.isDailyStanding ?? false,
+		doneForToday,
 	};
 }
 
@@ -98,7 +108,10 @@ function sortTasksByOrder<T extends { sortOrder: number; createdAt: Date }>(
 export function createGuestTaskRepository(): TaskRepository {
 	return {
 		async list() {
-			return sortTasksByOrder(loadSnapshot().tasks).map(toDomainTask);
+			const doneTodayIds = getGuestDoneForTodayTaskIds();
+			return sortTasksByOrder(loadSnapshot().tasks).map((task) =>
+				toDomainTask(task, doneTodayIds.has(task.id)),
+			);
 		},
 
 		async create(input) {
@@ -129,6 +142,7 @@ export function createGuestTaskRepository(): TaskRepository {
 				sortOrder: maxSortOrder + 1,
 				resumeNote: input.resumeNote ?? null,
 				personaPresetId: input.personaPresetId ?? null,
+				isDailyStanding: input.isDailyStanding ?? false,
 				createdAt: now,
 				updatedAt: null,
 			};
@@ -200,6 +214,9 @@ export function createGuestTaskRepository(): TaskRepository {
 						...(input.personaPresetId !== undefined
 							? { personaPresetId: input.personaPresetId }
 							: {}),
+						...(input.isDailyStanding !== undefined
+							? { isDailyStanding: input.isDailyStanding }
+							: {}),
 						...(nextStatus === "completed" ? { resumeNote: null } : {}),
 						sortOrder,
 						updatedAt: new Date(),
@@ -265,6 +282,18 @@ export function createGuestTaskRepository(): TaskRepository {
 			if (error != null) {
 				throw new Error(error);
 			}
+		},
+
+		async markDoneForToday(input) {
+			const snapshot = loadSnapshot();
+			const task = snapshot.tasks.find((row) => row.id === String(input.id));
+			if (task == null) {
+				throw new Error("Task not found");
+			}
+			if (!task.isDailyStanding) {
+				throw new Error("Task is not marked as daily standing");
+			}
+			markGuestTaskDoneForToday(String(input.id));
 		},
 	};
 }

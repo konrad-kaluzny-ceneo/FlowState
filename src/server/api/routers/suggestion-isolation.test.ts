@@ -11,7 +11,20 @@ let cycles: Array<{
 	checkIn: { energy: string } | null;
 }> = [];
 let sessions: Array<{ id: number; userId: string; state: string }> = [];
-let tasks: Array<{ id: number; userId: string; status: string }> = [];
+let tasks: Array<{
+	id: number;
+	userId: string;
+	status: string;
+	isDailyStanding?: boolean;
+	workType?: string;
+	weight?: number;
+	importance?: number;
+	urgency?: number;
+	effortMinutes?: number | null;
+	commitmentHorizon?: string;
+	sortOrder?: number;
+	createdAt?: Date;
+}> = [];
 
 vi.mock("~/server/db/index", () => ({
 	db: {
@@ -19,7 +32,7 @@ vi.mock("~/server/db/index", () => ({
 			findFirst: vi.fn(
 				(args: {
 					where: { id?: number; userId?: string };
-					include?: { checkIn?: boolean };
+					include?: { session?: boolean; checkIn?: boolean };
 				}) => {
 					const cycle = cycles.find(
 						(c) => c.id === args.where.id && c.userId === args.where.userId,
@@ -30,9 +43,18 @@ vi.mock("~/server/db/index", () => ({
 						...(args.include?.checkIn
 							? { checkIn: cycle.checkIn ?? null }
 							: {}),
+						...(args.include?.session
+							? {
+									session: {
+										id: 1,
+										interruptionCount: 0,
+									},
+								}
+							: {}),
 					});
 				},
 			),
+			count: vi.fn(() => Promise.resolve(0)),
 		},
 		session: {
 			findFirst: vi.fn((args: { where: { id?: number; userId?: string } }) => {
@@ -44,6 +66,13 @@ vi.mock("~/server/db/index", () => ({
 			}),
 		},
 		task: {
+			findMany: vi.fn((args: { where: { userId?: string } }) => {
+				return Promise.resolve(
+					tasks.filter(
+						(t) => args.where.userId == null || t.userId === args.where.userId,
+					),
+				);
+			}),
 			findFirst: vi.fn(
 				(args: {
 					where: { id?: number; userId?: string; status?: string };
@@ -66,8 +95,16 @@ vi.mock("~/server/db/index", () => ({
 			),
 		},
 		suggestionDecision: {
+			findFirst: vi.fn(() => Promise.resolve(null)),
 			upsert: vi.fn(),
 			create: vi.fn(),
+			count: vi.fn(() => Promise.resolve(0)),
+		},
+		taskDayCompletion: {
+			findMany: vi.fn(() => Promise.resolve([])),
+		},
+		dayPlan: {
+			findUnique: vi.fn(() => Promise.resolve(null)),
 		},
 	},
 }));
@@ -138,6 +175,7 @@ describe("suggestion router isolation", () => {
 				context: "post_check_in",
 				cycleId: 1,
 				localHour: 10,
+				localDateKey: "2026-06-19",
 			}),
 		).rejects.toMatchObject({ code: "NOT_FOUND" });
 	});
@@ -183,6 +221,7 @@ describe("suggestion router isolation", () => {
 				context: "kickoff",
 				sessionId: 5,
 				localHour: 10,
+				localDateKey: "2026-06-19",
 				energy: "STEADY",
 			}),
 		).rejects.toMatchObject({ code: "NOT_FOUND" });

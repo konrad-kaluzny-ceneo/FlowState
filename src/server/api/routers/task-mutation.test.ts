@@ -20,12 +20,20 @@ type TaskRow = {
 	effortMinutes: number | null;
 	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	personaPresetId: string | null;
+	isDailyStanding: boolean;
 	createdAt: Date;
 	updatedAt: Date | null;
 };
 
+type TaskDayCompletionRow = {
+	userId: string;
+	taskId: number;
+	localDateKey: string;
+};
+
 // Stateful in-memory store; findFirst filters by { id, userId } like production
 let allTasks: TaskRow[] = [];
+let taskDayCompletions: TaskDayCompletionRow[] = [];
 let nextTaskId = 1;
 
 // Mock ~/lib/auth/server
@@ -123,6 +131,7 @@ vi.mock("~/server/db/index", () => {
 							args.data.personaPresetId === undefined
 								? null
 								: (args.data.personaPresetId as string | null),
+						isDailyStanding: Boolean(args.data.isDailyStanding ?? false),
 						createdAt: new Date(),
 						updatedAt: null,
 					};
@@ -156,6 +165,7 @@ vi.mock("~/server/db/index", () => {
 								| "commitmentHorizon"
 								| "workType"
 								| "personaPresetId"
+								| "isDailyStanding"
 							>
 						>;
 					}) => {
@@ -174,6 +184,33 @@ vi.mock("~/server/db/index", () => {
 					}
 					return Promise.resolve({ id: args.where.id });
 				}),
+			},
+			taskDayCompletion: {
+				upsert: vi.fn(
+					(args: {
+						where: {
+							task_day_completion_user_task_date: {
+								userId: string;
+								taskId: number;
+								localDateKey: string;
+							};
+						};
+						create: TaskDayCompletionRow;
+					}) => {
+						const key = args.where.task_day_completion_user_task_date;
+						const existing = taskDayCompletions.find(
+							(row) =>
+								row.userId === key.userId &&
+								row.taskId === key.taskId &&
+								row.localDateKey === key.localDateKey,
+						);
+						if (existing) {
+							return Promise.resolve(existing);
+						}
+						taskDayCompletions.push(args.create);
+						return Promise.resolve(args.create);
+					},
+				),
 			},
 			$transaction: vi.fn(
 				async (ops: Array<Promise<unknown>> | ((tx: unknown) => unknown)) => {
@@ -214,6 +251,7 @@ function makeTask(
 		effortMinutes: null,
 		commitmentHorizon: "WHEN_POSSIBLE",
 		personaPresetId: null,
+		isDailyStanding: false,
 		createdAt: new Date(),
 		updatedAt: null,
 		...partial,
@@ -275,6 +313,7 @@ const ownershipScenarioArb = fc
 describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUND on failure", () => {
 	beforeEach(() => {
 		allTasks = [];
+		taskDayCompletions = [];
 		nextTaskId = 1;
 	});
 
@@ -361,6 +400,7 @@ describe("Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUN
 describe("task reorder and sortOrder", () => {
 	beforeEach(() => {
 		allTasks = [];
+		taskDayCompletions = [];
 		nextTaskId = 1;
 		vi.clearAllMocks();
 	});
@@ -495,6 +535,7 @@ describe("task reorder and sortOrder", () => {
 describe("Eisenhower task attributes", () => {
 	beforeEach(() => {
 		allTasks = [];
+		taskDayCompletions = [];
 		nextTaskId = 1;
 		vi.clearAllMocks();
 	});
@@ -560,6 +601,81 @@ describe("Eisenhower task attributes", () => {
 			taskCaller(USER_A).create({
 				title: "Bad preset",
 				personaPresetId: "not-a-preset",
+			}),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+});
+
+describe("daily standing task flag", () => {
+	beforeEach(() => {
+		allTasks = [];
+		taskDayCompletions = [];
+		nextTaskId = 1;
+		vi.clearAllMocks();
+	});
+
+	it("create persists isDailyStanding", async () => {
+		const created = await taskCaller(USER_A).create({
+			title: "Morning standup prep",
+			isDailyStanding: true,
+		});
+
+		expect(created.isDailyStanding).toBe(true);
+	});
+
+	it("update toggles isDailyStanding", async () => {
+		allTasks = [
+			makeTask({
+				id: 1,
+				title: "Inbox sweep",
+				userId: USER_A,
+				isDailyStanding: false,
+			}),
+		];
+
+		await taskCaller(USER_A).update({ id: 1, isDailyStanding: true });
+
+		expect(allTasks.find((t) => t.id === 1)?.isDailyStanding).toBe(true);
+	});
+
+	it("markDoneForToday upserts completion for standing task", async () => {
+		allTasks = [
+			makeTask({
+				id: 1,
+				title: "Daily review",
+				userId: USER_A,
+				isDailyStanding: true,
+			}),
+		];
+
+		await taskCaller(USER_A).markDoneForToday({
+			taskId: 1,
+			localDateKey: "2026-06-19",
+		});
+
+		expect(taskDayCompletions).toEqual([
+			{
+				userId: USER_A,
+				taskId: 1,
+				localDateKey: "2026-06-19",
+			},
+		]);
+	});
+
+	it("markDoneForToday rejects non-standing task", async () => {
+		allTasks = [
+			makeTask({
+				id: 1,
+				title: "One-off",
+				userId: USER_A,
+				isDailyStanding: false,
+			}),
+		];
+
+		await expect(
+			taskCaller(USER_A).markDoneForToday({
+				taskId: 1,
+				localDateKey: "2026-06-19",
 			}),
 		).rejects.toMatchObject({ code: "BAD_REQUEST" });
 	});

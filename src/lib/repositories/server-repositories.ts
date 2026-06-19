@@ -26,6 +26,7 @@ type CreateTaskInput = {
 	commitmentHorizon?: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	resumeNote?: string | null;
 	personaPresetId?: string | null;
+	isDailyStanding?: boolean;
 };
 
 type UpdateTaskInput = {
@@ -40,6 +41,7 @@ type UpdateTaskInput = {
 	commitmentHorizon?: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 	resumeNote?: string | null;
 	personaPresetId?: string | null;
+	isDailyStanding?: boolean;
 };
 
 type CreateCycleInput = {
@@ -63,6 +65,7 @@ type TrpcTaskRow = {
 	sortOrder: number;
 	resumeNote?: string | null;
 	personaPresetId?: string | null;
+	isDailyStanding?: boolean;
 	createdAt: Date;
 	updatedAt: Date | null;
 };
@@ -125,6 +128,7 @@ function toDomainTask(row: TrpcTaskRow): DomainTask {
 		commitmentHorizon: row.commitmentHorizon ?? "WHEN_POSSIBLE",
 		resumeNote: row.resumeNote ?? null,
 		personaPresetId: row.personaPresetId ?? null,
+		isDailyStanding: row.isDailyStanding ?? false,
 	};
 }
 
@@ -143,6 +147,11 @@ export function createServerTaskRepository(client: TrpcClient): TaskRepository {
 			client.task.reorder.mutate({
 				orderedIds: input.orderedIds.map(toNumericId),
 			}),
+		markDoneForToday: async (_input) => {
+			throw new Error(
+				"markDoneForToday is not supported via server repository",
+			);
+		},
 	};
 }
 
