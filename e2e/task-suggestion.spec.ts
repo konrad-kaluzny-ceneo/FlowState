@@ -43,7 +43,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await cleanReload;
 		await resetCycleRecoveryAfterReload(page);
 		await resetFakeClock(page);
-		if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
+		if (await page.getByTestId("session-energy-card").isVisible()) {
 			await completeKickoffReadiness(page, "skip");
 		}
 	});
@@ -68,7 +68,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await advanceClockThroughFastWork(page);
 		const suggestionResponse = waitForSuggestionNext(page);
 		await completeWorkCycleWithCheckIn(page, "focused");
-		await expect(page.getByTestId("kickoff-readiness-overlay")).toHaveCount(0);
+		await expect(page.getByTestId("session-energy-card")).toHaveCount(0);
 		await suggestionResponse;
 
 		await expectSuggestionVisible(page, {
@@ -97,7 +97,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await advanceClockThroughFastWork(page);
 		const suggestionResponse = waitForSuggestionNext(page);
 		await completeWorkCycleWithCheckIn(page, "focused");
-		await expect(page.getByTestId("kickoff-readiness-overlay")).toHaveCount(0);
+		await expect(page.getByTestId("session-energy-card")).toHaveCount(0);
 		await suggestionResponse;
 
 		await expectSuggestionVisible(page, { title: deepTask });
@@ -142,7 +142,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 		await advanceClockThroughFastWork(page);
 		const suggestionResponse = waitForSuggestionNext(page);
 		await completeWorkCycleWithCheckIn(page, "focused");
-		await expect(page.getByTestId("kickoff-readiness-overlay")).toHaveCount(0);
+		await expect(page.getByTestId("session-energy-card")).toHaveCount(0);
 		await suggestionResponse;
 
 		await overrideSuggestionByFocusingTask(page, reactiveTask);

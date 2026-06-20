@@ -163,6 +163,29 @@ describe("TaskList", () => {
 		presetCoachMock.shouldShowPresetCoach = false;
 	});
 
+	it("shows Continue here subtitle without resume note on continue row", () => {
+		const continueTask = makeTask({
+			id: 2,
+			title: "Second task",
+			resumeNote: "Left off here",
+		});
+		const otherTask = makeTask({ id: 1, title: "First task" });
+
+		render(
+			<TaskList
+				{...defaultProps}
+				continueTaskId={2}
+				focusedTaskId={2}
+				tasks={[otherTask, continueTask]}
+			/>,
+		);
+
+		expect(screen.getByTestId("continue-here-row").textContent).toContain(
+			"Continue here",
+		);
+		expect(screen.queryByTestId("task-resume-note")).toBeNull();
+	});
+
 	it("inline edit uses textarea and preserves multiline title on save", () => {
 		render(<TaskList {...defaultProps} />);
 

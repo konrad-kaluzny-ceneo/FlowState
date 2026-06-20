@@ -8,6 +8,7 @@ import {
 	markHandoffDismissed,
 	pickHandoffTaskContext,
 	readDismissedHandoffSessionIds,
+	resolveContinueTaskId,
 	shouldShowReturnHandoffForSession,
 } from "./return-handoff";
 
@@ -25,6 +26,33 @@ describe("return-handoff storage", () => {
 		expect(handoffDismissStorageKey("session-42")).toBe(
 			"flowstate:handoff-dismissed:session-42",
 		);
+	});
+});
+
+describe("resolveContinueTaskId", () => {
+	it("returns last focused task when still active", () => {
+		expect(
+			resolveContinueTaskId({ lastFocusedTaskId: 42 }, [
+				{ id: 1, status: "active" },
+				{ id: 42, status: "active" },
+			]),
+		).toBe(42);
+	});
+
+	it("returns null when last focused task is not active", () => {
+		expect(
+			resolveContinueTaskId({ lastFocusedTaskId: 42 }, [
+				{ id: 42, status: "completed" },
+			]),
+		).toBeNull();
+	});
+
+	it("returns null when last ended session has no focus id", () => {
+		expect(
+			resolveContinueTaskId({ lastFocusedTaskId: null }, [
+				{ id: 1, status: "active" },
+			]),
+		).toBeNull();
 	});
 });
 

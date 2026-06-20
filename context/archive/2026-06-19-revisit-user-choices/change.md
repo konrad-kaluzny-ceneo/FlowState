@@ -1,10 +1,10 @@
 ---
 change_id: revisit-user-choices
 title: Review and change prior in-session choices and dismissals
-status: impl_reviewed
+status: archived
 created: 2026-06-19
 updated: 2026-06-19
-archived_at: null
+archived_at: 2026-06-19T16:01:00Z
 ---
 
 ## Notes

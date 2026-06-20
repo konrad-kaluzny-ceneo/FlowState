@@ -3,7 +3,7 @@ project: FlowState
 type: lessons
 version: 2
 created: 2026-05-28
-updated: 2026-06-13
+updated: 2026-06-20
 prd_version: 3
 ---
 
@@ -60,3 +60,21 @@ Never reverse this order.
 **What went wrong:** S-09 (`optimistic-task-mutations`) sped up task CRUD but its plan explicitly excluded `cycle.create` / `cycle.interrupt` — so Start/Interrupt stayed pessimistic until B-03. Separately, B-02 (task title clipped in edit mode) shipped in `task-list.tsx` with zero co-located component tests — a single-line `<input>` hid long and multiline titles until manual QA.
 
 **Impact:** Users still perceived lag on any non-optimistic surface; long titles remained a regression risk with no automated guard on the edit control choice (textarea vs input).
+
+---
+
+## Test every wedge transition before shipping transition logic changes
+
+- **Context**: Changes to wedge overlays, transition gates, or F-07 conductor orchestration — `use-pomodoro-cycle`, `transition-conductor`, `pomodoro-dashboard`, and co-located overlay components.
+- **Problem**: Popups and transition gates frequently regress into dead-end states: chips or buttons appear but do nothing, or the overlay stays open after the user selects an option — trapping the user and making the app unusable. Confirmed in `session-entry-wedge-bugs` (focus popup permission deferral deadlock, false entry closure/handoff) and Cycle Complete overlay not dismissing after choice.
+- **Rule**: Treat every transition beat as a critical path. Before merging, add or extend hook/component tests that assert each gate opens, accepts the primary action (Skip, chip, Continue later, dismiss), and closes before the next beat proceeds. Change transition ordering, async deferral, and conductor priority with highest caution — never ship overlay-sequence changes without a dismiss-oracle for every affected gate.
+- **Applies to**: frame, research, plan, plan-review, implement, impl-review
+
+---
+
+## Use E2E env vars for auth manual verification
+
+- **Context**: Agent manual verification of authenticated user flows — browser testing, wedge/session checks, and auth-only paths that guest mode cannot cover.
+- **Problem**: Without valid credentials the agent cannot log in to verify server-side session/cycle behavior; hardcoding passwords in lessons, plans, or code leaks secrets and goes stale when credentials rotate.
+- **Rule**: For logged-in manual checks, read `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` from the project `.env` at runtime. In durable docs (lessons, plans, frames) refer only to those variable names — never paste actual credential values.
+- **Applies to**: implement, impl-review

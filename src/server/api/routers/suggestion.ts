@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { energyLevelSchema } from "~/lib/domain";
+import { energyLevelSchema, type WorkType } from "~/lib/domain";
 import type { EnergyLevel } from "~/lib/domain/energy-level";
 
 import {
@@ -14,6 +14,7 @@ import {
 } from "~/lib/scoring/persona-trust-clause";
 import { buildRationaleBreakdown } from "~/lib/scoring/rationale-breakdown";
 import { pickBestTask, type ScoringContext } from "~/lib/scoring/score-task";
+import { resolveIntentionWorkType } from "~/lib/session/narrative-copy";
 import {
 	buildSuggestionPool,
 	loadRemainingFocusMinutes,
@@ -41,6 +42,7 @@ const nextInputSchema = z.discriminatedUnion("context", [
 		localHour: localHourSchema,
 		localDateKey: localDateKeySchema,
 		energy: energyLevelSchemaZod,
+		sessionIntention: z.string().max(80).optional(),
 	}),
 ]);
 
@@ -78,6 +80,7 @@ async function buildScoringContextForSession(
 	localHour: number,
 	energy: EnergyLevel,
 	remainingFocusMinutes: number | null,
+	preferredWorkType?: WorkType,
 ): Promise<ScoringContext> {
 	const lastOverride = await db.suggestionDecision.findFirst({
 		where: {
@@ -107,6 +110,7 @@ async function buildScoringContextForSession(
 		interruptionCount: session.interruptionCount,
 		localHour,
 		lastOverrideWorkType: lastOverride?.chosenTask.workType,
+		preferredWorkType,
 		remainingFocusMinutes,
 	};
 }
@@ -298,6 +302,10 @@ export const suggestionRouter = createTRPCRouter({
 				input.localDateKey,
 			);
 
+			const preferredWorkType = resolveIntentionWorkType(
+				input.sessionIntention,
+			);
+
 			const scoringContext = await buildScoringContextForSession(
 				ctx.db,
 				session,
@@ -305,6 +313,7 @@ export const suggestionRouter = createTRPCRouter({
 				input.localHour,
 				input.energy,
 				remainingFocusMinutes,
+				preferredWorkType,
 			);
 
 			const winner = pickBestTask(

@@ -233,46 +233,34 @@ function assertNoCycleCompleteFlash(result: PomodoroCycleHookResult) {
 	}
 }
 
-async function completeKickoffReadinessGate(result: PomodoroCycleHookResult) {
+async function completeSessionEnergyGate(result: PomodoroCycleHookResult) {
 	await waitFor(() => {
-		expect(result.current.awaitingKickoffReadiness).toBe(true);
+		expect(result.current.sessionEnergyPending).toBe(true);
 	});
 	act(() => {
-		result.current.skipKickoffReadiness();
+		result.current.skipSessionEnergy();
 	});
 	await waitFor(() => {
 		expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
 	});
 }
 
-/** Skips first-cycle intention gate when present; does not wait for running. */
+/** Starts work cycle after optional kickoff steering skip. */
 async function beginWorkCycle(
 	result: PomodoroCycleHookResult,
 	durationSec: number,
-	options?: { intention?: string },
 ) {
 	await act(async () => {
 		await result.current.start(durationSec);
 	});
-
-	if (result.current.awaitingCycleIntention) {
-		await act(async () => {
-			if (options?.intention != null) {
-				await result.current.submitCycleIntention(options.intention);
-			} else {
-				await result.current.skipCycleIntention();
-			}
-		});
-	}
 }
 
 /** beginWorkCycle + wait until timer is running (real timers only). */
 async function startWorkCycle(
 	result: PomodoroCycleHookResult,
 	durationSec: number,
-	options?: { intention?: string },
 ) {
-	await beginWorkCycle(result, durationSec, options);
+	await beginWorkCycle(result, durationSec);
 
 	await waitFor(() => {
 		expect(result.current.state).toBe("running");
@@ -483,7 +471,7 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.state).toBe("running");
 	});
 
-	it("opens cycle intention gate on first work cycle start", async () => {
+	it("starts first work cycle without entry intention gate", async () => {
 		const { result } = renderHook(() => usePomodoroCycle(), {
 			wrapper: createWrapper(),
 		});
@@ -496,28 +484,8 @@ describe("usePomodoroCycle", () => {
 			await result.current.start(60);
 		});
 
-		expect(result.current.awaitingCycleIntention).toBe(true);
-		expect(result.current.state).toBe("idle");
-		expect(createCycle).not.toHaveBeenCalled();
-	});
-
-	it("persists cycle intention on first work cycle create", async () => {
-		const { result } = renderHook(() => usePomodoroCycle(), {
-			wrapper: createWrapper(),
-		});
-
-		act(() => {
-			result.current.selectTask(7, { id: 7, title: "Write tests" });
-		});
-
-		await startWorkCycle(result, 60, { intention: "Ship closure overlay" });
-
-		expect(createCycle).toHaveBeenCalledWith({
-			kind: "WORK",
-			configuredDurationSec: 60,
-			taskId: 7,
-			intention: "Ship closure overlay",
-		});
+		expect(result.current.sessionEnergyPending).toBe(false);
+		expect(createCycle).toHaveBeenCalled();
 	});
 
 	it("transitions to running before createCycle resolves (optimistic start)", async () => {
@@ -531,16 +499,9 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
-		await act(async () => {
-			await result.current.start(60);
-		});
-		await waitFor(() => {
-			expect(result.current.awaitingCycleIntention).toBe(true);
-		});
-
 		let startPromise!: Promise<void>;
 		act(() => {
-			startPromise = result.current.skipCycleIntention();
+			startPromise = result.current.start(60);
 		});
 
 		await waitFor(() => {
@@ -576,16 +537,9 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
-		await act(async () => {
-			await result.current.start(60);
-		});
-		await waitFor(() => {
-			expect(result.current.awaitingCycleIntention).toBe(true);
-		});
-
 		let startPromise!: Promise<void>;
 		act(() => {
-			startPromise = result.current.skipCycleIntention();
+			startPromise = result.current.start(60);
 		});
 
 		await waitFor(() => {
@@ -655,16 +609,9 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
-		await act(async () => {
-			await result.current.start(60);
-		});
-		await waitFor(() => {
-			expect(result.current.awaitingCycleIntention).toBe(true);
-		});
-
 		let startPromise!: Promise<void>;
 		act(() => {
-			startPromise = result.current.skipCycleIntention();
+			startPromise = result.current.start(60);
 		});
 
 		await waitFor(() => {
@@ -716,16 +663,9 @@ describe("usePomodoroCycle", () => {
 			result.current.selectTask(7, { id: 7, title: "Write tests" });
 		});
 
-		await act(async () => {
-			await result.current.start(60);
-		});
-		await waitFor(() => {
-			expect(result.current.awaitingCycleIntention).toBe(true);
-		});
-
 		let startPromise!: Promise<void>;
 		act(() => {
-			startPromise = result.current.skipCycleIntention();
+			startPromise = result.current.start(60);
 		});
 
 		await waitFor(() => {
@@ -1442,6 +1382,7 @@ describe("usePomodoroCycle", () => {
 
 		expect(endSession).toHaveBeenCalledWith({
 			closureLine: "Session complete — 0 cycles. Take a breath.",
+			lastFocusedTaskId: 7,
 		});
 		expect(result.current.pendingClosureLine).toBe(
 			"Session complete — 0 cycles. Take a breath.",
@@ -1511,7 +1452,29 @@ describe("usePomodoroCycle", () => {
 					"Session timed out — 2 cycles. Take a breath.",
 				);
 			});
-			expect(result.current.awaitingKickoffReadiness).toBe(false);
+			expect(result.current.sessionEnergyPending).toBe(false);
+		});
+
+		it("does not rebuild false zero-cycle closure when server closureLine is missing", async () => {
+			activeCycleData = null;
+			getActiveCycle.mockResolvedValue(null);
+			getLastEndedQuery.mockResolvedValue({
+				id: 42,
+				state: "ENDED_BY_TIMEOUT",
+				closureLine: null,
+				endedAt: new Date(),
+			});
+			taskListQuery.mockResolvedValue([]);
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("idle");
+			});
+
+			expect(result.current.pendingClosureLine).toBeNull();
 		});
 	});
 
@@ -2433,7 +2396,7 @@ describe("usePomodoroCycle", () => {
 				await result.current.confirmComplete(false);
 			});
 
-			await completeKickoffReadinessGate(result);
+			await completeSessionEnergyGate(result);
 
 			expect(suggestionNextMutate).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -2498,7 +2461,7 @@ describe("usePomodoroCycle", () => {
 				wrapper: createWrapper(),
 			});
 
-			await completeKickoffReadinessGate(result);
+			await completeSessionEnergyGate(result);
 
 			act(() => {
 				result.current.selectTask(7, { id: 7, title: "Write tests" });
@@ -2522,7 +2485,7 @@ describe("usePomodoroCycle", () => {
 				wrapper: createWrapper(),
 			});
 
-			await completeKickoffReadinessGate(result);
+			await completeSessionEnergyGate(result);
 
 			recordDecisionMutate.mockClear();
 
@@ -2557,7 +2520,7 @@ describe("usePomodoroCycle", () => {
 				wrapper: createWrapper(),
 			});
 
-			await completeKickoffReadinessGate(result);
+			await completeSessionEnergyGate(result);
 
 			await act(async () => {
 				await result.current.acceptKickoffSuggestion();
@@ -2581,7 +2544,7 @@ describe("usePomodoroCycle", () => {
 				wrapper: createWrapper(),
 			});
 
-			await completeKickoffReadinessGate(result);
+			await completeSessionEnergyGate(result);
 
 			await act(async () => {
 				await result.current.acceptKickoffSuggestion();
@@ -2619,7 +2582,7 @@ describe("usePomodoroCycle", () => {
 				wrapper: createWrapper(),
 			});
 
-			await completeKickoffReadinessGate(result);
+			await completeSessionEnergyGate(result);
 
 			vi.useFakeTimers();
 			try {
@@ -2639,8 +2602,8 @@ describe("usePomodoroCycle", () => {
 			}
 		});
 
-		describe("kickoff readiness gate", () => {
-			it("sets awaitingKickoffReadiness without calling suggestion.next on kickoffEligible", async () => {
+		describe("session steering", () => {
+			it("sets sessionEnergyPending and sessionFocusPending without calling suggestion.next on kickoffEligible", async () => {
 				taskListQuery.mockResolvedValue(activeTaskList);
 
 				const { result } = renderHook(() => usePomodoroCycle(), {
@@ -2648,7 +2611,8 @@ describe("usePomodoroCycle", () => {
 				});
 
 				await waitFor(() => {
-					expect(result.current.awaitingKickoffReadiness).toBe(true);
+					expect(result.current.sessionEnergyPending).toBe(true);
+					expect(result.current.sessionFocusPending).toBe(true);
 				});
 
 				expect(suggestionNextMutate).not.toHaveBeenCalledWith(
@@ -2656,7 +2620,7 @@ describe("usePomodoroCycle", () => {
 				);
 			});
 
-			it("submitKickoffReadiness forwards declared energy to kickoff mutate", async () => {
+			it("completeSessionEnergy forwards declared energy to kickoff mutate", async () => {
 				taskListQuery.mockResolvedValue(activeTaskList);
 				suggestionNextMutate.mockImplementation(async (input) => {
 					if (input.context === "kickoff") {
@@ -2670,13 +2634,13 @@ describe("usePomodoroCycle", () => {
 				});
 
 				await waitFor(() => {
-					expect(result.current.awaitingKickoffReadiness).toBe(true);
+					expect(result.current.sessionEnergyPending).toBe(true);
 				});
 
 				suggestionNextMutate.mockClear();
 
 				act(() => {
-					result.current.submitKickoffReadiness("FOCUSED");
+					result.current.completeSessionEnergy("FOCUSED");
 				});
 
 				await waitFor(() => {
@@ -2692,7 +2656,7 @@ describe("usePomodoroCycle", () => {
 				);
 			});
 
-			it("skipKickoffReadiness forwards STEADY energy without creating check-in", async () => {
+			it("forwards sessionIntention to kickoff mutate when steering chip selected", async () => {
 				taskListQuery.mockResolvedValue(activeTaskList);
 				suggestionNextMutate.mockImplementation(async (input) => {
 					if (input.context === "kickoff") {
@@ -2706,14 +2670,65 @@ describe("usePomodoroCycle", () => {
 				});
 
 				await waitFor(() => {
-					expect(result.current.awaitingKickoffReadiness).toBe(true);
+					expect(result.current.sessionEnergyPending).toBe(true);
+				});
+
+				suggestionNextMutate.mockClear();
+
+				act(() => {
+					result.current.completeSessionFocus("Ship closure overlay");
+				});
+				act(() => {
+					result.current.completeSessionEnergy("STEADY");
+				});
+
+				await waitFor(() => {
+					expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+				});
+
+				expect(suggestionNextMutate).toHaveBeenCalledWith(
+					expect.objectContaining({
+						context: "kickoff",
+						sessionIntention: "Ship closure overlay",
+					}),
+				);
+
+				act(() => {
+					result.current.selectTask(7, { id: 7, title: "Write tests" });
+				});
+
+				await startWorkCycle(result, 60);
+
+				expect(createCycle).toHaveBeenCalledWith({
+					kind: "WORK",
+					configuredDurationSec: 60,
+					taskId: 7,
+					intention: "Ship closure overlay",
+				});
+			});
+
+			it("skipSessionEnergy forwards STEADY energy without creating check-in", async () => {
+				taskListQuery.mockResolvedValue(activeTaskList);
+				suggestionNextMutate.mockImplementation(async (input) => {
+					if (input.context === "kickoff") {
+						return kickoffSuggestion;
+					}
+					return null;
+				});
+
+				const { result } = renderHook(() => usePomodoroCycle(), {
+					wrapper: createWrapper(),
+				});
+
+				await waitFor(() => {
+					expect(result.current.sessionEnergyPending).toBe(true);
 				});
 
 				suggestionNextMutate.mockClear();
 				createCheckInMutate.mockClear();
 
 				act(() => {
-					result.current.skipKickoffReadiness();
+					result.current.skipSessionEnergy();
 				});
 
 				await waitFor(() => {
@@ -2730,7 +2745,7 @@ describe("usePomodoroCycle", () => {
 				expect(createCheckInMutate).not.toHaveBeenCalled();
 			});
 
-			it("clears awaitingKickoffReadiness within 200ms before kickoff mutate resolves (L-04)", async () => {
+			it("clears sessionEnergyPending within 200ms before kickoff mutate resolves (L-04)", async () => {
 				taskListQuery.mockResolvedValue(activeTaskList);
 				let releaseKickoffMutate!: (value: typeof kickoffSuggestion) => void;
 				const kickoffMutateBlocked = new Promise<typeof kickoffSuggestion>(
@@ -2750,19 +2765,19 @@ describe("usePomodoroCycle", () => {
 				});
 
 				await waitFor(() => {
-					expect(result.current.awaitingKickoffReadiness).toBe(true);
+					expect(result.current.sessionEnergyPending).toBe(true);
 				});
 
 				vi.useFakeTimers();
 				try {
 					const startedAt = performance.now();
 					act(() => {
-						result.current.submitKickoffReadiness("FOCUSED");
+						result.current.completeSessionEnergy("FOCUSED");
 					});
 					const elapsedMs = performance.now() - startedAt;
 
 					expect(elapsedMs).toBeLessThan(200);
-					expect(result.current.awaitingKickoffReadiness).toBe(false);
+					expect(result.current.sessionEnergyPending).toBe(false);
 					expect(result.current.pendingKickoffSuggestion.status).toBe(
 						"loading",
 					);
@@ -2778,7 +2793,7 @@ describe("usePomodoroCycle", () => {
 				}
 			});
 
-			it("clears awaitingKickoffReadiness within 200ms on skip before mutate resolves (L-04)", async () => {
+			it("clears sessionEnergyPending within 200ms on skip before mutate resolves (L-04)", async () => {
 				taskListQuery.mockResolvedValue(activeTaskList);
 				let releaseKickoffMutate!: (value: typeof kickoffSuggestion) => void;
 				const kickoffMutateBlocked = new Promise<typeof kickoffSuggestion>(
@@ -2798,19 +2813,19 @@ describe("usePomodoroCycle", () => {
 				});
 
 				await waitFor(() => {
-					expect(result.current.awaitingKickoffReadiness).toBe(true);
+					expect(result.current.sessionEnergyPending).toBe(true);
 				});
 
 				vi.useFakeTimers();
 				try {
 					const startedAt = performance.now();
 					act(() => {
-						result.current.skipKickoffReadiness();
+						result.current.skipSessionEnergy();
 					});
 					const elapsedMs = performance.now() - startedAt;
 
 					expect(elapsedMs).toBeLessThan(200);
-					expect(result.current.awaitingKickoffReadiness).toBe(false);
+					expect(result.current.sessionEnergyPending).toBe(false);
 				} finally {
 					vi.useRealTimers();
 					await act(async () => {
@@ -2836,13 +2851,13 @@ describe("usePomodoroCycle", () => {
 				await driveWorkCycleToCheckIn(result);
 
 				expect(result.current.awaitingCheckIn).toBe(true);
-				expect(result.current.awaitingKickoffReadiness).toBe(false);
+				expect(result.current.sessionEnergyPending).toBe(false);
 				expect(suggestionNextMutate).not.toHaveBeenCalledWith(
 					expect.objectContaining({ context: "kickoff" }),
 				);
 			});
 
-			it("does not reopen awaitingKickoffReadiness when endSession races getOrCreateActive", async () => {
+			it("does not reopen sessionEnergyPending when endSession races getOrCreateActive", async () => {
 				taskListQuery.mockResolvedValue(activeTaskList);
 
 				let releaseGetOrCreate!: () => void;
@@ -2894,7 +2909,7 @@ describe("usePomodoroCycle", () => {
 					await blockedGetOrCreate;
 				});
 
-				expect(result.current.awaitingKickoffReadiness).toBe(false);
+				expect(result.current.sessionEnergyPending).toBe(false);
 			});
 		});
 
@@ -2957,7 +2972,7 @@ describe("usePomodoroCycle", () => {
 				await result.current.submitCheckIn("FOCUSED");
 			});
 
-			expect(result.current.awaitingKickoffReadiness).toBe(false);
+			expect(result.current.sessionEnergyPending).toBe(false);
 
 			await waitFor(() => {
 				expect(result.current.pendingSuggestion.status).toBe("ready");
@@ -3199,10 +3214,10 @@ describe("usePomodoroCycle", () => {
 
 		async function reachKickoffReady(result: PomodoroCycleHookResult) {
 			await waitFor(() => {
-				expect(result.current.awaitingKickoffReadiness).toBe(true);
+				expect(result.current.sessionEnergyPending).toBe(true);
 			});
 			act(() => {
-				result.current.skipKickoffReadiness();
+				result.current.skipSessionEnergy();
 			});
 			await waitFor(() => {
 				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");

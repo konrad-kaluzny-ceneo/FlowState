@@ -1,7 +1,7 @@
 ---
 project: FlowState
 version: 3
-updated: 2026-06-13
+updated: 2026-06-20
 ---
 
 # Test Plan
@@ -12,7 +12,7 @@ updated: 2026-06-13
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-13 (PRD v3 — risks #8–#11 + response guidance added; Phase 8 rollout row; cookbook fills on first `/10x-new` for wedge coherence)
+> Last updated: 2026-06-20 (risk #12 — stuck wedge gates; §6.10 transition dismiss oracles; catalyst: `session-entry-wedge-bugs` + Cycle Complete popup)
 
 ## 1. Strategy
 
@@ -65,6 +65,7 @@ research's job, see §1 principle #3).
 | 9 | Check-in → suggestion transition feels sluggish or shows stale UI (>200ms perceived) | Medium | Medium | PRD v3 guardrail 200ms; roadmap S-34; hot-spot dir `src/hooks/` |
 | 10 | Pause/resume loses remaining time, counts as interruption, or session never ends after long pause | High | Medium | PRD v3 US-04; pause cap ~30 min; roadmap S-24 |
 | 11 | Network loss during wedge gate (check-in, suggestion) silently drops state with no calm recovery | High | Medium | PRD v3 US-01 guardrail; roadmap S-35 |
+| 12 | Wedge popup or gate accepts no action — overlay persists after chip/button click and user cannot proceed | High | High | Change `session-entry-wedge-bugs` (2026-06-20): focus popup permission deferral deadlock, false entry closure; user report — Cycle Complete overlay does not close after option; hot-spot dirs `src/lib/wedge/`, `src/hooks/`, `src/app/_components/` (overlay orchestration churn); related to #8 but distinct failure mode (dead-end gate, not stacking) |
 
 ### Risk Response Guidance
 
@@ -81,6 +82,7 @@ research's job, see §1 principle #3).
 | #9 | Check-in → suggestion handoff feels instant (≤200ms perceived) with no stale suggestion card | Optimistic UI implies rollback on mutation failure; guest path may differ | Post-check-in transition path; which mutations block render; S-25 readiness interaction | Vitest deferred-mock oracle (§6.8 pattern on wedge hooks); component smoke on suggestion overlay; belt row only if hook cannot observe perceived latency | Belt e2e timing assertions without hook deferred-mock proof; copying B-03 tests without wedge-specific race branches |
 | #10 | Pause/resume preserves remaining time; long pause (~30 min cap) ends session calmly without counting as interruption | Cap is pause duration, not interrupt count; S-24 full variant may differ from minimal B-08 path | Pause state machine in cycle hook; cap timer vs wall clock; session end on cap | Hook unit tests for pause/resume/cap; integration for persisted pause state; belt only for end-to-end cap → closure if hook gaps remain | Treating pause cap as interruption increment; e2e-only pause proofs while hook branches survive |
 | #11 | Network loss during wedge gate shows calm recovery — local state preserved, one-tap retry, no silent drop | Offline banner alone is insufficient; retry must re-use pending check-in/suggestion intent | Which mutations are wedge-critical; guest local-first boundaries; S-22 catch-up interaction | Hook tests simulating rejected/failed tRPC with pending wedge state; component smoke on recovery UI; integration for idempotent retry | Full offline Playwright on merge gate before unit recovery oracles; forcing re-entry of energy after transient failure |
+| #12 | Every wedge gate primary action (Skip, chip, Continue later, dismiss) closes the overlay and unblocks the next beat — no stuck boolean or deferral deadlock | "One gate at a time" (Risk #8) implies the visible gate is actionable; permission/async deferral must not hide the follow-up UI while leaving the current gate open | Gate open/close state in cycle hook; deferral chains (e.g. intention → permission); conductor `activeGate` transitions; which handler clears which flag | Per-gate hook/component matrix (`transition-conductor.test.ts` + dashboard/hook dismiss oracles); belt row per critical gate only when hook cannot observe dismiss | Z-index or CSS-only fixes; changing one overlay sequence without dismiss tests on all gates in the beat; shipping conductor priority changes without regression on Cycle Complete, check-in, and kickoff paths |
 
 ## 3. Phased Rollout
 
@@ -97,7 +99,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 5 | Mutation oracle hardening | Raise covered-code mutation score from ~58% by killing survived mutants in hooks and server routers — tests exist but assertions are too weak | #1, #2, #3, #4, #5, #6 | unit + integration (targeted Stryker runs) | not started | — |
 | 6 | Uncovered UI & auth paths | Exercise task-list, dashboard, and auth action paths so no-coverage mutants drop — largest score drag but narrower than Phase 5 per test | #1, #3, #5 | component smoke + integration | complete | testing-component-layer-cookbook |
 | 7 | E2E belt merge gate | Replace full-catalog CI gate with 12-test belt; Vitest backfill then delete 10 demoted e2e files | #1–#7 (belt entry points + integration-only #4/#6) | Playwright belt + Vitest/component backfill | complete | testing-e2e-belt-fast |
-| 8 | PRD v3 wedge coherence | Orchestrated transitions, pause semantics, optimistic wedge, network recovery — belt/hook proofs for US-01/US-04 | #8, #9, #10, #11 | unit + hook + belt extensions | not started | — |
+| 8 | PRD v3 wedge coherence | Orchestrated transitions, pause semantics, optimistic wedge, network recovery, **stuck-gate dismiss oracles** — belt/hook proofs for US-01/US-04 | #8, #9, #10, #11, **#12** | unit + hook + belt extensions | not started | — |
 
 ## 4. Stack
 
@@ -343,6 +345,28 @@ CI merge gate — **14 tests across 12 spec files** (change `testing-e2e-belt-fa
 - **Anti-patterns**: belt e2e for overlay layout-only regressions; snapshot-only tests with no user-visible oracle; duplicating hook state-machine cases already in `use-pomodoro-cycle.test.tsx`.
 - **Latency oracles**: see §6.8 and `context/foundation/lessons.md` L-04 for per-surface edit-control smoke.
 
+### 6.10 Wedge transition dismiss oracles (Risk #12)
+
+- **When to use**: any change to wedge overlay sequencing, conductor priority, gate booleans in `use-pomodoro-cycle`, or dashboard handlers that defer one prompt behind another (permission, check-in, suggestion, closure).
+- **Failure shape to catch**: overlay visible + primary control clicked → same overlay still visible and app flow blocked (dead-end). Distinct from Risk #8 stacking (two overlays) — this is **one overlay that won't close**.
+- **Per-gate matrix** (minimum before merging transition logic):
+
+| Gate / surface | Primary action under test | Assert after action |
+|----------------|---------------------------|---------------------|
+| Cycle complete | `onCycleCompleteConfirm` / Continue later | `showCycleComplete` false; next beat (check-in or break) eligible |
+| Cycle intention / session steering | chip select or Skip | intention/steering gate cleared; permission or kickoff may proceed |
+| Kickoff readiness | energy chip or Skip | readiness gate cleared; suggestion fetch unblocked |
+| Check-in | energy chip | check-in overlay cleared; break or suggestion path open |
+| Session closure | dismiss | closure overlay cleared; idle/kickoff eligible |
+| Break-alerts permission | allow/dismiss | permission gate cleared; start not blocked |
+
+- **Location**: `src/lib/wedge/transition-conductor.test.ts` (priority/mutex); `src/hooks/use-pomodoro-cycle.test.tsx` (handler clears flags); `src/app/_components/pomodoro-dashboard.test.tsx` (deferral chains — e.g. intention must not defer permission while intention overlay still active).
+- **Deferral rule**: if handler A returns early waiting for gate B, test must prove B becomes visible **or** A closes first — never both hidden with A's stuck boolean true. Reference incident: `session-entry-wedge-bugs` permission deferral deadlock.
+- **Belt extension**: add/update belt row only when hook matrix cannot observe dismiss (prefer hook/component first per §1 #5). Cycle-complete dismiss belongs in hook tests before new belt spec.
+- **Reference tests**: `transition-conductor.test.ts` gate priority cases; `use-pomodoro-cycle.test.tsx` `onCycleCompleteConfirm` / check-in suppression paths; `pomodoro-dashboard.test.tsx` overlay visibility matrix.
+- **Run locally**: `pnpm exec vitest run src/lib/wedge/transition-conductor.test.ts src/hooks/use-pomodoro-cycle.test.tsx src/app/_components/pomodoro-dashboard.test.tsx`
+- **Recurring rule**: see `context/foundation/lessons.md` — *Test every wedge transition before shipping transition logic changes*.
+
 ## 7. What We Deliberately Don't Test
 
 Exclusions agreed during the rollout (Phase 2 interview, Q5). Future
@@ -363,7 +387,8 @@ contributors should respect these unless the underlying assumption changes.
 - CI quality gates wired: 2026-06-11 (`.github/workflows/ci.yml` — belt merge gate `pnpm test:e2e:belt`, 4 workers, build cache)
 - Belt merge-gate shipped: 2026-06-11 (`testing-e2e-belt-fast`)
 - Phase 6 component layer shipped: 2026-06-11 (`testing-component-layer-cookbook`) — co-located `_components` + auth action smokes; narrowed Stryker on dashboard/shell/auth paths
-- **Next session:** §3 Phase 8 (PRD v3 wedge coherence — risks #8–#11) after F-07/B-05 land; Phase 5 mutation oracle still optional backlog
+- Risk #12 + §6.10 added: 2026-06-20 (`session-entry-wedge-bugs` — stuck focus popup, Cycle Complete not closing)
+- **Next session:** §3 Phase 8 (PRD v3 wedge coherence — risks #8–#12) after F-07/B-05 land; Phase 5 mutation oracle still optional backlog
 
 Refresh (`/10x-test-plan --refresh`) when:
 

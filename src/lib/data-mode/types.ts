@@ -67,6 +67,7 @@ export type DomainSession = {
 	lastActivityAt: Date;
 	interruptionCount: number;
 	closureLine?: string | null;
+	lastFocusedTaskId?: string | null;
 };
 
 export type DataMode = "guest" | "authenticated";
@@ -139,7 +140,10 @@ export interface CycleRepository {
 
 export interface SessionRepository {
 	getOrCreateActive(): Promise<DomainSession>;
-	end(input?: { closureLine?: string | null }): Promise<DomainSession>;
+	end(input?: {
+		closureLine?: string | null;
+		lastFocusedTaskId?: DomainTaskId | null;
+	}): Promise<DomainSession>;
 }
 
 export type Repositories = {

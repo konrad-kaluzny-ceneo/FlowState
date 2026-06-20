@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
@@ -65,14 +65,18 @@ function makePomodoroMock(
 		overrideAcknowledgement: null,
 		inFlowSummaryLine: null,
 		pendingClosureLine: null,
-		returnHandoffGateOpen: false,
+		continueTaskId: null,
 		dismissSessionClosure: vi.fn(),
-		awaitingCycleIntention: false,
-		submitCycleIntention: vi.fn(),
-		skipCycleIntention: vi.fn(),
+		showSessionEnergy: false,
+		showSessionFocus: false,
+		sessionEnergyPending: false,
+		sessionFocusPending: false,
+		sessionSteeringSubmitting: false,
+		completeSessionEnergy: vi.fn(),
+		skipSessionEnergy: vi.fn(),
+		completeSessionFocus: vi.fn(),
+		skipSessionFocus: vi.fn(),
 		kickoffEligible: false,
-		awaitingKickoffReadiness: false,
-		kickoffReadinessSubmitting: false,
 		preFocusedTask: null,
 		catchUp: null,
 		suggestionCycleId: null,
@@ -102,8 +106,6 @@ function makePomodoroMock(
 		onMidCycleMarkComplete: vi.fn(),
 		onMidCycleContinueWithTask: vi.fn(),
 		onMidCycleEndCycleAndBreak: vi.fn(),
-		submitKickoffReadiness: vi.fn(),
-		skipKickoffReadiness: vi.fn(),
 		endSession: vi.fn(),
 		...overrides,
 	};
@@ -337,7 +339,7 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.queryByTestId("session-inflow-summary")).toBeNull();
 	});
 
-	it("hides in-flow summary when suggestion card is visible", () => {
+	it("hides in-flow summary when post-check-in suggestion card is visible", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
 				hasActiveSession: true,
@@ -372,30 +374,24 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.queryByTestId("session-inflow-summary")).toBeNull();
 	});
 
-	it("shows cycle intention prompt when awaiting first-cycle intention", () => {
-		renderBody({
-			awaitingCycleIntention: true,
-		});
-
-		expect(screen.getByTestId("cycle-intention-prompt")).toBeTruthy();
-	});
-
-	it("shows session closure overlay when pending closure line is set", () => {
-		renderBody({
-			pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
-		});
-
-		expect(screen.getByTestId("session-closure-overlay")).toBeTruthy();
-		expect(screen.getByTestId("session-closure-line").textContent).toBe(
-			"Session complete — 1 cycle. Take a breath.",
-		);
-	});
-
-	it("does not show kickoff readiness overlay while session closure is pending", () => {
+	it("shows in-flow summary alongside kickoff suggestion card", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
-				pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
-				awaitingKickoffReadiness: true,
+				hasActiveSession: true,
+				state: "idle",
+				focusedTaskId: null,
+				inFlowSummaryLine: "2 cycles · feeling steady",
+				pendingKickoffSuggestion: {
+					status: "ready",
+					data: {
+						taskId: "task-1",
+						title: "Suggested task",
+						workType: "OPERATIONAL",
+						weight: 2,
+						rationale: "Best next task",
+						breakdown: null,
+					},
+				},
 			}),
 		);
 
@@ -409,16 +405,65 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 			/>,
 		);
 
-		expect(screen.getByTestId("session-closure-overlay")).toBeTruthy();
-		expect(screen.queryByTestId("kickoff-readiness-overlay")).toBeNull();
+		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
+		expect(screen.getByTestId("session-inflow-summary").textContent).toBe(
+			"2 cycles · feeling steady",
+		);
 	});
 
-	it("does not show check-in overlay while session closure is pending", () => {
+	it("shows inline session energy card when showSessionEnergy is true", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
-				pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
-				awaitingCheckIn: true,
-				activeCycle: { id: 42 },
+				showSessionEnergy: true,
+				sessionEnergyPending: true,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("session-energy-card")).toBeTruthy();
+		expect(screen.queryByTestId("kickoff-readiness-overlay")).toBeNull();
+		expect(screen.queryByTestId("cycle-intention-prompt")).toBeNull();
+	});
+
+	it("shows inline session focus card when showSessionFocus is true", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				showSessionFocus: true,
+				sessionFocusPending: true,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("session-focus-card")).toBeTruthy();
+	});
+
+	it("dismisses cycle complete overlay after Continue later confirm", async () => {
+		const onCycleCompleteConfirm = vi.fn().mockResolvedValue(undefined);
+
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "completed",
+				cycleKind: "WORK",
+				focusedTask: { id: 1, title: "Focus task" },
+				onCycleCompleteConfirm,
 			}),
 		);
 
@@ -432,7 +477,117 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 			/>,
 		);
 
+		expect(screen.getByTestId("cycle-complete-overlay")).toBeTruthy();
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: /Continue later/i }),
+		);
+
+		expect(onCycleCompleteConfirm).toHaveBeenCalledWith(false);
+	});
+
+	it("shows session closure overlay when pending closure line is set", () => {
+		renderBody({
+			pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
+		});
+
 		expect(screen.getByTestId("session-closure-overlay")).toBeTruthy();
-		expect(screen.queryByTestId("check-in-overlay")).toBeNull();
+		expect(screen.getByTestId("session-closure-line").textContent).toBe(
+			"Session complete — 1 cycle. Take a breath.",
+		);
+	});
+
+	it("does not show kickoff suggestion while session energy card is visible", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTaskId: null,
+				showSessionEnergy: true,
+				sessionEnergyPending: true,
+				pendingKickoffSuggestion: {
+					status: "ready",
+					data: {
+						taskId: "task-1",
+						title: "Suggested task",
+						workType: "OPERATIONAL",
+						weight: 2,
+						rationale: "Best next task",
+						breakdown: null,
+					},
+				},
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("session-energy-card")).toBeTruthy();
+		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
+	});
+
+	it("does not show kickoff suggestion while session focus card is visible", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTaskId: null,
+				showSessionFocus: true,
+				sessionFocusPending: true,
+				pendingKickoffSuggestion: {
+					status: "ready",
+					data: {
+						taskId: "task-1",
+						title: "Suggested task",
+						workType: "OPERATIONAL",
+						weight: 2,
+						rationale: "Best next task",
+						breakdown: null,
+					},
+				},
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("session-focus-card")).toBeTruthy();
+		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
+	});
+
+	it("does not show check-in overlay while session closure is pending on idle entry", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
+				awaitingCheckIn: true,
+				activeCycle: { id: 42 },
+				state: "completed",
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableCheckInGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.queryByTestId("session-closure-overlay")).toBeNull();
+		expect(screen.getByTestId("check-in-overlay")).toBeTruthy();
 	});
 });

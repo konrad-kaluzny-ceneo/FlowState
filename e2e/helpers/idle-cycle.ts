@@ -1,22 +1,19 @@
 import { expect, type Page } from "@playwright/test";
 
 import { completeCheckIn } from "./check-in";
+import { dismissKickoffSteeringIfVisible } from "./kickoff";
 import { dismissFirstRunIfVisible } from "./onboarding";
-import { dismissReturnHandoffIfVisible } from "./return-handoff";
+
+/** @deprecated Use `dismissKickoffSteeringIfVisible` from `./kickoff`. */
+export async function dismissKickoffReadinessIfVisible(page: Page) {
+	await dismissKickoffSteeringIfVisible(page);
+}
 
 export async function dismissBreakAlertsPermissionIfVisible(page: Page) {
 	const prompt = page.getByTestId("break-alerts-permission-prompt");
 	if (await prompt.isVisible().catch(() => false)) {
 		await page.getByTestId("break-alerts-permission-not-now-btn").click();
 		await expect(prompt).toBeHidden({ timeout: 5_000 });
-	}
-}
-
-export async function dismissKickoffReadinessIfVisible(page: Page) {
-	const overlay = page.getByTestId("kickoff-readiness-overlay");
-	if (await overlay.isVisible().catch(() => false)) {
-		await page.getByTestId("kickoff-readiness-skip-btn").click();
-		await expect(overlay).toBeHidden({ timeout: 5_000 });
 	}
 }
 
@@ -37,7 +34,7 @@ export async function dismissTaskSuggestionIfVisible(page: Page) {
 /** Dismiss blocking overlays until the idle timer shell is mounted. */
 export async function waitForTimerPanelIdle(page: Page) {
 	await expect(async () => {
-		await dismissKickoffReadinessIfVisible(page);
+		await dismissKickoffSteeringIfVisible(page);
 		await dismissTaskSuggestionIfVisible(page);
 
 		if (await page.getByTestId("timer-panel-running").isVisible()) {
@@ -57,11 +54,11 @@ export async function waitForTimerPanelIdle(page: Page) {
 export async function ensureIdleCycle(page: Page) {
 	await expect(async () => {
 		await dismissFirstRunIfVisible(page);
-		await dismissReturnHandoffIfVisible(page);
 
-		if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
-			await page.getByTestId("kickoff-readiness-skip-btn").click();
-			throw new Error("kickoff readiness dismissed — re-check idle");
+		if (await page.getByTestId("session-energy-card").isVisible()) {
+			await page.getByTestId("session-energy-skip-btn").click();
+			await page.getByTestId("session-focus-skip-btn").click();
+			throw new Error("kickoff steering dismissed — re-check idle");
 		}
 
 		if (await page.getByTestId("task-suggestion-card").isVisible()) {
@@ -88,7 +85,7 @@ export async function ensureIdleCycle(page: Page) {
 		}
 
 		if (await page.getByTestId("cycle-complete-overlay").isVisible()) {
-			await dismissKickoffReadinessIfVisible(page);
+			await dismissKickoffSteeringIfVisible(page);
 			const continueLater = page.getByRole("button", {
 				name: "Continue later",
 			});

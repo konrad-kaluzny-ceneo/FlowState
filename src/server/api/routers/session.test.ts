@@ -12,6 +12,7 @@ let sessions: Array<{
 	lastActivityAt: Date;
 	endedAt: Date | null;
 	closureLine: string | null;
+	lastFocusedTaskId: number | null;
 }> = [];
 let nextId = 1;
 
@@ -66,6 +67,7 @@ vi.mock("~/server/db/index", () => ({
 					lastActivityAt: now,
 					endedAt: null,
 					closureLine: null,
+					lastFocusedTaskId: null,
 				};
 				sessions.push(session);
 				return Promise.resolve(session);
@@ -102,7 +104,31 @@ vi.mock("~/server/db/index", () => ({
 				},
 			),
 		},
+		cycle: {
+			findFirst: vi.fn(() => Promise.resolve(null)),
+			count: vi.fn(() => Promise.resolve(0)),
+		},
+		checkIn: {
+			findFirst: vi.fn(() => Promise.resolve(null)),
+		},
 	},
+}));
+
+vi.mock("~/server/api/lib/session-end-metadata", () => ({
+	computeSessionEndMetadata: vi.fn(
+		async (
+			_database: unknown,
+			_userId: string,
+			sessionId: number,
+			endedBy: "timeout" | "user" | "pause_cap",
+		) => ({
+			closureLine:
+				endedBy === "timeout"
+					? "Session complete — 2 cycles. Take a breath."
+					: "Session complete — 1 cycle. Take a breath.",
+			lastFocusedTaskId: sessionId === 50 ? 12 : 7,
+		}),
+	),
 }));
 
 import { installImmediateSetTimeout } from "~/test-utils/immediate-set-timeout";
@@ -112,6 +138,9 @@ installImmediateSetTimeout();
 const { createCallerFactory } = await import("~/server/api/trpc");
 const { sessionRouter } = await import("~/server/api/routers/session");
 const { db } = await import("~/server/db/index");
+const { computeSessionEndMetadata } = await import(
+	"~/server/api/lib/session-end-metadata"
+);
 
 const createCaller = createCallerFactory(sessionRouter);
 const USER_ID = "user-session-test";
@@ -168,6 +197,7 @@ describe("session router", () => {
 					lastActivityAt: new Date(),
 					endedAt: null,
 					closureLine: null,
+					lastFocusedTaskId: null,
 				},
 			];
 
@@ -188,6 +218,7 @@ describe("session router", () => {
 					lastActivityAt: fiveHoursAgo,
 					endedAt: null,
 					closureLine: null,
+					lastFocusedTaskId: null,
 				},
 			];
 
@@ -196,6 +227,16 @@ describe("session router", () => {
 			expect(session.id).not.toBe(50);
 			expect(sessions[0]?.state).toBe("ENDED_BY_TIMEOUT");
 			expect(sessions[0]?.endedAt).not.toBeNull();
+			expect(sessions[0]?.closureLine).toBe(
+				"Session complete — 2 cycles. Take a breath.",
+			);
+			expect(sessions[0]?.lastFocusedTaskId).toBe(12);
+			expect(computeSessionEndMetadata).toHaveBeenCalledWith(
+				expect.anything(),
+				USER_ID,
+				50,
+				"timeout",
+			);
 			expect(session.state).toBe("ACTIVE");
 			expect(sessions).toHaveLength(2);
 		});
@@ -211,6 +252,7 @@ describe("session router", () => {
 					lastActivityAt: oneHourAgo,
 					endedAt: null,
 					closureLine: null,
+					lastFocusedTaskId: null,
 				},
 			];
 
@@ -231,6 +273,7 @@ describe("session router", () => {
 					lastActivityAt: new Date(),
 					endedAt: null,
 					closureLine: null,
+					lastFocusedTaskId: null,
 				},
 			];
 
@@ -259,6 +302,7 @@ describe("session router", () => {
 					lastActivityAt: new Date(),
 					endedAt: null,
 					closureLine: null,
+					lastFocusedTaskId: null,
 				},
 			];
 
@@ -284,6 +328,7 @@ describe("session router", () => {
 					lastActivityAt: new Date(),
 					endedAt: new Date(),
 					closureLine: null,
+					lastFocusedTaskId: null,
 				},
 			];
 
@@ -301,6 +346,7 @@ describe("session router", () => {
 					lastActivityAt: new Date(),
 					endedAt: null,
 					closureLine: null,
+					lastFocusedTaskId: null,
 				},
 			];
 
@@ -309,6 +355,28 @@ describe("session router", () => {
 			});
 
 			expect(result.closureLine).toBe("Session complete — 2 cycles.");
+		});
+
+		it("persists lastFocusedTaskId from client input", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					endedAt: null,
+					closureLine: null,
+					lastFocusedTaskId: null,
+				},
+			];
+
+			const result = await sessionCaller().end({
+				closureLine: "Session complete — 1 cycle. Take a breath.",
+				lastFocusedTaskId: 99,
+			});
+
+			expect(result.lastFocusedTaskId).toBe(99);
 		});
 	});
 
@@ -323,6 +391,7 @@ describe("session router", () => {
 					lastActivityAt: new Date(),
 					endedAt: new Date("2020-01-01"),
 					closureLine: "Older closure",
+					lastFocusedTaskId: 3,
 				},
 				{
 					id: 2,
@@ -332,6 +401,7 @@ describe("session router", () => {
 					lastActivityAt: new Date(),
 					endedAt: new Date("2025-06-01"),
 					closureLine: "Latest closure",
+					lastFocusedTaskId: 8,
 				},
 			];
 
@@ -339,6 +409,7 @@ describe("session router", () => {
 
 			expect(result?.id).toBe(2);
 			expect(result?.closureLine).toBe("Latest closure");
+			expect(result?.lastFocusedTaskId).toBe(8);
 		});
 	});
 });

@@ -298,6 +298,43 @@ export function createGuestTaskRepository(): TaskRepository {
 	};
 }
 
+function resolveGuestLastFocusedTaskId(
+	snapshot: ReturnType<typeof loadSnapshot>,
+	sessionId: string,
+): string | null {
+	const activeWorkCycle = [...snapshot.cycles]
+		.filter(
+			(cycle) =>
+				cycle.sessionId === sessionId &&
+				cycle.kind === "WORK" &&
+				(cycle.state === "RUNNING" || cycle.state === "PAUSED") &&
+				cycle.taskId != null,
+		)
+		.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())[0];
+
+	if (activeWorkCycle?.taskId != null) {
+		return activeWorkCycle.taskId;
+	}
+
+	const lastWorkCycle = [...snapshot.cycles]
+		.filter(
+			(cycle) =>
+				cycle.sessionId === sessionId &&
+				cycle.kind === "WORK" &&
+				cycle.taskId != null,
+		)
+		.sort((a, b) => {
+			const endedDiff =
+				(b.endedAt?.getTime() ?? 0) - (a.endedAt?.getTime() ?? 0);
+			if (endedDiff !== 0) {
+				return endedDiff;
+			}
+			return b.startedAt.getTime() - a.startedAt.getTime();
+		})[0];
+
+	return lastWorkCycle?.taskId ?? null;
+}
+
 export function createGuestSessionRepository(): SessionRepository {
 	return {
 		async getOrCreateActive() {
@@ -346,13 +383,21 @@ export function createGuestSessionRepository(): SessionRepository {
 			};
 		},
 
-		async end(input?: { closureLine?: string | null }) {
+		async end(input?: {
+			closureLine?: string | null;
+			lastFocusedTaskId?: string | null;
+		}) {
 			const snapshot = loadSnapshot();
 			const active = snapshot.sessions.find((s) => s.state === "ACTIVE");
 
 			if (active == null) {
 				throw new Error("No active session to end");
 			}
+
+			const lastFocusedTaskId =
+				input?.lastFocusedTaskId != null
+					? String(input.lastFocusedTaskId)
+					: resolveGuestLastFocusedTaskId(snapshot, active.id);
 
 			const now = new Date();
 			const { error } = mutateSnapshot((current) => ({
@@ -366,6 +411,7 @@ export function createGuestSessionRepository(): SessionRepository {
 								...(input?.closureLine != null
 									? { closureLine: input.closureLine }
 									: {}),
+								lastFocusedTaskId,
 							}
 						: s,
 				),
@@ -384,6 +430,7 @@ export function createGuestSessionRepository(): SessionRepository {
 				lastActivityAt: active.lastActivityAt,
 				interruptionCount: active.interruptionCount,
 				closureLine: input?.closureLine ?? active.closureLine ?? null,
+				lastFocusedTaskId,
 			};
 		},
 	};

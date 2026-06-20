@@ -79,6 +79,7 @@ export const guestSessionSchema = z.object({
 	lastActivityAt: z.coerce.date(),
 	interruptionCount: z.number().int().default(0),
 	closureLine: z.string().max(120).nullable().optional(),
+	lastFocusedTaskId: z.string().uuid().nullable().optional(),
 });
 
 export const guestCycleSchema = z.object({

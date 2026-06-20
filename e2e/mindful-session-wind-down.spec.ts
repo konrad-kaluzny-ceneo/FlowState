@@ -43,7 +43,7 @@ import {
 } from "./helpers/work-cycle";
 
 async function startFastWorkCycle(page: Page, taskTitle: string) {
-	if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
+	if (await page.getByTestId("session-energy-card").isVisible()) {
 		await completeKickoffReadiness(page, "skip");
 	}
 	await focusTask(page, taskTitle);

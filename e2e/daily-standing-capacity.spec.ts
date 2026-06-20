@@ -10,9 +10,9 @@ import {
 	markStandingDoneForToday,
 	seedCapacitySuggestionScenario,
 } from "./helpers/daily-plan";
-import { dismissKickoffReadinessIfVisible } from "./helpers/idle-cycle";
 import {
 	completeKickoffReadiness,
+	dismissKickoffSteeringIfVisible,
 	expectKickoffVisible,
 	waitForKickoffSuggestionResponse,
 } from "./helpers/kickoff";
@@ -51,8 +51,8 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 		await resetCycleRecoveryAfterReload(page);
 		await resetFakeClock(page);
 		await dismissFirstRunIfVisible(page);
-		if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
-			await dismissKickoffReadinessIfVisible(page);
+		if (await page.getByTestId("session-energy-card").isVisible()) {
+			await dismissKickoffSteeringIfVisible(page);
 		}
 	});
 
@@ -78,7 +78,7 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 		await page.reload();
 		await taskListReload;
 		await dismissFirstRunIfVisible(page);
-		await dismissKickoffReadinessIfVisible(page);
+		await dismissKickoffSteeringIfVisible(page);
 
 		await focusTask(page, longTitle);
 		await setWorkDurationSec(page, 1);
@@ -132,7 +132,7 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 		await page.reload();
 		await taskListReload;
 		await dismissFirstRunIfVisible(page);
-		await dismissKickoffReadinessIfVisible(page);
+		await dismissKickoffSteeringIfVisible(page);
 
 		await markStandingDoneForToday(page, standingTitle);
 		await expect(
@@ -177,7 +177,7 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 		await page.reload();
 		await expect(page.getByTestId("task-list")).toBeVisible();
 		await dismissFirstRunIfVisible(page);
-		await dismissKickoffReadinessIfVisible(page);
+		await dismissKickoffSteeringIfVisible(page);
 
 		const standingRow = page
 			.getByRole("listitem")

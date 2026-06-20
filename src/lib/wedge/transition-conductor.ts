@@ -1,16 +1,14 @@
 /**
  * Pure wedge transition conductor (F-07).
  * Enforces at most one blocking gate overlay per beat via priority matrix.
- * Priority (highest first): return handoff block → closure → wind-down → check-in
- * → cycle intention → kickoff readiness → cycle complete.
+ * Priority (highest first): closure → wind-down → check-in → cycle complete.
+ * Session steering (energy + focus) is inline — not a conductor gate.
  */
 
 export type WedgeGate =
 	| "session_closure"
 	| "wind_down"
 	| "check_in"
-	| "cycle_intention"
-	| "kickoff_readiness"
 	| "cycle_complete"
 	| "none";
 
@@ -22,11 +20,8 @@ export type WedgeConductorInput = {
 	awaitingCheckIn: boolean;
 	awaitingWindDown: boolean;
 	windDownRationale: string | null;
-	awaitingKickoffReadiness: boolean;
-	awaitingCycleIntention: boolean;
 	isPostCheckInTransitioning: boolean;
 	activeCycle: unknown | null;
-	returnHandoffGateOpen: boolean;
 	cyclePaused: boolean;
 	state: "idle" | "running" | "paused" | "completed";
 };
@@ -36,8 +31,6 @@ export type WedgeConductorOutput = {
 	showSessionClosure: boolean;
 	showWindDown: boolean;
 	showCheckIn: boolean;
-	showCycleIntention: boolean;
-	showKickoffReadiness: boolean;
 	showCycleComplete: boolean;
 };
 
@@ -54,7 +47,6 @@ export type KickoffEligibilityInput = {
 	hasActiveTasks: boolean;
 	sessionStartIdleFlag: boolean;
 	postBreakIdleFlag: boolean;
-	returnHandoffGateOpen: boolean;
 	cyclePaused: boolean;
 };
 
@@ -62,8 +54,6 @@ const GATE_PRIORITY: WedgeGate[] = [
 	"session_closure",
 	"wind_down",
 	"check_in",
-	"cycle_intention",
-	"kickoff_readiness",
 	"cycle_complete",
 ];
 
@@ -75,13 +65,14 @@ function gateCandidates(
 			session_closure: false,
 			wind_down: false,
 			check_in: false,
-			cycle_intention: false,
-			kickoff_readiness: false,
 			cycle_complete: false,
 		};
 	}
 
-	const showSessionClosure = input.pendingClosureLine != null;
+	const showSessionClosure =
+		input.pendingClosureLine != null &&
+		input.state === "idle" &&
+		input.activeCycle == null;
 
 	const showWindDown =
 		input.enableWindDownGate &&
@@ -96,37 +87,17 @@ function gateCandidates(
 		!showSessionClosure &&
 		!showWindDown;
 
-	const showCycleIntention =
-		input.awaitingCycleIntention &&
-		!showSessionClosure &&
-		!showWindDown &&
-		!showCheckIn;
-
-	const showKickoffReadiness =
-		input.enableSuggestionGate &&
-		input.awaitingKickoffReadiness &&
-		!input.returnHandoffGateOpen &&
-		!showSessionClosure &&
-		!showCheckIn &&
-		!showWindDown &&
-		!input.isPostCheckInTransitioning &&
-		!showCycleIntention;
-
 	const showCycleComplete =
 		input.state === "completed" &&
 		!showSessionClosure &&
 		!showWindDown &&
 		!showCheckIn &&
-		!input.isPostCheckInTransitioning &&
-		!showKickoffReadiness &&
-		!showCycleIntention;
+		!input.isPostCheckInTransitioning;
 
 	return {
 		session_closure: showSessionClosure,
 		wind_down: showWindDown,
 		check_in: showCheckIn,
-		cycle_intention: showCycleIntention,
-		kickoff_readiness: showKickoffReadiness,
 		cycle_complete: showCycleComplete,
 	};
 }
@@ -147,8 +118,6 @@ export function resolveWedgeBeat(
 	const showSessionClosure = activeGate === "session_closure";
 	const showWindDown = activeGate === "wind_down";
 	const showCheckIn = activeGate === "check_in";
-	const showCycleIntention = activeGate === "cycle_intention";
-	const showKickoffReadiness = activeGate === "kickoff_readiness";
 	const showCycleComplete = activeGate === "cycle_complete";
 
 	return {
@@ -156,8 +125,6 @@ export function resolveWedgeBeat(
 		showSessionClosure,
 		showWindDown,
 		showCheckIn,
-		showCycleIntention,
-		showKickoffReadiness,
 		showCycleComplete,
 	};
 }
@@ -166,10 +133,6 @@ export function computeKickoffEligible(
 	input: KickoffEligibilityInput,
 ): boolean {
 	if (input.cyclePaused || input.state === "paused") {
-		return false;
-	}
-
-	if (input.returnHandoffGateOpen) {
 		return false;
 	}
 
