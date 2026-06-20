@@ -328,40 +328,40 @@ No schema migration. Read-only feature over existing data.
 
 #### Manual
 
-- [ ] 1.5 tRPC caller returns recap rows in dev after seeded cycles
+- [x] 1.5 tRPC caller returns recap rows in dev after seeded cycles — 293e9f8
 
 ### Phase 2: Guest Aggregator & Dual-Mode Hook
 
 #### Automated
 
-- [x] 2.1 Vitest: `guest/recap.test.ts` — pending
-- [x] 2.2 Vitest: `use-daily-recap.test.ts` — pending
+- [x] 2.1 Vitest: `guest/recap.test.ts` — d9d1e2d
+- [x] 2.2 Vitest: `use-daily-recap.test.ts` — d9d1e2d
 
 #### Manual
 
-- [ ] 2.3 Guest trial recap updates after cycle complete
+- [x] 2.3 Guest trial recap updates after cycle complete — 230f0c7
 
 ### Phase 3: Daily Recap Panel UI
 
 #### Automated
 
-- [ ] 3.1 Vitest: `daily-recap-panel.test.tsx`
-- [ ] 3.2 `pnpm check` passes after panel mount
+- [x] 3.1 Vitest: `daily-recap-panel.test.tsx` — 3544fab
+- [x] 3.2 `pnpm check` passes after panel mount — 3544fab
 
 #### Manual
 
-- [ ] 3.3 Panel collapse and dismiss behave correctly in browser
+- [x] 3.3 Panel collapse and dismiss behave correctly in browser — 3544fab
 
 ### Phase 4: Focus Footprint on Task Rows
 
 #### Automated
 
-- [ ] 4.1 Vitest: extended `task-list.test.tsx` footprint cases
-- [ ] 4.2 Full `pnpm test` passes
+- [x] 4.1 Vitest: extended `task-list.test.tsx` footprint cases — cc222ce
+- [x] 4.2 Full `pnpm test` passes — cc222ce
 
 #### Manual
 
-- [ ] 4.3 Footprint visible only on focused row in browser
+- [x] 4.3 Footprint visible only on focused row in browser — cc222ce
 
 ### Phase 5: E2E Belt & Test-Plan Cookbook
 
