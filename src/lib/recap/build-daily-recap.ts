@@ -118,6 +118,9 @@ function buildLast24HoursRows(cycles: CycleWithTask[]): RecapTaskRow[] {
 		}
 
 		const minutes = computeCycleFocusedMinutes(cycle);
+		if (minutes <= 0) {
+			continue;
+		}
 		const existing = byTask.get(cycle.taskId);
 
 		if (existing == null) {
@@ -188,6 +191,9 @@ async function buildFootprints(
 
 		const key = String(cycle.taskId);
 		const minutes = computeCycleFocusedMinutes(cycle);
+		if (minutes <= 0) {
+			continue;
+		}
 		const endedAt = cycle.endedAt ?? cycle.startedAt;
 		const existing = footprints[key];
 

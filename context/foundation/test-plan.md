@@ -190,7 +190,7 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 #### Belt merge gate (Phase 7 — shipped)
 
-CI merge gate — **15 tests across 13 spec files** (change `testing-e2e-belt-fast`). Partial-file tests tag non-belt cases `@skip-belt`; belt script uses `--grep-invert @skip-belt`.
+CI merge gate — **16 tests across 13 spec files** (change `testing-e2e-belt-fast`). Partial-file tests tag non-belt cases `@skip-belt`; belt script uses `--grep-invert @skip-belt`.
 
 | # | Spec | Belt scope | Tests | Risk / role |
 |---|------|------------|------:|-------------|
@@ -373,7 +373,7 @@ CI merge gate — **15 tests across 13 spec files** (change `testing-e2e-belt-fa
 - **When to use**: recap aggregation (`buildDailyRecap` / guest mirror), `recap.getDaily` router, `DailyRecapPanel`, focus footprint on task rows.
 - **Unit / integration**: `src/lib/recap/compute-cycle-focused-minutes.test.ts`, `src/lib/recap/build-daily-recap.test.ts`, `src/lib/guest/recap.test.ts`, `src/server/api/routers/recap.test.ts`, `src/server/api/routers/recap.integration.test.ts` (router + real `buildDailyRecap` over seeded mock DB cycles).
 - **Hook / component**: `src/hooks/use-daily-recap.test.tsx` (auth query + guest snapshot refresh); `src/app/_components/daily-recap-panel.test.tsx` (collapse, dismiss, empty states); extend `src/app/_components/task-list.test.tsx` for `task-footprint-{taskId}` on focused rows only.
-- **E2E belt**: `e2e/daily-work-timing-recap.spec.ts` — complete fast WORK cycle → `daily-recap-panel` Last 24h row → dismiss → footprint on refocused task. Helpers: `e2e/helpers/work-cycle.ts` (`addTasks`, `focusTask`, `advanceClockThroughFastWork`, `completeWorkCycleWithCheckIn`). Test IDs: `daily-recap-panel`, `daily-recap-dismiss`, `daily-recap-last24`, `daily-recap-last24-toggle`, `daily-recap-today`, `task-footprint-{taskId}`.
+- **E2E belt**: `e2e/daily-work-timing-recap.spec.ts` — complete fast WORK cycle → `daily-recap-panel` Last 24h row → dismiss → footprint on refocused task. Helpers: `e2e/helpers/work-cycle.ts` (`addTasks`, `focusTask`, `advanceClockThroughFastWork`, `completeWorkCycleWithCheckIn`). Belt test IDs: `daily-recap-panel`, `daily-recap-dismiss`, `daily-recap-last24`, `task-footprint-*`. Section toggles (`daily-recap-last24-toggle`, `daily-recap-today-toggle`) and Today list (`daily-recap-today`) covered in `daily-recap-panel.test.tsx`.
 - **Run locally**: `pnpm exec vitest run src/lib/recap src/lib/guest/recap.test.ts src/hooks/use-daily-recap.test.tsx src/app/_components/daily-recap-panel.test.tsx`; belt: `set CI=true && pnpm test:e2e:belt --grep daily-work-timing-recap`.
 - **Reference tests**: `recap.integration.test.ts` `getDaily returns recap rows from seeded cycles`; `daily-recap-panel.test.tsx` dismiss + `aria-expanded` toggles; belt spec `shows last 24h recap row after work cycle, dismiss hides panel, footprint on focus`.
 
