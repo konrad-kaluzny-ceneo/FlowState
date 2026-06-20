@@ -3,7 +3,7 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-06-19
+updated: 2026-06-20
 structure: split
 active_slices: []
 prd_version: 3
@@ -75,15 +75,15 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | F-06 | serene-pastel-rebrand | [FLO-62](https://linear.app/flowstate-10xdev/issue/FLO-62) | [#97](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/97) | (foundation) Serene Pastel tokens | F-04, S-13 | Secondary | done |
 | S-28 | wellness-illustration-foundation | [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) | [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98) | Calm Garden illustrations + overlay phase 2 | F-06 | Secondary | ready |
 | S-29 | task-create-persona-presets | [FLO-64](https://linear.app/flowstate-10xdev/issue/FLO-64) | [#105](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/105) | persona presets + Custom expand | F-05, F-06, S-13 | **US-02** | done |
-| S-30 | daily-work-timing-recap | [FLO-65](https://linear.app/flowstate-10xdev/issue/FLO-65) | [#106](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/106) | light timing recap; dismissible footprint | S-02, S-18 | **US-03** | ready |
+| S-30 | daily-work-timing-recap | [FLO-65](https://linear.app/flowstate-10xdev/issue/FLO-65) | [#106](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/106) | light timing recap; dismissible footprint | S-02, S-18 | **US-03** | in review |
 | S-31 | work-focus-shell | [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) | [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107) | WORK cycle focus shell | S-13, F-06 | Secondary | ready |
 | F-07 | wedge-transition-conductor | [FLO-71](https://linear.app/flowstate-10xdev/issue/FLO-71) | [#114](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/114) | (foundation) max 1 interstitial + 1 gate; return handoff before kickoff | B-05, B-06, S-12, S-19 | **US-01** | done |
 | S-32 | create-wedge-trust-bridge | [FLO-72](https://linear.app/flowstate-10xdev/issue/FLO-72) | [#115](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/115) | first suggestion cites persona preset in rationale | S-36, F-05, S-06 | **US-02** | done |
-| S-33 | break-restoration-atmosphere | — | — | home break atmosphere during breaks | F-06, S-13, F-07 | US-01 craft | proposed |
+| S-33 | break-restoration-atmosphere | [FLO-85](https://linear.app/flowstate-10xdev/issue/FLO-85) | [#143](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/143) | home break atmosphere during breaks | F-06, S-13, F-07 | US-01 craft | proposed |
 | S-34 | optimistic-wedge-transitions | [FLO-73](https://linear.app/flowstate-10xdev/issue/FLO-73) | [#116](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/116) | optimistic check-in → suggestion ≤200ms | F-07, S-06, S-09, S-25 | **US-01** | done |
 | S-35 | wedge-transition-sync-recovery | [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) | [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) | calm network-loss recovery on wedge gates | F-07, S-06, S-22 | **US-01** | proposed |
 | S-36 | persona-presets-v2 | [FLO-75](https://linear.app/flowstate-10xdev/issue/FLO-75) | [#118](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/118) | 8 personas + row labels + visible effort | S-29, F-05 | **US-02** | done |
-| S-37 | revisit-user-choices | — | [#132](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/132) | see and change prior choices (MVP: out-of-tab notification prefs on timer hub) | break-alerts-out-of-tab (merged) | revisit-user-choices PRD thread | done |
+| S-37 | revisit-user-choices | [FLO-80](https://linear.app/flowstate-10xdev/issue/FLO-80) | [#132](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/132) | see and change prior choices (MVP: out-of-tab notification prefs on timer hub) | break-alerts-out-of-tab (merged) | revisit-user-choices PRD thread | done |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -173,5 +173,6 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **session-entry-wedge-bugs (ad-hoc)** — Inline steering cards, Continue row, timeout closure + `lastFocusedTaskId`; removed ReturnHandoffBanner. Archived 2026-06-20 → `context/archive/2026-06-20-session-entry-wedge-bugs/`. PR [#141](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/141). Issues [FLO-84](https://linear.app/flowstate-10xdev/issue/FLO-84) / [#142](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/142). Lesson: inline steering + conductor beats overlay stacks; `steeringCompletedRef` on both energy and focus handlers.
 - **S-37: revisit user choices (notification preference revisit MVP)** — Archived 2026-06-19 → `context/archive/2026-06-19-revisit-user-choices/`. PR [#140](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/140). Lesson: 3-state readout + timer-hub placement completes break-alerts revisit path.
 - **S-27: daily standing + focus-hours budget** — Archived 2026-06-19 → `context/archive/2026-06-19-daily-standing-tasks-capacity-plan/`. Lesson: —.
