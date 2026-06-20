@@ -1,8 +1,8 @@
-# Session Entry Wedge Bugs Implementation Plan
+﻿# Session Entry Wedge Bugs Implementation Plan
 
 ## Overview
 
-Fix session-entry wedge failures: replace blocking kickoff/focus popups with one inline steering Card (energy + session focus), wire focus into kickoff scoring, relocate Continue context to the last-focused task row, and fix false “0 cycles” closure on timeout return. Single refactor — no interim popup hotfix.
+Fix session-entry wedge failures: replace blocking kickoff/focus popups with one inline steering Card (energy + session focus), wire focus into kickoff scoring, relocate Continue context to the last-focused task row, and fix false â€œ0 cyclesâ€ closure on timeout return. Single refactor â€” no interim popup hotfix.
 
 ## Current State Analysis
 
@@ -17,18 +17,18 @@ Frame brief (`frame.md`) confirms four independent defects:
 
 ### Key Discoveries
 
-- F-07 conductor gates `kickoff_readiness` and `cycle_intention` as blocking overlays (`transition-conductor.ts:61-67`) — inline steering requires retiring those gates for entry.
-- `TaskList` already supports `highlightedTaskId` ring for suggestion (`task-list.tsx:449-454`) — reuse for Continue row styling.
-- `ScoringContext` has `TYPE_FIT` energy×workType matrix (`score-task.ts:24-28`) — session-intention work-type boost follows same pattern.
-- E2E belt `session-return-handoff.spec.ts` asserts banner blocks suggestion — must be rewritten.
+- F-07 conductor gates `kickoff_readiness` and `cycle_intention` as blocking overlays (`transition-conductor.ts:61-67`) â€” inline steering requires retiring those gates for entry.
+- `TaskList` already supports `highlightedTaskId` ring for suggestion (`task-list.tsx:449-454`) â€” reuse for Continue row styling.
+- `ScoringContext` has `TYPE_FIT` energyÃ—workType matrix (`score-task.ts:24-28`) â€” session-intention work-type boost follows same pattern.
+- E2E belt `session-return-handoff.spec.ts` asserts banner blocks suggestion â€” must be rewritten.
 
 ## Desired End State
 
-1. Idle kickoff-eligible user sees **inline** `SessionSteeringCard` (energy + focus chips + optional custom line) — no full-screen scrim.
-2. No interaction within ~1s → implicit Skip (STEADY, no intention) → kickoff `suggestion.next` fetch ≤200ms perceived clear of steering card (L-04).
-3. Session focus chips bias kickoff scoring via work-type boost (user decision: map chip → workType).
+1. Idle kickoff-eligible user sees **inline** `SessionSteeringCard` (energy + focus chips + optional custom line) â€” no full-screen scrim.
+2. No interaction within ~1s â†’ implicit Skip (STEADY, no intention) â†’ kickoff `suggestion.next` fetch â‰¤200ms perceived clear of steering card (L-04).
+3. Session focus chips bias kickoff scoring via work-type boost (user decision: map chip â†’ workType).
 4. First `start()` does **not** reopen focus popup; intention already captured at entry.
-5. After ended session with `lastFocusedTaskId`, matching task row shows ring + “Continue here” subtitle with icon (no resume note on that row).
+5. After ended session with `lastFocusedTaskId`, matching task row shows ring + â€œContinue hereâ€ subtitle with icon (no resume note on that row).
 6. No `ReturnHandoffBanner`; kickoff suggestion card loads without dismiss step.
 7. Timeout-ended sessions persist `closureLine` server-side; client hydrate does not rebuild from zeroed counters.
 8. Verification: `pnpm check`, `pnpm test`, `set CI=true && pnpm test:e2e:belt` (handoff + kickoff specs updated).
@@ -40,18 +40,18 @@ Frame brief (`frame.md`) confirms four independent defects:
 - Resume note on Continue row (user: short reminder only)
 - 8h threshold for Continue row visibility (show whenever last ended session has `lastFocusedTaskId`)
 - Scoring ML changes or new suggestion router
-- Guest-mode kickoff suggestion (unchanged FR boundary) — guest gets `lastFocusedTaskId` on session blob for Continue row parity only
+- Guest-mode kickoff suggestion (unchanged FR boundary) â€” guest gets `lastFocusedTaskId` on session blob for Continue row parity only
 - Roadmap doc / Linear sync (unless user requests)
 
 ## Implementation Approach
 
-Four phases: (1) persist last focus + closure on timeout, (2) inline steering + scoring wire + overlay removal, (3) Continue row + banner/conductor cleanup, (4) tests + docs. Phases 2–3 touch the same dashboard/hook files — implement sequentially in one branch.
+Four phases: (1) persist last focus + closure on timeout, (2) inline steering + scoring wire + overlay removal, (3) Continue row + banner/conductor cleanup, (4) tests + docs. Phases 2â€“3 touch the same dashboard/hook files â€” implement sequentially in one branch.
 
 ## Critical Implementation Details
 
 **Steering is not a conductor gate.** `SessionSteeringCard` renders inline when `kickoffEligible && !steeringCompleted`; it must not register in `GATE_PRIORITY`. Remove `kickoff_readiness` and entry-time `cycle_intention` from active conductor paths once steering ships.
 
-**Permission prompt ordering.** `BreakAlertsPermissionPrompt` runs after steering completes and before the first `start()` that would start the worker — never while steering card is visible. Deferral pattern in `pomodoro-dashboard.tsx` must not leave a stuck boolean gate.
+**Permission prompt ordering.** `BreakAlertsPermissionPrompt` runs after steering completes and before the first `start()` that would start the worker â€” never while steering card is visible. Deferral pattern in `pomodoro-dashboard.tsx` must not leave a stuck boolean gate.
 
 **`lastFocusedTaskId` snapshot.** Update on every successful `selectTask` while `hasActiveSession`; on `endSession` and server timeout, persist current `focusedTaskId` if set. Timeout path in `active-session.ts` must read last focused task from cycles or session column before ending.
 
@@ -107,7 +107,7 @@ Add durable last-focus memory and server-side closure line for timeout-ended ses
 
 **Files**: `src/server/api/routers/session.test.ts`, `src/server/api/lib/active-session.test.ts` (new if needed), `src/hooks/use-pomodoro-cycle.test.tsx`
 
-**Intent**: Timeout persists non-null `closureLine`; `getLastEnded` exposes `lastFocusedTaskId`; hydrate does not show “0 cycles” when server line exists.
+**Intent**: Timeout persists non-null `closureLine`; `getLastEnded` exposes `lastFocusedTaskId`; hydrate does not show â€œ0 cyclesâ€ when server line exists.
 
 ### Success Criteria:
 
@@ -120,8 +120,8 @@ Add durable last-focus memory and server-side closure line for timeout-ended ses
 
 #### Manual Verification:
 
-- End session with focused task → reload → `getLastEnded` shows correct `lastFocusedTaskId`
-- Simulate timeout (or test hook) → closure line is not “0 cycles” when work occurred
+- End session with focused task â†’ reload â†’ `getLastEnded` shows correct `lastFocusedTaskId`
+- Simulate timeout (or test hook) â†’ closure line is not â€œ0 cyclesâ€ when work occurred
 
 ---
 
@@ -133,13 +133,13 @@ Replace kickoff/focus popups with inline Card; pass intention into kickoff score
 
 ### Changes Required:
 
-#### 1. Chip → workType map
+#### 1. Chip â†’ workType map
 
 **File**: `src/lib/session/narrative-copy.ts`
 
 **Intent**: Central map from intention chip to scoring work-type preference.
 
-**Contract**: Export `INTENTION_CHIP_WORK_TYPE_MAP: Record<string, WorkType>` — e.g. Deep work → `DEEP_WORK`, Clear inbox → `OPERATIONAL`, Ship a feature → `DEEP_WORK` (document mapping in comment).
+**Contract**: Export `INTENTION_CHIP_WORK_TYPE_MAP: Record<string, WorkType>` â€” e.g. Deep work â†’ `DEEP_WORK`, Clear inbox â†’ `OPERATIONAL`, Ship a feature â†’ `DEEP_WORK` (document mapping in comment).
 
 #### 2. Scoring context
 
@@ -155,7 +155,7 @@ Replace kickoff/focus popups with inline Card; pass intention into kickoff score
 
 **Intent**: Kickoff context accepts optional session intention string; map to `preferredWorkType` for `pickBestTask`.
 
-**Contract**: Extend kickoff branch of `nextInputSchema` with `sessionIntention: z.string().max(80).optional()`; map via `INTENTION_CHIP_WORK_TYPE_MAP` (custom text: no boost or heuristic — default no boost).
+**Contract**: Extend kickoff branch of `nextInputSchema` with `sessionIntention: z.string().max(80).optional()`; map via `INTENTION_CHIP_WORK_TYPE_MAP` (custom text: no boost or heuristic â€” default no boost).
 
 #### 4. SessionSteeringCard component
 
@@ -169,7 +169,7 @@ Replace kickoff/focus popups with inline Card; pass intention into kickoff score
 
 **Files**: `src/hooks/use-pomodoro-cycle.ts`, `src/app/_components/pomodoro-dashboard.tsx`
 
-**Intent**: On `kickoffEligible`, show steering card; ~1s auto-skip timer → STEADY + no intention → `fetchKickoffSuggestion`; remove `awaitingKickoffReadiness` overlay path and `awaitingCycleIntention` on `start()`; pass `sessionIntention` to kickoff mutate.
+**Intent**: On `kickoffEligible`, show steering card; ~1s auto-skip timer â†’ STEADY + no intention â†’ `fetchKickoffSuggestion`; remove `awaitingKickoffReadiness` overlay path and `awaitingCycleIntention` on `start()`; pass `sessionIntention` to kickoff mutate.
 
 **Contract**: `fetchKickoffSuggestion(sessionId, energy, sessionIntention?)`; delete render of `KickoffReadinessOverlay` and `CycleIntentionPrompt` for kickoff/entry; `start()` no longer sets `awaitingCycleIntention`.
 
@@ -185,7 +185,7 @@ Replace kickoff/focus popups with inline Card; pass intention into kickoff score
 
 **File**: `src/app/_components/pomodoro-dashboard.tsx`
 
-**Intent**: Show break-alerts permission after steering completes, before `start()` — never hidden behind a non-existent overlay gate.
+**Intent**: Show break-alerts permission after steering completes, before `start()` â€” never hidden behind a non-existent overlay gate.
 
 **Contract**: `permissionPromptVisible` independent of removed `showCycleIntention`.
 
@@ -202,9 +202,9 @@ Replace kickoff/focus popups with inline Card; pass intention into kickoff score
 
 #### Manual Verification:
 
-- Idle with tasks → inline steering card (not popup); chips respond; auto-skip after ~1s fetches suggestion
+- Idle with tasks â†’ inline steering card (not popup); chips respond; auto-skip after ~1s fetches suggestion
 - Custom focus chip changes suggested task class vs no intention (smoke)
-- Start cycle → no second focus popup
+- Start cycle â†’ no second focus popup
 
 ---
 
@@ -222,7 +222,7 @@ Relocate Continue semantics to list row; remove banner and pol-10 kickoff block.
 
 **Intent**: Replace `pickHandoffTaskContext` list-order fallback with `lastFocusedTaskId` from ended session.
 
-**Contract**: New `resolveContinueTaskId(lastEnded, tasks): DomainTaskId | null` — returns id only if task still active; no banner line composition for task title.
+**Contract**: New `resolveContinueTaskId(lastEnded, tasks): DomainTaskId | null` â€” returns id only if task still active; no banner line composition for task title.
 
 #### 2. Hook exposure
 
@@ -236,7 +236,7 @@ Relocate Continue semantics to list row; remove banner and pol-10 kickoff block.
 
 **File**: `src/app/_components/task-list.tsx`, `task-list.test.tsx`
 
-**Intent**: When `continueTaskId === task.id`, show accent ring (reuse suggestion ring token) + subtitle row with icon + “Continue here” under title; **no** resume note on Continue row.
+**Intent**: When `continueTaskId === task.id`, show accent ring (reuse suggestion ring token) + subtitle row with icon + â€œContinue hereâ€ under title; **no** resume note on Continue row.
 
 **Contract**: `data-testid="continue-here-row"` on subtitle; `continueTaskId?: DomainTaskId | null` prop.
 
@@ -264,8 +264,8 @@ Relocate Continue semantics to list row; remove banner and pol-10 kickoff block.
 
 #### Manual Verification:
 
-- Return after ended session → no top banner; suggestion card visible; correct row shows “Continue here”
-- Last focused task not first in list → Continue row on correct task
+- Return after ended session â†’ no top banner; suggestion card visible; correct row shows â€œContinue hereâ€
+- Last focused task not first in list â†’ Continue row on correct task
 
 ---
 
@@ -297,7 +297,7 @@ Update belt specs and product flow doc to match new entry sequence.
 
 **File**: `context/foundation/user-flow.md`
 
-**Intent**: Document inline steering → suggestion → Continue row; remove handoff banner beat and pol-10 defer sequence.
+**Intent**: Document inline steering â†’ suggestion â†’ Continue row; remove handoff banner beat and pol-10 defer sequence.
 
 ### Success Criteria:
 
@@ -308,7 +308,7 @@ Update belt specs and product flow doc to match new entry sequence.
 
 #### Manual Verification:
 
-- Full entry flow on authenticated account: steering → suggestion → continue row → start cycle
+- Full entry flow on authenticated account: steering â†’ suggestion â†’ continue row â†’ start cycle
 
 ---
 
@@ -330,11 +330,11 @@ Update belt specs and product flow doc to match new entry sequence.
 
 ### Manual Testing Steps
 
-1. Fresh auth user with tasks → steering inline → suggestion loads
-2. Pick “Deep work” → suggestion favors deep work type
-3. End session on task B (not first in list) → reload → Continue here on B
-4. Timeout path (or test DB) → no “0 cycles” false closure
-5. Notification permission `default` → steering skip → start → permission prompt once
+1. Fresh auth user with tasks â†’ steering inline â†’ suggestion loads
+2. Pick â€œDeep workâ€ â†’ suggestion favors deep work type
+3. End session on task B (not first in list) â†’ reload â†’ Continue here on B
+4. Timeout path (or test DB) â†’ no â€œ0 cyclesâ€ false closure
+5. Notification permission `default` â†’ steering skip â†’ start â†’ permission prompt once
 
 ## Performance Considerations
 
@@ -343,7 +343,7 @@ Update belt specs and product flow doc to match new entry sequence.
 
 ## Migration Notes
 
-- Prisma migration adds nullable `last_focused_task_id` — backfill not required; Continue row appears after next session end
+- Prisma migration adds nullable `last_focused_task_id` â€” backfill not required; Continue row appears after next session end
 - Remove `flowstate:handoff-dismissed:*` keys optionally (dead code)
 
 ## References
@@ -358,57 +358,57 @@ Update belt specs and product flow doc to match new entry sequence.
 
 ## Progress
 
-> Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
+> Convention: `- [ ]` pending, `- [x]` done. Append ` â€” <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Last focus persistence + closure on timeout
 
 #### Automated
 
-- [x] 1.1 `pnpm prisma migrate dev` applies cleanly
-- [x] 1.2 `pnpm exec vitest run src/server/api/routers/session.test.ts`
-- [x] 1.3 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` (closure hydrate cases)
-- [x] 1.4 `pnpm check` passes
+- [x] 1.1 `pnpm prisma migrate dev` applies cleanly — 228609f
+- [x] 1.2 `pnpm exec vitest run src/server/api/routers/session.test.ts` — 228609f
+- [x] 1.3 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` (closure hydrate cases) — 228609f
+- [x] 1.4 `pnpm check` passes — 228609f
 
 #### Manual
 
-- [x] 1.5 End session with focused task → reload → lastFocusedTaskId correct
-- [x] 1.6 Timeout path → closure line not false “0 cycles”
+- [x] 1.5 End session with focused task â†’ reload â†’ lastFocusedTaskId correct — 228609f
+- [x] 1.6 Timeout path â†’ closure line not false â€œ0 cyclesâ€ — 228609f
 
 ### Phase 2: Inline session steering + scoring wire
 
 #### Automated
 
-- [x] 2.1 `pnpm exec vitest run src/lib/scoring/score-task.test.ts`
-- [x] 2.2 `pnpm exec vitest run src/app/_components/session-steering-card.test.tsx`
-- [x] 2.3 `pnpm exec vitest run src/lib/wedge/transition-conductor.test.ts`
-- [x] 2.4 `pnpm exec vitest run src/app/_components/pomodoro-dashboard.test.tsx`
-- [x] 2.5 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx`
-- [x] 2.6 `pnpm check` passes
+- [x] 2.1 `pnpm exec vitest run src/lib/scoring/score-task.test.ts` — 228609f
+- [x] 2.2 `pnpm exec vitest run src/app/_components/session-steering-card.test.tsx` — 228609f
+- [x] 2.3 `pnpm exec vitest run src/lib/wedge/transition-conductor.test.ts` — 228609f
+- [x] 2.4 `pnpm exec vitest run src/app/_components/pomodoro-dashboard.test.tsx` — 228609f
+- [x] 2.5 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` — 228609f
+- [x] 2.6 `pnpm check` passes — 228609f
 
 #### Manual
 
-- [x] 2.7 Inline steering; chips work; auto-skip ~1s; no focus popup on Start
-- [x] 2.8 Deep work chip biases suggestion (smoke)
+- [x] 2.7 Inline steering; chips work; auto-skip ~1s; no focus popup on Start — 228609f
+- [x] 2.8 Deep work chip biases suggestion (smoke) — 228609f
 
 ### Phase 3: Continue on task row + remove handoff banner
 
 #### Automated
 
-- [x] 3.1 `pnpm exec vitest run src/lib/session/return-handoff.test.ts`
-- [x] 3.2 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
-- [x] 3.3 `pnpm test` passes
+- [x] 3.1 `pnpm exec vitest run src/lib/session/return-handoff.test.ts` — 228609f
+- [x] 3.2 `pnpm exec vitest run src/app/_components/task-list.test.tsx` — 228609f
+- [x] 3.3 `pnpm test` passes — 228609f
 
 #### Manual
 
-- [x] 3.4 No banner; suggestion visible; Continue here on last-focused row
+- [x] 3.4 No banner; suggestion visible; Continue here on last-focused row — 228609f
 
 ### Phase 4: E2E belt + user-flow doc
 
 #### Automated
 
-- [x] 4.1 `set CI=true && pnpm test:e2e:belt` passes
-- [x] 4.2 `pnpm check` passes
+- [x] 4.1 `set CI=true && pnpm test:e2e:belt` passes — 228609f
+- [x] 4.2 `pnpm check` passes — 228609f
 
 #### Manual
 
-- [x] 4.3 Full authenticated entry flow smoke
+- [x] 4.3 Full authenticated entry flow smoke — 228609f
