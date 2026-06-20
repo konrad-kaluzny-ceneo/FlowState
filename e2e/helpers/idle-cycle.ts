@@ -1,7 +1,10 @@
 import { expect, type Page } from "@playwright/test";
 
 import { completeCheckIn } from "./check-in";
-import { dismissKickoffSteeringIfVisible } from "./kickoff";
+import {
+	completeKickoffSteering,
+	dismissKickoffSteeringIfVisible,
+} from "./kickoff";
 import { dismissFirstRunIfVisible } from "./onboarding";
 
 /** @deprecated Use `dismissKickoffSteeringIfVisible` from `./kickoff`. */
@@ -56,8 +59,7 @@ export async function ensureIdleCycle(page: Page) {
 		await dismissFirstRunIfVisible(page);
 
 		if (await page.getByTestId("session-energy-card").isVisible()) {
-			await page.getByTestId("session-energy-skip-btn").click();
-			await page.getByTestId("session-focus-skip-btn").click();
+			await completeKickoffSteering(page, "skip");
 			throw new Error("kickoff steering dismissed — re-check idle");
 		}
 
