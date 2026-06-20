@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { incrementUsedFocusMinutes } from "~/lib/day-plan/increment-used-focus-minutes";
 import { getMinWorkDurationSec } from "~/lib/duration-bounds";
+import { computeCycleFocusedMinutes } from "~/lib/recap/compute-cycle-focused-minutes";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
@@ -215,16 +216,13 @@ export const cycleRouter = createTRPCRouter({
 					input.localDateKey != null &&
 					input.localDateKey.length > 0
 				) {
-					const elapsedSec = Math.min(
-						cycle.configuredDurationSec,
-						Math.max(
-							0,
-							Math.floor(
-								(endedAt.getTime() - cycle.startedAt.getTime()) / 1000,
-							),
-						),
-					);
-					const minutes = Math.max(1, Math.ceil(elapsedSec / 60));
+					const minutes = computeCycleFocusedMinutes({
+						kind: cycle.kind,
+						state: "COMPLETED",
+						startedAt: cycle.startedAt,
+						endedAt,
+						configuredDurationSec: cycle.configuredDurationSec,
+					});
 
 					await incrementUsedFocusMinutes(
 						tx,

@@ -25,7 +25,12 @@ type MutationLifecycle<
 		input: TInput,
 		context: TContext | undefined,
 	) => void;
-	onSettled?: () => void;
+	onSettled?: (
+		data?: unknown,
+		error?: unknown,
+		variables?: TInput,
+		context?: TContext,
+	) => void;
 };
 
 const cancelTaskList = vi.fn();
@@ -40,6 +45,7 @@ const setTaskListData = vi.fn(
 	},
 );
 const invalidateTaskList = vi.fn();
+const invalidateDailyRecap = vi.fn();
 
 const taskRepoCreate = vi.fn();
 const taskRepoUpdate = vi.fn();
@@ -83,7 +89,7 @@ async function runMutationLifecycle<TInput, TOutput, TContext>(
 			lifecycle.onError?.(err, mutationInput, context);
 			throw err;
 		} finally {
-			lifecycle.onSettled?.();
+			lifecycle.onSettled?.(result, undefined, mutationInput, context);
 		}
 	});
 	return mutateAsync(input);
@@ -103,7 +109,7 @@ async function runFailingMutationLifecycle<TInput, TContext>(
 			lifecycle.onError?.(error, mutationInput, context);
 			throw error;
 		} finally {
-			lifecycle.onSettled?.();
+			lifecycle.onSettled?.(undefined, err, mutationInput, context);
 		}
 	});
 	await expect(mutateAsync(input)).rejects.toBe(err);
@@ -131,6 +137,11 @@ vi.mock("~/trpc/react", () => ({
 					getData: getTaskListData,
 					setData: setTaskListData,
 					invalidate: invalidateTaskList,
+				},
+			},
+			recap: {
+				getDaily: {
+					invalidate: invalidateDailyRecap,
 				},
 			},
 		}),
@@ -261,10 +272,18 @@ describe("useTaskMutations", () => {
 				{ title: "New task" },
 				context,
 			);
-			mutationLifecycles.create.onSettled?.();
+			mutationLifecycles.create.onSettled?.(
+				serverTask,
+				undefined,
+				{ title: "New task" },
+				context,
+			);
 		});
 
 		expect(taskListCache?.[1]?.id).toBe(42);
+		expect(invalidateDailyRecap).toHaveBeenCalledWith({
+			localDateKey: expect.any(String),
+		});
 		expect(result.current.error).toBeNull();
 	});
 

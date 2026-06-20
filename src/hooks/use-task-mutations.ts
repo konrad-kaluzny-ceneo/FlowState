@@ -162,9 +162,33 @@ export function useTaskMutations() {
 		setError(null);
 	}, []);
 
-	const handleSettled = useCallback(() => {
-		void utils.task.list.invalidate();
-	}, [utils]);
+	const handleSettled = useCallback(
+		(
+			_data: unknown,
+			_error: unknown,
+			variables: unknown,
+			context?: MutationContext,
+		) => {
+			const variableDateKey =
+				variables != null &&
+				typeof variables === "object" &&
+				"localDateKey" in variables &&
+				typeof variables.localDateKey === "string"
+					? variables.localDateKey
+					: undefined;
+			const localDateKey =
+				context?.localDateKey ??
+				variableDateKey ??
+				currentTaskListInput().localDateKey;
+			void utils.task.list.invalidate(
+				localDateKey ? { localDateKey } : undefined,
+			);
+			if (localDateKey) {
+				void utils.recap.getDaily.invalidate({ localDateKey });
+			}
+		},
+		[utils],
+	);
 
 	const handleError = useCallback(
 		(err: unknown, _input: unknown, context: MutationContext | undefined) => {

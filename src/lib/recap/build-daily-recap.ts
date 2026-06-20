@@ -6,7 +6,10 @@ import type {
 	TaskFootprint,
 	TodayPlanRow,
 } from "~/lib/recap/types";
-import { buildSuggestionPool } from "~/lib/suggestion/build-suggestion-pool";
+import {
+	buildSuggestionPool,
+	getDoneTodayTaskIds,
+} from "~/lib/suggestion/build-suggestion-pool";
 import type { db as dbClient } from "~/server/db/index";
 
 type DbClient = typeof dbClient;
@@ -68,12 +71,13 @@ export async function buildDailyRecap(
 
 	last24Hours.sort((a, b) => b.lastEndedAt.getTime() - a.lastEndedAt.getTime());
 
-	const poolTasks = await buildSuggestionPool(db, userId, localDateKey);
-	const completions = await db.taskDayCompletion.findMany({
-		where: { userId, localDateKey },
-		select: { taskId: true },
-	});
-	const doneTodayIds = new Set(completions.map((row) => row.taskId));
+	const doneTodayIds = await getDoneTodayTaskIds(db, userId, localDateKey);
+	const poolTasks = await buildSuggestionPool(
+		db,
+		userId,
+		localDateKey,
+		doneTodayIds,
+	);
 
 	const todayPlan: TodayPlanRow[] = poolTasks.map((task) => ({
 		taskId: task.id,
