@@ -1,5 +1,6 @@
 import type { Session } from "~/lib/persistence/prisma/client-types";
 
+import { computeSessionEndMetadata } from "~/server/api/lib/session-end-metadata";
 import type { db } from "~/server/db/index";
 
 type Db = typeof db;
@@ -23,11 +24,21 @@ export async function findOrCreateActiveSession(
 		const lastActivity = existing.lastActivityAt.getTime();
 
 		if (now - lastActivity > SESSION_INACTIVITY_TIMEOUT_MS) {
+			const { closureLine, lastFocusedTaskId } =
+				await computeSessionEndMetadata(
+					database,
+					userId,
+					existing.id,
+					"timeout",
+				);
+
 			await database.session.update({
 				where: { id: existing.id },
 				data: {
 					state: "ENDED_BY_TIMEOUT",
 					endedAt: new Date(),
+					closureLine,
+					lastFocusedTaskId,
 				},
 			});
 

@@ -26,7 +26,7 @@ test.describe("Mid-cycle last task (Risk #3)", () => {
 		await page.reload();
 		await cleanReload;
 		await resetCycleRecoveryAfterReload(page);
-		if (await page.getByTestId("kickoff-readiness-overlay").isVisible()) {
+		if (await page.getByTestId("session-energy-card").isVisible()) {
 			await completeKickoffReadiness(page, "skip");
 		}
 	});

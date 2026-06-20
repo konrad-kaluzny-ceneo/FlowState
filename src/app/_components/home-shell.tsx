@@ -9,7 +9,6 @@ import {
 } from "~/app/_components/guest-merge-ui-context";
 import { MergeSuccessOverlay } from "~/app/_components/merge-success-overlay";
 import { PomodoroDashboard } from "~/app/_components/pomodoro-dashboard";
-import { ReturnHandoffBannerMount } from "~/app/_components/return-handoff-banner-mount";
 import {
 	OnboardingProvider,
 	useOnboarding,
@@ -59,7 +58,6 @@ function HomeShellContent({ isAuthenticated }: { isAuthenticated: boolean }) {
 			/>
 			<main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-shell-top to-shell-bottom text-primary">
 				<div className="container flex flex-col items-center justify-center gap-8 px-4 py-16">
-					<ReturnHandoffBannerMount isAuthenticated={isAuthenticated} />
 					<header className="space-y-2 text-center">
 						<h1 className="font-semibold text-4xl tracking-tight">FlowState</h1>
 						<p className="text-sm text-text-secondary">

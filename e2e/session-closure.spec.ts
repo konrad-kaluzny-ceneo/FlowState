@@ -53,7 +53,7 @@ test.describe("Session closure (S-17)", () => {
 
 		await page.getByTestId("session-closure-dismiss-btn").click();
 		await expect(page.getByTestId("session-closure-overlay")).toBeHidden();
-		await expect(page.getByTestId("kickoff-readiness-overlay")).toHaveCount(0);
+		await expect(page.getByTestId("session-energy-card")).toHaveCount(0);
 		await expect(page.getByTestId("end-session-btn")).toBeHidden();
 	});
 });

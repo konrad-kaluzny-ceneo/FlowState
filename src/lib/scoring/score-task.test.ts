@@ -367,4 +367,26 @@ describe("scoreTask", () => {
 			scoreTask(heavy, context),
 		);
 	});
+
+	it("boosts tasks matching session-intention preferred work type", () => {
+		const deep = mkTask({
+			id: 1,
+			workType: "DEEP_WORK",
+			urgency: 2,
+			sortOrder: 0,
+		});
+		const operational = mkTask({
+			id: 2,
+			workType: "OPERATIONAL",
+			urgency: 2,
+			sortOrder: 1,
+		});
+		const withoutPreference = pickBestTask([operational, deep], steadyContext);
+		const withDeepPreference = pickBestTask([operational, deep], {
+			...steadyContext,
+			preferredWorkType: "DEEP_WORK",
+		});
+		expect(withoutPreference?.id).toBe(2);
+		expect(withDeepPreference?.id).toBe(1);
+	});
 });

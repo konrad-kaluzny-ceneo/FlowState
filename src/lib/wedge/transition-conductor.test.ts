@@ -15,36 +15,21 @@ const baseInput: WedgeConductorInput = {
 	awaitingCheckIn: false,
 	awaitingWindDown: false,
 	windDownRationale: null,
-	awaitingKickoffReadiness: false,
-	awaitingCycleIntention: false,
 	isPostCheckInTransitioning: false,
 	activeCycle: null,
-	returnHandoffGateOpen: false,
 	cyclePaused: false,
 	state: "idle",
 };
 
 describe("resolveWedgeBeat", () => {
-	it("shows session closure over kickoff readiness (T-01)", () => {
+	it("shows session closure on idle entry (T-01)", () => {
 		const result = resolveWedgeBeat({
 			...baseInput,
 			pendingClosureLine: "Session complete — take a breath.",
-			awaitingKickoffReadiness: true,
 		});
 
 		expect(result.activeGate).toBe("session_closure");
 		expect(result.showSessionClosure).toBe(true);
-		expect(result.showKickoffReadiness).toBe(false);
-	});
-
-	it("blocks kickoff when return handoff gate is open (pol-10 / T-06)", () => {
-		const result = resolveWedgeBeat({
-			...baseInput,
-			returnHandoffGateOpen: true,
-			awaitingKickoffReadiness: true,
-		});
-
-		expect(result.showKickoffReadiness).toBe(false);
 	});
 
 	it("prefers wind-down over check-in", () => {
@@ -61,16 +46,14 @@ describe("resolveWedgeBeat", () => {
 		expect(result.showCheckIn).toBe(false);
 	});
 
-	it("prefers check-in over kickoff readiness", () => {
+	it("shows check-in when no higher gate active", () => {
 		const result = resolveWedgeBeat({
 			...baseInput,
 			awaitingCheckIn: true,
 			activeCycle: { id: 1 },
-			awaitingKickoffReadiness: true,
 		});
 
 		expect(result.activeGate).toBe("check_in");
-		expect(result.showKickoffReadiness).toBe(false);
 	});
 
 	it("shows cycle complete when no higher gate active", () => {
@@ -83,6 +66,33 @@ describe("resolveWedgeBeat", () => {
 		expect(result.showCycleComplete).toBe(true);
 	});
 
+	it("prefers cycle complete over stale session closure during work beat", () => {
+		const result = resolveWedgeBeat({
+			...baseInput,
+			pendingClosureLine: "Session complete — 2 cycles. Take a breath.",
+			state: "completed",
+			activeCycle: { id: 42 },
+		});
+
+		expect(result.activeGate).toBe("cycle_complete");
+		expect(result.showSessionClosure).toBe(false);
+		expect(result.showCycleComplete).toBe(true);
+	});
+
+	it("prefers check-in over stale session closure after cycle complete confirm", () => {
+		const result = resolveWedgeBeat({
+			...baseInput,
+			pendingClosureLine: "Session complete — 2 cycles. Take a breath.",
+			state: "completed",
+			activeCycle: { id: 42 },
+			awaitingCheckIn: true,
+		});
+
+		expect(result.activeGate).toBe("check_in");
+		expect(result.showSessionClosure).toBe(false);
+		expect(result.showCheckIn).toBe(true);
+	});
+
 	it("suppresses all gates when cycle is paused (pol-12)", () => {
 		const result = resolveWedgeBeat({
 			...baseInput,
@@ -92,8 +102,6 @@ describe("resolveWedgeBeat", () => {
 			windDownRationale: "You've been at it for a while.",
 			awaitingCheckIn: true,
 			activeCycle: { id: 1 },
-			awaitingKickoffReadiness: true,
-			awaitingCycleIntention: true,
 			state: "completed",
 		});
 
@@ -101,8 +109,6 @@ describe("resolveWedgeBeat", () => {
 		expect(result.showSessionClosure).toBe(false);
 		expect(result.showWindDown).toBe(false);
 		expect(result.showCheckIn).toBe(false);
-		expect(result.showCycleIntention).toBe(false);
-		expect(result.showKickoffReadiness).toBe(false);
 		expect(result.showCycleComplete).toBe(false);
 	});
 });
@@ -121,18 +127,8 @@ describe("computeKickoffEligible", () => {
 		hasActiveTasks: true,
 		sessionStartIdleFlag: true,
 		postBreakIdleFlag: false,
-		returnHandoffGateOpen: false,
 		cyclePaused: false,
 	};
-
-	it("returns false when return handoff gate is open (pol-10)", () => {
-		expect(
-			computeKickoffEligible({
-				...baseKickoff,
-				returnHandoffGateOpen: true,
-			}),
-		).toBe(false);
-	});
 
 	it("returns false when closure pending", () => {
 		expect(

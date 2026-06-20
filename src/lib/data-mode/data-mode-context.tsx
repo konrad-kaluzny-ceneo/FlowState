@@ -100,9 +100,13 @@ export function DataModeProvider({
 					mutate: () => utils.client.session.getOrCreateActive.mutate(),
 				},
 				end: {
-					mutate: (input?: { closureLine?: string | null }) =>
+					mutate: (input?: {
+						closureLine?: string | null;
+						lastFocusedTaskId?: number;
+					}) =>
 						utils.client.session.end.mutate({
 							closureLine: input?.closureLine ?? undefined,
+							lastFocusedTaskId: input?.lastFocusedTaskId ?? undefined,
 						}),
 				},
 			},

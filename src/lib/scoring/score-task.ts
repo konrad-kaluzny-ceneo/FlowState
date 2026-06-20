@@ -6,6 +6,7 @@ export type ScoringContext = {
 	interruptionCount: number;
 	localHour: number;
 	lastOverrideWorkType?: WorkType;
+	preferredWorkType?: WorkType;
 	remainingFocusMinutes?: number | null;
 };
 
@@ -60,6 +61,13 @@ export function scoreTask(task: ScoringTask, context: ScoringContext): number {
 	let score = computeEisenhowerBase(task, context);
 
 	score *= TYPE_FIT[context.energy][task.workType];
+
+	if (
+		context.preferredWorkType != null &&
+		task.workType === context.preferredWorkType
+	) {
+		score *= 1.2;
+	}
 
 	if (context.completedWorkCycles >= 4) {
 		score *= task.workType === "DEEP_WORK" ? 0.75 : 1.1;

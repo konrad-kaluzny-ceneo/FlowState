@@ -1,15 +1,16 @@
 /**
- * Risk: S-17 / FR-040 — 8h return handoff banner composes closure + resume note
+ * Risk: S-17 / FR-040 — continue row + kickoff after ended session (no top banner)
  * Modeled on: e2e/session-closure.spec.ts
  */
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
+import { completeKickoffSteering } from "./helpers/kickoff";
 import { dismissFirstRunIfVisible } from "./helpers/onboarding";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import { addTask, startFocusedWorkCycle } from "./helpers/work-cycle";
 
-test.describe("Session return handoff (S-17)", () => {
+test.describe("Session return continue row (S-17)", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
 		await expect(page.getByTestId("task-list")).toBeVisible();
@@ -26,12 +27,12 @@ test.describe("Session return handoff (S-17)", () => {
 		await dismissFirstRunIfVisible(page);
 	});
 
-	test("shows dismissible handoff after 8h since last session end", async ({
+	test("shows continue row and kickoff suggestion without handoff banner", async ({
 		page,
 	}) => {
 		test.setTimeout(90_000);
 
-		const taskTitle = `E2E Handoff ${Date.now()}`;
+		const taskTitle = `E2E Continue ${Date.now()}`;
 
 		await addTask(page, taskTitle);
 
@@ -63,16 +64,23 @@ test.describe("Session return handoff (S-17)", () => {
 		});
 		await dismissFirstRunIfVisible(page);
 
-		await expect(page.getByTestId("return-handoff-banner")).toBeVisible({
+		await expect(page.getByTestId("return-handoff-banner")).toHaveCount(0);
+		await expect(page.getByTestId("session-energy-card")).toBeVisible({
 			timeout: 15_000,
 		});
-		await expect(page.getByTestId("kickoff-readiness-overlay")).toHaveCount(0);
-		await expect(page.getByTestId("return-handoff-line")).toContainText(
-			/Continue:|Session complete/,
-		);
-		await expect(page.getByTestId("task-suggestion-card")).toBeHidden();
 
-		await page.getByTestId("return-handoff-dismiss-btn").click();
-		await expect(page.getByTestId("return-handoff-banner")).toBeHidden();
+		const taskRow = page
+			.getByRole("listitem")
+			.filter({ hasText: taskTitle })
+			.first();
+		await expect(taskRow.getByTestId("continue-here-row")).toBeVisible({
+			timeout: 15_000,
+		});
+
+		await completeKickoffSteering(page, "skip");
+
+		await expect(page.getByTestId("task-suggestion-card")).toBeVisible({
+			timeout: 20_000,
+		});
 	});
 });

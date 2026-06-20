@@ -12,12 +12,14 @@ import {
 import { BreakAlertsPermissionPrompt } from "~/app/_components/break-alerts-permission-prompt";
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
-import { CycleIntentionPrompt } from "~/app/_components/cycle-intention-prompt";
 import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
-import { KickoffReadinessOverlay } from "~/app/_components/kickoff-readiness-overlay";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
+import {
+	SessionEnergyCard,
+	SessionFocusCard,
+} from "~/app/_components/session-steering-card";
 import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
 import { TaskList } from "~/app/_components/task-list";
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
@@ -102,14 +104,16 @@ export function PomodoroDashboardBody({
 		getCycleEndAudioMode,
 		getOutOfTabBreakAlertsEnabled,
 		activeTaskIds,
+		continueTasks: tasks.map((task) => ({
+			id: task.id,
+			status: task.status,
+		})),
 	});
 	useE2eExposeCycleRecovery();
 
-	type PendingStartAction =
-		| { kind: "start"; durationSec: number }
-		| { kind: "submit-intention"; intention: string | null };
+	type PendingStartAction = { kind: "start"; durationSec: number };
 
-	const cycleIntentionCompletedRef = useRef(false);
+	const steeringCompletedRef = useRef(false);
 	const [permissionPromptVisible, setPermissionPromptVisible] = useState(false);
 	const [pendingStartAction, setPendingStartAction] =
 		useState<PendingStartAction | null>(null);
@@ -135,17 +139,12 @@ export function PomodoroDashboardBody({
 			return;
 		}
 
-		if (pending.kind === "start") {
-			await pomodoro.start(pending.durationSec);
-			return;
-		}
-
-		await pomodoro.submitCycleIntention(pending.intention);
+		await pomodoro.start(pending.durationSec);
 	}, [pendingStartAction, pomodoro]);
 
 	const handleStartWithPermission = useCallback(
 		async (durationSec: number) => {
-			if (needsPermissionPrompt() && cycleIntentionCompletedRef.current) {
+			if (needsPermissionPrompt() && steeringCompletedRef.current) {
 				setPendingStartAction({ kind: "start", durationSec });
 				setPermissionPromptVisible(true);
 				return;
@@ -156,24 +155,31 @@ export function PomodoroDashboardBody({
 		[needsPermissionPrompt, pomodoro],
 	);
 
-	const handleSubmitCycleIntention = useCallback(
-		async (intention: string | null) => {
-			cycleIntentionCompletedRef.current = true;
-
-			if (needsPermissionPrompt()) {
-				setPendingStartAction({ kind: "submit-intention", intention });
-				setPermissionPromptVisible(true);
-				return;
-			}
-
-			await pomodoro.submitCycleIntention(intention);
+	const handleCompleteEnergy = useCallback(
+		(energy: "FOCUSED" | "STEADY" | "FADING") => {
+			steeringCompletedRef.current = true;
+			pomodoro.completeSessionEnergy(energy);
 		},
-		[needsPermissionPrompt, pomodoro],
+		[pomodoro],
 	);
 
-	const handleSkipCycleIntention = useCallback(async () => {
-		await handleSubmitCycleIntention(null);
-	}, [handleSubmitCycleIntention]);
+	const handleSkipEnergy = useCallback(() => {
+		steeringCompletedRef.current = true;
+		pomodoro.skipSessionEnergy();
+	}, [pomodoro]);
+
+	const handleCompleteFocus = useCallback(
+		(intention: string) => {
+			steeringCompletedRef.current = true;
+			pomodoro.completeSessionFocus(intention);
+		},
+		[pomodoro],
+	);
+
+	const handleSkipFocus = useCallback(() => {
+		steeringCompletedRef.current = true;
+		pomodoro.skipSessionFocus();
+	}, [pomodoro]);
 
 	const dismissPermissionPrompt = useCallback(() => {
 		writeNotificationPromptDismissed(onboardingScope, true);
@@ -219,7 +225,9 @@ export function PomodoroDashboardBody({
 		pomodoro.state === "idle" &&
 		pomodoro.focusedTaskId == null &&
 		pomodoro.pendingKickoffSuggestion.status !== "idle" &&
-		!showSuggestionCard;
+		!showSuggestionCard &&
+		!pomodoro.showSessionEnergy &&
+		!pomodoro.showSessionFocus;
 
 	const highlightedTaskId = showKickoffCard
 		? pomodoro.kickoffSuggestedTaskId
@@ -253,11 +261,8 @@ export function PomodoroDashboardBody({
 				awaitingCheckIn: pomodoro.awaitingCheckIn,
 				awaitingWindDown: pomodoro.awaitingWindDown,
 				windDownRationale: pomodoro.windDownRationale,
-				awaitingKickoffReadiness: pomodoro.awaitingKickoffReadiness,
-				awaitingCycleIntention: pomodoro.awaitingCycleIntention,
 				isPostCheckInTransitioning: pomodoro.isPostCheckInTransitioning,
 				activeCycle: pomodoro.activeCycle,
-				returnHandoffGateOpen: pomodoro.returnHandoffGateOpen,
 				cyclePaused,
 				state: pomodoro.state,
 			}),
@@ -269,11 +274,8 @@ export function PomodoroDashboardBody({
 			pomodoro.awaitingCheckIn,
 			pomodoro.awaitingWindDown,
 			pomodoro.windDownRationale,
-			pomodoro.awaitingKickoffReadiness,
-			pomodoro.awaitingCycleIntention,
 			pomodoro.isPostCheckInTransitioning,
 			pomodoro.activeCycle,
-			pomodoro.returnHandoffGateOpen,
 			pomodoro.state,
 			cyclePaused,
 		],
@@ -307,9 +309,7 @@ export function PomodoroDashboardBody({
 		!cyclePaused &&
 		pomodoro.inFlowSummaryLine != null &&
 		!wedgeGateActive &&
-		!showSuggestionCard &&
-		!showKickoffCard &&
-		!pomodoro.awaitingCycleIntention;
+		!showSuggestionCard;
 
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8">
@@ -328,6 +328,31 @@ export function PomodoroDashboardBody({
 						Dismiss
 					</button>
 				</div>
+			)}
+
+			{enableSuggestionGate && pomodoro.showSessionEnergy && (
+				<SessionEnergyCard
+					disabled={pomodoro.sessionSteeringSubmitting}
+					onSelect={handleCompleteEnergy}
+					onSkip={handleSkipEnergy}
+				/>
+			)}
+
+			{enableSuggestionGate && pomodoro.showSessionFocus && (
+				<SessionFocusCard
+					isSubmitting={pomodoro.sessionSteeringSubmitting}
+					onComplete={handleCompleteFocus}
+					onSkip={handleSkipFocus}
+				/>
+			)}
+
+			{showInFlowSummary && (
+				<p
+					className="w-full max-w-lg rounded-lg border border-border-subtle bg-surface-panel/50 px-4 py-2 text-center text-sm text-text-secondary"
+					data-testid="session-inflow-summary"
+				>
+					{pomodoro.inFlowSummaryLine}
+				</p>
 			)}
 
 			{showKickoffDurationChips &&
@@ -365,15 +390,6 @@ export function PomodoroDashboardBody({
 					remainingMs={pomodoro.remainingMs}
 					state={pomodoro.state}
 				/>
-			)}
-
-			{showInFlowSummary && (
-				<p
-					className="w-full max-w-lg rounded-lg border border-border-subtle bg-surface-panel/50 px-4 py-2 text-center text-sm text-text-secondary"
-					data-testid="session-inflow-summary"
-				>
-					{pomodoro.inFlowSummaryLine}
-				</p>
 			)}
 
 			{showSuggestionCard &&
@@ -475,6 +491,7 @@ export function PomodoroDashboardBody({
 			)}
 
 			<TaskList
+				continueTaskId={pomodoro.continueTaskId}
 				cycleKind={pomodoro.cycleKind}
 				cycleState={pomodoro.state}
 				focusedTaskId={pomodoro.focusedTaskId}
@@ -538,25 +555,10 @@ export function PomodoroDashboardBody({
 				/>
 			)}
 
-			{wedgeBeat.showKickoffReadiness && (
-				<KickoffReadinessOverlay
-					isSubmitting={pomodoro.kickoffReadinessSubmitting}
-					onSkip={pomodoro.skipKickoffReadiness}
-					onSubmit={pomodoro.submitKickoffReadiness}
-				/>
-			)}
-
-			{wedgeBeat.showCycleIntention && (
-				<CycleIntentionPrompt
-					onSkip={handleSkipCycleIntention}
-					onSubmit={handleSubmitCycleIntention}
-				/>
-			)}
-
 			<BreakAlertsPermissionPrompt
 				onDismiss={dismissPermissionPrompt}
 				onEnable={dismissPermissionPrompt}
-				visible={permissionPromptVisible && !wedgeBeat.showCycleIntention}
+				visible={permissionPromptVisible}
 			/>
 
 			{wedgeBeat.showSessionClosure && pomodoro.pendingClosureLine != null && (

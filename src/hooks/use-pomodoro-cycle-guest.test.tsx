@@ -207,12 +207,6 @@ describe("usePomodoroCycle guest catchUp", () => {
 				await result.current.start(60);
 			});
 
-			if (result.current.awaitingCycleIntention) {
-				await act(async () => {
-					await result.current.skipCycleIntention();
-				});
-			}
-
 			await act(async () => {
 				vi.advanceTimersByTime(61_000);
 			});

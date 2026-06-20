@@ -53,6 +53,19 @@ type CreateCycleInput = {
 	intention?: string;
 };
 
+type ServerSessionRow = {
+	id: number;
+	userId: string;
+	state: DomainSession["state"];
+	closureLine: string | null;
+	lastFocusedTaskId: number | null;
+	startedAt: Date;
+	endedAt: Date | null;
+	lastActivityAt: Date;
+	interruptionCount: number;
+	archivedAt?: Date | null;
+};
+
 type TrpcClient = {
 	task: {
 		list: { fetch: () => Promise<DomainTask[]> };
@@ -93,9 +106,12 @@ type TrpcClient = {
 		};
 	};
 	session: {
-		getOrCreateActive: { mutate: () => Promise<DomainSession> };
+		getOrCreateActive: { mutate: () => Promise<ServerSessionRow> };
 		end: {
-			mutate: (input: { closureLine?: string }) => Promise<DomainSession>;
+			mutate: (input: {
+				closureLine?: string;
+				lastFocusedTaskId?: number;
+			}) => Promise<ServerSessionRow>;
 		};
 	};
 };
@@ -178,14 +194,41 @@ export function createServerCycleRepository(
 	};
 }
 
+function normalizeDomainSession(session: ServerSessionRow): DomainSession {
+	return {
+		id: session.id,
+		userId: session.userId,
+		state: session.state,
+		startedAt: session.startedAt,
+		endedAt: session.endedAt,
+		lastActivityAt: session.lastActivityAt,
+		interruptionCount: session.interruptionCount,
+		closureLine: session.closureLine,
+		lastFocusedTaskId:
+			session.lastFocusedTaskId != null
+				? String(session.lastFocusedTaskId)
+				: null,
+	};
+}
+
 export function createServerSessionRepository(
 	client: TrpcClient,
 ): SessionRepository {
 	return {
-		getOrCreateActive: () => client.session.getOrCreateActive.mutate(),
-		end: (input?: { closureLine?: string | null }) =>
-			client.session.end.mutate({
-				closureLine: input?.closureLine ?? undefined,
-			}),
+		getOrCreateActive: async () =>
+			normalizeDomainSession(await client.session.getOrCreateActive.mutate()),
+		end: async (input?: {
+			closureLine?: string | null;
+			lastFocusedTaskId?: DomainTaskId | null;
+		}) =>
+			normalizeDomainSession(
+				await client.session.end.mutate({
+					closureLine: input?.closureLine ?? undefined,
+					lastFocusedTaskId:
+						input?.lastFocusedTaskId != null
+							? toNumericId(input.lastFocusedTaskId)
+							: undefined,
+				}),
+			),
 	};
 }

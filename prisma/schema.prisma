@@ -81,6 +81,8 @@ model Task {
   cycles Cycle[]
   dayCompletions TaskDayCompletion[]
 
+  lastFocusedSessions Session[] @relation("SessionLastFocusedTask")
+
   suggestedDecisions SuggestionDecision[] @relation("SuggestedTask")
   chosenDecisions    SuggestionDecision[] @relation("ChosenTask")
 
@@ -102,12 +104,15 @@ model Session {
   interruptionCount Int         @default(0) @map("interruption_count")
   archivedAt       DateTime?    @map("archived_at") @db.Timestamptz
   closureLine      String?      @map("closure_line") @db.VarChar(120)
+  lastFocusedTaskId Int?        @map("last_focused_task_id")
 
   cycles              Cycle[]
   suggestionDecisions SuggestionDecision[]
+  lastFocusedTask     Task?    @relation("SessionLastFocusedTask", fields: [lastFocusedTaskId], references: [id], onDelete: SetNull)
 
   @@index([userId], name: "session_user_id_idx")
   @@index([state], name: "session_state_idx")
+  @@index([lastFocusedTaskId], name: "session_last_focused_task_id_idx")
   @@map("flow_state_session")
 }
 

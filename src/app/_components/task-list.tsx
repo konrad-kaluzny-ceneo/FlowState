@@ -332,6 +332,7 @@ type TaskListProps = {
 	onRefresh: () => Promise<void>;
 	focusedTaskId: DomainTaskId | null;
 	highlightedTaskId?: DomainTaskId | null;
+	continueTaskId?: DomainTaskId | null;
 	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void;
 	cycleState: "idle" | "running" | "paused" | "completed";
 	cycleKind?: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null;
@@ -344,6 +345,7 @@ type SortableActiveTaskRowProps = {
 	dragDisabled: boolean;
 	focusedTaskId: DomainTaskId | null;
 	highlightedTaskId: DomainTaskId | null;
+	continueTaskId: DomainTaskId | null;
 	editingId: DomainTaskId | null;
 	editTitle: string;
 	editWorkType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
@@ -389,6 +391,7 @@ function SortableActiveTaskRow({
 	dragDisabled,
 	focusedTaskId,
 	highlightedTaskId,
+	continueTaskId,
 	editingId,
 	editTitle,
 	editWorkType,
@@ -441,12 +444,15 @@ function SortableActiveTaskRow({
 		transition,
 	};
 
+	const isContinueRow = continueTaskId === task.id;
+	const isHighlightedRow = highlightedTaskId === task.id || isContinueRow;
+
 	return (
 		<li
 			className={`flex max-w-full flex-col gap-2 overflow-hidden rounded-lg border border-transparent bg-surface-card px-4 py-3 ${
 				focusedTaskId === task.id ? "ring-2 ring-focus" : ""
 			} ${
-				highlightedTaskId === task.id ? "ring-2 ring-accent-suggestion" : ""
+				isHighlightedRow ? "ring-2 ring-accent-suggestion" : ""
 			} ${isDragging ? "z-10 opacity-80" : ""} ${
 				completingTaskId === task.id ? "animate-task-complete" : ""
 			} ${task.doneForToday ? "opacity-60" : ""}`}
@@ -605,6 +611,7 @@ function SortableActiveTaskRow({
 			</div>
 			{editingId !== task.id &&
 				focusedTaskId === task.id &&
+				!isContinueRow &&
 				task.resumeNote != null &&
 				task.resumeNote.length > 0 && (
 					<p
@@ -614,6 +621,15 @@ function SortableActiveTaskRow({
 						{task.resumeNote}
 					</p>
 				)}
+			{editingId !== task.id && isContinueRow && (
+				<p
+					className="flex items-center gap-1 pl-9 text-accent-suggestion text-sm"
+					data-testid="continue-here-row"
+				>
+					<span aria-hidden="true">→</span>
+					Continue here
+				</p>
+			)}
 			{editingId !== task.id && (
 				<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-9">
 					<span className="flex min-w-0 flex-wrap items-center gap-1">
@@ -671,6 +687,7 @@ export function TaskList({
 	onRefresh: _onRefresh,
 	focusedTaskId,
 	highlightedTaskId = null,
+	continueTaskId = null,
 	onFocusTask,
 	cycleState,
 	cycleKind = null,
@@ -1114,6 +1131,7 @@ export function TaskList({
 									<SortableActiveTaskRow
 										canMidCycleMarkComplete={canMidCycleMarkComplete}
 										completingTaskId={completingTaskId}
+										continueTaskId={continueTaskId}
 										cycleLocked={cycleLocked}
 										dragDisabled={dragDisabled}
 										editCommitmentHorizon={editCommitmentHorizon}

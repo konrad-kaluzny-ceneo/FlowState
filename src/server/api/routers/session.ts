@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
+import { computeSessionEndMetadata } from "~/server/api/lib/session-end-metadata";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const sessionRouter = createTRPCRouter({
@@ -41,9 +42,35 @@ export const sessionRouter = createTRPCRouter({
 		.input(
 			z.object({
 				closureLine: z.string().max(120).optional(),
+				lastFocusedTaskId: z.number().int().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const active = await ctx.db.session.findFirst({
+				where: {
+					userId: ctx.session.user.id,
+					state: "ACTIVE",
+					archivedAt: null,
+				},
+			});
+
+			if (active == null) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "No active session to end",
+				});
+			}
+
+			const derived = await computeSessionEndMetadata(
+				ctx.db,
+				ctx.session.user.id,
+				active.id,
+				"user",
+			);
+
+			const lastFocusedTaskId =
+				input.lastFocusedTaskId ?? derived.lastFocusedTaskId;
+
 			const { count } = await ctx.db.session.updateMany({
 				where: {
 					userId: ctx.session.user.id,
@@ -53,9 +80,8 @@ export const sessionRouter = createTRPCRouter({
 				data: {
 					state: "ENDED_BY_USER",
 					endedAt: new Date(),
-					...(input.closureLine != null
-						? { closureLine: input.closureLine }
-						: {}),
+					closureLine: input.closureLine ?? derived.closureLine,
+					lastFocusedTaskId,
 				},
 			});
 

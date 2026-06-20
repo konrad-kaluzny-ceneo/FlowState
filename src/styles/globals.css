@@ -42,10 +42,13 @@
 	--color-segment-inactive: #e8e4ef;
 
 	/* Energy identity */
+	--color-energy-focused: #5b7fc4;
 	--color-energy-focused-border: rgb(91 127 196 / 0.4);
 	--color-energy-focused-bg: rgb(91 127 196 / 0.1);
+	--color-energy-steady: #5e5290;
 	--color-energy-steady-border: rgb(94 82 144 / 0.4);
 	--color-energy-steady-bg: rgb(94 82 144 / 0.1);
+	--color-energy-fading: #b26a82;
 	--color-energy-fading-border: rgb(178 106 130 / 0.35);
 	--color-energy-fading-bg: rgb(178 106 130 / 0.08);
 
@@ -91,10 +94,13 @@
 	--color-segment-active: #7c6ead;
 	--color-segment-inactive: rgb(255 255 255 / 0.08);
 
+	--color-energy-focused: #818cf8;
 	--color-energy-focused-border: rgb(129 140 248 / 0.45);
 	--color-energy-focused-bg: rgb(99 102 241 / 0.12);
+	--color-energy-steady: #9b8fc4;
 	--color-energy-steady-border: rgb(155 143 196 / 0.45);
 	--color-energy-steady-bg: rgb(155 143 196 / 0.12);
+	--color-energy-fading: #d49ab0;
 	--color-energy-fading-border: rgb(212 154 170 / 0.4);
 	--color-energy-fading-bg: rgb(212 154 170 / 0.08);
 

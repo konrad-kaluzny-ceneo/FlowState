@@ -1,3 +1,4 @@
+import type { DomainTaskId } from "~/lib/data-mode/types";
 import type { GuestSession } from "~/lib/guest/schema";
 
 import {
@@ -62,6 +63,21 @@ export type HandoffTaskContext = {
 	resumeNote: string | null;
 	taskTitle: string | null;
 };
+
+export function resolveContinueTaskId(
+	lastEnded: { lastFocusedTaskId?: DomainTaskId | null } | null,
+	tasks: Array<{ id: DomainTaskId; status: string }>,
+): DomainTaskId | null {
+	if (lastEnded?.lastFocusedTaskId == null) {
+		return null;
+	}
+
+	const targetId = String(lastEnded.lastFocusedTaskId);
+	const match = tasks.find(
+		(task) => String(task.id) === targetId && task.status === "active",
+	);
+	return match?.id ?? null;
+}
 
 export function pickHandoffTaskContext(
 	tasks: Array<{

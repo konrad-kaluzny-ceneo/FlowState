@@ -1,6 +1,5 @@
 import { expect, type Page } from "@playwright/test";
 import type { CheckInEnergyUi } from "./check-in";
-import { dismissReturnHandoffIfVisible } from "./return-handoff";
 
 const ENERGY_TEST_IDS: Record<CheckInEnergyUi, string> = {
 	focused: "check-in-energy-focused",
@@ -8,24 +7,71 @@ const ENERGY_TEST_IDS: Record<CheckInEnergyUi, string> = {
 	fading: "check-in-energy-fading",
 };
 
+export type KickoffSteeringIntentionChip =
+	| "deep-work"
+	| "clear-inbox"
+	| "ship-feature";
+
+export type CompleteKickoffSteeringOptions =
+	| "skip"
+	| {
+			energy?: CheckInEnergyUi | "skip";
+			focus?:
+				| "skip"
+				| { chip: KickoffSteeringIntentionChip }
+				| { intention: string };
+	  };
+
+export async function completeKickoffSteering(
+	page: Page,
+	options: CompleteKickoffSteeringOptions = "skip",
+) {
+	const energyCard = page.getByTestId("session-energy-card");
+	await expect(energyCard).toBeVisible({ timeout: 15_000 });
+
+	const energy = options === "skip" ? "skip" : (options.energy ?? "skip");
+	const focus = options === "skip" ? "skip" : (options.focus ?? "skip");
+
+	if (energy === "skip") {
+		await page.getByTestId("session-energy-skip-btn").click();
+	} else {
+		await page.getByTestId(ENERGY_TEST_IDS[energy]).click();
+	}
+	await expect(energyCard).toBeHidden({ timeout: 5_000 });
+
+	const focusCard = page.getByTestId("session-focus-card");
+	if (!(await focusCard.isVisible().catch(() => false))) {
+		return;
+	}
+
+	if (focus === "skip") {
+		await page.getByTestId("session-focus-skip-btn").click();
+	} else if ("chip" in focus) {
+		await page.getByTestId(`steering-intention-${focus.chip}`).click();
+	} else {
+		await page.getByTestId("steering-intention-input").fill(focus.intention);
+		await page.getByTestId("steering-intention-submit-btn").click();
+	}
+	await expect(focusCard).toBeHidden({ timeout: 5_000 });
+}
+
+/** @deprecated Use `completeKickoffSteering` — skips both energy and focus cards. */
 export async function completeKickoffReadiness(
 	page: Page,
 	energy: CheckInEnergyUi | "skip",
 ) {
-	await dismissReturnHandoffIfVisible(page);
-	await expect(page.getByTestId("kickoff-readiness-overlay")).toBeVisible({
-		timeout: 15_000,
-	});
-
 	if (energy === "skip") {
-		await page.getByTestId("kickoff-readiness-skip-btn").click();
-	} else {
-		await page.getByTestId(ENERGY_TEST_IDS[energy]).click();
+		await completeKickoffSteering(page, "skip");
+		return;
 	}
+	await completeKickoffSteering(page, { energy, focus: "skip" });
+}
 
-	await expect(page.getByTestId("kickoff-readiness-overlay")).toBeHidden({
-		timeout: 5_000,
-	});
+export async function dismissKickoffSteeringIfVisible(page: Page) {
+	const energyCard = page.getByTestId("session-energy-card");
+	if (await energyCard.isVisible().catch(() => false)) {
+		await completeKickoffSteering(page, "skip");
+	}
 }
 
 function isKickoffSuggestionNextResponse(response: {
@@ -40,7 +86,7 @@ function isKickoffSuggestionNextResponse(response: {
 	return postData?.includes('"context":"kickoff"') ?? false;
 }
 
-/** Register before dismissing kickoff readiness — response can finish before the click settles. */
+/** Register before dismissing steering cards — response can finish before clicks settle. */
 export function waitForKickoffSuggestionResponse(page: Page) {
 	return page.waitForResponse(
 		(response) => isKickoffSuggestionNextResponse(response),
@@ -50,9 +96,9 @@ export function waitForKickoffSuggestionResponse(page: Page) {
 
 export async function waitForKickoffSuggestion(
 	page: Page,
-	options?: { readinessCompleted?: boolean },
+	options?: { steeringCompleted?: boolean },
 ) {
-	if (options?.readinessCompleted === true) {
+	if (options?.steeringCompleted === true) {
 		await expect(page.getByTestId("task-suggestion-card")).toBeVisible({
 			timeout: 20_000,
 		});
@@ -60,7 +106,7 @@ export async function waitForKickoffSuggestion(
 	}
 
 	const responsePromise = waitForKickoffSuggestionResponse(page);
-	await completeKickoffReadiness(page, "skip");
+	await completeKickoffSteering(page, "skip");
 	await responsePromise;
 }
 
