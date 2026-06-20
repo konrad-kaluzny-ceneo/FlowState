@@ -1,5 +1,7 @@
+export type RecapTaskId = string | number;
+
 export type RecapTaskRow = {
-	taskId: number;
+	taskId: RecapTaskId;
 	title: string;
 	firstStartedAt: Date;
 	lastEndedAt: Date;
@@ -8,7 +10,7 @@ export type RecapTaskRow = {
 };
 
 export type TodayPlanRow = {
-	taskId: number;
+	taskId: RecapTaskId;
 	title: string;
 	isDailyStanding: boolean;
 	doneForToday: boolean;
@@ -23,5 +25,5 @@ export type TaskFootprint = {
 export type DailyRecap = {
 	last24Hours: RecapTaskRow[];
 	todayPlan: TodayPlanRow[];
-	footprints: Record<number, TaskFootprint>;
+	footprints: Record<string, TaskFootprint>;
 };

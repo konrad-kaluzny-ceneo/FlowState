@@ -185,7 +185,7 @@ describe("buildDailyRecap", () => {
 			title: "Write recap",
 			focusedMinutes: 25,
 		});
-		expect(recap.footprints[1]).toEqual({
+		expect(recap.footprints["1"]).toEqual({
 			lastFocusedAt: new Date("2026-06-20T11:10:00Z"),
 			cumulativeMinutes: 25,
 		});

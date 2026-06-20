@@ -1,6 +1,7 @@
 import { computeCycleFocusedMinutes } from "~/lib/recap/compute-cycle-focused-minutes";
 import type {
 	DailyRecap,
+	RecapTaskId,
 	RecapTaskRow,
 	TaskFootprint,
 	TodayPlanRow,
@@ -142,9 +143,17 @@ function buildLast24HoursRows(cycles: CycleWithTask[]): RecapTaskRow[] {
 async function buildFootprints(
 	db: DbClient,
 	userId: string,
-	taskIds: number[],
-): Promise<Record<number, TaskFootprint>> {
+	taskIds: RecapTaskId[],
+): Promise<Record<string, TaskFootprint>> {
 	if (taskIds.length === 0) {
+		return {};
+	}
+
+	const numericTaskIds = taskIds.filter(
+		(id): id is number => typeof id === "number",
+	);
+
+	if (numericTaskIds.length === 0) {
 		return {};
 	}
 
@@ -153,7 +162,7 @@ async function buildFootprints(
 			userId,
 			kind: "WORK",
 			state: "COMPLETED",
-			taskId: { in: taskIds },
+			taskId: { in: numericTaskIds },
 		},
 		select: {
 			taskId: true,
@@ -166,19 +175,20 @@ async function buildFootprints(
 		orderBy: { startedAt: "asc" },
 	});
 
-	const footprints: Record<number, TaskFootprint> = {};
+	const footprints: Record<string, TaskFootprint> = {};
 
 	for (const cycle of cycles) {
 		if (cycle.taskId == null) {
 			continue;
 		}
 
+		const key = String(cycle.taskId);
 		const minutes = computeCycleFocusedMinutes(cycle);
 		const endedAt = cycle.endedAt ?? cycle.startedAt;
-		const existing = footprints[cycle.taskId];
+		const existing = footprints[key];
 
 		if (existing == null) {
-			footprints[cycle.taskId] = {
+			footprints[key] = {
 				lastFocusedAt: endedAt,
 				cumulativeMinutes: minutes,
 			};

@@ -321,10 +321,10 @@ No schema migration. Read-only feature over existing data.
 
 #### Automated
 
-- [x] 1.1 `pnpm check` and `pnpm typecheck` pass after Phase 1
-- [x] 1.2 Vitest: `compute-cycle-focused-minutes.test.ts`
-- [x] 1.3 Vitest: `build-daily-recap.test.ts`
-- [x] 1.4 Vitest: `recap.test.ts` router
+- [x] 1.1 `pnpm check` and `pnpm typecheck` pass after Phase 1 — d9f3d15
+- [x] 1.2 Vitest: `compute-cycle-focused-minutes.test.ts` — d9f3d15
+- [x] 1.3 Vitest: `build-daily-recap.test.ts` — d9f3d15
+- [x] 1.4 Vitest: `recap.test.ts` router — d9f3d15
 
 #### Manual
 
@@ -334,8 +334,8 @@ No schema migration. Read-only feature over existing data.
 
 #### Automated
 
-- [ ] 2.1 Vitest: `guest/recap.test.ts`
-- [ ] 2.2 Vitest: `use-daily-recap.test.ts`
+- [x] 2.1 Vitest: `guest/recap.test.ts` — pending
+- [x] 2.2 Vitest: `use-daily-recap.test.ts` — pending
 
 #### Manual
 
