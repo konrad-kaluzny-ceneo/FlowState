@@ -1,10 +1,10 @@
 ---
 change_id: daily-work-timing-recap
 title: Daily work timing recap
-status: impl_reviewed
+status: archived
 created: 2026-06-20
 updated: 2026-06-20
-archived_at: null
+archived_at: 2026-06-20T14:20:00Z
 ---
 
 ## Notes
