@@ -27,6 +27,7 @@ vi.mock("~/trpc/react", () => ({
 			cycle: { getActive: { invalidate: vi.fn() } },
 			task: { list: { invalidate: vi.fn() } },
 			dayPlan: { getOrCreate: { invalidate: vi.fn() } },
+			recap: { getDaily: { invalidate: vi.fn() } },
 			client: { cycle: { list: { query: vi.fn().mockResolvedValue([]) } } },
 		}),
 		checkIn: {

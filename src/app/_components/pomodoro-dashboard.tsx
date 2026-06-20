@@ -12,6 +12,7 @@ import {
 import { BreakAlertsPermissionPrompt } from "~/app/_components/break-alerts-permission-prompt";
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
+import { DailyRecapPanel } from "~/app/_components/daily-recap-panel";
 import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
@@ -26,6 +27,7 @@ import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
 import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
 import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preference";
+import { useDailyRecap } from "~/hooks/use-daily-recap";
 import { useDayPlan } from "~/hooks/use-day-plan";
 import { useE2eExposeCycleRecovery } from "~/hooks/use-e2e-expose-cycle-recovery";
 import { useOnboarding } from "~/hooks/use-onboarding-state";
@@ -110,6 +112,11 @@ export function PomodoroDashboardBody({
 		})),
 	});
 	useE2eExposeCycleRecovery();
+	const {
+		recap,
+		isLoading: recapLoading,
+		localDateKey: recapDateKey,
+	} = useDailyRecap();
 
 	type PendingStartAction = { kind: "start"; durationSec: number };
 
@@ -490,11 +497,18 @@ export function PomodoroDashboardBody({
 				/>
 			)}
 
+			<DailyRecapPanel
+				isLoading={recapLoading}
+				localDateKey={recapDateKey}
+				recap={recap}
+			/>
+
 			<TaskList
 				continueTaskId={pomodoro.continueTaskId}
 				cycleKind={pomodoro.cycleKind}
 				cycleState={pomodoro.state}
 				focusedTaskId={pomodoro.focusedTaskId}
+				footprints={recap.footprints}
 				highlightedTaskId={highlightedTaskId}
 				onFocusTask={(taskId, task) => {
 					pomodoro.selectTask(taskId, task);
