@@ -66,6 +66,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@kaluzny-konrad/ai-toolkit-kk':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@axe-core/playwright':
         specifier: ^4.11.3
         version: 4.11.3(playwright-core@1.60.0)
@@ -1151,6 +1154,11 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==, tarball: https://registry.npmjs.org/@jridgewell/trace-mapping/-/trace-mapping-0.3.31.tgz}
+
+  '@kaluzny-konrad/ai-toolkit-kk@1.0.0':
+    resolution: {integrity: sha512-2wQoIo/ravslHxKraxoFZaltYLb26RdBQqVFt3JzUHYH+4+dE7tHKeYj4ZPLca6WCS/rkGkjoQeoDh8H+d8JKA==, tarball: https://npm.pkg.github.com/download/@kaluzny-konrad/ai-toolkit-kk/1.0.0/e8186be44d6aeff37d68168ab8ae2993ce0d04c9}
+    engines: {node: '>=20'}
+    hasBin: true
 
   '@kurkle/color@0.3.4':
     resolution: {integrity: sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w==, tarball: https://registry.npmjs.org/@kurkle/color/-/color-0.3.4.tgz}
@@ -5054,6 +5062,8 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@kaluzny-konrad/ai-toolkit-kk@1.0.0': {}
 
   '@kurkle/color@0.3.4': {}
 

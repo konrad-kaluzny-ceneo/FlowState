@@ -31,7 +31,9 @@
 		"prepare": "lefthook install",
 		"review": "tsx scripts/cursor-review/review.ts",
 		"review:cloud": "tsx scripts/cursor-review/review.ts --cloud",
-		"change-impact": "node scripts/change-impact/run.mjs"
+		"change-impact": "node scripts/change-impact/run.mjs",
+		"sync:ai-toolkit": "ai-toolkit-sync",
+		"preinstall": "node -e \"if(process.env.GH_PKG_TOKEN){require('node:fs').appendFileSync('.npmrc','//npm.pkg.github.com/:_authToken='+process.env.GH_PKG_TOKEN+'\\n')}\""
 	},
 	"dependencies": {
 		"@dnd-kit/core": "^6.3.1",
@@ -55,6 +57,7 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
+		"@kaluzny-konrad/ai-toolkit-kk": "^1.0.0",
 		"@axe-core/playwright": "^4.11.3",
 		"@biomejs/biome": "^2.4.15",
 		"@connectrpc/connect-node": "^1.7.0",

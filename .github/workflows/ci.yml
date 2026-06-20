@@ -2,6 +2,7 @@
 #
 # E2E secrets (repository settings → Secrets and variables → Actions):
 #   DATABASE_URL, DATABASE_URL_UNPOOLED, NEON_AUTH_BASE_URL, NEON_AUTH_COOKIE_SECRET
+#   GH_PKG_TOKEN — classic PAT with read:packages (private @kaluzny-konrad/ai-toolkit-kk)
 # Use a Neon dev branch — never production credentials in public forks.
 
 name: CI
@@ -33,9 +34,13 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+          registry-url: https://npm.pkg.github.com
+          scope: "@kaluzny-konrad"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_PKG_TOKEN }}
 
       - name: Generate Prisma client
         run: pnpm exec prisma generate
@@ -77,9 +82,13 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+          registry-url: https://npm.pkg.github.com
+          scope: "@kaluzny-konrad"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_PKG_TOKEN }}
 
       - name: Generate Prisma client
         run: pnpm exec prisma generate
