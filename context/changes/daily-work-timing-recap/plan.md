@@ -367,9 +367,9 @@ No schema migration. Read-only feature over existing data.
 
 #### Automated
 
-- [ ] 5.1 Belt e2e `daily-work-timing-recap.spec.ts` passes
-- [ ] 5.2 Full `pnpm test` passes after e2e
+- [x] 5.1 Belt e2e `daily-work-timing-recap.spec.ts` passes — 12eb16d
+- [x] 5.2 Full `pnpm test` passes after e2e — 12eb16d
 
 #### Manual
 
-- [ ] 5.3 Test-plan §6 cookbook entry reviewed
+- [x] 5.3 Test-plan §6 cookbook entry reviewed — 12eb16d
