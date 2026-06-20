@@ -111,6 +111,27 @@ function extractAssistantText(event: SDKMessage): string | undefined {
 	return text || undefined;
 }
 
+function isCursorAuthFailure(err: CursorAgentError): boolean {
+	const message = err.message.toLowerCase();
+	return (
+		!err.isRetryable &&
+		(message.includes("api key") ||
+			message.includes("unauthorized") ||
+			message.includes("authentication") ||
+			message.includes("forbidden") ||
+			message.includes("401") ||
+			message.includes("403"))
+	);
+}
+
+function skipReviewForAuthFailure(reason: string): never {
+	console.error(`Cursor review skipped: ${reason}`);
+	console.error(
+		"::notice title=Cursor code review skipped::Invalid or missing CURSOR_API_KEY — advisory review skipped (CI not blocked).",
+	);
+	process.exit(0);
+}
+
 try {
 	const agent = resumeId
 		? await Agent.resume(resumeId, { apiKey })
@@ -180,6 +201,9 @@ try {
 	}
 } catch (err) {
 	if (err instanceof CursorAgentError) {
+		if (isCursorAuthFailure(err)) {
+			skipReviewForAuthFailure(err.message);
+		}
 		console.error(
 			`Startup failed: ${err.message} (retryable=${err.isRetryable})`,
 		);
