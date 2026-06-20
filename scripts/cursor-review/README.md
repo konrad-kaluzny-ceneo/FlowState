@@ -11,7 +11,7 @@ Headless code review for FlowState using [`@cursor/sdk`](https://cursor.com/docs
    CURSOR_API_KEY="cursor_..."
    ```
 
-   CI uses the GitHub secret `CURSOR_API_KEY` — not `.env.local`. When the secret is unset, the `cursor-review` workflow **succeeds with a notice** and does not block CI.
+   CI uses the GitHub secret `CURSOR_API_KEY` — not `.env.local`. When the secret is unset or **invalid**, the `cursor-review` workflow **succeeds with a notice** and does not block CI.
 
 3. Node **22.13+** required (matches CI).
 
@@ -60,6 +60,7 @@ On a PR, CI passes `--pr-url` so the agent attaches to the pull request directly
 | --- | --- |
 | `Failed to verify existence of branch` | Use `--ref $(git rev-parse HEAD)` instead of branch name; ensure repo is connected in [Cursor Integrations](https://cursor.com/dashboard/integrations) and API key has GitHub access |
 | `Missing CURSOR_API_KEY` | Set in `.env.local` and export in PowerShell before `pnpm review` |
+| `Invalid User API Key` | Rotate key in [Cursor Integrations](https://cursor.com/dashboard/integrations); CI treats this as skipped (does not fail the workflow) |
 
 For GitHub Actions, add repository secret `CURSOR_API_KEY`. Workflow `.github/workflows/cursor-review.yml` checks out the PR head commit, runs a cloud agent (scope computed inside the VM), auto-passes `--change-id` for `features/*` branches, and updates a single PR comment on each push.
 

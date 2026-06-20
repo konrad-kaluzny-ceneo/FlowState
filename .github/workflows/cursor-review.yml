@@ -1,6 +1,6 @@
 # Advisory PR code review via Cursor SDK (cloud agent).
 # Optional repository secret: CURSOR_API_KEY
-# When unset, the job succeeds with a notice (does not fail CI).
+# When unset or invalid, the job succeeds with a notice (does not fail CI).
 #
 # Not a merge gate — runs in parallel with CI quality/e2e.
 
@@ -88,7 +88,7 @@ jobs:
           pnpm review:cloud "${REVIEW_ARGS[@]}"
 
       - name: Post PR comment
-        if: github.event_name == 'pull_request' && steps.cursor_key.outputs.skip != 'true' && steps.review.outcome == 'success'
+        if: github.event_name == 'pull_request' && steps.cursor_key.outputs.skip != 'true' && steps.review.outcome == 'success' && hashFiles('reports/review.md') != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
