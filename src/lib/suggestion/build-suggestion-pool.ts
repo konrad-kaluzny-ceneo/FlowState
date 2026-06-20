@@ -24,16 +24,26 @@ export async function loadRemainingFocusMinutes(
 	return remainingFocusMinutes(plan.focusBudgetMinutes, plan.usedFocusMinutes);
 }
 
-export async function buildSuggestionPool(
+export async function getDoneTodayTaskIds(
 	db: DbClient,
 	userId: string,
 	localDateKey: string,
-) {
+): Promise<Set<number>> {
 	const completions = await db.taskDayCompletion.findMany({
 		where: { userId, localDateKey },
 		select: { taskId: true },
 	});
-	const doneTodayIds = new Set(completions.map((row) => row.taskId));
+	return new Set(completions.map((row) => row.taskId));
+}
+
+export async function buildSuggestionPool(
+	db: DbClient,
+	userId: string,
+	localDateKey: string,
+	doneTodayIds?: Set<number>,
+) {
+	const resolvedDoneTodayIds =
+		doneTodayIds ?? (await getDoneTodayTaskIds(db, userId, localDateKey));
 
 	const tasks = await db.task.findMany({
 		where: {
@@ -44,7 +54,7 @@ export async function buildSuggestionPool(
 	});
 
 	return tasks.filter((task) => {
-		if (doneTodayIds.has(task.id)) {
+		if (resolvedDoneTodayIds.has(task.id)) {
 			return false;
 		}
 		if (task.status === "active") {

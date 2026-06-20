@@ -21,6 +21,7 @@ import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guid
 import { PersonaPresetPicker } from "~/app/_components/persona-preset-picker";
 import { usePresetCoachOnboarding } from "~/hooks/use-onboarding-state";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
+import { formatEndedAgo } from "~/lib/catch-up/format-ended-ago";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import type {
 	CommitmentHorizon,
@@ -29,6 +30,7 @@ import type {
 } from "~/lib/data-mode/types";
 import { WORK_TYPE_CONFIG } from "~/lib/design/work-type-config";
 import { PRESET_COACH_LINE } from "~/lib/onboarding/copy";
+import type { TaskFootprint } from "~/lib/recap/types";
 import {
 	applyPersonaPresetToCreateState,
 	DEFAULT_CREATE_FORM_ATTRIBUTES,
@@ -338,6 +340,7 @@ type TaskListProps = {
 	cycleKind?: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null;
 	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
 	suggestionLoading?: boolean;
+	footprints?: Record<string, TaskFootprint>;
 };
 
 type SortableActiveTaskRowProps = {
@@ -384,6 +387,7 @@ type SortableActiveTaskRowProps = {
 	onMarkDoneForToday: (taskId: DomainTaskId) => void;
 	completingTaskId: DomainTaskId | null;
 	onBeginComplete: (taskId: DomainTaskId) => void;
+	footprints: Record<string, TaskFootprint>;
 };
 
 function SortableActiveTaskRow({
@@ -425,6 +429,7 @@ function SortableActiveTaskRow({
 	onMarkDoneForToday,
 	completingTaskId,
 	onBeginComplete,
+	footprints,
 }: SortableActiveTaskRowProps) {
 	const {
 		attributes,
@@ -446,6 +451,9 @@ function SortableActiveTaskRow({
 
 	const isContinueRow = continueTaskId === task.id;
 	const isHighlightedRow = highlightedTaskId === task.id || isContinueRow;
+	const footprint = footprints[String(task.id)];
+	const showFootprint =
+		footprint != null && (focusedTaskId === task.id || editingId === task.id);
 
 	return (
 		<li
@@ -678,6 +686,15 @@ function SortableActiveTaskRow({
 					</div>
 				</div>
 			)}
+			{showFootprint && (
+				<p
+					className="pl-9 text-sm text-text-secondary"
+					data-testid={`task-footprint-${task.id}`}
+				>
+					Last focused {formatEndedAgo(footprint.lastFocusedAt.getTime())} ·{" "}
+					{footprint.cumulativeMinutes}m total
+				</p>
+			)}
 		</li>
 	);
 }
@@ -693,6 +710,7 @@ export function TaskList({
 	cycleKind = null,
 	onMidCycleMarkComplete,
 	suggestionLoading = false,
+	footprints = {},
 }: TaskListProps) {
 	const mode = useDataMode();
 	const { shouldShowPresetCoach, markPresetCoachDismissed } =
@@ -1148,6 +1166,7 @@ export function TaskList({
 										editWorkType={editWorkType}
 										focusedTaskId={focusedTaskId}
 										focusLocked={focusLocked}
+										footprints={footprints}
 										highlightedTaskId={highlightedTaskId}
 										isMutating={isMutating}
 										key={String(task.id)}

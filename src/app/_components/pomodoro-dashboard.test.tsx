@@ -16,6 +16,14 @@ vi.mock("~/hooks/use-e2e-expose-cycle-recovery", () => ({
 	useE2eExposeCycleRecovery: () => {},
 }));
 
+vi.mock("~/hooks/use-daily-recap", () => ({
+	useDailyRecap: () => ({
+		recap: { last24Hours: [], todayPlan: [], footprints: {} },
+		isLoading: false,
+		localDateKey: "2026-06-20",
+	}),
+}));
+
 vi.mock("./task-list", () => ({
 	TaskList: () => <div data-testid="task-list-stub" />,
 }));

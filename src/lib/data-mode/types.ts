@@ -125,6 +125,7 @@ export interface CycleRepository {
 		cycleId: DomainTaskId;
 		markTaskDone?: boolean;
 		incrementInterruption?: boolean;
+		localDateKey?: string;
 	}): Promise<void>;
 	interrupt(input: { cycleId: DomainTaskId }): Promise<void>;
 	pause(input: {

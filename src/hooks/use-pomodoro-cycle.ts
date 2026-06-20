@@ -530,6 +530,15 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		});
 	}, [mode, utils.dayPlan.getOrCreate]);
 
+	const invalidateDailyRecap = useCallback(async () => {
+		if (mode !== "authenticated") {
+			return;
+		}
+		await utils.recap.getDaily.invalidate({
+			localDateKey: formatLocalDateKey(),
+		});
+	}, [mode, utils.recap.getDaily]);
+
 	const resolvePersistableCycleId =
 		useCallback(async (): Promise<DomainTaskId> => {
 			const current = activeCycleRef.current;
@@ -2322,6 +2331,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			await Promise.all([
 				invalidateServerCycle(),
 				invalidateDayPlan(),
+				invalidateDailyRecap(),
 				...(markTaskDone ? [utils.task.list.invalidate()] : []),
 			]);
 
@@ -2332,6 +2342,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		[
 			completedWorkCycles,
 			cycles,
+			invalidateDailyRecap,
 			invalidateDayPlan,
 			invalidateServerCycle,
 			startWorker,
@@ -2396,6 +2407,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			await Promise.all([
 				invalidateServerCycle(),
 				invalidateDayPlan(),
+				invalidateDailyRecap(),
 				...(markTaskDone ? [utils.task.list.invalidate()] : []),
 			]);
 
@@ -2408,6 +2420,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		[
 			activeCycle,
 			cycles,
+			invalidateDailyRecap,
 			invalidateDayPlan,
 			invalidateServerCycle,
 			mode,
@@ -2709,6 +2722,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					await Promise.all([
 						invalidateServerCycle(),
 						invalidateDayPlan(),
+						invalidateDailyRecap(),
 						...(markTaskDone ? [utils.task.list.invalidate()] : []),
 					]);
 
@@ -2746,6 +2760,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			startWorker,
 			createCheckIn,
 			cycles,
+			invalidateDailyRecap,
 			invalidateDayPlan,
 			invalidateServerCycle,
 			utils.task.list,

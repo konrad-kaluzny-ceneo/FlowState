@@ -86,6 +86,7 @@ type TrpcClient = {
 				cycleId: number;
 				markTaskDone?: boolean;
 				incrementInterruption?: boolean;
+				localDateKey?: string;
 			}) => Promise<unknown>;
 		};
 		interrupt: { mutate: (input: { cycleId: number }) => Promise<unknown> };
@@ -166,6 +167,9 @@ export function createServerCycleRepository(
 				cycleId: toNumericId(input.cycleId),
 				markTaskDone: input.markTaskDone,
 				incrementInterruption: input.incrementInterruption,
+				...(input.localDateKey != null
+					? { localDateKey: input.localDateKey }
+					: {}),
 			});
 		},
 		interrupt: async (input) => {

@@ -697,4 +697,47 @@ describe("TaskList", () => {
 			status: "completed",
 		});
 	});
+
+	it("shows footprint on focused row when recap data exists", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-06-20T12:00:00Z"));
+
+		render(
+			<TaskList
+				{...defaultProps}
+				focusedTaskId={1}
+				footprints={{
+					"1": {
+						lastFocusedAt: new Date("2026-06-20T11:30:00Z"),
+						cumulativeMinutes: 25,
+					},
+				}}
+				tasks={[makeTask({ id: 1, title: "Focused task" })]}
+			/>,
+		);
+
+		const footprint = screen.getByTestId("task-footprint-1");
+		expect(footprint.textContent).toContain("25m total");
+		expect(footprint.textContent).toContain("30 minutes ago");
+
+		vi.useRealTimers();
+	});
+
+	it("hides footprint on unfocused rows", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				focusedTaskId={null}
+				footprints={{
+					"1": {
+						lastFocusedAt: new Date("2026-06-20T11:30:00Z"),
+						cumulativeMinutes: 25,
+					},
+				}}
+				tasks={[makeTask({ id: 1, title: "Unfocused task" })]}
+			/>,
+		);
+
+		expect(screen.queryByTestId("task-footprint-1")).toBeNull();
+	});
 });

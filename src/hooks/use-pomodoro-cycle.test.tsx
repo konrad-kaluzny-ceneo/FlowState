@@ -20,6 +20,7 @@ const getActiveCycle = vi.fn();
 const invalidateGetActive = vi.fn();
 const invalidateTaskList = vi.fn();
 const invalidateDayPlan = vi.fn();
+const invalidateRecap = vi.fn();
 const createCheckInMutate = vi.fn();
 const suggestionNextMutate = vi.fn();
 const recordDecisionMutate = vi.fn();
@@ -125,6 +126,7 @@ vi.mock("~/trpc/react", () => ({
 			cycle: { getActive: { invalidate: invalidateGetActive } },
 			task: { list: { invalidate: invalidateTaskList } },
 			dayPlan: { getOrCreate: { invalidate: invalidateDayPlan } },
+			recap: { getDaily: { invalidate: invalidateRecap } },
 			client: {
 				cycle: {
 					countCompletedWork: { query: vi.fn().mockResolvedValue(0) },
