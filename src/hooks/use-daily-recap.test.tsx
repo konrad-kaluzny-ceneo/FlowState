@@ -23,7 +23,7 @@ let queryInput: { localDateKey: string } | undefined;
 const invalidateRecap = vi.fn();
 const invalidateTaskList = vi.fn();
 
-const guestRecap: DailyRecap = {
+const guestRecapBefore: DailyRecap = {
 	last24Hours: [
 		{
 			taskId: "guest-task-id",
@@ -31,6 +31,20 @@ const guestRecap: DailyRecap = {
 			firstStartedAt: new Date("2026-06-20T09:00:00Z"),
 			lastEndedAt: new Date("2026-06-20T09:15:00Z"),
 			focusedMinutes: 15,
+		},
+	],
+	todayPlan: [],
+	footprints: {},
+};
+
+const guestRecapAfter: DailyRecap = {
+	last24Hours: [
+		{
+			taskId: "guest-task-id",
+			title: "Guest task",
+			firstStartedAt: new Date("2026-06-20T09:00:00Z"),
+			lastEndedAt: new Date("2026-06-20T09:30:00Z"),
+			focusedMinutes: 30,
 		},
 	],
 	todayPlan: [],
@@ -45,11 +59,17 @@ vi.mock("~/lib/time/local-date-key", () => ({
 	formatLocalDateKey: vi.fn(() => "2026-06-20"),
 }));
 
+let guestStoreListener: (() => void) | null = null;
+const guestSnapshot = { tasks: [], sessions: [], cycles: [] as unknown[] };
+
 vi.mock("~/lib/guest/store", () => ({
-	loadSnapshot: vi.fn(() => ({ tasks: [], sessions: [], cycles: [] })),
+	loadSnapshot: vi.fn(() => guestSnapshot),
 	subscribeGuestStore: vi.fn((listener: () => void) => {
+		guestStoreListener = listener;
 		listener();
-		return () => {};
+		return () => {
+			guestStoreListener = null;
+		};
 	}),
 }));
 
@@ -60,7 +80,7 @@ vi.mock("~/lib/guest/day-completions", () => ({
 }));
 
 vi.mock("~/lib/guest/recap", () => ({
-	buildGuestDailyRecap: vi.fn(() => guestRecap),
+	buildGuestDailyRecap: vi.fn(() => guestRecapBefore),
 }));
 
 vi.mock("~/trpc/react", () => ({
@@ -99,8 +119,10 @@ vi.mock("~/trpc/react", () => ({
 	},
 }));
 
+const { buildGuestDailyRecap } = await import("~/lib/guest/recap");
 const { useDailyRecap } = await import("~/hooks/use-daily-recap");
 const { formatLocalDateKey } = await import("~/lib/time/local-date-key");
+const { GUEST_STORAGE_KEY } = await import("~/lib/guest/schema");
 
 function createWrapper() {
 	const queryClient = new QueryClient({
@@ -118,7 +140,11 @@ describe("useDailyRecap", () => {
 	beforeEach(() => {
 		dataMode = "authenticated";
 		queryInput = undefined;
+		guestSnapshot.cycles = [];
+		guestStoreListener = null;
+		localStorage.removeItem(GUEST_STORAGE_KEY);
 		vi.mocked(formatLocalDateKey).mockReturnValue("2026-06-20");
+		vi.mocked(buildGuestDailyRecap).mockReturnValue(guestRecapBefore);
 		vi.clearAllMocks();
 	});
 
@@ -140,6 +166,26 @@ describe("useDailyRecap", () => {
 
 		expect(result.current.recap.last24Hours[0]?.taskId).toBe("guest-task-id");
 		expect(result.current.isLoading).toBe(false);
+	});
+
+	it("updates guest recap when snapshot store notifies", async () => {
+		dataMode = "guest";
+		const { result } = renderHook(() => useDailyRecap(), {
+			wrapper: createWrapper(),
+		});
+
+		expect(result.current.recap.last24Hours[0]?.focusedMinutes).toBe(15);
+
+		vi.mocked(buildGuestDailyRecap).mockReturnValue(guestRecapAfter);
+		localStorage.setItem(GUEST_STORAGE_KEY, '{"cycles":[{"id":"c1"}]}');
+
+		await act(async () => {
+			guestStoreListener?.();
+		});
+
+		await waitFor(() => {
+			expect(result.current.recap.last24Hours[0]?.focusedMinutes).toBe(30);
+		});
 	});
 
 	it("invalidates recap on local date rollover", async () => {
