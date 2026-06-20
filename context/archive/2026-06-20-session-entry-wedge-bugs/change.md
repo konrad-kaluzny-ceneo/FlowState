@@ -1,9 +1,10 @@
 ---
 change_id: session-entry-wedge-bugs
 title: Fix session entry wedge bugs on first visit and return
-status: impl_reviewed
+status: archived
 created: 2026-06-20
 updated: 2026-06-20
+archived_at: 2026-06-20T10:12:00Z
 ---
 
 ## Notes
