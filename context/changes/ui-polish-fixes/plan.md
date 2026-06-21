@@ -507,30 +507,30 @@ No database migration. Existing tasks retain stored `isDailyStanding` values; on
 
 #### Automated
 
-- [x] 2.1 `pnpm check` passes
-- [x] 2.2 `pnpm exec vitest run src/app/_components/out-of-tab-break-alerts-control.test.tsx`
-- [x] 2.3 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
+- [x] 2.1 `pnpm check` passes — 66b4082
+- [x] 2.2 `pnpm exec vitest run src/app/_components/out-of-tab-break-alerts-control.test.tsx` — 66b4082
+- [x] 2.3 `pnpm exec vitest run src/app/_components/task-list.test.tsx` — 66b4082
 
 #### Manual
 
-- [x] 2.4 Daily standing checkbox visually matches break alerts checkbox
-- [x] 2.5 New task form opens with Daily standing checked
-- [x] 2.6 Break alerts area shows only checkbox when permission granted; error copy when denied
+- [x] 2.4 Daily standing checkbox visually matches break alerts checkbox — 66b4082
+- [x] 2.5 New task form opens with Daily standing checked — 66b4082
+- [x] 2.6 Break alerts area shows only checkbox when permission granted; error copy when denied — 66b4082
 
 ### Phase 3: Daily recap visual polish
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run src/app/_components/daily-recap-panel.test.tsx`
-- [ ] 3.2 `pnpm check` passes
-- [ ] 3.3 Empty-recap test: no `daily-recap-last24-toggle` or `daily-recap-last24` in DOM
+- [x] 3.1 `pnpm exec vitest run src/app/_components/daily-recap-panel.test.tsx`
+- [x] 3.2 `pnpm check` passes
+- [x] 3.3 Empty-recap test: no `daily-recap-last24-toggle` or `daily-recap-last24` in DOM
 
 #### Manual
 
-- [ ] 3.4 Panel uses raised card elevation (`bg-surface-card border-card-border shadow-sm`)
-- [ ] 3.5 Title only (no subtitle); dismiss is lucide X icon-only with `aria-label="Dismiss daily recap"`
-- [ ] 3.6 Last 24h section absent when empty; Today always visible with chevron toggle (no underline hover)
-- [ ] 3.7 Dismiss still hides panel for the local calendar day
+- [x] 3.4 Panel uses raised card elevation (`bg-surface-card border-card-border shadow-sm`)
+- [x] 3.5 Title only (no subtitle); dismiss is lucide X icon-only with `aria-label="Dismiss daily recap"`
+- [x] 3.6 Last 24h section absent when empty; Today always visible with chevron toggle (no underline hover)
+- [x] 3.7 Dismiss still hides panel for the local calendar day
 
 ### Phase 4: Task create/edit field unification
 
