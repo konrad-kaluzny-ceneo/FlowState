@@ -20,6 +20,7 @@ type CycleCompleteOverlayProps = {
 	cycleKind?: CycleKind | null;
 	preFocusedTask?: FocusedTask;
 	onDismissPreFocus?: () => void;
+	reentryCopy?: string | null;
 };
 
 export function CycleCompleteOverlay({
@@ -31,6 +32,7 @@ export function CycleCompleteOverlay({
 	cycleKind = null,
 	preFocusedTask = null,
 	onDismissPreFocus,
+	reentryCopy = null,
 }: CycleCompleteOverlayProps) {
 	if (state !== "completed") {
 		return null;
@@ -47,9 +49,12 @@ export function CycleCompleteOverlay({
 					<h2 className="font-semibold text-2xl text-accent-break">
 						Break&apos;s over!
 					</h2>
-					<p className="mt-2 text-sm text-text-secondary">
-						{cycleKind === "LONG_BREAK" ? "Long break" : "Short break"} complete
-						— ready for the next cycle.
+					<p
+						className="mt-2 text-sm text-text-secondary"
+						data-testid="break-reentry-copy"
+					>
+						{reentryCopy ??
+							`${cycleKind === "LONG_BREAK" ? "Long break" : "Short break"} complete — ready for the next cycle.`}
 					</p>
 					<div className="mt-8 flex flex-col gap-3">
 						<button

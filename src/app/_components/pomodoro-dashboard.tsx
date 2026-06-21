@@ -50,6 +50,7 @@ import {
 } from "~/lib/onboarding/copy";
 import { shouldDeferFirstRun } from "~/lib/onboarding/defer";
 import type { OnboardingScope } from "~/lib/onboarding/types";
+import { getBreakReentryLine } from "~/lib/session/transition-copy";
 import { resolveWedgeBeat } from "~/lib/wedge/transition-conductor";
 
 type DayPlanView = ReturnType<typeof useDayPlan>;
@@ -318,6 +319,19 @@ export function PomodoroDashboardBody({
 		!wedgeGateActive &&
 		!showSuggestionCard;
 
+	const showBreakTransitionLine =
+		!cyclePaused &&
+		isBreakRunning &&
+		pomodoro.breakTransitionLine != null &&
+		!wedgeGateActive &&
+		!showSuggestionCard &&
+		!showInFlowSummary;
+
+	const breakReentryCopy =
+		pomodoro.cycleKind === "SHORT_BREAK" || pomodoro.cycleKind === "LONG_BREAK"
+			? getBreakReentryLine(pomodoro.narrativeLatestEnergy)
+			: null;
+
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8">
 			{pomodoro.error != null && (
@@ -360,6 +374,17 @@ export function PomodoroDashboardBody({
 				>
 					{pomodoro.inFlowSummaryLine}
 				</p>
+			)}
+
+			{showBreakTransitionLine && (
+				<button
+					className="w-full max-w-lg rounded-lg border border-purple-400/30 bg-purple-500/10 px-4 py-3 text-center text-purple-100/90 text-sm"
+					data-testid="break-transition-line"
+					onClick={pomodoro.clearBreakTransitionLine}
+					type="button"
+				>
+					{pomodoro.breakTransitionLine}
+				</button>
 			)}
 
 			{showKickoffDurationChips &&
@@ -565,6 +590,7 @@ export function PomodoroDashboardBody({
 					}}
 					onDismissPreFocus={pomodoro.dismissPreFocus}
 					preFocusedTask={pomodoro.preFocusedTask}
+					reentryCopy={breakReentryCopy}
 					state={pomodoro.state}
 				/>
 			)}

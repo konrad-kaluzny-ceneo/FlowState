@@ -57,6 +57,11 @@ import {
 	resolveContinueTaskId,
 } from "~/lib/session/return-handoff";
 import {
+	BREAK_TRANSITION_VISIBLE_MS,
+	type BreakKind,
+	getBreakStartLine,
+} from "~/lib/session/transition-copy";
+import {
 	buildWindDownRationale,
 	shouldShowWindDownNudge,
 } from "~/lib/session/wind-down-nudge";
@@ -375,6 +380,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const [overrideAcknowledgement, setOverrideAcknowledgement] = useState<
 		string | null
 	>(null);
+	const [breakTransitionLine, setBreakTransitionLine] = useState<string | null>(
+		null,
+	);
 	const [pendingKickoffSuggestion, setPendingKickoffSuggestion] =
 		useState<PendingKickoffSuggestion>({ status: "idle" });
 	const [kickoffSuggestedTaskId, setKickoffSuggestedTaskId] =
@@ -475,6 +483,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		"STEADY",
 	);
 	const overrideAckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	);
+	const breakTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
 	const pauseCapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1101,6 +1112,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			if (overrideAckTimerRef.current != null) {
 				clearTimeout(overrideAckTimerRef.current);
 			}
+			if (breakTransitionTimerRef.current != null) {
+				clearTimeout(breakTransitionTimerRef.current);
+			}
 		};
 	}, [stopWorker]);
 
@@ -1120,6 +1134,26 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			overrideAckTimerRef.current = null;
 		}, OVERRIDE_ACK_VISIBLE_MS);
 	}, [clearOverrideAck]);
+
+	const clearBreakTransitionLine = useCallback(() => {
+		if (breakTransitionTimerRef.current != null) {
+			clearTimeout(breakTransitionTimerRef.current);
+			breakTransitionTimerRef.current = null;
+		}
+		setBreakTransitionLine(null);
+	}, []);
+
+	const showBreakTransitionLine = useCallback(
+		(breakKind: BreakKind) => {
+			clearBreakTransitionLine();
+			setBreakTransitionLine(getBreakStartLine(breakKind));
+			breakTransitionTimerRef.current = setTimeout(() => {
+				setBreakTransitionLine(null);
+				breakTransitionTimerRef.current = null;
+			}, BREAK_TRANSITION_VISIBLE_MS);
+		},
+		[clearBreakTransitionLine],
+	);
 
 	const clearKickoffSuggestion = useCallback(() => {
 		kickoffFetchGenRef.current += 1;
@@ -2143,6 +2177,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			return;
 		}
 
+		clearBreakTransitionLine();
+
 		const savedEndTime = endTimeRef.current;
 		const frozenRemainingMs =
 			savedEndTime != null
@@ -2216,6 +2252,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		state,
 		stopWorker,
 		resolvePersistedCycleId,
+		clearBreakTransitionLine,
 	]);
 
 	const resume = useCallback(async () => {
@@ -2327,6 +2364,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			stateRef.current = "running";
 			startWorker(endTime);
 			fireBreakOutOfTabAlert(breakKind, breakCycle.id);
+			showBreakTransitionLine(breakKind);
 
 			await Promise.all([
 				invalidateServerCycle(),
@@ -2347,6 +2385,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			invalidateServerCycle,
 			startWorker,
 			fireBreakOutOfTabAlert,
+			showBreakTransitionLine,
 			utils.task.list,
 			_activeSessionId,
 			refreshNarrativeStats,
@@ -2492,6 +2531,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					setFocusedTask(null);
 				}
 			} else {
+				clearBreakTransitionLine();
 				const keptFocus = preFocusedTask;
 
 				setState("idle");
@@ -2529,6 +2569,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			utils.task.list,
 			preFocusedTask,
 			clearSuggestion,
+			clearBreakTransitionLine,
 		],
 	);
 
@@ -2566,8 +2607,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			}
 			setAwaitingCheckIn(snapshot.awaitingCheckIn);
 			setPendingMarkTaskDone(snapshot.pendingMarkTaskDone);
+			clearBreakTransitionLine();
 		},
-		[startWorker, stopWorker],
+		[startWorker, stopWorker, clearBreakTransitionLine],
 	);
 
 	const continueAfterCheckIn = useCallback(
@@ -2581,6 +2623,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		) => {
 			clearKickoffSuggestion();
 			clearKickoffIdleFlags();
+			if (options?.energy != null) {
+				setNarrativeLatestEnergy(options.energy);
+			}
 			const gen = ++suggestionFetchGenRef.current;
 			suggestionCycleIdRef.current = workCycleId;
 			setPendingSuggestion({ status: "loading" });
@@ -2649,6 +2694,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			stateRef.current = "running";
 			startWorker(optimisticEndTime);
 			fireBreakOutOfTabAlert(breakKind, optimisticBreakCycle.id);
+			showBreakTransitionLine(breakKind);
 			setAwaitingCheckIn(false);
 			setPendingMarkTaskDone(null);
 			setIsPostCheckInTransitioning(false);
@@ -2767,6 +2813,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			refreshNarrativeStats,
 			rollbackOptimisticCheckInTransition,
 			fireBreakOutOfTabAlert,
+			showBreakTransitionLine,
 		],
 	);
 
@@ -3114,6 +3161,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			clearSuggestion();
 			clearKickoffSuggestion();
 			clearKickoffIdleFlags();
+			clearBreakTransitionLine();
 
 			await Promise.all([
 				invalidateServerCycle(),
@@ -3137,6 +3185,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			clearKickoffSuggestion,
 			clearKickoffIdleFlags,
 			clearPauseCapTimer,
+			clearBreakTransitionLine,
 		],
 	);
 
@@ -3276,6 +3325,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		stagedKickoffDurationSec,
 		isAcceptingKickoffSuggestion,
 		overrideAcknowledgement,
+		breakTransitionLine,
+		clearBreakTransitionLine,
+		narrativeLatestEnergy,
 		inFlowSummaryLine,
 		pendingClosureLine,
 		dismissSessionClosure,
