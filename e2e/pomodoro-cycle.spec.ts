@@ -3,6 +3,8 @@
  * Modeled on: e2e/seed.spec.ts
  * Spec role: risk proof (S-01 regression + check-in step)
  */
+
+import { BREAK_REENTRY_FOCUSED } from "../src/lib/session/transition-copy";
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
@@ -12,6 +14,7 @@ import {
 } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import {
+	advanceClockThroughFastBreak,
 	advanceClockThroughFastWork,
 	startFocusedWorkCycle,
 } from "./helpers/work-cycle";
@@ -59,6 +62,33 @@ test.describe("Pomodoro cycle (S-01)", () => {
 			page.getByRole("listitem").filter({ hasText: taskTitle }),
 		).toBeVisible();
 		await expect(taskRow.getByRole("button", { name: "Focus" })).toBeVisible();
+	});
+
+	test("break re-entry shows energy-keyed copy after focused check-in", async ({
+		page,
+	}) => {
+		test.setTimeout(60_000);
+
+		const taskTitle = `E2E Reentry ${Date.now()}`;
+
+		await startFocusedWorkCycle(page, taskTitle, 1);
+		await advanceClockThroughFastWork(page);
+
+		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
+			timeout: 15_000,
+		});
+		await dismissKickoffReadinessIfVisible(page);
+		await page.getByRole("button", { name: "Continue later" }).click();
+		await completeCheckIn(page, "focused");
+
+		await advanceClockThroughFastBreak(page);
+
+		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
+			timeout: 15_000,
+		});
+		await expect(page.getByTestId("break-reentry-copy")).toHaveText(
+			BREAK_REENTRY_FOCUSED,
+		);
 	});
 
 	test("mark task done from completion overlay @skip-belt", async ({

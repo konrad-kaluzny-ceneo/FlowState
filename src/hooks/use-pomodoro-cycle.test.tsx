@@ -4,6 +4,10 @@ import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainActiveCycle } from "~/lib/data-mode/types";
+import {
+	BREAK_START_SHORT,
+	BREAK_TRANSITION_VISIBLE_MS,
+} from "~/lib/session/transition-copy";
 import { assertRemainingMsWithinTolerance } from "~/test-utils/countdown-tolerance";
 import type { TimerWorkerInbound } from "~/workers/timer-worker-logic";
 
@@ -1566,6 +1570,155 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.awaitingCheckIn).toBe(false);
 		expect(result.current.state).toBe("running");
 		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+		expect(result.current.breakTransitionLine).toBe(BREAK_START_SHORT);
+	});
+
+	describe("break transition line", () => {
+		const breakStartCycleMock = () => {
+			createCycle.mockImplementation(async (input) => ({
+				id: input.kind === "WORK" ? 42 : 300,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: null,
+				kind: input.kind,
+				state: "RUNNING",
+				startedAt: new Date(),
+				endedAt: null,
+				task: null,
+				configuredDurationSec: input.configuredDurationSec,
+			}));
+		};
+
+		it("clearBreakTransitionLine dismisses break-start line", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 70,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+			breakStartCycleMock();
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			act(() => {
+				fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+					data: { type: "complete" },
+				} as MessageEvent);
+			});
+
+			await act(async () => {
+				await result.current.onCycleCompleteConfirm(false);
+			});
+
+			await act(async () => {
+				await result.current.submitCheckIn("FOCUSED");
+			});
+
+			expect(result.current.breakTransitionLine).toBe(BREAK_START_SHORT);
+
+			act(() => {
+				result.current.clearBreakTransitionLine();
+			});
+
+			expect(result.current.breakTransitionLine).toBeNull();
+		});
+
+		it("auto-dismisses break-start line after 5s", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 70,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+			breakStartCycleMock();
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			act(() => {
+				fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+					data: { type: "complete" },
+				} as MessageEvent);
+			});
+
+			await act(async () => {
+				await result.current.onCycleCompleteConfirm(false);
+			});
+
+			vi.useFakeTimers();
+			try {
+				await act(async () => {
+					await result.current.submitCheckIn("FOCUSED");
+				});
+
+				expect(result.current.breakTransitionLine).toBe(BREAK_START_SHORT);
+
+				act(() => {
+					vi.advanceTimersByTime(BREAK_TRANSITION_VISIBLE_MS);
+				});
+
+				expect(result.current.breakTransitionLine).toBeNull();
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it("clears break-start line when break completes", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 70,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+			breakStartCycleMock();
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			act(() => {
+				fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+					data: { type: "complete" },
+				} as MessageEvent);
+			});
+
+			await act(async () => {
+				await result.current.onCycleCompleteConfirm(false);
+			});
+
+			await act(async () => {
+				await result.current.submitCheckIn("FOCUSED");
+			});
+
+			expect(result.current.breakTransitionLine).toBe(BREAK_START_SHORT);
+
+			act(() => {
+				fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+					data: { type: "complete" },
+				} as MessageEvent);
+			});
+
+			await act(async () => {
+				await result.current.confirmComplete(false);
+			});
+
+			expect(result.current.breakTransitionLine).toBeNull();
+		});
 	});
 
 	it("submitCheckIn keeps cycle-complete suppressed until break running", async () => {

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
 import { defaultEisenhowerFields } from "~/lib/data-mode/types";
+import { BREAK_START_SHORT } from "~/lib/session/transition-copy";
 
 import { PomodoroDashboardBody } from "./pomodoro-dashboard";
 
@@ -71,6 +72,9 @@ function makePomodoroMock(
 		stagedKickoffDurationSec: null,
 		isAcceptingKickoffSuggestion: false,
 		overrideAcknowledgement: null,
+		breakTransitionLine: null,
+		clearBreakTransitionLine: vi.fn(),
+		narrativeLatestEnergy: null,
 		inFlowSummaryLine: null,
 		pendingClosureLine: null,
 		continueTaskId: null,
@@ -597,5 +601,67 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		expect(screen.queryByTestId("session-closure-overlay")).toBeNull();
 		expect(screen.getByTestId("check-in-overlay")).toBeTruthy();
+	});
+
+	it("shows break transition line during running short break", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "SHORT_BREAK",
+			breakTransitionLine: BREAK_START_SHORT,
+		});
+
+		expect(screen.getByTestId("break-transition-line").textContent).toBe(
+			BREAK_START_SHORT,
+		);
+	});
+
+	it("hides break transition line when post-check-in suggestion card is visible", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				hasActiveSession: true,
+				state: "running",
+				cycleKind: "SHORT_BREAK",
+				breakTransitionLine: BREAK_START_SHORT,
+				pendingSuggestion: {
+					status: "ready",
+					data: {
+						taskId: "task-1",
+						title: "Suggested task",
+						workType: "OPERATIONAL",
+						weight: 2,
+						rationale: "Best next task",
+						breakdown: null,
+					},
+				},
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
+		expect(screen.queryByTestId("break-transition-line")).toBeNull();
+	});
+
+	it("skip click clears break transition line", () => {
+		const clearBreakTransitionLine = vi.fn();
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "SHORT_BREAK",
+			breakTransitionLine: BREAK_START_SHORT,
+			clearBreakTransitionLine,
+		});
+
+		fireEvent.click(screen.getByTestId("break-transition-line"));
+		expect(clearBreakTransitionLine).toHaveBeenCalled();
 	});
 });

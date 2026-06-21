@@ -133,6 +133,9 @@ export async function startFocusedWorkCycle(
 	await waitForTimerPanelIdle(page);
 	await dismissKickoffReadinessIfVisible(page);
 	await setWorkDurationSec(page, durationSec);
+	if (durationSec === 1) {
+		await setShortBreakDurationSec(page, 1);
+	}
 	await dismissKickoffReadinessIfVisible(page);
 	await clickStartCycle(page);
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible({
