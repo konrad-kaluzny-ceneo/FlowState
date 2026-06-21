@@ -404,7 +404,7 @@ export function PomodoroDashboardBody({
 
 			{showBreakTransitionLine && (
 				<button
-					className="w-full max-w-lg rounded-lg border border-purple-400/30 bg-purple-500/10 px-4 py-3 text-center text-purple-100/90 text-sm"
+					className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
 					data-testid="break-transition-line"
 					onClick={pomodoro.clearBreakTransitionLine}
 					type="button"
@@ -531,7 +531,7 @@ export function PomodoroDashboardBody({
 
 			{pomodoro.overrideAcknowledgement != null && (
 				<p
-					className="w-full max-w-lg rounded-lg border border-purple-400/30 bg-purple-500/10 px-4 py-3 text-center text-purple-100/90 text-sm"
+					className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
 					data-testid="suggestion-override-ack"
 				>
 					{pomodoro.overrideAcknowledgement}

@@ -3,31 +3,31 @@ name: FlowState
 description: Calm mindful Pomodoro for dynamic knowledge workers
 colors:
   shell-top: "#FAF8F5"
-  shell-bottom: "#F0EBF8"
+  shell-bottom: "#EDEAE4"
   surface-overlay: "#FFFFFF"
   surface-break: "#E8F4F2"
   surface-card: "#FFFFFF"
-  surface-card-muted: "#F5F3F8"
-  border-subtle: "#E5E0EB"
+  surface-card-muted: "#F3F1EC"
+  border-subtle: "#E0DDD6"
   border-break: "#3D8F824D"
   text-primary: "#2D2A35"
   text-secondary: "#5C5768"
   text-dimmed: "#9B96A8"
   text-section: "#3D3848"
   scrim: "#F8F6F3B8"
-  accent-cta: "#5E5290"
-  accent-cta-hover: "#6E619F"
+  accent-cta: "#736D62"
+  accent-cta-hover: "#635E54"
   on-cta: "#FFFFFF"
   accent-break: "#3D8F82"
   accent-success: "#3A8F65"
   accent-suggestion: "#D4A017CC"
-  focus-ring: "#7C6EAD"
-  segment-active: "#5E5290"
-  segment-inactive: "#E8E4EF"
-  card-border: "#E5E0EB"
+  focus-ring: "#8A8478"
+  segment-active: "#736D62"
+  segment-inactive: "#E8E5DF"
+  card-border: "#E0DDD6"
   card-shadow: "#2D2A3514"
   energy-focused: "#5B7FC4"
-  energy-steady: "#5E5290"
+  energy-steady: "#736D62"
   energy-fading: "#B26A82"
   worktype-deep-bg: "#3D5A8F1F"
   worktype-deep-text: "#3D5A8F"
@@ -106,7 +106,7 @@ components:
 
 ## Overview
 
-FlowState is a calm, **light-default** Pomodoro app for interrupt-driven knowledge workers. The visual system prioritizes **focus clarity** over decoration: a linen-to-lavender shell gradient, solid white task cards with soft elevation, muted plum-lavender primary actions, and semantic accents for break (teal), success (green), and suggestion highlight (amber). A **calm dark** variant on `#1E2433` uses desaturated pastels for low-light sessions.
+FlowState is a calm, **light-default** Pomodoro app for interrupt-driven knowledge workers. The visual system prioritizes **focus clarity** over decoration: a linen-to-cool-stone shell gradient, solid white task cards with soft elevation, muted cool-stone beige primary actions, and semantic accents for break (teal), success (green), and suggestion highlight (amber). A **calm dark** variant on `#1E2433` uses desaturated pastels for low-light sessions.
 
 Craft targets are wedge surfaces only — home shell, task list hierarchy, and cycle transition overlays. Implementation uses Tailwind CSS v4 with semantic tokens in `src/styles/globals.css` `@theme { }`; calm dark overrides the same `--color-*` variables under `[data-theme="dark"]` on `<html>`.
 
@@ -128,12 +128,12 @@ A blocking inline script in `layout.tsx` `<head>` sets `data-theme` before first
 
 | Token | Value | Usage |
 | --- | --- | --- |
-| `shell-top` / `shell-bottom` | `#FAF8F5` → `#F0EBF8` | Page background gradient |
+| `shell-top` / `shell-bottom` | `#FAF8F5` → `#EDEAE4` | Page background gradient |
 | `surface-overlay` | `#FFFFFF` | Modal/overlay card fill |
 | `surface-break` | `#E8F4F2` | Break-state overlays and timer tint |
 | `surface-card` | `#FFFFFF` | Task rows, nested panels |
-| `surface-card-muted` | `#F5F3F8` | Completed rows, subdued panels |
-| `border-subtle` / `card-border` | `#E5E0EB` | Cards, inputs, overlay borders |
+| `surface-card-muted` | `#F3F1EC` | Completed rows, subdued panels |
+| `border-subtle` / `card-border` | `#E0DDD6` | Cards, inputs, overlay borders |
 | `border-break` | `#3D8F82` at 30% | Break-variant overlay border |
 | `scrim` | `rgba(248,246,243,0.72)` | Overlay backdrop (mist) |
 
@@ -150,15 +150,15 @@ A blocking inline script in `layout.tsx` `<head>` sets `data-theme` before first
 
 | Token | Value | Usage |
 | --- | --- | --- |
-| `accent-cta` | `#5E5290` | Primary buttons |
-| `accent-cta-hover` | `#6E619F` | Primary hover |
+| `accent-cta` | `#736D62` | Primary buttons |
+| `accent-cta-hover` | `#635E54` | Primary hover |
 | `on-cta` | `#FFFFFF` | Text on filled CTAs |
 | `accent-break` | `#3D8F82` | Break timer, break complete |
 | `accent-success` | `#3A8F65` | Mark done, completion |
 | `accent-suggestion` | `amber` ring | Suggested task row highlight |
-| `focus-ring` | `#7C6EAD` | Selected task focus ring |
+| `focus-ring` | `#8A8478` | Selected task focus ring |
 
-**CTA contrast:** Muted plum CTA requires explicit `text-on-cta` — never `text-primary` on filled buttons.
+**CTA contrast:** Cool-stone CTA requires explicit `text-on-cta` — never `text-primary` on filled buttons.
 
 ### Calm dark
 
@@ -168,11 +168,11 @@ A blocking inline script in `layout.tsx` `<head>` sets `data-theme` before first
 | `surface-card` | `#2A3142` | Elevated from shell |
 | `surface-card-muted` | `#232936` | Completed rows |
 | `text-primary` | `#F5F3F0` | Light ink |
-| `accent-cta` | `#9B8FC4` | Desaturated plum-lavender |
+| `accent-cta` | `#9A9489` | Desaturated cool stone |
 | `accent-break` | `#4A9A8E` | Desaturated teal |
 | `accent-success` | `#4A9468` | Desaturated green |
 | `scrim` | `rgba(30,36,51,0.78)` | Subdued backdrop |
-| `focus-ring` | `#A99DC8` | Visible on dark cards |
+| `focus-ring` | `#B0AAA0` | Visible on dark cards |
 
 Work-type and energy badge tokens retokenize per theme — dark-designed washes fail contrast on light `#FFFFFF` cards.
 
@@ -181,7 +181,7 @@ Work-type and energy badge tokens retokenize per theme — dark-designed washes 
 | State | Light border/bg | Dark border/bg |
 | --- | --- | --- |
 | Focused | indigo wash | desaturated indigo |
-| Steady | plum wash | desaturated plum |
+| Steady | stone wash | desaturated stone |
 | Fading | rose wash | desaturated rose |
 
 Each state uses `energy-*-border` + `energy-*-bg` token pairs. Label + optional icon required — color alone is insufficient.
