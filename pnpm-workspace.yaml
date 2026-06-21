@@ -27,6 +27,8 @@ allowBuilds:
 
 # --- Supply-chain: reject packages published less than 1 day ago (pnpm 11 default) ---
 # minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - "@kaluzny-konrad/ai-toolkit-kk"
 
 # --- Peer dependency handling ---
 autoInstallPeers: true

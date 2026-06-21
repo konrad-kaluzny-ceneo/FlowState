@@ -31,7 +31,9 @@
 		"prepare": "lefthook install",
 		"review": "tsx scripts/cursor-review/review.ts",
 		"review:cloud": "tsx scripts/cursor-review/review.ts --cloud",
-		"change-impact": "node scripts/change-impact/run.mjs"
+		"change-impact": "node scripts/change-impact/run.mjs",
+		"sync:ai-toolkit": "node scripts/sync-ai-toolkit.mjs --require",
+		"postinstall": "node scripts/sync-ai-toolkit.mjs"
 	},
 	"dependencies": {
 		"@dnd-kit/core": "^6.3.1",
@@ -79,6 +81,9 @@
 		"tsx": "^4.22.3",
 		"typescript": "^6.0.3",
 		"vitest": "^4.1.7"
+	},
+	"optionalDependencies": {
+		"@kaluzny-konrad/ai-toolkit-kk": "^1.0.0"
 	},
 	"ct3aMetadata": {
 		"initVersion": "7.40.0"
