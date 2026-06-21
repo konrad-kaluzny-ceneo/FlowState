@@ -1,10 +1,10 @@
 ---
 change_id: fix-graceful-session-end-while-running
 title: Graceful session end while timer running
-status: impl_reviewed
+status: archived
 created: 2026-06-21
 updated: 2026-06-21
-archived_at: null
+archived_at: 2026-06-21T17:59:00Z
 ---
 
 ## Notes

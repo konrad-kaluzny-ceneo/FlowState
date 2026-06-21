@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-21
 structure: split
-active_slices: [B-08]
+active_slices: []
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -67,7 +67,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | B-05 | fix-closure-kickoff-mutex | [FLO-67](https://linear.app/flowstate-10xdev/issue/FLO-67) | [#110](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/110) | **(bug)** closure without kickoff/check-in stacking | — | **US-01** | done |
 | B-06 | fix-timeout-closure-on-load | [FLO-68](https://linear.app/flowstate-10xdev/issue/FLO-68) | [#111](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/111) | **(bug)** timeout closure on page load, not cycle start | B-05 | US-01 | done |
 | B-07 | fix-wind-down-cycle-threshold | [FLO-69](https://linear.app/flowstate-10xdev/issue/FLO-69) | [#112](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/112) | **(bug)** wind-down at 3rd completed work cycle | — | US-01 | done |
-| B-08 | fix-graceful-session-end-while-running | [FLO-70](https://linear.app/flowstate-10xdev/issue/FLO-70) | [#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113) | **(bug)** calm end session while timer running | F-07; S-24 full | US-04 | in review |
+| B-08 | fix-graceful-session-end-while-running | [FLO-70](https://linear.app/flowstate-10xdev/issue/FLO-70) | [#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113) | **(bug)** calm end session while timer running | F-07; S-24 full | US-04 | done |
 | B-09 | pause-and-end-session | TBD | TBD | pause then end session — B-08 full variant (dual calm exit) | B-08 minimal; S-24 | US-04 | proposed |
 | F-05 | eisenhower-effort-task-attributes | [FLO-57](https://linear.app/flowstate-10xdev/issue/FLO-57) | [#78](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/78) | (foundation) scorer v2 substrate | S-04, S-06 | modified | done |
 | S-25 | pre-suggestion-readiness | [FLO-58](https://linear.app/flowstate-10xdev/issue/FLO-58) | [#79](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/79) | readiness gate before suggestion | S-05, S-06, S-15 | preserved | done |
@@ -178,6 +178,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **B-08: calm end session while timer running** — Archived 2026-06-21 → `context/archive/2026-06-21-fix-graceful-session-end-while-running/`. PR [#149](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/149). Issues [FLO-70](https://linear.app/flowstate-10xdev/issue/FLO-70) / [#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113). Lesson: T-04 was dashboard-only — confirm overlay + existing `endSession()` path; no hook changes.
 - **S-21: skippable break/re-entry copy by energy** — Archived 2026-06-21 → `context/archive/2026-06-21-mindful-transition-copy/`. PR [#148](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/148). Issues [FLO-36](https://linear.app/flowstate-10xdev/issue/FLO-36) / [#47](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/47). Lesson: dashboard mutex sufficient for S-21 MVP; one interstitial + existing gate only.
 - **session-entry-wedge-bugs (ad-hoc)** — Inline steering cards, Continue row, timeout closure + `lastFocusedTaskId`; removed ReturnHandoffBanner. Archived 2026-06-20 → `context/archive/2026-06-20-session-entry-wedge-bugs/`. PR [#141](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/141). Issues [FLO-84](https://linear.app/flowstate-10xdev/issue/FLO-84) / [#142](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/142). Lesson: inline steering + conductor beats overlay stacks; `steeringCompletedRef` on both energy and focus handlers.
 - **S-30: light daily recap + focus footprint on home** — Archived 2026-06-20 → `context/archive/2026-06-20-daily-work-timing-recap/`. PR [#144](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/144). Issues [FLO-65](https://linear.app/flowstate-10xdev/issue/FLO-65) / [#106](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/106). Lesson: shared `computeCycleFocusedMinutes` + dual-mode recap hook; belt e2e covers dismiss + footprint.
