@@ -27,7 +27,7 @@ Full scope map: [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-
 | US-01 | B-05, B-06, B-07, B-08, **F-07**, S-21, S-33, S-34, S-35 |
 | US-02 | **S-29**, **S-32** |
 | US-03 | **S-27**, **S-30** |
-| US-04 | **S-24**, B-08 (full after S-24) |
+| US-04 | **S-24**, B-08 (minimal), **B-09**, **S-38** |
 | Secondary craft | S-28, S-31 |
 
 ## Glance column tags (`roadmap.md`)
@@ -59,5 +59,6 @@ When a plan or item card cites `FR-004`, treat it as **historical traceability**
 | S-24 | US-04 | [#50](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/50) |
 | S-27, S-30 | US-03 | [#80](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/80), [#106](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/106) |
 | S-34, S-35 | US-01 | [#116](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/116), [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) |
-| B-05–B-08 | US-01 / US-04 | [#110](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/110)–[#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113) |
+| B-05–B-09 | US-01 / US-04 | [#110](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/110)–[#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113); B-09 TBD |
+| S-38 | US-04 | TBD |
 | S-28, S-31 | Secondary |

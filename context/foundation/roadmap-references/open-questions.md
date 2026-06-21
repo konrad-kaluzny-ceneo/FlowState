@@ -21,3 +21,4 @@ Detail: [`prd-v3-horizon.md`](prd-v3-horizon.md).
 4. **`Task.resumeNote` vs interruption snapshot** — Owner: implementer. Block: S-18/S-17 handoff (historical).
 5. **`weight` migration vs dual-axis defaults** — Owner: implementer. Block: was F-05; **done** — note for S-27 only if capacity edge cases.
 6. **Drag-drop library and touch targets** — Owner: implementer. Block: no for S-26 (done).
+7. **Partial cycle credit in session closure** — When user ends session mid-cycle, should closure acknowledge elapsed focus on the interrupted block (copy-only) or count partial time in stats/recap? Owner: user. Block: **S-38** plan; copy-only may fold into B-08 phase 1.

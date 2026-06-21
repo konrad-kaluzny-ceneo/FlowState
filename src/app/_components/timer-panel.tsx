@@ -1,5 +1,6 @@
 "use client";
 
+import { Pause, Play, Square } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import type {
@@ -120,14 +121,14 @@ export function TimerPanel({
 
 		return (
 			<section
-				className={`w-full max-w-lg rounded-xl border p-6 text-center ${
+				className={`w-full max-w-lg rounded-xl border p-6 text-center shadow-sm ${
 					isBreak
 						? "border-border-break bg-surface-break"
-						: "border-border-subtle bg-surface-card"
+						: "border-card-border bg-surface-card"
 				}`}
 				data-testid={isPaused ? "timer-panel-paused" : "timer-panel-running"}
 			>
-				<p className="text-sm text-text-secondary">
+				<p className="font-semibold text-sm text-text-section">
 					{isPaused
 						? isBreak
 							? "Break paused"
@@ -137,7 +138,7 @@ export function TimerPanel({
 							: "Focusing on"}
 				</p>
 				{!isBreak && (
-					<p className="mt-1 font-medium text-lg text-primary">
+					<p className="mt-1 font-semibold text-primary text-xl">
 						{focusedTask?.title ?? "Task"}
 					</p>
 				)}
@@ -151,30 +152,33 @@ export function TimerPanel({
 				</p>
 				{isPaused ? (
 					<button
-						className="mt-6 w-full rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover"
+						aria-label={isBreak ? "Resume break" : "Resume"}
+						className="mt-6 flex w-full items-center justify-center rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 						data-testid="timer-resume"
 						onClick={() => void onResume()}
 						type="button"
 					>
-						{isBreak ? "Resume break" : "Resume"}
+						<Play aria-hidden="true" className="h-5 w-5" />
 					</button>
 				) : (
 					<div className="mt-6 flex flex-col gap-3">
 						<button
-							className="w-full rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover"
+							aria-label={isBreak ? "Pause break" : "Pause"}
+							className="flex w-full items-center justify-center rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 							data-testid="timer-pause"
 							onClick={() => void onPause()}
 							type="button"
 						>
-							{isBreak ? "Pause break" : "Pause"}
+							<Pause aria-hidden="true" className="h-5 w-5" />
 						</button>
 						<button
-							className="rounded-lg border border-border-subtle px-4 py-2 text-sm text-text-section transition hover:border-red-400/60 hover:text-red-600"
+							aria-label={isBreak ? "End break early" : "Interrupt"}
+							className="flex w-full items-center justify-center rounded-lg bg-red-600 px-4 py-2 font-semibold text-on-cta transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 							data-testid="timer-interrupt"
 							onClick={() => void onInterrupt()}
 							type="button"
 						>
-							{isBreak ? "End break early" : "Interrupt"}
+							<Square aria-hidden="true" className="h-4 w-4" />
 						</button>
 					</div>
 				)}
@@ -198,13 +202,13 @@ export function TimerPanel({
 
 	return (
 		<section
-			className="w-full max-w-lg rounded-xl border border-border-subtle bg-surface-card p-6"
+			className="w-full max-w-lg rounded-xl border border-card-border bg-surface-card p-6 shadow-sm"
 			data-testid="timer-panel-idle"
 		>
-			<p className="text-center text-sm text-text-secondary">
+			<p className="text-center font-semibold text-sm text-text-section">
 				Ready to focus on
 			</p>
-			<p className="text-center font-medium text-lg text-primary">
+			<p className="text-center font-semibold text-primary text-xl">
 				{focusedTask?.title}
 			</p>
 

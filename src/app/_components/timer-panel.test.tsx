@@ -96,6 +96,15 @@ describe("TimerPanel", () => {
 		expect(onStart).toHaveBeenCalledWith(15 * 60);
 	});
 
+	it("pause and interrupt controls expose accessible names when running", () => {
+		render(
+			<TimerPanel {...defaultProps} remainingMs={125_000} state="running" />,
+		);
+
+		expect(screen.getByRole("button", { name: "Pause" })).toBeTruthy();
+		expect(screen.getByRole("button", { name: "Interrupt" })).toBeTruthy();
+	});
+
 	it("shows Pause and Interrupt when running", () => {
 		render(
 			<TimerPanel {...defaultProps} remainingMs={125_000} state="running" />,

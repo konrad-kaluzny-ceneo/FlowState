@@ -15,6 +15,7 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Plus, Target } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
@@ -477,7 +478,8 @@ function SortableActiveTaskRow({
 					</span>
 					<div className="flex shrink-0 items-center gap-1">
 						<button
-							className={`rounded-lg px-2 py-1 font-medium text-xs transition ${
+							aria-label={focusedTaskId === task.id ? "Focused" : "Focus"}
+							className={`rounded-lg p-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
 								focusedTaskId === task.id
 									? "bg-accent-cta text-on-cta"
 									: "bg-surface-panel text-text-section hover:bg-surface-card-muted"
@@ -486,7 +488,7 @@ function SortableActiveTaskRow({
 							onClick={() => void onFocusTask(task.id, task)}
 							type="button"
 						>
-							{focusedTaskId === task.id ? "Focused" : "Focus"}
+							<Target aria-hidden="true" className="h-4 w-4" />
 						</button>
 						<button
 							aria-label="Delete task"
@@ -846,11 +848,13 @@ export function TaskList({
 						value={newTitle}
 					/>
 					<button
-						className="rounded-lg bg-accent-cta px-4 py-2 font-medium text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50"
+						aria-busy={isCreating}
+						aria-label="Add"
+						className="rounded-lg bg-accent-cta p-2 font-medium text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
 						disabled={isCreating || !newTitle.trim()}
 						type="submit"
 					>
-						{isCreating ? "Adding..." : "Add"}
+						<Plus aria-hidden="true" className="h-5 w-5" />
 					</button>
 				</div>
 				<TaskFieldsPanel

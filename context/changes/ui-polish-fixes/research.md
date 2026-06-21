@@ -102,7 +102,9 @@ Session buttons have **no lucide icons** except `persona-preset-picker.tsx`. Est
 
 **Behavior:** `sessionStorage` key `flowstate:daily-recap-dismiss:{localDateKey}` = `"1"`; per local calendar day; no undo.
 
-**Change surface:** Replace label with `"Close"` or lucide `X` icon-only + keep `aria-label`. E2E uses testid (`e2e/daily-work-timing-recap.spec.ts:78`) — stable. Unit test `daily-recap-panel.test.tsx:71-78` may need update if asserting visible text.
+**Post–Phase 1 implementation feedback (2026-06-21):** After cool-stone token recolor (plan Phase 1, commit `bdd58b3`), the recap panel reads as a flat inset (`bg-surface-panel border-border-subtle`) with weak dismiss affordance (small text `"Not now"`) and redundant subtitle copy. Plan Phase 3 expands from dismiss copy-only to full hub-card polish: `bg-surface-card border-card-border shadow-sm` per `DESIGN.md` raised-card row; remove subtitle entirely; lucide `X` icon-only dismiss (keep `aria-label="Dismiss daily recap"`, not visible `"Close"`); omit entire Last 24h `<section>` when `last24Hours.length === 0` (no empty-state paragraph, no collapsed shell); Today section always shown with chevron disclosure buttons instead of `hover:underline` link styling. `daily-recap-panel.test.tsx` empty-state case and collapse tests must split: empty Last 24h → section absent; non-empty → toggle + `daily-recap-last24` present. E2E `daily-work-timing-recap.spec.ts` unchanged (exercises non-empty Last 24h + testid dismiss).
+
+**Change surface:** Replace label with lucide `X` icon-only + keep `aria-label`. E2E uses testid (`e2e/daily-work-timing-recap.spec.ts:78`) — stable. Unit test `daily-recap-panel.test.tsx` needs rewrite for omit-when-empty Last 24h.
 
 ### 3. Daily standing checkbox
 

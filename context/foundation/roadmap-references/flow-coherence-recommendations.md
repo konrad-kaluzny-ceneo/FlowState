@@ -131,9 +131,10 @@ Copy (S-21), wizualia break (S-33), pause DB (S-24), optimistic UI (S-34) — **
 **Outcome:** user can end session calmly while a cycle is running — without waiting full cycle or raw interrupt.
 
 **Scope minimal:** confirm → interrupt path → closure (bez break).  
-**Scope full:** „Pause & end session” po S-24.
+**Scope full:** „Pause & end session” → **B-09** (after B-08 minimal).  
+**Closure expectations:** mid-cycle end copy → **S-38** (OQ #7; may fold thin copy into B-08).
 
-**Prerequisites:** F-07 (guard); S-24 dla wariantu pełnego · **Effort:** S minimal / M full
+**Prerequisites:** F-07 (guard); S-24 dla wariantu pełnego · **Effort:** S minimal / M full (B-09)
 
 ---
 

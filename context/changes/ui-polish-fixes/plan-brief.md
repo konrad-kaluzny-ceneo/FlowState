@@ -13,7 +13,7 @@ The app uses a semantic token architecture (`globals.css` `@theme` → Tailwind 
 
 ## Desired End State
 
-Users open a calm cool-stone interface where CTAs, focus rings, and shell gradients feel cohesive (not plum-on-lavender). Creating and editing tasks share the same bordered field panel; completed tasks are editable on click and show done state via dim text plus a checkmark (no strikethrough). Daily standing and break-alert toggles use a styled shared checkbox (standing defaults on for new tasks). Daily recap dismiss reads "Close". Session controls use icon-only buttons where intent is obvious (Pause, Add, Focus, Interrupt) while End session keeps its label. The timer focus card matches DESIGN.md elevation and typography tiers.
+Users open a calm cool-stone interface where CTAs, focus rings, and shell gradients feel cohesive (not plum-on-lavender). Creating and editing tasks share the same bordered field panel; completed tasks are editable on click and show done state via dim text plus a checkmark (no strikethrough). Daily standing and break-alert toggles use a styled shared checkbox (standing defaults on for new tasks). Daily recap is a raised hub card with lucide X dismiss (no subtitle); Last 24h omitted when empty; Today uses chevron toggles without link underline. Session controls use icon-only buttons where intent is obvious (Pause, Add, Focus, Interrupt) while End session keeps its label. The timer focus card matches DESIGN.md elevation and typography tiers.
 
 ## Key Decisions Made
 
@@ -25,7 +25,8 @@ Users open a calm cool-stone interface where CTAs, focus rings, and shell gradie
 | Done-state styling | Dim text + checkmark icon, no strikethrough | Keeps titles readable while signaling completion | Plan |
 | Icon policy | Icon-only for Pause/Add/Focus/Interrupt; End session keeps text | High-discoverability footer action stays labeled; obvious controls gain icons | Plan |
 | Scope boundary | Core 9 items only | Defer break-alerts permission overlay "Not now" consistency to a follow-up | Plan |
-| Daily recap dismiss | "Close" text label | Matches change request primary wording; testid stable | Plan |
+| Daily recap dismiss | lucide `X` icon-only + `aria-label` | Matches change.md item 2 (“even better icon X”); testid stable; no visible “Close” text | Plan (post–Phase 1 feedback) |
+| Daily recap layout | Raised card + omit empty Last 24h + chevron toggles | Phase 1 tokens exposed flat panel; reduce copy; section UX without link underline | Plan (post–Phase 1 feedback) |
 | Task unification depth | Extract `TaskFieldsPanel`; persona presets create-only | Aligns chrome without expanding edit scope to presets (S-29 boundary) | Research / Plan |
 
 ## Scope
@@ -36,7 +37,7 @@ Users open a calm cool-stone interface where CTAs, focus rings, and shell gradie
 - Shared `StyledCheckbox` for Daily standing + out-of-tab break alerts
 - Daily standing UI default `true`; styled toggle
 - Break alerts settings simplified to checkbox + error-only extras
-- Daily recap "Not now" → "Close"
+- Daily recap visual polish: raised card elevation, lucide X dismiss, no subtitle, omit Last 24h when empty, chevron section toggles
 - Task create/edit field panel unification
 - Completed-section click-to-edit
 - Done-state: remove strikethrough, add checkmark visual
@@ -61,7 +62,7 @@ Palette change is token-layer only — preserve semantic token names so ~15 cons
 | --- | --- | --- |
 | 1. Cool stone token recolor | Beige palette + DESIGN.md + purple hardcode fix | CTA contrast / a11y regression on light shell |
 | 2. Shared checkbox + alerts | StyledCheckbox, standing default, simplified break alerts | Tests assume unchecked standing default today |
-| 3. Daily recap dismiss | "Close" label on dismiss button | Low — testid unchanged |
+| 3. Daily recap visual polish | Raised card, X dismiss, no subtitle, omit empty Last 24h, chevron toggles | Unit tests assume Last 24h always present + empty-state copy today |
 | 4. Task create/edit unify | TaskFieldsPanel extraction, aligned bordered chrome | Large file touch; L-04 component test for title control |
 | 5. Completed edit + done-state | Click-to-edit completed rows; checkmark + dim, no strikethrough | Completed row must reuse edit commit paths |
 | 6. Icons + timer card | lucide icon-only session buttons; timer card elevation | E2E role-name selectors for Add/Focus/Interrupt |
