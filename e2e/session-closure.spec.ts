@@ -34,15 +34,16 @@ test.describe("Session closure (S-17)", () => {
 			timeout: 15_000,
 		});
 
-		await page.getByRole("button", { name: "Interrupt" }).click();
-		await expect(page.getByTestId("timer-panel-running")).toBeHidden({
-			timeout: 15_000,
-		});
 		await expect(page.getByTestId("end-session-btn")).toBeEnabled({
 			timeout: 15_000,
 		});
 
 		await page.getByTestId("end-session-btn").click();
+
+		await expect(page.getByTestId("end-session-confirm-overlay")).toBeVisible({
+			timeout: 15_000,
+		});
+		await page.getByTestId("end-session-confirm-btn").click();
 
 		await expect(page.getByTestId("session-closure-overlay")).toBeVisible({
 			timeout: 15_000,

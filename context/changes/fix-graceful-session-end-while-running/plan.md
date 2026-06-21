@@ -199,8 +199,8 @@ Replace interrupt-first workaround in session-closure belt spec with running-sta
 
 #### Automated
 
-- [x] 2.1 Wire confirm flow in pomodoro-dashboard (remove running disable)
-- [x] 2.2 Add dashboard characterization tests for T-04
+- [x] 2.1 Wire confirm flow in pomodoro-dashboard (remove running disable) — 26fc607
+- [x] 2.2 Add dashboard characterization tests for T-04 — 26fc607
 
 #### Manual
 
@@ -210,5 +210,5 @@ Replace interrupt-first workaround in session-closure belt spec with running-sta
 
 #### Automated
 
-- [ ] 3.1 Update session-closure.spec.ts for running-state end path
-- [ ] 3.2 Adjust idle-cycle helper for confirm overlay if needed
+- [x] 3.1 Update session-closure.spec.ts for running-state end path
+- [x] 3.2 Adjust idle-cycle helper for confirm overlay if needed

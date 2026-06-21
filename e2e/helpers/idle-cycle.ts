@@ -7,6 +7,27 @@ import {
 } from "./kickoff";
 import { dismissFirstRunIfVisible } from "./onboarding";
 
+async function clickEndSessionWithConfirmIfNeeded(
+	page: Page,
+): Promise<boolean> {
+	const endSession = page.getByTestId("end-session-btn");
+	if (!(await endSession.isVisible().catch(() => false))) {
+		return false;
+	}
+	if (!(await endSession.isEnabled().catch(() => false))) {
+		return false;
+	}
+
+	await endSession.click();
+
+	const confirmOverlay = page.getByTestId("end-session-confirm-overlay");
+	if (await confirmOverlay.isVisible().catch(() => false)) {
+		await page.getByTestId("end-session-confirm-btn").click();
+	}
+
+	return true;
+}
+
 /** @deprecated Use `dismissKickoffSteeringIfVisible` from `./kickoff`. */
 export async function dismissKickoffReadinessIfVisible(page: Page) {
 	await dismissKickoffSteeringIfVisible(page);
@@ -119,9 +140,8 @@ export async function ensureIdleCycle(page: Page) {
 			throw new Error("running cycle interrupted — re-check idle");
 		}
 
-		const endSession = page.getByTestId("end-session-btn");
-		if ((await endSession.isVisible()) && (await endSession.isEnabled())) {
-			await endSession.click();
+		const endSessionClicked = await clickEndSessionWithConfirmIfNeeded(page);
+		if (endSessionClicked) {
 			throw new Error("session ended — re-check idle");
 		}
 
