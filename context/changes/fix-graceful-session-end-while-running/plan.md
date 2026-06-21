@@ -192,15 +192,15 @@ Replace interrupt-first workaround in session-closure belt spec with running-sta
 
 #### Automated
 
-- [x] 1.1 Add end-session copy module + unit tests
-- [x] 1.2 Add EndSessionConfirmOverlay + component tests
+- [x] 1.1 Add end-session copy module + unit tests — 97f1672
+- [x] 1.2 Add EndSessionConfirmOverlay + component tests — 97f1672
 
 ### Phase 2: Dashboard wiring + component tests
 
 #### Automated
 
-- [ ] 2.1 Wire confirm flow in pomodoro-dashboard (remove running disable)
-- [ ] 2.2 Add dashboard characterization tests for T-04
+- [x] 2.1 Wire confirm flow in pomodoro-dashboard (remove running disable)
+- [x] 2.2 Add dashboard characterization tests for T-04
 
 #### Manual
 
