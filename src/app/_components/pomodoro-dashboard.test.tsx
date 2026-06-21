@@ -678,3 +678,70 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(clearBreakTransitionLine).toHaveBeenCalled();
 	});
 });
+
+describe("PomodoroDashboardBody end session while running", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("keeps end session enabled during a running cycle", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			activeCycle: { id: 42 },
+		});
+
+		expect(screen.getByTestId("end-session-btn")).toHaveProperty(
+			"disabled",
+			false,
+		);
+	});
+
+	it("opens confirm overlay on end session click when running", () => {
+		const endSession = vi.fn();
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			activeCycle: { id: 42 },
+			endSession,
+		});
+
+		fireEvent.click(screen.getByTestId("end-session-btn"));
+
+		expect(screen.getByTestId("end-session-confirm-overlay")).toBeTruthy();
+		expect(endSession).not.toHaveBeenCalled();
+	});
+
+	it("dismisses confirm overlay on cancel without ending session", () => {
+		const endSession = vi.fn();
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			activeCycle: { id: 42 },
+			endSession,
+		});
+
+		fireEvent.click(screen.getByTestId("end-session-btn"));
+		fireEvent.click(screen.getByTestId("end-session-confirm-cancel-btn"));
+
+		expect(screen.queryByTestId("end-session-confirm-overlay")).toBeNull();
+		expect(endSession).not.toHaveBeenCalled();
+	});
+
+	it("calls endSession once when confirm is accepted", async () => {
+		const endSession = vi.fn().mockResolvedValue(undefined);
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			activeCycle: { id: 42 },
+			endSession,
+		});
+
+		fireEvent.click(screen.getByTestId("end-session-btn"));
+		fireEvent.click(screen.getByTestId("end-session-confirm-btn"));
+
+		await vi.waitFor(() => {
+			expect(endSession).toHaveBeenCalledTimes(1);
+		});
+	});
+});

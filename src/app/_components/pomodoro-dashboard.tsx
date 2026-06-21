@@ -13,6 +13,7 @@ import { BreakAlertsPermissionPrompt } from "~/app/_components/break-alerts-perm
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { DailyRecapPanel } from "~/app/_components/daily-recap-panel";
+import { EndSessionConfirmOverlay } from "~/app/_components/end-session-confirm-overlay";
 import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
@@ -123,6 +124,8 @@ export function PomodoroDashboardBody({
 
 	const steeringCompletedRef = useRef(false);
 	const [permissionPromptVisible, setPermissionPromptVisible] = useState(false);
+	const [endSessionConfirmOpen, setEndSessionConfirmOpen] = useState(false);
+	const [isEndingSession, setIsEndingSession] = useState(false);
 	const [pendingStartAction, setPendingStartAction] =
 		useState<PendingStartAction | null>(null);
 
@@ -194,6 +197,29 @@ export function PomodoroDashboardBody({
 		setPermissionPromptVisible(false);
 		void completePendingStart();
 	}, [completePendingStart, onboardingScope]);
+
+	const handleEndSessionClick = useCallback(() => {
+		if (pomodoro.state === "running" || pomodoro.state === "paused") {
+			setEndSessionConfirmOpen(true);
+			return;
+		}
+
+		void pomodoro.endSession();
+	}, [pomodoro]);
+
+	const handleEndSessionConfirm = useCallback(async () => {
+		setIsEndingSession(true);
+		try {
+			await pomodoro.endSession();
+			setEndSessionConfirmOpen(false);
+		} finally {
+			setIsEndingSession(false);
+		}
+	}, [pomodoro]);
+
+	const handleEndSessionCancel = useCallback(() => {
+		setEndSessionConfirmOpen(false);
+	}, []);
 
 	const canMarkTaskDone =
 		pomodoro.focusedTaskId != null && activeTaskIds.has(pomodoro.focusedTaskId);
@@ -643,12 +669,20 @@ export function PomodoroDashboardBody({
 				/>
 			)}
 
+			{endSessionConfirmOpen && (
+				<EndSessionConfirmOverlay
+					isSubmitting={isEndingSession}
+					onCancel={handleEndSessionCancel}
+					onConfirm={() => void handleEndSessionConfirm()}
+				/>
+			)}
+
 			{pomodoro.hasActiveSession && (
 				<button
 					className="rounded-lg border border-border-subtle px-4 py-2 text-sm text-text-secondary transition hover:border-red-400/40 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
 					data-testid="end-session-btn"
-					disabled={pomodoro.state === "running"}
-					onClick={() => void pomodoro.endSession()}
+					disabled={pomodoro.isConfirming || isEndingSession}
+					onClick={handleEndSessionClick}
 					type="button"
 				>
 					End session
