@@ -521,16 +521,16 @@ No database migration. Existing tasks retain stored `isDailyStanding` values; on
 
 #### Automated
 
-- [x] 3.1 `pnpm exec vitest run src/app/_components/daily-recap-panel.test.tsx`
-- [x] 3.2 `pnpm check` passes
-- [x] 3.3 Empty-recap test: no `daily-recap-last24-toggle` or `daily-recap-last24` in DOM
+- [x] 3.1 `pnpm exec vitest run src/app/_components/daily-recap-panel.test.tsx` — 6962189
+- [x] 3.2 `pnpm check` passes — 6962189
+- [x] 3.3 Empty-recap test: no `daily-recap-last24-toggle` or `daily-recap-last24` in DOM — 6962189
 
 #### Manual
 
-- [x] 3.4 Panel uses raised card elevation (`bg-surface-card border-card-border shadow-sm`)
-- [x] 3.5 Title only (no subtitle); dismiss is lucide X icon-only with `aria-label="Dismiss daily recap"`
-- [x] 3.6 Last 24h section absent when empty; Today always visible with chevron toggle (no underline hover)
-- [x] 3.7 Dismiss still hides panel for the local calendar day
+- [x] 3.4 Panel uses raised card elevation (`bg-surface-card border-card-border shadow-sm`) — 6962189
+- [x] 3.5 Title only (no subtitle); dismiss is lucide X icon-only with `aria-label="Dismiss daily recap"` — 6962189
+- [x] 3.6 Last 24h section absent when empty; Today always visible with chevron toggle (no underline hover) — 6962189
+- [x] 3.7 Dismiss still hides panel for the local calendar day — 6962189
 
 ### Phase 4: Task create/edit field unification
 
