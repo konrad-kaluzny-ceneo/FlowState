@@ -199,7 +199,7 @@ Each state uses `energy-*-border` + `energy-*-bg` token pairs. Label + optional 
 | State | Background | Text | Other |
 | --- | --- | --- | --- |
 | Active row | `bg-surface-card` | `text-primary` | Standard weight |
-| Completed row | `bg-surface-card-muted` | `text-text-dimmed` | `line-through` |
+| Completed row | `bg-surface-card-muted` | `text-text-dimmed` | checkmark + dim text (no strikethrough) |
 | Selected/focused | — | — | `ring-2 ring-focus` |
 | Section headings | — | `text-text-section font-semibold` | "Active" vs "Completed" |
 

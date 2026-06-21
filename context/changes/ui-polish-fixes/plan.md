@@ -551,15 +551,15 @@ No database migration. Existing tasks retain stored `isDailyStanding` values; on
 
 #### Automated
 
-- [ ] 5.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
-- [ ] 5.2 `pnpm test` passes
-- [ ] 5.3 `pnpm check` passes
+- [x] 5.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
+- [x] 5.2 `pnpm test` passes
+- [x] 5.3 `pnpm check` passes
 
 #### Manual
 
-- [ ] 5.4 Click completed task title opens edit panel
-- [ ] 5.5 Done-for-today and completed titles readable (no strikethrough)
-- [ ] 5.6 Revert to active still works during idle cycle
+- [x] 5.4 Click completed task title opens edit panel
+- [x] 5.5 Done-for-today and completed titles readable (no strikethrough)
+- [x] 5.6 Revert to active still works during idle cycle
 
 ### Phase 6: Session icons + timer card polish
 

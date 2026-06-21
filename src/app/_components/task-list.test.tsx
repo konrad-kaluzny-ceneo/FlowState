@@ -681,6 +681,46 @@ describe("TaskList", () => {
 		expect(screen.getByTestId("done-for-today-button")).toBeTruthy();
 	});
 
+	it("does not use line-through on done-for-today active task titles", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						id: 1,
+						title: "Stand-up",
+						isDailyStanding: true,
+						doneForToday: true,
+					}),
+				]}
+			/>,
+		);
+
+		const titleButton = screen.getByRole("button", { name: "Stand-up" });
+		expect(titleButton.className).not.toContain("line-through");
+		expect(titleButton.className).toContain("text-text-dimmed");
+	});
+
+	it("opens edit panel when clicking a completed task title", () => {
+		render(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						id: 1,
+						title: "Archived task",
+						status: "completed",
+					}),
+				]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "Archived task" }));
+
+		expect(screen.getByTestId("task-fields-panel-edit")).toBeTruthy();
+		expect(screen.getByTestId("task-fields-title")).toBeTruthy();
+	});
+
 	it("calls markDoneForToday for standing tasks instead of global complete", () => {
 		render(
 			<TaskList

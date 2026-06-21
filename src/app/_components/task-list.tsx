@@ -349,6 +349,13 @@ function SortableActiveTaskRow({
 							Done today
 						</button>
 					)
+				) : task.doneForToday ? (
+					<span
+						className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-accent-success bg-accent-success/20 text-accent-success text-xs"
+						title="Done for today"
+					>
+						✓
+					</span>
 				) : (
 					<button
 						aria-label="Mark complete"
@@ -413,9 +420,9 @@ function SortableActiveTaskRow({
 				) : (
 					<button
 						aria-disabled={cycleLocked}
-						className={`min-w-0 flex-1 basis-0 cursor-pointer overflow-hidden whitespace-pre-wrap break-all text-left text-primary ${
+						className={`min-w-0 flex-1 basis-0 cursor-pointer overflow-hidden whitespace-pre-wrap break-all text-left ${
 							cycleLocked ? "cursor-default" : ""
-						} ${task.doneForToday ? "line-through opacity-70" : ""}`}
+						} ${task.doneForToday ? "text-text-dimmed" : "text-primary"}`}
 						onClick={() => {
 							if (cycleLocked) return;
 							void onStartEditing(task);
@@ -1015,32 +1022,88 @@ export function TaskList({
 										}}
 										type="button"
 									/>
-									<span className="min-w-0 flex-1 basis-0 overflow-hidden whitespace-pre-wrap break-all text-text-secondary line-through">
-										{task.title}
-									</span>
+									{editingId === task.id ? (
+										// biome-ignore lint/a11y/noStaticElementInteractions: focus-outside commit when leaving edit panel
+										<div
+											className="min-w-0 flex-1 space-y-2"
+											onBlur={(event) => {
+												const next = event.relatedTarget;
+												if (
+													next instanceof Node &&
+													event.currentTarget.contains(next)
+												) {
+													return;
+												}
+												void commitEditIfDirty();
+											}}
+											ref={editPanelRef}
+										>
+											<TaskFieldsPanel
+												commitmentHorizon={editCommitmentHorizon}
+												effortMinutes={editEffortMinutes}
+												importance={editImportance}
+												isDailyStanding={editIsDailyStanding}
+												mode="edit"
+												onCommitmentHorizonChange={setEditCommitmentHorizon}
+												onEffortMinutesChange={setEditEffortMinutes}
+												onImportanceChange={setEditImportance}
+												onIsDailyStandingChange={setEditIsDailyStanding}
+												onResumeNoteChange={setEditResumeNote}
+												onTitleChange={setEditTitle}
+												onTitleKeyDown={(event) => {
+													if (event.key === "Enter" && !event.shiftKey) {
+														event.preventDefault();
+														void commitEditIfDirty();
+													}
+													if (event.key === "Escape") setEditingId(null);
+												}}
+												onUrgencyChange={setEditUrgency}
+												onWorkTypeChange={setEditWorkType}
+												resumeNote={editResumeNote}
+												resumeNoteFieldId={`task-resume-note-edit-${String(task.id)}`}
+												title={editTitle}
+												urgency={editUrgency}
+												workType={editWorkType}
+											/>
+										</div>
+									) : (
+										<button
+											className="min-w-0 flex-1 basis-0 cursor-pointer overflow-hidden whitespace-pre-wrap break-all text-left text-text-dimmed disabled:cursor-default"
+											disabled={cycleLocked}
+											onClick={() => {
+												if (cycleLocked) return;
+												void startEditing(task);
+											}}
+											type="button"
+										>
+											{task.title}
+										</button>
+									)}
 								</div>
-								<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-7">
-									<TaskBadges
-										commitmentHorizon={task.commitmentHorizon}
-										dimmed
-										effortMinutes={task.effortMinutes}
-										importance={task.importance}
-										personaPresetId={task.personaPresetId}
-										urgency={task.urgency}
-										workType={task.workType}
-									/>
-									<button
-										aria-label="Delete task"
-										className="shrink-0 px-1 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
-										disabled={cycleLocked || isMutating}
-										onClick={() => {
-											void deleteTask({ id: task.id });
-										}}
-										type="button"
-									>
-										✕
-									</button>
-								</div>
+								{editingId !== task.id && (
+									<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-7">
+										<TaskBadges
+											commitmentHorizon={task.commitmentHorizon}
+											dimmed
+											effortMinutes={task.effortMinutes}
+											importance={task.importance}
+											personaPresetId={task.personaPresetId}
+											urgency={task.urgency}
+											workType={task.workType}
+										/>
+										<button
+											aria-label="Delete task"
+											className="shrink-0 px-1 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+											disabled={cycleLocked || isMutating}
+											onClick={() => {
+												void deleteTask({ id: task.id });
+											}}
+											type="button"
+										>
+											✕
+										</button>
+									</div>
+								)}
 							</li>
 						))}
 					</ul>
