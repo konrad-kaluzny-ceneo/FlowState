@@ -56,7 +56,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-18 | task-resume-context-note | [FLO-33](https://linear.app/flowstate-10xdev/issue/FLO-33) | [#44](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/44) | resume note at interrupt / mid-cycle switch | S-06 | preserved | done |
 | S-19 | suggestion-override-acknowledgement | [FLO-34](https://linear.app/flowstate-10xdev/issue/FLO-34) | [#45](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/45) | validating override acknowledgement | S-06 | US-01 | done |
 | S-20 | persistent-quiet-cycle-audio | [FLO-35](https://linear.app/flowstate-10xdev/issue/FLO-35) | [#46](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/46) | mute/soften chime + optional title pulse | S-01 | preserved | done |
-| S-21 | mindful-transition-copy | [FLO-36](https://linear.app/flowstate-10xdev/issue/FLO-36) | [#47](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/47) | skippable break/re-entry copy by energy | F-07, S-02, S-05, S-12 | US-01 | in review |
+| S-21 | mindful-transition-copy | [FLO-36](https://linear.app/flowstate-10xdev/issue/FLO-36) | [#47](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/47) | skippable break/re-entry copy by energy | F-07, S-02, S-05, S-12 | US-01 | done |
 | S-22 | background-tab-return-catchup | [FLO-37](https://linear.app/flowstate-10xdev/issue/FLO-37) | [#48](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/48) | catch-up when tab was backgrounded at cycle end | S-01, S-05, S-06 | preserved | done |
 | S-23 | suggestion-rationale-expander | [FLO-38](https://linear.app/flowstate-10xdev/issue/FLO-38) | [#49](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/49) | "Why this?" factor breakdown | S-06 | preserved | done |
 | S-24 | cycle-pause-resume | [FLO-39](https://linear.app/flowstate-10xdev/issue/FLO-39) | [#50](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/50) | pause/resume; suppress wedge gates while PAUSED; ~30 min cap → calm session end | S-01, S-02 | **US-04** | done |
@@ -124,7 +124,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-30 | daily-work-timing-recap | **yes** | US-03; light footprint only |
 | S-31 | work-focus-shell | **yes** | Secondary craft |
 | S-28 | wellness-illustration-foundation | **yes** | Secondary craft |
-| S-21 | mindful-transition-copy | **in review** | US-01; PR pending — `features/mindful-transition-copy` |
+| S-21 | mindful-transition-copy | **done** | US-01; merged PR [#148](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/148) |
 | S-33 | break-restoration-atmosphere | **yes** | pair S-21 |
 | S-34 | optimistic-wedge-transitions | **yes** | US-01; F-07 done |
 | S-35 | wedge-transition-sync-recovery | **yes** | bundle with S-34 |
@@ -173,6 +173,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **S-21: skippable break/re-entry copy by energy** — Archived 2026-06-21 → `context/archive/2026-06-21-mindful-transition-copy/`. PR [#148](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/148). Issues [FLO-36](https://linear.app/flowstate-10xdev/issue/FLO-36) / [#47](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/47). Lesson: dashboard mutex sufficient for S-21 MVP; one interstitial + existing gate only.
 - **session-entry-wedge-bugs (ad-hoc)** — Inline steering cards, Continue row, timeout closure + `lastFocusedTaskId`; removed ReturnHandoffBanner. Archived 2026-06-20 → `context/archive/2026-06-20-session-entry-wedge-bugs/`. PR [#141](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/141). Issues [FLO-84](https://linear.app/flowstate-10xdev/issue/FLO-84) / [#142](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/142). Lesson: inline steering + conductor beats overlay stacks; `steeringCompletedRef` on both energy and focus handlers.
 - **S-30: light daily recap + focus footprint on home** — Archived 2026-06-20 → `context/archive/2026-06-20-daily-work-timing-recap/`. PR [#144](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/144). Issues [FLO-65](https://linear.app/flowstate-10xdev/issue/FLO-65) / [#106](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/106). Lesson: shared `computeCycleFocusedMinutes` + dual-mode recap hook; belt e2e covers dismiss + footprint.
 - **S-37: revisit user choices (notification preference revisit MVP)** — Archived 2026-06-19 → `context/archive/2026-06-19-revisit-user-choices/`. PR [#140](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/140). Lesson: 3-state readout + timer-hub placement completes break-alerts revisit path.

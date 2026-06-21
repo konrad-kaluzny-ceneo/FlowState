@@ -1,10 +1,9 @@
 ---
 change_id: mindful-transition-copy
 title: Mindful transition copy
-status: impl_reviewed
-created: 2026-06-21
+status: archived
 updated: 2026-06-21
-archived_at: null
+archived_at: 2026-06-21T12:08:00Z
 ---
 
 ## Notes
