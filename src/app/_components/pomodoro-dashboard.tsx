@@ -324,7 +324,8 @@ export function PomodoroDashboardBody({
 		isBreakRunning &&
 		pomodoro.breakTransitionLine != null &&
 		!wedgeGateActive &&
-		!showSuggestionCard;
+		!showSuggestionCard &&
+		!showInFlowSummary;
 
 	const breakReentryCopy =
 		pomodoro.cycleKind === "SHORT_BREAK" || pomodoro.cycleKind === "LONG_BREAK"

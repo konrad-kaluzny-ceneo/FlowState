@@ -2643,13 +2643,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						(cycleKindRef.current === "SHORT_BREAK" ||
 							cycleKindRef.current === "LONG_BREAK");
 					if (breakStarted) {
-						const breakKindNow = cycleKindRef.current;
-						if (
-							breakKindNow === "SHORT_BREAK" ||
-							breakKindNow === "LONG_BREAK"
-						) {
-							showBreakTransitionLine(breakKindNow);
-						}
 						setAwaitingCheckIn(false);
 						setPendingMarkTaskDone(null);
 					}

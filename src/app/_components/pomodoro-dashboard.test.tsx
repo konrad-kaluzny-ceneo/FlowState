@@ -651,6 +651,19 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.queryByTestId("break-transition-line")).toBeNull();
 	});
 
+	it("hides break transition line when in-flow summary is visible", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "SHORT_BREAK",
+			breakTransitionLine: BREAK_START_SHORT,
+			inFlowSummaryLine: "2 cycles · feeling steady",
+		});
+
+		expect(screen.queryByTestId("break-transition-line")).toBeNull();
+		expect(screen.getByTestId("session-inflow-summary")).toBeTruthy();
+	});
+
 	it("skip click clears break transition line", () => {
 		const clearBreakTransitionLine = vi.fn();
 		renderBody({
