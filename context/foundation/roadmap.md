@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-21
 structure: split
-active_slices: []
+active_slices: [B-08]
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -67,7 +67,8 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | B-05 | fix-closure-kickoff-mutex | [FLO-67](https://linear.app/flowstate-10xdev/issue/FLO-67) | [#110](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/110) | **(bug)** closure without kickoff/check-in stacking | — | **US-01** | done |
 | B-06 | fix-timeout-closure-on-load | [FLO-68](https://linear.app/flowstate-10xdev/issue/FLO-68) | [#111](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/111) | **(bug)** timeout closure on page load, not cycle start | B-05 | US-01 | done |
 | B-07 | fix-wind-down-cycle-threshold | [FLO-69](https://linear.app/flowstate-10xdev/issue/FLO-69) | [#112](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/112) | **(bug)** wind-down at 3rd completed work cycle | — | US-01 | done |
-| B-08 | fix-graceful-session-end-while-running | [FLO-70](https://linear.app/flowstate-10xdev/issue/FLO-70) | [#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113) | **(bug)** calm end session while timer running | F-07; S-24 full | US-04 | proposed |
+| B-08 | fix-graceful-session-end-while-running | [FLO-70](https://linear.app/flowstate-10xdev/issue/FLO-70) | [#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113) | **(bug)** calm end session while timer running | F-07; S-24 full | US-04 | in review |
+| B-09 | pause-and-end-session | TBD | TBD | pause then end session — B-08 full variant (dual calm exit) | B-08 minimal; S-24 | US-04 | proposed |
 | F-05 | eisenhower-effort-task-attributes | [FLO-57](https://linear.app/flowstate-10xdev/issue/FLO-57) | [#78](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/78) | (foundation) scorer v2 substrate | S-04, S-06 | modified | done |
 | S-25 | pre-suggestion-readiness | [FLO-58](https://linear.app/flowstate-10xdev/issue/FLO-58) | [#79](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/79) | readiness gate before suggestion | S-05, S-06, S-15 | preserved | done |
 | S-26 | task-manual-priority-order | [FLO-59](https://linear.app/flowstate-10xdev/issue/FLO-59) | [#81](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/81) | drag-reorder tie-breaker | S-04, S-06, S-09 | preserved | done |
@@ -84,6 +85,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-35 | wedge-transition-sync-recovery | [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) | [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) | calm network-loss recovery on wedge gates | F-07, S-06, S-22 | **US-01** | proposed |
 | S-36 | persona-presets-v2 | [FLO-75](https://linear.app/flowstate-10xdev/issue/FLO-75) | [#118](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/118) | 8 personas + row labels + visible effort | S-29, F-05 | **US-02** | done |
 | S-37 | revisit-user-choices | [FLO-80](https://linear.app/flowstate-10xdev/issue/FLO-80) | [#132](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/132) | see and change prior choices (MVP: out-of-tab notification prefs on timer hub) | break-alerts-out-of-tab (merged) | revisit-user-choices PRD thread | done |
+| S-38 | session-end-mid-cycle-closure | TBD | TBD | mid-cycle end sets expectations — what counts in closure | B-08 minimal | US-04 | proposed |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -104,7 +106,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | K | Wellness re-skin | F-06 → S-28 | Pastel + Calm Garden |
 | L | Task UX + standup | S-29 → **S-36** (done); S-32 after S-36; S-30; S-27 | PRD v3 US-02–03 |
 | M | Coherence craft | S-31 ∥ S-28; S-30 footprint | Focus shell, atmosphere |
-| N | PRD v3 flow conductor | **B-05 → B-06 → F-07 (+B-07)** → S-21 ∥ S-33; S-34 ∥ S-35; S-24 → B-08 | US-01 — see [`prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md) |
+| N | PRD v3 flow conductor | **B-05 → B-06 → F-07 (+B-07)** → S-21 ∥ S-33; S-34 ∥ S-35; S-24 → **B-08 → B-09 ∥ S-38** | US-01 — see [`prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md) |
 | O | Choice revisit | break-alerts-out-of-tab (merged) → **S-37** | MVP: notification prefs on timer hub; broader pattern deferred |
 
 ## Backlog Handoff
@@ -114,7 +116,9 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | B-05 | fix-closure-kickoff-mutex | **yes** | P0 hotfix; T-01; parallel S-29; US-01 |
 | B-06 | fix-timeout-closure-on-load | **yes** | after B-05; T-03 |
 | B-07 | fix-wind-down-cycle-threshold | **yes** | with F-07 faza 2 |
-| B-08 | fix-graceful-session-end-while-running | revise | minimal after F-07; full after S-24 |
+| B-08 | fix-graceful-session-end-while-running | revise | minimal after F-07; full → **B-09**; closure copy → **S-38** |
+| B-09 | pause-and-end-session | **no** | after B-08 minimal; US-04 full variant; create Linear/GitHub before plan |
+| S-38 | session-end-mid-cycle-closure | **no** | after B-08 minimal; OQ #7; may fold thin copy into B-08 phase 1 |
 | S-29 | task-create-persona-presets | **done** | merged PR #109 |
 | S-36 | persona-presets-v2 | **done** | US-02; [PR #119](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/119) |
 | S-32 | create-wedge-trust-bridge | **yes** | after S-36; US-02 |
@@ -168,6 +172,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | P-GAP-109 garden on overlays | S-28 phase 2 | already in S-28 detail |
 | P-GAP-110 progressive coaching | S-11 extension | park in [`parked.md`](roadmap-references/parked.md) |
 | P-GAP-102 guest activation | S-11 extension | **active extension** (promoted from parked); after F-07 — event storming hot-1 |
+| B-08 PRD review (2026-06-21) | **B-09** + **S-38** | new proposed slices — pause-then-end vs mid-cycle closure expectations |
 
 Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-batches/README.md).
 

@@ -210,5 +210,5 @@ Replace interrupt-first workaround in session-closure belt spec with running-sta
 
 #### Automated
 
-- [x] 3.1 Update session-closure.spec.ts for running-state end path
-- [x] 3.2 Adjust idle-cycle helper for confirm overlay if needed
+- [x] 3.1 Update session-closure.spec.ts for running-state end path — efc8375
+- [x] 3.2 Adjust idle-cycle helper for confirm overlay if needed — efc8375
