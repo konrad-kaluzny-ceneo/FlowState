@@ -190,30 +190,30 @@ One belt spec asserting break re-entry copy visible after authenticated work→c
 
 #### Automated
 
-- [x] 1.1 Add `transition-copy.ts` with break-start + re-entry selectors
-- [x] 1.2 Add `transition-copy.test.ts` tone + energy oracle
+- [x] 1.1 Add `transition-copy.ts` with break-start + re-entry selectors — af858f7
+- [x] 1.2 Add `transition-copy.test.ts` tone + energy oracle — af858f7
 
 ### Phase 2: Hook state (break-start line)
 
 #### Automated
 
-- [x] 2.1 Wire break-start line set/clear/dismiss in `use-pomodoro-cycle.ts`
-- [x] 2.2 Hook tests for break transition line lifecycle
+- [x] 2.1 Wire break-start line set/clear/dismiss in `use-pomodoro-cycle.ts` — af858f7
+- [x] 2.2 Hook tests for break transition line lifecycle — af858f7
 
 ### Phase 3: Dashboard + overlay UI
 
 #### Automated
 
-- [x] 3.1 Dashboard interstitial + mutex guards
-- [x] 3.2 `CycleCompleteOverlay` reentry copy prop
-- [x] 3.3 Component tests (dashboard + overlay)
+- [x] 3.1 Dashboard interstitial + mutex guards — af858f7
+- [x] 3.2 `CycleCompleteOverlay` reentry copy prop — af858f7
+- [x] 3.3 Component tests (dashboard + overlay) — af858f7
 
 ### Phase 4: E2E belt smoke
 
 #### Automated
 
-- [x] 4.1 Belt e2e assertion for break re-entry copy
+- [x] 4.1 Belt e2e assertion for break re-entry copy — af858f7
 
 #### Manual
 
-- [x] 4.2 Smoke Fading path — no wind-down tone overlap
+- [x] 4.2 Smoke Fading path — no wind-down tone overlap — af858f7
