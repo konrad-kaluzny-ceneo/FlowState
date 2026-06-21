@@ -536,16 +536,16 @@ No database migration. Existing tasks retain stored `isDailyStanding` values; on
 
 #### Automated
 
-- [x] 4.1 `pnpm check` passes
-- [x] 4.2 `pnpm exec vitest run src/app/_components/task-fields-panel.test.tsx`
-- [x] 4.3 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
-- [x] 4.4 `pnpm test` passes
+- [x] 4.1 `pnpm check` passes — 7ae5ea4
+- [x] 4.2 `pnpm exec vitest run src/app/_components/task-fields-panel.test.tsx` — 7ae5ea4
+- [x] 4.3 `pnpm exec vitest run src/app/_components/task-list.test.tsx` — 7ae5ea4
+- [x] 4.4 `pnpm test` passes — 7ae5ea4
 
 #### Manual
 
-- [x] 4.5 Edit on active task matches create form visual weight
-- [x] 4.6 Create task flow unchanged functionally
-- [x] 4.7 Persona presets appear only on create
+- [x] 4.5 Edit on active task matches create form visual weight — 7ae5ea4
+- [x] 4.6 Create task flow unchanged functionally — 7ae5ea4
+- [x] 4.7 Persona presets appear only on create — 7ae5ea4
 
 ### Phase 5: Completed task edit + done-state styling
 
