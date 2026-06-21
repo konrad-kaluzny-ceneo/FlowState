@@ -20,3 +20,5 @@ Zgłaszam kilka małych błędów UI w aplikacji:
 7. Niektóre przyciski nie mają ikon, np.: "End session", "Focus", "Add", "Interrupt", "Pause". Jeżeli jakaś ikona jest oczywista, użyj jej bez napisu.
 8. Widok edycji focus'u jest nieostylowanyt dobrze (Ready to focus on) - tak samo popup "Focusing on".
 9. Out-of-tab break alerts ma bardzo dużo informacji, a wystarczyłby sam ostylowany checkbox z napisem o intencji (a ma tytuł, podtytuł, checkbox, dodatkową informację). Uprość ten komponent, wystarczy checkbox z opcją ustawienia alertów. Dodatkowe informacje pokazuj tylko gdy coś się zepsuje.
+
+**2026-06-21 plan expansion:** Daily recap visual polish added to Phase 3 after Phase 1 manual review — raised card elevation, X icon dismiss, remove subtitle, omit empty Last 24h section, chevron toggles (reverses prior "Close" text decision).

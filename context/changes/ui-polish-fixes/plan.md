@@ -2,11 +2,13 @@
 
 ## Overview
 
-Ship nine UI polish items from `change.md`: replace plum primary with a cool-stone beige palette, unify task create/edit styling, enable completed-task editing, improve done-state readability, add session button icons, polish the timer focus card, style checkboxes (Daily standing default-on), simplify break-alert settings, and rename daily recap dismiss to "Close". All changes are UI-layer; no tRPC or schema changes except optional token/documentation updates.
+Ship nine UI polish items from `change.md`: replace plum primary with a cool-stone beige palette, unify task create/edit styling, enable completed-task editing, improve done-state readability, add session button icons, polish the timer focus card, style checkboxes (Daily standing default-on), simplify break-alert settings, and polish daily recap hub card (raised elevation, X dismiss, section UX). All changes are UI-layer; no tRPC or schema changes except optional token/documentation updates.
 
 ## Current State Analysis
 
-FlowState uses Tailwind v4 CSS-first tokens in `src/styles/globals.css` with plum `#5E5290` as `accent-cta`, lavender-tinted shell gradients (`shell-bottom: #f0ebf8`), and codified strikethrough on completed rows in `DESIGN.md`. Task create (bordered input, persona presets) and edit (borderless textarea, always-visible attribute panel) diverge inside `task-list.tsx`. Completed tasks render as read-only `<li>` rows despite the server accepting updates. Session buttons are text-only except persona presets' lucide usage. Break alerts settings show legend, status paragraph, checkbox, and permission hints even when healthy.
+**Phase 1 landed (bdd58b3):** cool-stone beige tokens and `--color-focus` alias live in `globals.css`; `DESIGN.md` YAML updated; hardcoded purple removed from `pomodoro-dashboard.tsx`. Remaining slice work is UI polish on checkbox, recap hub card, task-list, timer, and icons — no further token migration unless contrast regressions surface.
+
+FlowState uses Tailwind v4 CSS-first tokens in `src/styles/globals.css` (pre–Phase 1: plum `#5E5290` as `accent-cta`, lavender-tinted shell gradients). Task create (bordered input, persona presets) and edit (borderless textarea, always-visible attribute panel) diverge inside `task-list.tsx`. Completed tasks render as read-only `<li>` rows despite the server accepting updates. Session buttons are text-only except persona presets' lucide usage. Break alerts settings show legend, status paragraph, checkbox, and permission hints even when healthy.
 
 ### Key Discoveries:
 
@@ -15,7 +17,7 @@ FlowState uses Tailwind v4 CSS-first tokens in `src/styles/globals.css` with plu
 - Completed split: `task-list.tsx:803-804,1200-1254` — UI-only edit lock
 - Strikethrough: `task-list.tsx:609,1224` + `DESIGN.md:202` — intentional spec divergence for item 6
 - E2E mixed selectors: testids for pause/end-session; role names for Add/Focus/Interrupt
-- L-04: per-surface component smoke when changing interactive title controls
+- Daily recap panel uses flat `bg-surface-panel` — post–Phase 1 cool-stone tokens reduced contrast vs white task cards (`daily-recap-panel.tsx:86`)
 
 ## Desired End State
 
@@ -24,7 +26,7 @@ After all six phases:
 1. Light theme uses cool-stone beige accent (OKLCH h ~95–110) with retinted neutrals; dark theme desaturated equivalents; `DESIGN.md` YAML and prose updated.
 2. `StyledCheckbox` styles Daily standing and break-alert toggles; new tasks default Daily standing checked (UI only).
 3. Break alerts control is a single styled checkbox with intent label; permission denied/default hints appear only when relevant.
-4. Daily recap dismiss shows "Close" (same testid, aria-label).
+4. Daily recap panel uses DESIGN.md raised-card elevation (`bg-surface-card border-card-border shadow-sm`); title only (no subtitle); lucide `X` icon-only dismiss with `aria-label="Dismiss daily recap"`; Last 24h section omitted when `last24Hours.length === 0`; Today section always visible with chevron expand/collapse (no link-style underline hover).
 5. Create and edit share `TaskFieldsPanel` with bordered title field; persona presets remain create-only.
 6. Completed section rows support click-to-edit using the same panel; done state uses `text-text-dimmed` + checkmark, no `line-through`.
 7. Pause, Resume, Interrupt, Focus, Add use lucide icons (icon-only with aria-label); End session keeps text.
@@ -39,11 +41,14 @@ Verification: `pnpm check`, `pnpm test`, `set CI=true && pnpm test:e2e:belt`, `s
 - Wedge transition conductor (F-07) or timer-hub session-end UX (B-08/B-09)
 - Extracting all of `task-list.tsx` beyond `TaskFieldsPanel` / `StyledCheckbox`
 - Changing suggestion scoring, recap data, or guest merge logic
-- Daily recap X icon-only variant (text "Close" per decision)
+- Daily recap visible text dismiss label `"Close"` (icon X per change.md item 2 + post–Phase 1 feedback)
+- Last 24h empty-state copy when section is omitted (`"No focused work in the last 24 hours yet."` not shown — section absent instead)
+- Chevron rotation / motion polish beyond basic expand/collapse (static chevron acceptable)
+- `DESIGN.md` dedicated "hub recap card" tier — reuse existing raised-card elevation row
 
 ## Implementation Approach
 
-Work token-first (high leverage, a11y gate), then shared primitives (checkbox), then quick copy fixes, then the heavy `task-list.tsx` refactor in two phases (unify fields, then completed edit + done-state), finishing with timer/icon polish that depends on stable accent tokens. Preserve all `data-testid` values. Icon-only buttons must expose the same accessible names e2e already targets.
+Work token-first (high leverage, a11y gate), then shared primitives (checkbox), then daily recap hub-card polish, then the heavy `task-list.tsx` refactor in two phases (unify fields, then completed edit + done-state), finishing with timer/icon polish that depends on stable accent tokens. Preserve all `data-testid` values. Icon-only buttons must expose the same accessible names e2e already targets.
 
 ## Critical Implementation Details
 
@@ -175,29 +180,53 @@ Extract a reusable styled checkbox, apply it to Daily standing (default-on for n
 
 ---
 
-## Phase 3: Daily recap dismiss copy
+## Phase 3: Daily recap visual polish
 
 ### Overview
 
-Replace "Not now" with "Close" on the daily recap dismiss control.
+Polish the inline daily recap hub card after Phase 1 token recolor exposed low elevation and excess copy. Raise the panel to DESIGN.md raised-card tier, remove the subtitle, replace text dismiss with a lucide `X` icon-only control, omit the Last 24h section when there is no data, and restyle section headers as chevron toggles without link underline hover.
 
 ### Changes Required:
 
-#### 1. Dismiss button label
+#### 1. Panel elevation and header
 
 **File**: `src/app/_components/daily-recap-panel.tsx`
 
-**Intent**: Change visible button text from "Not now" to "Close" (~lines 96–104). Keep `data-testid="daily-recap-dismiss"` and `aria-label="Dismiss daily recap"`.
+**Intent**: Change root container (~line 86) from flat `bg-surface-panel border-border-subtle` to raised card: `bg-surface-card border border-card-border shadow-sm`. Keep `rounded-lg`, padding, and `data-testid="daily-recap-panel"`. Header row: title `"Daily recap"` only — **remove** subtitle paragraph (`"Light timing for standups — list only, no charts."`, ~lines 92–94).
 
-**Contract**: sessionStorage dismiss key and behavior unchanged.
+**Contract**: Panel reads as an elevated hub card on cool-stone shell, not a flat inset panel.
 
-#### 2. Unit test
+#### 2. Icon-only dismiss (lucide X)
+
+**File**: `src/app/_components/daily-recap-panel.tsx`
+
+**Intent**: Replace `"Not now"` text button (~lines 96–104) with lucide `X` icon-only button. Import `X` from `lucide-react`. No visible text label. Keep `data-testid="daily-recap-dismiss"`, `aria-label="Dismiss daily recap"`, and `sessionStorage` dismiss behavior unchanged. Style as a compact icon control: visible focus ring (`ring-focus` or equivalent), `text-text-dimmed` with hover toward `text-text-section`, adequate hit target (e.g. `p-1 rounded-md`).
+
+**Contract**: E2E `e2e/daily-work-timing-recap.spec.ts:78` (testid click) unchanged. Do **not** use visible text `"Close"`.
+
+#### 3. Last 24h — omit when empty
+
+**File**: `src/app/_components/daily-recap-panel.tsx`
+
+**Intent**: When `recap.last24Hours.length === 0`, do **not** render the Last 24h `<section>`, toggle, or empty-state copy (`"No focused work in the last 24 hours yet."`). When `length > 0`, render section with toggle and rows as today. Initial `last24Expanded` state: `true` when section is rendered (data present).
+
+**Contract**: `data-testid="daily-recap-last24-toggle"` and `daily-recap-last24` exist only when `last24Hours.length > 0`. No collapsed empty shell.
+
+#### 4. Today section — chevron toggle, no underline
+
+**File**: `src/app/_components/daily-recap-panel.tsx`
+
+**Intent**: Today section always renders (including empty plan with `"Nothing on today's plan yet."`). Replace toggle button classes `underline-offset-2 transition hover:underline` (~line 141) with chevron affordance: lucide `ChevronDown` (rotate when collapsed) beside label, flex row, **no** underline on hover. Apply same chevron pattern to Last 24h toggle when that section is present (~line 111). Preserve `aria-expanded`, `data-testid="daily-recap-today-toggle"`, and collapse behavior.
+
+**Contract**: Section headers look like disclosure controls, not text links.
+
+#### 5. Unit tests
 
 **File**: `src/app/_components/daily-recap-panel.test.tsx`
 
-**Intent**: Update any assertion on visible dismiss text if present; dismiss behavior test unchanged.
+**Intent**: **Replace** the existing `"shows empty states when sections have no rows"` case — it currently asserts `"No focused work in the last 24 hours yet."`; after Phase 3 that copy must not render and `daily-recap-last24-toggle` / `daily-recap-last24` must be absent when `last24Hours: []`. Keep Today empty copy (`"Nothing on today's plan yet."`). Also add/update: no subtitle text in document; dismiss via testid still works; recap with `last24Hours` data — section present, collapse still works (`collapses sections independently` fixture unchanged); optional assertion that root panel has raised-card utility classes if co-located smoke adds value.
 
-**Contract**: E2E `e2e/daily-work-timing-recap.spec.ts:78` uses testid — no e2e change required.
+**Contract**: All `daily-recap-panel.test.tsx` cases pass; no e2e spec changes required (belt recap spec exercises non-empty Last 24h path).
 
 ### Success Criteria:
 
@@ -208,7 +237,10 @@ Replace "Not now" with "Close" on the daily recap dismiss control.
 
 #### Manual Verification:
 
-- Daily recap dismiss button reads "Close"
+- Recap panel has visible elevation (white/surface-card fill, card border, subtle shadow) on timer hub after Phase 1 palette
+- Header shows title only; dismiss is a clear X icon with keyboard focus ring
+- Fresh session with no Last 24h work: no Last 24h section at all; Today section visible
+- After a work cycle: Last 24h section appears with chevron toggle; expand/collapse works; no underline hover on section labels
 - Dismiss still hides panel for the local calendar day
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
@@ -413,7 +445,7 @@ Add lucide icons to obvious session/task actions (icon-only) and align timer foc
 - `task-fields-panel.test.tsx` — bordered title in create/edit modes (L-04)
 - `task-list.test.tsx` — daily standing default, completed edit entry, no strikethrough classes
 - `out-of-tab-break-alerts-control.test.tsx` — status label not always rendered
-- `daily-recap-panel.test.tsx` — dismiss behavior
+- `daily-recap-panel.test.tsx` — elevation/dismiss icon, Last 24h omit-when-empty, chevron toggles
 
 ### Integration Tests:
 
@@ -433,7 +465,7 @@ Add lucide icons to obvious session/task actions (icon-only) and align timer foc
 3. Mark task done-for-today — title readable, checkmark visible, no strikethrough
 4. Complete task — click title to edit; revert still works
 5. Start session — icon buttons on timer; break alerts checkbox minimal until error
-6. Open daily recap — dismiss with "Close"
+6. Open daily recap — raised card elevation; X dismiss; no subtitle; Last 24h absent when empty; chevron toggles without underline hover
 
 ## Performance Considerations
 
@@ -459,43 +491,46 @@ No database migration. Existing tasks retain stored `isDailyStanding` values; on
 
 #### Automated
 
-- [x] 1.1 `pnpm check` passes
-- [x] 1.2 `pnpm typecheck` passes
-- [x] 1.3 `pnpm test` passes
-- [x] 1.4 `set CI=true && pnpm test:e2e:a11y` passes
+- [x] 1.1 `pnpm check` passes — bdd58b3
+- [x] 1.2 `pnpm typecheck` passes — bdd58b3
+- [x] 1.3 `pnpm test` passes — bdd58b3
+- [x] 1.4 `set CI=true && pnpm test:e2e:a11y` passes — bdd58b3
 
 #### Manual
 
-- [x] 1.5 Home shell gradient reads cool stone, not lavender-plum
-- [x] 1.6 Primary CTAs have adequate contrast on light background
-- [x] 1.7 Focus ring visible on selected task row
-- [x] 1.8 Dark theme toggle still coherent
+- [x] 1.5 Home shell gradient reads cool stone, not lavender-plum — bdd58b3
+- [x] 1.6 Primary CTAs have adequate contrast on light background — bdd58b3
+- [x] 1.7 Focus ring visible on selected task row — bdd58b3
+- [x] 1.8 Dark theme toggle still coherent — bdd58b3
 
 ### Phase 2: Shared checkbox, daily standing default, break alerts simplify
 
 #### Automated
 
-- [ ] 2.1 `pnpm check` passes
-- [ ] 2.2 `pnpm exec vitest run src/app/_components/out-of-tab-break-alerts-control.test.tsx`
-- [ ] 2.3 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
+- [x] 2.1 `pnpm check` passes
+- [x] 2.2 `pnpm exec vitest run src/app/_components/out-of-tab-break-alerts-control.test.tsx`
+- [x] 2.3 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
 
 #### Manual
 
-- [ ] 2.4 Daily standing checkbox visually matches break alerts checkbox
-- [ ] 2.5 New task form opens with Daily standing checked
-- [ ] 2.6 Break alerts area shows only checkbox when permission granted; error copy when denied
+- [x] 2.4 Daily standing checkbox visually matches break alerts checkbox
+- [x] 2.5 New task form opens with Daily standing checked
+- [x] 2.6 Break alerts area shows only checkbox when permission granted; error copy when denied
 
-### Phase 3: Daily recap dismiss copy
+### Phase 3: Daily recap visual polish
 
 #### Automated
 
 - [ ] 3.1 `pnpm exec vitest run src/app/_components/daily-recap-panel.test.tsx`
 - [ ] 3.2 `pnpm check` passes
+- [ ] 3.3 Empty-recap test: no `daily-recap-last24-toggle` or `daily-recap-last24` in DOM
 
 #### Manual
 
-- [ ] 3.3 Daily recap dismiss button reads "Close"
-- [ ] 3.4 Dismiss still hides panel for the local calendar day
+- [ ] 3.4 Panel uses raised card elevation (`bg-surface-card border-card-border shadow-sm`)
+- [ ] 3.5 Title only (no subtitle); dismiss is lucide X icon-only with `aria-label="Dismiss daily recap"`
+- [ ] 3.6 Last 24h section absent when empty; Today always visible with chevron toggle (no underline hover)
+- [ ] 3.7 Dismiss still hides panel for the local calendar day
 
 ### Phase 4: Task create/edit field unification
 

@@ -19,6 +19,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
 import { PersonaPresetPicker } from "~/app/_components/persona-preset-picker";
+import { StyledCheckbox } from "~/app/_components/styled-checkbox";
 import { usePresetCoachOnboarding } from "~/hooks/use-onboarding-state";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { formatEndedAgo } from "~/lib/catch-up/format-ended-ago";
@@ -265,15 +266,12 @@ function DailyStandingToggle({
 	onChange: (value: boolean) => void;
 }) {
 	return (
-		<label className="flex items-center gap-2 text-text-secondary text-xs">
-			<input
-				checked={checked}
-				data-testid="daily-standing-toggle"
-				onChange={(event) => onChange(event.target.checked)}
-				type="checkbox"
-			/>
-			Daily standing
-		</label>
+		<StyledCheckbox
+			checked={checked}
+			data-testid="daily-standing-toggle"
+			label="Daily standing"
+			onChange={onChange}
+		/>
 	);
 }
 
@@ -749,7 +747,7 @@ export function TaskList({
 		useState<CommitmentHorizon>(
 			DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon,
 		);
-	const [newIsDailyStanding, setNewIsDailyStanding] = useState(false);
+	const [newIsDailyStanding, setNewIsDailyStanding] = useState(true);
 
 	function resetCreateFormState() {
 		setNewTitle("");
@@ -760,7 +758,7 @@ export function TaskList({
 		setNewImportance(DEFAULT_CREATE_FORM_ATTRIBUTES.importance);
 		setNewEffortMinutes(DEFAULT_CREATE_FORM_ATTRIBUTES.effortMinutes);
 		setNewCommitmentHorizon(DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon);
-		setNewIsDailyStanding(false);
+		setNewIsDailyStanding(true);
 	}
 
 	function applyPresetToCreateForm(presetId: PersonaPresetId) {

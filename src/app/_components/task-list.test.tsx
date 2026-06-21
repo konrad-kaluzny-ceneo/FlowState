@@ -445,7 +445,7 @@ describe("TaskList", () => {
 				effortMinutes: Number.parseInt(applied.effortMinutes, 10),
 				commitmentHorizon: applied.commitmentHorizon,
 				personaPresetId: presetId,
-				isDailyStanding: false,
+				isDailyStanding: true,
 			});
 		});
 	});
@@ -671,7 +671,10 @@ describe("TaskList", () => {
 			/>,
 		);
 
-		expect(screen.getByTestId("daily-standing-toggle")).toBeTruthy();
+		const toggle = screen.getByTestId(
+			"daily-standing-toggle",
+		) as HTMLInputElement;
+		expect(toggle.checked).toBe(true);
 		expect(screen.getByTestId("daily-standing-badge").textContent).toBe(
 			"Daily",
 		);
