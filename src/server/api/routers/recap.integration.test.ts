@@ -14,8 +14,16 @@ const { recapRouter } = await import("~/server/api/routers/recap");
 const createCaller = createCallerFactory(recapRouter);
 
 const USER = "recap-integration-user";
-const DATE_KEY = "2026-06-20";
-const NOW = new Date("2026-06-20T12:00:00Z");
+
+function recapTestAnchor() {
+	const now = new Date();
+	const localDateKey = [
+		now.getFullYear(),
+		String(now.getMonth() + 1).padStart(2, "0"),
+		String(now.getDate()).padStart(2, "0"),
+	].join("-");
+	return { now, localDateKey };
+}
 
 type CycleRow = {
 	id: number;
@@ -159,6 +167,8 @@ describe("recap router integration", () => {
 	});
 
 	it("getDaily returns recap rows from seeded cycles via buildDailyRecap", async () => {
+		const { now, localDateKey } = recapTestAnchor();
+
 		tasks.push(
 			{
 				id: 1,
@@ -168,8 +178,8 @@ describe("recap router integration", () => {
 				isDailyStanding: false,
 				effortMinutes: 25,
 				sortOrder: 0,
-				createdAt: NOW,
-				updatedAt: NOW,
+				createdAt: now,
+				updatedAt: now,
 			},
 			{
 				id: 2,
@@ -179,8 +189,8 @@ describe("recap router integration", () => {
 				isDailyStanding: false,
 				effortMinutes: 15,
 				sortOrder: 1,
-				createdAt: NOW,
-				updatedAt: NOW,
+				createdAt: now,
+				updatedAt: now,
 			},
 		);
 
@@ -192,8 +202,8 @@ describe("recap router integration", () => {
 				kind: "WORK",
 				state: "COMPLETED",
 				configuredDurationSec: 1500,
-				startedAt: new Date("2026-06-20T10:00:00Z"),
-				endedAt: new Date("2026-06-20T10:15:00Z"),
+				startedAt: new Date(now.getTime() - 3 * 60 * 60 * 1000),
+				endedAt: new Date(now.getTime() - 2.75 * 60 * 60 * 1000),
 				task: { id: 1, title: "Write recap" },
 			},
 			{
@@ -203,15 +213,15 @@ describe("recap router integration", () => {
 				kind: "WORK",
 				state: "COMPLETED",
 				configuredDurationSec: 1500,
-				startedAt: new Date("2026-06-20T11:00:00Z"),
-				endedAt: new Date("2026-06-20T11:10:00Z"),
+				startedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+				endedAt: new Date(now.getTime() - (2 * 60 - 10) * 60 * 1000),
 				task: { id: 2, title: "Review PR" },
 			},
 		);
 
 		const db = createMockDb();
 		const result = await recapCaller(USER, db).getDaily({
-			localDateKey: DATE_KEY,
+			localDateKey,
 		});
 
 		expect(result.last24Hours).toHaveLength(2);
