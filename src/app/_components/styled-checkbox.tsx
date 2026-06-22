@@ -37,7 +37,7 @@ export function StyledCheckbox({
 			/>
 			<span
 				aria-hidden="true"
-				className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-border-subtle bg-surface-card transition-colors peer-checked:border-accent-cta peer-checked:bg-accent-cta peer-focus-visible:ring-2 peer-focus-visible:ring-focus peer-disabled:opacity-60"
+				className="pointer-events-none flex h-4 w-4 shrink-0 items-center justify-center rounded border border-border-subtle bg-surface-card transition-colors peer-checked:border-accent-cta peer-checked:bg-accent-cta peer-focus-visible:ring-2 peer-focus-visible:ring-focus peer-disabled:opacity-60"
 			>
 				{checked ? (
 					<svg

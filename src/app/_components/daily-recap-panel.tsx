@@ -26,11 +26,13 @@ function dismissForDate(localDateKey: string): void {
 
 function formatTimeRange(row: RecapTaskRow): string {
 	const options: Intl.DateTimeFormatOptions = {
-		hour: "numeric",
+		hour: "2-digit",
 		minute: "2-digit",
+		hour12: false,
 	};
-	const start = row.firstStartedAt.toLocaleTimeString([], options);
-	const end = row.lastEndedAt.toLocaleTimeString([], options);
+	const locale = "en-GB";
+	const start = row.firstStartedAt.toLocaleTimeString(locale, options);
+	const end = row.lastEndedAt.toLocaleTimeString(locale, options);
 	return `${start}–${end}`;
 }
 
@@ -89,9 +91,7 @@ export function DailyRecapPanel({
 	recap,
 	isLoading = false,
 }: DailyRecapPanelProps) {
-	const [dismissed, setDismissed] = useState(() =>
-		isDismissedForDate(localDateKey),
-	);
+	const [dismissed, setDismissed] = useState(false);
 	const [last24Expanded, setLast24Expanded] = useState(true);
 	const [todayExpanded, setTodayExpanded] = useState(true);
 	const hasLast24Hours = recap.last24Hours.length > 0;

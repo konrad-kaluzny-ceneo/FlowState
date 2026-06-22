@@ -565,12 +565,12 @@ No database migration. Existing tasks retain stored `isDailyStanding` values; on
 
 #### Automated
 
-- [ ] 6.1 `pnpm check` passes
-- [ ] 6.2 `pnpm test` passes
-- [ ] 6.3 `set CI=true && pnpm test:e2e:belt` passes
+- [x] 6.1 `pnpm check` passes
+- [x] 6.2 `pnpm test` passes
+- [x] 6.3 `set CI=true && pnpm test:e2e:belt` passes
 
 #### Manual
 
-- [ ] 6.4 Pause/Interrupt/Focus/Add show clear icons; End session still labeled
-- [ ] 6.5 Timer card has subtle shadow and readable focus title hierarchy
-- [ ] 6.6 Icon buttons usable via keyboard focus ring
+- [x] 6.4 Pause/Interrupt/Focus/Add show clear icons; End session still labeled
+- [x] 6.5 Timer card has subtle shadow and readable focus title hierarchy
+- [x] 6.6 Icon buttons usable via keyboard focus ring

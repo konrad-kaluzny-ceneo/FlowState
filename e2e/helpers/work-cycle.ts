@@ -49,7 +49,21 @@ export async function configureFastPomodoroDurations(page: Page) {
 }
 
 async function waitForTaskCreateSettled(addButton: Locator) {
-	await expect(addButton).not.toHaveText("Adding...", { timeout: 15_000 });
+	await expect(addButton).not.toHaveAttribute("aria-busy", "true", {
+		timeout: 15_000,
+	});
+}
+
+/** Belt specs expect generic tasks — uncheck daily standing default for create flows. */
+async function uncheckDailyStandingDefault(page: Page) {
+	const toggle = page.getByTestId("daily-standing-toggle");
+	if (!(await toggle.isVisible())) {
+		return;
+	}
+	if (await toggle.isChecked()) {
+		await page.getByText("Daily standing", { exact: true }).click();
+		await expect(toggle).not.toBeChecked();
+	}
 }
 
 async function isGuestDashboard(page: Page) {
@@ -115,6 +129,7 @@ export async function startFocusedWorkCycle(
 ) {
 	await dismissFirstRunIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
+	await uncheckDailyStandingDefault(page);
 	await page.getByPlaceholder("Add a new task...").fill(taskTitle);
 	await page.getByRole("button", { name: "Add", exact: true }).click();
 	const taskRow = page
@@ -147,6 +162,7 @@ export async function addTask(page: Page, title: string) {
 	const addButton = page.getByRole("button", { name: "Add", exact: true });
 	await dismissFirstRunIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
+	await uncheckDailyStandingDefault(page);
 	await page.getByPlaceholder("Add a new task...").fill(title);
 	await dismissKickoffReadinessIfVisible(page);
 	await addButton.click();
@@ -232,6 +248,7 @@ export async function addTaskWithAttributes(
 		.filter({ hasText: /^Urgency/ })
 		.first();
 	await urgencyRow.getByRole("button", { name: weight }).click();
+	await uncheckDailyStandingDefault(page);
 	await page.getByPlaceholder("Add a new task...").fill(title);
 	const addButton = addForm.getByRole("button", { name: "Add" });
 	await dismissKickoffReadinessIfVisible(page);
