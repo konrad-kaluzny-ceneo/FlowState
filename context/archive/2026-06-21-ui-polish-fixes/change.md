@@ -1,10 +1,10 @@
 ---
 change_id: ui-polish-fixes
 title: UI polish — beige palette, task editing, icons, and simplified overlays
-status: impl_reviewed
+status: archived
 created: 2026-06-21
-updated: 2026-06-21
-archived_at: null
+updated: 2026-06-22
+archived_at: 2026-06-22
 ---
 
 ## Notes
