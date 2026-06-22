@@ -117,3 +117,15 @@
 - **Unknowns:** Minimal interrupt→closure vs pause — owner: `/10x-plan`. Block: no for minimal.
 - **Risk:** UI-only vs backend interrupt already in `endSession()`. Detail: [`items/B-08.md`](items/B-08.md).
 - **Status:** proposed — P2
+- **Follow-ups:** **B-09** (full pause-then-end); **S-38** (mid-cycle closure copy / OQ #7)
+
+### B-09: Pause and end session (B-08 full)
+
+- **Outcome:** dual calm path — pause remaining time, then confirm session end (full B-08 variant).
+- **Change ID:** pause-and-end-session
+- **Linear:** TBD
+- **GitHub:** TBD
+- **PRD refs:** US-04
+- **Prerequisites:** B-08 minimal; S-24
+- **Detail:** [`items/B-09.md`](items/B-09.md)
+- **Status:** proposed — P2; after B-08 minimal

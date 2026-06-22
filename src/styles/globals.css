@@ -5,17 +5,17 @@
 		var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
 		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-	/* Shell & surfaces — light-default (Serene Pastel) */
+	/* Shell & surfaces — light-default (cool stone) */
 	--color-shell-top: #faf8f5;
-	--color-shell-bottom: #f0ebf8;
+	--color-shell-bottom: #edeae4;
 	--color-surface-overlay: #ffffff;
 	--color-surface-break: #e8f4f2;
 	--color-surface-card: #ffffff;
-	--color-surface-card-muted: #f5f3f8;
-	--color-surface-panel: #f8f6fc;
-	--color-border-subtle: #e5e0eb;
+	--color-surface-card-muted: #f3f1ec;
+	--color-surface-panel: #f5f3ee;
+	--color-border-subtle: #e0ddd6;
 	--color-border-break: rgb(61 143 130 / 0.3);
-	--color-card-border: #e5e0eb;
+	--color-card-border: #e0ddd6;
 	--color-card-shadow: rgb(45 42 53 / 0.08);
 
 	/* Text hierarchy */
@@ -27,27 +27,28 @@
 
 	/* Scrim & focus */
 	--color-scrim: rgb(248 246 243 / 0.72);
-	--color-focus-ring: #7c6ead;
+	--color-focus-ring: #8a8478;
+	--color-focus: var(--color-focus-ring);
 
 	/* Semantic accents */
-	--color-accent-cta: #5e5290;
-	--color-accent-cta-hover: #6e619f;
+	--color-accent-cta: #736d62;
+	--color-accent-cta-hover: #635e54;
 	--color-on-cta: #ffffff;
 	--color-accent-break: #3d8f82;
 	--color-accent-success: #3a8f65;
 	--color-accent-suggestion: rgb(212 160 23 / 0.8);
 
 	/* Segmented controls */
-	--color-segment-active: #5e5290;
-	--color-segment-inactive: #e8e4ef;
+	--color-segment-active: #736d62;
+	--color-segment-inactive: #e8e5df;
 
 	/* Energy identity */
 	--color-energy-focused: #5b7fc4;
 	--color-energy-focused-border: rgb(91 127 196 / 0.4);
 	--color-energy-focused-bg: rgb(91 127 196 / 0.1);
-	--color-energy-steady: #5e5290;
-	--color-energy-steady-border: rgb(94 82 144 / 0.4);
-	--color-energy-steady-bg: rgb(94 82 144 / 0.1);
+	--color-energy-steady: #736d62;
+	--color-energy-steady-border: rgb(115 109 98 / 0.4);
+	--color-energy-steady-bg: rgb(115 109 98 / 0.1);
 	--color-energy-fading: #b26a82;
 	--color-energy-fading-border: rgb(178 106 130 / 0.35);
 	--color-energy-fading-bg: rgb(178 106 130 / 0.08);
@@ -82,24 +83,25 @@
 	--color-text-section: rgb(245 243 240 / 0.85);
 
 	--color-scrim: rgb(30 36 51 / 0.78);
-	--color-focus-ring: #a99dc8;
+	--color-focus-ring: #b0aaa0;
+	--color-focus: var(--color-focus-ring);
 
-	--color-accent-cta: #6e619f;
-	--color-accent-cta-hover: #7c6ead;
+	--color-accent-cta: #9a9489;
+	--color-accent-cta-hover: #aaa49a;
 	--color-on-cta: #ffffff;
 	--color-accent-break: #4a9a8e;
 	--color-accent-success: #4a9468;
 	--color-accent-suggestion: rgb(212 175 55 / 0.75);
 
-	--color-segment-active: #7c6ead;
+	--color-segment-active: #9a9489;
 	--color-segment-inactive: rgb(255 255 255 / 0.08);
 
 	--color-energy-focused: #818cf8;
 	--color-energy-focused-border: rgb(129 140 248 / 0.45);
 	--color-energy-focused-bg: rgb(99 102 241 / 0.12);
-	--color-energy-steady: #9b8fc4;
-	--color-energy-steady-border: rgb(155 143 196 / 0.45);
-	--color-energy-steady-bg: rgb(155 143 196 / 0.12);
+	--color-energy-steady: #9a9489;
+	--color-energy-steady-border: rgb(154 148 137 / 0.45);
+	--color-energy-steady-bg: rgb(154 148 137 / 0.12);
 	--color-energy-fading: #d49ab0;
 	--color-energy-fading-border: rgb(212 154 170 / 0.4);
 	--color-energy-fading-bg: rgb(212 154 170 / 0.08);

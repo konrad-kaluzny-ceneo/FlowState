@@ -1,13 +1,10 @@
 "use client";
 
+import { StyledCheckbox } from "~/app/_components/styled-checkbox";
 import {
 	getNotificationPermission,
 	requestNotificationPermission,
 } from "~/lib/break-out-of-tab-alert/notify-break-start";
-import {
-	resolveOutOfTabBreakAlertStatus,
-	statusLabel,
-} from "~/lib/break-out-of-tab-alert/preference-status";
 
 type OutOfTabBreakAlertsControlProps = {
 	enabled: boolean;
@@ -21,10 +18,6 @@ export function OutOfTabBreakAlertsControl({
 	disabled = false,
 }: OutOfTabBreakAlertsControlProps) {
 	const permission = getNotificationPermission();
-	const status = resolveOutOfTabBreakAlertStatus({
-		enabled,
-		notificationPermission: permission,
-	});
 
 	const handleToggle = (next: boolean) => {
 		if (!next) {
@@ -45,25 +38,14 @@ export function OutOfTabBreakAlertsControl({
 			className="border-border-subtle border-t pt-4"
 			data-testid="out-of-tab-break-alerts-control"
 		>
-			<legend className="mb-2 w-full text-center text-sm text-text-secondary">
-				Out-of-tab break alerts
-			</legend>
-			<p
-				className="mb-3 text-center text-text-dimmed text-xs"
-				data-testid="out-of-tab-break-alerts-status"
-			>
-				{statusLabel(status)}
-			</p>
-			<label className="flex items-center justify-center gap-2 text-sm text-text-secondary">
-				<input
-					checked={enabled}
-					data-testid="out-of-tab-break-alerts-toggle"
-					disabled={disabled}
-					onChange={(event) => handleToggle(event.target.checked)}
-					type="checkbox"
-				/>
-				Alert me when break starts (other tab)
-			</label>
+			<StyledCheckbox
+				checked={enabled}
+				className="justify-center"
+				data-testid="out-of-tab-break-alerts-toggle"
+				disabled={disabled}
+				label="Alert me when break starts (other tab)"
+				onChange={handleToggle}
+			/>
 			{permission === "denied" && (
 				<div className="mt-2 text-center text-text-dimmed text-xs">
 					<p>

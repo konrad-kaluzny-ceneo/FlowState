@@ -15,10 +15,15 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Plus, Target } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
 import { PersonaPresetPicker } from "~/app/_components/persona-preset-picker";
+import {
+	TaskFieldsPanel,
+	TITLE_FIELD_CLASS,
+} from "~/app/_components/task-fields-panel";
 import { usePresetCoachOnboarding } from "~/hooks/use-onboarding-state";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { formatEndedAgo } from "~/lib/catch-up/format-ended-ago";
@@ -41,12 +46,6 @@ import {
 import { formatLocalDateKey } from "~/lib/time/local-date-key";
 
 const AXIS_LABELS = { 1: "Light", 2: "Medium", 3: "Heavy" } as const;
-
-const HORIZON_OPTIONS: { value: CommitmentHorizon; label: string }[] = [
-	{ value: "ASAP", label: "ASAP" },
-	{ value: "THIS_WEEK", label: "This week" },
-	{ value: "WHEN_POSSIBLE", label: "When possible" },
-];
 
 function EisenhowerDetailBadges({
 	workType,
@@ -163,120 +162,6 @@ function TaskBadges({
 	);
 }
 
-type EisenhowerAttributeFieldsProps = {
-	urgency: 1 | 2 | 3;
-	importance: 1 | 2 | 3;
-	effortMinutes: string;
-	commitmentHorizon: CommitmentHorizon;
-	onUrgencyChange: (value: 1 | 2 | 3) => void;
-	onImportanceChange: (value: 1 | 2 | 3) => void;
-	onEffortMinutesChange: (value: string) => void;
-	onCommitmentHorizonChange: (value: CommitmentHorizon) => void;
-};
-
-function EisenhowerAttributeFields({
-	urgency,
-	importance,
-	effortMinutes,
-	commitmentHorizon,
-	onUrgencyChange,
-	onImportanceChange,
-	onEffortMinutesChange,
-	onCommitmentHorizonChange,
-}: EisenhowerAttributeFieldsProps) {
-	return (
-		<>
-			<div className="flex flex-wrap items-center gap-2">
-				<span className="w-16 shrink-0 text-text-secondary text-xs">
-					Urgency
-				</span>
-				<SegmentedControl
-					onChange={(v) => onUrgencyChange(v as 1 | 2 | 3)}
-					options={[
-						{ value: 1 as const, label: "Light" },
-						{ value: 2 as const, label: "Medium" },
-						{ value: 3 as const, label: "Heavy" },
-					]}
-					value={urgency}
-				/>
-			</div>
-			<div className="flex flex-wrap items-center gap-2">
-				<span className="w-16 shrink-0 text-text-secondary text-xs">
-					Importance
-				</span>
-				<SegmentedControl
-					onChange={(v) => onImportanceChange(v as 1 | 2 | 3)}
-					options={[
-						{ value: 1 as const, label: "Light" },
-						{ value: 2 as const, label: "Medium" },
-						{ value: 3 as const, label: "Heavy" },
-					]}
-					value={importance}
-				/>
-			</div>
-			<div className="flex flex-wrap items-center gap-2">
-				<span className="w-16 shrink-0 text-text-secondary text-xs">
-					Effort
-				</span>
-				<input
-					className="w-24 rounded-md bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
-					inputMode="numeric"
-					max={240}
-					min={5}
-					onChange={(e) => onEffortMinutesChange(e.target.value)}
-					placeholder="min"
-					type="number"
-					value={effortMinutes}
-				/>
-				{effortMinutes !== "" && (
-					<button
-						className="text-text-dimmed text-xs hover:text-text-section"
-						onClick={() => onEffortMinutesChange("")}
-						type="button"
-					>
-						Clear
-					</button>
-				)}
-			</div>
-			<div className="flex flex-wrap items-center gap-2">
-				<span className="w-16 shrink-0 text-text-secondary text-xs">
-					Horizon
-				</span>
-				<SegmentedControl
-					colorMap={{
-						ASAP: "bg-worktype-reactive-bg text-worktype-reactive-text",
-						THIS_WEEK: "bg-worktype-deep-bg text-worktype-deep-text",
-						WHEN_POSSIBLE: "bg-surface-panel text-text-section",
-					}}
-					onChange={(v) => onCommitmentHorizonChange(v as CommitmentHorizon)}
-					options={HORIZON_OPTIONS}
-					value={commitmentHorizon}
-				/>
-			</div>
-		</>
-	);
-}
-
-function DailyStandingToggle({
-	checked,
-	onChange,
-}: {
-	checked: boolean;
-	onChange: (value: boolean) => void;
-}) {
-	return (
-		<label className="flex items-center gap-2 text-text-secondary text-xs">
-			<input
-				checked={checked}
-				data-testid="daily-standing-toggle"
-				onChange={(event) => onChange(event.target.checked)}
-				type="checkbox"
-			/>
-			Daily standing
-		</label>
-	);
-}
-
 function parseEffortMinutes(value: string): number | null {
 	const trimmed = value.trim();
 	if (trimmed === "") {
@@ -287,46 +172,6 @@ function parseEffortMinutes(value: string): number | null {
 		return null;
 	}
 	return parsed;
-}
-
-type SegmentedControlProps<T extends string | number> = {
-	options: { value: T; label: string }[];
-	value: T;
-	onChange: (value: T) => void;
-	colorMap?: Record<string, string>;
-};
-
-function SegmentedControl<T extends string | number>({
-	options,
-	value,
-	onChange,
-	colorMap,
-}: SegmentedControlProps<T>) {
-	return (
-		<div className="flex flex-wrap gap-1">
-			{options.map((opt) => {
-				const isActive = opt.value === value;
-				const activeColor =
-					colorMap?.[String(opt.value)] ?? "bg-accent-cta text-on-cta";
-				return (
-					<button
-						aria-pressed={isActive}
-						className={`rounded-md px-2 py-1 font-medium text-xs transition ${
-							isActive
-								? activeColor
-								: "bg-surface-panel text-text-secondary hover:bg-surface-card-muted"
-						}`}
-						key={String(opt.value)}
-						onClick={() => onChange(opt.value)}
-						onMouseDown={(e) => e.preventDefault()}
-						type="button"
-					>
-						{opt.label}
-					</button>
-				);
-			})}
-		</div>
-	);
 }
 
 type TaskListProps = {
@@ -505,6 +350,13 @@ function SortableActiveTaskRow({
 							Done today
 						</button>
 					)
+				) : task.doneForToday ? (
+					<span
+						className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-accent-success bg-accent-success/20 text-accent-success text-xs"
+						title="Done for today"
+					>
+						✓
+					</span>
 				) : (
 					<button
 						aria-label="Mark complete"
@@ -538,75 +390,40 @@ function SortableActiveTaskRow({
 						}}
 						ref={editPanelRef}
 					>
-						{/* textarea (not input): titles are unbounded; multiline + wrap in read mode (B-02) */}
-						<textarea
-							className="w-full resize-y rounded bg-surface-panel px-2 py-1 text-primary focus:outline-none"
-							onChange={(e) => onSetEditTitle(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter" && !e.shiftKey) {
-									e.preventDefault();
-									void onCommitEdit();
-								}
-								if (e.key === "Escape") onSetEditingId(null);
-							}}
-							rows={2}
-							value={editTitle}
-						/>
-						<label
-							className="block text-text-secondary text-xs"
-							htmlFor={`task-resume-note-edit-${String(task.id)}`}
-						>
-							Where you left off (optional)
-						</label>
-						<textarea
-							className="w-full resize-none rounded bg-surface-panel px-2 py-1 text-primary text-sm focus:outline-none"
-							id={`task-resume-note-edit-${String(task.id)}`}
-							maxLength={120}
-							onChange={(event) => onSetEditResumeNote(event.target.value)}
-							placeholder="One line for when you return to this task"
-							rows={2}
-							value={editResumeNote}
-						/>
-						<div className="flex flex-wrap items-center gap-2">
-							<span className="w-16 shrink-0 text-text-secondary text-xs">
-								Type
-							</span>
-							<SegmentedControl
-								colorMap={{
-									DEEP_WORK: WORK_TYPE_CONFIG.DEEP_WORK.segmentActive,
-									OPERATIONAL: WORK_TYPE_CONFIG.OPERATIONAL.segmentActive,
-									REACTIVE: WORK_TYPE_CONFIG.REACTIVE.segmentActive,
-								}}
-								onChange={onSetEditWorkType}
-								options={[
-									{ value: "DEEP_WORK" as const, label: "Deep" },
-									{ value: "OPERATIONAL" as const, label: "Ops" },
-									{ value: "REACTIVE" as const, label: "Reactive" },
-								]}
-								value={editWorkType}
-							/>
-						</div>
-						<EisenhowerAttributeFields
+						<TaskFieldsPanel
 							commitmentHorizon={editCommitmentHorizon}
 							effortMinutes={editEffortMinutes}
 							importance={editImportance}
+							isDailyStanding={editIsDailyStanding}
+							mode="edit"
 							onCommitmentHorizonChange={onSetEditCommitmentHorizon}
 							onEffortMinutesChange={onSetEditEffortMinutes}
 							onImportanceChange={onSetEditImportance}
+							onIsDailyStandingChange={onSetEditIsDailyStanding}
+							onResumeNoteChange={onSetEditResumeNote}
+							onTitleChange={onSetEditTitle}
+							onTitleKeyDown={(event) => {
+								if (event.key === "Enter" && !event.shiftKey) {
+									event.preventDefault();
+									void onCommitEdit();
+								}
+								if (event.key === "Escape") onSetEditingId(null);
+							}}
 							onUrgencyChange={onSetEditUrgency}
+							onWorkTypeChange={onSetEditWorkType}
+							resumeNote={editResumeNote}
+							resumeNoteFieldId={`task-resume-note-edit-${String(task.id)}`}
+							title={editTitle}
 							urgency={editUrgency}
-						/>
-						<DailyStandingToggle
-							checked={editIsDailyStanding}
-							onChange={onSetEditIsDailyStanding}
+							workType={editWorkType}
 						/>
 					</div>
 				) : (
 					<button
 						aria-disabled={cycleLocked}
-						className={`min-w-0 flex-1 basis-0 cursor-pointer overflow-hidden whitespace-pre-wrap break-all text-left text-primary ${
+						className={`min-w-0 flex-1 basis-0 cursor-pointer overflow-hidden whitespace-pre-wrap break-all text-left ${
 							cycleLocked ? "cursor-default" : ""
-						} ${task.doneForToday ? "line-through opacity-70" : ""}`}
+						} ${task.doneForToday ? "text-text-dimmed" : "text-primary"}`}
 						onClick={() => {
 							if (cycleLocked) return;
 							void onStartEditing(task);
@@ -661,7 +478,8 @@ function SortableActiveTaskRow({
 					</span>
 					<div className="flex shrink-0 items-center gap-1">
 						<button
-							className={`rounded-lg px-2 py-1 font-medium text-xs transition ${
+							aria-label={focusedTaskId === task.id ? "Focused" : "Focus"}
+							className={`rounded-lg p-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
 								focusedTaskId === task.id
 									? "bg-accent-cta text-on-cta"
 									: "bg-surface-panel text-text-section hover:bg-surface-card-muted"
@@ -670,7 +488,7 @@ function SortableActiveTaskRow({
 							onClick={() => void onFocusTask(task.id, task)}
 							type="button"
 						>
-							{focusedTaskId === task.id ? "Focused" : "Focus"}
+							<Target aria-hidden="true" className="h-4 w-4" />
 						</button>
 						<button
 							aria-label="Delete task"
@@ -749,7 +567,7 @@ export function TaskList({
 		useState<CommitmentHorizon>(
 			DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon,
 		);
-	const [newIsDailyStanding, setNewIsDailyStanding] = useState(false);
+	const [newIsDailyStanding, setNewIsDailyStanding] = useState(true);
 
 	function resetCreateFormState() {
 		setNewTitle("");
@@ -760,7 +578,7 @@ export function TaskList({
 		setNewImportance(DEFAULT_CREATE_FORM_ATTRIBUTES.importance);
 		setNewEffortMinutes(DEFAULT_CREATE_FORM_ATTRIBUTES.effortMinutes);
 		setNewCommitmentHorizon(DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon);
-		setNewIsDailyStanding(false);
+		setNewIsDailyStanding(true);
 	}
 
 	function applyPresetToCreateForm(presetId: PersonaPresetId) {
@@ -1022,7 +840,7 @@ export function TaskList({
 			>
 				<div className="flex gap-2">
 					<input
-						className="flex-1 rounded-lg border border-border-subtle bg-surface-card px-4 py-2 text-primary placeholder:text-text-dimmed focus:border-text-secondary focus:outline-none"
+						className={`flex-1 ${TITLE_FIELD_CLASS}`}
 						onChange={(e) => setNewTitle(e.target.value)}
 						placeholder="Add a new task..."
 						ref={addTaskInputRef}
@@ -1030,103 +848,90 @@ export function TaskList({
 						value={newTitle}
 					/>
 					<button
-						className="rounded-lg bg-accent-cta px-4 py-2 font-medium text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50"
+						aria-busy={isCreating}
+						aria-label="Add"
+						className="rounded-lg bg-accent-cta p-2 font-medium text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
 						disabled={isCreating || !newTitle.trim()}
 						type="submit"
 					>
-						{isCreating ? "Adding..." : "Add"}
+						<Plus aria-hidden="true" className="h-5 w-5" />
 					</button>
 				</div>
-				<PersonaPresetPicker
-					coachLine={shouldShowPresetCoach ? PRESET_COACH_LINE : undefined}
-					onDismissCoach={
-						shouldShowPresetCoach ? markPresetCoachDismissed : undefined
-					}
-					onSelectCustom={() => {
-						setShowCustomPanel(true);
+				<TaskFieldsPanel
+					commitmentHorizon={newCommitmentHorizon}
+					effortMinutes={newEffortMinutes}
+					importance={newImportance}
+					includeTitle={false}
+					isDailyStanding={newIsDailyStanding}
+					mode="create"
+					onCommitmentHorizonChange={(value) => {
 						markCreateFormCustom();
+						setNewCommitmentHorizon(value);
 					}}
-					onSelectPreset={applyPresetToCreateForm}
-					selectedPresetId={selectedPresetId}
-					showCustomPanel={showCustomPanel}
-				/>
-				<DailyStandingToggle
-					checked={newIsDailyStanding}
-					onChange={setNewIsDailyStanding}
-				/>
-				{selectedPresetId != null && selectedPresetId !== "custom" && (
-					<div className="flex flex-wrap items-center gap-2">
-						<span className="w-16 shrink-0 text-text-secondary text-xs">
-							Effort
-						</span>
-						<input
-							className="w-24 rounded-md bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
-							data-testid="create-preset-effort"
-							inputMode="numeric"
-							max={240}
-							min={5}
-							onChange={(e) => setNewEffortMinutes(e.target.value)}
-							placeholder="min"
-							type="number"
-							value={newEffortMinutes}
+					onEffortMinutesChange={setNewEffortMinutes}
+					onImportanceChange={(value) => {
+						markCreateFormCustom();
+						setNewImportance(value);
+					}}
+					onIsDailyStandingChange={setNewIsDailyStanding}
+					onTitleChange={setNewTitle}
+					onUrgencyChange={(value) => {
+						markCreateFormCustom();
+						setNewUrgency(value);
+					}}
+					onWorkTypeChange={(value) => {
+						markCreateFormCustom();
+						setNewWorkType(value);
+					}}
+					personaPresetPicker={
+						<PersonaPresetPicker
+							coachLine={shouldShowPresetCoach ? PRESET_COACH_LINE : undefined}
+							onDismissCoach={
+								shouldShowPresetCoach ? markPresetCoachDismissed : undefined
+							}
+							onSelectCustom={() => {
+								setShowCustomPanel(true);
+								markCreateFormCustom();
+							}}
+							onSelectPreset={applyPresetToCreateForm}
+							selectedPresetId={selectedPresetId}
+							showCustomPanel={showCustomPanel}
 						/>
-						{newEffortMinutes !== "" && (
-							<button
-								className="text-text-dimmed text-xs hover:text-text-section"
-								onClick={() => setNewEffortMinutes("")}
-								type="button"
-							>
-								Clear
-							</button>
-						)}
-					</div>
-				)}
-				{showCustomPanel && (
-					<div
-						className="space-y-2 rounded-lg border border-border-subtle bg-surface-panel p-3"
-						data-testid="create-task-custom-panel"
-					>
-						<div className="flex items-center gap-2">
-							<span className="w-16 text-text-secondary text-xs">Type</span>
-							<SegmentedControl
-								colorMap={{
-									DEEP_WORK: WORK_TYPE_CONFIG.DEEP_WORK.segmentActive,
-									OPERATIONAL: WORK_TYPE_CONFIG.OPERATIONAL.segmentActive,
-									REACTIVE: WORK_TYPE_CONFIG.REACTIVE.segmentActive,
-								}}
-								onChange={(value) => {
-									markCreateFormCustom();
-									setNewWorkType(value);
-								}}
-								options={[
-									{ value: "DEEP_WORK" as const, label: "Deep" },
-									{ value: "OPERATIONAL" as const, label: "Ops" },
-									{ value: "REACTIVE" as const, label: "Reactive" },
-								]}
-								value={newWorkType}
-							/>
-						</div>
-						<EisenhowerAttributeFields
-							commitmentHorizon={newCommitmentHorizon}
-							effortMinutes={newEffortMinutes}
-							importance={newImportance}
-							onCommitmentHorizonChange={(value) => {
-								markCreateFormCustom();
-								setNewCommitmentHorizon(value);
-							}}
-							onEffortMinutesChange={setNewEffortMinutes}
-							onImportanceChange={(value) => {
-								markCreateFormCustom();
-								setNewImportance(value);
-							}}
-							onUrgencyChange={(value) => {
-								markCreateFormCustom();
-								setNewUrgency(value);
-							}}
-							urgency={newUrgency}
-						/>
-					</div>
-				)}
+					}
+					presetEffortField={
+						selectedPresetId != null && selectedPresetId !== "custom" ? (
+							<div className="flex flex-wrap items-center gap-2">
+								<span className="w-16 shrink-0 text-text-secondary text-xs">
+									Effort
+								</span>
+								<input
+									className="w-24 rounded-md bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
+									data-testid="create-preset-effort"
+									inputMode="numeric"
+									max={240}
+									min={5}
+									onChange={(e) => setNewEffortMinutes(e.target.value)}
+									placeholder="min"
+									type="number"
+									value={newEffortMinutes}
+								/>
+								{newEffortMinutes !== "" && (
+									<button
+										className="text-text-dimmed text-xs hover:text-text-section"
+										onClick={() => setNewEffortMinutes("")}
+										type="button"
+									>
+										Clear
+									</button>
+								)}
+							</div>
+						) : null
+					}
+					showAttributeFields={showCustomPanel}
+					title={newTitle}
+					urgency={newUrgency}
+					workType={newWorkType}
+				/>
 			</form>
 
 			<section>
@@ -1221,32 +1026,88 @@ export function TaskList({
 										}}
 										type="button"
 									/>
-									<span className="min-w-0 flex-1 basis-0 overflow-hidden whitespace-pre-wrap break-all text-text-secondary line-through">
-										{task.title}
-									</span>
+									{editingId === task.id ? (
+										// biome-ignore lint/a11y/noStaticElementInteractions: focus-outside commit when leaving edit panel
+										<div
+											className="min-w-0 flex-1 space-y-2"
+											onBlur={(event) => {
+												const next = event.relatedTarget;
+												if (
+													next instanceof Node &&
+													event.currentTarget.contains(next)
+												) {
+													return;
+												}
+												void commitEditIfDirty();
+											}}
+											ref={editPanelRef}
+										>
+											<TaskFieldsPanel
+												commitmentHorizon={editCommitmentHorizon}
+												effortMinutes={editEffortMinutes}
+												importance={editImportance}
+												isDailyStanding={editIsDailyStanding}
+												mode="edit"
+												onCommitmentHorizonChange={setEditCommitmentHorizon}
+												onEffortMinutesChange={setEditEffortMinutes}
+												onImportanceChange={setEditImportance}
+												onIsDailyStandingChange={setEditIsDailyStanding}
+												onResumeNoteChange={setEditResumeNote}
+												onTitleChange={setEditTitle}
+												onTitleKeyDown={(event) => {
+													if (event.key === "Enter" && !event.shiftKey) {
+														event.preventDefault();
+														void commitEditIfDirty();
+													}
+													if (event.key === "Escape") setEditingId(null);
+												}}
+												onUrgencyChange={setEditUrgency}
+												onWorkTypeChange={setEditWorkType}
+												resumeNote={editResumeNote}
+												resumeNoteFieldId={`task-resume-note-edit-${String(task.id)}`}
+												title={editTitle}
+												urgency={editUrgency}
+												workType={editWorkType}
+											/>
+										</div>
+									) : (
+										<button
+											className="min-w-0 flex-1 basis-0 cursor-pointer overflow-hidden whitespace-pre-wrap break-all text-left text-text-dimmed disabled:cursor-default"
+											disabled={cycleLocked}
+											onClick={() => {
+												if (cycleLocked) return;
+												void startEditing(task);
+											}}
+											type="button"
+										>
+											{task.title}
+										</button>
+									)}
 								</div>
-								<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-7">
-									<TaskBadges
-										commitmentHorizon={task.commitmentHorizon}
-										dimmed
-										effortMinutes={task.effortMinutes}
-										importance={task.importance}
-										personaPresetId={task.personaPresetId}
-										urgency={task.urgency}
-										workType={task.workType}
-									/>
-									<button
-										aria-label="Delete task"
-										className="shrink-0 px-1 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
-										disabled={cycleLocked || isMutating}
-										onClick={() => {
-											void deleteTask({ id: task.id });
-										}}
-										type="button"
-									>
-										✕
-									</button>
-								</div>
+								{editingId !== task.id && (
+									<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-7">
+										<TaskBadges
+											commitmentHorizon={task.commitmentHorizon}
+											dimmed
+											effortMinutes={task.effortMinutes}
+											importance={task.importance}
+											personaPresetId={task.personaPresetId}
+											urgency={task.urgency}
+											workType={task.workType}
+										/>
+										<button
+											aria-label="Delete task"
+											className="shrink-0 px-1 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+											disabled={cycleLocked || isMutating}
+											onClick={() => {
+												void deleteTask({ id: task.id });
+											}}
+											type="button"
+										>
+											✕
+										</button>
+									</div>
+								)}
 							</li>
 						))}
 					</ul>

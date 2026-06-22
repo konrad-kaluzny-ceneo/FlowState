@@ -14,22 +14,32 @@ vi.mock("~/lib/break-out-of-tab-alert/notify-break-start", () => ({
 }));
 
 describe("OutOfTabBreakAlertsControl", () => {
-	it("shows not-configured status when enabled without permission", () => {
-		mockGetPermission.mockReturnValue("default");
-		render(<OutOfTabBreakAlertsControl enabled onChange={vi.fn()} />);
-
-		expect(
-			screen.getByTestId("out-of-tab-break-alerts-status").textContent,
-		).toContain("Not configured");
-	});
-
-	it("shows enabled status when permission granted", () => {
+	it("does not show always-visible status label when permission granted", () => {
 		mockGetPermission.mockReturnValue("granted");
 		render(<OutOfTabBreakAlertsControl enabled onChange={vi.fn()} />);
 
+		expect(screen.queryByTestId("out-of-tab-break-alerts-status")).toBeNull();
 		expect(
-			screen.getByTestId("out-of-tab-break-alerts-status").textContent,
-		).toContain("Enabled");
+			screen.getByText("Alert me when break starts (other tab)"),
+		).toBeTruthy();
+	});
+
+	it("shows permission hint when enabled with default permission", () => {
+		mockGetPermission.mockReturnValue("default");
+		render(<OutOfTabBreakAlertsControl enabled onChange={vi.fn()} />);
+
+		expect(screen.queryByTestId("out-of-tab-break-alerts-status")).toBeNull();
+		expect(screen.getByText(/Browser permission is still needed/)).toBeTruthy();
+	});
+
+	it("shows denied guidance when notifications are blocked", () => {
+		mockGetPermission.mockReturnValue("denied");
+		render(<OutOfTabBreakAlertsControl enabled onChange={vi.fn()} />);
+
+		expect(
+			screen.getByText(/Notifications are blocked in your browser/),
+		).toBeTruthy();
+		expect(screen.getByTestId("out-of-tab-break-alerts-retry")).toBeTruthy();
 	});
 
 	it("calls onChange false when toggle off", () => {

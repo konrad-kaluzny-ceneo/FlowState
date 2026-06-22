@@ -49,6 +49,22 @@ describe("DailyRecapPanel", () => {
 		);
 	});
 
+	it("uses raised card elevation on the panel root", () => {
+		render(<DailyRecapPanel localDateKey={DATE_KEY} recap={sampleRecap} />);
+
+		const panel = screen.getByTestId("daily-recap-panel");
+		expect(panel.className).toContain("bg-surface-card");
+		expect(panel.className).toContain("border-card-border");
+		expect(panel.className).toContain("shadow-sm");
+	});
+
+	it("shows title only without subtitle copy", () => {
+		render(<DailyRecapPanel localDateKey={DATE_KEY} recap={sampleRecap} />);
+
+		expect(screen.getByText("Daily recap")).toBeTruthy();
+		expect(screen.queryByText(/Light timing for standups/i)).toBeNull();
+	});
+
 	it("collapses sections independently via aria-expanded toggles", () => {
 		render(<DailyRecapPanel localDateKey={DATE_KEY} recap={sampleRecap} />);
 
@@ -57,6 +73,8 @@ describe("DailyRecapPanel", () => {
 
 		expect(last24Toggle.getAttribute("aria-expanded")).toBe("true");
 		expect(todayToggle.getAttribute("aria-expanded")).toBe("true");
+		expect(last24Toggle.className).not.toContain("hover:underline");
+		expect(todayToggle.className).not.toContain("hover:underline");
 
 		fireEvent.click(last24Toggle);
 		expect(last24Toggle.getAttribute("aria-expanded")).toBe("false");
@@ -78,7 +96,7 @@ describe("DailyRecapPanel", () => {
 		).toBe("1");
 	});
 
-	it("shows empty states when sections have no rows", () => {
+	it("omits Last 24h section when there is no data", () => {
 		render(
 			<DailyRecapPanel
 				localDateKey={DATE_KEY}
@@ -87,8 +105,10 @@ describe("DailyRecapPanel", () => {
 		);
 
 		expect(
-			screen.getByText(/No focused work in the last 24 hours/i),
-		).toBeTruthy();
+			screen.queryByText(/No focused work in the last 24 hours/i),
+		).toBeNull();
+		expect(screen.queryByTestId("daily-recap-last24-toggle")).toBeNull();
+		expect(screen.queryByTestId("daily-recap-last24")).toBeNull();
 		expect(screen.getByText(/Nothing on today's plan yet/i)).toBeTruthy();
 	});
 

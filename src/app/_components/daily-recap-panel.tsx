@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import type { DailyRecap, RecapTaskRow, TodayPlanRow } from "~/lib/recap/types";
@@ -25,11 +26,13 @@ function dismissForDate(localDateKey: string): void {
 
 function formatTimeRange(row: RecapTaskRow): string {
 	const options: Intl.DateTimeFormatOptions = {
-		hour: "numeric",
+		hour: "2-digit",
 		minute: "2-digit",
+		hour12: false,
 	};
-	const start = row.firstStartedAt.toLocaleTimeString([], options);
-	const end = row.lastEndedAt.toLocaleTimeString([], options);
+	const locale = "en-GB";
+	const start = row.firstStartedAt.toLocaleTimeString(locale, options);
+	const end = row.lastEndedAt.toLocaleTimeString(locale, options);
 	return `${start}–${end}`;
 }
 
@@ -55,16 +58,43 @@ function formatTodayRow(row: TodayPlanRow): string {
 	return parts.join(" · ");
 }
 
+function SectionToggle({
+	expanded,
+	label,
+	onToggle,
+	testId,
+}: {
+	expanded: boolean;
+	label: string;
+	onToggle: () => void;
+	testId: string;
+}) {
+	return (
+		<button
+			aria-expanded={expanded}
+			className="flex items-center gap-1 font-semibold text-sm text-text-section"
+			data-testid={testId}
+			onClick={onToggle}
+			type="button"
+		>
+			<ChevronDown
+				aria-hidden="true"
+				className={`h-4 w-4 shrink-0 transition-transform ${expanded ? "" : "-rotate-90"}`}
+			/>
+			{label}
+		</button>
+	);
+}
+
 export function DailyRecapPanel({
 	localDateKey,
 	recap,
 	isLoading = false,
 }: DailyRecapPanelProps) {
-	const [dismissed, setDismissed] = useState(() =>
-		isDismissedForDate(localDateKey),
-	);
+	const [dismissed, setDismissed] = useState(false);
 	const [last24Expanded, setLast24Expanded] = useState(true);
 	const [todayExpanded, setTodayExpanded] = useState(true);
+	const hasLast24Hours = recap.last24Hours.length > 0;
 
 	useEffect(() => {
 		setDismissed(isDismissedForDate(localDateKey));
@@ -83,68 +113,53 @@ export function DailyRecapPanel({
 
 	return (
 		<div
-			className="w-full max-w-lg rounded-lg border border-border-subtle bg-surface-panel px-4 py-3"
+			className="w-full max-w-lg rounded-lg border border-card-border bg-surface-card px-4 py-3 shadow-sm"
 			data-testid="daily-recap-panel"
 		>
 			<div className="flex items-start justify-between gap-3">
-				<div className="space-y-1">
-					<p className="font-semibold text-sm text-text-section">Daily recap</p>
-					<p className="text-text-secondary text-xs">
-						Light timing for standups — list only, no charts.
-					</p>
-				</div>
+				<p className="font-semibold text-sm text-text-section">Daily recap</p>
 				<button
 					aria-label="Dismiss daily recap"
-					className="shrink-0 text-text-dimmed text-xs hover:text-text-section"
+					className="shrink-0 rounded-md p-1 text-text-dimmed hover:text-text-section focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 					data-testid="daily-recap-dismiss"
 					onClick={handleDismiss}
 					type="button"
 				>
-					Not now
+					<X aria-hidden="true" className="h-4 w-4" />
 				</button>
 			</div>
 
 			<div className="mt-3 space-y-3">
-				<section>
-					<button
-						aria-expanded={last24Expanded}
-						className="font-semibold text-sm text-text-section underline-offset-2 transition hover:underline"
-						data-testid="daily-recap-last24-toggle"
-						onClick={() => setLast24Expanded((value) => !value)}
-						type="button"
-					>
-						Last 24 hours
-					</button>
-					{last24Expanded && (
-						<div className="mt-2 space-y-1" data-testid="daily-recap-last24">
-							{recap.last24Hours.length === 0 ? (
-								<p className="text-sm text-text-secondary">
-									No focused work in the last 24 hours yet.
-								</p>
-							) : (
-								recap.last24Hours.map((row) => (
+				{hasLast24Hours && (
+					<section>
+						<SectionToggle
+							expanded={last24Expanded}
+							label="Last 24 hours"
+							onToggle={() => setLast24Expanded((value) => !value)}
+							testId="daily-recap-last24-toggle"
+						/>
+						{last24Expanded && (
+							<div className="mt-2 space-y-1" data-testid="daily-recap-last24">
+								{recap.last24Hours.map((row) => (
 									<p
 										className="text-sm text-text-secondary"
 										key={String(row.taskId)}
 									>
 										{formatRecapRow(row)}
 									</p>
-								))
-							)}
-						</div>
-					)}
-				</section>
+								))}
+							</div>
+						)}
+					</section>
+				)}
 
 				<section>
-					<button
-						aria-expanded={todayExpanded}
-						className="font-semibold text-sm text-text-section underline-offset-2 transition hover:underline"
-						data-testid="daily-recap-today-toggle"
-						onClick={() => setTodayExpanded((value) => !value)}
-						type="button"
-					>
-						Today
-					</button>
+					<SectionToggle
+						expanded={todayExpanded}
+						label="Today"
+						onToggle={() => setTodayExpanded((value) => !value)}
+						testId="daily-recap-today-toggle"
+					/>
 					{todayExpanded && (
 						<div className="mt-2 space-y-1" data-testid="daily-recap-today">
 							{recap.todayPlan.length === 0 ? (

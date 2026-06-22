@@ -29,9 +29,8 @@ Progressive disclosure for `context/foundation/roadmap.md`. **Read the main file
 | F-01…F-06 | `items/F-0N.md` | see glance |
 | F-07 | `items/F-07.md` | proposed (expand 2026-06-12) |
 | S-01…S-31 | `items/S-NN.md` | see glance |
-| S-32…S-35 | `items/S-3N.md` | proposed (expand 2026-06-12) |
-| B-01…B-04 | `items/B-0N.md` | done |
-| B-05…B-08 | `items/B-0N.md` | proposed (flow coherence 2026-06-13) |
+| S-32…S-38 | `items/S-3N.md` | see glance |
+| B-01…B-09 | `items/B-0N.md` | see glance |
 
 Expand outcomes (F-07, S-32–S-35) and merge scope (P-202–P-205, P-GAP-*) live in the main [`roadmap.md`](../roadmap.md) glance + scope tables and in `items/` detail cards — no separate staging folder.
 
@@ -42,7 +41,7 @@ Expand outcomes (F-07, S-32–S-35) and merge scope (P-202–P-205, P-GAP-*) liv
 | Wedge / flow | F-07, B-05–B-08, S-21, S-34, S-35 | `user-flow.md`, `flow-coherence-recommendations.md`, `prd-refs.md` US-01 |
 | Persona / trust | S-29, S-32 | `prd-refs.md` US-02 |
 | Daily planning | S-27, S-30 | `prd-refs.md` US-03 |
-| Pause | S-24, B-08 | `prd-refs.md` US-04 |
+| Pause | S-24, B-08, **B-09**, **S-38** | `prd-refs.md` US-04 |
 | Craft | S-28, S-31 | `DESIGN.md` |
 | Bug (done) | B-01–B-04 | item card only |
 
