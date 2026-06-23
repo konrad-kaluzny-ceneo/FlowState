@@ -49,7 +49,7 @@ pnpm review --resume agent-abc123
 
 Add repository secret `CURSOR_API_KEY`. Workflow `.github/workflows/cursor-review.yml` uses composite action `.github/actions/cursor-review` and runs the SDK in **local mode on the runner** — **no Cursor GitHub integration required**:
 
-- Checks out the PR head commit (`fetch-depth: 0`) and runs `pnpm review` against the working tree, diffing vs `origin/main`.
+- Checks out the PR head commit (`fetch-depth: 0`) and runs `pnpm review --no-sandbox` against the working tree, diffing vs `origin/main`. `--no-sandbox` is required because GitHub runners do not support the local SDK sandbox; the review is read-only and the runner is ephemeral.
 - Auto-passes `--change-id` for `features/*` branches plus the PR title/description for context.
 - Upserts a single PR comment (`<!-- cursor-review-v1 -->`) and applies `ai-cr:*` labels from `reports/review.json`.
 
@@ -107,4 +107,4 @@ Always set `local` or `cloud` explicitly in scripts — the SDK defaults to loca
 
 ## Safety
 
-Local runs use `autoReview: true` and `sandboxOptions.enabled: true`. The prompt forbids file edits; the agent is instructed read-only. For strict CI gates, treat output as advisory — merge still requires human review and existing CI (`pnpm check`, `pnpm test`, e2e belt).
+Local runs use `autoReview: true` and `sandboxOptions.enabled: true` by default. The prompt forbids file edits; the agent is instructed read-only. CI passes `--no-sandbox` because GitHub runners do not support the local SDK sandbox — acceptable there since the review is read-only and the runner is ephemeral and isolated. For strict CI gates, treat output as advisory — merge still requires human review and existing CI (`pnpm check`, `pnpm test`, e2e belt).

@@ -25,6 +25,7 @@ const { values } = parseArgs({
 		"pr-description": { type: "string" },
 		output: { type: "string" },
 		resume: { type: "string" },
+		"no-sandbox": { type: "boolean", default: false },
 		help: { type: "boolean", default: false },
 	},
 });
@@ -45,8 +46,10 @@ Options:
   --pr-title <text>         PR title for prompt context (CI use)
   --pr-description <text>   PR description for prompt context (truncated to 2000 chars)
   --output <path>           Save review markdown to file (reports/ is gitignored)
-  --resume <agentId>  Continue a previous agent conversation
-  --help              Show this help
+  --resume <agentId>        Continue a previous agent conversation
+  --no-sandbox              Disable local SDK sandboxing (use in CI runners where
+                            sandboxing is unsupported; review is read-only)
+  --help                    Show this help
 
 Requires CURSOR_API_KEY in the environment (see scripts/cursor-review/README.md).
 `);
@@ -73,6 +76,7 @@ const prUrl = values["pr-url"];
 const prTitle = values["pr-title"];
 const rawPrDescription = values["pr-description"];
 const prDescription = rawPrDescription?.slice(0, 2000);
+const sandboxEnabled = !values["no-sandbox"];
 
 let startingRef = values.ref;
 if (!startingRef && !useCloud) {
@@ -172,7 +176,7 @@ try {
 								cwd,
 								settingSources: ["project"],
 								autoReview: true,
-								sandboxOptions: { enabled: true },
+								sandboxOptions: { enabled: sandboxEnabled },
 							},
 						}),
 			});

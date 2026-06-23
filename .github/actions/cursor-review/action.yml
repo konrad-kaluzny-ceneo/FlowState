@@ -74,6 +74,7 @@ runs:
         REVIEW_ARGS=(
           --base "${{ inputs.base }}"
           --output reports/review.md
+          --no-sandbox
         )
         if [ -n "${{ inputs.change-id }}" ]; then
           REVIEW_ARGS+=(--change-id "${{ inputs.change-id }}")
