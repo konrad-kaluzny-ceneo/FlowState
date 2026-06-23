@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-23
 structure: split
-active_slices: []
+active_slices: [S-33]
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -80,7 +80,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-31 | work-focus-shell | [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) | [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107) | WORK cycle focus shell | S-13, F-06 | Secondary | ready |
 | F-07 | wedge-transition-conductor | [FLO-71](https://linear.app/flowstate-10xdev/issue/FLO-71) | [#114](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/114) | (foundation) max 1 interstitial + 1 gate; return handoff before kickoff | B-05, B-06, S-12, S-19 | **US-01** | done |
 | S-32 | create-wedge-trust-bridge | [FLO-72](https://linear.app/flowstate-10xdev/issue/FLO-72) | [#115](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/115) | first suggestion cites persona preset in rationale | S-36, F-05, S-06 | **US-02** | done |
-| S-33 | break-restoration-atmosphere | [FLO-85](https://linear.app/flowstate-10xdev/issue/FLO-85) | [#143](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/143) | home break atmosphere during breaks | F-06, S-13, F-07 | US-01 craft | proposed |
+| S-33 | break-restoration-atmosphere | [FLO-85](https://linear.app/flowstate-10xdev/issue/FLO-85) | [#143](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/143) | home break atmosphere during breaks | F-06, S-13, F-07 | US-01 craft | in review |
 | S-34 | optimistic-wedge-transitions | [FLO-73](https://linear.app/flowstate-10xdev/issue/FLO-73) | [#116](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/116) | optimistic check-in → suggestion ≤200ms | F-07, S-06, S-09, S-25 | **US-01** | done |
 | S-35 | wedge-transition-sync-recovery | [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) | [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) | calm network-loss recovery on wedge gates | F-07, S-06, S-22 | **US-01** | done |
 | S-36 | persona-presets-v2 | [FLO-75](https://linear.app/flowstate-10xdev/issue/FLO-75) | [#118](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/118) | 8 personas + row labels + visible effort | S-29, F-05 | **US-02** | done |
