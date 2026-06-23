@@ -18,6 +18,7 @@ import {
 	shouldDeferFirstRun,
 	subscribeDeferState,
 } from "~/lib/onboarding/defer";
+import { completeAuthenticatedWedgeCoach } from "~/lib/onboarding/post-merge-wedge-coach";
 import {
 	loadOnboardingState,
 	patchOnboardingState,
@@ -82,8 +83,11 @@ function useOnboardingState(scope: OnboardingScope): OnboardingContextValue {
 	}, []);
 
 	const markSuggestionCoachSeen = useCallback(() => {
-		setState(() =>
-			patchOnboardingState(scopeRef.current, { suggestionCoachSeen: true }),
+		setState((current) =>
+			patchOnboardingState(
+				scopeRef.current,
+				completeAuthenticatedWedgeCoach(current),
+			),
 		);
 	}, []);
 

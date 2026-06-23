@@ -19,9 +19,10 @@ import {
 } from "~/lib/guest/merge-copy";
 import { clearGuestSnapshot } from "~/lib/guest/store";
 import { setImportInFlight } from "~/lib/onboarding/defer";
+import { enableAuthenticatedWedgeCoach } from "~/lib/onboarding/storage";
 import { api } from "~/trpc/react";
 
-export function GuestImportOnMount() {
+export function GuestImportOnMount({ userId }: { userId: string }) {
 	const { mode } = useRepositories();
 	const { showMergeSuccess } = useGuestMergeUi();
 	const utils = api.useUtils();
@@ -79,6 +80,10 @@ export function GuestImportOnMount() {
 				}
 
 				markGuestImportDone();
+				enableAuthenticatedWedgeCoach({
+					mode: "authenticated",
+					userId,
+				});
 				clearGuestSnapshot();
 				setImportError(null);
 				resetActiveCycleRecoveryGuard();
@@ -95,7 +100,7 @@ export function GuestImportOnMount() {
 				setImportInFlight(false);
 			}
 		})();
-	}, [mode]);
+	}, [mode, userId]);
 
 	if (importError == null) {
 		return null;

@@ -58,7 +58,13 @@ function OfflineBanner() {
 	);
 }
 
-function HomeShellContent({ isAuthenticated }: { isAuthenticated: boolean }) {
+function HomeShellContent({
+	isAuthenticated,
+	userId,
+}: {
+	isAuthenticated: boolean;
+	userId: string | null;
+}) {
 	const mode = isAuthenticated ? "authenticated" : "guest";
 	const { isFirstRunVisible, dismissFirstRun } = useOnboarding();
 	const { mergeSuccessVisible } = useGuestMergeUi();
@@ -66,7 +72,9 @@ function HomeShellContent({ isAuthenticated }: { isAuthenticated: boolean }) {
 
 	return (
 		<DataModeProvider mode={mode}>
-			{isAuthenticated && <GuestImportOnMount />}
+			{isAuthenticated && userId != null && (
+				<GuestImportOnMount userId={userId} />
+			)}
 			<MergeSuccessOverlayMount />
 			<FirstRunOverlay
 				mode={mode}
@@ -103,7 +111,7 @@ export function HomeShell({ isAuthenticated, userId }: HomeShellProps) {
 	return (
 		<OnboardingProvider scope={scope}>
 			<GuestMergeUiProvider>
-				<HomeShellContent isAuthenticated={isAuthenticated} />
+				<HomeShellContent isAuthenticated={isAuthenticated} userId={userId} />
 			</GuestMergeUiProvider>
 		</OnboardingProvider>
 	);

@@ -28,6 +28,27 @@ export const CHECK_IN_COACH_LINE =
 export const SUGGESTION_COACH_LINE =
 	"Accept the suggestion or tap Focus on any other task — you're always in control.";
 
+export const POST_MERGE_CHECK_IN_COACH_LINE =
+	"Now that you're signed in, this check-in unlocks personalized next-task suggestions.";
+
+export const POST_MERGE_SUGGESTION_COACH_LINE =
+	"FlowState picked this based on your energy — accept it or choose any task.";
+
+export const POST_MERGE_SUGGESTION_COACH_WITH_PRESET_LINE =
+	"Your {preset} preset helped shape this pick — accept it or choose any task.";
+
+export function getPostMergeSuggestionCoachLine(
+	personaPresetLabel: string | null,
+): string {
+	if (personaPresetLabel != null && personaPresetLabel.length > 0) {
+		return POST_MERGE_SUGGESTION_COACH_WITH_PRESET_LINE.replace(
+			"{preset}",
+			personaPresetLabel,
+		);
+	}
+	return POST_MERGE_SUGGESTION_COACH_LINE;
+}
+
 export const PRESET_COACH_LINE =
 	"Presets pre-fill work type and priority — tap Custom if you want full control.";
 
