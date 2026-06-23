@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-23
 structure: split
-active_slices: [S-31]
+active_slices: []
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -77,7 +77,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-28 | wellness-illustration-foundation | [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) | [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98) | Calm Garden illustrations + overlay phase 2 | F-06 | Secondary | ready |
 | S-29 | task-create-persona-presets | [FLO-64](https://linear.app/flowstate-10xdev/issue/FLO-64) | [#105](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/105) | persona presets + Custom expand | F-05, F-06, S-13 | **US-02** | done |
 | S-30 | daily-work-timing-recap | [FLO-65](https://linear.app/flowstate-10xdev/issue/FLO-65) | [#106](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/106) | light timing recap; dismissible footprint | S-02, S-18 | **US-03** | done |
-| S-31 | work-focus-shell | [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) | [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107) | WORK cycle focus shell | S-13, F-06 | Secondary | active |
+| S-31 | work-focus-shell | [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) | [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107) | WORK cycle focus shell | S-13, F-06 | Secondary | done |
 | F-07 | wedge-transition-conductor | [FLO-71](https://linear.app/flowstate-10xdev/issue/FLO-71) | [#114](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/114) | (foundation) max 1 interstitial + 1 gate; return handoff before kickoff | B-05, B-06, S-12, S-19 | **US-01** | done |
 | S-32 | create-wedge-trust-bridge | [FLO-72](https://linear.app/flowstate-10xdev/issue/FLO-72) | [#115](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/115) | first suggestion cites persona preset in rationale | S-36, F-05, S-06 | **US-02** | done |
 | S-33 | break-restoration-atmosphere | [FLO-85](https://linear.app/flowstate-10xdev/issue/FLO-85) | [#143](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/143) | home break atmosphere during breaks | F-06, S-13, F-07 | US-01 craft | done |
@@ -178,6 +178,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **S-31: WORK cycle focus shell** — Archived 2026-06-23 → `context/archive/2026-06-23-work-focus-shell/`. PR [#157](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/157). Issues [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) / [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107). Lesson: section-scoped chrome subdue during WORK; shell wash via data-attribute mirrors S-33.
 - **S-33: home break atmosphere during breaks** — Archived 2026-06-23 → `context/archive/2026-06-23-break-restoration-atmosphere/`. PR [#156](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/156). Issues [FLO-85](https://linear.app/flowstate-10xdev/issue/FLO-85) / [#143](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/143). Lesson: shell wash via data-attribute + CSS tokens; yield before wedge/suggestion gates.
 - **S-35: calm network-loss recovery on wedge gates** — Archived 2026-06-23 → `context/archive/2026-06-23-wedge-transition-sync-recovery/`. PR [#155](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/155). Issues [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) / [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117). Lesson: preserve wedge intent on partial failure; restore recovery UI when retry fails.
 - **B-08: calm end session while timer running** — Archived 2026-06-21 → `context/archive/2026-06-21-fix-graceful-session-end-while-running/`. PR [#149](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/149). Issues [FLO-70](https://linear.app/flowstate-10xdev/issue/FLO-70) / [#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113). Lesson: T-04 was dashboard-only — confirm overlay + existing `endSession()` path; no hook changes.
