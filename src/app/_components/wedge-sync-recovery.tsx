@@ -19,6 +19,10 @@ function savedLocallyCopy(phase: PendingWedgeRecovery["phase"]): string {
 			return "Your work cycle is saved.";
 		case "suggestion_fetch":
 			return "Your break is still running.";
+		case "kickoff_session":
+			return "Your session has not started yet.";
+		case "kickoff_suggestion":
+			return "Your session is ready — we will load a suggestion when you retry.";
 	}
 }
 
@@ -45,9 +49,11 @@ export function WedgeSyncRecovery({
 			<p className="mt-1 text-text-dimmed">
 				{savedLocallyCopy(recovery.phase)}
 			</p>
-			<p className="mt-1 text-text-dimmed">
-				Energy: {ENERGY_LABEL[recovery.energy]} — no need to pick again.
-			</p>
+			{recovery.phase !== "kickoff_session" && (
+				<p className="mt-1 text-text-dimmed">
+					Energy: {ENERGY_LABEL[recovery.energy]} — no need to pick again.
+				</p>
+			)}
 			<div className="mt-3 flex flex-wrap gap-2">
 				<button
 					className={`${overlayButtonClass.primaryFull} py-2 font-medium disabled:cursor-not-allowed`}

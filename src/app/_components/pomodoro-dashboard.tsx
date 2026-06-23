@@ -363,7 +363,7 @@ export function PomodoroDashboardBody({
 		<div className="flex w-full max-w-lg flex-col items-center gap-8">
 			{pomodoro.pendingWedgeRecovery != null ? (
 				<WedgeSyncRecovery
-					isRetrying={pomodoro.isConfirming}
+					isRetrying={pomodoro.isWedgeSyncRetrying || pomodoro.isConfirming}
 					onDismiss={pomodoro.dismissPendingWedgeRecovery}
 					onRetry={() => {
 						void pomodoro.retryWedgeSync();

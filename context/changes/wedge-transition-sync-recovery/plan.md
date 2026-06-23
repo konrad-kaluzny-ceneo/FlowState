@@ -332,9 +332,9 @@ None — client-only.
 
 #### Automated
 
-- [ ] 4.1 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx`
-- [ ] 4.2 `pnpm check`
-- [ ] 4.3 `pnpm test`
+- [x] 4.1 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx`
+- [x] 4.2 `pnpm check`
+- [x] 4.3 `pnpm test`
 
 #### Manual
 
@@ -344,9 +344,9 @@ None — client-only.
 
 #### Automated
 
-- [ ] 5.1 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx`
-- [ ] 5.2 `pnpm check`
-- [ ] 5.3 `pnpm test`
+- [x] 5.1 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx`
+- [x] 5.2 `pnpm check`
+- [x] 5.3 `pnpm test`
 
 #### Manual
 

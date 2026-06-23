@@ -3488,6 +3488,220 @@ describe("usePomodoroCycle", () => {
 				expect(result.current.state).toBe("running");
 			});
 		});
+
+		const kickoffActiveTaskList = [
+			{
+				id: 7,
+				title: "Write tests",
+				status: "active" as const,
+				workType: "DEEP_WORK" as const,
+				weight: 2,
+				userId: "user-1",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			},
+		];
+
+		const kickoffSuggestionResult = {
+			sessionId: 1,
+			taskId: 9,
+			title: "Kickoff task",
+			workType: "DEEP_WORK" as const,
+			weight: 3,
+			rationaleKey: "kickoff_fresh",
+			rationale: "Start with deep work",
+		};
+
+		it("sets kickoff_suggestion recovery when kickoff fetch fails after steering", async () => {
+			taskListQuery.mockResolvedValue(kickoffActiveTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					throw new Error("network");
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.sessionEnergyPending).toBe(true);
+			});
+
+			act(() => {
+				result.current.skipSessionEnergy();
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingWedgeRecovery?.phase).toBe(
+					"kickoff_suggestion",
+				);
+				expect(result.current.pendingWedgeRecovery?.energy).toBe("STEADY");
+			});
+		});
+
+		it("retryWedgeSync replays kickoff suggestion fetch", async () => {
+			taskListQuery.mockResolvedValue(kickoffActiveTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					throw new Error("network");
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.sessionEnergyPending).toBe(true);
+			});
+
+			act(() => {
+				result.current.skipSessionEnergy();
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingWedgeRecovery?.phase).toBe(
+					"kickoff_suggestion",
+				);
+			});
+
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestionResult;
+				}
+				return null;
+			});
+
+			await act(async () => {
+				await result.current.retryWedgeSync();
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
+				expect(result.current.pendingWedgeRecovery).toBeNull();
+			});
+		});
+
+		it("restores wedge recovery when suggestion_fetch retry fails again", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 76,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+
+			createCycle.mockImplementation(async (input) => ({
+				id: input.kind === "WORK" ? 42 : 306,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: null,
+				kind: input.kind,
+				state: "RUNNING",
+				startedAt: new Date(),
+				endedAt: null,
+				task: null,
+				configuredDurationSec: input.configuredDurationSec,
+			}));
+
+			suggestionNextMutate.mockRejectedValue(new Error("network"));
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await driveWorkCycleToCheckIn(result);
+
+			await act(async () => {
+				await result.current.submitCheckIn("STEADY");
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingWedgeRecovery?.phase).toBe(
+					"suggestion_fetch",
+				);
+			});
+
+			await act(async () => {
+				await result.current.retryWedgeSync();
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingWedgeRecovery?.phase).toBe(
+					"suggestion_fetch",
+				);
+				expect(result.current.pendingSuggestion.status).toBe("error");
+			});
+		});
+
+		it("sets kickoff_session recovery when getOrCreateActive fails", async () => {
+			taskListQuery.mockResolvedValue(kickoffActiveTaskList);
+			getOrCreateSession.mockRejectedValueOnce(new Error("network"));
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingWedgeRecovery?.phase).toBe(
+					"kickoff_session",
+				);
+			});
+
+			getOrCreateSession.mockResolvedValueOnce({ id: 1 });
+
+			await act(async () => {
+				await result.current.retryWedgeSync();
+			});
+
+			await waitFor(() => {
+				expect(result.current.sessionEnergyPending).toBe(true);
+				expect(result.current.sessionFocusPending).toBe(true);
+				expect(result.current.pendingWedgeRecovery).toBeNull();
+			});
+		});
+
+		it("acceptKickoffSuggestion pre-focuses before recordDecision resolves", async () => {
+			taskListQuery.mockResolvedValue(kickoffActiveTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestionResult;
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await completeSessionEnergyGate(result);
+
+			const { releaseRecordDecision } = mockRecordDecisionDeferred();
+
+			act(() => {
+				result.current.acceptKickoffSuggestion();
+			});
+
+			expect(result.current.preFocusedTask).toMatchObject({
+				id: 9,
+				title: "Kickoff task",
+			});
+			expect(result.current.hasPreFocusedKickoff).toBe(true);
+
+			await act(async () => {
+				releaseRecordDecision();
+				await Promise.resolve();
+			});
+
+			expect(recordDecisionMutate).toHaveBeenCalledWith({
+				context: "kickoff",
+				sessionId: 1,
+				suggestedTaskId: 9,
+				chosenTaskId: 9,
+			});
+		});
 	});
 
 	describe("stale suggestion invalidation", () => {

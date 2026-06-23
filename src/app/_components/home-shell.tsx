@@ -53,7 +53,7 @@ function OfflineBanner() {
 			data-testid="offline-banner"
 			role="status"
 		>
-			You&apos;re offline — your progress saves when you&apos;re back online.
+			You&apos;re offline — retry when you&apos;re back online.
 		</div>
 	);
 }

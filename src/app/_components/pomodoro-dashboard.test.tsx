@@ -65,6 +65,7 @@ function makePomodoroMock(
 		awaitingWindDown: false,
 		windDownRationale: null,
 		isConfirming: false,
+		isWedgeSyncRetrying: false,
 		pendingSuggestion: { status: "idle" },
 		pendingKickoffSuggestion: { status: "idle" },
 		kickoffSuggestedTaskId: null,
