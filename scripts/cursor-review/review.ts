@@ -256,3 +256,8 @@ try {
 	}
 	throw err;
 }
+
+// The local SDK runtime keeps open handles (grpc/sqlite/telemetry) that can
+// prevent a clean exit after the review completes. Exit explicitly so CI does
+// not hang until the job timeout. All output is already flushed synchronously.
+process.exit(0);
