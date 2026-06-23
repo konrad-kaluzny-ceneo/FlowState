@@ -498,9 +498,9 @@ When `CURSOR_API_KEY` is set and Cursor GitHub integration is **absent**:
 
 #### Automated
 
-- [ ] 4.1 `pnpm check` passes
-- [ ] 4.2 `pnpm typecheck` passes
-- [ ] 4.3 `pnpm test` passes
+- [x] 4.1 `pnpm check` passes
+- [x] 4.2 `pnpm typecheck` passes
+- [x] 4.3 `pnpm test` passes
 
 #### Manual
 

@@ -1,6 +1,9 @@
-# Advisory PR code review via Cursor SDK (cloud agent).
+# Advisory PR code review via Cursor SDK (local runtime on the runner).
 # Optional repository secret: CURSOR_API_KEY
 # When unset or invalid, the job succeeds with a notice (does not fail CI).
+#
+# Local mode reviews the checked-out PR head on the runner — it does NOT require
+# the repo to be connected in Cursor GitHub Integrations.
 #
 # Not a merge gate — runs in parallel with CI quality/e2e.
 
@@ -95,15 +98,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
-      - name: Run Cursor cloud review
+      - name: Run Cursor local review
         id: review
         if: steps.cursor_key.outputs.skip != 'true'
         uses: ./.github/actions/cursor-review
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          pr-url: ${{ github.event.pull_request.html_url || '' }}
           change-id: ${{ steps.change.outputs.id }}
-          base: main
+          base: origin/main
           pr-title: ${{ github.event.pull_request.title || '' }}
           pr-description: ${{ steps.pr_body.outputs.description || '' }}
           api-key: ${{ secrets.CURSOR_API_KEY }}
