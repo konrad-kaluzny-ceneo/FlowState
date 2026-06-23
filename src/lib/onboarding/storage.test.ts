@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ONBOARDING_KEY_GUEST, onboardingKeyForScope } from "./keys";
 import {
+	enableAuthenticatedWedgeCoach,
 	loadOnboardingState,
 	patchOnboardingState,
 	saveOnboardingState,
@@ -20,11 +21,13 @@ describe("onboarding storage", () => {
 	});
 
 	it("round-trips all flags", () => {
-		const state = {
+		const state: typeof DEFAULT_ONBOARDING_STATE = {
 			firstRunDismissed: true,
 			checkInCoachSeen: true,
 			suggestionCoachSeen: false,
 			presetCoachDismissed: true,
+			authenticatedWedgeCoachEligible: true,
+			hasSeenAuthenticatedWedge: false,
 		};
 
 		saveOnboardingState({ mode: "guest" }, state);
@@ -140,6 +143,19 @@ describe("onboarding storage", () => {
 		).not.toBe(
 			onboardingKeyForScope({ mode: "authenticated", userId: "user-a" }),
 		);
+	});
+
+	it("enables authenticated wedge coach for auth scope", () => {
+		enableAuthenticatedWedgeCoach({
+			mode: "authenticated",
+			userId: "user-a",
+		});
+		expect(
+			loadOnboardingState({ mode: "authenticated", userId: "user-a" }),
+		).toEqual({
+			...DEFAULT_ONBOARDING_STATE,
+			authenticatedWedgeCoachEligible: true,
+		});
 	});
 
 	it("returns null key and skips writes for missing auth userId", () => {

@@ -50,13 +50,14 @@ import {
 } from "~/lib/data-mode/use-domain-tasks";
 import { shouldShowBreakAtmosphere } from "~/lib/design/break-atmosphere";
 import { shouldShowWorkFocusShell } from "~/lib/design/work-focus-shell";
-import {
-	CHECK_IN_COACH_LINE,
-	SUGGESTION_COACH_LINE,
-} from "~/lib/onboarding/copy";
 import { shouldDeferFirstRun } from "~/lib/onboarding/defer";
-import type { OnboardingScope } from "~/lib/onboarding/types";
+import {
+	resolveCheckInCoachLine,
+	resolveSuggestionCoachLine,
+} from "~/lib/onboarding/post-merge-wedge-coach";
+import type { OnboardingScope, OnboardingState } from "~/lib/onboarding/types";
 import { getBreakReentryLine } from "~/lib/session/transition-copy";
+import { getPersonaPresetLabel } from "~/lib/task/persona-presets";
 import { resolveWedgeBeat } from "~/lib/wedge/transition-conductor";
 
 type DayPlanView = ReturnType<typeof useDayPlan>;
@@ -70,6 +71,9 @@ export function PomodoroDashboardBody({
 	enableSuggestionGate = false,
 	checkInCoachLine,
 	suggestionCoachLine,
+	onboardingState,
+	shouldShowCheckInCoach: shouldShowCheckInCoachFlag,
+	shouldShowSuggestionCoach: shouldShowSuggestionCoachFlag,
 	workTypeDurationScope,
 	cycleEndAudioMode,
 	setCycleEndAudioMode,
@@ -85,6 +89,9 @@ export function PomodoroDashboardBody({
 	enableSuggestionGate?: boolean;
 	checkInCoachLine?: string;
 	suggestionCoachLine?: string;
+	onboardingState?: OnboardingState;
+	shouldShowCheckInCoach?: boolean;
+	shouldShowSuggestionCoach?: boolean;
 	workTypeDurationScope?: OnboardingScope;
 	cycleEndAudioMode: CycleEndAudioMode;
 	setCycleEndAudioMode: (mode: CycleEndAudioMode) => void;
@@ -124,6 +131,32 @@ export function PomodoroDashboardBody({
 		isLoading: recapLoading,
 		localDateKey: recapDateKey,
 	} = useDailyRecap();
+
+	const suggestionPersonaLabel = useMemo(() => {
+		const pending = pomodoro.pendingSuggestion;
+		if (pending.status !== "ready") {
+			return null;
+		}
+		const task = tasks.find((t) => t.id === pending.data.taskId);
+		if (task?.personaPresetId == null || task.personaPresetId === "custom") {
+			return null;
+		}
+		return getPersonaPresetLabel(task.personaPresetId) ?? null;
+	}, [pomodoro.pendingSuggestion, tasks]);
+
+	const effectiveCheckInCoachLine =
+		onboardingState != null && shouldShowCheckInCoachFlag != null
+			? resolveCheckInCoachLine(onboardingState, shouldShowCheckInCoachFlag)
+			: checkInCoachLine;
+
+	const effectiveSuggestionCoachLine =
+		onboardingState != null && shouldShowSuggestionCoachFlag != null
+			? resolveSuggestionCoachLine(
+					onboardingState,
+					shouldShowSuggestionCoachFlag,
+					suggestionPersonaLabel,
+				)
+			: suggestionCoachLine;
 
 	type PendingStartAction = { kind: "start"; durationSec: number };
 
@@ -494,7 +527,7 @@ export function PomodoroDashboardBody({
 							/>
 						)}
 						<TaskSuggestionCard
-							coachLine={suggestionCoachLine}
+							coachLine={effectiveSuggestionCoachLine}
 							onAccept={() => {
 								pomodoro.dismissCatchUp();
 								onSuggestionCoachSeen?.();
@@ -530,7 +563,7 @@ export function PomodoroDashboardBody({
 					<TaskSuggestionCard status="loading" />
 				) : pomodoro.pendingKickoffSuggestion.status === "ready" ? (
 					<TaskSuggestionCard
-						coachLine={suggestionCoachLine}
+						coachLine={effectiveSuggestionCoachLine}
 						isAccepting={pomodoro.isAcceptingKickoffSuggestion}
 						onAccept={() => {
 							onSuggestionCoachSeen?.();
@@ -681,7 +714,7 @@ export function PomodoroDashboardBody({
 						</div>
 					)}
 					<CheckInOverlay
-						coachLine={checkInCoachLine}
+						coachLine={effectiveCheckInCoachLine}
 						cycleId={Number(pomodoro.activeCycle.id)}
 						isSubmitting={pomodoro.isConfirming}
 						onSubmit={async (energy) => {
@@ -740,6 +773,7 @@ function AuthenticatedPomodoroDashboard() {
 	);
 	const {
 		scope: onboardingScope,
+		state: onboardingState,
 		shouldShowCheckInCoach,
 		shouldShowSuggestionCoach,
 		markCheckInCoachSeen,
@@ -754,22 +788,19 @@ function AuthenticatedPomodoroDashboard() {
 
 	return (
 		<PomodoroDashboardBody
-			checkInCoachLine={
-				shouldShowCheckInCoach ? CHECK_IN_COACH_LINE : undefined
-			}
 			cycleEndAudioMode={cycleEndAudioMode}
 			dayPlan={dayPlan}
 			enableCheckInGate
 			enableSuggestionGate
 			enableWindDownGate
 			onboardingScope={onboardingScope}
+			onboardingState={onboardingState}
 			onCheckInCoachSeen={markCheckInCoachSeen}
 			onSuggestionCoachSeen={markSuggestionCoachSeen}
 			refreshTasks={refreshTasks}
 			setCycleEndAudioMode={setCycleEndAudioMode}
-			suggestionCoachLine={
-				shouldShowSuggestionCoach ? SUGGESTION_COACH_LINE : undefined
-			}
+			shouldShowCheckInCoach={shouldShowCheckInCoach}
+			shouldShowSuggestionCoach={shouldShowSuggestionCoach}
 			tasks={domainTasks}
 			workTypeDurationScope={workTypeDurationScope}
 		/>

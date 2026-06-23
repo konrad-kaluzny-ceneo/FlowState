@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-23
 structure: split
-active_slices: []
+active_slices: [S-11 ext]
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
