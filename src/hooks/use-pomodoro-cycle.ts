@@ -2967,7 +2967,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					...(intent.markTaskDone ? [utils.task.list.invalidate()] : []),
 				]);
 
-				await fetchPostCheckInSuggestion(intent.workCycleId, gen);
+				await fetchPostCheckInSuggestion(workCycleId, gen);
 				pendingWedgeIntentRef.current = null;
 				setPendingWedgeRecovery(null);
 				setError(null);
@@ -2975,7 +2975,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				if (suggestionFetchGenRef.current !== gen) {
 					return;
 				}
-				if (suggestionCycleIdRef.current !== intent.workCycleId) {
+				if (suggestionCycleIdRef.current !== workCycleId) {
 					return;
 				}
 				pendingWedgeIntentRef.current = { ...intent, phase: "start_break" };
