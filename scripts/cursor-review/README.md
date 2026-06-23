@@ -62,7 +62,30 @@ On a PR, CI passes `--pr-url` so the agent attaches to the pull request directly
 | `Missing CURSOR_API_KEY` | Set in `.env.local` and export in PowerShell before `pnpm review` |
 | `Invalid User API Key` | Rotate key in [Cursor Integrations](https://cursor.com/dashboard/integrations); CI treats this as skipped (does not fail the workflow) |
 
-For GitHub Actions, add repository secret `CURSOR_API_KEY`. Workflow `.github/workflows/cursor-review.yml` checks out the PR head commit, runs a cloud agent (scope computed inside the VM), auto-passes `--change-id` for `features/*` branches, and updates a single PR comment on each push.
+For GitHub Actions, add repository secret `CURSOR_API_KEY`. Workflow `.github/workflows/cursor-review.yml` uses composite action `.github/actions/cursor-review` — checks out the PR head commit, runs a cloud agent (scope computed inside the VM), auto-passes `--change-id` for `features/*` branches, upserts a single PR comment (`<!-- cursor-review-v1 -->`), and applies `ai-cr:*` labels from `reports/review.json`.
+
+## PR labels (`ai-cr:*`)
+
+| Label | Color | Meaning |
+| --- | --- | --- |
+| `ai-cr:passed` | Green | Review completed; all scores ≥ 6, no critical findings |
+| `ai-cr:failed` | Red | Review completed with failures, or agent run error |
+| `ai-cr:review` | Blue | Request on-demand re-run (removed at run start) |
+
+Labels are created automatically on first workflow run when `CURSOR_API_KEY` is configured. Pass/fail is **advisory** — not a merge gate.
+
+## On-demand retry
+
+Add the `ai-cr:review` label to a PR to trigger a fresh review. The workflow removes `ai-cr:review`, `ai-cr:passed`, and `ai-cr:failed` before each run, then applies the new outcome.
+
+## Scores & pass rules
+
+The agent emits a **Scores** section (C1–C6, each 1–10). `review.ts` writes `reports/review.json` alongside `reports/review.md` with:
+
+- `passed` — `true` when every present score ≥ 6 and no `critical` findings
+- `scores`, `mean`, `failReasons`, `criticalCount`
+
+C5 (plan alignment) is omitted from the mean when no `--change-id` is provided. When `CURSOR_API_KEY` is missing or invalid, the workflow skips review — no comment, no labels, job stays green.
 
 ## Runtime choice
 

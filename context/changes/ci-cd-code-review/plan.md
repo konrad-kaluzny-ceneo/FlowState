@@ -359,8 +359,8 @@ if: >
 
 #### Automated
 
-- [ ] 3.1 `pnpm check` passes
-- [ ] 3.2 `pnpm test` passes
+- [x] 3.1 `pnpm check` passes
+- [x] 3.2 `pnpm test` passes
 
 #### Manual
 
