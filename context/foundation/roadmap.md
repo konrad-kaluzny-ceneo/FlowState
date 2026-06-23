@@ -3,9 +3,9 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-06-21
+updated: 2026-06-23
 structure: split
-active_slices: []
+active_slices: [S-35]
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -82,7 +82,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-32 | create-wedge-trust-bridge | [FLO-72](https://linear.app/flowstate-10xdev/issue/FLO-72) | [#115](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/115) | first suggestion cites persona preset in rationale | S-36, F-05, S-06 | **US-02** | done |
 | S-33 | break-restoration-atmosphere | [FLO-85](https://linear.app/flowstate-10xdev/issue/FLO-85) | [#143](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/143) | home break atmosphere during breaks | F-06, S-13, F-07 | US-01 craft | proposed |
 | S-34 | optimistic-wedge-transitions | [FLO-73](https://linear.app/flowstate-10xdev/issue/FLO-73) | [#116](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/116) | optimistic check-in → suggestion ≤200ms | F-07, S-06, S-09, S-25 | **US-01** | done |
-| S-35 | wedge-transition-sync-recovery | [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) | [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) | calm network-loss recovery on wedge gates | F-07, S-06, S-22 | **US-01** | proposed |
+| S-35 | wedge-transition-sync-recovery | [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) | [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) | calm network-loss recovery on wedge gates | F-07, S-06, S-22 | **US-01** | active |
 | S-36 | persona-presets-v2 | [FLO-75](https://linear.app/flowstate-10xdev/issue/FLO-75) | [#118](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/118) | 8 personas + row labels + visible effort | S-29, F-05 | **US-02** | done |
 | S-37 | revisit-user-choices | [FLO-80](https://linear.app/flowstate-10xdev/issue/FLO-80) | [#132](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/132) | see and change prior choices (MVP: out-of-tab notification prefs on timer hub) | break-alerts-out-of-tab (merged) | revisit-user-choices PRD thread | done |
 | S-38 | session-end-mid-cycle-closure | [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) | [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151) | mid-cycle end sets expectations — what counts in closure | B-08 minimal | US-04 | proposed |
