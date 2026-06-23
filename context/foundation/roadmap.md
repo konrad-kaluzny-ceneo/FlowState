@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-23
 structure: split
-active_slices: [S-11 ext]
+active_slices: []
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -133,7 +133,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-34 | optimistic-wedge-transitions | **yes** | US-01; F-07 done |
 | S-35 | wedge-transition-sync-recovery | **yes** | bundle with S-34 |
 | F-03 | align-prisma-config | **yes** | hygiene; parallel when idle |
-| S-11 ext. | post-merge-wedge-coach | **yes** | after F-07; T-05 / hot-1; P-GAP-102 promoted — see [`flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md) Phase 4 |
+| S-11 ext. | post-merge-wedge-coach | **done** | shipped PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159); T-05 post-merge bridge |
 | S-37 | revisit-user-choices | **done** | merged PR #140 |
 
 **Recommended next:** **S-32** (S-36 done) ∥ **B-06** (active) → **F-07** → **S-11 ext.** ∥ **S-27** ∥ **S-30** ∥ **S-31** ∥ **S-28** → **S-24** → **S-34** ∥ **S-35**; **S-21** ∥ **S-33** after F-07.
@@ -171,13 +171,14 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | P-105 Eisenhower literacy | S-29 phase 2 | plan scope |
 | P-GAP-109 garden on overlays | S-28 phase 2 | already in S-28 detail |
 | P-GAP-110 progressive coaching | S-11 extension | park in [`parked.md`](roadmap-references/parked.md) |
-| P-GAP-102 guest activation | S-11 extension | **active extension** (promoted from parked); after F-07 — event storming hot-1 |
+| P-GAP-102 guest activation | S-11 extension | **done** — post-merge-wedge-coach PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159) |
 | B-08 PRD review (2026-06-21) | **B-09** + **S-38** | new proposed slices — pause-then-end vs mid-cycle closure expectations |
 
 Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-batches/README.md).
 
 ## Done
 
+- **S-11 ext: post-merge wedge coach** — Archived 2026-06-23 → `context/archive/2026-06-23-post-merge-wedge-coach/`. PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159). Extends S-11 / [FLO-26](https://linear.app/flowstate-10xdev/issue/FLO-26) / [#37](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/37). Lesson: `authenticatedWedgeCoachEligible` on guest import; persona-aware suggestion subcopy; `hasSeenAuthenticatedWedge` completes bridge.
 - **S-31: WORK cycle focus shell** — Archived 2026-06-23 → `context/archive/2026-06-23-work-focus-shell/`. PR [#157](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/157). Issues [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) / [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107). Lesson: section-scoped chrome subdue during WORK; shell wash via data-attribute mirrors S-33.
 - **S-33: home break atmosphere during breaks** — Archived 2026-06-23 → `context/archive/2026-06-23-break-restoration-atmosphere/`. PR [#156](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/156). Issues [FLO-85](https://linear.app/flowstate-10xdev/issue/FLO-85) / [#143](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/143). Lesson: shell wash via data-attribute + CSS tokens; yield before wedge/suggestion gates.
 - **S-35: calm network-loss recovery on wedge gates** — Archived 2026-06-23 → `context/archive/2026-06-23-wedge-transition-sync-recovery/`. PR [#155](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/155). Issues [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) / [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117). Lesson: preserve wedge intent on partial failure; restore recovery UI when retry fails.
