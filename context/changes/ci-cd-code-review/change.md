@@ -3,7 +3,7 @@ change_id: ci-cd-code-review
 title: Extend advisory PR code review (composite action, scoring, labels)
 status: impl_reviewed
 created: 2026-06-19
-updated: 2026-06-22
+updated: 2026-06-23
 research: context/changes/ci-cd-code-review/research.md
 plan: context/changes/ci-cd-code-review/plan.md
 archived_at: null

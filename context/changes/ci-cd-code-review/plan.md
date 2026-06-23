@@ -41,7 +41,7 @@ When key absent: job succeeds, notice only — no comment, no labels.
 
 ## Implementation Approach
 
-Three incremental phases: (1) tighten review contract + testable parser in TypeScript, (2) extract composite action, (3) wire labels/triggers in workflow. Score parsing lives in `review.ts` → sidecar JSON (user decision); workflow reads JSON for labels — no shell regex on LLM markdown.
+Three incremental phases shipped in code (1–3); **Phase 4** closes CI verification gaps when Cursor GitHub integration is unavailable (local review on GHA runner, drop `--pr-url`).
 
 ## Critical Implementation Details
 
@@ -287,6 +287,131 @@ if: >
 
 ---
 
+## Phase 4: CI smoke without Cursor GitHub integration
+
+### Overview
+
+Post-implementation verification (2026-06-23) after `CURSOR_API_KEY` was added to repo secrets. Phases 1–3 code is merged on `features/ci-cd-code-review` (PR #154); manual sign-off items in §Progress remain open. This phase closes the gap between **workflow green** and **agent actually producing a review** when Cursor **GitHub Integrations** cannot be configured.
+
+### Findings (2026-06-23)
+
+#### Workflow blockers (fixed on branch)
+
+Two issues prevented `cursor-review` from running on PR events at all:
+
+1. **Missing checkout before local composite action** — `uses: ./.github/actions/cursor-review` requires a prior `actions/checkout` in the parent workflow so GitHub can load the action definition. Without it, push events failed workflow validation (0 jobs).
+2. **YAML syntax in failure-handler step** — multiline bash `FAILURE_BODY='…'` broke YAML indentation at line ~151 (`Invalid workflow file`). Fixed with `printf` for the two-line body.
+
+Commits: `e55d655` (checkout), `4fdec82` (YAML).
+
+#### Secret & job semantics (verified)
+
+- `CURSOR_API_KEY` present in repo secrets (added 2026-06-23).
+- After workflow fixes, job `cursor-review` runs green (~35s) on PR `synchronize` (run `28045726594`).
+- Key is detected (`skip=false`); advisory semantics hold — job exits 0 even when agent fails.
+
+#### Agent failure — integration not optional for current cloud+PR path
+
+Cloud review with `--pr-url` fails at agent startup:
+
+```
+Startup failed: [pr_resolution_failed] Failed to fetch pull request details (retryable=false)
+```
+
+Cause: CI passes `pr-url: ${{ github.event.pull_request.html_url }}` into `pnpm review:cloud`, which maps to Cursor SDK `cloud.repos[].prUrl`. Resolving the PR requires the repo to be linked in [Cursor Dashboard → Integrations](https://cursor.com/dashboard/integrations) for the API key's account/team.
+
+**User constraint**: GitHub integration in Cursor cannot be completed. `--pr-url` path is therefore unavailable.
+
+#### What still works without integration
+
+| Mode | Command | GitHub integration | Notes |
+| --- | --- | --- | --- |
+| Cloud + PR attach | `pnpm review:cloud --pr-url …` | **Required** | Current CI path; fails with `pr_resolution_failed` |
+| Cloud + ref only | `pnpm review:cloud --ref <sha>` | **Maybe** | VM must clone repo from GitHub; may still need repo link for private/auth clone |
+| **Local on runner** | `pnpm review` | **Not required** | Repo already checked out on GHA; only `CURSOR_API_KEY` needed |
+
+PR title/description can still reach the prompt via `--pr-title` / `--pr-description` without `--pr-url` (already wired in workflow).
+
+#### Side effects observed on failed run
+
+- `ai-cr:failed` label applied (correct per failure path).
+- Failure comment upserted (`<!-- cursor-review-v1 -->` + "Review agent failed to complete.").
+- `workflow_dispatch` unavailable until workflow on `main` includes valid trigger (branch-only fix; not blocking PR `synchronize`).
+
+### Desired end state (Phase 4)
+
+When `CURSOR_API_KEY` is set and Cursor GitHub integration is **absent**:
+
+1. CI runs **local** review (`pnpm review`, not `review:cloud`) against the checked-out PR head on the GHA runner.
+2. **Do not pass `--pr-url`** to the SDK (remove from composite action default CI path).
+3. Keep existing outputs: `reports/review.md`, `reports/review.json`, PR comment upsert, `ai-cr:*` labels, `labeled` retry.
+4. Optional fallback: try cloud with `--ref <sha>` only if local mode proves unsuitable on GHA (document outcome).
+
+### Changes required
+
+#### 1. Composite action — local review mode
+
+**File**: `.github/actions/cursor-review/action.yml`
+
+**Intent**: Run review without cloud VM / GitHub PR resolution.
+
+**Contract**:
+- Replace `pnpm review:cloud` with `pnpm review` (or add input `mode: local|cloud`, default `local`).
+- Drop `--pr-url` from default `REVIEW_ARGS`; retain `--ref` only if needed for logging (local mode uses `cwd` + `getCurrentBranch` / detached HEAD at checkout SHA).
+- Retain `--base`, `--change-id`, `--pr-title`, `--pr-description`, `--output`.
+- Update action `description` to reflect local-on-runner execution.
+
+#### 2. Workflow — stop passing pr-url
+
+**File**: `.github/workflows/cursor-review.yml`
+
+**Intent**: Avoid `pr_resolution_failed` when integration unavailable.
+
+**Contract**:
+- Remove `pr-url` input from composite action call (or pass empty string).
+- Add parent `checkout` before composite action (already landed — keep).
+
+#### 3. review.ts / build-prompt (minimal)
+
+**File**: `scripts/cursor-review/review.ts`, `build-prompt.ts`
+
+**Intent**: Ensure local prompt on detached HEAD in CI still computes diff vs `main`.
+
+**Contract**:
+- Verify `getChangedFiles` / merge-base work when GHA checks out commit SHA (detached HEAD); adjust only if smoke fails.
+- No new CLI flags required.
+
+#### 4. README
+
+**File**: `scripts/cursor-review/README.md`
+
+**Intent**: Document integration requirement vs local CI path.
+
+**Contract**:
+- **Cloud + `--pr-url`**: requires Cursor GitHub integration.
+- **CI default (local)**: no integration; needs checkout on runner.
+- Troubleshooting table: add `pr_resolution_failed` → use local CI path or connect repo in Integrations.
+
+### Success criteria
+
+#### Automated verification
+
+- `pnpm check` passes
+- `pnpm typecheck` passes
+- `pnpm test` passes
+
+#### Manual verification
+
+- [ ] 4.1 PR `synchronize` runs `cursor-review`; agent completes; `reports/review.md` + `.json` produced
+- [ ] 4.2 PR comment upserts with Scores section; `ai-cr:passed` or `ai-cr:failed` matches JSON
+- [ ] 4.3 No `pr_resolution_failed` in Action logs
+- [ ] 4.4 `ai-cr:review` label still triggers re-run
+- [ ] 4.5 Missing key path unchanged (skip, green job, no labels/comment)
+
+**Implementation note**: Phase 4 unblocks manual items 2.3–2.4 and 3.3–3.5 in §Progress without requiring Cursor GitHub integration.
+
+---
+
 ## Testing Strategy
 
 ### Unit Tests
@@ -368,3 +493,18 @@ if: >
 - [ ] 3.4 `ai-cr:review` label triggers re-run
 - [ ] 3.5 Agent failure path applies `ai-cr:failed` with green job
 - [ ] 3.6 Missing key skips labels and comment
+
+### Phase 4: CI smoke without Cursor GitHub integration
+
+#### Automated
+
+- [ ] 4.1 `pnpm check` passes
+- [ ] 4.2 `pnpm typecheck` passes
+- [ ] 4.3 `pnpm test` passes
+
+#### Manual
+
+- [ ] 4.4 PR synchronize produces review markdown + JSON (no `pr_resolution_failed`)
+- [ ] 4.5 PR comment upsert + correct `ai-cr:passed` / `ai-cr:failed`
+- [ ] 4.6 `ai-cr:review` retry still works
+- [ ] 4.7 Missing key skip path unchanged
