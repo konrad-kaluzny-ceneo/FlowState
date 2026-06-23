@@ -1,5 +1,0 @@
-feat(pause-and-end-session): Pause and end session dual calm exit (p1)
-
-Add Pause and end session action that pauses the timer then shows after-pause confirm before calling existing endSession(). Reuses overlay variant copy for paused closure.
-
-Fixes #150
