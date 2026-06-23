@@ -87,6 +87,14 @@ jobs:
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
+      - name: Checkout (load local composite action)
+        if: steps.cursor_key.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
       - name: Run Cursor cloud review
         id: review
         if: steps.cursor_key.outputs.skip != 'true'
