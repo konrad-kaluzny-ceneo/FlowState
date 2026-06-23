@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-23
 structure: split
-active_slices: []
+active_slices: [S-31]
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -77,7 +77,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-28 | wellness-illustration-foundation | [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) | [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98) | Calm Garden illustrations + overlay phase 2 | F-06 | Secondary | ready |
 | S-29 | task-create-persona-presets | [FLO-64](https://linear.app/flowstate-10xdev/issue/FLO-64) | [#105](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/105) | persona presets + Custom expand | F-05, F-06, S-13 | **US-02** | done |
 | S-30 | daily-work-timing-recap | [FLO-65](https://linear.app/flowstate-10xdev/issue/FLO-65) | [#106](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/106) | light timing recap; dismissible footprint | S-02, S-18 | **US-03** | done |
-| S-31 | work-focus-shell | [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) | [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107) | WORK cycle focus shell | S-13, F-06 | Secondary | ready |
+| S-31 | work-focus-shell | [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) | [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107) | WORK cycle focus shell | S-13, F-06 | Secondary | active |
 | F-07 | wedge-transition-conductor | [FLO-71](https://linear.app/flowstate-10xdev/issue/FLO-71) | [#114](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/114) | (foundation) max 1 interstitial + 1 gate; return handoff before kickoff | B-05, B-06, S-12, S-19 | **US-01** | done |
 | S-32 | create-wedge-trust-bridge | [FLO-72](https://linear.app/flowstate-10xdev/issue/FLO-72) | [#115](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/115) | first suggestion cites persona preset in rationale | S-36, F-05, S-06 | **US-02** | done |
 | S-33 | break-restoration-atmosphere | [FLO-85](https://linear.app/flowstate-10xdev/issue/FLO-85) | [#143](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/143) | home break atmosphere during breaks | F-06, S-13, F-07 | US-01 craft | done |
