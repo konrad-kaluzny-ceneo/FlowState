@@ -91,7 +91,7 @@ Add the `ai-cr:review` label to a PR to trigger a fresh review. The workflow rem
 
 The agent emits a **Scores** section (C1–C6, each 1–10). `review.ts` writes `reports/review.json` alongside `reports/review.md` with:
 
-- `passed` — `true` when every present score ≥ 6 and no `critical` findings
+- `passed` — `true` when all applicable criteria are present and each is ≥ 6, with no `critical` findings (applicable = C1–C4, C6, plus C5 when `--change-id` is set)
 - `scores`, `mean`, `failReasons`, `criticalCount`
 
 C5 (plan alignment) is omitted from the mean when no `--change-id` is provided. When `CURSOR_API_KEY` is missing or invalid, the workflow skips review — no comment, no labels, job stays green.

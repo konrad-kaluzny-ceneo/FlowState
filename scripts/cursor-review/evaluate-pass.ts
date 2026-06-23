@@ -29,8 +29,9 @@ export function evaluatePass(input: EvaluatePassInput): PassEvaluation {
 		.map((id) => scores[id])
 		.filter((n): n is number => n !== undefined);
 
-	if (presentScores.length === 0) {
-		failReasons.push("missing scores");
+	const missing = applicable.filter((id) => scores[id] === undefined);
+	if (missing.length > 0) {
+		failReasons.push(`missing scores: ${missing.join(", ")}`);
 	}
 
 	for (const id of applicable) {

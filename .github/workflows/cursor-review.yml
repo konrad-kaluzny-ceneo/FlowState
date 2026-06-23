@@ -50,15 +50,20 @@ jobs:
         if: steps.cursor_key.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh label create "ai-cr:passed" --color 2da44e --description "AI code review passed" 2>/dev/null || true
           gh label create "ai-cr:failed" --color cf222e --description "AI code review failed" 2>/dev/null || true
           gh label create "ai-cr:review" --color bfd4f2 --description "Re-run AI code review" 2>/dev/null || true
 
+      # Runs even when the review is skipped (no API key) so stale labels never
+      # linger. GH_REPO gives gh repository context — this step runs before the
+      # checkout, so without it every gh call would fail silently.
       - name: Prepare PR labels
-        if: steps.cursor_key.outputs.skip != 'true' && github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           PR="${{ github.event.pull_request.number }}"
           gh pr edit "$PR" --remove-label "ai-cr:review" 2>/dev/null || true
@@ -110,10 +115,13 @@ jobs:
           pr-description: ${{ steps.pr_body.outputs.description || '' }}
           api-key: ${{ secrets.CURSOR_API_KEY }}
 
+      # Advisory job: a transient gh/jq failure here must not turn CI red.
       - name: Post PR comment
         if: github.event_name == 'pull_request' && steps.cursor_key.outputs.skip != 'true' && steps.review.outputs.skipped != 'true' && steps.review.outputs.review-outcome == 'success' && steps.review.outputs.review-md != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           PR="${{ github.event.pull_request.number }}"
           REPO="${{ github.repository }}"
@@ -128,8 +136,10 @@ jobs:
 
       - name: Apply review label
         if: github.event_name == 'pull_request' && steps.cursor_key.outputs.skip != 'true' && steps.review.outputs.skipped != 'true' && steps.review.outputs.review-outcome == 'success' && steps.review.outputs.review-json != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           PR="${{ github.event.pull_request.number }}"
           PASSED=$(jq -r '.passed' reports/review.json)
@@ -141,8 +151,10 @@ jobs:
 
       - name: Handle review failure
         if: always() && github.event_name == 'pull_request' && steps.cursor_key.outputs.skip != 'true' && steps.review.outputs.skipped != 'true' && steps.review.outputs.review-outcome == 'failure'
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           PR="${{ github.event.pull_request.number }}"
           REPO="${{ github.repository }}"
