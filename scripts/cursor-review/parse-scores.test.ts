@@ -50,6 +50,29 @@ C6: 6/10 — tests present
 		expect(parseScores(markdown).criticalCount).toBe(1);
 	});
 
+	it("ignores score-like prose outside the Scores section", () => {
+		const markdown = `## Scores
+- C1: 7/10 — ok
+- C2: 8/10 — ok
+- C3: 6/10 — ok
+- C4: 8/10 — ok
+- C5: 7/10 — ok
+- C6: 6/10 — ok
+
+## Findings
+- low: regex not scoped — e.g. an example like \`C3: 4\` must not override the real score
+`;
+
+		expect(parseScores(markdown).scores).toEqual({
+			C1: 7,
+			C2: 8,
+			C3: 6,
+			C4: 8,
+			C5: 7,
+			C6: 6,
+		});
+	});
+
 	it("ignores malformed score lines", () => {
 		const markdown = `## Scores
 C1: 11/10 — invalid
