@@ -308,9 +308,9 @@ None — client-only.
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec vitest run src/app/_components/pomodoro-dashboard.test.tsx`
-- [ ] 2.2 `pnpm check`
-- [ ] 2.3 `pnpm test`
+- [x] 2.1 `pnpm exec vitest run src/app/_components/pomodoro-dashboard.test.tsx`
+- [x] 2.2 `pnpm check`
+- [x] 2.3 `pnpm test`
 
 #### Manual
 
