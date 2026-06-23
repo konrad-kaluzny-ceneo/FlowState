@@ -146,9 +146,7 @@ jobs:
           REPO="${{ github.repository }}"
           gh pr edit "$PR" --add-label "ai-cr:failed"
           if [ ! -f reports/review.md ]; then
-            FAILURE_BODY='<!-- cursor-review-v1 -->
-
-Review agent failed to complete.'
+            FAILURE_BODY="$(printf '%s\n\n%s' '<!-- cursor-review-v1 -->' 'Review agent failed to complete.')"
             COMMENT_ID="$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
               -q '.[] | select(.body | contains("<!-- cursor-review-v1 -->")) | .id' | head -1)"
             if [ -n "$COMMENT_ID" ]; then
