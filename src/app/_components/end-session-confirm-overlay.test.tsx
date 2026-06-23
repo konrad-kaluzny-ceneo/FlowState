@@ -6,6 +6,8 @@ import {
 	END_SESSION_CONFIRM_CANCEL_LABEL,
 	END_SESSION_CONFIRM_LABEL,
 	END_SESSION_CONFIRM_TITLE,
+	PAUSE_AND_END_SESSION_CONFIRM_BODY,
+	PAUSE_AND_END_SESSION_CONFIRM_CANCEL_LABEL,
 } from "~/lib/session/end-session-copy";
 
 import { EndSessionConfirmOverlay } from "./end-session-confirm-overlay";
@@ -41,6 +43,23 @@ describe("EndSessionConfirmOverlay", () => {
 
 		expect(onCancel).toHaveBeenCalledTimes(1);
 		expect(onConfirm).toHaveBeenCalledTimes(1);
+	});
+
+	it("renders after-pause variant copy", () => {
+		render(
+			<EndSessionConfirmOverlay
+				onCancel={vi.fn()}
+				onConfirm={vi.fn()}
+				variant="after-pause"
+			/>,
+		);
+
+		expect(screen.getByText(PAUSE_AND_END_SESSION_CONFIRM_BODY)).toBeTruthy();
+		expect(
+			screen.getByRole("button", {
+				name: PAUSE_AND_END_SESSION_CONFIRM_CANCEL_LABEL,
+			}),
+		).toBeTruthy();
 	});
 
 	it("disables actions while submitting", () => {

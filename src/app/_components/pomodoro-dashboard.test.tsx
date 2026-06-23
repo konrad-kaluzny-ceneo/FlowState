@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
@@ -747,6 +747,39 @@ describe("PomodoroDashboardBody end session while running", () => {
 		await vi.waitFor(() => {
 			expect(endSession).toHaveBeenCalledTimes(1);
 		});
+	});
+
+	it("shows pause and end session when running", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			activeCycle: { id: 42 },
+		});
+
+		expect(screen.getByTestId("pause-and-end-session-btn")).toBeTruthy();
+	});
+
+	it("pauses then opens after-pause confirm on pause and end click", async () => {
+		const pause = vi.fn().mockResolvedValue(undefined);
+		const endSession = vi.fn();
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			activeCycle: { id: 42 },
+			pause,
+			endSession,
+		});
+
+		fireEvent.click(screen.getByTestId("pause-and-end-session-btn"));
+
+		await waitFor(() => {
+			expect(pause).toHaveBeenCalledTimes(1);
+		});
+		await waitFor(() => {
+			expect(screen.getByTestId("end-session-confirm-overlay")).toBeTruthy();
+		});
+		expect(screen.getByText("Stay paused")).toBeTruthy();
+		expect(endSession).not.toHaveBeenCalled();
 	});
 });
 
