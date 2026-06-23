@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { HomeShell } from "./home-shell";
 
@@ -73,7 +73,16 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 	DataModeProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+const onlineState = vi.hoisted(() => ({ isOnline: true }));
+
+vi.mock("~/hooks/use-online-status", () => ({
+	useOnlineStatus: () => onlineState.isOnline,
+}));
+
 describe("HomeShell", () => {
+	beforeEach(() => {
+		onlineState.isOnline = true;
+	});
 	it("shows guest banner and hides guest import when not authenticated", () => {
 		mergeUiState.mergeSuccessVisible = false;
 		render(<HomeShell isAuthenticated={false} userId={null} />);
@@ -101,5 +110,23 @@ describe("HomeShell", () => {
 		expect(firstRunOverlayProps).toHaveBeenCalled();
 		const lastCall = firstRunOverlayProps.mock.calls.at(-1)?.[0];
 		expect(lastCall?.visible).toBe(false);
+	});
+
+	it("shows offline banner when browser reports offline", () => {
+		onlineState.isOnline = false;
+		mergeUiState.mergeSuccessVisible = false;
+
+		render(<HomeShell isAuthenticated={true} userId="user-1" />);
+
+		expect(screen.getByTestId("offline-banner")).toBeTruthy();
+	});
+
+	it("hides offline banner when online", () => {
+		onlineState.isOnline = true;
+		mergeUiState.mergeSuccessVisible = false;
+
+		render(<HomeShell isAuthenticated={false} userId={null} />);
+
+		expect(screen.queryByTestId("offline-banner")).toBeNull();
 	});
 });

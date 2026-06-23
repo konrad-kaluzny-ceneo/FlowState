@@ -26,6 +26,7 @@ import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
 import { TaskList } from "~/app/_components/task-list";
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
+import { WedgeSyncRecovery } from "~/app/_components/wedge-sync-recovery";
 import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
 import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preference";
 import { useDailyRecap } from "~/hooks/use-daily-recap";
@@ -360,21 +361,32 @@ export function PomodoroDashboardBody({
 
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8">
-			{pomodoro.error != null && (
-				<div
-					className="w-full rounded-lg border border-red-400/40 bg-red-500/20 px-4 py-3 text-red-100 text-sm"
-					data-testid="pomodoro-error"
-					role="alert"
-				>
-					{pomodoro.error}
-					<button
-						className="ml-3 underline hover:text-primary"
-						onClick={pomodoro.clearError}
-						type="button"
+			{pomodoro.pendingWedgeRecovery != null ? (
+				<WedgeSyncRecovery
+					isRetrying={pomodoro.isWedgeSyncRetrying || pomodoro.isConfirming}
+					onDismiss={pomodoro.dismissPendingWedgeRecovery}
+					onRetry={() => {
+						void pomodoro.retryWedgeSync();
+					}}
+					recovery={pomodoro.pendingWedgeRecovery}
+				/>
+			) : (
+				pomodoro.error != null && (
+					<div
+						className="w-full rounded-lg border border-red-400/40 bg-red-500/20 px-4 py-3 text-red-100 text-sm"
+						data-testid="pomodoro-error"
+						role="alert"
 					>
-						Dismiss
-					</button>
-				</div>
+						{pomodoro.error}
+						<button
+							className="ml-3 underline hover:text-primary"
+							onClick={pomodoro.clearError}
+							type="button"
+						>
+							Dismiss
+						</button>
+					</div>
+				)
 			)}
 
 			{enableSuggestionGate && pomodoro.showSessionEnergy && (
