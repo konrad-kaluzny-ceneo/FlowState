@@ -347,8 +347,8 @@ if: >
 
 #### Automated
 
-- [ ] 2.1 `pnpm check` passes
-- [ ] 2.2 `pnpm typecheck` passes
+- [x] 2.1 `pnpm check` passes
+- [x] 2.2 `pnpm typecheck` passes
 
 #### Manual
 

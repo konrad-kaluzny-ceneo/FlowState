@@ -37,61 +37,53 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - name: Derive change-id
+        id: change
         if: steps.cursor_key.outputs.skip != 'true'
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
+        run: |
+          HEAD_REF="${{ github.head_ref || github.ref_name }}"
+          if [[ "$HEAD_REF" == features/* ]]; then
+            echo "id=${HEAD_REF#features/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "id=" >> "$GITHUB_OUTPUT"
+          fi
 
-      - uses: pnpm/action-setup@v4
-        if: steps.cursor_key.outputs.skip != 'true'
+      - name: Truncate PR description
+        id: pr_body
+        if: steps.cursor_key.outputs.skip != 'true' && github.event_name == 'pull_request'
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          TRUNC=$(printf '%s' "$BODY" | head -c 2000)
+          {
+            echo 'description<<EOF'
+            printf '%s' "$TRUNC"
+            echo
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
-      - uses: actions/setup-node@v4
-        if: steps.cursor_key.outputs.skip != 'true'
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        if: steps.cursor_key.outputs.skip != 'true'
-        run: pnpm install --frozen-lockfile
-
-      - name: Run cloud code review
+      - name: Run Cursor cloud review
         id: review
         if: steps.cursor_key.outputs.skip != 'true'
-        env:
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-        run: |
-          if [ ! -f scripts/cursor-review/review.ts ]; then
-            echo "Missing scripts/cursor-review/review.ts — commit the Cursor SDK scripts before enabling this workflow."
-            exit 1
-          fi
-          mkdir -p reports
-          HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
-          HEAD_REF="${{ github.head_ref || github.ref_name }}"
-          PR_URL="${{ github.event.pull_request.html_url || '' }}"
-          REVIEW_ARGS=(
-            --ref "$HEAD_SHA"
-            --output reports/review.md
-          )
-          if [ -n "$PR_URL" ]; then
-            REVIEW_ARGS+=(--pr-url "$PR_URL")
-          fi
-          if [[ "$HEAD_REF" == features/* ]]; then
-            REVIEW_ARGS+=(--change-id "${HEAD_REF#features/}")
-          fi
-          pnpm review:cloud "${REVIEW_ARGS[@]}"
+        uses: ./.github/actions/cursor-review
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          pr-url: ${{ github.event.pull_request.html_url || '' }}
+          change-id: ${{ steps.change.outputs.id }}
+          base: main
+          pr-title: ${{ github.event.pull_request.title || '' }}
+          pr-description: ${{ steps.pr_body.outputs.description || '' }}
+          api-key: ${{ secrets.CURSOR_API_KEY }}
 
       - name: Post PR comment
-        if: github.event_name == 'pull_request' && steps.cursor_key.outputs.skip != 'true' && steps.review.outcome == 'success' && hashFiles('reports/review.md') != ''
+        if: github.event_name == 'pull_request' && steps.cursor_key.outputs.skip != 'true' && steps.review.outputs.skipped != 'true' && steps.review.outputs.review-outcome == 'success' && steps.review.outputs.review-md != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           PR="${{ github.event.pull_request.number }}"
           REPO="${{ github.repository }}"
           COMMENT_ID="$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
-            -q '.[] | select(.body | contains("<!-- cursor-review -->")) | .id' | head -1)"
+            -q '.[] | select(.body | contains("<!-- cursor-review-v1 -->")) | .id' | head -1)"
           if [ -n "$COMMENT_ID" ]; then
             jq -n --rawfile body reports/review.md '{body: $body}' | \
               gh api --method PATCH "repos/${REPO}/issues/comments/${COMMENT_ID}" --input -
