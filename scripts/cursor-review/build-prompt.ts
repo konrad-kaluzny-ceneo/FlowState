@@ -28,16 +28,60 @@ function buildPlanContext(changeId: string, cwd: string): string {
 	return planContext;
 }
 
+function buildPrMetadataBlock(
+	prTitle?: string,
+	prDescription?: string,
+): string {
+	if (!prTitle && !prDescription) {
+		return "";
+	}
+	let block = "\n## Pull request context\n";
+	if (prTitle) {
+		block += `- Title: ${prTitle}\n`;
+	}
+	if (prDescription) {
+		block += `- Description:\n${prDescription}\n`;
+	}
+	return block;
+}
+
+function buildDeliverableBlock(hasPlanContext: boolean): string {
+	const c5Line = hasPlanContext
+		? "- C5: Plan alignment — drift, missing items, scope creep\n"
+		: "- C5: omit (no plan context for this review)\n";
+
+	return `Write the review in the same language as recent commits (Polish or English). Use this structure:
+
+1. **Summary** — 2–3 sentences
+2. **Scores** — one line per criterion (\`C1: N/10 — brief rationale\`):
+   - C1: Correctness — logic bugs, stale state, race conditions
+   - C2: Security — authn/authz, XSS, injection, secrets, guest vs auth paths
+   - C3: Reliability — error handling, session recovery, optimistic rollback
+   - C4: Conventions — AGENTS.md, DESIGN.md, Biome, Prisma \`@@map\`, tRPC registration
+${c5Line}   - C6: Tests — missing coverage on risky paths in the diff
+3. **Findings** — bullet list with severity (\`critical\` / \`high\` / \`medium\` / \`low\`), **Location** as \`path:line\` or \`path:start-end\`, issue, suggested fix
+4. **Strengths** — what was done well
+5. **Follow-ups** — optional non-blocking suggestions`;
+}
+
 export function buildReviewPrompt(options: {
 	base: string;
 	changeId?: string;
 	cwd: string;
 	cloud?: boolean;
 	startingRef?: string;
+	prTitle?: string;
+	prDescription?: string;
 }): string {
+	const hasPlanContext = Boolean(options.changeId);
 	const planContext = options.changeId
 		? buildPlanContext(options.changeId, options.cwd)
 		: "";
+	const prMetadata = buildPrMetadataBlock(
+		options.prTitle,
+		options.prDescription,
+	);
+	const deliverable = buildDeliverableBlock(hasPlanContext);
 
 	if (options.cloud) {
 		const branch = options.startingRef ?? "HEAD";
@@ -59,15 +103,10 @@ You are in a cloud VM checked out at branch/ref \`${branch}\`.
   1. \`git fetch origin ${options.base}\`
   2. \`git diff $(git merge-base HEAD origin/${options.base})..HEAD\`
   3. List changed files and read the highest-risk ones.
-${planContext}
+${planContext}${prMetadata}
 ## Deliverable
 
-Write the review in the same language as recent commits (Polish or English). Use this structure:
-
-1. **Summary** — 2–3 sentences
-2. **Findings** — bullet list with severity (critical/high/medium/low), file path, issue, suggested fix
-3. **Strengths** — what was done well
-4. **Follow-ups** — optional non-blocking suggestions`;
+${deliverable}`;
 	}
 
 	const files = getChangedFiles(options.base, options.cwd);
@@ -101,15 +140,10 @@ ${fileList}
 \`\`\`
 ${stat || "(empty diff)"}
 \`\`\`
-${planContext}
+${planContext}${prMetadata}
 ## Deliverable
 
-Write the review in the same language as recent commits (Polish or English). Use this structure:
-
-1. **Summary** — 2–3 sentences
-2. **Findings** — bullet list with severity (critical/high/medium/low), file path, issue, suggested fix
-3. **Strengths** — what was done well
-4. **Follow-ups** — optional non-blocking suggestions
+${deliverable}
 
 Start by running \`git diff $(git merge-base HEAD ${options.base})..HEAD\` to inspect the full patch, then read the highest-risk changed files.`;
 }

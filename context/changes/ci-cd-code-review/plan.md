@@ -334,10 +334,10 @@ if: >
 
 #### Automated
 
-- [ ] 1.1 `pnpm check` passes
-- [ ] 1.2 `pnpm typecheck` passes
-- [ ] 1.3 `pnpm exec vitest run scripts/cursor-review/parse-scores.test.ts scripts/cursor-review/evaluate-pass.test.ts` passes
-- [ ] 1.4 `pnpm test` passes
+- [x] 1.1 `pnpm check` passes
+- [x] 1.2 `pnpm typecheck` passes
+- [x] 1.3 `pnpm exec vitest run scripts/cursor-review/parse-scores.test.ts scripts/cursor-review/evaluate-pass.test.ts` passes
+- [x] 1.4 `pnpm test` passes
 
 #### Manual
 
