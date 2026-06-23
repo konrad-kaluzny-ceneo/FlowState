@@ -186,6 +186,7 @@ type TaskListProps = {
 	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
 	suggestionLoading?: boolean;
 	footprints?: Record<string, TaskFootprint>;
+	chromeSubdued?: boolean;
 };
 
 type SortableActiveTaskRowProps = {
@@ -529,6 +530,7 @@ export function TaskList({
 	onMidCycleMarkComplete,
 	suggestionLoading = false,
 	footprints = {},
+	chromeSubdued = false,
 }: TaskListProps) {
 	const mode = useDataMode();
 	const { shouldShowPresetCoach, markPresetCoachDismissed } =
@@ -791,7 +793,11 @@ export function TaskList({
 	);
 
 	return (
-		<div className="w-full max-w-lg space-y-6" data-testid="task-list">
+		<div
+			className={`w-full max-w-lg space-y-6${chromeSubdued ? "opacity-80 saturate-75" : ""}`}
+			data-break-chrome-subdued={chromeSubdued ? "true" : undefined}
+			data-testid="task-list"
+		>
 			{error != null && (
 				<div
 					className="rounded-lg border border-red-400/40 bg-red-500/20 px-4 py-3 text-red-100 text-sm"

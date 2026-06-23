@@ -35,6 +35,7 @@ import { useE2eExposeCycleRecovery } from "~/hooks/use-e2e-expose-cycle-recovery
 import { useOnboarding } from "~/hooks/use-onboarding-state";
 import { useOutOfTabBreakAlertsPreference } from "~/hooks/use-out-of-tab-break-alerts-preference";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
+import { useSyncBreakAtmosphere } from "~/hooks/use-sync-break-atmosphere";
 import { getNotificationPermission } from "~/lib/break-out-of-tab-alert/notify-break-start";
 import {
 	readNotificationPromptDismissed,
@@ -46,6 +47,7 @@ import {
 	useDomainTasks,
 	useGuestDomainTasks,
 } from "~/lib/data-mode/use-domain-tasks";
+import { shouldShowBreakAtmosphere } from "~/lib/design/break-atmosphere";
 import {
 	CHECK_IN_COACH_LINE,
 	SUGGESTION_COACH_LINE,
@@ -318,6 +320,14 @@ export function PomodoroDashboardBody({
 
 	const wedgeGateActive = wedgeBeat.activeGate !== "none";
 
+	const breakAtmosphereActive = shouldShowBreakAtmosphere({
+		cycleKind: pomodoro.cycleKind,
+		state: pomodoro.state,
+		wedgeGateActive,
+		suggestionCardOnBreak: showSuggestionCard,
+	});
+	useSyncBreakAtmosphere(breakAtmosphereActive);
+
 	const showCycleCompleteCatchUp =
 		!cyclePaused &&
 		catchUp != null &&
@@ -567,6 +577,7 @@ export function PomodoroDashboardBody({
 			/>
 
 			<TaskList
+				chromeSubdued={breakAtmosphereActive}
 				continueTaskId={pomodoro.continueTaskId}
 				cycleKind={pomodoro.cycleKind}
 				cycleState={pomodoro.state}
