@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyGardenBed } from "~/lib/design/illustrations/empty-garden-bed";
 import type { FirstRunMode } from "~/lib/onboarding/copy";
 
 type EmptyActiveTasksGuideProps = {
@@ -20,7 +21,11 @@ export function EmptyActiveTasksGuide({
 	onAddTaskClick,
 }: EmptyActiveTasksGuideProps) {
 	return (
-		<div className="space-y-2" data-testid="empty-active-tasks-guide">
+		<div
+			className="flex flex-col items-center gap-3 py-2 text-center"
+			data-testid="empty-active-tasks-guide"
+		>
+			<EmptyGardenBed />
 			<p className="text-sm text-text-dimmed">{getEmptyGuideMessage(mode)}</p>
 			<button
 				className="text-sm text-text-dimmed underline transition hover:text-text-section"

@@ -16,6 +16,7 @@ import {
 import { useOnlineStatus } from "~/hooks/use-online-status";
 import { useTestIdVisible } from "~/hooks/use-test-id-visible";
 import { DataModeProvider } from "~/lib/data-mode/data-mode-context";
+import { HomeHeroSprig } from "~/lib/design/illustrations/home-hero-sprig";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 
 type HomeShellProps = {
@@ -90,6 +91,7 @@ function HomeShellContent({
 				<div className="container flex flex-col items-center justify-center gap-8 px-4 py-16">
 					<OfflineBanner />
 					<header className="space-y-2 text-center">
+						<HomeHeroSprig />
 						<h1 className="font-semibold text-4xl tracking-tight">FlowState</h1>
 						<p className="text-sm text-text-secondary">
 							Manage your tasks. Stay in flow.
