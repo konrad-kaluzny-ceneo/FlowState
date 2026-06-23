@@ -36,6 +36,7 @@ import { useOnboarding } from "~/hooks/use-onboarding-state";
 import { useOutOfTabBreakAlertsPreference } from "~/hooks/use-out-of-tab-break-alerts-preference";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
 import { useSyncBreakAtmosphere } from "~/hooks/use-sync-break-atmosphere";
+import { useSyncWorkFocusShell } from "~/hooks/use-sync-work-focus-shell";
 import { getNotificationPermission } from "~/lib/break-out-of-tab-alert/notify-break-start";
 import {
 	readNotificationPromptDismissed,
@@ -48,6 +49,7 @@ import {
 	useGuestDomainTasks,
 } from "~/lib/data-mode/use-domain-tasks";
 import { shouldShowBreakAtmosphere } from "~/lib/design/break-atmosphere";
+import { shouldShowWorkFocusShell } from "~/lib/design/work-focus-shell";
 import {
 	CHECK_IN_COACH_LINE,
 	SUGGESTION_COACH_LINE,
@@ -328,6 +330,13 @@ export function PomodoroDashboardBody({
 	});
 	useSyncBreakAtmosphere(breakAtmosphereActive);
 
+	const workFocusShellActive = shouldShowWorkFocusShell({
+		cycleKind: pomodoro.cycleKind,
+		state: pomodoro.state,
+		wedgeGateActive,
+	});
+	useSyncWorkFocusShell(workFocusShellActive);
+
 	const showCycleCompleteCatchUp =
 		!cyclePaused &&
 		catchUp != null &&
@@ -582,6 +591,7 @@ export function PomodoroDashboardBody({
 				cycleKind={pomodoro.cycleKind}
 				cycleState={pomodoro.state}
 				focusedTaskId={pomodoro.focusedTaskId}
+				focusShellActive={workFocusShellActive}
 				footprints={recap.footprints}
 				highlightedTaskId={highlightedTaskId}
 				onFocusTask={(taskId, task) => {
