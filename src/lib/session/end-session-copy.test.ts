@@ -5,6 +5,11 @@ import {
 	END_SESSION_CONFIRM_CANCEL_LABEL,
 	END_SESSION_CONFIRM_LABEL,
 	END_SESSION_CONFIRM_TITLE,
+	getEndSessionConfirmCopy,
+	PAUSE_AND_END_SESSION_CONFIRM_BODY,
+	PAUSE_AND_END_SESSION_CONFIRM_CANCEL_LABEL,
+	PAUSE_AND_END_SESSION_CONFIRM_LABEL,
+	PAUSE_AND_END_SESSION_CONFIRM_TITLE,
 } from "./end-session-copy";
 
 describe("end-session-copy", () => {
@@ -32,5 +37,17 @@ describe("end-session-copy", () => {
 
 		expect(joined).toMatch(/session|cycle|end/i);
 		expect(joined).not.toMatch(/wrong|mistake|must/i);
+	});
+
+	it("exports distinct after-pause copy for B-09", () => {
+		const afterPause = getEndSessionConfirmCopy("after-pause");
+		expect(afterPause.title).toBe(PAUSE_AND_END_SESSION_CONFIRM_TITLE);
+		expect(afterPause.body).toBe(PAUSE_AND_END_SESSION_CONFIRM_BODY);
+		expect(afterPause.confirmLabel).toBe(PAUSE_AND_END_SESSION_CONFIRM_LABEL);
+		expect(afterPause.cancelLabel).toBe(
+			PAUSE_AND_END_SESSION_CONFIRM_CANCEL_LABEL,
+		);
+		expect(afterPause.body).toMatch(/paused/i);
+		expect(afterPause.cancelLabel).toMatch(/Stay paused/i);
 	});
 });
