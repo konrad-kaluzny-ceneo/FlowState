@@ -1,0 +1,5 @@
+feat(session-end-mid-cycle-closure): mid-cycle end closure expectations (p1)
+
+Update end-session confirm copy and closure line when user ends during an in-progress work block. Sets expectations: finished cycles count, in-progress block does not.
+
+Fixes #151

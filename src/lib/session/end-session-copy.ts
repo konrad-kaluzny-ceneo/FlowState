@@ -2,7 +2,7 @@
 export const END_SESSION_CONFIRM_TITLE = "End this session?";
 
 export const END_SESSION_CONFIRM_BODY =
-	"The current cycle will stop and you'll see a short session summary. You can start fresh whenever you're ready.";
+	"Finished cycles and completed tasks will appear in your summary. This in-progress focus block won't be counted.";
 
 export const END_SESSION_CONFIRM_LABEL = "End session";
 
@@ -12,7 +12,7 @@ export const END_SESSION_CONFIRM_CANCEL_LABEL = "Keep going";
 export const PAUSE_AND_END_SESSION_CONFIRM_TITLE = "End session while paused?";
 
 export const PAUSE_AND_END_SESSION_CONFIRM_BODY =
-	"Your timer is paused. Ending now will close the session and show a short summary — you can return when you're ready.";
+	"Finished cycles and completed tasks will appear in your summary. Your paused focus block won't be counted.";
 
 export const PAUSE_AND_END_SESSION_CONFIRM_LABEL = "End session";
 

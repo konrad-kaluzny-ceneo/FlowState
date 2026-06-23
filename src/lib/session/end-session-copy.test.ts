@@ -50,4 +50,13 @@ describe("end-session-copy", () => {
 		expect(afterPause.body).toMatch(/paused/i);
 		expect(afterPause.cancelLabel).toMatch(/Stay paused/i);
 	});
+
+	it("sets mid-cycle expectations in confirm copy (S-38)", () => {
+		const immediate = getEndSessionConfirmCopy("immediate");
+		expect(immediate.body).toMatch(/won't be counted/i);
+		expect(immediate.body).toMatch(/Finished cycles/i);
+
+		const afterPause = getEndSessionConfirmCopy("after-pause");
+		expect(afterPause.body).toMatch(/won't be counted/i);
+	});
 });

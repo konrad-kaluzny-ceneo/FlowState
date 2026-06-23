@@ -43,6 +43,9 @@ test.describe("Session closure (S-17)", () => {
 		await expect(page.getByTestId("end-session-confirm-overlay")).toBeVisible({
 			timeout: 15_000,
 		});
+		await expect(
+			page.getByText(/Finished cycles and completed tasks/i),
+		).toBeVisible();
 		await page.getByTestId("end-session-confirm-btn").click();
 
 		await expect(page.getByTestId("session-closure-overlay")).toBeVisible({
@@ -50,6 +53,9 @@ test.describe("Session closure (S-17)", () => {
 		});
 		await expect(page.getByTestId("session-closure-line")).toContainText(
 			"Session complete",
+		);
+		await expect(page.getByTestId("session-closure-line")).toContainText(
+			"wasn't counted",
 		);
 
 		await page.getByTestId("session-closure-dismiss-btn").click();
