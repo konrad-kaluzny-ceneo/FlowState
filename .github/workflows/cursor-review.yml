@@ -83,11 +83,11 @@ jobs:
           BODY: ${{ github.event.pull_request.body }}
         run: |
           TRUNC=$(printf '%s' "$BODY" | head -c 2000)
+          DELIM="EOF_$(openssl rand -hex 16)"
           {
-            echo 'description<<EOF'
-            printf '%s' "$TRUNC"
-            echo
-            echo 'EOF'
+            echo "description<<$DELIM"
+            printf '%s\n' "$TRUNC"
+            echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
       - name: Checkout (load local composite action)

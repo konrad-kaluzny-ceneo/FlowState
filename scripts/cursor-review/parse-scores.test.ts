@@ -30,9 +30,24 @@ C6: 6/10 — tests present
 - critical: src/auth.ts:42 — missing auth check
 - **critical** src/db.ts:10 — SQL injection risk
 - Critical — src/x.ts:1 — edge case
+- (critical) src/y.ts:5 — parenthesized severity
 `;
 
-		expect(parseScores(markdown).criticalCount).toBe(3);
+		expect(parseScores(markdown).criticalCount).toBe(4);
+	});
+
+	it("only counts critical lines inside the Findings section", () => {
+		const markdown = `## Findings
+- critical: src/auth.ts:42 — real critical finding
+
+## Strengths
+- critical thinking applied throughout the diff
+
+## Follow-ups
+- critical: this prose mention must not be counted
+`;
+
+		expect(parseScores(markdown).criticalCount).toBe(1);
 	});
 
 	it("ignores malformed score lines", () => {

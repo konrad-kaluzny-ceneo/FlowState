@@ -65,6 +65,10 @@ runs:
       continue-on-error: true
       env:
         CURSOR_API_KEY: ${{ inputs.api-key }}
+        BASE: ${{ inputs.base }}
+        CHANGE_ID: ${{ inputs.change-id }}
+        PR_TITLE: ${{ inputs.pr-title }}
+        PR_DESCRIPTION: ${{ inputs.pr-description }}
       run: |
         if [ ! -f scripts/cursor-review/review.ts ]; then
           echo "Missing scripts/cursor-review/review.ts — commit the Cursor SDK scripts before enabling this workflow."
@@ -72,18 +76,18 @@ runs:
         fi
         mkdir -p reports
         REVIEW_ARGS=(
-          --base "${{ inputs.base }}"
+          --base "$BASE"
           --output reports/review.md
           --no-sandbox
         )
-        if [ -n "${{ inputs.change-id }}" ]; then
-          REVIEW_ARGS+=(--change-id "${{ inputs.change-id }}")
+        if [ -n "$CHANGE_ID" ]; then
+          REVIEW_ARGS+=(--change-id "$CHANGE_ID")
         fi
-        if [ -n "${{ inputs.pr-title }}" ]; then
-          REVIEW_ARGS+=(--pr-title "${{ inputs.pr-title }}")
+        if [ -n "$PR_TITLE" ]; then
+          REVIEW_ARGS+=(--pr-title "$PR_TITLE")
         fi
-        if [ -n "${{ inputs.pr-description }}" ]; then
-          REVIEW_ARGS+=(--pr-description "${{ inputs.pr-description }}")
+        if [ -n "$PR_DESCRIPTION" ]; then
+          REVIEW_ARGS+=(--pr-description "$PR_DESCRIPTION")
         fi
         set +e
         pnpm review "${REVIEW_ARGS[@]}"
@@ -96,6 +100,7 @@ runs:
       shell: bash
       run: |
         EXIT_CODE="${{ steps.run.outputs.exit_code }}"
+        EXIT_CODE="${EXIT_CODE:-1}"
         if [ -f reports/review.md ]; then
           echo "review-md=reports/review.md" >> "$GITHUB_OUTPUT"
           if [ -f reports/review.json ]; then

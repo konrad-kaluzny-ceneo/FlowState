@@ -212,7 +212,9 @@ try {
 				criticalCount,
 				hasPlanContext: Boolean(changeId),
 			});
-			const jsonPath = outputPath.replace(/\.md$/i, ".json");
+			const jsonPath = /\.md$/i.test(outputPath)
+				? outputPath.replace(/\.md$/i, ".json")
+				: `${outputPath}.json`;
 			writeFileSync(
 				jsonPath,
 				JSON.stringify(

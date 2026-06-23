@@ -8,7 +8,7 @@ export type ParsedScores = {
 const SCORE_LINE = /(?:\*\*)?(C[1-6])(?:\*\*)?:\s*(\d{1,2})(?:\/10)?/gi;
 
 const CRITICAL_FINDING =
-	/^\s*(?:[-*]\s*)?(?:\*\*)?critical(?:\*\*)?(?:\s*[:(]|\s+—|\s+–|\s+-|\s+)/i;
+	/^\s*(?:[-*]\s*)?(?:\(\s*)?(?:\*\*)?critical(?:\*\*)?(?:\s*\))?(?:\s*[:—–-]|\s+)/i;
 
 /**
  * Extract C1–C6 scores and count critical findings from review markdown.
@@ -25,11 +25,18 @@ export function parseScores(markdown: string): ParsedScores {
 		}
 	}
 
-	const findingsStart = markdown.search(/^#{1,3}\s*\*?\*?Findings\*?\*?/im);
-	const findingsSection =
-		findingsStart >= 0 ? markdown.slice(findingsStart) : markdown;
-
-	for (const line of findingsSection.split("\n")) {
+	let inFindings = false;
+	for (const line of markdown.split("\n")) {
+		if (/^#{1,3}\s*\*?\*?Findings\*?\*?/i.test(line)) {
+			inFindings = true;
+			continue;
+		}
+		if (inFindings && /^#{1,3}\s+\S/.test(line)) {
+			break;
+		}
+		if (!inFindings) {
+			continue;
+		}
 		if (CRITICAL_FINDING.test(line)) {
 			criticalCount += 1;
 		}
