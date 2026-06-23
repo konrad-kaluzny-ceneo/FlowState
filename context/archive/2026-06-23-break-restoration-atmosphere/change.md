@@ -1,12 +1,12 @@
 ---
 change_id: break-restoration-atmosphere
 title: Break restoration atmosphere
-status: impl_reviewed
+status: archived
 created: 2026-06-23
 updated: 2026-06-23
-research: context/changes/break-restoration-atmosphere/research.md
-plan: context/changes/break-restoration-atmosphere/plan.md
-archived_at: null
+research: context/archive/2026-06-23-break-restoration-atmosphere/research.md
+plan: context/archive/2026-06-23-break-restoration-atmosphere/plan.md
+archived_at: 2026-06-23T19:32:00Z
 ---
 
 ## Notes
