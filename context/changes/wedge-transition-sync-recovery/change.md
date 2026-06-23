@@ -1,10 +1,11 @@
 ---
 change_id: wedge-transition-sync-recovery
 title: Wedge transition sync recovery
-status: preparing
+status: plan_reviewed
 created: 2026-06-23
 updated: 2026-06-23
 research: context/changes/wedge-transition-sync-recovery/research.md
+plan: context/changes/wedge-transition-sync-recovery/plan.md
 archived_at: null
 ---
 

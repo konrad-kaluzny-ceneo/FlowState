@@ -46,6 +46,10 @@ Add `PendingWedgeIntent` ref in hook; on wedge mutation failure capture intent i
 
 **Wind-down path:** Stay pessimistic — no optimistic retry changes to wind-down branch.
 
+**Retry mutex:** `isWedgeSyncRetryingRef` prevents double-tap on `retryWedgeSync` (mirrors S-34 in-flight guard).
+
+**Existing `retrySuggestion`:** When `pendingWedgeRecovery` is active, dashboard routes Retry to `retryWedgeSync`; otherwise keep card-level `retrySuggestion` for legacy fetch-only errors.
+
 ## Phase 1: Pending wedge intent and `retryWedgeSync`
 
 ### Overview
@@ -156,7 +160,7 @@ Global calm banner when browser offline.
 
 #### 2. Banner in home shell
 
-**File:** `src/app/_components/home-shell.tsx` (or `page.tsx` shell wrapper)
+**File:** `src/app/_components/home-shell.tsx`
 
 **Intent:** Subtle banner: "You're offline — changes save when you're back." `data-testid="offline-banner"`. Hide when online.
 
@@ -292,9 +296,9 @@ None — client-only.
 
 #### Automated
 
-- [ ] 1.1 `pnpm check`
-- [ ] 1.2 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx`
-- [ ] 1.3 `pnpm test`
+- [x] 1.1 `pnpm check`
+- [x] 1.2 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx`
+- [x] 1.3 `pnpm test`
 
 #### Manual
 

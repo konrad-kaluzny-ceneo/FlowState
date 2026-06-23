@@ -3329,6 +3329,167 @@ describe("usePomodoroCycle", () => {
 		});
 	});
 
+	describe("S-35 wedge sync recovery", () => {
+		it("keeps break running when suggestion fetch fails after optimistic advance", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 73,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+
+			createCycle.mockImplementation(async (input) => ({
+				id: input.kind === "WORK" ? 42 : 303,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: null,
+				kind: input.kind,
+				state: "RUNNING",
+				startedAt: new Date(),
+				endedAt: null,
+				task: null,
+				configuredDurationSec: input.configuredDurationSec,
+			}));
+
+			suggestionNextMutate.mockRejectedValueOnce(new Error("network"));
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await driveWorkCycleToCheckIn(result);
+
+			await act(async () => {
+				await result.current.submitCheckIn("STEADY");
+			});
+
+			await waitFor(() => {
+				expect(result.current.awaitingCheckIn).toBe(false);
+				expect(result.current.state).toBe("running");
+				expect(result.current.cycleKind).toBe("SHORT_BREAK");
+				expect(result.current.pendingWedgeRecovery?.phase).toBe(
+					"suggestion_fetch",
+				);
+			});
+		});
+
+		it("retryWedgeSync replays suggestion fetch without rolling back break", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 74,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+
+			createCycle.mockImplementation(async (input) => ({
+				id: input.kind === "WORK" ? 42 : 304,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: null,
+				kind: input.kind,
+				state: "RUNNING",
+				startedAt: new Date(),
+				endedAt: null,
+				task: null,
+				configuredDurationSec: input.configuredDurationSec,
+			}));
+
+			suggestionNextMutate
+				.mockRejectedValueOnce(new Error("network"))
+				.mockResolvedValueOnce({
+					cycleId: 74,
+					taskId: 9,
+					title: "Suggested task",
+					workType: "DEEP_WORK",
+					weight: 2,
+					rationaleKey: "fresh_start",
+					rationale: "Fresh start",
+				});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await driveWorkCycleToCheckIn(result);
+
+			await act(async () => {
+				await result.current.submitCheckIn("FOCUSED");
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingWedgeRecovery?.phase).toBe(
+					"suggestion_fetch",
+				);
+			});
+
+			await act(async () => {
+				await result.current.retryWedgeSync();
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+				expect(result.current.cycleKind).toBe("SHORT_BREAK");
+				expect(result.current.pendingSuggestion.status).toBe("ready");
+				expect(result.current.pendingWedgeRecovery).toBeNull();
+			});
+		});
+
+		it("retryWedgeSync replays check-in with preserved energy", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 75,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+
+			createCycle.mockImplementation(async (input) => ({
+				id: input.kind === "WORK" ? 42 : 305,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: null,
+				kind: input.kind,
+				state: "RUNNING",
+				startedAt: new Date(),
+				endedAt: null,
+				task: null,
+				configuredDurationSec: input.configuredDurationSec,
+			}));
+
+			createCheckInMutate.mockRejectedValueOnce(new Error("network"));
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await driveWorkCycleToCheckIn(result);
+
+			await act(async () => {
+				await result.current.submitCheckIn("FOCUSED");
+			});
+
+			await waitFor(() => {
+				expect(result.current.awaitingCheckIn).toBe(true);
+				expect(result.current.pendingWedgeRecovery?.phase).toBe("check_in");
+				expect(result.current.pendingWedgeRecovery?.energy).toBe("FOCUSED");
+			});
+
+			createCheckInMutate.mockClear();
+
+			await act(async () => {
+				await result.current.retryWedgeSync();
+			});
+
+			await waitFor(() => {
+				expect(createCheckInMutate).toHaveBeenCalledWith({
+					cycleId: 75,
+					energy: "FOCUSED",
+				});
+				expect(result.current.awaitingCheckIn).toBe(false);
+				expect(result.current.state).toBe("running");
+			});
+		});
+	});
+
 	describe("stale suggestion invalidation", () => {
 		const activeTaskList = [
 			{
