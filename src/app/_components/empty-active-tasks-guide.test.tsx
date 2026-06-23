@@ -12,6 +12,7 @@ describe("EmptyActiveTasksGuide", () => {
 		);
 
 		expect(screen.getByTestId("empty-active-tasks-guide")).toBeTruthy();
+		expect(screen.getByTestId("empty-garden-bed")).toBeTruthy();
 		expect(screen.getByText(/Sign in to unlock energy check-ins/)).toBeTruthy();
 
 		fireEvent.click(screen.getByTestId("empty-active-tasks-add-btn"));
