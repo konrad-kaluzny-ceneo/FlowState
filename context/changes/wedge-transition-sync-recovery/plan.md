@@ -320,9 +320,9 @@ None — client-only.
 
 #### Automated
 
-- [ ] 3.1 home-shell / use-online-status tests
-- [ ] 3.2 `pnpm check`
-- [ ] 3.3 `pnpm test`
+- [x] 3.1 home-shell / use-online-status tests
+- [x] 3.2 `pnpm check`
+- [x] 3.3 `pnpm test`
 
 #### Manual
 
