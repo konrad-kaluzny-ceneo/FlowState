@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-23
 structure: split
-active_slices: [S-28]
+active_slices: []
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -74,7 +74,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-26 | task-manual-priority-order | [FLO-59](https://linear.app/flowstate-10xdev/issue/FLO-59) | [#81](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/81) | drag-reorder tie-breaker | S-04, S-06, S-09 | preserved | done |
 | S-27 | daily-standing-tasks-capacity-plan | [FLO-60](https://linear.app/flowstate-10xdev/issue/FLO-60) | [#80](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/80) | daily standing + focus-hours budget | F-05, S-06, S-15 | **US-03** | done |
 | F-06 | serene-pastel-rebrand | [FLO-62](https://linear.app/flowstate-10xdev/issue/FLO-62) | [#97](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/97) | (foundation) Serene Pastel tokens | F-04, S-13 | Secondary | done |
-| S-28 | wellness-illustration-foundation | [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) | [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98) | Calm Garden illustrations + overlay phase 2 | F-06 | Secondary | in review |
+| S-28 | wellness-illustration-foundation | [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) | [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98) | Calm Garden illustrations + overlay phase 2 | F-06 | Secondary | done |
 | S-29 | task-create-persona-presets | [FLO-64](https://linear.app/flowstate-10xdev/issue/FLO-64) | [#105](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/105) | persona presets + Custom expand | F-05, F-06, S-13 | **US-02** | done |
 | S-30 | daily-work-timing-recap | [FLO-65](https://linear.app/flowstate-10xdev/issue/FLO-65) | [#106](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/106) | light timing recap; dismissible footprint | S-02, S-18 | **US-03** | done |
 | S-31 | work-focus-shell | [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) | [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107) | WORK cycle focus shell | S-13, F-06 | Secondary | done |
@@ -127,7 +127,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-27 | daily-standing-tasks-capacity-plan | **yes** | US-03; local-midnight reset |
 | S-30 | daily-work-timing-recap | **yes** | US-03; light footprint only |
 | S-31 | work-focus-shell | **yes** | Secondary craft |
-| S-28 | wellness-illustration-foundation | **yes** | Secondary craft |
+| S-28 | wellness-illustration-foundation | **done** | phase 1 shipped PR [#160](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/160); phase 2 overlays deferred |
 | S-21 | mindful-transition-copy | **done** | US-01; merged PR [#148](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/148) |
 | S-33 | break-restoration-atmosphere | **yes** | pair S-21 |
 | S-34 | optimistic-wedge-transitions | **yes** | US-01; F-07 done |
@@ -178,6 +178,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **S-28: Calm Garden illustrations + overlay phase 2** — Archived 2026-06-23 → `context/archive/2026-06-23-wellness-illustration-foundation/`. PR [#160](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/160). Issues [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) / [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98). Lesson: phase 1 (hero sprig + Empty Garden Bed SVG primitives); overlay scrims deferred to follow-up.
 - **S-11 ext: post-merge wedge coach** — Archived 2026-06-23 → `context/archive/2026-06-23-post-merge-wedge-coach/`. PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159). Extends S-11 / [FLO-26](https://linear.app/flowstate-10xdev/issue/FLO-26) / [#37](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/37). Lesson: `authenticatedWedgeCoachEligible` on guest import; persona-aware suggestion subcopy; `hasSeenAuthenticatedWedge` completes bridge.
 - **S-31: WORK cycle focus shell** — Archived 2026-06-23 → `context/archive/2026-06-23-work-focus-shell/`. PR [#157](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/157). Issues [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) / [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107). Lesson: section-scoped chrome subdue during WORK; shell wash via data-attribute mirrors S-33.
 - **S-33: home break atmosphere during breaks** — Archived 2026-06-23 → `context/archive/2026-06-23-break-restoration-atmosphere/`. PR [#156](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/156). Issues [FLO-85](https://linear.app/flowstate-10xdev/issue/FLO-85) / [#143](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/143). Lesson: shell wash via data-attribute + CSS tokens; yield before wedge/suggestion gates.
