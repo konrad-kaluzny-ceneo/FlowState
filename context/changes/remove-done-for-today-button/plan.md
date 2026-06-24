@@ -246,24 +246,25 @@ No data migration. Existing `TaskDayCompletion` rows unaffected. Users with stan
 
 #### Automated
 
-- [x] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
-- [x] 2.2 `pnpm test`
+- [x] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` — c0cac95
+- [x] 2.2 `pnpm test` — c0cac95
 
 #### Manual
 
-- [x] 2.3 Open Add task — Daily standing toggle is off by default
-- [x] 2.4 Creating a task without toggling produces global-complete checkbox semantics
+- [x] 2.3 Open Add task — Daily standing toggle is off by default — c0cac95
+- [x] 2.4 Creating a task without toggling produces global-complete checkbox semantics — c0cac95
 
 ### Phase 3: Cycle overlay alignment + e2e
 
 #### Automated
 
-- [ ] 3.1 `pnpm test`
-- [ ] 3.2 `set CI=true && pnpm test:e2e:belt`
-- [ ] 3.3 `pnpm check`
+- [x] 3.1 `pnpm test`
+- [x] 3.2 `set CI=true && pnpm test:e2e:belt`
+- [x] 3.3 `pnpm check`
 
 #### Manual
 
-- [ ] 3.4 Finish WORK cycle on standing focused task — overlay primary marks done-for-today; task stays active
-- [ ] 3.5 Finish WORK cycle on regular task — overlay still globally completes
-- [ ] 3.6 Kickoff after standing done-for-today still excludes that task
+- [x] 3.4 Finish WORK cycle on standing focused task — overlay primary marks done-for-today; task stays active
+- [x] 3.5 Finish WORK cycle on regular task — overlay still globally completes
+- [x] 3.6 Kickoff after standing done-for-today still excludes that task
+

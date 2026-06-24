@@ -25,6 +25,12 @@ vi.mock("~/hooks/use-daily-recap", () => ({
 	}),
 }));
 
+vi.mock("~/hooks/use-task-mutations", () => ({
+	useTaskMutations: () => ({
+		markDoneForToday: vi.fn().mockResolvedValue(undefined),
+	}),
+}));
+
 vi.mock("./task-list", () => ({
 	TaskList: () => <div data-testid="task-list-stub" />,
 }));

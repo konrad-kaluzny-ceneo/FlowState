@@ -37,6 +37,7 @@ import { useOutOfTabBreakAlertsPreference } from "~/hooks/use-out-of-tab-break-a
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
 import { useSyncBreakAtmosphere } from "~/hooks/use-sync-break-atmosphere";
 import { useSyncWorkFocusShell } from "~/hooks/use-sync-work-focus-shell";
+import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { getNotificationPermission } from "~/lib/break-out-of-tab-alert/notify-break-start";
 import {
 	readNotificationPromptDismissed,
@@ -276,6 +277,19 @@ export function PomodoroDashboardBody({
 
 	const canMarkTaskDone =
 		pomodoro.focusedTaskId != null && activeTaskIds.has(pomodoro.focusedTaskId);
+
+	const focusedActiveTask = useMemo(() => {
+		if (pomodoro.focusedTaskId == null) {
+			return null;
+		}
+		return tasks.find((task) => task.id === pomodoro.focusedTaskId) ?? null;
+	}, [pomodoro.focusedTaskId, tasks]);
+
+	const primaryMarksDoneForToday =
+		focusedActiveTask?.isDailyStanding === true &&
+		focusedActiveTask.doneForToday !== true;
+
+	const { markDoneForToday } = useTaskMutations();
 
 	const midCycleOtherActiveTasks = useMemo(() => {
 		if (pomodoro.midCyclePendingTask == null) {
@@ -691,12 +705,25 @@ export function PomodoroDashboardBody({
 					cycleKind={pomodoro.cycleKind}
 					focusedTask={pomodoro.focusedTask}
 					isConfirming={pomodoro.isConfirming}
-					onConfirm={async (markTaskDone) => {
+					onConfirm={async (markPrimary) => {
 						pomodoro.dismissCatchUp();
-						await pomodoro.onCycleCompleteConfirm(markTaskDone);
+						if (
+							markPrimary &&
+							focusedActiveTask?.isDailyStanding === true &&
+							focusedActiveTask.doneForToday !== true
+						) {
+							await markDoneForToday({
+								id: focusedActiveTask.id,
+								localDateKey: recapDateKey,
+							});
+							await pomodoro.onCycleCompleteConfirm(false);
+							return;
+						}
+						await pomodoro.onCycleCompleteConfirm(markPrimary);
 					}}
 					onDismissPreFocus={pomodoro.dismissPreFocus}
 					preFocusedTask={pomodoro.preFocusedTask}
+					primaryMarksDoneForToday={primaryMarksDoneForToday}
 					reentryCopy={breakReentryCopy}
 					state={pomodoro.state}
 				/>

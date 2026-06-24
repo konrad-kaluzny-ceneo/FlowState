@@ -184,9 +184,7 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 			.filter({ hasText: standingTitle })
 			.first();
 		await expect(standingRow.getByTestId("daily-standing-badge")).toBeVisible();
-		await expect(
-			standingRow.getByTestId("done-for-today-button"),
-		).toBeVisible();
+		await expect(standingRow.getByTestId("task-complete-button")).toBeVisible();
 
 		await expect(page.getByTestId("focus-budget-prompt")).toBeVisible();
 		await page.getByRole("button", { name: "2h" }).click();
