@@ -1,9 +1,9 @@
 ---
 change_id: remove-done-for-today-button
 title: Remove spurious Done for today button; daily recap from completions
-status: preparing
+status: implementing
 created: 2026-06-23
-updated: 2026-06-23
+updated: 2026-06-24
 frame: context/changes/remove-done-for-today-button/frame.md
 research: context/changes/remove-done-for-today-button/research.md
 archived_at: null
