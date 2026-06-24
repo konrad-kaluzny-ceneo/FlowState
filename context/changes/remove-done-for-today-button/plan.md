@@ -232,27 +232,27 @@ No data migration. Existing `TaskDayCompletion` rows unaffected. Users with stan
 
 #### Automated
 
-- [x] 1.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
-- [x] 1.2 `pnpm check`
-- [x] 1.3 `pnpm typecheck`
+- [x] 1.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` — cd94ffb
+- [x] 1.2 `pnpm check` — cd94ffb
+- [x] 1.3 `pnpm typecheck` — cd94ffb
 
 #### Manual
 
-- [x] 1.4 Standing row: checkbox click dims row and shows ✓ without moving task to Completed section
-- [x] 1.5 Non-standing row: checkbox click archives task as today
-- [x] 1.6 Screen reader announces correct label per row type
+- [x] 1.4 Standing row: checkbox click dims row and shows ✓ without moving task to Completed section — cd94ffb
+- [x] 1.5 Non-standing row: checkbox click archives task as today — cd94ffb
+- [x] 1.6 Screen reader announces correct label per row type — cd94ffb
 
 ### Phase 2: Default Daily standing OFF on create
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
-- [ ] 2.2 `pnpm test`
+- [x] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
+- [x] 2.2 `pnpm test`
 
 #### Manual
 
-- [ ] 2.3 Open Add task — Daily standing toggle is off by default
-- [ ] 2.4 Creating a task without toggling produces global-complete checkbox semantics
+- [x] 2.3 Open Add task — Daily standing toggle is off by default
+- [x] 2.4 Creating a task without toggling produces global-complete checkbox semantics
 
 ### Phase 3: Cycle overlay alignment + e2e
 
