@@ -258,13 +258,13 @@ No data migration. Existing `TaskDayCompletion` rows unaffected. Users with stan
 
 #### Automated
 
-- [x] 3.1 `pnpm test`
-- [x] 3.2 `set CI=true && pnpm test:e2e:belt`
-- [x] 3.3 `pnpm check`
+- [x] 3.1 `pnpm test` — 5e29b33
+- [x] 3.2 `set CI=true && pnpm test:e2e:belt` — 5e29b33
+- [x] 3.3 `pnpm check` — 5e29b33
 
 #### Manual
 
-- [x] 3.4 Finish WORK cycle on standing focused task — overlay primary marks done-for-today; task stays active
-- [x] 3.5 Finish WORK cycle on regular task — overlay still globally completes
-- [x] 3.6 Kickoff after standing done-for-today still excludes that task
+- [x] 3.4 Finish WORK cycle on standing focused task — overlay primary marks done-for-today; task stays active — 5e29b33
+- [x] 3.5 Finish WORK cycle on regular task — overlay still globally completes — 5e29b33
+- [x] 3.6 Kickoff after standing done-for-today still excludes that task — 5e29b33
 
