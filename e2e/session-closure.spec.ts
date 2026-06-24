@@ -89,11 +89,15 @@ test.describe("Session closure (S-17)", () => {
 		});
 		await expect(page.getByText("Stay paused")).toBeVisible();
 
+		await expect(page.getByText(/paused focus block/i)).toBeVisible();
 		await page.getByTestId("end-session-confirm-btn").click();
 
 		await expect(page.getByTestId("session-closure-overlay")).toBeVisible({
 			timeout: 15_000,
 		});
+		await expect(page.getByTestId("session-closure-line")).toContainText(
+			"wasn't counted",
+		);
 		await page.getByTestId("session-closure-dismiss-btn").click();
 		await expect(page.getByTestId("end-session-btn")).toBeHidden();
 	});

@@ -66,7 +66,7 @@ describe("buildClosureLine", () => {
 		).toBe("Session complete — 3 cycles, 2 tasks done. Feeling fading.");
 	});
 
-	it("uses the same tone for timeout-ended sessions", () => {
+	it("uses calm tone for timeout-ended sessions", () => {
 		expect(
 			buildClosureLine({
 				cyclesCompleted: 1,

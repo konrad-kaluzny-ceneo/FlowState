@@ -781,6 +781,20 @@ describe("PomodoroDashboardBody end session while running", () => {
 		expect(screen.getByText("Stay paused")).toBeTruthy();
 		expect(endSession).not.toHaveBeenCalled();
 	});
+
+	it("shows break-neutral confirm copy when ending during SHORT_BREAK", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "SHORT_BREAK",
+			activeCycle: { id: 42 },
+		});
+
+		fireEvent.click(screen.getByTestId("end-session-btn"));
+
+		expect(screen.getByTestId("end-session-confirm-overlay")).toBeTruthy();
+		expect(screen.queryByText(/focus block/i)).toBeNull();
+	});
 });
 
 describe("PomodoroDashboardBody wedge sync recovery", () => {

@@ -7,6 +7,7 @@ import {
 } from "~/app/_components/overlay-shell";
 import {
 	type EndSessionConfirmVariant,
+	type EndSessionCycleContext,
 	getEndSessionConfirmCopy,
 } from "~/lib/session/end-session-copy";
 
@@ -15,6 +16,7 @@ type EndSessionConfirmOverlayProps = {
 	onCancel: () => void;
 	isSubmitting?: boolean;
 	variant?: EndSessionConfirmVariant;
+	cycleContext?: EndSessionCycleContext;
 };
 
 export function EndSessionConfirmOverlay({
@@ -22,8 +24,9 @@ export function EndSessionConfirmOverlay({
 	onCancel,
 	isSubmitting = false,
 	variant = "immediate",
+	cycleContext = "work",
 }: EndSessionConfirmOverlayProps) {
-	const copy = getEndSessionConfirmCopy(variant);
+	const copy = getEndSessionConfirmCopy(variant, cycleContext);
 
 	return (
 		<OverlayScrim

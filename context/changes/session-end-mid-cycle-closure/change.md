@@ -1,9 +1,9 @@
 ---
 change_id: session-end-mid-cycle-closure
 title: Session end mid-cycle closure clarity (S-38)
-status: impl_reviewed
+status: implemented
 created: 2026-06-23
-updated: 2026-06-23
+updated: 2026-06-24
 roadmap_id: S-38
 linear: FLO-87
 github: 151
