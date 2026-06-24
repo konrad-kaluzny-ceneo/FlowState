@@ -177,5 +177,5 @@ export async function seedCapacitySuggestionScenario(
 
 export async function markStandingDoneForToday(page: Page, taskTitle: string) {
 	const row = page.getByRole("listitem").filter({ hasText: taskTitle }).first();
-	await row.getByTestId("done-for-today-button").click();
+	await row.getByTestId("task-complete-button").click();
 }

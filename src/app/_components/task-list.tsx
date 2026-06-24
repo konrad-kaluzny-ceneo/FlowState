@@ -332,27 +332,7 @@ function SortableActiveTaskRow({
 				>
 					⋮⋮
 				</button>
-				{task.isDailyStanding ? (
-					task.doneForToday ? (
-						<span
-							className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-accent-success bg-accent-success/20 text-accent-success text-xs"
-							title="Done for today"
-						>
-							✓
-						</span>
-					) : (
-						<button
-							aria-label="Done for today"
-							className="mt-0.5 shrink-0 rounded border border-border-subtle px-2 py-0.5 text-text-secondary text-xs transition hover:border-accent-success hover:text-accent-success disabled:cursor-not-allowed disabled:opacity-40"
-							data-testid="done-for-today-button"
-							disabled={markCompleteLocked || isMutating}
-							onClick={() => onMarkDoneForToday(task.id)}
-							type="button"
-						>
-							Done today
-						</button>
-					)
-				) : task.doneForToday ? (
+				{task.doneForToday ? (
 					<span
 						className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-accent-success bg-accent-success/20 text-accent-success text-xs"
 						title="Done for today"
@@ -361,10 +341,18 @@ function SortableActiveTaskRow({
 					</span>
 				) : (
 					<button
-						aria-label="Mark complete"
+						aria-label={
+							task.isDailyStanding ? "Done for today" : "Mark complete"
+						}
 						className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
+						data-testid="task-complete-button"
 						disabled={markCompleteLocked || isMutating}
 						onClick={() => {
+							if (task.isDailyStanding) {
+								onMarkDoneForToday(task.id);
+								return;
+							}
+
 							if (canMidCycleMarkComplete && onMidCycleMarkComplete != null) {
 								onMidCycleMarkComplete(task.id, task);
 								return;
@@ -571,7 +559,7 @@ export function TaskList({
 		useState<CommitmentHorizon>(
 			DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon,
 		);
-	const [newIsDailyStanding, setNewIsDailyStanding] = useState(true);
+	const [newIsDailyStanding, setNewIsDailyStanding] = useState(false);
 
 	function resetCreateFormState() {
 		setNewTitle("");
@@ -582,7 +570,7 @@ export function TaskList({
 		setNewImportance(DEFAULT_CREATE_FORM_ATTRIBUTES.importance);
 		setNewEffortMinutes(DEFAULT_CREATE_FORM_ATTRIBUTES.effortMinutes);
 		setNewCommitmentHorizon(DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon);
-		setNewIsDailyStanding(true);
+		setNewIsDailyStanding(false);
 	}
 
 	function applyPresetToCreateForm(presetId: PersonaPresetId) {

@@ -6,6 +6,23 @@ import { BREAK_REENTRY_FOCUSED } from "~/lib/session/transition-copy";
 import { CycleCompleteOverlay } from "./cycle-complete-overlay";
 
 describe("CycleCompleteOverlay", () => {
+	it("shows Done for today primary action for daily standing tasks", () => {
+		render(
+			<CycleCompleteOverlay
+				canMarkTaskDone
+				focusedTask={{ id: 1, title: "Stand-up" }}
+				onConfirm={vi.fn().mockResolvedValue(undefined)}
+				primaryMarksDoneForToday
+				state="completed"
+			/>,
+		);
+
+		expect(screen.getByRole("button", { name: "Done for today" })).toBeTruthy();
+		expect(
+			screen.queryByRole("button", { name: "Done — mark task complete" }),
+		).toBeNull();
+	});
+
 	it("renders actions when state is completed", () => {
 		render(
 			<CycleCompleteOverlay

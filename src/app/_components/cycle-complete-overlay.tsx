@@ -15,6 +15,7 @@ type CycleCompleteOverlayProps = {
 	state: PomodoroCycleState;
 	focusedTask: FocusedTask;
 	canMarkTaskDone: boolean;
+	primaryMarksDoneForToday?: boolean;
 	onConfirm: (markTaskDone: boolean) => Promise<void>;
 	isConfirming?: boolean;
 	cycleKind?: CycleKind | null;
@@ -27,6 +28,7 @@ export function CycleCompleteOverlay({
 	state,
 	focusedTask,
 	canMarkTaskDone,
+	primaryMarksDoneForToday = false,
 	onConfirm,
 	isConfirming = false,
 	cycleKind = null,
@@ -88,6 +90,10 @@ export function CycleCompleteOverlay({
 		);
 	}
 
+	const primaryActionLabel = primaryMarksDoneForToday
+		? "Done for today"
+		: "Done — mark task complete";
+
 	return (
 		<OverlayScrim testId="cycle-complete-overlay">
 			<OverlayCard>
@@ -99,12 +105,13 @@ export function CycleCompleteOverlay({
 				)}
 				<div className="mt-8 flex flex-col gap-3">
 					<button
+						aria-label={primaryActionLabel}
 						className={overlayButtonClass.success}
 						disabled={!canMarkTaskDone || isConfirming}
 						onClick={() => void onConfirm(true)}
 						type="button"
 					>
-						Done — mark task complete
+						{primaryActionLabel}
 					</button>
 					<button
 						className={overlayButtonClass.secondary}

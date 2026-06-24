@@ -445,7 +445,7 @@ describe("TaskList", () => {
 				effortMinutes: Number.parseInt(applied.effortMinutes, 10),
 				commitmentHorizon: applied.commitmentHorizon,
 				personaPresetId: presetId,
-				isDailyStanding: true,
+				isDailyStanding: false,
 			});
 		});
 	});
@@ -667,18 +667,38 @@ describe("TaskList", () => {
 		render(
 			<TaskList
 				{...defaultProps}
-				tasks={[makeTask({ id: 1, title: "Stand-up", isDailyStanding: true })]}
+				tasks={[
+					makeTask({ id: 1, title: "Stand-up", isDailyStanding: true }),
+					makeTask({ id: 2, title: "One-off", isDailyStanding: false }),
+				]}
 			/>,
 		);
 
 		const toggle = screen.getByTestId(
 			"daily-standing-toggle",
 		) as HTMLInputElement;
-		expect(toggle.checked).toBe(true);
+		expect(toggle.checked).toBe(false);
 		expect(screen.getByTestId("daily-standing-badge").textContent).toBe(
 			"Daily",
 		);
-		expect(screen.getByTestId("done-for-today-button")).toBeTruthy();
+		const standingCompleteButton = screen.getByRole("button", {
+			name: "Done for today",
+		});
+		const regularCompleteButton = screen.getByRole("button", {
+			name: "Mark complete",
+		});
+		expect(standingCompleteButton.className).toContain("border-2");
+		expect(standingCompleteButton.className).toContain("h-5");
+		expect(standingCompleteButton.className).toContain("w-5");
+		expect(regularCompleteButton.className).toContain("border-2");
+		expect(regularCompleteButton.className).toContain("h-5");
+		expect(regularCompleteButton.className).toContain("w-5");
+		expect(standingCompleteButton.getAttribute("data-testid")).toBe(
+			"task-complete-button",
+		);
+		expect(regularCompleteButton.getAttribute("data-testid")).toBe(
+			"task-complete-button",
+		);
 	});
 
 	it("does not use line-through on done-for-today active task titles", () => {
@@ -729,7 +749,7 @@ describe("TaskList", () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId("done-for-today-button"));
+		fireEvent.click(screen.getByRole("button", { name: "Done for today" }));
 
 		expect(markDoneForToday).toHaveBeenCalledWith({
 			id: 1,
