@@ -3,7 +3,7 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-06-21
+updated: 2026-06-23
 structure: split
 active_slices: []
 prd_version: 3
@@ -68,21 +68,21 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | B-06 | fix-timeout-closure-on-load | [FLO-68](https://linear.app/flowstate-10xdev/issue/FLO-68) | [#111](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/111) | **(bug)** timeout closure on page load, not cycle start | B-05 | US-01 | done |
 | B-07 | fix-wind-down-cycle-threshold | [FLO-69](https://linear.app/flowstate-10xdev/issue/FLO-69) | [#112](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/112) | **(bug)** wind-down at 3rd completed work cycle | — | US-01 | done |
 | B-08 | fix-graceful-session-end-while-running | [FLO-70](https://linear.app/flowstate-10xdev/issue/FLO-70) | [#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113) | **(bug)** calm end session while timer running | F-07; S-24 full | US-04 | done |
-| B-09 | pause-and-end-session | [FLO-86](https://linear.app/flowstate-10xdev/issue/FLO-86) | [#150](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/150) | pause then end session — B-08 full variant (dual calm exit) | B-08 minimal; S-24 | US-04 | proposed |
+| B-09 | pause-and-end-session | [FLO-86](https://linear.app/flowstate-10xdev/issue/FLO-86) | [#150](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/150) | pause then end session — B-08 full variant (dual calm exit) | B-08 minimal; S-24 | US-04 | done |
 | F-05 | eisenhower-effort-task-attributes | [FLO-57](https://linear.app/flowstate-10xdev/issue/FLO-57) | [#78](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/78) | (foundation) scorer v2 substrate | S-04, S-06 | modified | done |
 | S-25 | pre-suggestion-readiness | [FLO-58](https://linear.app/flowstate-10xdev/issue/FLO-58) | [#79](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/79) | readiness gate before suggestion | S-05, S-06, S-15 | preserved | done |
 | S-26 | task-manual-priority-order | [FLO-59](https://linear.app/flowstate-10xdev/issue/FLO-59) | [#81](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/81) | drag-reorder tie-breaker | S-04, S-06, S-09 | preserved | done |
 | S-27 | daily-standing-tasks-capacity-plan | [FLO-60](https://linear.app/flowstate-10xdev/issue/FLO-60) | [#80](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/80) | daily standing + focus-hours budget | F-05, S-06, S-15 | **US-03** | done |
 | F-06 | serene-pastel-rebrand | [FLO-62](https://linear.app/flowstate-10xdev/issue/FLO-62) | [#97](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/97) | (foundation) Serene Pastel tokens | F-04, S-13 | Secondary | done |
-| S-28 | wellness-illustration-foundation | [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) | [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98) | Calm Garden illustrations + overlay phase 2 | F-06 | Secondary | ready |
+| S-28 | wellness-illustration-foundation | [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) | [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98) | Calm Garden illustrations + overlay phase 2 | F-06 | Secondary | done |
 | S-29 | task-create-persona-presets | [FLO-64](https://linear.app/flowstate-10xdev/issue/FLO-64) | [#105](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/105) | persona presets + Custom expand | F-05, F-06, S-13 | **US-02** | done |
 | S-30 | daily-work-timing-recap | [FLO-65](https://linear.app/flowstate-10xdev/issue/FLO-65) | [#106](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/106) | light timing recap; dismissible footprint | S-02, S-18 | **US-03** | done |
-| S-31 | work-focus-shell | [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) | [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107) | WORK cycle focus shell | S-13, F-06 | Secondary | ready |
+| S-31 | work-focus-shell | [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) | [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107) | WORK cycle focus shell | S-13, F-06 | Secondary | done |
 | F-07 | wedge-transition-conductor | [FLO-71](https://linear.app/flowstate-10xdev/issue/FLO-71) | [#114](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/114) | (foundation) max 1 interstitial + 1 gate; return handoff before kickoff | B-05, B-06, S-12, S-19 | **US-01** | done |
 | S-32 | create-wedge-trust-bridge | [FLO-72](https://linear.app/flowstate-10xdev/issue/FLO-72) | [#115](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/115) | first suggestion cites persona preset in rationale | S-36, F-05, S-06 | **US-02** | done |
-| S-33 | break-restoration-atmosphere | [FLO-85](https://linear.app/flowstate-10xdev/issue/FLO-85) | [#143](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/143) | home break atmosphere during breaks | F-06, S-13, F-07 | US-01 craft | proposed |
+| S-33 | break-restoration-atmosphere | [FLO-85](https://linear.app/flowstate-10xdev/issue/FLO-85) | [#143](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/143) | home break atmosphere during breaks | F-06, S-13, F-07 | US-01 craft | done |
 | S-34 | optimistic-wedge-transitions | [FLO-73](https://linear.app/flowstate-10xdev/issue/FLO-73) | [#116](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/116) | optimistic check-in → suggestion ≤200ms | F-07, S-06, S-09, S-25 | **US-01** | done |
-| S-35 | wedge-transition-sync-recovery | [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) | [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) | calm network-loss recovery on wedge gates | F-07, S-06, S-22 | **US-01** | proposed |
+| S-35 | wedge-transition-sync-recovery | [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) | [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) | calm network-loss recovery on wedge gates | F-07, S-06, S-22 | **US-01** | done |
 | S-36 | persona-presets-v2 | [FLO-75](https://linear.app/flowstate-10xdev/issue/FLO-75) | [#118](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/118) | 8 personas + row labels + visible effort | S-29, F-05 | **US-02** | done |
 | S-37 | revisit-user-choices | [FLO-80](https://linear.app/flowstate-10xdev/issue/FLO-80) | [#132](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/132) | see and change prior choices (MVP: out-of-tab notification prefs on timer hub) | break-alerts-out-of-tab (merged) | revisit-user-choices PRD thread | done |
 | S-38 | session-end-mid-cycle-closure | [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) | [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151) | mid-cycle end sets expectations — what counts in closure | B-08 minimal | US-04 | proposed |
@@ -127,13 +127,13 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-27 | daily-standing-tasks-capacity-plan | **yes** | US-03; local-midnight reset |
 | S-30 | daily-work-timing-recap | **yes** | US-03; light footprint only |
 | S-31 | work-focus-shell | **yes** | Secondary craft |
-| S-28 | wellness-illustration-foundation | **yes** | Secondary craft |
+| S-28 | wellness-illustration-foundation | **done** | phase 1 shipped PR [#160](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/160); phase 2 overlays deferred |
 | S-21 | mindful-transition-copy | **done** | US-01; merged PR [#148](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/148) |
 | S-33 | break-restoration-atmosphere | **yes** | pair S-21 |
 | S-34 | optimistic-wedge-transitions | **yes** | US-01; F-07 done |
 | S-35 | wedge-transition-sync-recovery | **yes** | bundle with S-34 |
 | F-03 | align-prisma-config | **yes** | hygiene; parallel when idle |
-| S-11 ext. | post-merge-wedge-coach | **yes** | after F-07; T-05 / hot-1; P-GAP-102 promoted — see [`flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md) Phase 4 |
+| S-11 ext. | post-merge-wedge-coach | **done** | shipped PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159); T-05 post-merge bridge |
 | S-37 | revisit-user-choices | **done** | merged PR #140 |
 
 **Recommended next:** **S-32** (S-36 done) ∥ **B-06** (active) → **F-07** → **S-11 ext.** ∥ **S-27** ∥ **S-30** ∥ **S-31** ∥ **S-28** → **S-24** → **S-34** ∥ **S-35**; **S-21** ∥ **S-33** after F-07.
@@ -171,13 +171,19 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | P-105 Eisenhower literacy | S-29 phase 2 | plan scope |
 | P-GAP-109 garden on overlays | S-28 phase 2 | already in S-28 detail |
 | P-GAP-110 progressive coaching | S-11 extension | park in [`parked.md`](roadmap-references/parked.md) |
-| P-GAP-102 guest activation | S-11 extension | **active extension** (promoted from parked); after F-07 — event storming hot-1 |
+| P-GAP-102 guest activation | S-11 extension | **done** — post-merge-wedge-coach PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159) |
 | B-08 PRD review (2026-06-21) | **B-09** + **S-38** | new proposed slices — pause-then-end vs mid-cycle closure expectations |
 
 Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-batches/README.md).
 
 ## Done
 
+- **B-09: pause then end session — B-08 full variant (dual calm exit)** — Archived 2026-06-23 → `context/archive/2026-06-23-pause-and-end-session/`. PR [#161](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/161). Issues [FLO-86](https://linear.app/flowstate-10xdev/issue/FLO-86) / [#150](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/150). Lesson: pause-then-confirm before endSession from paused; after-pause overlay variant distinguishes three exit intents.
+- **S-28: Calm Garden illustrations + overlay phase 2** — Archived 2026-06-23 → `context/archive/2026-06-23-wellness-illustration-foundation/`. PR [#160](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/160). Issues [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) / [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98). Lesson: phase 1 (hero sprig + Empty Garden Bed SVG primitives); overlay scrims deferred to follow-up.
+- **S-11 ext: post-merge wedge coach** — Archived 2026-06-23 → `context/archive/2026-06-23-post-merge-wedge-coach/`. PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159). Extends S-11 / [FLO-26](https://linear.app/flowstate-10xdev/issue/FLO-26) / [#37](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/37). Lesson: `authenticatedWedgeCoachEligible` on guest import; persona-aware suggestion subcopy; `hasSeenAuthenticatedWedge` completes bridge.
+- **S-31: WORK cycle focus shell** — Archived 2026-06-23 → `context/archive/2026-06-23-work-focus-shell/`. PR [#157](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/157). Issues [FLO-66](https://linear.app/flowstate-10xdev/issue/FLO-66) / [#107](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/107). Lesson: section-scoped chrome subdue during WORK; shell wash via data-attribute mirrors S-33.
+- **S-33: home break atmosphere during breaks** — Archived 2026-06-23 → `context/archive/2026-06-23-break-restoration-atmosphere/`. PR [#156](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/156). Issues [FLO-85](https://linear.app/flowstate-10xdev/issue/FLO-85) / [#143](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/143). Lesson: shell wash via data-attribute + CSS tokens; yield before wedge/suggestion gates.
+- **S-35: calm network-loss recovery on wedge gates** — Archived 2026-06-23 → `context/archive/2026-06-23-wedge-transition-sync-recovery/`. PR [#155](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/155). Issues [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) / [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117). Lesson: preserve wedge intent on partial failure; restore recovery UI when retry fails.
 - **B-08: calm end session while timer running** — Archived 2026-06-21 → `context/archive/2026-06-21-fix-graceful-session-end-while-running/`. PR [#149](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/149). Issues [FLO-70](https://linear.app/flowstate-10xdev/issue/FLO-70) / [#113](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/113). Lesson: T-04 was dashboard-only — confirm overlay + existing `endSession()` path; no hook changes.
 - **S-21: skippable break/re-entry copy by energy** — Archived 2026-06-21 → `context/archive/2026-06-21-mindful-transition-copy/`. PR [#148](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/148). Issues [FLO-36](https://linear.app/flowstate-10xdev/issue/FLO-36) / [#47](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/47). Lesson: dashboard mutex sufficient for S-21 MVP; one interstitial + existing gate only.
 - **session-entry-wedge-bugs (ad-hoc)** — Inline steering cards, Continue row, timeout closure + `lastFocusedTaskId`; removed ReturnHandoffBanner. Archived 2026-06-20 → `context/archive/2026-06-20-session-entry-wedge-bugs/`. PR [#141](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/141). Issues [FLO-84](https://linear.app/flowstate-10xdev/issue/FLO-84) / [#142](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/142). Lesson: inline steering + conductor beats overlay stacks; `steeringCompletedRef` on both energy and focus handlers.

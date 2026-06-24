@@ -1,6 +1,9 @@
-# Advisory PR code review via Cursor SDK (cloud agent).
+# Advisory PR code review via Cursor SDK (local runtime on the runner).
 # Optional repository secret: CURSOR_API_KEY
 # When unset or invalid, the job succeeds with a notice (does not fail CI).
+#
+# Local mode reviews the checked-out PR head on the runner — it does NOT require
+# the repo to be connected in Cursor GitHub Integrations.
 #
 # Not a merge gate — runs in parallel with CI quality/e2e.
 
@@ -8,7 +11,7 @@ name: Cursor code review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
 concurrency:
@@ -22,8 +25,14 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+      issues: write
       pull-requests: write
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    if: >
+      (github.event_name == 'workflow_dispatch' ||
+       github.event.pull_request.head.repo.full_name == github.repository) &&
+      (github.event_name != 'pull_request' ||
+       github.event.action != 'labeled' ||
+       github.event.label.name == 'ai-cr:review')
     steps:
       - name: Cursor review availability
         id: cursor_key
@@ -37,64 +46,127 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - name: Ensure review labels
         if: steps.cursor_key.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh label create "ai-cr:passed" --color 2da44e --description "AI code review passed" 2>/dev/null || true
+          gh label create "ai-cr:failed" --color cf222e --description "AI code review failed" 2>/dev/null || true
+          gh label create "ai-cr:review" --color bfd4f2 --description "Re-run AI code review" 2>/dev/null || true
+
+      # Runs even when the review is skipped (no API key) so stale labels never
+      # linger. GH_REPO gives gh repository context — this step runs before the
+      # checkout, so without it every gh call would fail silently.
+      - name: Prepare PR labels
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          PR="${{ github.event.pull_request.number }}"
+          gh pr edit "$PR" --remove-label "ai-cr:review" 2>/dev/null || true
+          gh pr edit "$PR" --remove-label "ai-cr:passed" 2>/dev/null || true
+          gh pr edit "$PR" --remove-label "ai-cr:failed" 2>/dev/null || true
+
+      - name: Derive change-id
+        id: change
+        if: steps.cursor_key.outputs.skip != 'true'
+        run: |
+          HEAD_REF="${{ github.head_ref || github.ref_name }}"
+          if [[ "$HEAD_REF" == features/* ]]; then
+            echo "id=${HEAD_REF#features/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "id=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Truncate PR description
+        id: pr_body
+        if: steps.cursor_key.outputs.skip != 'true' && github.event_name == 'pull_request'
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          TRUNC=$(printf '%s' "$BODY" | head -c 2000)
+          DELIM="EOF_$(openssl rand -hex 16)"
+          {
+            echo "description<<$DELIM"
+            printf '%s\n' "$TRUNC"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout (load local composite action)
+        if: steps.cursor_key.outputs.skip != 'true'
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v4
-        if: steps.cursor_key.outputs.skip != 'true'
-
-      - uses: actions/setup-node@v4
-        if: steps.cursor_key.outputs.skip != 'true'
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        if: steps.cursor_key.outputs.skip != 'true'
-        run: pnpm install --frozen-lockfile
-
-      - name: Run cloud code review
+      - name: Run Cursor local review
         id: review
         if: steps.cursor_key.outputs.skip != 'true'
-        env:
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-        run: |
-          if [ ! -f scripts/cursor-review/review.ts ]; then
-            echo "Missing scripts/cursor-review/review.ts — commit the Cursor SDK scripts before enabling this workflow."
-            exit 1
-          fi
-          mkdir -p reports
-          HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
-          HEAD_REF="${{ github.head_ref || github.ref_name }}"
-          PR_URL="${{ github.event.pull_request.html_url || '' }}"
-          REVIEW_ARGS=(
-            --ref "$HEAD_SHA"
-            --output reports/review.md
-          )
-          if [ -n "$PR_URL" ]; then
-            REVIEW_ARGS+=(--pr-url "$PR_URL")
-          fi
-          if [[ "$HEAD_REF" == features/* ]]; then
-            REVIEW_ARGS+=(--change-id "${HEAD_REF#features/}")
-          fi
-          pnpm review:cloud "${REVIEW_ARGS[@]}"
+        uses: ./.github/actions/cursor-review
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          change-id: ${{ steps.change.outputs.id }}
+          base: origin/main
+          pr-title: ${{ github.event.pull_request.title || '' }}
+          pr-description: ${{ steps.pr_body.outputs.description || '' }}
+          api-key: ${{ secrets.CURSOR_API_KEY }}
 
+      # Advisory job: a transient gh/jq failure here must not turn CI red.
       - name: Post PR comment
-        if: github.event_name == 'pull_request' && steps.cursor_key.outputs.skip != 'true' && steps.review.outcome == 'success' && hashFiles('reports/review.md') != ''
+        if: github.event_name == 'pull_request' && steps.cursor_key.outputs.skip != 'true' && steps.review.outputs.skipped != 'true' && steps.review.outputs.review-outcome == 'success' && steps.review.outputs.review-md != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           PR="${{ github.event.pull_request.number }}"
           REPO="${{ github.repository }}"
           COMMENT_ID="$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
-            -q '.[] | select(.body | contains("<!-- cursor-review -->")) | .id' | head -1)"
+            -q '.[] | select(.body | contains("<!-- cursor-review-v1 -->")) | .id' | head -1)"
           if [ -n "$COMMENT_ID" ]; then
             jq -n --rawfile body reports/review.md '{body: $body}' | \
               gh api --method PATCH "repos/${REPO}/issues/comments/${COMMENT_ID}" --input -
           else
             gh pr comment "$PR" --body-file reports/review.md
+          fi
+
+      - name: Apply review label
+        if: github.event_name == 'pull_request' && steps.cursor_key.outputs.skip != 'true' && steps.review.outputs.skipped != 'true' && steps.review.outputs.review-outcome == 'success' && steps.review.outputs.review-json != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          PR="${{ github.event.pull_request.number }}"
+          PASSED=$(jq -r '.passed' reports/review.json)
+          if [ "$PASSED" = "true" ]; then
+            gh pr edit "$PR" --add-label "ai-cr:passed"
+          else
+            gh pr edit "$PR" --add-label "ai-cr:failed"
+          fi
+
+      - name: Handle review failure
+        if: always() && github.event_name == 'pull_request' && steps.cursor_key.outputs.skip != 'true' && steps.review.outputs.skipped != 'true' && steps.review.outputs.review-outcome == 'failure'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          PR="${{ github.event.pull_request.number }}"
+          REPO="${{ github.repository }}"
+          gh pr edit "$PR" --add-label "ai-cr:failed"
+          if [ ! -f reports/review.md ]; then
+            FAILURE_BODY="$(printf '%s\n\n%s' '<!-- cursor-review-v1 -->' 'Review agent failed to complete.')"
+            COMMENT_ID="$(gh api "repos/${REPO}/issues/${PR}/comments" --paginate \
+              -q '.[] | select(.body | contains("<!-- cursor-review-v1 -->")) | .id' | head -1)"
+            if [ -n "$COMMENT_ID" ]; then
+              jq -n --arg body "$FAILURE_BODY" '{body: $body}' | \
+                gh api --method PATCH "repos/${REPO}/issues/comments/${COMMENT_ID}" --input -
+            else
+              printf '%s' "$FAILURE_BODY" | gh pr comment "$PR" --body-file -
+            fi
           fi

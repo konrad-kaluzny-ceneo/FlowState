@@ -4,12 +4,15 @@ import { parseArgs } from "node:util";
 import { Agent, CursorAgentError, type SDKMessage } from "@cursor/sdk";
 import { config as loadEnv } from "dotenv";
 import { buildReviewPrompt } from "./build-prompt.js";
+import { REVIEW_COMMENT_MARKER } from "./constants.js";
+import { evaluatePass } from "./evaluate-pass.js";
 import {
 	changeIdFromBranch,
 	GitScopeError,
 	getCurrentBranch,
 	resolveRepoUrl,
 } from "./git-scope.js";
+import { parseScores } from "./parse-scores.js";
 
 const { values } = parseArgs({
 	options: {
@@ -18,8 +21,11 @@ const { values } = parseArgs({
 		cloud: { type: "boolean", default: false },
 		ref: { type: "string" },
 		"pr-url": { type: "string" },
+		"pr-title": { type: "string" },
+		"pr-description": { type: "string" },
 		output: { type: "string" },
 		resume: { type: "string" },
+		"no-sandbox": { type: "boolean", default: false },
 		help: { type: "boolean", default: false },
 	},
 });
@@ -32,14 +38,18 @@ Usage:
   pnpm review:cloud [--ref <sha-or-branch>] [--pr-url <url>] [--change-id <id>] [--output reports/review.md]
 
 Options:
-  --base <branch>     Compare against this branch (default: main)
-  --change-id <id>    Load context/changes/<id>/plan.md for plan-drift review
-  --cloud             Run on Cursor cloud VM (requires repo access for API key)
-  --ref <sha|branch>  Cloud starting ref — prefer commit SHA (default: current branch)
-  --pr-url <url>      Attach cloud agent to an existing GitHub PR (CI use)
-  --output <path>     Save review markdown to file (reports/ is gitignored)
-  --resume <agentId>  Continue a previous agent conversation
-  --help              Show this help
+  --base <branch>           Compare against this branch (default: main)
+  --change-id <id>          Load context/changes/<id>/plan.md for plan-drift review
+  --cloud                   Run on Cursor cloud VM (requires repo access for API key)
+  --ref <sha|branch>        Cloud starting ref — prefer commit SHA (default: current branch)
+  --pr-url <url>            Attach cloud agent to an existing GitHub PR (CI use)
+  --pr-title <text>         PR title for prompt context (CI use)
+  --pr-description <text>   PR description for prompt context (truncated to 2000 chars)
+  --output <path>           Save review markdown to file (reports/ is gitignored)
+  --resume <agentId>        Continue a previous agent conversation
+  --no-sandbox              Disable local SDK sandboxing (use in CI runners where
+                            sandboxing is unsupported; review is read-only)
+  --help                    Show this help
 
 Requires CURSOR_API_KEY in the environment (see scripts/cursor-review/README.md).
 `);
@@ -63,6 +73,10 @@ const useCloud = values.cloud ?? false;
 const outputPath = values.output;
 const resumeId = values.resume;
 const prUrl = values["pr-url"];
+const prTitle = values["pr-title"];
+const rawPrDescription = values["pr-description"];
+const prDescription = rawPrDescription?.slice(0, 2000);
+const sandboxEnabled = !values["no-sandbox"];
 
 let startingRef = values.ref;
 if (!startingRef && !useCloud) {
@@ -89,6 +103,8 @@ try {
 		cwd,
 		cloud: useCloud,
 		startingRef,
+		prTitle,
+		prDescription,
 	});
 } catch (err) {
 	if (err instanceof GitScopeError) {
@@ -160,7 +176,7 @@ try {
 								cwd,
 								settingSources: ["project"],
 								autoReview: true,
-								sandboxOptions: { enabled: true },
+								sandboxOptions: { enabled: sandboxEnabled },
 							},
 						}),
 			});
@@ -186,9 +202,38 @@ try {
 
 		if (outputPath) {
 			mkdirSync(dirname(outputPath), { recursive: true });
-			const header = `<!-- cursor-review agent=${agent.agentId} run=${result.id} -->\n\n`;
+			const header = `${REVIEW_COMMENT_MARKER} agent=${agent.agentId} run=${result.id}\n\n`;
 			writeFileSync(outputPath, header + reviewText, "utf8");
 			console.error(`\nSaved review to ${outputPath}`);
+
+			const { scores, criticalCount } = parseScores(reviewText);
+			const evaluation = evaluatePass({
+				scores,
+				criticalCount,
+				hasPlanContext: Boolean(changeId),
+			});
+			const jsonPath = /\.md$/i.test(outputPath)
+				? outputPath.replace(/\.md$/i, ".json")
+				: `${outputPath}.json`;
+			writeFileSync(
+				jsonPath,
+				JSON.stringify(
+					{
+						version: 1,
+						passed: evaluation.passed,
+						scores,
+						mean: evaluation.mean,
+						failReasons: evaluation.failReasons,
+						criticalCount,
+						agentId: agent.agentId,
+						runId: result.id,
+					},
+					null,
+					2,
+				),
+				"utf8",
+			);
+			console.error(`Saved review sidecar to ${jsonPath}`);
 		}
 
 		if (useCloud) {
@@ -211,3 +256,8 @@ try {
 	}
 	throw err;
 }
+
+// The local SDK runtime keeps open handles (grpc/sqlite/telemetry) that can
+// prevent a clean exit after the review completes. Exit explicitly so CI does
+// not hang until the job timeout. All output is already flushed synchronously.
+process.exit(0);

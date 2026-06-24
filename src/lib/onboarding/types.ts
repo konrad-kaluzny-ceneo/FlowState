@@ -3,6 +3,8 @@ export interface OnboardingState {
 	checkInCoachSeen: boolean;
 	suggestionCoachSeen: boolean;
 	presetCoachDismissed: boolean;
+	authenticatedWedgeCoachEligible: boolean;
+	hasSeenAuthenticatedWedge: boolean;
 }
 
 export const DEFAULT_ONBOARDING_STATE: OnboardingState = {
@@ -10,6 +12,8 @@ export const DEFAULT_ONBOARDING_STATE: OnboardingState = {
 	checkInCoachSeen: false,
 	suggestionCoachSeen: false,
 	presetCoachDismissed: false,
+	authenticatedWedgeCoachEligible: false,
+	hasSeenAuthenticatedWedge: false,
 };
 
 export type OnboardingScope =

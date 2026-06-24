@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
@@ -57,6 +57,7 @@ function makePomodoroMock(
 		cycleKind: "WORK",
 		hasActiveSession: false,
 		error: null,
+		pendingWedgeRecovery: null,
 		midCyclePendingTask: null,
 		isMidCycleSubmitting: false,
 		awaitingCheckIn: false,
@@ -64,6 +65,7 @@ function makePomodoroMock(
 		awaitingWindDown: false,
 		windDownRationale: null,
 		isConfirming: false,
+		isWedgeSyncRetrying: false,
 		pendingSuggestion: { status: "idle" },
 		pendingKickoffSuggestion: { status: "idle" },
 		kickoffSuggestedTaskId: null,
@@ -106,6 +108,8 @@ function makePomodoroMock(
 		dismissPreFocus: vi.fn(),
 		retryKickoffSuggestion: vi.fn(),
 		retrySuggestion: vi.fn(),
+		retryWedgeSync: vi.fn(),
+		dismissPendingWedgeRecovery: vi.fn(),
 		start: vi.fn(),
 		interrupt: vi.fn(),
 		pause: vi.fn(),
@@ -743,5 +747,70 @@ describe("PomodoroDashboardBody end session while running", () => {
 		await vi.waitFor(() => {
 			expect(endSession).toHaveBeenCalledTimes(1);
 		});
+	});
+
+	it("shows pause and end session when running", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			activeCycle: { id: 42 },
+		});
+
+		expect(screen.getByTestId("pause-and-end-session-btn")).toBeTruthy();
+	});
+
+	it("pauses then opens after-pause confirm on pause and end click", async () => {
+		const pause = vi.fn().mockResolvedValue(undefined);
+		const endSession = vi.fn();
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			activeCycle: { id: 42 },
+			pause,
+			endSession,
+		});
+
+		fireEvent.click(screen.getByTestId("pause-and-end-session-btn"));
+
+		await waitFor(() => {
+			expect(pause).toHaveBeenCalledTimes(1);
+		});
+		await waitFor(() => {
+			expect(screen.getByTestId("end-session-confirm-overlay")).toBeTruthy();
+		});
+		expect(screen.getByText("Stay paused")).toBeTruthy();
+		expect(endSession).not.toHaveBeenCalled();
+	});
+});
+
+describe("PomodoroDashboardBody wedge sync recovery", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("shows wedge-sync-recovery with retry instead of generic pomodoro-error", () => {
+		const retryWedgeSync = vi.fn();
+		const dismissPendingWedgeRecovery = vi.fn();
+
+		renderBody({
+			error: "Could not save check-in. Try again.",
+			pendingWedgeRecovery: {
+				message: "Could not save check-in. Try again.",
+				phase: "check_in",
+				energy: "FOCUSED",
+			},
+			retryWedgeSync,
+			dismissPendingWedgeRecovery,
+		});
+
+		expect(screen.getByTestId("wedge-sync-recovery")).toBeTruthy();
+		expect(screen.queryByTestId("pomodoro-error")).toBeNull();
+		expect(screen.getByText(/Energy: Focused/)).toBeTruthy();
+
+		fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+		expect(retryWedgeSync).toHaveBeenCalledTimes(1);
+
+		fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+		expect(dismissPendingWedgeRecovery).toHaveBeenCalledTimes(1);
 	});
 });

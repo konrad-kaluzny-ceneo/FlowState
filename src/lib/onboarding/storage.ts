@@ -21,6 +21,9 @@ function parseStoredState(raw: string | null): OnboardingState {
 			checkInCoachSeen: parsed.checkInCoachSeen === true,
 			suggestionCoachSeen: parsed.suggestionCoachSeen === true,
 			presetCoachDismissed: parsed.presetCoachDismissed === true,
+			authenticatedWedgeCoachEligible:
+				parsed.authenticatedWedgeCoachEligible === true,
+			hasSeenAuthenticatedWedge: parsed.hasSeenAuthenticatedWedge === true,
 		};
 	} catch {
 		return { ...DEFAULT_ONBOARDING_STATE };
@@ -78,4 +81,11 @@ export function patchOnboardingState(
 	const next: OnboardingState = { ...current, ...partial };
 	saveOnboardingState(scope, next);
 	return next;
+}
+
+export function enableAuthenticatedWedgeCoach(scope: OnboardingScope): void {
+	if (scope.mode !== "authenticated" || !scope.userId) {
+		return;
+	}
+	patchOnboardingState(scope, { authenticatedWedgeCoachEligible: true });
 }

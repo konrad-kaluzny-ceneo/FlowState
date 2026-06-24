@@ -6,23 +6,25 @@ import {
 	overlayButtonClass,
 } from "~/app/_components/overlay-shell";
 import {
-	END_SESSION_CONFIRM_BODY,
-	END_SESSION_CONFIRM_CANCEL_LABEL,
-	END_SESSION_CONFIRM_LABEL,
-	END_SESSION_CONFIRM_TITLE,
+	type EndSessionConfirmVariant,
+	getEndSessionConfirmCopy,
 } from "~/lib/session/end-session-copy";
 
 type EndSessionConfirmOverlayProps = {
 	onConfirm: () => void;
 	onCancel: () => void;
 	isSubmitting?: boolean;
+	variant?: EndSessionConfirmVariant;
 };
 
 export function EndSessionConfirmOverlay({
 	onConfirm,
 	onCancel,
 	isSubmitting = false,
+	variant = "immediate",
 }: EndSessionConfirmOverlayProps) {
+	const copy = getEndSessionConfirmCopy(variant);
+
 	return (
 		<OverlayScrim
 			role="dialog"
@@ -30,12 +32,8 @@ export function EndSessionConfirmOverlay({
 			zIndex={58}
 		>
 			<OverlayCard>
-				<h2 className="font-semibold text-2xl text-primary">
-					{END_SESSION_CONFIRM_TITLE}
-				</h2>
-				<p className="mt-4 text-sm text-text-secondary">
-					{END_SESSION_CONFIRM_BODY}
-				</p>
+				<h2 className="font-semibold text-2xl text-primary">{copy.title}</h2>
+				<p className="mt-4 text-sm text-text-secondary">{copy.body}</p>
 				<div className="mt-8 flex flex-col gap-3">
 					<button
 						className={`${overlayButtonClass.primaryFull} disabled:cursor-not-allowed`}
@@ -44,7 +42,7 @@ export function EndSessionConfirmOverlay({
 						onClick={onConfirm}
 						type="button"
 					>
-						{END_SESSION_CONFIRM_LABEL}
+						{copy.confirmLabel}
 					</button>
 					<button
 						className={overlayButtonClass.secondaryFull}
@@ -53,7 +51,7 @@ export function EndSessionConfirmOverlay({
 						onClick={onCancel}
 						type="button"
 					>
-						{END_SESSION_CONFIRM_CANCEL_LABEL}
+						{copy.cancelLabel}
 					</button>
 				</div>
 			</OverlayCard>

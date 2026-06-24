@@ -13,8 +13,10 @@ import {
 	OnboardingProvider,
 	useOnboarding,
 } from "~/hooks/use-onboarding-state";
+import { useOnlineStatus } from "~/hooks/use-online-status";
 import { useTestIdVisible } from "~/hooks/use-test-id-visible";
 import { DataModeProvider } from "~/lib/data-mode/data-mode-context";
+import { HomeHeroSprig } from "~/lib/design/illustrations/home-hero-sprig";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 
 type HomeShellProps = {
@@ -39,7 +41,31 @@ function MergeSuccessOverlayMount() {
 	);
 }
 
-function HomeShellContent({ isAuthenticated }: { isAuthenticated: boolean }) {
+function OfflineBanner() {
+	const isOnline = useOnlineStatus();
+
+	if (isOnline) {
+		return null;
+	}
+
+	return (
+		<div
+			className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg/90 px-4 py-2 text-center text-sm text-text-secondary"
+			data-testid="offline-banner"
+			role="status"
+		>
+			You&apos;re offline — retry when you&apos;re back online.
+		</div>
+	);
+}
+
+function HomeShellContent({
+	isAuthenticated,
+	userId,
+}: {
+	isAuthenticated: boolean;
+	userId: string | null;
+}) {
 	const mode = isAuthenticated ? "authenticated" : "guest";
 	const { isFirstRunVisible, dismissFirstRun } = useOnboarding();
 	const { mergeSuccessVisible } = useGuestMergeUi();
@@ -47,7 +73,9 @@ function HomeShellContent({ isAuthenticated }: { isAuthenticated: boolean }) {
 
 	return (
 		<DataModeProvider mode={mode}>
-			{isAuthenticated && <GuestImportOnMount />}
+			{isAuthenticated && userId != null && (
+				<GuestImportOnMount userId={userId} />
+			)}
 			<MergeSuccessOverlayMount />
 			<FirstRunOverlay
 				mode={mode}
@@ -56,9 +84,14 @@ function HomeShellContent({ isAuthenticated }: { isAuthenticated: boolean }) {
 					isFirstRunVisible && !cycleCompleteVisible && !mergeSuccessVisible
 				}
 			/>
-			<main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-shell-top to-shell-bottom text-primary">
+			<main
+				className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-shell-top to-shell-bottom text-primary transition-colors duration-300 motion-reduce:transition-none"
+				id="home-shell-main"
+			>
 				<div className="container flex flex-col items-center justify-center gap-8 px-4 py-16">
+					<OfflineBanner />
 					<header className="space-y-2 text-center">
+						<HomeHeroSprig />
 						<h1 className="font-semibold text-4xl tracking-tight">FlowState</h1>
 						<p className="text-sm text-text-secondary">
 							Manage your tasks. Stay in flow.
@@ -80,7 +113,7 @@ export function HomeShell({ isAuthenticated, userId }: HomeShellProps) {
 	return (
 		<OnboardingProvider scope={scope}>
 			<GuestMergeUiProvider>
-				<HomeShellContent isAuthenticated={isAuthenticated} />
+				<HomeShellContent isAuthenticated={isAuthenticated} userId={userId} />
 			</GuestMergeUiProvider>
 		</OnboardingProvider>
 	);

@@ -186,6 +186,8 @@ type TaskListProps = {
 	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
 	suggestionLoading?: boolean;
 	footprints?: Record<string, TaskFootprint>;
+	chromeSubdued?: boolean;
+	focusShellActive?: boolean;
 };
 
 type SortableActiveTaskRowProps = {
@@ -529,6 +531,8 @@ export function TaskList({
 	onMidCycleMarkComplete,
 	suggestionLoading = false,
 	footprints = {},
+	chromeSubdued = false,
+	focusShellActive = false,
 }: TaskListProps) {
 	const mode = useDataMode();
 	const { shouldShowPresetCoach, markPresetCoachDismissed } =
@@ -790,8 +794,16 @@ export function TaskList({
 		[commitEditIfDirty, editingId, onFocusTask],
 	);
 
+	const focusChromeSubduedClass = focusShellActive
+		? "opacity-60 saturate-75 transition-opacity duration-300 motion-reduce:transition-none"
+		: "";
+
 	return (
-		<div className="w-full max-w-lg space-y-6" data-testid="task-list">
+		<div
+			className={`w-full max-w-lg space-y-6${chromeSubdued ? "opacity-80 saturate-75" : ""}`}
+			data-break-chrome-subdued={chromeSubdued ? "true" : undefined}
+			data-testid="task-list"
+		>
 			{error != null && (
 				<div
 					className="rounded-lg border border-red-400/40 bg-red-500/20 px-4 py-3 text-red-100 text-sm"
@@ -810,7 +822,8 @@ export function TaskList({
 			)}
 
 			<form
-				className="space-y-2"
+				className={`space-y-2${focusChromeSubduedClass ? ` ${focusChromeSubduedClass}` : ""}`}
+				data-focus-chrome-subdued={focusShellActive ? "true" : undefined}
 				onSubmit={(e) => {
 					e.preventDefault();
 					if (!newTitle.trim()) {
@@ -1003,7 +1016,10 @@ export function TaskList({
 			</section>
 
 			{completedTasks.length > 0 && (
-				<section>
+				<section
+					className={focusChromeSubduedClass || undefined}
+					data-focus-chrome-subdued={focusShellActive ? "true" : undefined}
+				>
 					<h2 className="mb-2 font-semibold text-lg text-text-section">
 						Completed ({completedTasks.length})
 					</h2>

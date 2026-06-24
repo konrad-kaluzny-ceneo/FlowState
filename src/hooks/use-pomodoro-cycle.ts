@@ -241,6 +241,31 @@ type WedgeTransitionSnapshot = {
 	completedWorkCycles: number;
 };
 
+export type WedgeSyncPhase =
+	| "check_in"
+	| "complete_work"
+	| "start_break"
+	| "suggestion_fetch"
+	| "kickoff_session"
+	| "kickoff_suggestion";
+
+export type PendingWedgeRecovery = {
+	message: string;
+	phase: WedgeSyncPhase;
+	energy: EnergyLevel;
+};
+
+type PendingWedgeIntent = {
+	phase: WedgeSyncPhase;
+	energy: EnergyLevel;
+	markTaskDone?: boolean;
+	workCycleId?: number;
+	sessionId?: number;
+	sessionIntention?: string | null;
+	breakKind?: "SHORT_BREAK" | "LONG_BREAK";
+	breakDurationSec?: number;
+};
+
 function isBreakKind(kind: CycleKind | null): boolean {
 	return kind === "SHORT_BREAK" || kind === "LONG_BREAK";
 }
@@ -344,6 +369,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		null,
 	);
 	const [error, setError] = useState<string | null>(null);
+	const [pendingWedgeRecovery, setPendingWedgeRecovery] =
+		useState<PendingWedgeRecovery | null>(null);
 	const [cycleKind, setCycleKind] = useState<CycleKind | null>(null);
 	const [completedWorkCycles, setCompletedWorkCycles] = useState(0);
 	const [_activeSessionId, setActiveSessionId] = useState<DomainTaskId | null>(
@@ -375,8 +402,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const [stagedKickoffDurationSec, setStagedKickoffDurationSec] = useState<
 		number | null
 	>(null);
-	const [isAcceptingKickoffSuggestion, setIsAcceptingKickoffSuggestion] =
-		useState(false);
+	const [isAcceptingKickoffSuggestion] = useState(false);
 	const [overrideAcknowledgement, setOverrideAcknowledgement] = useState<
 		string | null
 	>(null);
@@ -495,6 +521,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const pendingBreakCreateRef = useRef<Promise<CreatedActiveCycle> | null>(
 		null,
 	);
+	// S-35 / test-plan risk #11: wedge network failures preserve intent in
+	// pendingWedgeIntentRef and replay via retryWedgeSync — no forced energy re-entry.
+	const pendingWedgeIntentRef = useRef<PendingWedgeIntent | null>(null);
+	const isWedgeSyncRetryingRef = useRef(false);
+	const [isWedgeSyncRetrying, setIsWedgeSyncRetrying] = useState(false);
 	const activeCycleRef = useRef(activeCycle);
 	const useWorkerRef = useRef(
 		process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER !== "1",
@@ -1372,10 +1403,25 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						});
 						setKickoffSuggestedTaskId(result.taskId);
 					}
+					pendingWedgeIntentRef.current = null;
+					setPendingWedgeRecovery(null);
 				} catch {
 					if (gen !== kickoffFetchGenRef.current) {
 						return;
 					}
+					const recoveryMessage =
+						"Could not load kickoff suggestion. Try again.";
+					pendingWedgeIntentRef.current = {
+						phase: "kickoff_suggestion",
+						energy,
+						sessionId,
+						sessionIntention: trimmedIntention,
+					};
+					setPendingWedgeRecovery({
+						message: recoveryMessage,
+						phase: "kickoff_suggestion",
+						energy,
+					});
 					setPendingKickoffSuggestion({ status: "error" });
 					setKickoffSuggestedTaskId(null);
 				} finally {
@@ -1657,6 +1703,16 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				if (gen !== kickoffFetchGenRef.current) {
 					return;
 				}
+				const recoveryMessage = "Could not start your session. Try again.";
+				pendingWedgeIntentRef.current = {
+					phase: "kickoff_session",
+					energy: "STEADY",
+				};
+				setPendingWedgeRecovery({
+					message: recoveryMessage,
+					phase: "kickoff_session",
+					energy: "STEADY",
+				});
 				setPendingKickoffSuggestion({ status: "error" });
 			}
 		})();
@@ -1807,7 +1863,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		void recordSuggestionDecision(data.taskId, data.taskId);
 	}, [pendingSuggestion, preFocusTask, recordSuggestionDecision]);
 
-	const acceptKickoffSuggestion = useCallback(async () => {
+	const acceptKickoffSuggestion = useCallback(() => {
 		if (pendingKickoffSuggestion.status !== "ready") {
 			return;
 		}
@@ -1818,20 +1874,14 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			return;
 		}
 
-		setIsAcceptingKickoffSuggestion(true);
 		setError(null);
-
-		try {
-			preFocusTask(data.taskId, {
-				id: data.taskId,
-				title: data.title,
-			});
-			setHasPreFocusedKickoff(true);
-			clearKickoffIdleFlags();
-			await recordKickoffDecision(data.taskId, data.taskId);
-		} finally {
-			setIsAcceptingKickoffSuggestion(false);
-		}
+		preFocusTask(data.taskId, {
+			id: data.taskId,
+			title: data.title,
+		});
+		setHasPreFocusedKickoff(true);
+		clearKickoffIdleFlags();
+		void recordKickoffDecision(data.taskId, data.taskId);
 	}, [
 		pendingKickoffSuggestion,
 		preFocusTask,
@@ -2591,6 +2641,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const rollbackOptimisticCheckInTransition = useCallback(
 		(snapshot: WedgeTransitionSnapshot) => {
+			// S-35: callers must prefer partial-failure paths over rollback when server
+			// already persisted check-in/work — see continueAfterCheckIn async chain.
 			pendingBreakCreateRef.current = null;
 			stopWorker();
 			endTimeRef.current = snapshot.endTime;
@@ -2704,10 +2756,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			const energy = options?.energy;
 
 			void (async () => {
+				let failurePhase: WedgeSyncPhase = "check_in";
 				let failureMessage =
 					"Break could not start. Your work cycle was saved.";
 				try {
 					if (!checkInAlreadySaved) {
+						failurePhase = "check_in";
 						if (energy == null) {
 							throw new Error("Missing check-in energy for post-check-in path");
 						}
@@ -2722,6 +2776,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						}
 					}
 
+					failurePhase = "complete_work";
 					await retryOnce(() =>
 						cycles.complete(
 							withWorkDayPlanKey(
@@ -2738,6 +2793,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					);
 					pendingIncrementInterruptionRef.current = false;
 
+					failurePhase = "start_break";
 					const createCall = cycles.create({
 						kind: breakKind,
 						configuredDurationSec: breakDurationSec,
@@ -2776,7 +2832,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						void refreshNarrativeStats(_activeSessionId);
 					}
 
+					failurePhase = "suggestion_fetch";
 					await fetchPostCheckInSuggestion(workCycleId, gen);
+					pendingWedgeIntentRef.current = null;
+					setPendingWedgeRecovery(null);
 				} catch {
 					if (suggestionFetchGenRef.current !== gen) {
 						return;
@@ -2784,10 +2843,54 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					if (suggestionCycleIdRef.current !== workCycleId) {
 						return;
 					}
-					rollbackOptimisticCheckInTransition(snapshot);
+					if (energy == null) {
+						rollbackOptimisticCheckInTransition(snapshot);
+						setPendingSuggestion({ status: "error" });
+						setSuggestedTaskId(null);
+						setError(failureMessage);
+						return;
+					}
+
+					const wedgeIntent: PendingWedgeIntent = {
+						phase: failurePhase,
+						energy,
+						markTaskDone,
+						workCycleId,
+						breakKind,
+						breakDurationSec,
+					};
+					pendingWedgeIntentRef.current = wedgeIntent;
+					setPendingWedgeRecovery({
+						message: failureMessage,
+						phase: failurePhase,
+						energy,
+					});
 					setPendingSuggestion({ status: "error" });
 					setSuggestedTaskId(null);
 					setError(failureMessage);
+
+					if (
+						failurePhase === "suggestion_fetch" ||
+						failurePhase === "start_break"
+					) {
+						if (failurePhase === "suggestion_fetch") {
+							setError(
+								"Could not load suggestion. Your break is running — tap Retry.",
+							);
+							setPendingWedgeRecovery({
+								message:
+									"Could not load suggestion. Your break is running — tap Retry.",
+								phase: failurePhase,
+								energy,
+							});
+						}
+						return;
+					}
+
+					rollbackOptimisticCheckInTransition(snapshot);
+					if (failurePhase === "check_in") {
+						setAwaitingCheckIn(true);
+					}
 				} finally {
 					endSuggestionFetch();
 				}
@@ -2814,6 +2917,88 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			rollbackOptimisticCheckInTransition,
 			fireBreakOutOfTabAlert,
 			showBreakTransitionLine,
+		],
+	);
+
+	const retryBreakCreateAfterCheckIn = useCallback(
+		async (intent: PendingWedgeIntent) => {
+			if (
+				intent.breakKind == null ||
+				intent.breakDurationSec == null ||
+				intent.workCycleId == null
+			) {
+				throw new Error("Missing break metadata for wedge retry");
+			}
+			const workCycleId = intent.workCycleId;
+			const gen = suggestionFetchGenRef.current;
+			const endSuggestionFetch = beginSuggestionFetch();
+			const failureMessage =
+				"Break could not start. Your work cycle was saved.";
+			try {
+				const createCall = cycles.create({
+					kind: intent.breakKind,
+					configuredDurationSec: intent.breakDurationSec,
+				});
+				pendingBreakCreateRef.current = createCall;
+				let breakCycle: CreatedActiveCycle;
+				try {
+					breakCycle = await createCall;
+				} catch (createError) {
+					pendingBreakCreateRef.current = null;
+					throw createError;
+				}
+				pendingBreakCreateRef.current = null;
+
+				const endTime = cycleEndTimeMs(breakCycle);
+				const reconciledBreak: DomainActiveCycle = {
+					...breakCycle,
+					task: null,
+				};
+				setActiveCycle(reconciledBreak);
+				activeCycleRef.current = reconciledBreak;
+				setCycleKind(intent.breakKind);
+				cycleKindRef.current = intent.breakKind;
+				startWorker(endTime);
+
+				await Promise.all([
+					invalidateServerCycle(),
+					invalidateDayPlan(),
+					invalidateDailyRecap(),
+					...(intent.markTaskDone ? [utils.task.list.invalidate()] : []),
+				]);
+
+				await fetchPostCheckInSuggestion(workCycleId, gen);
+				pendingWedgeIntentRef.current = null;
+				setPendingWedgeRecovery(null);
+				setError(null);
+			} catch {
+				if (suggestionFetchGenRef.current !== gen) {
+					return;
+				}
+				if (suggestionCycleIdRef.current !== workCycleId) {
+					return;
+				}
+				pendingWedgeIntentRef.current = { ...intent, phase: "start_break" };
+				setPendingWedgeRecovery({
+					message: failureMessage,
+					phase: "start_break",
+					energy: intent.energy,
+				});
+				setPendingSuggestion({ status: "error" });
+				setSuggestedTaskId(null);
+				setError(failureMessage);
+			} finally {
+				endSuggestionFetch();
+			}
+		},
+		[
+			cycles,
+			fetchPostCheckInSuggestion,
+			invalidateDailyRecap,
+			invalidateDayPlan,
+			invalidateServerCycle,
+			startWorker,
+			utils.task.list,
 		],
 	);
 
@@ -2968,7 +3153,19 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 							setPendingMarkTaskDone(null);
 							setAwaitingWindDown(true);
 						} catch {
-							setError("Could not save check-in. Try again.");
+							const recoveryMessage = "Could not save check-in. Try again.";
+							pendingWedgeIntentRef.current = {
+								phase: "check_in",
+								energy,
+								markTaskDone,
+								workCycleId,
+							};
+							setPendingWedgeRecovery({
+								message: recoveryMessage,
+								phase: "check_in",
+								energy,
+							});
+							setError(recoveryMessage);
 						} finally {
 							setIsConfirming(false);
 						}
@@ -3019,6 +3216,123 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			_activeSessionId,
 		],
 	);
+
+	const retryWedgeSync = useCallback(async () => {
+		const intent = pendingWedgeIntentRef.current;
+		if (intent == null || isWedgeSyncRetryingRef.current) {
+			return;
+		}
+		isWedgeSyncRetryingRef.current = true;
+		setIsWedgeSyncRetrying(true);
+		setError(null);
+		try {
+			switch (intent.phase) {
+				case "check_in":
+					await submitCheckIn(intent.energy);
+					if (pendingWedgeIntentRef.current == null) {
+						setCatchUp(null);
+					}
+					break;
+				case "complete_work": {
+					if (intent.markTaskDone == null || intent.workCycleId == null) {
+						break;
+					}
+					await continueAfterCheckIn(intent.markTaskDone, intent.workCycleId, {
+						energy: intent.energy,
+						checkInAlreadySaved: true,
+					});
+					break;
+				}
+				case "start_break":
+					await retryBreakCreateAfterCheckIn(intent);
+					if (pendingWedgeIntentRef.current == null) {
+						setCatchUp(null);
+					}
+					break;
+				case "suggestion_fetch": {
+					if (intent.workCycleId == null) {
+						break;
+					}
+					const gen = suggestionFetchGenRef.current;
+					const failureMessage = "Could not load suggestion. Try again.";
+					const endSuggestionFetch = beginSuggestionFetch();
+					setPendingSuggestion({ status: "loading" });
+					try {
+						await fetchPostCheckInSuggestion(intent.workCycleId, gen);
+						pendingWedgeIntentRef.current = null;
+						setPendingWedgeRecovery(null);
+						setError(null);
+						setCatchUp(null);
+					} catch {
+						if (suggestionFetchGenRef.current !== gen) {
+							return;
+						}
+						if (suggestionCycleIdRef.current !== intent.workCycleId) {
+							return;
+						}
+						pendingWedgeIntentRef.current = intent;
+						setPendingWedgeRecovery({
+							message: failureMessage,
+							phase: "suggestion_fetch",
+							energy: intent.energy,
+						});
+						setPendingSuggestion({ status: "error" });
+						setSuggestedTaskId(null);
+					} finally {
+						endSuggestionFetch();
+					}
+					break;
+				}
+				case "kickoff_session": {
+					const failureMessage = "Could not start your session. Try again.";
+					try {
+						const session = await sessions.getOrCreateActive();
+						setActiveSessionId(session.id);
+						setSessionEnergyPending(true);
+						setSessionFocusPending(true);
+						setPendingKickoffSuggestion({ status: "idle" });
+						pendingWedgeIntentRef.current = null;
+						setPendingWedgeRecovery(null);
+						setCatchUp(null);
+					} catch {
+						pendingWedgeIntentRef.current = intent;
+						setPendingWedgeRecovery({
+							message: failureMessage,
+							phase: "kickoff_session",
+							energy: intent.energy,
+						});
+						setPendingKickoffSuggestion({ status: "error" });
+					}
+					break;
+				}
+				case "kickoff_suggestion": {
+					const sessionId =
+						intent.sessionId ??
+						(_activeSessionId != null ? Number(_activeSessionId) : null);
+					if (sessionId == null) {
+						break;
+					}
+					fetchKickoffSuggestion(
+						sessionId,
+						intent.energy,
+						intent.sessionIntention,
+					);
+					break;
+				}
+			}
+		} finally {
+			isWedgeSyncRetryingRef.current = false;
+			setIsWedgeSyncRetrying(false);
+		}
+	}, [
+		_activeSessionId,
+		continueAfterCheckIn,
+		fetchKickoffSuggestion,
+		fetchPostCheckInSuggestion,
+		retryBreakCreateAfterCheckIn,
+		sessions,
+		submitCheckIn,
+	]);
 
 	const onMidCycleEndCycleAndBreak = useCallback(async () => {
 		if (midCyclePendingTask == null || activeCycle == null) {
@@ -3247,6 +3561,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		setError(null);
 	}, []);
 
+	const dismissPendingWedgeRecovery = useCallback(() => {
+		pendingWedgeIntentRef.current = null;
+		setPendingWedgeRecovery(null);
+		setError(null);
+	}, []);
+
 	const dismissCatchUp = useCallback(() => {
 		setCatchUp(null);
 		stopCycleEndTabPulse();
@@ -3309,6 +3629,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		cycleKind,
 		hasActiveSession,
 		error,
+		pendingWedgeRecovery,
 		midCyclePendingTask,
 		isMidCycleSubmitting,
 		awaitingCheckIn,
@@ -3316,6 +3637,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		awaitingWindDown,
 		windDownRationale,
 		isConfirming,
+		isWedgeSyncRetrying,
 		pendingSuggestion,
 		suggestionCycleId,
 		suggestedTaskId,
@@ -3356,6 +3678,14 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		clearKickoffSuggestion,
 		dismissPreFocus,
 		retryKickoffSuggestion: () => {
+			const wedgePhase = pendingWedgeIntentRef.current?.phase;
+			if (
+				wedgePhase === "kickoff_suggestion" ||
+				wedgePhase === "kickoff_session"
+			) {
+				void retryWedgeSync();
+				return;
+			}
 			if (_activeSessionId != null) {
 				fetchKickoffSuggestion(
 					Number(_activeSessionId),
@@ -3365,10 +3695,15 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			}
 		},
 		retrySuggestion: () => {
+			if (pendingWedgeIntentRef.current?.phase === "suggestion_fetch") {
+				void retryWedgeSync();
+				return;
+			}
 			if (suggestionCycleId != null) {
 				fetchSuggestion(suggestionCycleId);
 			}
 		},
+		retryWedgeSync,
 		start,
 		interrupt,
 		pause,
@@ -3383,5 +3718,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		onMidCycleEndCycleAndBreak,
 		endSession,
 		clearError,
+		dismissPendingWedgeRecovery,
 	};
 }

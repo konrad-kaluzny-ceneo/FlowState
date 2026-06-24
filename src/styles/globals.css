@@ -158,3 +158,25 @@
 		animation-duration: 50ms;
 	}
 }
+
+/* S-33: break restoration atmosphere — shell wash during breaks */
+#home-shell-main[data-break-atmosphere="true"] {
+	--color-shell-top: #eef6f4;
+	--color-shell-bottom: #dceee9;
+}
+
+[data-theme="dark"] #home-shell-main[data-break-atmosphere="true"] {
+	--color-shell-top: #1a2830;
+	--color-shell-bottom: #1e3238;
+}
+
+/* S-31: work focus shell — calm focus wash during WORK cycles */
+#home-shell-main[data-work-focus-shell="true"] {
+	--color-shell-top: #f4f2ef;
+	--color-shell-bottom: #ebe6e0;
+}
+
+[data-theme="dark"] #home-shell-main[data-work-focus-shell="true"] {
+	--color-shell-top: #1e1c1a;
+	--color-shell-bottom: #252220;
+}

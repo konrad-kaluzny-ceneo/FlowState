@@ -26,6 +26,7 @@ import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
 import { TaskList } from "~/app/_components/task-list";
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
+import { WedgeSyncRecovery } from "~/app/_components/wedge-sync-recovery";
 import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
 import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preference";
 import { useDailyRecap } from "~/hooks/use-daily-recap";
@@ -34,6 +35,8 @@ import { useE2eExposeCycleRecovery } from "~/hooks/use-e2e-expose-cycle-recovery
 import { useOnboarding } from "~/hooks/use-onboarding-state";
 import { useOutOfTabBreakAlertsPreference } from "~/hooks/use-out-of-tab-break-alerts-preference";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
+import { useSyncBreakAtmosphere } from "~/hooks/use-sync-break-atmosphere";
+import { useSyncWorkFocusShell } from "~/hooks/use-sync-work-focus-shell";
 import { getNotificationPermission } from "~/lib/break-out-of-tab-alert/notify-break-start";
 import {
 	readNotificationPromptDismissed,
@@ -45,13 +48,16 @@ import {
 	useDomainTasks,
 	useGuestDomainTasks,
 } from "~/lib/data-mode/use-domain-tasks";
-import {
-	CHECK_IN_COACH_LINE,
-	SUGGESTION_COACH_LINE,
-} from "~/lib/onboarding/copy";
+import { shouldShowBreakAtmosphere } from "~/lib/design/break-atmosphere";
+import { shouldShowWorkFocusShell } from "~/lib/design/work-focus-shell";
 import { shouldDeferFirstRun } from "~/lib/onboarding/defer";
-import type { OnboardingScope } from "~/lib/onboarding/types";
+import {
+	resolveCheckInCoachLine,
+	resolveSuggestionCoachLine,
+} from "~/lib/onboarding/post-merge-wedge-coach";
+import type { OnboardingScope, OnboardingState } from "~/lib/onboarding/types";
 import { getBreakReentryLine } from "~/lib/session/transition-copy";
+import { getPersonaPresetLabel } from "~/lib/task/persona-presets";
 import { resolveWedgeBeat } from "~/lib/wedge/transition-conductor";
 
 type DayPlanView = ReturnType<typeof useDayPlan>;
@@ -65,6 +71,9 @@ export function PomodoroDashboardBody({
 	enableSuggestionGate = false,
 	checkInCoachLine,
 	suggestionCoachLine,
+	onboardingState,
+	shouldShowCheckInCoach: shouldShowCheckInCoachFlag,
+	shouldShowSuggestionCoach: shouldShowSuggestionCoachFlag,
 	workTypeDurationScope,
 	cycleEndAudioMode,
 	setCycleEndAudioMode,
@@ -80,6 +89,9 @@ export function PomodoroDashboardBody({
 	enableSuggestionGate?: boolean;
 	checkInCoachLine?: string;
 	suggestionCoachLine?: string;
+	onboardingState?: OnboardingState;
+	shouldShowCheckInCoach?: boolean;
+	shouldShowSuggestionCoach?: boolean;
 	workTypeDurationScope?: OnboardingScope;
 	cycleEndAudioMode: CycleEndAudioMode;
 	setCycleEndAudioMode: (mode: CycleEndAudioMode) => void;
@@ -120,11 +132,40 @@ export function PomodoroDashboardBody({
 		localDateKey: recapDateKey,
 	} = useDailyRecap();
 
+	const suggestionPersonaLabel = useMemo(() => {
+		const pending = pomodoro.pendingSuggestion;
+		if (pending.status !== "ready") {
+			return null;
+		}
+		const task = tasks.find((t) => t.id === pending.data.taskId);
+		if (task?.personaPresetId == null || task.personaPresetId === "custom") {
+			return null;
+		}
+		return getPersonaPresetLabel(task.personaPresetId) ?? null;
+	}, [pomodoro.pendingSuggestion, tasks]);
+
+	const effectiveCheckInCoachLine =
+		onboardingState != null && shouldShowCheckInCoachFlag != null
+			? resolveCheckInCoachLine(onboardingState, shouldShowCheckInCoachFlag)
+			: checkInCoachLine;
+
+	const effectiveSuggestionCoachLine =
+		onboardingState != null && shouldShowSuggestionCoachFlag != null
+			? resolveSuggestionCoachLine(
+					onboardingState,
+					shouldShowSuggestionCoachFlag,
+					suggestionPersonaLabel,
+				)
+			: suggestionCoachLine;
+
 	type PendingStartAction = { kind: "start"; durationSec: number };
 
 	const steeringCompletedRef = useRef(false);
 	const [permissionPromptVisible, setPermissionPromptVisible] = useState(false);
 	const [endSessionConfirmOpen, setEndSessionConfirmOpen] = useState(false);
+	const [endSessionConfirmVariant, setEndSessionConfirmVariant] = useState<
+		"immediate" | "after-pause"
+	>("immediate");
 	const [isEndingSession, setIsEndingSession] = useState(false);
 	const [pendingStartAction, setPendingStartAction] =
 		useState<PendingStartAction | null>(null);
@@ -200,11 +241,22 @@ export function PomodoroDashboardBody({
 
 	const handleEndSessionClick = useCallback(() => {
 		if (pomodoro.state === "running" || pomodoro.state === "paused") {
+			setEndSessionConfirmVariant(
+				pomodoro.state === "paused" ? "after-pause" : "immediate",
+			);
 			setEndSessionConfirmOpen(true);
 			return;
 		}
 
 		void pomodoro.endSession();
+	}, [pomodoro]);
+
+	const handlePauseAndEndSessionClick = useCallback(async () => {
+		if (pomodoro.state === "running") {
+			await pomodoro.pause();
+		}
+		setEndSessionConfirmVariant("after-pause");
+		setEndSessionConfirmOpen(true);
 	}, [pomodoro]);
 
 	const handleEndSessionConfirm = useCallback(async () => {
@@ -219,6 +271,7 @@ export function PomodoroDashboardBody({
 
 	const handleEndSessionCancel = useCallback(() => {
 		setEndSessionConfirmOpen(false);
+		setEndSessionConfirmVariant("immediate");
 	}, []);
 
 	const canMarkTaskDone =
@@ -317,6 +370,21 @@ export function PomodoroDashboardBody({
 
 	const wedgeGateActive = wedgeBeat.activeGate !== "none";
 
+	const breakAtmosphereActive = shouldShowBreakAtmosphere({
+		cycleKind: pomodoro.cycleKind,
+		state: pomodoro.state,
+		wedgeGateActive,
+		suggestionCardOnBreak: showSuggestionCard,
+	});
+	useSyncBreakAtmosphere(breakAtmosphereActive);
+
+	const workFocusShellActive = shouldShowWorkFocusShell({
+		cycleKind: pomodoro.cycleKind,
+		state: pomodoro.state,
+		wedgeGateActive,
+	});
+	useSyncWorkFocusShell(workFocusShellActive);
+
 	const showCycleCompleteCatchUp =
 		!cyclePaused &&
 		catchUp != null &&
@@ -360,21 +428,32 @@ export function PomodoroDashboardBody({
 
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8">
-			{pomodoro.error != null && (
-				<div
-					className="w-full rounded-lg border border-red-400/40 bg-red-500/20 px-4 py-3 text-red-100 text-sm"
-					data-testid="pomodoro-error"
-					role="alert"
-				>
-					{pomodoro.error}
-					<button
-						className="ml-3 underline hover:text-primary"
-						onClick={pomodoro.clearError}
-						type="button"
+			{pomodoro.pendingWedgeRecovery != null ? (
+				<WedgeSyncRecovery
+					isRetrying={pomodoro.isWedgeSyncRetrying || pomodoro.isConfirming}
+					onDismiss={pomodoro.dismissPendingWedgeRecovery}
+					onRetry={() => {
+						void pomodoro.retryWedgeSync();
+					}}
+					recovery={pomodoro.pendingWedgeRecovery}
+				/>
+			) : (
+				pomodoro.error != null && (
+					<div
+						className="w-full rounded-lg border border-red-400/40 bg-red-500/20 px-4 py-3 text-red-100 text-sm"
+						data-testid="pomodoro-error"
+						role="alert"
 					>
-						Dismiss
-					</button>
-				</div>
+						{pomodoro.error}
+						<button
+							className="ml-3 underline hover:text-primary"
+							onClick={pomodoro.clearError}
+							type="button"
+						>
+							Dismiss
+						</button>
+					</div>
+				)
 			)}
 
 			{enableSuggestionGate && pomodoro.showSessionEnergy && (
@@ -463,7 +542,7 @@ export function PomodoroDashboardBody({
 							/>
 						)}
 						<TaskSuggestionCard
-							coachLine={suggestionCoachLine}
+							coachLine={effectiveSuggestionCoachLine}
 							onAccept={() => {
 								pomodoro.dismissCatchUp();
 								onSuggestionCoachSeen?.();
@@ -499,7 +578,7 @@ export function PomodoroDashboardBody({
 					<TaskSuggestionCard status="loading" />
 				) : pomodoro.pendingKickoffSuggestion.status === "ready" ? (
 					<TaskSuggestionCard
-						coachLine={suggestionCoachLine}
+						coachLine={effectiveSuggestionCoachLine}
 						isAccepting={pomodoro.isAcceptingKickoffSuggestion}
 						onAccept={() => {
 							onSuggestionCoachSeen?.();
@@ -555,10 +634,12 @@ export function PomodoroDashboardBody({
 			/>
 
 			<TaskList
+				chromeSubdued={breakAtmosphereActive}
 				continueTaskId={pomodoro.continueTaskId}
 				cycleKind={pomodoro.cycleKind}
 				cycleState={pomodoro.state}
 				focusedTaskId={pomodoro.focusedTaskId}
+				focusShellActive={workFocusShellActive}
 				footprints={recap.footprints}
 				highlightedTaskId={highlightedTaskId}
 				onFocusTask={(taskId, task) => {
@@ -648,7 +729,7 @@ export function PomodoroDashboardBody({
 						</div>
 					)}
 					<CheckInOverlay
-						coachLine={checkInCoachLine}
+						coachLine={effectiveCheckInCoachLine}
 						cycleId={Number(pomodoro.activeCycle.id)}
 						isSubmitting={pomodoro.isConfirming}
 						onSubmit={async (energy) => {
@@ -674,19 +755,33 @@ export function PomodoroDashboardBody({
 					isSubmitting={isEndingSession}
 					onCancel={handleEndSessionCancel}
 					onConfirm={() => void handleEndSessionConfirm()}
+					variant={endSessionConfirmVariant}
 				/>
 			)}
 
 			{pomodoro.hasActiveSession && (
-				<button
-					className="rounded-lg border border-border-subtle px-4 py-2 text-sm text-text-secondary transition hover:border-red-400/40 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
-					data-testid="end-session-btn"
-					disabled={pomodoro.isConfirming || isEndingSession}
-					onClick={handleEndSessionClick}
-					type="button"
-				>
-					End session
-				</button>
+				<div className="flex flex-col items-center gap-2">
+					{pomodoro.state === "running" && (
+						<button
+							className="rounded-lg border border-border-subtle px-4 py-2 text-sm text-text-secondary transition hover:border-energy-steady-border hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40"
+							data-testid="pause-and-end-session-btn"
+							disabled={pomodoro.isConfirming || isEndingSession}
+							onClick={() => void handlePauseAndEndSessionClick()}
+							type="button"
+						>
+							Pause & end session
+						</button>
+					)}
+					<button
+						className="rounded-lg border border-border-subtle px-4 py-2 text-sm text-text-secondary transition hover:border-red-400/40 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+						data-testid="end-session-btn"
+						disabled={pomodoro.isConfirming || isEndingSession}
+						onClick={handleEndSessionClick}
+						type="button"
+					>
+						End session
+					</button>
+				</div>
 			)}
 		</div>
 	);
@@ -707,6 +802,7 @@ function AuthenticatedPomodoroDashboard() {
 	);
 	const {
 		scope: onboardingScope,
+		state: onboardingState,
 		shouldShowCheckInCoach,
 		shouldShowSuggestionCoach,
 		markCheckInCoachSeen,
@@ -721,22 +817,19 @@ function AuthenticatedPomodoroDashboard() {
 
 	return (
 		<PomodoroDashboardBody
-			checkInCoachLine={
-				shouldShowCheckInCoach ? CHECK_IN_COACH_LINE : undefined
-			}
 			cycleEndAudioMode={cycleEndAudioMode}
 			dayPlan={dayPlan}
 			enableCheckInGate
 			enableSuggestionGate
 			enableWindDownGate
 			onboardingScope={onboardingScope}
+			onboardingState={onboardingState}
 			onCheckInCoachSeen={markCheckInCoachSeen}
 			onSuggestionCoachSeen={markSuggestionCoachSeen}
 			refreshTasks={refreshTasks}
 			setCycleEndAudioMode={setCycleEndAudioMode}
-			suggestionCoachLine={
-				shouldShowSuggestionCoach ? SUGGESTION_COACH_LINE : undefined
-			}
+			shouldShowCheckInCoach={shouldShowCheckInCoach}
+			shouldShowSuggestionCoach={shouldShowSuggestionCoach}
 			tasks={domainTasks}
 			workTypeDurationScope={workTypeDurationScope}
 		/>

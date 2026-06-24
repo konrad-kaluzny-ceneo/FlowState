@@ -54,14 +54,14 @@ describe("GuestImportOnMount", () => {
 	});
 
 	it("imports guest snapshot once when authenticated with local guest data", async () => {
-		const { rerender } = render(<GuestImportOnMount />);
+		const { rerender } = render(<GuestImportOnMount userId="user-test" />);
 
 		await waitFor(() => {
 			expect(importGuestSnapshotAction).toHaveBeenCalledTimes(1);
 		});
 		expect(showMergeSuccess).toHaveBeenCalledTimes(1);
 
-		rerender(<GuestImportOnMount />);
+		rerender(<GuestImportOnMount userId="user-test" />);
 		expect(importGuestSnapshotAction).toHaveBeenCalledTimes(1);
 	});
 });
