@@ -3,9 +3,9 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-06-23
+updated: 2026-06-24
 structure: split
-active_slices: [S-38]
+active_slices: []
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -85,7 +85,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-35 | wedge-transition-sync-recovery | [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) | [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) | calm network-loss recovery on wedge gates | F-07, S-06, S-22 | **US-01** | done |
 | S-36 | persona-presets-v2 | [FLO-75](https://linear.app/flowstate-10xdev/issue/FLO-75) | [#118](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/118) | 8 personas + row labels + visible effort | S-29, F-05 | **US-02** | done |
 | S-37 | revisit-user-choices | [FLO-80](https://linear.app/flowstate-10xdev/issue/FLO-80) | [#132](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/132) | see and change prior choices (MVP: out-of-tab notification prefs on timer hub) | break-alerts-out-of-tab (merged) | revisit-user-choices PRD thread | done |
-| S-38 | session-end-mid-cycle-closure | [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) | [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151) | mid-cycle end sets expectations — what counts in closure | B-08 minimal | US-04 | in review |
+| S-38 | session-end-mid-cycle-closure | [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) | [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151) | mid-cycle end sets expectations — what counts in closure | B-08 minimal | US-04 | done |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -178,6 +178,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **S-38: mid-cycle end sets expectations — what counts in closure** — Archived 2026-06-24 → `context/archive/2026-06-23-session-end-mid-cycle-closure/`. PR [#162](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/162). Issues [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) / [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151). Lesson: S-38 mid-cycle copy gated to WORK via `cycleContext`; break confirm restores B-08 neutral wording; closure `interruptedMidCycle` only when ending during WORK running/paused.
 - **B-09: pause then end session — B-08 full variant (dual calm exit)** — Archived 2026-06-23 → `context/archive/2026-06-23-pause-and-end-session/`. PR [#161](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/161). Issues [FLO-86](https://linear.app/flowstate-10xdev/issue/FLO-86) / [#150](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/150). Lesson: pause-then-confirm before endSession from paused; after-pause overlay variant distinguishes three exit intents.
 - **S-28: Calm Garden illustrations + overlay phase 2** — Archived 2026-06-23 → `context/archive/2026-06-23-wellness-illustration-foundation/`. PR [#160](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/160). Issues [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) / [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98). Lesson: phase 1 (hero sprig + Empty Garden Bed SVG primitives); overlay scrims deferred to follow-up.
 - **S-11 ext: post-merge wedge coach** — Archived 2026-06-23 → `context/archive/2026-06-23-post-merge-wedge-coach/`. PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159). Extends S-11 / [FLO-26](https://linear.app/flowstate-10xdev/issue/FLO-26) / [#37](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/37). Lesson: `authenticatedWedgeCoachEligible` on guest import; persona-aware suggestion subcopy; `hasSeenAuthenticatedWedge` completes bridge.
