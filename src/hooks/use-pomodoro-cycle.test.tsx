@@ -1510,6 +1510,60 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.hasActiveSession).toBe(false);
 	});
 
+	it("passes mid-cycle closureLine when user ends during running WORK (S-38)", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 50,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.endSession();
+		});
+
+		expect(endSession).toHaveBeenCalledWith(
+			expect.objectContaining({
+				closureLine: expect.stringContaining("wasn't counted"),
+			}),
+		);
+	});
+
+	it("omits mid-cycle note when ending during a break cycle", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 51,
+			kind: "SHORT_BREAK",
+			configuredDurationSec: 300,
+			taskId: null,
+			task: null,
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.endSession();
+		});
+
+		const call = endSession.mock.calls.at(-1)?.[0] as {
+			closureLine: string;
+		};
+		expect(call.closureLine).not.toMatch(/wasn't counted/i);
+	});
+
 	it("WORK cycle-end requires check-in before break starts", async () => {
 		activeCycleData = makeActiveCycle({
 			id: 70,

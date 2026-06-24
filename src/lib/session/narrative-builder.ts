@@ -32,7 +32,11 @@ export type ClosureLineInput = {
 	tasksCompleted: number;
 	latestEnergy: EnergyLevel | null;
 	endedBy: "user" | "timeout" | "pause_cap";
+	/** S-38: user ended during an in-progress work block — clarify it is excluded from stats. */
+	interruptedMidCycle?: boolean;
 };
+
+const MID_CYCLE_FOCUS_NOT_COUNTED = "This focus block wasn't counted.";
 
 export type ReturnHandoffInput = {
 	closureLine: string | null;
@@ -89,10 +93,36 @@ export function buildInFlowSummary(input: InFlowSummaryInput): string | null {
 	return parts.join(" · ");
 }
 
-export function buildClosureLine(input: ClosureLineInput): string {
+function formatClosureStatsParts(input: ClosureLineInput): string {
+	if (
+		input.interruptedMidCycle &&
+		input.endedBy === "user" &&
+		input.cyclesCompleted === 0 &&
+		input.tasksCompleted === 0
+	) {
+		return "no finished cycles yet";
+	}
+
 	const cyclePart = formatCycleCount(Math.max(input.cyclesCompleted, 0));
 	const taskPart = formatTaskCount(input.tasksCompleted);
-	const statsParts = [cyclePart, taskPart].filter(Boolean).join(", ");
+	return [cyclePart, taskPart].filter(Boolean).join(", ");
+}
+
+function appendMidCycleNote(line: string, input: ClosureLineInput): string {
+	if (!input.interruptedMidCycle || input.endedBy !== "user") {
+		return line;
+	}
+
+	const note = ` ${MID_CYCLE_FOCUS_NOT_COUNTED}`;
+	if (line.length + note.length > 120) {
+		return line;
+	}
+
+	return `${line}${note}`;
+}
+
+export function buildClosureLine(input: ClosureLineInput): string {
+	const statsParts = formatClosureStatsParts(input);
 	const energyPart = formatEnergy(input.latestEnergy);
 
 	if (input.endedBy === "pause_cap") {
@@ -103,10 +133,16 @@ export function buildClosureLine(input: ClosureLineInput): string {
 	}
 
 	if (energyPart) {
-		return `${CLOSURE_PREFIX} — ${statsParts}. ${capitalize(energyPart)}.`;
+		return appendMidCycleNote(
+			`${CLOSURE_PREFIX} — ${statsParts}. ${capitalize(energyPart)}.`,
+			input,
+		);
 	}
 
-	return `${CLOSURE_PREFIX} — ${statsParts}. Take a breath.`;
+	return appendMidCycleNote(
+		`${CLOSURE_PREFIX} — ${statsParts}. Take a breath.`,
+		input,
+	);
 }
 
 export function buildReturnHandoff(input: ReturnHandoffInput): string | null {

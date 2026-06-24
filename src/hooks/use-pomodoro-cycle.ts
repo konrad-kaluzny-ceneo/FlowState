@@ -856,12 +856,16 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	);
 
 	const buildSessionClosureLine = useCallback(
-		(endedBy: "user" | "timeout" | "pause_cap") =>
+		(
+			endedBy: "user" | "timeout" | "pause_cap",
+			options?: { interruptedMidCycle?: boolean },
+		) =>
 			buildClosureLine({
 				cyclesCompleted: completedWorkCycles,
 				tasksCompleted: narrativeTasksCompleted,
 				latestEnergy: narrativeLatestEnergy,
 				endedBy,
+				interruptedMidCycle: options?.interruptedMidCycle,
 			}),
 		[completedWorkCycles, narrativeTasksCompleted, narrativeLatestEnergy],
 	);
@@ -3399,8 +3403,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setError(null);
 			clearPauseCapTimer();
 			const endingSessionId = _activeSessionId;
+			const interruptedMidCycle =
+				activeCycle != null &&
+				cycleKind === "WORK" &&
+				(state === "running" || state === "paused");
 			const closureLine = buildSessionClosureLine(
 				endedBy === "pause_cap" ? "pause_cap" : "user",
+				{ interruptedMidCycle },
 			);
 
 			if (activeCycle != null && state === "running") {
@@ -3485,6 +3494,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		[
 			_activeSessionId,
 			activeCycle,
+			cycleKind,
 			state,
 			mode,
 			cycles,

@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-23
 structure: split
-active_slices: []
+active_slices: [S-38]
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -85,7 +85,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-35 | wedge-transition-sync-recovery | [FLO-74](https://linear.app/flowstate-10xdev/issue/FLO-74) | [#117](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/117) | calm network-loss recovery on wedge gates | F-07, S-06, S-22 | **US-01** | done |
 | S-36 | persona-presets-v2 | [FLO-75](https://linear.app/flowstate-10xdev/issue/FLO-75) | [#118](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/118) | 8 personas + row labels + visible effort | S-29, F-05 | **US-02** | done |
 | S-37 | revisit-user-choices | [FLO-80](https://linear.app/flowstate-10xdev/issue/FLO-80) | [#132](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/132) | see and change prior choices (MVP: out-of-tab notification prefs on timer hub) | break-alerts-out-of-tab (merged) | revisit-user-choices PRD thread | done |
-| S-38 | session-end-mid-cycle-closure | [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) | [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151) | mid-cycle end sets expectations — what counts in closure | B-08 minimal | US-04 | proposed |
+| S-38 | session-end-mid-cycle-closure | [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) | [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151) | mid-cycle end sets expectations — what counts in closure | B-08 minimal | US-04 | in review |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 

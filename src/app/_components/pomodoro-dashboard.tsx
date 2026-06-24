@@ -752,6 +752,7 @@ export function PomodoroDashboardBody({
 
 			{endSessionConfirmOpen && (
 				<EndSessionConfirmOverlay
+					cycleContext={pomodoro.cycleKind === "WORK" ? "work" : "break"}
 					isSubmitting={isEndingSession}
 					onCancel={handleEndSessionCancel}
 					onConfirm={() => void handleEndSessionConfirm()}

@@ -66,7 +66,7 @@ describe("buildClosureLine", () => {
 		).toBe("Session complete — 3 cycles, 2 tasks done. Feeling fading.");
 	});
 
-	it("uses the same tone for timeout-ended sessions", () => {
+	it("uses calm tone for timeout-ended sessions", () => {
 		expect(
 			buildClosureLine({
 				cyclesCompleted: 1,
@@ -99,6 +99,44 @@ describe("buildClosureLine", () => {
 				endedBy: "pause_cap",
 			}),
 		).toBe("Your pause ran long — session complete — 1 cycle. Take a breath.");
+	});
+
+	it("clarifies in-progress work is excluded when user ends mid-cycle (S-38)", () => {
+		expect(
+			buildClosureLine({
+				cyclesCompleted: 0,
+				tasksCompleted: 0,
+				latestEnergy: null,
+				endedBy: "user",
+				interruptedMidCycle: true,
+			}),
+		).toBe(
+			"Session complete — no finished cycles yet. Take a breath. This focus block wasn't counted.",
+		);
+
+		expect(
+			buildClosureLine({
+				cyclesCompleted: 2,
+				tasksCompleted: 1,
+				latestEnergy: "STEADY",
+				endedBy: "user",
+				interruptedMidCycle: true,
+			}),
+		).toBe(
+			"Session complete — 2 cycles, 1 task done. Feeling steady. This focus block wasn't counted.",
+		);
+	});
+
+	it("does not add mid-cycle note for timeout or pause-cap ends", () => {
+		expect(
+			buildClosureLine({
+				cyclesCompleted: 1,
+				tasksCompleted: 0,
+				latestEnergy: null,
+				endedBy: "timeout",
+				interruptedMidCycle: true,
+			}),
+		).toBe("Session complete — 1 cycle. Take a breath.");
 	});
 });
 
