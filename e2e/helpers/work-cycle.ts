@@ -42,7 +42,10 @@ export async function resetFakeClock(page: Page) {
 	clockInstalledPages.add(page);
 }
 
-/** 1s work + 1s break — pair with ensureFakeClock + advanceClockThroughFast*. */
+/**
+ * 1s work + 1s break. UI cycle starts via `clickStartCycle` / `startFocusedWorkCycle`
+ * install the fake clock automatically; still call `advanceClockThroughFast*` to advance time.
+ */
 export async function configureFastPomodoroDurations(page: Page) {
 	await setShortBreakDurationSec(page, 1);
 	await setWorkDurationSec(page, 1);
@@ -106,8 +109,15 @@ export async function waitForCycleCreateSettled(page: Page) {
 	throw new Error("cycle.create did not return ok within timeout");
 }
 
-/** Click Start Cycle and await server create on authenticated dashboards. */
+/**
+ * Click Start Cycle and await server create on authenticated dashboards.
+ *
+ * E2E client timer mode (`NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1`) computes cycle expiry
+ * from client `Date.now()`, so the fake clock must be installed before Start Cycle —
+ * otherwise sub-second cycles race the real wall clock (`e2e-belt-timer-flakiness`).
+ */
 export async function clickStartCycle(page: Page) {
+	await ensureFakeClock(page);
 	await dismissFirstRunIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	const createSettled = waitForCycleCreateSettled(page);
