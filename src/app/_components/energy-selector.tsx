@@ -127,24 +127,27 @@ export function EnergySelector({
 					{coachLine}
 				</p>
 			)}
-			<div className="mt-4 flex flex-col gap-2 sm:mt-6 sm:flex-row sm:gap-2">
-				{ENERGY_OPTIONS.map((option) => (
-					<button
-						className={`flex flex-1 flex-col items-center justify-center gap-1.5 rounded-lg border px-2 py-3 font-semibold text-primary transition disabled:opacity-50 sm:py-2.5 ${option.buttonClass}`}
-						data-testid={option.testId}
-						disabled={disabled}
-						key={option.value}
-						onClick={() => onSelect(option.value)}
-						type="button"
-					>
-						<EnergyOptionIcon
-							className={`h-5 w-5 shrink-0 ${option.iconClass}`}
-							ui={option.ui}
-						/>
-						<span>{option.label}</span>
-					</button>
-				))}
-			</div>
+			<fieldset className="mt-4 border-0 p-0 sm:mt-6">
+				<legend className="sr-only">Energy level</legend>
+				<div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+					{ENERGY_OPTIONS.map((option) => (
+						<button
+							className={`flex flex-1 flex-col items-center justify-center gap-1.5 rounded-lg border px-2 py-3 font-semibold text-primary transition disabled:opacity-50 sm:py-2.5 ${option.buttonClass}`}
+							data-testid={option.testId}
+							disabled={disabled}
+							key={option.value}
+							onClick={() => onSelect(option.value)}
+							type="button"
+						>
+							<EnergyOptionIcon
+								className={`h-5 w-5 shrink-0 ${option.iconClass}`}
+								ui={option.ui}
+							/>
+							<span>{option.label}</span>
+						</button>
+					))}
+				</div>
+			</fieldset>
 		</>
 	);
 }

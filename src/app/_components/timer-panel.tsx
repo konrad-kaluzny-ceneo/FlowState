@@ -121,6 +121,7 @@ export function TimerPanel({
 
 		return (
 			<section
+				aria-label={isBreak ? "Break timer" : "Focus timer"}
 				className={`w-full max-w-lg rounded-xl border p-6 text-center shadow-sm ${
 					isBreak
 						? "border-border-break bg-surface-break"
@@ -200,8 +201,14 @@ export function TimerPanel({
 		workMaxSec,
 	);
 
+	const startLabel =
+		focusedTask != null
+			? `Start cycle for ${focusedTask.title}`
+			: "Start cycle";
+
 	return (
 		<section
+			aria-label="Ready to focus"
 			className="w-full max-w-lg rounded-xl border border-card-border bg-surface-card p-6 shadow-sm"
 			data-testid="timer-panel-idle"
 		>
@@ -230,12 +237,16 @@ export function TimerPanel({
 			/>
 
 			<button
+				aria-label={startLabel}
 				className="mt-6 w-full rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50"
+				data-testid="timer-start-cycle"
 				disabled={isStarting || workPickerInvalid || !workValid}
 				onClick={() => void onStart(workDurationSec)}
 				type="button"
 			>
-				{isStarting ? "Starting..." : "Start Cycle"}
+				<span aria-hidden="true">
+					{isStarting ? "Starting..." : "Start Cycle"}
+				</span>
 			</button>
 
 			{onCycleEndAudioModeChange != null && (

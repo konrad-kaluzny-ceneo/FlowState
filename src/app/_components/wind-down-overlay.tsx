@@ -26,12 +26,26 @@ export function WindDownOverlay({
 	isSubmitting = false,
 }: WindDownOverlayProps) {
 	return (
-		<OverlayScrim role="dialog" testId="wind-down-overlay" zIndex={58}>
+		<OverlayScrim
+			ariaDescribedBy="wind-down-description"
+			ariaLabelledBy="wind-down-heading"
+			role="dialog"
+			testId="wind-down-overlay"
+			zIndex={58}
+		>
 			<OverlayCard>
-				<h2 className="font-semibold text-2xl text-primary">
+				<h2
+					className="font-semibold text-2xl text-primary"
+					id="wind-down-heading"
+				>
 					{WIND_DOWN_TITLE}
 				</h2>
-				<p className="mt-4 text-sm text-text-secondary">{WIND_DOWN_BODY}</p>
+				<p
+					className="mt-4 text-sm text-text-secondary"
+					id="wind-down-description"
+				>
+					{WIND_DOWN_BODY}
+				</p>
 				<p
 					className="mt-2 text-accent-cta/70 text-xs"
 					data-testid="wind-down-rationale"

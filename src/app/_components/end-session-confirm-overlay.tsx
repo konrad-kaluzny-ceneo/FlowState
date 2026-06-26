@@ -30,13 +30,26 @@ export function EndSessionConfirmOverlay({
 
 	return (
 		<OverlayScrim
+			ariaDescribedBy="end-session-confirm-description"
+			ariaLabelledBy="end-session-confirm-heading"
+			onEscape={isSubmitting ? undefined : onCancel}
 			role="dialog"
 			testId="end-session-confirm-overlay"
 			zIndex={58}
 		>
 			<OverlayCard>
-				<h2 className="font-semibold text-2xl text-primary">{copy.title}</h2>
-				<p className="mt-4 text-sm text-text-secondary">{copy.body}</p>
+				<h2
+					className="font-semibold text-2xl text-primary"
+					id="end-session-confirm-heading"
+				>
+					{copy.title}
+				</h2>
+				<p
+					className="mt-4 text-sm text-text-secondary"
+					id="end-session-confirm-description"
+				>
+					{copy.body}
+				</p>
 				<div className="mt-8 flex flex-col gap-3">
 					<button
 						className={`${overlayButtonClass.primaryFull} disabled:cursor-not-allowed`}

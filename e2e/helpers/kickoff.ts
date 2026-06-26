@@ -125,9 +125,9 @@ export async function expectKickoffVisible(
 	});
 
 	if (options?.title != null) {
-		await expect(
-			page.getByTestId("task-suggestion-card").getByText(options.title),
-		).toBeVisible();
+		await expect(page.getByTestId("suggestion-task-title")).toHaveText(
+			options.title,
+		);
 	}
 
 	if (options?.rationale != null) {

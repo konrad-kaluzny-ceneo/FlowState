@@ -31,6 +31,14 @@ describe("SessionEnergyCard", () => {
 
 		expect(onSkip).toHaveBeenCalled();
 	});
+
+	it("exposes a labelled energy steering region", () => {
+		render(<SessionEnergyCard onSelect={vi.fn()} onSkip={vi.fn()} />);
+
+		expect(
+			screen.getByRole("region", { name: "How's your energy to start?" }),
+		).toBeTruthy();
+	});
 });
 
 describe("SessionFocusCard", () => {
@@ -60,5 +68,24 @@ describe("SessionFocusCard", () => {
 		fireEvent.click(screen.getByTestId("session-focus-skip-btn"));
 
 		expect(onSkip).toHaveBeenCalled();
+	});
+
+	it("exposes a labelled focus steering region with grouped chips", () => {
+		render(<SessionFocusCard onComplete={vi.fn()} onSkip={vi.fn()} />);
+
+		expect(
+			screen.getByRole("region", { name: "What's your focus this session?" }),
+		).toBeTruthy();
+		expect(
+			screen.getByRole("group", { name: "Focus intention options" }),
+		).toBeTruthy();
+	});
+
+	it("labels the custom focus input for screen readers", () => {
+		render(<SessionFocusCard onComplete={vi.fn()} onSkip={vi.fn()} />);
+
+		expect(
+			screen.getByRole("textbox", { name: "Custom focus intention" }),
+		).toBeTruthy();
 	});
 });

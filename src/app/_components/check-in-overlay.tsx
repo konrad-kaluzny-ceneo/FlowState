@@ -24,16 +24,24 @@ export function CheckInOverlay({
 }: CheckInOverlayProps) {
 	return (
 		<OverlayScrim
+			ariaDescribedBy="check-in-description"
+			ariaLabelledBy="check-in-heading"
 			cycleId={cycleId}
 			role="dialog"
 			testId="check-in-overlay"
 			zIndex={60}
 		>
 			<OverlayCard>
-				<h2 className="font-semibold text-2xl text-primary">
+				<h2
+					className="font-semibold text-2xl text-primary"
+					id="check-in-heading"
+				>
 					How&apos;s your energy?
 				</h2>
-				<p className="mt-2 text-sm text-text-secondary">
+				<p
+					className="mt-2 text-sm text-text-secondary"
+					id="check-in-description"
+				>
 					Select one before your break starts.
 				</p>
 				<EnergySelector

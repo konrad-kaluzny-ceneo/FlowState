@@ -41,6 +41,31 @@ export async function dismissBreakAlertsPermissionIfVisible(page: Page) {
 	}
 }
 
+/** Dismiss cycle-complete modal so belt helpers can reach task list / start controls. */
+export async function dismissCycleCompleteIfVisible(page: Page) {
+	if (!(await page.getByTestId("cycle-complete-overlay").isVisible())) {
+		return;
+	}
+	await dismissKickoffSteeringIfVisible(page);
+	const continueLater = page.getByRole("button", { name: "Continue later" });
+	if (await continueLater.isVisible()) {
+		await continueLater.click();
+		if (await page.getByTestId("check-in-overlay").isVisible()) {
+			await completeCheckIn(page, "steady");
+			if (await page.getByTestId("wind-down-overlay").isVisible()) {
+				await page.getByTestId("wind-down-keep-going-btn").click();
+			}
+		}
+		return;
+	}
+	const suggestedContinue = page.getByTestId("break-continue-suggested-btn");
+	if (await suggestedContinue.isVisible()) {
+		await suggestedContinue.click();
+		return;
+	}
+	await page.getByTestId("break-continue-btn").click();
+}
+
 export async function dismissTaskSuggestionIfVisible(page: Page) {
 	const card = page.getByTestId("task-suggestion-card");
 	if (!(await card.isVisible().catch(() => false))) {
@@ -108,25 +133,7 @@ export async function ensureIdleCycle(page: Page) {
 		}
 
 		if (await page.getByTestId("cycle-complete-overlay").isVisible()) {
-			await dismissKickoffSteeringIfVisible(page);
-			const continueLater = page.getByRole("button", {
-				name: "Continue later",
-			});
-			if (await continueLater.isVisible()) {
-				await continueLater.click();
-				if (await page.getByTestId("check-in-overlay").isVisible()) {
-					await completeCheckIn(page, "steady");
-				}
-			} else {
-				const suggestedContinue = page.getByTestId(
-					"break-continue-suggested-btn",
-				);
-				if (await suggestedContinue.isVisible()) {
-					await suggestedContinue.click();
-				} else {
-					await page.getByTestId("break-continue-btn").click();
-				}
-			}
+			await dismissCycleCompleteIfVisible(page);
 			throw new Error("cycle overlay dismissed — re-check idle");
 		}
 

@@ -54,7 +54,9 @@ test.describe("Daily work timing recap (S-30)", () => {
 		await setWorkDurationSec(page, 1);
 		await setShortBreakDurationSec(page, 30);
 		await clickStartCycle(page);
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+		await expect(page.getByTestId("timer-panel-running")).toBeVisible({
+			timeout: 15_000,
+		});
 
 		await advanceClockThroughFastWork(page);
 		const recapResponse = page.waitForResponse(

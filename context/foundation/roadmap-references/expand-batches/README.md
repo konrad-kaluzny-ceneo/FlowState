@@ -2,6 +2,21 @@
 
 # Follow-up scope merges
 
+## Unpark review (2026-06-26 — accessible wedge operation)
+
+> `/10x-roadmap-expand` unpark pass run after `/10x-ship-slice-base` S1 found no eligible canonical roadmap rows. Context-only commit: no Linear/GitHub issues created.
+
+| Proposal | Score | Action | Target |
+| --- | --- | --- | --- |
+| P-102 Accessible wedge overlay gates | 66 (original) / 77 (unpark evaluation with P-103) | **promote** | S-39 |
+| P-103 Wedge keyboard shortcuts | 67 (original) / bundled | **merge into promoted slice** | S-39 |
+| testing-prd-v3-wedge-coherence | 73 | defer as quality companion | test-plan Phase 8 |
+| testing-mutation-oracle-hardening | 52 | defer | test-plan Phase 5 |
+
+**Goal:** provide one normal canonical `ready` roadmap row for the next ship-slice run while preserving PRD v3 wedge coherence and avoiding a horizontal app-wide accessibility audit.
+
+**Recommended `/10x-plan` target:** `S-39` (`accessible-wedge-gates`) after creating the Linear/GitHub pair.
+
 ## Follow-up scope merges (batch 6 — coherence gaps)
 
 > `/10x-roadmap-expand` coherence pass 2026-06-12 — **Commit** synced to Linear + GitHub.
