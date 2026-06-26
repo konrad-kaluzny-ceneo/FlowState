@@ -8,7 +8,7 @@
 
 | Proposal | Score | Action | Target |
 | --- | --- | --- | --- |
-| P-703 Product Voice Contract | 9.6 | **promote** | F-08 |
+| P-703 Product Voice Contract | 9.6 | **promote** | F-14 |
 | P-701 Home IA Reset | 9.1 | **promote** | S-40 |
 | P-702 Desktop Calm Workbench | 9.2 | **promote** | S-41 |
 | P-704 Mindful Day Memory | 9.3 | **promote** (S-30 phase 2) | S-42 |
@@ -16,7 +16,7 @@
 
 **Goal:** make app purpose obvious on entry; calm home hierarchy; desktop workbench; narrative day memory; state-bound Calm Garden illustrations.
 
-**Recommended `/10x-plan` target:** `product-voice-contract` (F-08) first.
+**Recommended `/10x-plan` target:** `product-voice-contract` (F-14) first.
 
 Detail: [`batch-7-ux-ui-story-chapter.md`](batch-7-ux-ui-story-chapter.md).
 

@@ -25,11 +25,11 @@ last_updated_by: GPT-5.5
 
 ## Summary
 
-The UX/UI story chapter is implementable as a coherent roadmap expansion after PRD v3 and the quality hardening rows. The proposed ID allocation is available: the current roadmap ends product slices at `S-39` and quality at `Q-09`, so `F-08` and `S-40` through `S-43` can be used without collision ([roadmap.md:89-91](https://github.com/konrad-kaluzny-ceneo/FlowState/blob/8ca325ea8352b9404f30bd6c93900c7e290d532b/context/foundation/roadmap.md#L89-L91)).
+The UX/UI story chapter is implementable as a coherent roadmap expansion after PRD v3 and the quality hardening rows. The proposed ID allocation is available: the current roadmap ends product slices at `S-39` and quality at `Q-09`, so `F-14` and `S-40` through `S-43` can be used without collision ([roadmap.md:89-91](https://github.com/konrad-kaluzny-ceneo/FlowState/blob/8ca325ea8352b9404f30bd6c93900c7e290d532b/context/foundation/roadmap.md#L89-L91)).
 
 The safest roadmap stance is:
 
-- `F-08 product-voice-contract` - new foundation row, first in sequence.
+- `F-14 product-voice-contract` - new foundation row, first in sequence.
 - `S-40 home-ia-reset` - new UX slice, hard prerequisite for desktop layout.
 - `S-41 desktop-calm-workbench` - new UX slice, only after S-40.
 - `S-42 mindful-day-memory` - new slice row, but explicitly marked as S-30 phase 2 / formatter-only.
@@ -37,7 +37,7 @@ The safest roadmap stance is:
 
 The implementation risk is not technical feasibility; it is scope discipline. `S-41` context rail can steal focus from the decision column; `S-42` can duplicate S-30 substrate. `S-43` can violate the S-39 gate/accessibility contract if illustrations appear on accept/override/start controls.
 
-Recommended sequence: `F-08 -> S-40 -> S-41`, with `S-43` able to run in parallel with `S-41` once the rail/hero slot is defined, and `S-42` best placed after the home hierarchy exists so recap remains context rather than a primary surface.
+Recommended sequence: `F-14 -> S-40 -> S-41`, with `S-43` able to run in parallel with `S-41` once the rail/hero slot is defined, and `S-42` best placed after the home hierarchy exists so recap remains context rather than a primary surface.
 
 ## Detailed Findings
 
@@ -224,7 +224,7 @@ Parked and merge constraints to carry forward:
 ## Open Questions
 
 1. Should roadmap `main_goal` move from quality hardening to a new label such as `ux-story`, or should the new stream stand alone until the roadmap patch is accepted?
-2. Should `S-42` run before or after `S-43`? Hard constraints are clear (`F-08` first, `S-40` before `S-41`), but the source docs differ on the final ordering.
+2. Should `S-42` run before or after `S-43`? Hard constraints are clear (`F-14` first, `S-40` before `S-41`), but the source docs differ on the final ordering.
 3. What is the concrete, deterministic substitute for the proposed "5-second purpose test" and ">=80% pass" acceptance? The app should not add analytics instrumentation for this.
 4. Which exact three rail blocks are allowed in `S-41` for authenticated and guest users?
 5. Which exact existing session/cycle states bind to the six `S-43` illustration variants?

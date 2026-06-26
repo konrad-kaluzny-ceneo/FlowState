@@ -50,7 +50,7 @@ S-28 phase 2 absorption + six-state variant map on hero/rail.
 
 | Proposal | Roadmap stance |
 | --- | --- |
-| `product-voice-contract` | New foundation row (F-08) |
+| `product-voice-contract` | New foundation row (F-14) |
 | `home-ia-reset` | New slice row (S-40) |
 | `desktop-calm-workbench` | New slice row (S-41), hard dependency on S-40 |
 | `mindful-day-memory` | New slice row (S-42), explicit S-30 phase 2 |

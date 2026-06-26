@@ -2,7 +2,7 @@
 
 ## Overview
 
-Write the accepted UX/UI story chapter into FlowState's roadmap index and reference layer. Five proposals from expand batch 7 become canonical rows **F-08** (`product-voice-contract`) and **S-40**–**S-43** (`home-ia-reset`, `desktop-calm-workbench`, `mindful-day-memory`, `stateful-illustration-system`). This change is **documentation only** — it prepares downstream `/10x-plan` and `/10x-implement` work; it does not modify application code.
+Write the accepted UX/UI story chapter into FlowState's roadmap index and reference layer. Five proposals from expand batch 7 become canonical rows **F-14** (`product-voice-contract`) and **S-40**–**S-43** (`home-ia-reset`, `desktop-calm-workbench`, `mindful-day-memory`, `stateful-illustration-system`). This change is **documentation only** — it prepares downstream `/10x-plan` and `/10x-implement` work; it does not modify application code.
 
 ## Current State Analysis
 
@@ -14,7 +14,7 @@ Write the accepted UX/UI story chapter into FlowState's roadmap index and refere
 
 ### Key Discoveries
 
-- ID allocation is collision-free: F-08 and S-40–S-43 (`research.md`).
+- ID allocation is collision-free: F-14 and S-40–S-43 (`research.md`).
 - Patch targets: glance table after Q-09, new stream after Stream Q, backlog handoff, scope merges, item cards, expand-batches record (`research.md`).
 - Primary risk is scope discipline (recap co-primary; illustrations on gate controls), not stack feasibility (`research.md`, `parked-comparison.md`).
 - Issue creation follows L-01: verify existing `FLO-*` before creating pairs; quality rows Q-08/Q-09 intentionally skip external issues (`lessons.md`, `items/Q-08.md`).
@@ -23,9 +23,9 @@ Write the accepted UX/UI story chapter into FlowState's roadmap index and refere
 
 After this plan completes:
 
-1. `roadmap.md` lists F-08 and S-40–S-43 with short Outcome cells, prerequisites, PRD refs, and `proposed` status.
-2. Stream **R — UX/UI story chapter** documents the craft chain F-08 → S-40 → S-41 → S-42 → S-43.
-3. Backlog handoff recommends **F-08 / `product-voice-contract`** as first `/10x-plan` target.
+1. `roadmap.md` lists F-14 and S-40–S-43 with short Outcome cells, prerequisites, PRD refs, and `proposed` status.
+2. Stream **R — UX/UI story chapter** documents the craft chain F-14 → S-40 → S-41 → S-42 → S-43.
+3. Backlog handoff recommends **F-14 / `product-voice-contract`** as first `/10x-plan` target.
 4. Item cards exist for each new ID with expand merge notes (S-42↔S-30, S-43↔S-28).
 5. A PRD/roadmap decision audit records which old "not doing now" decisions remain locked, which need clarification, and which are absorbed by the new rows.
 6. Batch 7 is archived under `roadmap-references/expand-batches/batch-7-ux-ui-story-chapter.md`.
@@ -46,13 +46,13 @@ Follow the split-roadmap convention: patch the index (`roadmap.md`) with terse r
 
 **Frozen sequencing (roadmap commit order):**
 
-1. **F-08** `product-voice-contract` — foundation; `context/foundation/product-voice.md`
-2. **S-40** `home-ia-reset` — home IA; soft dep F-08
+1. **F-14** `product-voice-contract` — foundation; `context/foundation/product-voice.md`
+2. **S-40** `home-ia-reset` — home IA; soft dep F-14
 3. **S-41** `desktop-calm-workbench` — hard dep S-40
-4. **S-42** `mindful-day-memory` — S-30 phase 2; after F-08; best after S-40/S-41 placement
+4. **S-42** `mindful-day-memory` — S-30 phase 2; after F-14; best after S-40/S-41 placement
 5. **S-43** `stateful-illustration-system` — absorbs S-28 phase 2; may parallel S-41 implementation once rail slot exists
 
-**`main_goal`:** leave frontmatter as `quality` until F-08 ships; the new stream carries chapter identity without premature relabel.
+**`main_goal`:** leave frontmatter as `quality` until F-14 ships; the new stream carries chapter identity without premature relabel.
 
 ## Critical Implementation Details
 
@@ -102,7 +102,7 @@ Lock acceptance language and relationships before editing canonical roadmap file
 | `roadmap-references/parked.md`: session reconnect calm banner P-104 | Still parked | keep parked | Do not hide it in S-40/S-42; leave a separate future recovery candidate |
 | `items/S-30.md`: light timing recap | Shipped substrate | absorb as phase 2 | S-42 explicitly extends presentation/formatter only; no new data pipeline |
 | `items/S-28.md`: Calm Garden phase 2 overlays | Deferred scope | absorb/reframe | S-43 absorbs visual follow-up while preserving S-39 gate exclusions |
-| `roadmap.md` frontmatter `main_goal: quality` | Current chapter label | keep for now | Stream R carries UX/UI story until F-08 ships |
+| `roadmap.md` frontmatter `main_goal: quality` | Current chapter label | keep for now | Stream R carries UX/UI story until F-14 ships |
 
 If the audit marks any PRD text as stale, Phase 2 must update the relevant PRD or roadmap-reference wording in the same patch.
 
@@ -129,7 +129,7 @@ If the audit marks any PRD text as stale, Phase 2 must update the relevant PRD o
 
 ### Overview
 
-Add F-08 and S-40–S-43 to the canonical roadmap index with stream, handoff, and scope merges.
+Add F-14 and S-40–S-43 to the canonical roadmap index with stream, handoff, and scope merges.
 
 ### Changes Required
 
@@ -143,10 +143,10 @@ Add F-08 and S-40–S-43 to the canonical roadmap index with stream, handoff, an
 
 | ID | Change ID | Outcome (short) | Prerequisites |
 | --- | --- | --- | --- |
-| F-08 | product-voice-contract | (foundation) Polish-first voice contract — promise, tone, copy zones | S-21, S-30, F-04, F-06 |
-| S-40 | home-ia-reset | home answers "Co teraz?" — one dominant next-focus, recap collapsed, inventory secondary | S-13, S-15, S-27, S-30, S-31; soft F-08 |
-| S-41 | desktop-calm-workbench | lg≥1024 calm three-zone workbench; decision column primary; rail ≤3 blocks | S-40; soft F-08 |
-| S-42 | mindful-day-memory | S-30 phase 2 — Domknięte/Zostaje/Wróć tutaj narrative; formatter only | S-30, S-18; soft F-08 |
+| F-14 | product-voice-contract | (foundation) Polish-first voice contract — promise, tone, copy zones | S-21, S-30, F-04, F-06 |
+| S-40 | home-ia-reset | home answers "Co teraz?" — one dominant next-focus, recap collapsed, inventory secondary | S-13, S-15, S-27, S-30, S-31; soft F-14 |
+| S-41 | desktop-calm-workbench | lg≥1024 calm three-zone workbench; decision column primary; rail ≤3 blocks | S-40; soft F-14 |
+| S-42 | mindful-day-memory | S-30 phase 2 — Domknięte/Zostaje/Wróć tutaj narrative; formatter only | S-30, S-18; soft F-14 |
 | S-43 | stateful-illustration-system | S-28 phase 2 — state-bound Calm Garden on hero/rail; not on gates | S-28, F-06, F-07, S-39 |
 
 Linear/GitHub columns: `—` until Phase 4.
@@ -155,7 +155,7 @@ Linear/GitHub columns: `—` until Phase 4.
 
 **File**: `context/foundation/roadmap.md`
 
-**Intent**: Add Stream **R — UX/UI story chapter** after Stream Q: `F-08 → S-40 → S-41 → S-42 → S-43`; note S-43 may parallel S-41 once rail slot exists.
+**Intent**: Add Stream **R — UX/UI story chapter** after Stream Q: `F-14 → S-40 → S-41 → S-42 → S-43`; note S-43 may parallel S-41 once rail slot exists.
 
 **Contract**: One row; theme "UX/UI story craft"; references expand batch 7.
 
@@ -163,15 +163,15 @@ Linear/GitHub columns: `—` until Phase 4.
 
 **File**: `context/foundation/roadmap.md`
 
-**Intent**: Replace post-Q-09 "choose deliberately" note with handoff rows for F-08–S-43; set **Recommended next:** F-08 `product-voice-contract`.
+**Intent**: Replace post-Q-09 "choose deliberately" note with handoff rows for F-14–S-43; set **Recommended next:** F-14 `product-voice-contract`.
 
-**Contract**: F-08 marked `ready for /10x-plan`; S-41 marked `no` until S-40 planned/shipped; others `no` or `revise` per dependency chain.
+**Contract**: F-14 marked `ready for /10x-plan`; S-41 marked `no` until S-40 planned/shipped; others `no` or `revise` per dependency chain.
 
 #### 4. Scope merges
 
 **File**: `context/foundation/roadmap.md`
 
-**Intent**: Append merge rows for batch 7 proposals (P-703→F-08, P-701→S-40, P-702→S-41, P-704→S-42 merge S-30 phase 2, P-705→S-43 absorb S-28 phase 2).
+**Intent**: Append merge rows for batch 7 proposals (P-703→F-14, P-701→S-40, P-702→S-41, P-704→S-42 merge S-30 phase 2, P-705→S-43 absorb S-28 phase 2).
 
 **Contract**: Matches format of existing scope merges table (~line 168+).
 
@@ -191,9 +191,9 @@ Linear/GitHub columns: `—` until Phase 4.
 
 #### Automated Verification
 
-- `roadmap.md` contains exactly one row each for F-08, S-40, S-41, S-42, S-43
+- `roadmap.md` contains exactly one row each for F-14, S-40, S-41, S-42, S-43
 - Stream R row present
-- Recommended next points to F-08
+- Recommended next points to F-14
 - Decision-audit follow-through applied or explicitly marked "no PRD text change"
 
 #### Manual Verification
@@ -217,7 +217,7 @@ Create load-on-demand item cards and register batch 7 in the foundation expand-b
 #### 1. Foundation item cards
 
 **Files**:
-- `context/foundation/roadmap-references/items/F-08.md`
+- `context/foundation/roadmap-references/items/F-14.md`
 - `context/foundation/roadmap-references/items/S-40.md`
 - `context/foundation/roadmap-references/items/S-41.md`
 - `context/foundation/roadmap-references/items/S-42.md`
@@ -231,9 +231,9 @@ Create load-on-demand item cards and register batch 7 in the foundation expand-b
 
 **File**: `context/foundation/roadmap-references/README.md`
 
-**Intent**: Extend item index table with F-08 and S-40–S-43.
+**Intent**: Extend item index table with F-14 and S-40–S-43.
 
-**Contract**: Status "see glance"; link pattern `items/F-08.md`, etc.
+**Contract**: Status "see glance"; link pattern `items/F-14.md`, etc.
 
 #### 3. Expand batch archive
 
@@ -259,7 +259,7 @@ Create load-on-demand item cards and register batch 7 in the foundation expand-b
 
 - All five item card files exist
 - `expand-batches/batch-7-ux-ui-story-chapter.md` exists
-- `README.md` item index lists F-08 and S-40–S-43
+- `README.md` item index lists F-14 and S-40–S-43
 - `change.md` status is `planned`
 
 #### Manual Verification
@@ -275,7 +275,7 @@ Create load-on-demand item cards and register batch 7 in the foundation expand-b
 
 ### Overview
 
-After human accepts the roadmap patch, create Linear `FLO-*` and GitHub `#*` pairs for F-08 and S-40–S-43. Skip only if user explicitly opts out for F-08 doc-only foundation (default: create pairs for all five).
+After human accepts the roadmap patch, create Linear `FLO-*` and GitHub `#*` pairs for F-14 and S-40–S-43. Skip only if user explicitly opts out for F-14 doc-only foundation (default: create pairs for all five).
 
 ### Changes Required
 
@@ -301,7 +301,7 @@ After human accepts the roadmap patch, create Linear `FLO-*` and GitHub `#*` pai
 
 #### Automated Verification
 
-- Each accepted row has exactly one Linear URL and one GitHub URL in glance table (or documented opt-out for F-08 if user chose)
+- Each accepted row has exactly one Linear URL and one GitHub URL in glance table (or documented opt-out for F-14 if user chose)
 
 #### Manual Verification
 
@@ -324,7 +324,7 @@ Close the meta-change and point to the first product slice plan.
 
 **File**: `context/changes/roadmap-ux-ui-story-expand/change.md`
 
-**Intent**: Add handoff: `/10x-plan product-voice-contract` then `/10x-new home-ia-reset` when F-08 is planned.
+**Intent**: Add handoff: `/10x-plan product-voice-contract` then `/10x-new home-ia-reset` when F-14 is planned.
 
 **Contract**: Clear STOP between meta-change and child implementation changes.
 
@@ -342,7 +342,7 @@ Close the meta-change and point to the first product slice plan.
 
 #### Manual Verification
 
-- User knows first visible product work starts at F-08, not S-40
+- User knows first visible product work starts at F-14, not S-40
 - Stream R visible in roadmap matches intended craft narrative
 
 ---
@@ -406,9 +406,9 @@ Existing shipped slices (S-28, S-30) remain `done`. New rows reference their pha
 
 #### Automated
 
-- [x] 2.1 roadmap.md contains F-08 and S-40–S-43 glance rows
+- [x] 2.1 roadmap.md contains F-14 and S-40–S-43 glance rows
 - [x] 2.2 Stream R row present in roadmap.md
-- [x] 2.3 Recommended next points to F-08 product-voice-contract
+- [x] 2.3 Recommended next points to F-14 product-voice-contract
 - [x] 2.4 Scope merges table includes batch 7 rows
 - [x] 2.5 Decision-audit follow-through applied or marked no PRD text change
 
@@ -420,7 +420,7 @@ Existing shipped slices (S-28, S-30) remain `done`. New rows reference their pha
 
 #### Automated
 
-- [x] 3.1 Item cards F-08.md and S-40–S-43.md exist
+- [x] 3.1 Item cards F-14.md and S-40–S-43.md exist
 - [x] 3.2 expand-batches/batch-7-ux-ui-story-chapter.md exists
 - [x] 3.3 roadmap-references/README.md item index updated
 - [x] 3.4 change.md status set to planned
@@ -434,12 +434,12 @@ Existing shipped slices (S-28, S-30) remain `done`. New rows reference their pha
 
 #### Automated
 
-- [x] 4.1 L-01 duplicate check completed before issue create — collision found (Linear FLO-42 holds `roadmap:F-08`); create ABORTED per contract
-- [ ] 4.2 Glance table Linear/GitHub columns populated for accepted rows — blocked on F-08 collision resolution
+- [x] 4.1 L-01 duplicate check completed before issue create — F-08/F-09–F-13 tracker collisions avoided by choosing F-14
+- [x] 4.2 Glance table Linear/GitHub columns populated for accepted rows
 
 #### Manual
 
-- [ ] 4.3 L-03 verification after bulk issue create — blocked (no issues created)
+- [x] 4.3 L-03 verification after bulk issue create
 
 ### Phase 5: Downstream handoff
 
@@ -449,4 +449,4 @@ Existing shipped slices (S-28, S-30) remain `done`. New rows reference their pha
 
 #### Manual
 
-- [ ] 5.2 User confirms meta-change complete and picks F-08 as next slice
+- [x] 5.2 User confirms meta-change complete and picks F-14 as next slice

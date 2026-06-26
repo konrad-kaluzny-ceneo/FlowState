@@ -120,7 +120,7 @@ Sorted by weighted total (descending).
 
 ## Recommended sequencing (pre-refinement)
 
-1. `product-voice-contract` (F-08 candidate)
+1. `product-voice-contract` (F-14 candidate)
 2. `home-ia-reset` (S-40 candidate)
 3. `desktop-calm-workbench` (S-41 candidate)
 4. `mindful-day-memory` (S-42 candidate — or S-30 phase 2)
@@ -153,7 +153,7 @@ Each dimension is scored 0–10 with explicit user-value justification (not gut 
 
 | P-ID | Proposal | Change ID | Before | After | Rec | Suggested roadmap ID |
 | --- | --- | --- | --- | --- | --- | --- |
-| P-703 | Product Voice Contract | `product-voice-contract` | 6.4 | **9.6** | promote | F-08 |
+| P-703 | Product Voice Contract | `product-voice-contract` | 6.4 | **9.6** | promote | F-14 |
 | P-701 | Home IA Reset | `home-ia-reset` | 7.7 | **9.1** | promote | S-40 |
 | P-702 | Desktop Calm Workbench | `desktop-calm-workbench` | 6.7 | **9.2** | promote | S-41 |
 | P-704 | Mindful Day Memory | `mindful-day-memory` | 6.2 | **9.3** | promote | S-42 (S-30 phase 2) |
@@ -161,7 +161,7 @@ Each dimension is scored 0–10 with explicit user-value justification (not gut 
 
 ### Recommended commit order
 
-1. **F-08** `product-voice-contract` (9.6) — foundation; `context/foundation/product-voice.md`
+1. **F-14** `product-voice-contract` (9.6) — foundation; `context/foundation/product-voice.md`
 2. **S-40** `home-ia-reset` (9.1) — phase 1; locks mobile-first IA + "Co teraz?"
 3. **S-41** `desktop-calm-workbench` (9.2) — phase 2; hard dep on S-40
 4. **S-42** `mindful-day-memory` (9.3) — S-30 phase 2; narrative formatter only
@@ -201,7 +201,7 @@ Each dimension is scored 0–10 with explicit user-value justification (not gut 
 **Deliverables:**
 - `home-ia-spec.md`, `home-session-state.ts`, `home-module-priority.ts`
 - Dashboard composition refactor driven by priority matrix (F-07 unchanged)
-- `TaskSuggestionCard` heading → "Co teraz?" (interim `home-voice.ts` until F-08)
+- `TaskSuggestionCard` heading → "Co teraz?" (interim `home-voice.ts` until F-14)
 - DailyRecapPanel collapsed by default
 
 **User-value acceptance:**
@@ -212,7 +212,7 @@ Each dimension is scored 0–10 with explicit user-value justification (not gut 
 
 **Scores:** wedge 10 · user 10 · feasibility 10 · novelty 9 · sequencing 10 → **9.1**
 
-**Sequencing:** Soft dep F-08; hard unblock for S-41.
+**Sequencing:** Soft dep F-14; hard unblock for S-41.
 
 ---
 
@@ -232,7 +232,7 @@ Each dimension is scored 0–10 with explicit user-value justification (not gut 
 
 **Scores:** wedge 9 · user 9 · feasibility 10 · novelty 8 · sequencing 10 → **9.2**
 
-**Sequencing:** **Phase 2 only** — hard dep on S-40; soft dep F-08 for rail copy.
+**Sequencing:** **Phase 2 only** — hard dep on S-40; soft dep F-14 for rail copy.
 
 ---
 
@@ -251,7 +251,7 @@ Each dimension is scored 0–10 with explicit user-value justification (not gut 
 
 **Scores:** wedge 9 · user 10 · feasibility 10 · novelty 8 · sequencing 9 → **9.3**
 
-**Sequencing:** merge_with **S-30** as phase 2; after F-08; context rail placement post S-40.
+**Sequencing:** merge_with **S-30** as phase 2; after F-14; context rail placement post S-40.
 
 ---
 
@@ -280,5 +280,5 @@ Each dimension is scored 0–10 with explicit user-value justification (not gut 
 ## Next actions (orchestrator)
 
 - [ ] User reviews refined proposals and selects accept / reject / park per P-ID
-- [ ] On `commit`: allocate F-08, S-40…S-43, patch `roadmap.md`, create Linear + GitHub pairs
-- [ ] Recommended first `/10x-plan`: `product-voice-contract` (F-08, score 9.6)
+- [ ] On `commit`: allocate F-14, S-40…S-43, patch `roadmap.md`, create Linear + GitHub pairs
+- [ ] Recommended first `/10x-plan`: `product-voice-contract` (F-14, score 9.6)

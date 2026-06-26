@@ -41,7 +41,7 @@ Target after refinement: `>= 9.0`.
 
 ## Refined proposals
 
-### F-08 candidate — Product Voice Contract
+### F-14 candidate — Product Voice Contract
 
 | Field | Value |
 | --- | --- |
@@ -98,7 +98,7 @@ Target after refinement: `>= 9.0`.
 - Recap is not expanded on first paint.
 - During active work, timer is hero and recap is hidden.
 
-**Sequencing:** Soft dependency on F-08 for authoritative copy. Hard prerequisite for `desktop-calm-workbench`.
+**Sequencing:** Soft dependency on F-14 for authoritative copy. Hard prerequisite for `desktop-calm-workbench`.
 
 ---
 
@@ -156,7 +156,7 @@ Target after refinement: `>= 9.0`.
 - `Wróć tutaj` names the last focused task after interruption.
 - Expanded view is narrative, not `title · 45m · timestamp`.
 
-**Sequencing:** After F-08. Placement should follow S-40/S-41 so it remains context, not primary surface.
+**Sequencing:** After F-14. Placement should follow S-40/S-41 so it remains context, not primary surface.
 
 ---
 
@@ -198,7 +198,7 @@ Target after refinement: `>= 9.0`.
 
 ## Recommended roadmap order
 
-1. F-08 `product-voice-contract`
+1. F-14 `product-voice-contract`
 2. S-40 `home-ia-reset`
 3. S-41 `desktop-calm-workbench`
 4. S-43 `stateful-illustration-system`
@@ -221,10 +221,10 @@ Date: 2026-06-26. Authoritative for `/10x-implement roadmap-ux-ui-story-expand` 
 
 ### Commit order (canonical)
 
-1. **F-08** `product-voice-contract` — foundation; `context/foundation/product-voice.md`
-2. **S-40** `home-ia-reset` — home IA; soft dep F-08
+1. **F-14** `product-voice-contract` — foundation; `context/foundation/product-voice.md`
+2. **S-40** `home-ia-reset` — home IA; soft dep F-14
 3. **S-41** `desktop-calm-workbench` — hard dep S-40
-4. **S-42** `mindful-day-memory` — S-30 phase 2; after F-08; best after S-40/S-41 placement
+4. **S-42** `mindful-day-memory` — S-30 phase 2; after F-14; best after S-40/S-41 placement
 5. **S-43** `stateful-illustration-system` — absorbs S-28 phase 2; may parallel S-41 once rail slot exists
 
 **S-42 before S-43:** recap remains context after IA is locked; rail illustration slot is defined before stateful variants ship.
@@ -233,7 +233,7 @@ Date: 2026-06-26. Authoritative for `/10x-implement roadmap-ux-ui-story-expand` 
 
 | ID | Change ID | Score | Stance |
 | --- | --- | --- | --- |
-| F-08 | `product-voice-contract` | 9.6 | promote — foundation first |
+| F-14 | `product-voice-contract` | 9.6 | promote — foundation first |
 | S-40 | `home-ia-reset` | 9.1 | promote — hard unblock for S-41 |
 | S-41 | `desktop-calm-workbench` | 9.2 | promote — phase 2 after S-40 only |
 | S-42 | `mindful-day-memory` | 9.3 | promote — S-30 phase 2 / formatter only |
@@ -255,7 +255,7 @@ Bind six variants to S-40 home-session-state: `idle`, `energy_choice` (steering)
 
 ### `main_goal` frontmatter
 
-Leave `main_goal: quality` until F-08 ships; Stream R carries UX/UI story chapter identity without premature relabel.
+Leave `main_goal: quality` until F-14 ships; Stream R carries UX/UI story chapter identity without premature relabel.
 
 ## PRD / roadmap decision audit
 
@@ -265,6 +265,6 @@ Leave `main_goal: quality` until F-08 ships; Stream R carries UX/UI story chapte
 | `roadmap-references/parked.md`: session reconnect calm banner P-104 | Still parked | keep parked | Do not hide it in S-40/S-42; leave a separate future recovery candidate |
 | `items/S-30.md`: light timing recap | Shipped substrate | absorb as phase 2 | S-42 explicitly extends presentation/formatter only; no new data pipeline |
 | `items/S-28.md`: Calm Garden phase 2 overlays | Deferred scope | absorb/reframe | S-43 absorbs visual follow-up while preserving S-39 gate exclusions |
-| `roadmap.md` frontmatter `main_goal: quality` | Current chapter label | keep for now | Stream R carries UX/UI story until F-08 ships |
+| `roadmap.md` frontmatter `main_goal: quality` | Current chapter label | keep for now | Stream R carries UX/UI story until F-14 ships |
 
 **PRD text change:** none for this meta-change. MVP-era scope notes on dashboards, charts, stats, AI, and streaks are superseded — removed from Stream R item cards and expand docs.
