@@ -3,9 +3,10 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-06-24
+updated: 2026-06-26
 structure: split
-active_slices: []
+active_slices:
+  - align-prisma-config
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -44,7 +45,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-08 | guest-local-storage-merge | [FLO-21](https://linear.app/flowstate-10xdev/issue/FLO-21) | [#30](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/30) | guest trial → merge on sign-in | S-01, F-02 | preserved | done |
 | S-09 | optimistic-task-mutations | [FLO-24](https://linear.app/flowstate-10xdev/issue/FLO-24) | [#35](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/35) | optimistic task CRUD when logged in | S-01, F-02 | guardrails | done |
 | S-10 | google-oauth-provider | [FLO-20](https://linear.app/flowstate-10xdev/issue/FLO-20) | [#20](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/20) | Google sign-in | F-02 | preserved | done |
-| F-03 | align-prisma-config | [FLO-22](https://linear.app/flowstate-10xdev/issue/FLO-22) | [#33](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/33) | (foundation) Prisma 7 config hygiene | — | — | proposed |
+| F-03 | align-prisma-config | [FLO-22](https://linear.app/flowstate-10xdev/issue/FLO-22) | [#33](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/33) | (foundation) Prisma 7 config hygiene | — | — | in review |
 | F-04 | impeccable-design-foundation | [FLO-25](https://linear.app/flowstate-10xdev/issue/FLO-25) | [#36](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/36) | (foundation) DESIGN.md | S-09 | preserved | done |
 | S-11 | first-run-wedge-onboarding | [FLO-26](https://linear.app/flowstate-10xdev/issue/FLO-26) | [#37](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/37) | first-run teaches check-in → suggestion wedge | S-06, S-08 | preserved | done |
 | S-12 | wedge-overlay-visual-polish | [FLO-28](https://linear.app/flowstate-10xdev/issue/FLO-28) | [#38](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/38) | cohesive check-in/suggestion overlays | S-09, F-04 | preserved | done |
