@@ -153,9 +153,9 @@ No data migration. No env var changes. CI workflow unchanged — this aligns loc
 
 #### Automated
 
-- [x] 1.1 `pnpm check` passes
-- [x] 1.2 `pnpm typecheck` passes
-- [x] 1.3 `pnpm test` passes
+- [x] 1.1 `pnpm check` passes — 14d7f45
+- [x] 1.2 `pnpm typecheck` passes — 14d7f45
+- [x] 1.3 `pnpm test` passes — 14d7f45
 
 #### Manual
 
