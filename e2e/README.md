@@ -125,6 +125,7 @@ Required repository secrets: `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `NEON_AUTH
 - **Local:** Playwright starts `next dev --turbo` with `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` injected via `webServer.env`.
 - **CI (GitHub Actions):** separate build step + `next start`; timer flag baked at build time via job env.
 - `page.clock` advances the countdown in specs that use it (Web Workers are not clock-mocked in e2e).
+- Fake clock before start: UI cycle starts via `clickStartCycle` / `startFocusedWorkCycle` install Playwright fake timers **before** the Start Cycle click, so E2E client timer mode (`NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1`) cannot expire a sub-second cycle on the real wall clock. For API-seeded RUNNING cycles, call `ensureFakeClock` before `advanceClockThroughFast*` (see `mindful-session-wind-down` / `seed-scenario`). Do not start sub-second work cycles without going through these helpers.
 - Pomodoro specs reset stray cycles in `beforeEach` (interrupt / dismiss overlay) so **Focus** is not disabled by a leftover `RUNNING` cycle.
 - Short work cycles: fill `work-duration-min` and `work-duration-sec` via `setWorkDurationSec` in `e2e/helpers/work-cycle.ts`.
 - Vitest (`pnpm test`) and Playwright (`pnpm test:e2e`) are fully isolated — different configs, directories, and scripts.
