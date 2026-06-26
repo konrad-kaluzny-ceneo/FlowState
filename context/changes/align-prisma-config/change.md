@@ -1,7 +1,7 @@
 ---
 change_id: align-prisma-config
 title: Align Prisma config with Prisma 7 conventions
-status: implementing
+status: implemented
 created: 2026-06-26
 updated: 2026-06-26
 archived_at: null

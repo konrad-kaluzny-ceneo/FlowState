@@ -219,11 +219,11 @@ No database migration is part of this plan. Existing migrations and `migration_l
 
 #### Automated
 
-- [x] 3.1 `pnpm exec prisma migrate status` passes
-- [x] 3.2 Final `pnpm check` passes
-- [x] 3.3 Final `pnpm test` passes
+- [x] 3.1 `pnpm exec prisma migrate status` passes — cd427b1
+- [x] 3.2 Final `pnpm check` passes — cd427b1
+- [x] 3.3 Final `pnpm test` passes — cd427b1
 
 #### Manual
 
-- [x] 3.4 Migration status uses `DATABASE_URL_UNPOOLED` with no pooled runtime fallback
-- [x] 3.5 Final diff has no schema, migration, generated-client, runtime DB, or package-script churn
+- [x] 3.4 Migration status uses `DATABASE_URL_UNPOOLED` with no pooled runtime fallback — cd427b1
+- [x] 3.5 Final diff has no schema, migration, generated-client, runtime DB, or package-script churn — cd427b1
