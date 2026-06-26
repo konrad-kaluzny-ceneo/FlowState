@@ -1,10 +1,10 @@
 ---
 change_id: testing-mutation-oracle-hardening
 title: Mutation oracle hardening — kill survived mutants in hooks and server routers
-status: impl_reviewed
+status: archived
 created: 2026-06-26
 updated: 2026-06-26
-archived_at: null
+archived_at: 2026-06-26T19:50:00Z
 ---
 
 ## Notes

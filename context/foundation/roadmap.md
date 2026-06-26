@@ -88,7 +88,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-38 | session-end-mid-cycle-closure | [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) | [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151) | mid-cycle end sets expectations — what counts in closure | B-08 minimal | US-04 | done |
 | S-39 | accessible-wedge-gates | [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) | [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) | operate wedge gates with screen-reader-safe focus, live status, and keyboard-first accept/override/start controls | F-07, S-21, S-28 | US-01, desktop accessibility guardrails | done |
 | Q-08 | testing-prd-v3-wedge-coherence | — | — | (quality) prove PRD v3 wedge coherence across transition mutex, pause, optimistic/recovery, stuck-gate dismiss, and S-39 operability oracles | F-07, S-21, S-24, S-28, S-34, S-35, S-39 | US-01, US-04; test-plan Phase 8 | done |
-| Q-09 | testing-mutation-oracle-hardening | — | — | (quality) raise covered-code mutation score by killing survived mutants in hooks + server routers — strengthen weak oracles | S-01, S-03, S-05, S-07, S-08 | test-plan Phase 5; risks #1–#6 | in review |
+| Q-09 | testing-mutation-oracle-hardening | — | — | (quality) raise covered-code mutation score by killing survived mutants in hooks + server routers — strengthen weak oracles | S-01, S-03, S-05, S-07, S-08 | test-plan Phase 5; risks #1–#6 | done |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -142,9 +142,9 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-37 | revisit-user-choices | **done** | merged PR #140 |
 | S-39 | accessible-wedge-gates | **done** | PR [#168](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/168); pair [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) |
 | Q-08 | testing-prd-v3-wedge-coherence | **done** | archived PR [#169](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/169); no Linear/GitHub issue pair by design |
-| Q-09 | testing-mutation-oracle-hardening | **in review** | test-plan Phase 5 mutation oracle hardening; no Linear/GitHub issue pair by design |
+| Q-09 | testing-mutation-oracle-hardening | **done** | archived PR [#170](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/170); no Linear/GitHub issue pair by design |
 
-**Recommended next:** Q-09 `testing-mutation-oracle-hardening` is **in review** (test-plan Phase 5 mutation oracle hardening).
+**Recommended next:** Q-09 archived — choose the next quality or product slice deliberately before opening work.
 
 ## Reference appendix (load on demand)
 
@@ -187,7 +187,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
-- **Q-08: (quality) prove PRD v3 wedge coherence across transition mutex, pause, optimistic/recovery, stuck-gate dismiss, and S-39 operability oracles** — Archived 2026-06-26 → `context/archive/2026-06-26-testing-prd-v3-wedge-coherence/`. PR [#169](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/169). Issues intentionally skipped. Lesson: Phase 8 stayed below browser level; hook/component/integration oracles covered mutex, pause, recovery, deferral, and stale-suggestion risks.
+- **Q-09: (quality) raise covered-code mutation score by killing survived mutants in hooks + server routers — strengthen weak oracles** — Archived 2026-06-26 → `context/archive/2026-06-26-testing-mutation-oracle-hardening/`. PR [#170](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/170). Issues intentionally skipped. Lesson: middleware + Prisma `where` call-arg oracles kill isolation regressions mocks hide; hook file still below 65% band — user-visible clusters addressed, wedge/no-cov deferred per §6.7.
 - **S-39: operate wedge gates with screen-reader-safe focus, live status, and keyboard-first accept/override/start controls without losing the calm one-gate transition flow** — Archived 2026-06-26 → `context/archive/2026-06-26-accessible-wedge-gates/`. PR [#168](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/168). Issues [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167). Lesson: primitive-first modal contract in `OverlayScrim`; inline gates use polite live status; no new conductor gate.
 - **F-03: (foundation) Prisma 7 config hygiene** — Archived 2026-06-26 → `context/archive/2026-06-26-align-prisma-config/`. Lesson: —.
 - **S-38: mid-cycle end sets expectations — what counts in closure** — Archived 2026-06-24 → `context/archive/2026-06-23-session-end-mid-cycle-closure/`. PR [#162](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/162). Issues [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) / [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151). Lesson: S-38 mid-cycle copy gated to WORK via `cycleContext`; break confirm restores B-08 neutral wording; closure `interruptedMidCycle` only when ending during WORK running/paused.
