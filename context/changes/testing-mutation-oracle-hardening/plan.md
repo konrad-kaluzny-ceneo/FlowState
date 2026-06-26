@@ -447,8 +447,8 @@ No Prisma schema or data migration is planned. If a router or guest import produ
 
 #### Automated
 
-- [x] 1.1 tRPC middleware oracle passes
-- [x] 1.2 Targeted Stryker for `src/server/api/trpc.ts` meets or documents the 70% exit band — **67.35% covered** (33 killed / 16 survived / 3 no-cov); shortfall documented: 3 no-cov `errorFormatter` (uncovered Zod path), 8 dev-only `timingMiddleware` logging/delay (equivalent per §6.7), 2 `data?.user` optional-chaining (auth API always returns object envelope), 1 empty `catch` (session already `null`), 2 `enforceAuth` optional-chaining + 2 `next({ctx})` object-literal (equivalent when caller injects valid session shape)
+- [x] 1.1 tRPC middleware oracle passes — 9b22387
+- [x] 1.2 Targeted Stryker for `src/server/api/trpc.ts` meets or documents the 70% exit band — 9b22387 — **67.35% covered** (33 killed / 16 survived / 3 no-cov); shortfall documented: 3 no-cov `errorFormatter` (uncovered Zod path), 8 dev-only `timingMiddleware` logging/delay (equivalent per §6.7), 2 `data?.user` optional-chaining (auth API always returns object envelope), 1 empty `catch` (session already `null`), 2 `enforceAuth` optional-chaining + 2 `next({ctx})` object-literal (equivalent when caller injects valid session shape)
 
 ### Phase 2: Hook Timer and Recovery Oracles
 
