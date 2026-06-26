@@ -186,6 +186,27 @@ vi.mock("~/server/db/index", () => {
 				}),
 			},
 			taskDayCompletion: {
+				findMany: vi.fn(
+					(args: { where: { userId?: string; localDateKey?: string } }) => {
+						return Promise.resolve(
+							taskDayCompletions.filter((row) => {
+								if (
+									args.where.userId != null &&
+									row.userId !== args.where.userId
+								) {
+									return false;
+								}
+								if (
+									args.where.localDateKey != null &&
+									row.localDateKey !== args.where.localDateKey
+								) {
+									return false;
+								}
+								return true;
+							}),
+						);
+					},
+				),
 				upsert: vi.fn(
 					(args: {
 						where: {
@@ -529,6 +550,93 @@ describe("task reorder and sortOrder", () => {
 
 		const created = await taskCaller(USER_A).create({ title: "New task" });
 		expect(created.sortOrder).toBe(5);
+	});
+});
+
+describe("task router ownership oracles", () => {
+	beforeEach(() => {
+		allTasks = [];
+		taskDayCompletions = [];
+		nextTaskId = 1;
+		vi.clearAllMocks();
+	});
+
+	it("create scopes nextActiveSortOrder aggregate by userId and active status", async () => {
+		await taskCaller(USER_A).create({ title: "New task" });
+
+		expect(db.task.aggregate).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { userId: USER_A, status: "active" },
+			}),
+		);
+	});
+
+	it("update on foreign task scopes findFirst and skips update", async () => {
+		allTasks = [makeTask({ id: 9, title: "Victim task", userId: USER_B })];
+
+		await expect(
+			taskCaller(USER_A).update({ id: 9, title: "Stolen" }),
+		).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+		expect(db.task.findFirst).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { id: 9, userId: USER_A },
+			}),
+		);
+		expect(db.task.update).not.toHaveBeenCalled();
+	});
+
+	it("delete on foreign task scopes findFirst and skips delete", async () => {
+		allTasks = [makeTask({ id: 9, title: "Victim task", userId: USER_B })];
+
+		await expect(taskCaller(USER_A).delete({ id: 9 })).rejects.toMatchObject({
+			code: "NOT_FOUND",
+		});
+
+		expect(db.task.findFirst).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { id: 9, userId: USER_A },
+			}),
+		);
+		expect(db.task.delete).not.toHaveBeenCalled();
+	});
+
+	it("list with localDateKey queries completions for caller and date", async () => {
+		allTasks = [
+			makeTask({
+				id: 1,
+				title: "Standing",
+				userId: USER_A,
+				isDailyStanding: true,
+			}),
+		];
+		taskDayCompletions = [
+			{ userId: USER_A, taskId: 1, localDateKey: "2026-06-19" },
+		];
+
+		const list = await taskCaller(USER_A).list({ localDateKey: "2026-06-19" });
+
+		expect(db.taskDayCompletion.findMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { userId: USER_A, localDateKey: "2026-06-19" },
+			}),
+		);
+		expect(list[0]?.doneForToday).toBe(true);
+	});
+
+	it("reorder loads active tasks scoped by caller userId", async () => {
+		allTasks = [
+			makeTask({ id: 1, title: "One", userId: USER_A, sortOrder: 0 }),
+			makeTask({ id: 2, title: "Two", userId: USER_A, sortOrder: 1 }),
+		];
+
+		await taskCaller(USER_A).reorder({ orderedIds: [2, 1] });
+
+		expect(db.task.findMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { userId: USER_A, status: "active" },
+			}),
+		);
 	});
 });
 

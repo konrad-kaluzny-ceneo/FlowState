@@ -207,4 +207,18 @@ describe("checkIn router persistence", () => {
 		expect(list[0]?.cycleId).toBe(DEFAULT_LIST_LIMIT + 1);
 		expect(list.some((row) => row.cycleId === 1)).toBe(false);
 	});
+
+	it("duplicate create throws CONFLICT and skips second insert", async () => {
+		seedOwnedCycle(1);
+		const caller = checkInCaller();
+
+		await caller.create({ cycleId: 1, energy: "FOCUSED" });
+
+		await expect(
+			caller.create({ cycleId: 1, energy: "STEADY" }),
+		).rejects.toMatchObject({ code: "CONFLICT" });
+
+		expect(allCheckIns).toHaveLength(1);
+		expect(allCheckIns[0]?.energy).toBe("FOCUSED");
+	});
 });

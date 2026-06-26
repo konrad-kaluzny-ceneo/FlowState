@@ -237,6 +237,13 @@ describe("Feature: session domain model, Property: Cycle query isolation", () =>
 					configuredDurationSec: 1500 + (seed % 100),
 				}),
 			).rejects.toThrow(/NOT_FOUND/);
+
+			expect(db.session.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { id: 1, userId: attackerId },
+				}),
+			);
+			expect(db.cycle.create).not.toHaveBeenCalled();
 		},
 	);
 
@@ -277,6 +284,13 @@ describe("Feature: session domain model, Property: Cycle query isolation", () =>
 					taskId: 5,
 				}),
 			).rejects.toThrow(/NOT_FOUND/);
+
+			expect(db.task.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { id: 5, userId: attackerId },
+				}),
+			);
+			expect(db.cycle.create).not.toHaveBeenCalled();
 		},
 	);
 

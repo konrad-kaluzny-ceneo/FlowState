@@ -462,11 +462,11 @@ No Prisma schema or data migration is planned. If a router or guest import produ
 
 #### Automated
 
-- [ ] 3.1 Cycle router tests pass
-- [ ] 3.2 Task router tests pass
-- [ ] 3.3 Session and check-in router tests pass
-- [ ] 3.4 Suggestion isolation test passes if touched
-- [ ] 3.5 Targeted Stryker for touched router files meets or documents the router exit bands
+- [x] 3.1 Cycle router tests pass — 34ee3ae
+- [x] 3.2 Task router tests pass — 34ee3ae
+- [x] 3.3 Session and check-in router tests pass — 34ee3ae
+- [x] 3.4 Suggestion isolation test passes if touched — 34ee3ae — deferred (not touched; existing isolation coverage sufficient)
+- [x] 3.5 Targeted Stryker for touched router files meets or documents the router exit bands — 34ee3ae — cycle 76.53% / task 76.47% covered (≥75%); session 64.00% / check-in 64.52% covered — remaining survivors mostly string-literal/error-message mutants (equivalent/deferred per §6.7)
 
 ### Phase 4: Guest Import Transaction Oracles
 

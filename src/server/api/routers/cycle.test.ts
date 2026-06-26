@@ -1396,4 +1396,234 @@ describe("cycle router lifecycle", () => {
 			expect(result).toMatchObject({ id: 1, state: "RUNNING" });
 		});
 	});
+
+	describe("router ownership oracles", () => {
+		it("list scopes findMany by caller userId and optional sessionId", async () => {
+			sessions = [
+				{
+					id: 7,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 7,
+					userId: USER_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "COMPLETED",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: new Date(),
+				},
+			];
+
+			await caller().list({ sessionId: 7 });
+
+			expect(db.cycle.findMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { userId: USER_ID, sessionId: 7 },
+				}),
+			);
+		});
+
+		it("complete updateMany scopes by cycle id, userId, and RUNNING state", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			await caller().complete({ cycleId: 1 });
+
+			expect(db.cycle.updateMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: {
+						id: 1,
+						userId: USER_ID,
+						state: "RUNNING",
+					},
+				}),
+			);
+		});
+
+		it("complete returns BAD_REQUEST when updateMany affects zero rows", async () => {
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "COMPLETED",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: new Date(),
+				},
+			];
+
+			await expect(caller().complete({ cycleId: 1 })).rejects.toMatchObject({
+				code: "BAD_REQUEST",
+			});
+		});
+
+		it("complete with markTaskDone scopes task update by id and userId", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+			tasks = [
+				{ id: 5, title: "Done task", status: "active", userId: USER_ID },
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: 5,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			await caller().complete({ cycleId: 1, markTaskDone: true });
+
+			expect(db.task.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { id: 5, userId: USER_ID },
+					data: { status: "completed" },
+				}),
+			);
+		});
+
+		it("complete without markTaskDone does not update task", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+			tasks = [
+				{ id: 8, title: "Keep active", status: "active", userId: USER_ID },
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: 8,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			await caller().complete({ cycleId: 1, markTaskDone: false });
+
+			expect(db.task.update).not.toHaveBeenCalled();
+		});
+
+		it("complete with incrementInterruption increments session interruptionCount", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			await caller().complete({ cycleId: 1, incrementInterruption: true });
+
+			expect(db.session.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { id: 1 },
+					data: expect.objectContaining({
+						interruptionCount: { increment: 1 },
+					}),
+				}),
+			);
+		});
+
+		it("complete on foreign cycle scopes findFirst and skips writes", async () => {
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: VICTIM_ID,
+					taskId: null,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			await expect(
+				callerAs(ATTACKER_ID).complete({ cycleId: 1 }),
+			).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+			expect(db.cycle.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { id: 1, userId: ATTACKER_ID },
+				}),
+			);
+			expect(db.cycle.updateMany).not.toHaveBeenCalled();
+			expect(db.task.update).not.toHaveBeenCalled();
+		});
+	});
 });
