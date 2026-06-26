@@ -454,9 +454,9 @@ No Prisma schema or data migration is planned. If a router or guest import produ
 
 #### Automated
 
-- [ ] 2.1 Hook oracle suite passes
-- [ ] 2.2 Guest parity suite passes if touched
-- [ ] 2.3 Targeted Stryker for `src/hooks/use-pomodoro-cycle.ts` meets or documents the 65% exit band
+- [x] 2.1 Hook oracle suite passes — ec8a755
+- [x] 2.2 Guest parity suite passes if touched — ec8a755
+- [x] 2.3 Targeted Stryker for `src/hooks/use-pomodoro-cycle.ts` meets or documents the 65% exit band — ec8a755 — **52.68% covered** (1009 killed / 908 survived / 513 no-cov / 2 timeout); shortfall documented: 513 no-cov mutants in untested branches (SSR guards, guest-only paths, kickoff/wedge chains); remaining survivors cluster in kickoff steering `:3667–3668`, endSession/windDown `:3400+`, continueAfterCheckIn wedge `:2671+`, retryOnce/resilience helpers — deferred as display-only or non-risk #1–#3 per §6.7; timer/recovery kill-list oracles added for PAUSED freeze, handleCycleExpired guard, recalculateFromEndTime guards, recovery idempotency, visibility/catchUp, optimistic reconcile >2s, mid-cycle/check-in gates
 
 ### Phase 3: Router Ownership and NOT_FOUND Oracles
 

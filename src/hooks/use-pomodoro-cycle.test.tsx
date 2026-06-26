@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainActiveCycle } from "~/lib/data-mode/types";
+import { getShortBreakDuration } from "~/lib/duration-storage";
 import {
 	BREAK_START_SHORT,
 	BREAK_TRANSITION_VISIBLE_MS,
@@ -355,6 +356,20 @@ function mockCreateCycleDeferred() {
 			task: { id: 7, title: "Write tests" },
 			configuredDurationSec: 60,
 		};
+	});
+	return { releaseCreateCycle };
+}
+
+function mockCreateCycleDeferredWithCycle(
+	buildCycle: () => DomainActiveCycle | Promise<DomainActiveCycle>,
+) {
+	let releaseCreateCycle!: () => void;
+	const createBlocked = new Promise<void>((resolve) => {
+		releaseCreateCycle = resolve;
+	});
+	createCycle.mockImplementation(async () => {
+		await createBlocked;
+		return buildCycle();
 	});
 	return { releaseCreateCycle };
 }
@@ -4535,5 +4550,540 @@ describe("usePomodoroCycle break out-of-tab alerts", () => {
 		});
 
 		expect(maybeAlertBreakStartMock).not.toHaveBeenCalled();
+	});
+});
+
+describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () => {
+	function setVisibilityState(state: DocumentVisibilityState) {
+		Object.defineProperty(document, "visibilityState", {
+			configurable: true,
+			get: () => state,
+		});
+	}
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	beforeEach(() => {
+		sessionStorage.clear();
+		resetActiveCycleRecoveryForTests();
+		activeCycleData = null;
+		fakeWorkers.length = 0;
+		vi.clearAllMocks();
+		playAlarm.mockClear();
+		setVisibilityState("visible");
+		getActiveCycle.mockImplementation(async () => activeCycleData);
+		getOrCreateSession.mockResolvedValue({ id: 1 });
+		endSession.mockResolvedValue({ id: 1, state: "ENDED_BY_USER" });
+		createCycle.mockImplementation(async () => ({
+			id: 42,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: 7,
+			kind: "WORK",
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: { id: 7, title: "Write tests" },
+			configuredDurationSec: 60,
+		}));
+		completeCycle.mockResolvedValue(undefined);
+		interruptCycle.mockResolvedValue(undefined);
+		pauseCycle.mockImplementation(
+			async (input: {
+				cycleId: number | string;
+				remainingDurationSec: number;
+			}) => ({
+				...makeActiveCycle({ id: input.cycleId as number }),
+				state: "PAUSED" as const,
+				remainingDurationSec: input.remainingDurationSec,
+				pausedAt: new Date(),
+			}),
+		);
+		resumeCycle.mockImplementation(async () =>
+			makeActiveCycle({ state: "RUNNING", startedAt: new Date() }),
+		);
+		taskListQuery.mockResolvedValue([]);
+		getLastEndedQuery.mockResolvedValue(null);
+	});
+
+	it("hydrates PAUSED cycle from remainingDurationSec when startedAt is stale", async () => {
+		const staleStartedAt = new Date(Date.now() - 3_600_000);
+
+		activeCycleData = makeActiveCycle({
+			state: "PAUSED",
+			startedAt: staleStartedAt,
+			configuredDurationSec: 300,
+			remainingDurationSec: 90,
+			pausedAt: new Date(),
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("paused");
+		});
+
+		expect(result.current.remainingMs).toBe(90_000);
+		expect(result.current.state).not.toBe("completed");
+		expect(fakeWorkers).toHaveLength(0);
+	});
+
+	it("resumes PAUSED cycle from frozen remaining, not stale wall startedAt", async () => {
+		const staleStartedAt = new Date(Date.now() - 3_600_000);
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			state: "PAUSED",
+			startedAt: staleStartedAt,
+			configuredDurationSec: 300,
+			remainingDurationSec: 120,
+			pausedAt: new Date(),
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		resumeCycle.mockImplementation(async () =>
+			makeActiveCycle({
+				id: 10,
+				state: "RUNNING",
+				startedAt: new Date(),
+				configuredDurationSec: 300,
+				remainingDurationSec: null,
+				taskId: 2,
+				task: { id: 2, title: "Focus" },
+			}),
+		);
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("paused");
+		});
+
+		const resumeAtMs = Date.now();
+		await act(async () => {
+			await result.current.resume();
+		});
+
+		expect(result.current.state).toBe("running");
+		assertRemainingMsWithinTolerance(
+			result.current.remainingMs,
+			resumeAtMs + 120_000,
+			2000,
+			resumeAtMs,
+		);
+		const worker = fakeWorkers[fakeWorkers.length - 1];
+		expect(worker?.endTime).toBeGreaterThan(staleStartedAt.getTime() + 300_000);
+		expect(
+			Math.abs((worker?.endTime ?? 0) - (resumeAtMs + 120_000)),
+		).toBeLessThanOrEqual(2000);
+	});
+
+	it("ignores worker complete while paused", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		const worker = fakeWorkers[fakeWorkers.length - 1];
+
+		await act(async () => {
+			await result.current.pause();
+		});
+
+		expect(result.current.state).toBe("paused");
+
+		act(() => {
+			worker?.onmessage?.({ data: { type: "complete" } } as MessageEvent);
+		});
+
+		expect(result.current.state).toBe("paused");
+		expect(completeCycle).not.toHaveBeenCalled();
+	});
+
+	it("does not complete paused cycle on visibility return", async () => {
+		const staleStartedAt = new Date(Date.now() - 3_600_000);
+		activeCycleData = makeActiveCycle({
+			state: "PAUSED",
+			startedAt: staleStartedAt,
+			configuredDurationSec: 60,
+			remainingDurationSec: 45,
+			pausedAt: new Date(),
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("paused");
+		});
+
+		setVisibilityState("hidden");
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		setVisibilityState("visible");
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		expect(result.current.state).toBe("paused");
+		expect(result.current.remainingMs).toBe(45_000);
+		expect(result.current.catchUp).toBeNull();
+	});
+
+	it("does not complete idle cycle on visibility return", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		setVisibilityState("hidden");
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		setVisibilityState("visible");
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		expect(result.current.state).toBe("idle");
+		expect(result.current.catchUp).toBeNull();
+	});
+
+	it("calls getActive only once across remount for the same auth mode", async () => {
+		activeCycleData = makeActiveCycle();
+
+		const wrapper = createWrapper();
+		const first = renderHook(() => usePomodoroCycle(), { wrapper });
+
+		await waitFor(() => {
+			expect(first.result.current.state).toBe("running");
+		});
+
+		expect(getActiveCycle).toHaveBeenCalledTimes(1);
+
+		first.unmount();
+
+		const second = renderHook(() => usePomodoroCycle(), { wrapper });
+
+		await waitFor(() => {
+			expect(second.result.current.state).toBe("idle");
+		});
+
+		expect(getActiveCycle).toHaveBeenCalledTimes(1);
+		second.unmount();
+	});
+
+	it("presents timeout closure on no-active hydrate without skipping idle cleanup", async () => {
+		activeCycleData = null;
+		getLastEndedQuery.mockResolvedValue({
+			id: 42,
+			state: "ENDED_BY_TIMEOUT",
+			closureLine: "Session timed out — pick up when ready.",
+			endedAt: new Date(),
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.pendingClosureLine).toBe(
+				"Session timed out — pick up when ready.",
+			);
+		});
+
+		expect(getActiveCycle).toHaveBeenCalledTimes(1);
+		expect(getLastEndedQuery).toHaveBeenCalled();
+	});
+
+	it("transitions at exact remainingMs zero boundary via worker", async () => {
+		vi.useFakeTimers();
+		const startMs = 1_700_000_000_000;
+		vi.setSystemTime(startMs);
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		await beginWorkCycle(result, 60);
+
+		const worker = fakeWorkers[fakeWorkers.length - 1];
+		const endTimeMs = startMs + 60_000;
+		expect(worker?.endTime).toBe(endTimeMs);
+
+		vi.setSystemTime(endTimeMs);
+		act(() => {
+			worker?.emitTick();
+		});
+
+		expect(result.current.state).toBe("completed");
+		expect(result.current.remainingMs).toBe(0);
+	});
+
+	it("reconciles optimistic work start when server end time drifts >2s", async () => {
+		const serverDriftMs = 5_000;
+		let optimisticStartMs = 0;
+
+		const { releaseCreateCycle } = mockCreateCycleDeferredWithCycle(() => ({
+			id: 42,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: 7,
+			kind: "WORK",
+			state: "RUNNING",
+			startedAt: new Date(optimisticStartMs + serverDriftMs),
+			endedAt: null,
+			task: { id: 7, title: "Write tests" },
+			configuredDurationSec: 60,
+		}));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.selectTask(7, { id: 7, title: "Write tests" });
+		});
+
+		let startPromise!: Promise<void>;
+		act(() => {
+			startPromise = result.current.start(60);
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		const optimisticEndMs = fakeWorkers[fakeWorkers.length - 1]?.endTime ?? 0;
+		optimisticStartMs = optimisticEndMs - 60_000;
+		expect(optimisticEndMs).toBeGreaterThan(0);
+
+		await act(async () => {
+			releaseCreateCycle();
+			await startPromise;
+		});
+
+		const serverEndMs = optimisticStartMs + serverDriftMs + 60_000;
+		expect(fakeWorkers[fakeWorkers.length - 1]?.endTime).toBe(serverEndMs);
+		assertRemainingMsWithinTolerance(
+			result.current.remainingMs,
+			serverEndMs,
+			2000,
+			Date.now(),
+		);
+	});
+
+	it("reconciles optimistic break start when server end time drifts >2s", async () => {
+		const serverDriftMs = 4_000;
+		let optimisticBreakStartMs = 0;
+		let releaseBreakCreate!: () => void;
+		const breakCreateBlocked = new Promise<void>((resolve) => {
+			releaseBreakCreate = resolve;
+		});
+
+		activeCycleData = makeActiveCycle({
+			id: 70,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		createCycle.mockImplementation(async (input) => {
+			if (input.kind === "WORK") {
+				return {
+					id: 42,
+					sessionId: 1,
+					userId: "user-1",
+					taskId: 7,
+					kind: "WORK",
+					state: "RUNNING",
+					startedAt: new Date(),
+					endedAt: null,
+					task: { id: 7, title: "Write tests" },
+					configuredDurationSec: input.configuredDurationSec,
+				};
+			}
+
+			await breakCreateBlocked;
+			const breakDurationSec = input.configuredDurationSec;
+			return {
+				id: 300,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: null,
+				kind: input.kind,
+				state: "RUNNING",
+				startedAt: new Date(optimisticBreakStartMs + serverDriftMs),
+				endedAt: null,
+				task: null,
+				configuredDurationSec: breakDurationSec,
+			};
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await driveWorkCycleToCheckIn(result);
+
+		let submitPromise!: Promise<void>;
+		act(() => {
+			submitPromise = result.current.submitCheckIn("FOCUSED");
+		});
+
+		await waitFor(() => {
+			expect(result.current.cycleKind).toBe("SHORT_BREAK");
+		});
+
+		const breakDurationSec = getShortBreakDuration();
+		const optimisticEndMs = fakeWorkers[fakeWorkers.length - 1]?.endTime ?? 0;
+		optimisticBreakStartMs = optimisticEndMs - breakDurationSec * 1000;
+		expect(optimisticEndMs).toBeGreaterThan(0);
+
+		await act(async () => {
+			releaseBreakCreate();
+			await submitPromise;
+		});
+
+		const serverBreakEndMs =
+			optimisticBreakStartMs + serverDriftMs + breakDurationSec * 1000;
+		expect(fakeWorkers[fakeWorkers.length - 1]?.endTime).toBe(serverBreakEndMs);
+		assertRemainingMsWithinTolerance(
+			result.current.remainingMs,
+			serverBreakEndMs,
+			2000,
+			Date.now(),
+		);
+	});
+
+	it("no-ops onMidCycleMarkComplete when idle", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		act(() => {
+			result.current.onMidCycleMarkComplete(4, { id: 4, title: "Idle task" });
+		});
+		expect(result.current.midCyclePendingTask).toBeNull();
+	});
+
+	it("no-ops onMidCycleMarkComplete during break", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			kind: "SHORT_BREAK",
+			configuredDurationSec: 300,
+			taskId: null,
+			task: null,
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		act(() => {
+			result.current.onMidCycleMarkComplete(4, {
+				id: 4,
+				title: "Break task",
+			});
+		});
+		expect(result.current.midCyclePendingTask).toBeNull();
+	});
+
+	it("no-ops onMidCycleMarkComplete when paused", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 11,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Paused work" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.pause();
+		});
+
+		act(() => {
+			result.current.onMidCycleMarkComplete(4, {
+				id: 4,
+				title: "Paused work",
+			});
+		});
+		expect(result.current.midCyclePendingTask).toBeNull();
+	});
+
+	it("sets awaitingCheckIn for WORK completion before break transition", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 70,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Ship" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		act(() => {
+			fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+				data: { type: "complete" },
+			} as MessageEvent);
+		});
+
+		expect(result.current.state).toBe("completed");
+		expect(result.current.awaitingCheckIn).toBe(false);
+
+		await act(async () => {
+			await result.current.onCycleCompleteConfirm(false);
+		});
+
+		expect(result.current.awaitingCheckIn).toBe(true);
+		expect(completeCycle).not.toHaveBeenCalled();
+		expect(createCheckInMutate).not.toHaveBeenCalled();
 	});
 });
