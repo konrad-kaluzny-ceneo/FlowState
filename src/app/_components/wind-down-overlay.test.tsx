@@ -11,7 +11,7 @@ import {
 import { WindDownOverlay } from "./wind-down-overlay";
 
 describe("WindDownOverlay", () => {
-	it("renders fatigue rationale with primary actions", () => {
+	it("renders labelled modal gate with fatigue rationale and primary actions", () => {
 		render(
 			<WindDownOverlay
 				onEndSession={vi.fn()}
@@ -20,8 +20,12 @@ describe("WindDownOverlay", () => {
 			/>,
 		);
 
+		const dialog = screen.getByRole("dialog", { name: WIND_DOWN_TITLE });
+		expect(dialog.getAttribute("aria-modal")).toBe("true");
+		expect(dialog.getAttribute("aria-describedby")).toBe(
+			"wind-down-description",
+		);
 		expect(screen.getByTestId("wind-down-overlay")).toBeTruthy();
-		expect(screen.getByRole("heading", { name: WIND_DOWN_TITLE })).toBeTruthy();
 		expect(screen.getByText(WIND_DOWN_BODY)).toBeTruthy();
 		expect(screen.getByTestId("wind-down-rationale")).toBeTruthy();
 		expect(
@@ -31,12 +35,9 @@ describe("WindDownOverlay", () => {
 		).toBeTruthy();
 		expect(screen.getByTestId("wind-down-keep-going-btn")).toBeTruthy();
 		expect(screen.getByTestId("wind-down-end-session-btn")).toBeTruthy();
-		expect(
+		expect(document.activeElement).toBe(
 			screen.getByRole("button", { name: WIND_DOWN_KEEP_GOING_LABEL }),
-		).toBeTruthy();
-		expect(
-			screen.getByRole("button", { name: WIND_DOWN_END_SESSION_LABEL }),
-		).toBeTruthy();
+		);
 	});
 
 	it("calls onKeepGoing and onEndSession from primary buttons", () => {
@@ -57,6 +58,22 @@ describe("WindDownOverlay", () => {
 		expect(onEndSession).toHaveBeenCalledTimes(1);
 	});
 
+	it("does not bypass required choice on Escape", () => {
+		const onKeepGoing = vi.fn();
+		const onEndSession = vi.fn();
+		render(
+			<WindDownOverlay
+				onEndSession={onEndSession}
+				onKeepGoing={onKeepGoing}
+				rationale="End-session nudge"
+			/>,
+		);
+
+		fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+		expect(onKeepGoing).not.toHaveBeenCalled();
+		expect(onEndSession).not.toHaveBeenCalled();
+	});
+
 	it("disables actions while submitting", () => {
 		render(
 			<WindDownOverlay
@@ -75,5 +92,26 @@ describe("WindDownOverlay", () => {
 			"disabled",
 			true,
 		);
+	});
+
+	it("traps Tab focus within modal actions", () => {
+		render(
+			<WindDownOverlay
+				onEndSession={vi.fn()}
+				onKeepGoing={vi.fn()}
+				rationale="End-session nudge"
+			/>,
+		);
+
+		const keepGoing = screen.getByRole("button", {
+			name: WIND_DOWN_KEEP_GOING_LABEL,
+		});
+		const endSession = screen.getByRole("button", {
+			name: WIND_DOWN_END_SESSION_LABEL,
+		});
+
+		endSession.focus();
+		fireEvent.keyDown(screen.getByRole("dialog"), { key: "Tab" });
+		expect(document.activeElement).toBe(keepGoing);
 	});
 });

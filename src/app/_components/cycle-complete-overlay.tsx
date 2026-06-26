@@ -46,14 +46,30 @@ export function CycleCompleteOverlay({
 		const hasPreFocus = preFocusedTask != null;
 
 		return (
-			<OverlayScrim testId="cycle-complete-overlay">
+			<OverlayScrim
+				ariaDescribedBy="break-complete-description"
+				ariaLabelledBy="break-complete-heading"
+				onEscape={() => {
+					if (hasPreFocus && onDismissPreFocus != null) {
+						onDismissPreFocus();
+						return;
+					}
+					void onConfirm(false);
+				}}
+				role="dialog"
+				testId="cycle-complete-overlay"
+			>
 				<OverlayCard variant="break">
-					<h2 className="font-semibold text-2xl text-accent-break">
+					<h2
+						className="font-semibold text-2xl text-accent-break"
+						id="break-complete-heading"
+					>
 						Break&apos;s over!
 					</h2>
 					<p
 						className="mt-2 text-sm text-text-secondary"
 						data-testid="break-reentry-copy"
+						id="break-complete-description"
 					>
 						{reentryCopy ??
 							`${cycleKind === "LONG_BREAK" ? "Long break" : "Short break"} complete — ready for the next cycle.`}
@@ -95,11 +111,27 @@ export function CycleCompleteOverlay({
 		: "Done — mark task complete";
 
 	return (
-		<OverlayScrim testId="cycle-complete-overlay">
+		<OverlayScrim
+			ariaDescribedBy={
+				focusedTask != null ? "cycle-complete-description" : undefined
+			}
+			ariaLabelledBy="cycle-complete-heading"
+			onEscape={() => void onConfirm(false)}
+			role="dialog"
+			testId="cycle-complete-overlay"
+		>
 			<OverlayCard>
-				<h2 className="font-semibold text-2xl text-primary">Cycle Complete!</h2>
+				<h2
+					className="font-semibold text-2xl text-primary"
+					id="cycle-complete-heading"
+				>
+					Cycle Complete!
+				</h2>
 				{focusedTask != null && (
-					<p className="mt-2 text-sm text-text-secondary">
+					<p
+						className="mt-2 text-sm text-text-secondary"
+						id="cycle-complete-description"
+					>
 						{focusedTask.title}
 					</p>
 				)}

@@ -20,12 +20,25 @@ export function SessionClosureOverlay({
 	onDismiss,
 }: SessionClosureOverlayProps) {
 	return (
-		<OverlayScrim role="dialog" testId="session-closure-overlay" zIndex={58}>
+		<OverlayScrim
+			ariaDescribedBy="session-closure-description"
+			ariaLabelledBy="session-closure-heading"
+			onEscape={onDismiss}
+			role="dialog"
+			testId="session-closure-overlay"
+			zIndex={58}
+		>
 			<OverlayCard>
-				<h2 className="font-semibold text-2xl text-primary">{CLOSURE_TITLE}</h2>
+				<h2
+					className="font-semibold text-2xl text-primary"
+					id="session-closure-heading"
+				>
+					{CLOSURE_TITLE}
+				</h2>
 				<p
 					className="mt-4 text-sm text-text-secondary"
 					data-testid="session-closure-line"
+					id="session-closure-description"
 				>
 					{closureLine}
 				</p>
