@@ -12,7 +12,7 @@ updated: 2026-06-26
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-26 (Phase 8 wedge coherence oracles in §6.10; catalyst: `testing-prd-v3-wedge-coherence` / Q-08)
+> Last updated: 2026-06-26 (Phase 5 mutation oracle hardening in §6.7; catalyst: `testing-mutation-oracle-hardening` / Q-09)
 
 ## 1. Strategy
 
@@ -96,7 +96,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 2 | Active-slice browser proofs | Browser-level proof for S-03 mid-cycle prompt and S-05 check-in gate before wedge work compounds | #3, #7 | Playwright e2e | complete | testing-active-slice-browser-proofs |
 | 3 | Isolation, abuse & guest merge | Lock per-user isolation, IDOR rejection, and guest→account merge integrity | #4, #5, #6 | integration | complete | testing-isolation-abuse-guest-merge |
 | 4 | Quality-gates wiring | Enforce lint, typecheck, unit/integration, and critical e2e in CI on every PR | cross-cutting | CI gates | complete | testing-quality-gates-wiring |
-| 5 | Mutation oracle hardening | Raise covered-code mutation score from ~58% by killing survived mutants in hooks and server routers — tests exist but assertions are too weak | #1, #2, #3, #4, #5, #6 | unit + integration (targeted Stryker runs) | not started | — |
+| 5 | Mutation oracle hardening | Raise covered-code mutation score from ~58% by killing survived mutants in hooks and server routers — tests exist but assertions are too weak | #1, #2, #3, #4, #5, #6 | unit + integration (targeted Stryker runs) | complete | testing-mutation-oracle-hardening |
 | 6 | Uncovered UI & auth paths | Exercise task-list, dashboard, and auth action paths so no-coverage mutants drop — largest score drag but narrower than Phase 5 per test | #1, #3, #5 | component smoke + integration | complete | testing-component-layer-cookbook |
 | 7 | E2E belt merge gate | Replace full-catalog CI gate with 12-test belt; Vitest backfill then delete 10 demoted e2e files | #1–#7 (belt entry points + integration-only #4/#6) | Playwright belt + Vitest/component backfill | complete | testing-e2e-belt-fast |
 | 8 | PRD v3 wedge coherence | Orchestrated transitions, pause semantics, optimistic wedge, network recovery, **stuck-gate dismiss + S-39 operability oracles** — belt/hook proofs for US-01/US-04 | #8, #9, #10, #11, **#12** | unit + hook + belt extensions | complete | testing-prd-v3-wedge-coherence |
@@ -327,6 +327,42 @@ CI merge gate — **16 tests across 13 spec files** (change `testing-e2e-belt-fa
 - **Strong areas** (use as oracle examples): `src/workers/timer-worker-logic.ts` (100%), `src/lib/duration-input.ts` (92%), `src/server/api/lib/active-session.ts` (92%).
 - **Known anomaly**: one RuntimeError in hook layer during full run — Vitest runner crash on a conditional mutant; investigate separately, not a coverage gap.
 
+**Phase 5 — Mutation oracle hardening** (shipped 2026-06-26, change `testing-mutation-oracle-hardening`)
+
+- Risks covered: **#1–#6** (refresh/recovery, timer drift, mid-cycle gate, per-user isolation, guest merge, IDOR).
+- **Oracle patterns** (reuse when hardening weak assertions):
+  1. **tRPC middleware** — direct `protectedProcedure` boundary tests with `installImmediateSetTimeout` before importing `~/server/api/trpc`; assert `UNAUTHORIZED` when `ctx.session` is null, user-less, or identity-incomplete; valid session reaches resolver. Reference: `src/server/api/trpc.test.ts`.
+  2. **Hook timer/recovery** — assert public hook state + mutation call counts at the public boundary: PAUSED freeze/resume from `remainingDurationSec`; recovery idempotency (single `getActive`); visibility catch-up only when running; exact `remainingMs === 0` expiry; optimistic reconcile when server `endTime` drifts >2s (§6.8 deferred-mock); mid-cycle/check-in gate branches. Reference: `src/hooks/use-pomodoro-cycle.test.tsx`.
+  3. **Router ownership** — Prisma `where` / no-write oracles: assert `findFirst`/`updateMany` call args include caller `userId` (and `sessionId` where scoped); on ownership miss expect `NOT_FOUND`/`BAD_REQUEST` and **no** `create`/`update`/`delete`. Reference: `cycle.test.ts`, `cycle-isolation.test.ts`, `task-mutation.test.ts`, `task.test.ts`, `session.test.ts`, `check-in.test.ts`, `check-in-isolation.test.ts`.
+  4. **Guest import transactions** — empty snapshot returns zero counts with **no** `$transaction`; account `cycle.updateMany` closes `RUNNING`+`PAUSED` for importing `userId` only; expired guest RUNNING → `COMPLETED`; unmapped guest task UUID → `taskId: null`. Reference: `import-guest-snapshot.test.ts`, `guest.test.ts`.
+- **Targeted Stryker commands** (per file, not full-repo chase):
+
+  ```powershell
+  pnpm exec stryker run --mutate "src/server/api/trpc.ts"
+  pnpm exec stryker run --mutate "src/hooks/use-pomodoro-cycle.ts"
+  pnpm exec stryker run --mutate "src/server/api/routers/cycle.ts"
+  pnpm exec stryker run --mutate "src/server/api/routers/task.ts"
+  pnpm exec stryker run --mutate "src/server/api/routers/session.ts"
+  pnpm exec stryker run --mutate "src/server/api/routers/check-in.ts"
+  pnpm exec stryker run --mutate "src/server/api/lib/import-guest-snapshot.ts"
+  ```
+
+- **Scoped before/after** (targeted runs, research baseline → post-oracle, 2026-06-26):
+
+  | File | Before (covered %) | After (covered %) | Exit band | Outcome |
+  |------|-------------------:|------------------:|-----------|---------|
+  | `trpc.ts` | 18.37 | 67.35 | ≥70% | shortfall — dev `timingMiddleware`, `errorFormatter` Zod path, optional-chaining on auth envelope (equivalent/deferred) |
+  | `use-pomodoro-cycle.ts` | 51.77 | 52.68 | ≥65% | shortfall — 513 no-cov branches; kickoff/wedge/endSession survivors deferred as non–risk #1–#3 |
+  | `cycle.ts` | 75.51 | 76.53 | ≥75% | met |
+  | `task.ts` | 67.48 | 76.47 | ≥75% | met |
+  | `session.ts` | 60.87 | 64.00 | ≥75% | shortfall — string-literal/error-message mutants (equivalent) |
+  | `check-in.ts` | 38.71 | 64.52 | ≥75% | improved; shortfall — thin router string-literal noise |
+  | `import-guest-snapshot.ts` | 63.79 | 68.97 | meaningful ↑ | met — transaction/closure oracles landed |
+
+- **Survivor classification rule**: defer SSR guards, dev-only timing/logging, Prisma object-literal/`select` noise, display-only copy, alarm URL literals, timeout anomalies, and mock-swallowed implementation details unless the mutant maps to a user-visible risk #1–#6 regression. Do **not** chase 100% covered score.
+- **Explicit limitation**: full-repo Stryker refresh and CI mutation score floor (§5) remain **optional/deferred** — targeted per-file reruns are the Phase 5 signal.
+- **Run locally**: phase-local Vitest commands in `context/changes/testing-mutation-oracle-hardening/plan.md`; final gate `pnpm check` + `pnpm test`.
+
 ### 6.9 Adding a component test
 
 - **Location**: co-located next to the component — `src/app/_components/<name>.test.tsx`; hook integration stays in `src/hooks/<name>.test.tsx`.
@@ -423,7 +459,7 @@ contributors should respect these unless the underlying assumption changes.
 - Risk #12 + §6.10 added: 2026-06-20 (`session-entry-wedge-bugs` — stuck focus popup, Cycle Complete not closing)
 - S-39 operability oracles in §6.10: 2026-06-26 (`accessible-wedge-gates` — modal focus, inline live status, keyboard-first; wedge axe deferred)
 - Phase 8 wedge coherence cookbook in §6.10: 2026-06-26 (`testing-prd-v3-wedge-coherence` / Q-08 — mutex, optimistic handoff, pause, recovery, permission deferral oracles; hook/component/integration only)
-- **Q-08 archived:** §3 Phase 8 marked `complete` after `testing-prd-v3-wedge-coherence` merged and archived; Phase 5 mutation oracle still optional backlog
+- Phase 5 mutation oracle hardening shipped: 2026-06-26 (`testing-mutation-oracle-hardening` / Q-09) — middleware + hook timer/recovery + router `where`/no-write + guest transaction oracles; targeted Stryker: `trpc` 18→67%, hook 52→53%, `cycle`/`task` ≥76%, `import-guest-snapshot` 64→69%; full-repo Stryker / CI mutation gate remain optional
 
 Refresh (`/10x-test-plan --refresh`) when:
 
