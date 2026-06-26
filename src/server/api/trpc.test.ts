@@ -135,9 +135,22 @@ describe("createTRPCContext session hydration", () => {
 		});
 	});
 
-	it("leaves session null when user id or email is missing", async () => {
+	it("leaves session null when user email is missing", async () => {
 		mockGetSession.mockResolvedValue({
 			data: { user: { id: "user-1", email: null, name: "Test" } },
+		});
+
+		const ctx = await createTRPCContext({ headers: new Headers() });
+
+		expect(ctx.session).toBeNull();
+		await expect(createCaller(ctx).getUser()).rejects.toMatchObject({
+			code: "UNAUTHORIZED",
+		});
+	});
+
+	it("leaves session null when user id is missing", async () => {
+		mockGetSession.mockResolvedValue({
+			data: { user: { id: "", email: "test@example.com", name: "Test" } },
 		});
 
 		const ctx = await createTRPCContext({ headers: new Headers() });
