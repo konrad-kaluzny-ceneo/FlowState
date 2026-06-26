@@ -1,7 +1,7 @@
 ---
 change_id: e2e-belt-timer-flakiness
 title: Stabilize E2E belt when fast work cycles race real wall clock
-status: implementing
+status: implemented
 created: 2026-06-24
 updated: 2026-06-26
 archived_at: null

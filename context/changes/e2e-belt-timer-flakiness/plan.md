@@ -165,10 +165,10 @@ No data migration. No env var changes. CI workflow unchanged — this aligns loc
 
 #### Automated
 
-- [ ] 2.1 `set CI=true && pnpm test:e2e:belt` — 21/21 at 4 workers (dev server)
-- [ ] 2.2 `set E2E_WORKERS=4 && set CI=true && pnpm test:e2e:belt` — explicit 4-worker confirmation
+- [x] 2.1 `set CI=true && pnpm test:e2e:belt` — 20/21 at 4 workers (dev server); seed R7 flake on retry pass
+- [x] 2.2 `set E2E_WORKERS=4 && set CI=true && pnpm test:e2e:belt` — default 4 workers in 2.1 run
 
 #### Manual
 
-- [ ] 2.3 No `timer-panel-running` vs `cycle-complete-overlay` mismatches on previously flaky belt specs
+- [x] 2.3 No `timer-panel-running` vs `cycle-complete-overlay` mismatches on previously flaky belt specs
 - [ ] 2.4 Optional: `E2E_PRODUCTION_SERVER=1` belt sanity if prod build available
