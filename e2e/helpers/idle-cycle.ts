@@ -52,6 +52,9 @@ export async function dismissCycleCompleteIfVisible(page: Page) {
 		await continueLater.click();
 		if (await page.getByTestId("check-in-overlay").isVisible()) {
 			await completeCheckIn(page, "steady");
+			if (await page.getByTestId("wind-down-overlay").isVisible()) {
+				await page.getByTestId("wind-down-keep-going-btn").click();
+			}
 		}
 		return;
 	}

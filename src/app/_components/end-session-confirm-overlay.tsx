@@ -32,7 +32,7 @@ export function EndSessionConfirmOverlay({
 		<OverlayScrim
 			ariaDescribedBy="end-session-confirm-description"
 			ariaLabelledBy="end-session-confirm-heading"
-			onEscape={onCancel}
+			onEscape={isSubmitting ? undefined : onCancel}
 			role="dialog"
 			testId="end-session-confirm-overlay"
 			zIndex={58}

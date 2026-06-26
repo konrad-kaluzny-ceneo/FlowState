@@ -49,13 +49,17 @@ export function CycleCompleteOverlay({
 			<OverlayScrim
 				ariaDescribedBy="break-complete-description"
 				ariaLabelledBy="break-complete-heading"
-				onEscape={() => {
-					if (hasPreFocus && onDismissPreFocus != null) {
-						onDismissPreFocus();
-						return;
-					}
-					void onConfirm(false);
-				}}
+				onEscape={
+					isConfirming
+						? undefined
+						: () => {
+								if (hasPreFocus && onDismissPreFocus != null) {
+									onDismissPreFocus();
+									return;
+								}
+								void onConfirm(false);
+							}
+				}
 				role="dialog"
 				testId="cycle-complete-overlay"
 			>
@@ -116,7 +120,7 @@ export function CycleCompleteOverlay({
 				focusedTask != null ? "cycle-complete-description" : undefined
 			}
 			ariaLabelledBy="cycle-complete-heading"
-			onEscape={() => void onConfirm(false)}
+			onEscape={isConfirming ? undefined : () => void onConfirm(false)}
 			role="dialog"
 			testId="cycle-complete-overlay"
 		>
