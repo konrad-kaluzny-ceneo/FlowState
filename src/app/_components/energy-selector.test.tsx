@@ -54,4 +54,10 @@ describe("EnergySelector", () => {
 			"Pick the energy that fits right now.",
 		);
 	});
+
+	it("exposes an accessible energy chip group", () => {
+		render(<EnergySelector onSelect={vi.fn()} />);
+
+		expect(screen.getByRole("group", { name: "Energy level" })).toBeTruthy();
+	});
 });

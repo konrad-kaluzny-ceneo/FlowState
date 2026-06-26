@@ -12,6 +12,25 @@ import type { RationaleBreakdown } from "~/lib/scoring/rationale-breakdown";
 
 const WEIGHT_LABELS = { 1: "Light", 2: "Medium", 3: "Heavy" } as const;
 
+const SUGGESTION_HEADING_ID = "task-suggestion-heading";
+const SUGGESTION_RATIONALE_PANEL_ID = "task-suggestion-rationale-panel";
+
+function getSuggestionStatusMessage(
+	props: TaskSuggestionCardProps,
+	showSlowMessage: boolean,
+): string {
+	switch (props.status) {
+		case "loading":
+			return showSlowMessage ? "Still working on it…" : "Finding a good match…";
+		case "ready":
+			return `Suggestion ready: ${props.suggestion.title}`;
+		case "empty":
+			return "No active tasks — add one or end session.";
+		case "error":
+			return "Could not load a suggestion. Your break is still running.";
+	}
+}
+
 export type TaskSuggestionData = {
 	taskId: number;
 	title: string;
@@ -125,6 +144,7 @@ function ReadySuggestionContent({
 			{showExpander && breakdown != null && (
 				<div className="space-y-2">
 					<button
+						aria-controls={SUGGESTION_RATIONALE_PANEL_ID}
 						aria-expanded={rationaleExpanded}
 						className="text-sm text-text-dimmed underline-offset-2 transition hover:text-text-secondary hover:underline"
 						data-testid="suggestion-rationale-toggle"
@@ -137,6 +157,7 @@ function ReadySuggestionContent({
 						<div
 							className="space-y-2 rounded-lg border border-border-subtle bg-surface-panel p-3 text-sm text-text-dimmed"
 							data-testid="suggestion-rationale-expander"
+							id={SUGGESTION_RATIONALE_PANEL_ID}
 						>
 							{breakdown.dominant.length > 0 && (
 								<ul className="list-disc space-y-1 pl-4">
@@ -205,6 +226,8 @@ export function TaskSuggestionCard(props: TaskSuggestionCardProps) {
 		};
 	}, [props.status]);
 
+	const statusMessage = getSuggestionStatusMessage(props, showSlowMessage);
+
 	return (
 		<OverlayCard
 			centered={false}
@@ -212,8 +235,14 @@ export function TaskSuggestionCard(props: TaskSuggestionCardProps) {
 			padding="p-6"
 			variant="suggestion"
 		>
-			<div data-testid="task-suggestion-card">
-				<h2 className="font-semibold text-lg text-primary">
+			<section
+				aria-labelledby={SUGGESTION_HEADING_ID}
+				data-testid="task-suggestion-card"
+			>
+				<h2
+					className="font-semibold text-lg text-primary"
+					id={SUGGESTION_HEADING_ID}
+				>
 					Suggested next task
 				</h2>
 				{props.status === "ready" && props.coachLine != null && (
@@ -225,20 +254,50 @@ export function TaskSuggestionCard(props: TaskSuggestionCardProps) {
 					</p>
 				)}
 
-				{props.status === "loading" && (
-					<div className="mt-4 space-y-3">
-						{showSkeleton ? (
-							<>
-								<div className="h-5 w-3/4 animate-pulse rounded bg-surface-panel" />
-								<div className="h-4 w-full animate-pulse rounded bg-surface-panel" />
-								<div className="h-10 w-full animate-pulse rounded-lg bg-surface-panel" />
-							</>
-						) : (
-							<p className="text-sm text-text-dimmed">Finding a good match…</p>
+				{(props.status === "loading" ||
+					props.status === "empty" ||
+					props.status === "error" ||
+					props.status === "ready") && (
+					<div
+						aria-atomic="true"
+						aria-live="polite"
+						className="mt-4"
+						data-testid="suggestion-live-status"
+					>
+						{props.status === "loading" && (
+							<div className="space-y-3">
+								{showSkeleton ? (
+									<>
+										<div className="h-5 w-3/4 animate-pulse rounded bg-surface-panel" />
+										<div className="h-4 w-full animate-pulse rounded bg-surface-panel" />
+										<div className="h-10 w-full animate-pulse rounded-lg bg-surface-panel" />
+									</>
+								) : (
+									<p className="text-sm text-text-dimmed">
+										Finding a good match…
+									</p>
+								)}
+								{showSlowMessage && (
+									<p className="text-sm text-text-secondary">
+										Still working on it…
+									</p>
+								)}
+							</div>
 						)}
-						{showSlowMessage && (
+
+						{props.status === "ready" && (
+							<p className="sr-only">{statusMessage}</p>
+						)}
+
+						{props.status === "empty" && (
 							<p className="text-sm text-text-secondary">
-								Still working on it…
+								No active tasks — add one or end session.
+							</p>
+						)}
+
+						{props.status === "error" && (
+							<p className="text-red-600 text-sm">
+								Could not load a suggestion. Your break is still running.
 							</p>
 						)}
 					</div>
@@ -254,17 +313,8 @@ export function TaskSuggestionCard(props: TaskSuggestionCardProps) {
 					/>
 				)}
 
-				{props.status === "empty" && (
-					<p className="mt-4 text-sm text-text-secondary">
-						No active tasks — add one or end session.
-					</p>
-				)}
-
 				{props.status === "error" && (
-					<div className="mt-4 space-y-3">
-						<p className="text-red-600 text-sm">
-							Could not load a suggestion. Your break is still running.
-						</p>
+					<div className="mt-3">
 						<button
 							className={`${overlayButtonClass.secondaryFull} py-2 font-medium`}
 							onClick={props.onRetry}
@@ -274,7 +324,7 @@ export function TaskSuggestionCard(props: TaskSuggestionCardProps) {
 						</button>
 					</div>
 				)}
-			</div>
+			</section>
 		</OverlayCard>
 	);
 }

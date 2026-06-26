@@ -307,9 +307,9 @@ No database migration, data migration, or API migration is required. This slice 
 
 #### Automated
 
-- [x] 1.1 Modal gate component tests pass
-- [x] 1.2 Wedge conductor behavior remains unchanged
-- [x] 1.3 Code quality passes after modal gate changes
+- [x] 1.1 Modal gate component tests pass — 905666b
+- [x] 1.2 Wedge conductor behavior remains unchanged — 905666b
+- [x] 1.3 Code quality passes after modal gate changes — 905666b
 
 #### Manual
 
@@ -320,9 +320,9 @@ No database migration, data migration, or API migration is required. This slice 
 
 #### Automated
 
-- [ ] 2.1 Inline gate component tests pass
-- [ ] 2.2 Hook and dashboard wedge dismiss oracles still pass
-- [ ] 2.3 Code quality passes after inline gate changes
+- [x] 2.1 Inline gate component tests pass
+- [x] 2.2 Hook and dashboard wedge dismiss oracles still pass
+- [x] 2.3 Code quality passes after inline gate changes
 
 #### Manual
 

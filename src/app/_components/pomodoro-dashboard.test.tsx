@@ -687,6 +687,42 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		fireEvent.click(screen.getByTestId("break-transition-line"));
 		expect(clearBreakTransitionLine).toHaveBeenCalled();
 	});
+
+	it("announces in-flow summary through a polite live region", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "idle",
+			cycleKind: "SHORT_BREAK",
+			inFlowSummaryLine: "2 cycles · 1 task done · feeling steady",
+		});
+
+		const summary = screen.getByTestId("session-inflow-summary");
+		expect(summary.getAttribute("aria-live")).toBe("polite");
+	});
+
+	it("announces break transition through a polite live region", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "SHORT_BREAK",
+			breakTransitionLine: BREAK_START_SHORT,
+		});
+
+		const line = screen.getByTestId("break-transition-line");
+		expect(line.getAttribute("aria-live")).toBe("polite");
+	});
+
+	it("announces suggestion override acknowledgement politely", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			overrideAcknowledgement: "Got it — focusing on your pick.",
+		});
+
+		const ack = screen.getByTestId("suggestion-override-ack");
+		expect(ack.getAttribute("aria-live")).toBe("polite");
+		expect(ack.textContent).toBe("Got it — focusing on your pick.");
+	});
 });
 
 describe("PomodoroDashboardBody end session while running", () => {

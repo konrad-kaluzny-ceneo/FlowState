@@ -253,4 +253,69 @@ describe("TaskSuggestionCard", () => {
 			"left off at auth middleware",
 		);
 	});
+
+	it("exposes a labelled suggestion region", () => {
+		render(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={baseSuggestion}
+			/>,
+		);
+
+		expect(
+			screen.getByRole("region", { name: "Suggested next task" }),
+		).toBeTruthy();
+	});
+
+	it("announces status through one polite live region", () => {
+		render(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={baseSuggestion}
+			/>,
+		);
+
+		const liveRegions = screen.getAllByTestId("suggestion-live-status");
+		expect(liveRegions).toHaveLength(1);
+		expect(liveRegions[0]?.getAttribute("aria-live")).toBe("polite");
+		expect(screen.getByText("Suggestion ready: Deep refactor")).toBeTruthy();
+	});
+
+	it("updates polite status when loading becomes slow", () => {
+		render(<TaskSuggestionCard status="loading" />);
+
+		act(() => {
+			vi.advanceTimersByTime(1000);
+		});
+
+		expect(screen.getByTestId("suggestion-live-status").textContent).toContain(
+			"Still working on it…",
+		);
+	});
+
+	it("wires aria-controls from Why this? to the rationale panel", () => {
+		render(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={{
+					...baseSuggestion,
+					breakdown: sampleBreakdown,
+				}}
+			/>,
+		);
+
+		const toggle = screen.getByTestId("suggestion-rationale-toggle");
+		expect(toggle.getAttribute("aria-controls")).toBe(
+			"task-suggestion-rationale-panel",
+		);
+
+		fireEvent.click(toggle);
+
+		expect(screen.getByTestId("suggestion-rationale-expander").id).toBe(
+			"task-suggestion-rationale-panel",
+		);
+	});
 });

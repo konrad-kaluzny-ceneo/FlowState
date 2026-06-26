@@ -21,11 +21,15 @@ export function SessionEnergyCard({
 	disabled = false,
 }: SessionEnergyCardProps) {
 	return (
-		<div
+		<section
+			aria-labelledby="session-energy-heading"
 			className="w-full max-w-lg rounded-xl border border-border-subtle bg-surface-panel/80 p-5 shadow-sm"
 			data-testid="session-energy-card"
 		>
-			<h2 className="font-semibold text-lg text-primary">
+			<h2
+				className="font-semibold text-lg text-primary"
+				id="session-energy-heading"
+			>
 				How&apos;s your energy to start?
 			</h2>
 			<p className="mt-1 text-sm text-text-secondary">
@@ -41,7 +45,7 @@ export function SessionEnergyCard({
 			>
 				Skip
 			</button>
-		</div>
+		</section>
 	);
 }
 
@@ -71,31 +75,39 @@ export function SessionFocusCard({
 	};
 
 	return (
-		<div
+		<section
+			aria-labelledby="session-focus-heading"
 			className="w-full max-w-lg rounded-xl border border-border-subtle bg-surface-panel/80 p-5 shadow-sm"
 			data-testid="session-focus-card"
 		>
-			<h2 className="font-semibold text-lg text-primary">
+			<h2
+				className="font-semibold text-lg text-primary"
+				id="session-focus-heading"
+			>
 				What&apos;s your focus this session?
 			</h2>
 			<p className="mt-1 text-sm text-text-secondary">
 				Helps bias your first task suggestion.
 			</p>
-			<div className="mt-4 flex flex-wrap gap-2">
-				{INTENTION_CHIP_OPTIONS.map((chip) => (
-					<button
-						className="rounded-lg bg-segment-inactive px-3 py-2 text-sm text-text-secondary transition hover:bg-surface-panel disabled:opacity-40"
-						data-testid={`steering-intention-${chip.testId}`}
-						disabled={isSubmitting}
-						key={chip.testId}
-						onClick={() => handleChipSelect(chip.label)}
-						type="button"
-					>
-						{chip.label}
-					</button>
-				))}
-			</div>
+			<fieldset className="mt-4 border-0 p-0">
+				<legend className="sr-only">Focus intention options</legend>
+				<div className="flex flex-wrap gap-2">
+					{INTENTION_CHIP_OPTIONS.map((chip) => (
+						<button
+							className="rounded-lg bg-segment-inactive px-3 py-2 text-sm text-text-secondary transition hover:bg-surface-panel disabled:opacity-40"
+							data-testid={`steering-intention-${chip.testId}`}
+							disabled={isSubmitting}
+							key={chip.testId}
+							onClick={() => handleChipSelect(chip.label)}
+							type="button"
+						>
+							{chip.label}
+						</button>
+					))}
+				</div>
+			</fieldset>
 			<input
+				aria-label="Custom focus intention"
 				className="mt-3 w-full rounded-lg border border-border-subtle bg-surface-panel px-3 py-2 text-sm text-text-primary placeholder:text-text-dimmed"
 				data-testid="steering-intention-input"
 				disabled={isSubmitting}
@@ -124,6 +136,6 @@ export function SessionFocusCard({
 					Skip
 				</button>
 			</div>
-		</div>
+		</section>
 	);
 }

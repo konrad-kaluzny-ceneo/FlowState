@@ -488,6 +488,8 @@ export function PomodoroDashboardBody({
 
 			{showInFlowSummary && (
 				<p
+					aria-atomic="true"
+					aria-live="polite"
 					className="w-full max-w-lg rounded-lg border border-border-subtle bg-surface-panel/50 px-4 py-2 text-center text-sm text-text-secondary"
 					data-testid="session-inflow-summary"
 				>
@@ -497,6 +499,8 @@ export function PomodoroDashboardBody({
 
 			{showBreakTransitionLine && (
 				<button
+					aria-atomic="true"
+					aria-live="polite"
 					className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
 					data-testid="break-transition-line"
 					onClick={pomodoro.clearBreakTransitionLine}
@@ -624,6 +628,8 @@ export function PomodoroDashboardBody({
 
 			{pomodoro.overrideAcknowledgement != null && (
 				<p
+					aria-atomic="true"
+					aria-live="polite"
 					className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
 					data-testid="suggestion-override-ack"
 				>

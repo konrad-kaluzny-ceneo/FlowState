@@ -25,7 +25,9 @@ describe("TimerPanel", () => {
 		expect(screen.getByTestId("timer-panel-idle")).toBeTruthy();
 		expect(screen.getByTestId("work-duration-min")).toBeTruthy();
 		expect(screen.getByTestId("work-duration-sec")).toBeTruthy();
-		expect(screen.getByRole("button", { name: "Start Cycle" })).toBeTruthy();
+		expect(
+			screen.getByRole("button", { name: "Start cycle for Write docs" }),
+		).toBeTruthy();
 	});
 
 	it("renders countdown when running", () => {
@@ -49,8 +51,11 @@ describe("TimerPanel", () => {
 
 		expect(screen.getByText(/Must be within 1 s – 90 min/)).toBeTruthy();
 		expect(
-			(screen.getByRole("button", { name: "Start Cycle" }) as HTMLButtonElement)
-				.disabled,
+			(
+				screen.getByRole("button", {
+					name: "Start cycle for Write docs",
+				}) as HTMLButtonElement
+			).disabled,
 		).toBe(true);
 	});
 
@@ -66,8 +71,11 @@ describe("TimerPanel", () => {
 
 		expect(screen.getByText(/Must be within 1 s – 90 min/)).toBeTruthy();
 		expect(
-			(screen.getByRole("button", { name: "Start Cycle" }) as HTMLButtonElement)
-				.disabled,
+			(
+				screen.getByRole("button", {
+					name: "Start cycle for Write docs",
+				}) as HTMLButtonElement
+			).disabled,
 		).toBe(true);
 	});
 
@@ -81,7 +89,9 @@ describe("TimerPanel", () => {
 		fireEvent.change(screen.getByTestId("work-duration-sec"), {
 			target: { value: "90" },
 		});
-		fireEvent.click(screen.getByRole("button", { name: "Start Cycle" }));
+		fireEvent.click(
+			screen.getByRole("button", { name: "Start cycle for Write docs" }),
+		);
 
 		expect(onStart).toHaveBeenCalledWith(90);
 	});
@@ -91,7 +101,9 @@ describe("TimerPanel", () => {
 		render(<TimerPanel {...defaultProps} onStart={onStart} />);
 
 		fireEvent.click(screen.getByRole("button", { name: "15 min" }));
-		fireEvent.click(screen.getByRole("button", { name: "Start Cycle" }));
+		fireEvent.click(
+			screen.getByRole("button", { name: "Start cycle for Write docs" }),
+		);
 
 		expect(onStart).toHaveBeenCalledWith(15 * 60);
 	});
@@ -172,5 +184,25 @@ describe("TimerPanel", () => {
 
 		expect(screen.getByText("Break paused")).toBeTruthy();
 		expect(screen.getByRole("button", { name: "Resume break" })).toBeTruthy();
+	});
+
+	it("labels idle start with task context and keeps countdown off live regions", () => {
+		render(<TimerPanel {...defaultProps} />);
+
+		expect(
+			screen.getByRole("button", { name: "Start cycle for Write docs" }),
+		).toBeTruthy();
+		expect(screen.queryByTestId("timer-countdown")).toBeNull();
+		expect(document.querySelector('[aria-live="polite"]')).toBeNull();
+	});
+
+	it("does not put the running countdown in a live region", () => {
+		render(
+			<TimerPanel {...defaultProps} remainingMs={125_000} state="running" />,
+		);
+
+		const countdown = screen.getByTestId("timer-countdown");
+		expect(countdown.getAttribute("aria-live")).toBeNull();
+		expect(screen.getByRole("region", { name: "Focus timer" })).toBeTruthy();
 	});
 });
