@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-26
 structure: split
-active_slices: [S-39]
+active_slices: []
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -86,7 +86,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-36 | persona-presets-v2 | [FLO-75](https://linear.app/flowstate-10xdev/issue/FLO-75) | [#118](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/118) | 8 personas + row labels + visible effort | S-29, F-05 | **US-02** | done |
 | S-37 | revisit-user-choices | [FLO-80](https://linear.app/flowstate-10xdev/issue/FLO-80) | [#132](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/132) | see and change prior choices (MVP: out-of-tab notification prefs on timer hub) | break-alerts-out-of-tab (merged) | revisit-user-choices PRD thread | done |
 | S-38 | session-end-mid-cycle-closure | [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) | [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151) | mid-cycle end sets expectations — what counts in closure | B-08 minimal | US-04 | done |
-| S-39 | accessible-wedge-gates | [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) | [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) | operate wedge gates with screen-reader-safe focus, live status, and keyboard-first accept/override/start controls | F-07, S-21, S-28 | US-01, desktop accessibility guardrails | in review |
+| S-39 | accessible-wedge-gates | [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) | [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) | operate wedge gates with screen-reader-safe focus, live status, and keyboard-first accept/override/start controls | F-07, S-21, S-28 | US-01, desktop accessibility guardrails | done |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -137,9 +137,9 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | F-03 | align-prisma-config | **done** | merged PR #165 |
 | S-11 ext. | post-merge-wedge-coach | **done** | shipped PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159); T-05 post-merge bridge |
 | S-37 | revisit-user-choices | **done** | merged PR #140 |
-| S-39 | accessible-wedge-gates | **in review** | impl review APPROVED (94%); pre-PR; pair [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) |
+| S-39 | accessible-wedge-gates | **done** | PR [#168](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/168); pair [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) |
 
-**In flight:** **S-39** (`accessible-wedge-gates`) — implementation review APPROVED (94%), now **in review** pre-PR; paired with test-plan Phase 8 (`testing-prd-v3-wedge-coherence`). Pick the next slice once S-39 merges.
+**Recommended next:** run `/next-slice-selector` or unpark the next quality/product slice from test-plan Phase 8 / parked backlog.
 
 ## Reference appendix (load on demand)
 
@@ -176,12 +176,13 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | P-GAP-110 progressive coaching | S-11 extension | park in [`parked.md`](roadmap-references/parked.md) |
 | P-GAP-102 guest activation | S-11 extension | **done** — post-merge-wedge-coach PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159) |
 | B-08 PRD review (2026-06-21) | **B-09** + **S-38** | new proposed slices — pause-then-end vs mid-cycle closure expectations |
-| P-102 accessible wedge overlay gates + P-103 keyboard shortcuts | **S-39** | **promoted 2026-06-26** — one canonical slice; active with pair [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) |
+| P-102 accessible wedge overlay gates + P-103 keyboard shortcuts | **S-39** | **done 2026-06-26** — PR [#168](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/168); pair [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) |
 
 Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-batches/README.md).
 
 ## Done
 
+- **S-39: operate wedge gates with screen-reader-safe focus, live status, and keyboard-first accept/override/start controls without losing the calm one-gate transition flow** — Archived 2026-06-26 → `context/archive/2026-06-26-accessible-wedge-gates/`. PR [#168](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/168). Issues [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167). Lesson: primitive-first modal contract in `OverlayScrim`; inline gates use polite live status; no new conductor gate.
 - **F-03: (foundation) Prisma 7 config hygiene** — Archived 2026-06-26 → `context/archive/2026-06-26-align-prisma-config/`. Lesson: —.
 - **S-38: mid-cycle end sets expectations — what counts in closure** — Archived 2026-06-24 → `context/archive/2026-06-23-session-end-mid-cycle-closure/`. PR [#162](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/162). Issues [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) / [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151). Lesson: S-38 mid-cycle copy gated to WORK via `cycleContext`; break confirm restores B-08 neutral wording; closure `interruptedMidCycle` only when ending during WORK running/paused.
 - **B-09: pause then end session — B-08 full variant (dual calm exit)** — Archived 2026-06-23 → `context/archive/2026-06-23-pause-and-end-session/`. PR [#161](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/161). Issues [FLO-86](https://linear.app/flowstate-10xdev/issue/FLO-86) / [#150](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/150). Lesson: pause-then-confirm before endSession from paused; after-pause overlay variant distinguishes three exit intents.
