@@ -347,10 +347,10 @@ No database migration or data migration is planned. Persisted pause integration 
 
 #### Automated
 
-- [x] 4.1 Risk #8 conductor mutual-exclusion oracle passes — d8aa13b
-- [x] 4.2 Risk #9 hook no-stale-suggestion oracle passes — d8aa13b
-- [x] 4.3 Risk #9 suggestion card smoke passes — d8aa13b
-- [x] 4.4 Combined Phase 4 Vitest command passes — d8aa13b
+- [x] 4.1 Risk #8 conductor mutual-exclusion oracle passes — 137cbb3
+- [x] 4.2 Risk #9 hook no-stale-suggestion oracle passes — 137cbb3
+- [x] 4.3 Risk #9 suggestion card smoke passes — 137cbb3
+- [x] 4.4 Combined Phase 4 Vitest command passes — 137cbb3
 
 #### Manual
 
@@ -360,10 +360,10 @@ No database migration or data migration is planned. Persisted pause integration 
 
 #### Automated
 
-- [ ] 5.1 Cookbook references the new Phase 8 patterns in §6.10
-- [ ] 5.2 Quality gate passes: `pnpm check`
-- [ ] 5.3 Unit/integration gate passes: `pnpm test`
+- [x] 5.1 Cookbook references the new Phase 8 patterns in §6.10
+- [x] 5.2 Quality gate passes: `pnpm check`
+- [x] 5.3 Unit/integration gate passes: `pnpm test`
 
 #### Manual
 
-- [ ] 5.4 §6.10 update stays scoped to reusable wedge coherence patterns
+- [x] 5.4 §6.10 update stays scoped to reusable wedge coherence patterns
