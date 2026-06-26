@@ -3422,6 +3422,160 @@ describe("usePomodoroCycle", () => {
 				chosenTaskId: 9,
 			});
 		});
+
+		it("hides stale post-check-in suggestion while the next suggestion is pending after check-in", async () => {
+			const staleTitle = "Previous break suggestion";
+			const freshTitle = "Fresh break suggestion";
+
+			activeCycleData = makeActiveCycle({
+				id: 82,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+
+			createCycle.mockImplementation(async (input) => ({
+				id: input.kind === "WORK" ? 42 : 400,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: null,
+				kind: input.kind,
+				state: "RUNNING",
+				startedAt: new Date(),
+				endedAt: null,
+				task: null,
+				configuredDurationSec: input.configuredDurationSec,
+			}));
+
+			suggestionNextMutate.mockResolvedValueOnce({
+				cycleId: 82,
+				taskId: 8,
+				title: staleTitle,
+				workType: "DEEP_WORK",
+				weight: 3,
+				rationaleKey: "energy_deep",
+				rationale: "Deep work — you're focused",
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await driveWorkCycleToCheckIn(result);
+
+			await act(async () => {
+				await result.current.submitCheckIn("FOCUSED");
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingSuggestion.status).toBe("ready");
+				expect(
+					result.current.pendingSuggestion.status === "ready"
+						? result.current.pendingSuggestion.data.title
+						: null,
+				).toBe(staleTitle);
+			});
+
+			act(() => {
+				fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+					data: { type: "complete" },
+				} as MessageEvent);
+			});
+
+			await act(async () => {
+				await result.current.confirmComplete(false);
+			});
+
+			act(() => {
+				result.current.selectTask(7, { id: 7, title: "Write tests" });
+			});
+
+			await startWorkCycle(result, 60);
+
+			activeCycleData = makeActiveCycle({
+				id: 83,
+				configuredDurationSec: 300,
+				taskId: 7,
+				task: { id: 7, title: "Write tests" },
+			});
+
+			act(() => {
+				fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+					data: { type: "complete" },
+				} as MessageEvent);
+			});
+
+			await act(async () => {
+				await result.current.onCycleCompleteConfirm(false);
+			});
+
+			expect(result.current.awaitingCheckIn).toBe(true);
+
+			let releaseCreateCheckIn!: () => void;
+			const checkInBlocked = new Promise<void>((resolve) => {
+				releaseCreateCheckIn = resolve;
+			});
+			createCheckInMutate.mockImplementation(async () => {
+				await checkInBlocked;
+				return {
+					id: 2,
+					cycleId: 83,
+					energy: "FOCUSED",
+					userId: "user-1",
+					respondedAt: new Date(),
+				};
+			});
+
+			let releaseSuggestion!: () => void;
+			const suggestionBlocked = new Promise<void>((resolve) => {
+				releaseSuggestion = () => {
+					resolve();
+				};
+			});
+			suggestionNextMutate.mockImplementation(async () => {
+				await suggestionBlocked;
+				return {
+					cycleId: 83,
+					taskId: 10,
+					title: freshTitle,
+					workType: "DEEP_WORK",
+					weight: 2,
+					rationaleKey: "fresh_start",
+					rationale: "Fresh rationale for the new beat",
+				};
+			});
+
+			let submitPromise!: Promise<void>;
+			act(() => {
+				submitPromise = result.current.submitCheckIn("FOCUSED");
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingSuggestion.status).toBe("loading");
+				expect(result.current.suggestedTaskId).toBeNull();
+				if (result.current.pendingSuggestion.status === "ready") {
+					expect(result.current.pendingSuggestion.data.title).not.toBe(
+						staleTitle,
+					);
+				}
+			});
+
+			releaseSuggestion();
+			await act(async () => {
+				releaseCreateCheckIn();
+				await submitPromise;
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingSuggestion.status).toBe("ready");
+				expect(
+					result.current.pendingSuggestion.status === "ready"
+						? result.current.pendingSuggestion.data.title
+						: null,
+				).toBe(freshTitle);
+				expect(result.current.suggestedTaskId).toBe(10);
+			});
+		});
 	});
 
 	describe("S-35 wedge sync recovery", () => {

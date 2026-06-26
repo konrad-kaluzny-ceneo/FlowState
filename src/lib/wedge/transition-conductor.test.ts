@@ -113,6 +113,96 @@ describe("resolveWedgeBeat", () => {
 	});
 });
 
+describe("resolveWedgeBeat mutual-exclusion matrix (Risk #8)", () => {
+	function countTrueGates(result: ReturnType<typeof resolveWedgeBeat>): number {
+		return [
+			result.showSessionClosure,
+			result.showWindDown,
+			result.showCheckIn,
+			result.showCycleComplete,
+		].filter(Boolean).length;
+	}
+
+	const mutexMatrix: WedgeConductorInput[] = [
+		{
+			...baseInput,
+			cyclePaused: true,
+			pendingClosureLine: "Session complete — take a breath.",
+			awaitingWindDown: true,
+			windDownRationale: "You've been at it for a while.",
+			awaitingCheckIn: true,
+			activeCycle: { id: 1 },
+			state: "completed",
+		},
+		{
+			...baseInput,
+			pendingClosureLine: "Session complete — take a breath.",
+			awaitingWindDown: true,
+			windDownRationale: "You've been at it for a while.",
+			awaitingCheckIn: true,
+			activeCycle: { id: 1 },
+			state: "completed",
+		},
+		{
+			...baseInput,
+			enableSuggestionGate: true,
+			awaitingCheckIn: true,
+			activeCycle: { id: 1 },
+			state: "completed",
+			isPostCheckInTransitioning: false,
+		},
+		{
+			...baseInput,
+			enableSuggestionGate: true,
+			awaitingWindDown: true,
+			windDownRationale: "You've been at it for a while.",
+			awaitingCheckIn: true,
+			activeCycle: { id: 1 },
+			state: "completed",
+			isPostCheckInTransitioning: true,
+		},
+		{
+			...baseInput,
+			pendingClosureLine: "Session complete — take a breath.",
+			state: "idle",
+			activeCycle: null,
+		},
+		{
+			...baseInput,
+			pendingClosureLine: "Session complete — 2 cycles. Take a breath.",
+			state: "completed",
+			activeCycle: { id: 42 },
+			awaitingCheckIn: true,
+		},
+		{
+			...baseInput,
+			awaitingWindDown: true,
+			windDownRationale: "You've been at it for a while.",
+			awaitingCheckIn: true,
+			activeCycle: { id: 1 },
+			state: "completed",
+			isPostCheckInTransitioning: true,
+		},
+		{
+			...baseInput,
+			enableCheckInGate: false,
+			enableWindDownGate: false,
+			awaitingWindDown: true,
+			windDownRationale: "You've been at it for a while.",
+			awaitingCheckIn: true,
+			activeCycle: { id: 1 },
+			state: "completed",
+		},
+	];
+
+	it.each(
+		mutexMatrix,
+	)("exposes at most one gate boolean for candidate %#", (input) => {
+		const result = resolveWedgeBeat(input);
+		expect(countTrueGates(result)).toBeLessThanOrEqual(1);
+	});
+});
+
 describe("computeKickoffEligible", () => {
 	const baseKickoff = {
 		mode: "authenticated" as const,
