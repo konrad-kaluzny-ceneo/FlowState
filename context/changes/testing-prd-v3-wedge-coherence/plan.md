@@ -323,9 +323,9 @@ No database migration or data migration is planned. Persisted pause integration 
 
 #### Automated
 
-- [x] 2.1 Risk #11 component oracle passes — ea77046
-- [x] 2.2 Dashboard recovery guard remains green if touched — ea77046
-- [x] 2.3 Combined Phase 2 Vitest command passes — ea77046
+- [x] 2.1 Risk #11 component oracle passes — 1cb31a4
+- [x] 2.2 Dashboard recovery guard remains green if touched — 1cb31a4
+- [x] 2.3 Combined Phase 2 Vitest command passes — 1cb31a4
 
 #### Manual
 
