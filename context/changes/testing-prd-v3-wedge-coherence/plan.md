@@ -335,9 +335,9 @@ No database migration or data migration is planned. Persisted pause integration 
 
 #### Automated
 
-- [ ] 3.1 Risk #10 hook no-interruption oracle passes
-- [ ] 3.2 Risk #10 router persisted-pause integration passes
-- [ ] 3.3 Combined Phase 3 Vitest command passes
+- [x] 3.1 Risk #10 hook no-interruption oracle passes — 9c98b30
+- [x] 3.2 Risk #10 router persisted-pause integration passes — 9c98b30
+- [x] 3.3 Combined Phase 3 Vitest command passes — 9c98b30
 
 #### Manual
 
