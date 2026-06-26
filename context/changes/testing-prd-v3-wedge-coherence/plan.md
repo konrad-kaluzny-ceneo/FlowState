@@ -311,9 +311,9 @@ No database migration or data migration is planned. Persisted pause integration 
 
 #### Automated
 
-- [x] 1.1 Risk #12 prompt component oracle passes — f4e8331
-- [x] 1.2 Risk #12 dashboard deferral oracle passes — f4e8331
-- [x] 1.3 Combined Phase 1 Vitest command passes — f4e8331
+- [x] 1.1 Risk #12 prompt component oracle passes — dc6c60b
+- [x] 1.2 Risk #12 dashboard deferral oracle passes — dc6c60b
+- [x] 1.3 Combined Phase 1 Vitest command passes — dc6c60b
 
 #### Manual
 
