@@ -5,8 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-26
 structure: split
-active_slices:
-  - align-prisma-config
+active_slices: []
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -45,7 +44,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-08 | guest-local-storage-merge | [FLO-21](https://linear.app/flowstate-10xdev/issue/FLO-21) | [#30](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/30) | guest trial → merge on sign-in | S-01, F-02 | preserved | done |
 | S-09 | optimistic-task-mutations | [FLO-24](https://linear.app/flowstate-10xdev/issue/FLO-24) | [#35](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/35) | optimistic task CRUD when logged in | S-01, F-02 | guardrails | done |
 | S-10 | google-oauth-provider | [FLO-20](https://linear.app/flowstate-10xdev/issue/FLO-20) | [#20](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/20) | Google sign-in | F-02 | preserved | done |
-| F-03 | align-prisma-config | [FLO-22](https://linear.app/flowstate-10xdev/issue/FLO-22) | [#33](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/33) | (foundation) Prisma 7 config hygiene | — | — | in review |
+| F-03 | align-prisma-config | [FLO-22](https://linear.app/flowstate-10xdev/issue/FLO-22) | [#33](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/33) | (foundation) Prisma 7 config hygiene | — | — | done |
 | F-04 | impeccable-design-foundation | [FLO-25](https://linear.app/flowstate-10xdev/issue/FLO-25) | [#36](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/36) | (foundation) DESIGN.md | S-09 | preserved | done |
 | S-11 | first-run-wedge-onboarding | [FLO-26](https://linear.app/flowstate-10xdev/issue/FLO-26) | [#37](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/37) | first-run teaches check-in → suggestion wedge | S-06, S-08 | preserved | done |
 | S-12 | wedge-overlay-visual-polish | [FLO-28](https://linear.app/flowstate-10xdev/issue/FLO-28) | [#38](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/38) | cohesive check-in/suggestion overlays | S-09, F-04 | preserved | done |
@@ -133,7 +132,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-33 | break-restoration-atmosphere | **yes** | pair S-21 |
 | S-34 | optimistic-wedge-transitions | **yes** | US-01; F-07 done |
 | S-35 | wedge-transition-sync-recovery | **yes** | bundle with S-34 |
-| F-03 | align-prisma-config | **yes** | hygiene; parallel when idle |
+| F-03 | align-prisma-config | **done** | merged PR #165 |
 | S-11 ext. | post-merge-wedge-coach | **done** | shipped PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159); T-05 post-merge bridge |
 | S-37 | revisit-user-choices | **done** | merged PR #140 |
 
@@ -179,6 +178,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **F-03: (foundation) Prisma 7 config hygiene** — Archived 2026-06-26 → `context/archive/2026-06-26-align-prisma-config/`. Lesson: —.
 - **S-38: mid-cycle end sets expectations — what counts in closure** — Archived 2026-06-24 → `context/archive/2026-06-23-session-end-mid-cycle-closure/`. PR [#162](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/162). Issues [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) / [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151). Lesson: S-38 mid-cycle copy gated to WORK via `cycleContext`; break confirm restores B-08 neutral wording; closure `interruptedMidCycle` only when ending during WORK running/paused.
 - **B-09: pause then end session — B-08 full variant (dual calm exit)** — Archived 2026-06-23 → `context/archive/2026-06-23-pause-and-end-session/`. PR [#161](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/161). Issues [FLO-86](https://linear.app/flowstate-10xdev/issue/FLO-86) / [#150](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/150). Lesson: pause-then-confirm before endSession from paused; after-pause overlay variant distinguishes three exit intents.
 - **S-28: Calm Garden illustrations + overlay phase 2** — Archived 2026-06-23 → `context/archive/2026-06-23-wellness-illustration-foundation/`. PR [#160](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/160). Issues [FLO-63](https://linear.app/flowstate-10xdev/issue/FLO-63) / [#98](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/98). Lesson: phase 1 (hero sprig + Empty Garden Bed SVG primitives); overlay scrims deferred to follow-up.
