@@ -24,15 +24,23 @@ export function BreakAlertsPermissionPrompt({
 
 	return (
 		<OverlayScrim
+			ariaDescribedBy="break-alerts-permission-description"
+			ariaLabelledBy="break-alerts-permission-heading"
 			role="dialog"
 			testId="break-alerts-permission-prompt"
 			zIndex={60}
 		>
 			<OverlayCard>
-				<h2 className="font-semibold text-primary text-xl">
+				<h2
+					className="font-semibold text-primary text-xl"
+					id="break-alerts-permission-heading"
+				>
 					Break alerts in other tabs
 				</h2>
-				<p className="mt-3 text-sm text-text-secondary">
+				<p
+					className="mt-3 text-sm text-text-secondary"
+					id="break-alerts-permission-description"
+				>
 					When you are in another tab, FlowState can send a calm notification
 					and play your break chime when a break starts. You can turn this off
 					anytime in break settings.
