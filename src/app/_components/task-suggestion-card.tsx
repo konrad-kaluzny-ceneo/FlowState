@@ -127,7 +127,10 @@ function ReadySuggestionContent({
 	return (
 		<div className="mt-4 space-y-4">
 			<div className="space-y-2">
-				<p className="overflow-hidden whitespace-pre-wrap break-all font-medium text-primary">
+				<p
+					className="overflow-hidden whitespace-pre-wrap break-all font-medium text-primary"
+					data-testid="suggestion-task-title"
+				>
 					{suggestion.title}
 				</p>
 				<TaskBadges suggestion={suggestion} />

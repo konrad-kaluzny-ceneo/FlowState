@@ -333,12 +333,12 @@ No database migration, data migration, or API migration is required. This slice 
 
 #### Automated
 
-- [ ] 3.1 Test-plan Phase 8 includes S-39 operability criteria
-- [ ] 3.2 Optional wedge-scoped axe decision recorded, and coverage passes if added
-- [ ] 3.3 Focused wedge regression passes
-- [ ] 3.4 Required project checks pass
-- [ ] 3.5 Required unit and integration suite passes
-- [ ] 3.6 Required e2e belt passes
+- [x] 3.1 Test-plan Phase 8 includes S-39 operability criteria
+- [x] 3.2 Optional wedge-scoped axe decision recorded, and coverage passes if added
+- [x] 3.3 Focused wedge regression passes
+- [x] 3.4 Required project checks pass
+- [x] 3.5 Required unit and integration suite passes
+- [x] 3.6 Required e2e belt passes
 
 #### Manual
 

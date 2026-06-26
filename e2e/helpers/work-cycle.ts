@@ -4,6 +4,7 @@ import { splitSecToMinSec } from "../../src/lib/duration-input";
 import { completeCheckIn } from "./check-in";
 import {
 	dismissBreakAlertsPermissionIfVisible,
+	dismissCycleCompleteIfVisible,
 	dismissKickoffReadinessIfVisible,
 	dismissTaskSuggestionIfVisible,
 	waitForTimerPanelIdle,
@@ -119,6 +120,7 @@ export async function waitForCycleCreateSettled(page: Page) {
 export async function clickStartCycle(page: Page) {
 	await ensureFakeClock(page);
 	await dismissFirstRunIfVisible(page);
+	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	const createSettled = waitForCycleCreateSettled(page);
 	await page.getByRole("button", { name: "Start Cycle" }).click();
@@ -138,9 +140,11 @@ export async function startFocusedWorkCycle(
 	durationSec: number,
 ) {
 	await dismissFirstRunIfVisible(page);
+	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	await uncheckDailyStandingDefault(page);
 	await page.getByPlaceholder("Add a new task...").fill(taskTitle);
+	await dismissCycleCompleteIfVisible(page);
 	await page.getByRole("button", { name: "Add", exact: true }).click();
 	const taskRow = page
 		.getByRole("listitem")
@@ -171,9 +175,11 @@ export async function startFocusedWorkCycle(
 export async function addTask(page: Page, title: string) {
 	const addButton = page.getByRole("button", { name: "Add", exact: true });
 	await dismissFirstRunIfVisible(page);
+	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	await uncheckDailyStandingDefault(page);
 	await page.getByPlaceholder("Add a new task...").fill(title);
+	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	await addButton.click();
 	await expect(

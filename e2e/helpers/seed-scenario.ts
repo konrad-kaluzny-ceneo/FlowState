@@ -170,7 +170,14 @@ export async function resetWorkerSessionViaApi(page: Page) {
 	await dismissEndedSessionHandoffInStorage(page);
 	const tasks = await trpcQuery<Array<{ id: number }>>(page, "task.list");
 	for (const task of tasks) {
-		await trpcMutation(page, "task.delete", { id: task.id });
+		try {
+			await trpcMutation(page, "task.delete", { id: task.id });
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			if (!message.includes("NOT_FOUND")) {
+				throw error;
+			}
+		}
 	}
 	await drainActiveCycles(page);
 }

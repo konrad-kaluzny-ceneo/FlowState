@@ -156,7 +156,9 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 
 		await expectKickoffVisible(page, { title: activeTitle });
 		await expect(
-			page.getByTestId("task-suggestion-card").getByText(standingTitle),
+			page
+				.getByTestId("suggestion-task-title")
+				.filter({ hasText: standingTitle }),
 		).toHaveCount(0);
 	});
 

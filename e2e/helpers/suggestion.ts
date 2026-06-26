@@ -73,9 +73,10 @@ export async function expectSuggestionVisible(
 	}
 
 	if (options?.title != null) {
-		await expect(
-			page.getByTestId("task-suggestion-card").getByText(options.title),
-		).toBeVisible({ timeout: 15_000 });
+		await expect(page.getByTestId("suggestion-task-title")).toHaveText(
+			options.title,
+			{ timeout: 15_000 },
+		);
 		await expect(
 			page.getByTestId("suggested-task-row").filter({ hasText: options.title }),
 		).toBeVisible({ timeout: 15_000 });
