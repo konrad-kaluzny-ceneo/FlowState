@@ -318,4 +318,72 @@ describe("TaskSuggestionCard", () => {
 			"task-suggestion-rationale-panel",
 		);
 	});
+
+	it("drops stale suggestion copy when props switch to loading after check-in", () => {
+		const { rerender } = render(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={{
+					...baseSuggestion,
+					title: "Previous break suggestion",
+					rationale: "Previous rationale — do not keep showing",
+				}}
+			/>,
+		);
+
+		expect(screen.getByText("Previous break suggestion")).toBeTruthy();
+		expect(
+			screen.getByText("Previous rationale — do not keep showing"),
+		).toBeTruthy();
+
+		rerender(<TaskSuggestionCard status="loading" />);
+
+		expect(screen.queryByText("Previous break suggestion")).toBeNull();
+		expect(
+			screen.queryByText("Previous rationale — do not keep showing"),
+		).toBeNull();
+		expect(screen.getByText("Finding a good match…")).toBeTruthy();
+	});
+
+	it("renders fresh suggestion copy after loading handoff", () => {
+		const { rerender } = render(<TaskSuggestionCard status="loading" />);
+
+		expect(screen.queryByText("Fresh break suggestion")).toBeNull();
+
+		rerender(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={{
+					...baseSuggestion,
+					title: "Fresh break suggestion",
+					rationale: "Fresh rationale for the new beat",
+				}}
+			/>,
+		);
+
+		expect(screen.getByText("Fresh break suggestion")).toBeTruthy();
+		expect(screen.getByText("Fresh rationale for the new beat")).toBeTruthy();
+	});
+
+	it("does not show stale suggestion copy in empty state after check-in", () => {
+		const { rerender } = render(
+			<TaskSuggestionCard
+				onAccept={vi.fn()}
+				status="ready"
+				suggestion={{
+					...baseSuggestion,
+					title: "Previous break suggestion",
+				}}
+			/>,
+		);
+
+		rerender(<TaskSuggestionCard status="empty" />);
+
+		expect(screen.queryByText("Previous break suggestion")).toBeNull();
+		expect(
+			screen.getByText("No active tasks — add one or end session."),
+		).toBeTruthy();
+	});
 });

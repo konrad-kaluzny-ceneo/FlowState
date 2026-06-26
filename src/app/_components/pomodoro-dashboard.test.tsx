@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
 import { defaultEisenhowerFields } from "~/lib/data-mode/types";
+import type { OnboardingScope } from "~/lib/onboarding/types";
 import { BREAK_START_SHORT } from "~/lib/session/transition-copy";
 
 import { PomodoroDashboardBody } from "./pomodoro-dashboard";
@@ -34,6 +35,42 @@ vi.mock("~/hooks/use-task-mutations", () => ({
 vi.mock("./task-list", () => ({
 	TaskList: () => <div data-testid="task-list-stub" />,
 }));
+
+const mockGetNotificationPermission = vi.fn(
+	(): NotificationPermission => "default",
+);
+const mockShouldDeferFirstRun = vi.fn(() => false);
+const mockReadNotificationPromptDismissed = vi.fn(
+	(_scope: OnboardingScope) => false,
+);
+const mockWriteNotificationPromptDismissed = vi.fn(
+	(_scope: OnboardingScope, _dismissed: boolean) => undefined,
+);
+
+vi.mock("~/lib/break-out-of-tab-alert/notify-break-start", () => ({
+	getNotificationPermission: () => mockGetNotificationPermission(),
+	requestNotificationPermission: vi.fn().mockResolvedValue("granted"),
+}));
+
+vi.mock("~/lib/onboarding/defer", () => ({
+	shouldDeferFirstRun: () => mockShouldDeferFirstRun(),
+}));
+
+vi.mock("~/lib/break-out-of-tab-alert/storage", async (importOriginal) => {
+	const actual =
+		await importOriginal<
+			typeof import("~/lib/break-out-of-tab-alert/storage")
+		>();
+	return {
+		...actual,
+		readNotificationPromptDismissed: (
+			...args: Parameters<typeof actual.readNotificationPromptDismissed>
+		) => mockReadNotificationPromptDismissed(...args),
+		writeNotificationPromptDismissed: (
+			...args: Parameters<typeof actual.writeNotificationPromptDismissed>
+		) => mockWriteNotificationPromptDismissed(...args),
+	};
+});
 
 const tasks: DomainTask[] = [
 	{
@@ -836,6 +873,91 @@ describe("PomodoroDashboardBody end session while running", () => {
 
 		expect(screen.getByTestId("end-session-confirm-overlay")).toBeTruthy();
 		expect(screen.queryByText(/focus block/i)).toBeNull();
+	});
+});
+
+describe("PomodoroDashboardBody break-alerts permission deferral", () => {
+	beforeEach(() => {
+		localStorage.clear();
+		vi.clearAllMocks();
+		mockGetNotificationPermission.mockReturnValue("default");
+		mockShouldDeferFirstRun.mockReturnValue(false);
+		mockReadNotificationPromptDismissed.mockReturnValue(false);
+	});
+
+	function renderReadyToStartWithDeferredPermission() {
+		const start = vi.fn().mockResolvedValue(undefined);
+		const skipSessionEnergy = vi.fn();
+
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTask: { id: 1, title: "Focus task" },
+				showSessionEnergy: true,
+				sessionEnergyPending: true,
+				start,
+				skipSessionEnergy,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("session-energy-skip-btn"));
+
+		return { start, skipSessionEnergy };
+	}
+
+	function clickStartCycle() {
+		fireEvent.click(
+			screen.getByRole("button", { name: "Start cycle for Focus task" }),
+		);
+	}
+
+	it("defers pomodoro.start behind the permission prompt after steering completes", () => {
+		const { start } = renderReadyToStartWithDeferredPermission();
+
+		clickStartCycle();
+
+		expect(screen.getByTestId("break-alerts-permission-prompt")).toBeTruthy();
+		expect(start).not.toHaveBeenCalled();
+	});
+
+	it("replays deferred pomodoro.start once after permission prompt dismiss", async () => {
+		const { start } = renderReadyToStartWithDeferredPermission();
+
+		clickStartCycle();
+		fireEvent.click(screen.getByTestId("break-alerts-permission-not-now-btn"));
+
+		await waitFor(() => {
+			expect(start).toHaveBeenCalledTimes(1);
+		});
+		expect(start).toHaveBeenCalledWith(25 * 60);
+		expect(screen.queryByTestId("break-alerts-permission-prompt")).toBeNull();
+		expect(mockWriteNotificationPromptDismissed).toHaveBeenCalledWith(
+			{ mode: "guest" },
+			true,
+		);
+	});
+
+	it("replays deferred pomodoro.start once after permission prompt enable", async () => {
+		const { start } = renderReadyToStartWithDeferredPermission();
+
+		clickStartCycle();
+		fireEvent.click(screen.getByTestId("break-alerts-permission-enable-btn"));
+
+		await waitFor(() => {
+			expect(start).toHaveBeenCalledTimes(1);
+		});
+		expect(start).toHaveBeenCalledWith(25 * 60);
+		expect(screen.queryByTestId("break-alerts-permission-prompt")).toBeNull();
 	});
 });
 

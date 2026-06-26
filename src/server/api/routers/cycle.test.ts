@@ -643,6 +643,54 @@ describe("cycle router lifecycle", () => {
 		expect(sessions[0]?.interruptionCount).toBe(0);
 	});
 
+	it("pause persists PAUSED state readable through getActive", async () => {
+		tasks = [
+			{ id: 10, title: "Focus task", status: "active", userId: USER_ID },
+		];
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+		];
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: 10,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
+
+		await caller().pause({
+			cycleId: 1,
+			remainingDurationSec: 600,
+		});
+
+		const active = await caller().getActive();
+		expect(active).toMatchObject({
+			id: 1,
+			sessionId: 1,
+			userId: USER_ID,
+			taskId: 10,
+			kind: "WORK",
+			state: "PAUSED",
+			remainingDurationSec: 600,
+		});
+		expect(active?.pausedAt).not.toBeNull();
+		expect(active?.task).toMatchObject({ id: 10, title: "Focus task" });
+		expect(sessions[0]?.interruptionCount).toBe(0);
+	});
+
 	it("resume transitions PAUSED to RUNNING and clears pause fields", async () => {
 		sessions = [
 			{
