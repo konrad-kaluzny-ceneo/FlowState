@@ -481,9 +481,9 @@ No Prisma schema or data migration is planned. If a router or guest import produ
 
 #### Automated
 
-- [x] 5.1 Targeted Stryker results recorded for every scoped changed file — consolidated before/after (research baseline → post-oracle): `trpc.ts` 18.37→67.35%; `use-pomodoro-cycle.ts` 51.77→52.68%; `cycle.ts` 75.51→76.53%; `task.ts` 67.48→76.47%; `session.ts` 60.87→64.00%; `check-in.ts` 38.71→64.52%; `import-guest-snapshot.ts` 63.79→68.97%; exit-band misses classified equivalent/deferred per §6.7 (see `test-plan.md` §6.7 Phase 5 table)
-- [x] 5.2 `context/foundation/test-plan.md` §6.7 includes Phase 5 mutation-oracle notes
-- [x] 5.3 `context/foundation/test-plan.md` §3 Phase 5 row is updated after implementation completion
-- [x] 5.4 `context/foundation/test-plan.md` §8 freshness ledger is updated after implementation completion
-- [x] 5.5 Quality gate passes: `pnpm check`
-- [x] 5.6 Unit/integration gate passes: `pnpm test` — 965 passed / 126 files
+- [x] 5.1 Targeted Stryker results recorded for every scoped changed file — consolidated before/after (research baseline → post-oracle): `trpc.ts` 18.37→67.35%; `use-pomodoro-cycle.ts` 51.77→52.68%; `cycle.ts` 75.51→76.53%; `task.ts` 67.48→76.47%; `session.ts` 60.87→64.00%; `check-in.ts` 38.71→64.52%; `import-guest-snapshot.ts` 63.79→68.97%; exit-band misses classified equivalent/deferred per §6.7 (see `test-plan.md` §6.7 Phase 5 table) — d4a7296
+- [x] 5.2 `context/foundation/test-plan.md` §6.7 includes Phase 5 mutation-oracle notes — d4a7296
+- [x] 5.3 `context/foundation/test-plan.md` §3 Phase 5 row is updated after implementation completion — d4a7296
+- [x] 5.4 `context/foundation/test-plan.md` §8 freshness ledger is updated after implementation completion — d4a7296
+- [x] 5.5 Quality gate passes: `pnpm check` — d4a7296
+- [x] 5.6 Unit/integration gate passes: `pnpm test` — 965 passed / 126 files — d4a7296
