@@ -99,7 +99,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 5 | Mutation oracle hardening | Raise covered-code mutation score from ~58% by killing survived mutants in hooks and server routers — tests exist but assertions are too weak | #1, #2, #3, #4, #5, #6 | unit + integration (targeted Stryker runs) | not started | — |
 | 6 | Uncovered UI & auth paths | Exercise task-list, dashboard, and auth action paths so no-coverage mutants drop — largest score drag but narrower than Phase 5 per test | #1, #3, #5 | component smoke + integration | complete | testing-component-layer-cookbook |
 | 7 | E2E belt merge gate | Replace full-catalog CI gate with 12-test belt; Vitest backfill then delete 10 demoted e2e files | #1–#7 (belt entry points + integration-only #4/#6) | Playwright belt + Vitest/component backfill | complete | testing-e2e-belt-fast |
-| 8 | PRD v3 wedge coherence | Orchestrated transitions, pause semantics, optimistic wedge, network recovery, **stuck-gate dismiss + S-39 operability oracles** — belt/hook proofs for US-01/US-04 | #8, #9, #10, #11, **#12** | unit + hook + belt extensions | implementing | testing-prd-v3-wedge-coherence |
+| 8 | PRD v3 wedge coherence | Orchestrated transitions, pause semantics, optimistic wedge, network recovery, **stuck-gate dismiss + S-39 operability oracles** — belt/hook proofs for US-01/US-04 | #8, #9, #10, #11, **#12** | unit + hook + belt extensions | complete | testing-prd-v3-wedge-coherence |
 
 ## 4. Stack
 
@@ -423,7 +423,7 @@ contributors should respect these unless the underlying assumption changes.
 - Risk #12 + §6.10 added: 2026-06-20 (`session-entry-wedge-bugs` — stuck focus popup, Cycle Complete not closing)
 - S-39 operability oracles in §6.10: 2026-06-26 (`accessible-wedge-gates` — modal focus, inline live status, keyboard-first; wedge axe deferred)
 - Phase 8 wedge coherence cookbook in §6.10: 2026-06-26 (`testing-prd-v3-wedge-coherence` / Q-08 — mutex, optimistic handoff, pause, recovery, permission deferral oracles; hook/component/integration only)
-- **Next session:** mark §3 Phase 8 `complete` after `testing-prd-v3-wedge-coherence` archives; Phase 5 mutation oracle still optional backlog
+- **Q-08 archived:** §3 Phase 8 marked `complete` after `testing-prd-v3-wedge-coherence` merged and archived; Phase 5 mutation oracle still optional backlog
 
 Refresh (`/10x-test-plan --refresh`) when:
 
