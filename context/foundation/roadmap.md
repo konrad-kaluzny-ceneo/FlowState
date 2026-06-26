@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-26
 structure: split
-active_slices: []
+active_slices: [S-39]
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -86,6 +86,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-36 | persona-presets-v2 | [FLO-75](https://linear.app/flowstate-10xdev/issue/FLO-75) | [#118](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/118) | 8 personas + row labels + visible effort | S-29, F-05 | **US-02** | done |
 | S-37 | revisit-user-choices | [FLO-80](https://linear.app/flowstate-10xdev/issue/FLO-80) | [#132](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/132) | see and change prior choices (MVP: out-of-tab notification prefs on timer hub) | break-alerts-out-of-tab (merged) | revisit-user-choices PRD thread | done |
 | S-38 | session-end-mid-cycle-closure | [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) | [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151) | mid-cycle end sets expectations — what counts in closure | B-08 minimal | US-04 | done |
+| S-39 | accessible-wedge-gates | [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) | [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) | operate wedge gates with screen-reader-safe focus, live status, and keyboard-first accept/override/start controls | F-07, S-21, S-28 | US-01, desktop accessibility guardrails | active |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -108,6 +109,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | M | Coherence craft | S-31 ∥ S-28; S-30 footprint | Focus shell, atmosphere |
 | N | PRD v3 flow conductor | **B-05 → B-06 → F-07 (+B-07)** → S-21 ∥ S-33; S-34 ∥ S-35; S-24 → **B-08 → B-09 ∥ S-38** | US-01 — see [`prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md) |
 | O | Choice revisit | break-alerts-out-of-tab (merged) → **S-37** | MVP: notification prefs on timer hub; broader pattern deferred |
+| P | Accessible wedge operation | F-07 + S-21 + S-28 → **S-39** | Unparks P-102/P-103 now that transition conductor, copy, and Calm Garden overlay craft have landed |
 
 ## Backlog Handoff
 
@@ -135,8 +137,9 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | F-03 | align-prisma-config | **done** | merged PR #165 |
 | S-11 ext. | post-merge-wedge-coach | **done** | shipped PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159); T-05 post-merge bridge |
 | S-37 | revisit-user-choices | **done** | merged PR #140 |
+| S-39 | accessible-wedge-gates | **active** | unparked from P-102/P-103; pair [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) created 2026-06-26 |
 
-**Recommended next:** **S-32** (S-36 done) ∥ **B-06** (active) → **F-07** → **S-11 ext.** ∥ **S-27** ∥ **S-30** ∥ **S-31** ∥ **S-28** → **S-24** → **S-34** ∥ **S-35**; **S-21** ∥ **S-33** after F-07.
+**Recommended next:** **S-39** (`accessible-wedge-gates`) — only canonical `ready` row after PRD v3 flow/coherence slices landed; pair with test-plan Phase 8 (`testing-prd-v3-wedge-coherence`) during `/10x-plan`.
 
 ## Reference appendix (load on demand)
 
@@ -173,6 +176,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | P-GAP-110 progressive coaching | S-11 extension | park in [`parked.md`](roadmap-references/parked.md) |
 | P-GAP-102 guest activation | S-11 extension | **done** — post-merge-wedge-coach PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159) |
 | B-08 PRD review (2026-06-21) | **B-09** + **S-38** | new proposed slices — pause-then-end vs mid-cycle closure expectations |
+| P-102 accessible wedge overlay gates + P-103 keyboard shortcuts | **S-39** | **promoted 2026-06-26** — one canonical slice; active with pair [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) |
 
 Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-batches/README.md).
 
