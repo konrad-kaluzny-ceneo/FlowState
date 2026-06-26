@@ -1,7 +1,7 @@
 ---
 change_id: testing-prd-v3-wedge-coherence
 title: PRD v3 wedge coherence
-status: implemented
+status: impl_reviewed
 created: 2026-06-26
 updated: 2026-06-26
 archived_at: null
