@@ -45,98 +45,94 @@ let nextTaskId = 1;
 let nextCycleId = 1;
 let nextSessionId = 1;
 
+const cycleCreate = vi.fn((args: { data: Omit<CycleRow, "id"> }) => {
+	const row: CycleRow = { id: nextCycleId++, ...args.data };
+	cycles.push(row);
+	return Promise.resolve(row);
+});
+
+const cycleUpdateMany = vi.fn(
+	(args: {
+		where: { userId?: string; state?: CycleWhereState };
+		data: Partial<
+			Pick<
+				CycleRow,
+				"state" | "endedAt" | "pausedAt" | "remainingDurationSec" | "startedAt"
+			>
+		>;
+	}) => {
+		const matchesState = (
+			cycleState: CycleRow["state"],
+			whereState?: CycleWhereState,
+		): boolean => {
+			if (whereState == null) {
+				return true;
+			}
+			if (typeof whereState === "string") {
+				return cycleState === whereState;
+			}
+			return whereState.in.includes(cycleState);
+		};
+		let count = 0;
+		for (const cycle of cycles) {
+			if (args.where.userId != null && cycle.userId !== args.where.userId) {
+				continue;
+			}
+			if (!matchesState(cycle.state, args.where.state)) {
+				continue;
+			}
+			Object.assign(cycle, args.data);
+			count++;
+		}
+		return Promise.resolve({ count });
+	},
+);
+
+const dbTransaction = vi.fn((fn: (tx: unknown) => Promise<unknown>) =>
+	fn({
+		task: {
+			findMany: vi.fn(() =>
+				Promise.resolve(tasks.map((task) => ({ title: task.title }))),
+			),
+			aggregate: vi.fn(
+				(args: { where: { userId: string }; _max: { sortOrder: true } }) => {
+					const userTasks = tasks.filter(
+						(task) => task.userId === args.where.userId,
+					);
+					const maxSortOrder = userTasks.reduce(
+						(max, task) => Math.max(max, task.sortOrder),
+						-1,
+					);
+					return Promise.resolve({
+						_max: {
+							sortOrder: maxSortOrder >= 0 ? maxSortOrder : null,
+						},
+					});
+				},
+			),
+			create: vi.fn((args: { data: Omit<TaskRow, "id"> }) => {
+				const row: TaskRow = { id: nextTaskId++, ...args.data };
+				tasks.push(row);
+				return Promise.resolve(row);
+			}),
+		},
+		session: {
+			create: vi.fn((args: { data: { userId: string } }) => {
+				const row = { id: nextSessionId++, userId: args.data.userId };
+				sessions.push(row);
+				return Promise.resolve(row);
+			}),
+		},
+		cycle: {
+			updateMany: cycleUpdateMany,
+			create: cycleCreate,
+		},
+	}),
+);
+
 vi.mock("~/server/db/index", () => ({
 	db: {
-		$transaction: vi.fn((fn: (tx: unknown) => Promise<unknown>) =>
-			fn({
-				task: {
-					findMany: vi.fn(() =>
-						Promise.resolve(tasks.map((task) => ({ title: task.title }))),
-					),
-					aggregate: vi.fn(
-						(args: {
-							where: { userId: string };
-							_max: { sortOrder: true };
-						}) => {
-							const userTasks = tasks.filter(
-								(task) => task.userId === args.where.userId,
-							);
-							const maxSortOrder = userTasks.reduce(
-								(max, task) => Math.max(max, task.sortOrder),
-								-1,
-							);
-							return Promise.resolve({
-								_max: {
-									sortOrder: maxSortOrder >= 0 ? maxSortOrder : null,
-								},
-							});
-						},
-					),
-					create: vi.fn((args: { data: Omit<TaskRow, "id"> }) => {
-						const row: TaskRow = { id: nextTaskId++, ...args.data };
-						tasks.push(row);
-						return Promise.resolve(row);
-					}),
-				},
-				session: {
-					create: vi.fn((args: { data: { userId: string } }) => {
-						const row = { id: nextSessionId++, userId: args.data.userId };
-						sessions.push(row);
-						return Promise.resolve(row);
-					}),
-				},
-				cycle: {
-					updateMany: vi.fn(
-						(args: {
-							where: { userId?: string; state?: CycleWhereState };
-							data: Partial<
-								Pick<
-									CycleRow,
-									| "state"
-									| "endedAt"
-									| "pausedAt"
-									| "remainingDurationSec"
-									| "startedAt"
-								>
-							>;
-						}) => {
-							const matchesState = (
-								cycleState: CycleRow["state"],
-								whereState?: CycleWhereState,
-							): boolean => {
-								if (whereState == null) {
-									return true;
-								}
-								if (typeof whereState === "string") {
-									return cycleState === whereState;
-								}
-								return whereState.in.includes(cycleState);
-							};
-							let count = 0;
-							for (const cycle of cycles) {
-								if (
-									args.where.userId != null &&
-									cycle.userId !== args.where.userId
-								) {
-									continue;
-								}
-								if (!matchesState(cycle.state, args.where.state)) {
-									continue;
-								}
-								Object.assign(cycle, args.data);
-								count++;
-							}
-							return Promise.resolve({ count });
-						},
-					),
-					create: vi.fn((args: { data: Omit<CycleRow, "id"> }) => {
-						const row: CycleRow = { id: nextCycleId++, ...args.data };
-						cycles.push(row);
-						return Promise.resolve(row);
-					}),
-				},
-			}),
-		),
+		$transaction: dbTransaction,
 	},
 }));
 
@@ -180,6 +176,9 @@ describe("guest.import", () => {
 		nextTaskId = 2;
 		nextCycleId = 1;
 		nextSessionId = 1;
+		cycleUpdateMany.mockClear();
+		cycleCreate.mockClear();
+		dbTransaction.mockClear();
 	});
 
 	it("imports guest tasks with title suffix on collision and remaps cycle FKs", async () => {
@@ -248,13 +247,39 @@ describe("guest.import", () => {
 		expect(cycles[0]?.state).toBe("RUNNING");
 	});
 
-	it("closes account RUNNING cycles before importing guest snapshot", async () => {
-		const preImportCycleId = 99;
+	it("closes account RUNNING and PAUSED cycles before importing guest snapshot", async () => {
+		const preImportRunningId = 99;
+		const preImportPausedId = 100;
+		const foreignRunningId = 101;
 		cycles = [
 			{
-				id: preImportCycleId,
+				id: preImportRunningId,
 				sessionId: 1,
 				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+			{
+				id: preImportPausedId,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "PAUSED",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+				pausedAt: new Date(),
+				remainingDurationSec: 600,
+			},
+			{
+				id: foreignRunningId,
+				sessionId: 2,
+				userId: "other-user",
 				taskId: null,
 				kind: "WORK",
 				state: "RUNNING",
@@ -287,9 +312,57 @@ describe("guest.import", () => {
 		const result = await guestCaller().import(snapshot);
 
 		expect(result).toEqual({ importedTasks: 1, importedCycles: 0 });
-		const closedCycle = cycles.find((c) => c.id === preImportCycleId);
-		expect(closedCycle?.state).toBe("COMPLETED");
-		expect(closedCycle?.endedAt).not.toBeNull();
+		expect(cycleUpdateMany).toHaveBeenCalledWith({
+			where: { userId: USER_ID, state: { in: ["RUNNING", "PAUSED"] } },
+			data: { state: "COMPLETED", endedAt: expect.any(Date) },
+		});
+		const closedRunning = cycles.find((c) => c.id === preImportRunningId);
+		const closedPaused = cycles.find((c) => c.id === preImportPausedId);
+		const foreignCycle = cycles.find((c) => c.id === foreignRunningId);
+		expect(closedRunning?.state).toBe("COMPLETED");
+		expect(closedRunning?.endedAt).not.toBeNull();
+		expect(closedPaused?.state).toBe("COMPLETED");
+		expect(closedPaused?.endedAt).not.toBeNull();
+		expect(foreignCycle?.state).toBe("RUNNING");
+		expect(foreignCycle?.endedAt).toBeNull();
+	});
+
+	it("normalizes guest RUNNING cycle that expires exactly at boundary", async () => {
+		const configuredDurationSec = 60;
+		const now = Date.now();
+		const startedAt = new Date(now - configuredDurationSec * 1000);
+		const snapshot: GuestSnapshotV1 = {
+			version: 1,
+			tasks: [],
+			sessions: [
+				{
+					id: "660e8400-e29b-41d4-a716-446655440098",
+					state: "ACTIVE",
+					startedAt,
+					endedAt: null,
+					lastActivityAt: startedAt,
+					interruptionCount: 0,
+				},
+			],
+			cycles: [
+				{
+					id: "770e8400-e29b-41d4-a716-446655440098",
+					sessionId: "660e8400-e29b-41d4-a716-446655440098",
+					taskId: null,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec,
+					startedAt,
+					endedAt: null,
+				},
+			],
+		};
+
+		const result = await guestCaller().import(snapshot);
+
+		expect(result.importedCycles).toBe(1);
+		expect(cycles[0]?.state).toBe("COMPLETED");
+		expect(cycles[0]?.endedAt).not.toBeNull();
 	});
 
 	it("normalizes expired guest RUNNING cycle to COMPLETED with endedAt", async () => {
@@ -329,7 +402,7 @@ describe("guest.import", () => {
 		expect(cycles[0]?.endedAt).not.toBeNull();
 	});
 
-	it("returns zero counts for empty snapshot without DB writes", async () => {
+	it("returns zero counts for empty snapshot without opening a transaction", async () => {
 		const tasksBefore = tasks.length;
 		const cyclesBefore = cycles.length;
 		const sessionsBefore = sessions.length;
@@ -342,6 +415,8 @@ describe("guest.import", () => {
 		});
 
 		expect(result).toEqual({ importedTasks: 0, importedCycles: 0 });
+		expect(dbTransaction).not.toHaveBeenCalled();
+		expect(cycleUpdateMany).not.toHaveBeenCalled();
 		expect(tasks).toHaveLength(tasksBefore);
 		expect(cycles).toHaveLength(cyclesBefore);
 		expect(sessions).toHaveLength(sessionsBefore);
@@ -492,6 +567,9 @@ describe("guest.import", () => {
 		const result = await guestCaller().import(snapshot);
 
 		expect(result.importedCycles).toBe(1);
+		expect(cycleCreate).toHaveBeenCalledWith({
+			data: expect.objectContaining({ taskId: null }),
+		});
 		expect(cycles[0]?.taskId).toBeNull();
 	});
 });

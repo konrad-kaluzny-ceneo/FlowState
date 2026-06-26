@@ -472,10 +472,10 @@ No Prisma schema or data migration is planned. If a router or guest import produ
 
 #### Automated
 
-- [ ] 4.1 Guest import lib test passes
-- [ ] 4.2 Guest router import tests pass
-- [ ] 4.3 Combined guest phase command passes
-- [ ] 4.4 Targeted Stryker for `src/server/api/lib/import-guest-snapshot.ts` improves or documents remaining survivors
+- [x] 4.1 Guest import lib test passes — eaf86b4
+- [x] 4.2 Guest router import tests pass — eaf86b4
+- [x] 4.3 Combined guest phase command passes — eaf86b4
+- [x] 4.4 Targeted Stryker for `src/server/api/lib/import-guest-snapshot.ts` improves or documents remaining survivors — eaf86b4 — **68.97% covered** (79 killed / 36 survived / 10 no-cov / 1 timeout; was 63.79%); remaining survivors: Prisma `findMany`/`select` object-literal noise, session auto-create when snapshot has no session row, PAUSED import branch, string-literal state comparisons — deferred as equivalent/low user-visible risk per §6.7
 
 ### Phase 5: Targeted Stryker, Cookbook, and Final Gates
 
