@@ -38,6 +38,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
+        env:
+          # Generate-only dummy; prisma.config.ts evaluates datasource env at load time.
+          DATABASE_URL_UNPOOLED: postgresql://user:pass@localhost:5432/flowstate_generate
         run: pnpm exec prisma generate
 
       - name: Lint

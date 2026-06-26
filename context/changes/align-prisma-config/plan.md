@@ -192,28 +192,28 @@ No database migration is part of this plan. Existing migrations and `migration_l
 
 #### Automated
 
-- [x] 1.1 `pnpm exec prisma validate` passes
-- [x] 1.2 `pnpm db:generate` passes
-- [x] 1.3 `pnpm check` passes
+- [x] 1.1 `pnpm exec prisma validate` passes — e512897
+- [x] 1.2 `pnpm db:generate` passes — e512897
+- [x] 1.3 `pnpm check` passes — e512897
 
 #### Manual
 
-- [x] 1.4 Diff is limited to `prisma.config.ts` unless Phase 2 proves CI env is required
-- [x] 1.5 Runtime client split remains pooled `DATABASE_URL` in `src/server/db/index.ts`
+- [x] 1.4 Diff is limited to `prisma.config.ts` unless Phase 2 proves CI env is required — e512897
+- [x] 1.5 Runtime client split remains pooled `DATABASE_URL` in `src/server/db/index.ts` — e512897
 
 ### Phase 2: Generate and CI Behavior Check
 
 #### Automated
 
-- [ ] 2.1 `pnpm db:generate` passes after strict config change
-- [ ] 2.2 `pnpm typecheck` passes
-- [ ] 2.3 `pnpm check` passes
-- [ ] 2.4 `pnpm test` passes
+- [x] 2.1 `pnpm db:generate` passes after strict config change
+- [x] 2.2 `pnpm typecheck` passes
+- [x] 2.3 `pnpm check` passes
+- [x] 2.4 `pnpm test` passes
 
 #### Manual
 
-- [ ] 2.5 CI workflow is unchanged, or only the quality Prisma generate step receives a generate-only dummy `DATABASE_URL_UNPOOLED`
-- [ ] 2.6 No files under `generated/prisma` are committed
+- [x] 2.5 CI workflow is unchanged, or only the quality Prisma generate step receives a generate-only dummy `DATABASE_URL_UNPOOLED`
+- [x] 2.6 No files under `generated/prisma` are committed
 
 ### Phase 3: Final Prisma CLI Smoke
 
