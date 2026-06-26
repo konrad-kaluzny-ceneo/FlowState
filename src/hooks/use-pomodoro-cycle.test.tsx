@@ -935,6 +935,44 @@ describe("usePomodoroCycle", () => {
 		).toBeLessThanOrEqual(2000);
 	});
 
+	it("pause and resume do not invoke interrupt or increment interruption count", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 10,
+			configuredDurationSec: 300,
+			taskId: 2,
+			task: { id: 2, title: "Focus" },
+		});
+		getOrCreateSession.mockResolvedValue({ id: 1, interruptionCount: 2 });
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.pause();
+		});
+
+		expect(interruptCycle).not.toHaveBeenCalled();
+		expect(completeCycle).not.toHaveBeenCalledWith(
+			expect.objectContaining({ incrementInterruption: true }),
+		);
+
+		await act(async () => {
+			await result.current.resume();
+		});
+
+		expect(interruptCycle).not.toHaveBeenCalled();
+		expect(completeCycle).not.toHaveBeenCalledWith(
+			expect.objectContaining({ incrementInterruption: true }),
+		);
+		expect(pauseCycle).toHaveBeenCalledTimes(1);
+		expect(resumeCycle).toHaveBeenCalledTimes(1);
+	});
+
 	it("hydrates PAUSED cycle from getActive without starting countdown", async () => {
 		activeCycleData = makeActiveCycle({
 			state: "PAUSED",
@@ -994,6 +1032,9 @@ describe("usePomodoroCycle", () => {
 
 		expect(endSession).toHaveBeenCalled();
 		expect(interruptCycle).toHaveBeenCalledWith({ cycleId: 10 });
+		expect(completeCycle).not.toHaveBeenCalledWith(
+			expect.objectContaining({ incrementInterruption: true }),
+		);
 		expect(result.current.pendingClosureLine).toContain("Your pause ran long");
 	});
 
