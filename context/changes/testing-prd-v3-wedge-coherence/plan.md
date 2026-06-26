@@ -360,10 +360,10 @@ No database migration or data migration is planned. Persisted pause integration 
 
 #### Automated
 
-- [x] 5.1 Cookbook references the new Phase 8 patterns in §6.10
-- [x] 5.2 Quality gate passes: `pnpm check`
-- [x] 5.3 Unit/integration gate passes: `pnpm test`
+- [x] 5.1 Cookbook references the new Phase 8 patterns in §6.10 — b77b5e3
+- [x] 5.2 Quality gate passes: `pnpm check` — b77b5e3
+- [x] 5.3 Unit/integration gate passes: `pnpm test` — b77b5e3
 
 #### Manual
 
-- [x] 5.4 §6.10 update stays scoped to reusable wedge coherence patterns
+- [x] 5.4 §6.10 update stays scoped to reusable wedge coherence patterns — b77b5e3
