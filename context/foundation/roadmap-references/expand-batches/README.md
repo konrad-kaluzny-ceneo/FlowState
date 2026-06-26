@@ -2,6 +2,24 @@
 
 # Follow-up scope merges
 
+## Follow-up scope merges (batch 7 — UX/UI story chapter)
+
+> `/10x-roadmap-expand` UX/UI pass 2026-06-26 — **Commit** synced to `roadmap.md` 2026-06-26. Linear/GitHub pairs pending user accept (Phase 4).
+
+| Proposal | Score | Action | Target |
+| --- | --- | --- | --- |
+| P-703 Product Voice Contract | 9.6 | **promote** | F-08 |
+| P-701 Home IA Reset | 9.1 | **promote** | S-40 |
+| P-702 Desktop Calm Workbench | 9.2 | **promote** | S-41 |
+| P-704 Mindful Day Memory | 9.3 | **promote** (S-30 phase 2) | S-42 |
+| P-705 Stateful Illustration System | 9.22 | **promote** (S-28 phase 2) | S-43 |
+
+**Goal:** make app purpose obvious on entry; calm home hierarchy; desktop workbench; narrative day memory; state-bound Calm Garden illustrations.
+
+**Recommended `/10x-plan` target:** `product-voice-contract` (F-08) first.
+
+Detail: [`batch-7-ux-ui-story-chapter.md`](batch-7-ux-ui-story-chapter.md).
+
 ## Unpark review (2026-06-26 — accessible wedge operation)
 
 > `/10x-roadmap-expand` unpark pass run after `/10x-ship-slice-base` S1 found no eligible canonical roadmap rows. Context-only commit: no Linear/GitHub issues created.
