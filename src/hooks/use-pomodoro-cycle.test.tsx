@@ -1357,7 +1357,7 @@ describe("usePomodoroCycle", () => {
 		vi.stubGlobal("Worker", FakeWorker);
 	});
 
-	it("recalculates remaining within Â±2s when tab becomes visible (fallback path)", async () => {
+	it("recalculates remaining within ±2s when tab becomes visible (fallback path)", async () => {
 		vi.stubGlobal(
 			"Worker",
 			class {

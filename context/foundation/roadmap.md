@@ -88,6 +88,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-38 | session-end-mid-cycle-closure | [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) | [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151) | mid-cycle end sets expectations — what counts in closure | B-08 minimal | US-04 | done |
 | S-39 | accessible-wedge-gates | [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) | [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) | operate wedge gates with screen-reader-safe focus, live status, and keyboard-first accept/override/start controls | F-07, S-21, S-28 | US-01, desktop accessibility guardrails | done |
 | Q-08 | testing-prd-v3-wedge-coherence | — | — | (quality) prove PRD v3 wedge coherence across transition mutex, pause, optimistic/recovery, stuck-gate dismiss, and S-39 operability oracles | F-07, S-21, S-24, S-28, S-34, S-35, S-39 | US-01, US-04; test-plan Phase 8 | done |
+| Q-09 | testing-mutation-oracle-hardening | — | — | (quality) raise covered-code mutation score by killing survived mutants in hooks + server routers — strengthen weak oracles | S-01, S-03, S-05, S-07, S-08 | test-plan Phase 5; risks #1–#6 | in review |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -111,7 +112,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | N | PRD v3 flow conductor | **B-05 → B-06 → F-07 (+B-07)** → S-21 ∥ S-33; S-34 ∥ S-35; S-24 → **B-08 → B-09 ∥ S-38** | US-01 — see [`prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md) |
 | O | Choice revisit | break-alerts-out-of-tab (merged) → **S-37** | MVP: notification prefs on timer hub; broader pattern deferred |
 | P | Accessible wedge operation | F-07 + S-21 + S-28 → **S-39** | Unparks P-102/P-103 now that transition conductor, copy, and Calm Garden overlay craft have landed |
-| Q | PRD v3 quality hardening | S-39 → **Q-08** | Test-plan Phase 8 companion for risks #8–#12; keeps shipped product rows done |
+| Q | PRD v3 quality hardening | S-39 → **Q-08** → **Q-09** | Q-08 test-plan Phase 8 (risks #8–#12); Q-09 test-plan Phase 5 mutation oracle hardening (risks #1–#6) |
 
 ## Backlog Handoff
 
@@ -141,8 +142,9 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-37 | revisit-user-choices | **done** | merged PR #140 |
 | S-39 | accessible-wedge-gates | **done** | PR [#168](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/168); pair [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) |
 | Q-08 | testing-prd-v3-wedge-coherence | **done** | archived PR [#169](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/169); no Linear/GitHub issue pair by design |
+| Q-09 | testing-mutation-oracle-hardening | **in review** | test-plan Phase 5 mutation oracle hardening; no Linear/GitHub issue pair by design |
 
-**Recommended next:** no active roadmap slice selected after Q-08 archive; choose the next quality/product slice deliberately before opening work.
+**Recommended next:** Q-09 `testing-mutation-oracle-hardening` is **in review** (test-plan Phase 5 mutation oracle hardening).
 
 ## Reference appendix (load on demand)
 
