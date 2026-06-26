@@ -99,7 +99,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 5 | Mutation oracle hardening | Raise covered-code mutation score from ~58% by killing survived mutants in hooks and server routers — tests exist but assertions are too weak | #1, #2, #3, #4, #5, #6 | unit + integration (targeted Stryker runs) | not started | — |
 | 6 | Uncovered UI & auth paths | Exercise task-list, dashboard, and auth action paths so no-coverage mutants drop — largest score drag but narrower than Phase 5 per test | #1, #3, #5 | component smoke + integration | complete | testing-component-layer-cookbook |
 | 7 | E2E belt merge gate | Replace full-catalog CI gate with 12-test belt; Vitest backfill then delete 10 demoted e2e files | #1–#7 (belt entry points + integration-only #4/#6) | Playwright belt + Vitest/component backfill | complete | testing-e2e-belt-fast |
-| 8 | PRD v3 wedge coherence | Orchestrated transitions, pause semantics, optimistic wedge, network recovery, **stuck-gate dismiss + S-39 operability oracles** — belt/hook proofs for US-01/US-04 | #8, #9, #10, #11, **#12** | unit + hook + belt extensions | not started | testing-prd-v3-wedge-coherence |
+| 8 | PRD v3 wedge coherence | Orchestrated transitions, pause semantics, optimistic wedge, network recovery, **stuck-gate dismiss + S-39 operability oracles** — belt/hook proofs for US-01/US-04 | #8, #9, #10, #11, **#12** | unit + hook + belt extensions | implementing | testing-prd-v3-wedge-coherence |
 
 ## 4. Stack
 
