@@ -205,25 +205,25 @@ No database migration is part of this plan. Existing migrations and `migration_l
 
 #### Automated
 
-- [x] 2.1 `pnpm db:generate` passes after strict config change
-- [x] 2.2 `pnpm typecheck` passes
-- [x] 2.3 `pnpm check` passes
-- [x] 2.4 `pnpm test` passes
+- [x] 2.1 `pnpm db:generate` passes after strict config change — 2c472ee
+- [x] 2.2 `pnpm typecheck` passes — 2c472ee
+- [x] 2.3 `pnpm check` passes — 2c472ee
+- [x] 2.4 `pnpm test` passes — 2c472ee
 
 #### Manual
 
-- [x] 2.5 CI workflow is unchanged, or only the quality Prisma generate step receives a generate-only dummy `DATABASE_URL_UNPOOLED`
-- [x] 2.6 No files under `generated/prisma` are committed
+- [x] 2.5 CI workflow is unchanged, or only the quality Prisma generate step receives a generate-only dummy `DATABASE_URL_UNPOOLED` — 2c472ee
+- [x] 2.6 No files under `generated/prisma` are committed — 2c472ee
 
 ### Phase 3: Final Prisma CLI Smoke
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec prisma migrate status` passes
-- [ ] 3.2 Final `pnpm check` passes
-- [ ] 3.3 Final `pnpm test` passes
+- [x] 3.1 `pnpm exec prisma migrate status` passes
+- [x] 3.2 Final `pnpm check` passes
+- [x] 3.3 Final `pnpm test` passes
 
 #### Manual
 
-- [ ] 3.4 Migration status uses `DATABASE_URL_UNPOOLED` with no pooled runtime fallback
-- [ ] 3.5 Final diff has no schema, migration, generated-client, runtime DB, or package-script churn
+- [x] 3.4 Migration status uses `DATABASE_URL_UNPOOLED` with no pooled runtime fallback
+- [x] 3.5 Final diff has no schema, migration, generated-client, runtime DB, or package-script churn
