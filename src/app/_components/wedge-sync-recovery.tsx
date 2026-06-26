@@ -26,6 +26,8 @@ function savedLocallyCopy(phase: PendingWedgeRecovery["phase"]): string {
 	}
 }
 
+const WEDGE_SYNC_RECOVERY_HEADING_ID = "wedge-sync-recovery-heading";
+
 type WedgeSyncRecoveryProps = {
 	recovery: PendingWedgeRecovery;
 	onRetry: () => void;
@@ -40,20 +42,33 @@ export function WedgeSyncRecovery({
 	isRetrying = false,
 }: WedgeSyncRecoveryProps) {
 	return (
-		<div
+		<section
+			aria-labelledby={WEDGE_SYNC_RECOVERY_HEADING_ID}
 			className="w-full rounded-lg border border-energy-steady-border bg-energy-steady-bg/80 px-4 py-3 text-sm text-text-secondary"
 			data-testid="wedge-sync-recovery"
-			role="alert"
 		>
-			<p className="font-medium text-primary">{recovery.message}</p>
-			<p className="mt-1 text-text-dimmed">
-				{savedLocallyCopy(recovery.phase)}
-			</p>
-			{recovery.phase !== "kickoff_session" && (
+			<h2
+				className="font-semibold text-primary text-sm"
+				id={WEDGE_SYNC_RECOVERY_HEADING_ID}
+			>
+				Sync recovery
+			</h2>
+			<div
+				aria-atomic="true"
+				aria-live="polite"
+				className="mt-1"
+				data-testid="wedge-sync-recovery-live-status"
+			>
+				<p className="font-medium text-primary">{recovery.message}</p>
 				<p className="mt-1 text-text-dimmed">
-					Energy: {ENERGY_LABEL[recovery.energy]} — no need to pick again.
+					{savedLocallyCopy(recovery.phase)}
 				</p>
-			)}
+				{recovery.phase !== "kickoff_session" && (
+					<p className="mt-1 text-text-dimmed">
+						Energy: {ENERGY_LABEL[recovery.energy]} — no need to pick again.
+					</p>
+				)}
+			</div>
 			<div className="mt-3 flex flex-wrap gap-2">
 				<button
 					className={`${overlayButtonClass.primaryFull} py-2 font-medium disabled:cursor-not-allowed`}
@@ -71,6 +86,6 @@ export function WedgeSyncRecovery({
 					Dismiss
 				</button>
 			</div>
-		</div>
+		</section>
 	);
 }
