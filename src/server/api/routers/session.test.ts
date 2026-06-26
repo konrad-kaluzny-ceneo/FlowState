@@ -336,6 +336,112 @@ describe("session router", () => {
 				code: "NOT_FOUND",
 			});
 		});
+
+		it("throws NOT_FOUND when updateMany affects zero rows", async () => {
+			vi.mocked(db.session.updateMany).mockResolvedValueOnce({ count: 0 });
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					endedAt: null,
+					closureLine: null,
+					lastFocusedTaskId: null,
+				},
+			];
+
+			await expect(sessionCaller().end({})).rejects.toMatchObject({
+				code: "NOT_FOUND",
+			});
+
+			expect(db.session.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: {
+						userId: USER_ID,
+						state: "ACTIVE",
+						archivedAt: null,
+					},
+				}),
+			);
+			expect(db.session.updateMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: {
+						userId: USER_ID,
+						state: "ACTIVE",
+						archivedAt: null,
+					},
+				}),
+			);
+		});
+
+		it("end scopes findFirst and updateMany by caller userId", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					endedAt: null,
+					closureLine: null,
+					lastFocusedTaskId: null,
+				},
+			];
+
+			await sessionCaller().end({});
+
+			expect(db.session.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: {
+						userId: USER_ID,
+						state: "ACTIVE",
+						archivedAt: null,
+					},
+				}),
+			);
+			expect(db.session.updateMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: {
+						userId: USER_ID,
+						state: "ACTIVE",
+						archivedAt: null,
+					},
+				}),
+			);
+		});
+
+		it("cannot end another user's active session", async () => {
+			sessions = [
+				{
+					id: 99,
+					userId: VICTIM_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					endedAt: null,
+					closureLine: null,
+					lastFocusedTaskId: null,
+				},
+			];
+
+			await expect(sessionCallerAs(ATTACKER_ID).end({})).rejects.toMatchObject({
+				code: "NOT_FOUND",
+			});
+
+			expect(db.session.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: {
+						userId: ATTACKER_ID,
+						state: "ACTIVE",
+						archivedAt: null,
+					},
+				}),
+			);
+			expect(db.session.updateMany).not.toHaveBeenCalled();
+			expect(sessions[0]?.state).toBe("ACTIVE");
+		});
 		it("persists closure line when provided", async () => {
 			sessions = [
 				{

@@ -201,6 +201,13 @@ describe("Feature: session domain model, Property: CheckIn query isolation", () 
 			await expect(
 				caller.create({ cycleId: 1, energy: "FOCUSED" }),
 			).rejects.toThrow(/NOT_FOUND/);
+
+			expect(db.cycle.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { id: 1, userId: attackerId },
+				}),
+			);
+			expect(db.checkIn.create).not.toHaveBeenCalled();
 		},
 	);
 
