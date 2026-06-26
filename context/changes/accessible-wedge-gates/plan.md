@@ -320,9 +320,9 @@ No database migration, data migration, or API migration is required. This slice 
 
 #### Automated
 
-- [x] 2.1 Inline gate component tests pass
-- [x] 2.2 Hook and dashboard wedge dismiss oracles still pass
-- [x] 2.3 Code quality passes after inline gate changes
+- [x] 2.1 Inline gate component tests pass — 6060279
+- [x] 2.2 Hook and dashboard wedge dismiss oracles still pass — 6060279
+- [x] 2.3 Code quality passes after inline gate changes — 6060279
 
 #### Manual
 
