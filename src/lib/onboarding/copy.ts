@@ -1,3 +1,6 @@
+import { createNamespaceTranslator } from "~/i18n/create-translator";
+import type { UserLocale } from "~/lib/domain/user-locale";
+
 export type FirstRunMode = "guest" | "authenticated";
 
 export type FirstRunCopy = {
@@ -6,51 +9,71 @@ export type FirstRunCopy = {
 	dismissLabel: string;
 };
 
-export function getFirstRunCopy(mode: FirstRunMode): FirstRunCopy {
-	if (mode === "guest") {
-		return {
-			title: "Welcome to FlowState",
-			body: "Add a task, tap Focus on it, then start a focus cycle. When you're ready for more, sign in to unlock energy check-ins and smart task suggestions after each cycle.",
-			dismissLabel: "Got it",
-		};
-	}
+export function getFirstRunCopy(
+	mode: FirstRunMode,
+	locale: UserLocale = "en",
+): FirstRunCopy {
+	const t = createNamespaceTranslator("Onboarding.firstRun", locale);
+	const key = mode === "guest" ? "guest" : "authenticated";
 
 	return {
-		title: "Your wedge workflow",
-		body: "When a focus cycle ends, you'll get a quick energy check-in. FlowState then suggests your best next task with a short rationale — accept the suggestion or pick any other task to focus.",
-		dismissLabel: "Got it",
+		title: t(`${key}.title`),
+		body: t(`${key}.body`),
+		dismissLabel: t(`${key}.dismissLabel`),
 	};
 }
 
-export const CHECK_IN_COACH_LINE =
-	"This quick check-in helps FlowState suggest what fits your energy.";
+export function getCheckInCoachLine(locale: UserLocale = "en"): string {
+	return createNamespaceTranslator("Onboarding.coach", locale)("checkIn");
+}
 
-export const SUGGESTION_COACH_LINE =
-	"Accept the suggestion or tap Focus on any other task — you're always in control.";
+export function getSuggestionCoachLine(locale: UserLocale = "en"): string {
+	return createNamespaceTranslator("Onboarding.coach", locale)("suggestion");
+}
 
-export const POST_MERGE_CHECK_IN_COACH_LINE =
-	"Now that you're signed in, this check-in unlocks personalized next-task suggestions.";
-
-export const POST_MERGE_SUGGESTION_COACH_LINE =
-	"FlowState picked this based on your energy — accept it or choose any task.";
-
-export const POST_MERGE_SUGGESTION_COACH_WITH_PRESET_LINE =
-	"Your {preset} preset helped shape this pick — accept it or choose any task.";
+export function getPostMergeCheckInCoachLine(
+	locale: UserLocale = "en",
+): string {
+	return createNamespaceTranslator(
+		"Onboarding.coach",
+		locale,
+	)("postMergeCheckIn");
+}
 
 export function getPostMergeSuggestionCoachLine(
 	personaPresetLabel: string | null,
+	locale: UserLocale = "en",
 ): string {
+	const t = createNamespaceTranslator("Onboarding.coach", locale);
 	if (personaPresetLabel != null && personaPresetLabel.length > 0) {
-		return POST_MERGE_SUGGESTION_COACH_WITH_PRESET_LINE.replace(
-			"{preset}",
-			personaPresetLabel,
-		);
+		return t("postMergeSuggestionWithPreset", { preset: personaPresetLabel });
 	}
-	return POST_MERGE_SUGGESTION_COACH_LINE;
+	return t("postMergeSuggestion");
 }
 
-export const PRESET_COACH_LINE =
-	"Presets pre-fill work type and priority — tap Custom if you want full control.";
+export function getPresetCoachLine(locale: UserLocale = "en"): string {
+	return createNamespaceTranslator("Onboarding.coach", locale)("preset");
+}
+
+/** @deprecated Use getCheckInCoachLine(locale) — EN default for test compatibility. */
+export const CHECK_IN_COACH_LINE = getCheckInCoachLine();
+
+/** @deprecated Use getSuggestionCoachLine(locale) */
+export const SUGGESTION_COACH_LINE = getSuggestionCoachLine();
+
+/** @deprecated Use getPostMergeCheckInCoachLine(locale) */
+export const POST_MERGE_CHECK_IN_COACH_LINE = getPostMergeCheckInCoachLine();
+
+/** @deprecated Use getPostMergeSuggestionCoachLine(null, locale) */
+export const POST_MERGE_SUGGESTION_COACH_LINE =
+	getPostMergeSuggestionCoachLine(null);
+
+/** @deprecated Use getPostMergeSuggestionCoachLine with preset */
+export const POST_MERGE_SUGGESTION_COACH_WITH_PRESET_LINE =
+	"Your {preset} preset helped shape this pick — accept it or choose any task.";
+
+/** @deprecated Use getPresetCoachLine(locale) */
+export const PRESET_COACH_LINE = getPresetCoachLine();
 
 export type AuthPageVariant = "sign-in" | "sign-up";
 
@@ -59,22 +82,22 @@ export type AuthValueCopy = {
 	valueBlock?: { heading: string; lines: string[] };
 };
 
-export function getAuthValueCopy(variant: AuthPageVariant): AuthValueCopy {
+export function getAuthValueCopy(
+	variant: AuthPageVariant,
+	locale: UserLocale = "en",
+): AuthValueCopy {
+	const t = createNamespaceTranslator("Onboarding.authValue", locale);
+
 	if (variant === "sign-in") {
 		return {
-			subtitle:
-				"Mindful focus cycles on your tasks — sign in to unlock full sessions, energy check-ins, and session-aware suggestions.",
+			subtitle: t("signInSubtitle"),
 		};
 	}
 
 	return {
 		valueBlock: {
-			heading: "Your mindful Pomodoro workflow",
-			lines: [
-				"Run focus cycles on the tasks you choose, one at a time.",
-				"After each cycle, log a quick energy check-in.",
-				"FlowState suggests your best next task with a short rationale.",
-			],
+			heading: t("signUpHeading"),
+			lines: [t("signUpLine1"), t("signUpLine2"), t("signUpLine3")],
 		},
 	};
 }

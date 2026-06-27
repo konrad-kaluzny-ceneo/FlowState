@@ -1,9 +1,12 @@
 "use client";
 
+import { useLocale } from "next-intl";
+
 import type { CycleKind } from "~/hooks/use-pomodoro-cycle";
 import { getCatchUpCopy } from "~/lib/catch-up/copy";
 import { formatEndedAgo } from "~/lib/catch-up/format-ended-ago";
 import type { CatchUpState } from "~/lib/catch-up/types";
+import type { UserLocale } from "~/lib/domain/user-locale";
 
 type TabReturnCatchUpProps = {
 	catchUp: NonNullable<CatchUpState>;
@@ -18,12 +21,17 @@ export function TabReturnCatchUp({
 	cycleKind = null,
 	className,
 }: TabReturnCatchUpProps) {
-	const endedAgo = formatEndedAgo(catchUp.cycleEndedAtMs);
-	const copy = getCatchUpCopy(catchUp.gate, {
-		taskTitle,
-		cycleKind,
-		endedAgo,
-	});
+	const locale = useLocale() as UserLocale;
+	const endedAgo = formatEndedAgo(catchUp.cycleEndedAtMs, Date.now(), locale);
+	const copy = getCatchUpCopy(
+		catchUp.gate,
+		{
+			taskTitle,
+			cycleKind,
+			endedAgo,
+		},
+		locale,
+	);
 
 	const isBreakGate =
 		catchUp.gate === "BREAK_CONFIRM" ||

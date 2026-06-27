@@ -6,14 +6,15 @@ import {
 	waitFor,
 	within,
 } from "@testing-library/react";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
+import { IntlTestWrapper } from "~/i18n/test-intl";
 import type { DomainTask } from "~/lib/data-mode/types";
 import { defaultEisenhowerFields } from "~/lib/data-mode/types";
-import { PRESET_COACH_LINE } from "~/lib/onboarding/copy";
+import { getPresetCoachLine } from "~/lib/onboarding/copy";
 import {
 	applyPersonaPresetToCreateState,
+	getPersonaPresetLabel,
 	TASK_PERSONA_PRESETS,
 } from "~/lib/task/persona-presets";
 
@@ -98,6 +99,10 @@ const defaultProps = {
 	cycleState: "idle" as const,
 };
 
+function renderTaskList(ui: ReactElement) {
+	return render(<IntlTestWrapper>{ui}</IntlTestWrapper>);
+}
+
 function getCreateForm(): HTMLFormElement {
 	const input = screen.getByPlaceholderText("Add a new task...");
 	const form = input.closest("form");
@@ -171,7 +176,7 @@ describe("TaskList", () => {
 		});
 		const otherTask = makeTask({ id: 1, title: "First task" });
 
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				continueTaskId={2}
@@ -187,7 +192,7 @@ describe("TaskList", () => {
 	});
 
 	it("inline edit uses textarea and preserves multiline title on save", () => {
-		render(<TaskList {...defaultProps} />);
+		renderTaskList(<TaskList {...defaultProps} />);
 
 		fireEvent.click(screen.getByRole("button", { name: "Short title" }));
 
@@ -223,7 +228,7 @@ describe("TaskList", () => {
 	});
 
 	it("saves resumeNote when clicking outside the edit panel", async () => {
-		render(<TaskList {...defaultProps} />);
+		renderTaskList(<TaskList {...defaultProps} />);
 
 		fireEvent.click(screen.getByRole("button", { name: "Short title" }));
 
@@ -244,7 +249,7 @@ describe("TaskList", () => {
 	});
 
 	it("saves before focusing another task while editing", async () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[
@@ -280,7 +285,7 @@ describe("TaskList", () => {
 	});
 
 	it("saves the prior task before opening edit on another task", async () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[
@@ -309,7 +314,7 @@ describe("TaskList", () => {
 	});
 
 	it("discards edits on Escape without calling updateTask", () => {
-		render(<TaskList {...defaultProps} />);
+		renderTaskList(<TaskList {...defaultProps} />);
 
 		fireEvent.click(screen.getByRole("button", { name: "Short title" }));
 		const textarea = screen
@@ -325,7 +330,7 @@ describe("TaskList", () => {
 	});
 
 	it("persists attribute changes when committing after SegmentedControl edit", async () => {
-		render(<TaskList {...defaultProps} />);
+		renderTaskList(<TaskList {...defaultProps} />);
 
 		fireEvent.click(screen.getByRole("button", { name: "Short title" }));
 		fireEvent.click(screen.getByRole("button", { name: "Deep" }));
@@ -343,7 +348,7 @@ describe("TaskList", () => {
 	});
 
 	it("allows focusing and saving effort when inline editing an existing task", async () => {
-		render(
+		renderTaskList(
 			<TaskList {...defaultProps} tasks={[makeTask({ effortMinutes: 30 })]} />,
 		);
 
@@ -373,7 +378,7 @@ describe("TaskList", () => {
 	});
 
 	it("shows Eisenhower attribute pickers in create Custom panel", () => {
-		render(<TaskList {...defaultProps} />);
+		renderTaskList(<TaskList {...defaultProps} />);
 
 		openCreateCustomPanel();
 
@@ -387,9 +392,11 @@ describe("TaskList", () => {
 	});
 
 	it.each(
-		TASK_PERSONA_PRESETS.map((preset) => [preset.label, preset.id] as const),
+		TASK_PERSONA_PRESETS.map(
+			(preset) => [getPersonaPresetLabel(preset.id), preset.id] as const,
+		),
 	)("preset %s applies create form attributes visible in Custom panel", (_label, presetId) => {
-		render(<TaskList {...defaultProps} />);
+		renderTaskList(<TaskList {...defaultProps} />);
 
 		selectCreatePreset(presetId);
 		expect(
@@ -425,9 +432,11 @@ describe("TaskList", () => {
 	});
 
 	it.each(
-		TASK_PERSONA_PRESETS.map((preset) => [preset.label, preset.id] as const),
+		TASK_PERSONA_PRESETS.map(
+			(preset) => [getPersonaPresetLabel(preset.id), preset.id] as const,
+		),
 	)("Add sends %s preset attributes via createTask", async (_label, presetId) => {
-		render(<TaskList {...defaultProps} />);
+		renderTaskList(<TaskList {...defaultProps} />);
 
 		selectCreatePreset(presetId);
 		fillCreateTitle("Preset task");
@@ -451,7 +460,7 @@ describe("TaskList", () => {
 	});
 
 	it("preset effort is visible without Custom panel and effort-only edits keep preset selected", () => {
-		render(<TaskList {...defaultProps} />);
+		renderTaskList(<TaskList {...defaultProps} />);
 
 		selectCreatePreset("synchro");
 		expect(screen.getByTestId("create-preset-effort")).toBeTruthy();
@@ -470,7 +479,7 @@ describe("TaskList", () => {
 	});
 
 	it("post-create reset clears preset selection and Custom panel", async () => {
-		render(<TaskList {...defaultProps} />);
+		renderTaskList(<TaskList {...defaultProps} />);
 
 		selectCreatePreset("focus");
 		openCreateCustomPanel();
@@ -492,7 +501,7 @@ describe("TaskList", () => {
 	});
 
 	it("selecting a preset collapses Custom panel", () => {
-		render(<TaskList {...defaultProps} />);
+		renderTaskList(<TaskList {...defaultProps} />);
 
 		openCreateCustomPanel();
 		expect(screen.getByText("Urgency")).toBeTruthy();
@@ -507,10 +516,10 @@ describe("TaskList", () => {
 	it("preset coach dismiss calls markPresetCoachDismissed", () => {
 		presetCoachMock.shouldShowPresetCoach = true;
 
-		render(<TaskList {...defaultProps} />);
+		renderTaskList(<TaskList {...defaultProps} />);
 
 		expect(screen.getByTestId("preset-coach")).toBeTruthy();
-		expect(screen.getByText(PRESET_COACH_LINE)).toBeTruthy();
+		expect(screen.getByText(getPresetCoachLine())).toBeTruthy();
 
 		fireEvent.click(screen.getByTestId("preset-coach-dismiss-btn"));
 
@@ -518,7 +527,7 @@ describe("TaskList", () => {
 	});
 
 	it("shows ASAP badge on active task when horizon is ASAP", () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[makeTask({ commitmentHorizon: "ASAP" })]}
@@ -529,7 +538,7 @@ describe("TaskList", () => {
 	});
 
 	it("shows persona label and effort badge for preset task row", () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[
@@ -553,7 +562,7 @@ describe("TaskList", () => {
 	});
 
 	it("shows Custom badge with Eisenhower detail for custom persona tasks", () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[
@@ -576,7 +585,7 @@ describe("TaskList", () => {
 	});
 
 	it("legacy tasks without personaPresetId keep Eisenhower badges", () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[
@@ -598,7 +607,7 @@ describe("TaskList", () => {
 
 	it("read mode shows full long title", () => {
 		const longTitle = `${"A".repeat(60)}\n${"B".repeat(60)}`;
-		render(
+		renderTaskList(
 			<TaskList {...defaultProps} tasks={[makeTask({ title: longTitle })]} />,
 		);
 
@@ -608,7 +617,7 @@ describe("TaskList", () => {
 	});
 
 	it("shows drag handles when reorder is allowed", () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[
@@ -625,7 +634,7 @@ describe("TaskList", () => {
 	});
 
 	it("calls reorderTasks when drag ends with a new order", () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[
@@ -644,7 +653,7 @@ describe("TaskList", () => {
 	});
 
 	it("applies completion delight animation when marking a task done", () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[makeTask({ id: 1, title: "Finish me" })]}
@@ -664,7 +673,7 @@ describe("TaskList", () => {
 	});
 
 	it("renders daily standing toggle in create form and badge on standing tasks", () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[
@@ -702,7 +711,7 @@ describe("TaskList", () => {
 	});
 
 	it("does not use line-through on done-for-today active task titles", () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[
@@ -722,7 +731,7 @@ describe("TaskList", () => {
 	});
 
 	it("opens edit panel when clicking a completed task title", () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[
@@ -742,7 +751,7 @@ describe("TaskList", () => {
 	});
 
 	it("calls markDoneForToday for standing tasks instead of global complete", () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[makeTask({ id: 1, title: "Stand-up", isDailyStanding: true })]}
@@ -765,7 +774,7 @@ describe("TaskList", () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-06-20T12:00:00Z"));
 
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				focusedTaskId={1}
@@ -787,7 +796,7 @@ describe("TaskList", () => {
 	});
 
 	it("hides footprint on unfocused rows", () => {
-		render(
+		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				focusedTaskId={null}

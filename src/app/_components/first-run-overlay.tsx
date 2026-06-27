@@ -1,10 +1,13 @@
 "use client";
 
+import { useLocale } from "next-intl";
+
 import {
 	OverlayCard,
 	OverlayScrim,
 	overlayButtonClass,
 } from "~/app/_components/overlay-shell";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import { type FirstRunMode, getFirstRunCopy } from "~/lib/onboarding/copy";
 
 type FirstRunOverlayProps = {
@@ -18,11 +21,13 @@ export function FirstRunOverlay({
 	onDismiss,
 	visible,
 }: FirstRunOverlayProps) {
+	const locale = useLocale() as UserLocale;
+
 	if (!visible) {
 		return null;
 	}
 
-	const { title, body, dismissLabel } = getFirstRunCopy(mode);
+	const { title, body, dismissLabel } = getFirstRunCopy(mode, locale);
 
 	return (
 		<OverlayScrim role="dialog" testId="first-run-overlay" zIndex={58}>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { AuthDivider } from "~/app/auth/_components/auth-divider";
 import { GoogleSignInButton } from "~/app/auth/_components/google-sign-in-button";
@@ -14,6 +15,9 @@ const initialState: SignUpFormState = {
 };
 
 export function SignUpForm() {
+	const t = useTranslations("Auth.signUp");
+	const tField = useTranslations("Auth.field");
+	const tAuth = useTranslations("Auth");
 	const [state, formAction, isPending] = useActionState(
 		signUpAction,
 		initialState,
@@ -33,12 +37,9 @@ export function SignUpForm() {
 					className="flex items-center justify-between rounded-md bg-red-500/10 px-4 py-3 text-red-400 text-sm"
 					role="alert"
 				>
-					<span>
-						Could not sign up with Google. Please try again or use email and
-						password.
-					</span>
+					<span>{t("oauthError")}</span>
 					<button
-						aria-label="Dismiss error"
+						aria-label={tAuth("dismissErrorAria")}
 						className="ml-2 text-red-400 hover:text-red-300"
 						onClick={dismissOAuthError}
 						type="button"
@@ -59,7 +60,7 @@ export function SignUpForm() {
 
 			<div className="flex flex-col gap-1.5">
 				<label className="text-sm text-text-section" htmlFor="name">
-					Name
+					{tField("nameLabel")}
 				</label>
 				<input
 					aria-describedby={state.errors.name ? "name-error" : undefined}
@@ -69,7 +70,7 @@ export function SignUpForm() {
 					id="name"
 					maxLength={100}
 					name="name"
-					placeholder="Your name"
+					placeholder={tField("namePlaceholder")}
 					required
 					type="text"
 				/>
@@ -82,7 +83,7 @@ export function SignUpForm() {
 
 			<div className="flex flex-col gap-1.5">
 				<label className="text-sm text-text-section" htmlFor="email">
-					Email
+					{tField("emailLabel")}
 				</label>
 				<input
 					aria-describedby={state.errors.email ? "email-error" : undefined}
@@ -92,7 +93,7 @@ export function SignUpForm() {
 					id="email"
 					maxLength={254}
 					name="email"
-					placeholder="you@example.com"
+					placeholder={tField("emailPlaceholder")}
 					required
 					type="email"
 				/>
@@ -105,7 +106,7 @@ export function SignUpForm() {
 
 			<div className="flex flex-col gap-1.5">
 				<label className="text-sm text-text-section" htmlFor="password">
-					Password
+					{tField("passwordLabel")}
 				</label>
 				<input
 					aria-describedby={
@@ -117,7 +118,7 @@ export function SignUpForm() {
 					maxLength={128}
 					minLength={8}
 					name="password"
-					placeholder="At least 8 characters"
+					placeholder={tField("passwordPlaceholder")}
 					required
 					type="password"
 				/>
@@ -134,7 +135,7 @@ export function SignUpForm() {
 				disabled={isPending}
 				type="submit"
 			>
-				{isPending ? "Creating account..." : "Create account"}
+				{isPending ? t("submitting") : t("submit")}
 			</button>
 
 			<div className="mt-2">
@@ -149,12 +150,12 @@ export function SignUpForm() {
 			</div>
 
 			<p className="mt-2 text-center text-sm text-text-secondary">
-				Already have an account?{" "}
+				{t("haveAccount")}{" "}
 				<Link
 					className="text-accent-cta hover:text-accent-cta-hover"
 					href="/auth/sign-in"
 				>
-					Sign in
+					{t("signInLink")}
 				</Link>
 			</p>
 		</form>

@@ -570,17 +570,19 @@ Close the slice by making the voice contract operational for future work, updati
 
 #### Automated
 
-- [ ] 3.1 `pnpm check` passes.
-- [ ] 3.2 `pnpm typecheck` passes.
-- [ ] 3.3 `pnpm test` passes.
-- [ ] 3.4 Copy-module tests continue to assert unchanged EN output for migrated strings.
-- [ ] 3.5 Catalog key parity check passes for `en` and `pl`.
+- [x] 3.1 `pnpm check` passes.
+- [x] 3.2 `pnpm typecheck` passes.
+- [x] 3.3 `pnpm test` passes.
+- [x] 3.4 Copy-module tests continue to assert unchanged EN output for migrated strings.
+- [x] 3.5 Catalog key parity check passes for `en` and `pl`.
 
 #### Manual
 
 - [ ] 3.6 Core guest and authenticated timer flows show no missing keys.
 - [ ] 3.7 EN app copy reads the same as before migration.
 - [ ] 3.8 PL mode is structurally complete but may display intentional EN fallback placeholders for not-yet-authored target copy.
+
+**Phase 3 deferred (inline strings — Phase 4 belt):** `task-fields-panel.tsx` (horizon/axis labels), `guest-banner.tsx`, `check-in-overlay.tsx` (heading/body), `energy-selector.tsx`, `focus-budget-prompt.tsx`, `break-alerts-permission-prompt.tsx`, `kickoff-duration-chips.tsx`, `duration-picker.tsx`, `session-closure-overlay.tsx`, `merge-success-overlay.tsx`, `pomodoro-dashboard.tsx` (steering card strings already in SessionSteering namespace but overlay shells may retain literals).
 
 ### Phase 4: Localization Regression Belt
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import {
 	Suspense,
 	useCallback,
@@ -51,6 +52,7 @@ import {
 } from "~/lib/data-mode/use-domain-tasks";
 import { shouldShowBreakAtmosphere } from "~/lib/design/break-atmosphere";
 import { shouldShowWorkFocusShell } from "~/lib/design/work-focus-shell";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import { shouldDeferFirstRun } from "~/lib/onboarding/defer";
 import {
 	resolveCheckInCoachLine,
@@ -133,6 +135,7 @@ export function PomodoroDashboardBody({
 		localDateKey: recapDateKey,
 	} = useDailyRecap();
 
+	const locale = useLocale() as UserLocale;
 	const suggestionPersonaLabel = useMemo(() => {
 		const pending = pomodoro.pendingSuggestion;
 		if (pending.status !== "ready") {
@@ -142,12 +145,16 @@ export function PomodoroDashboardBody({
 		if (task?.personaPresetId == null || task.personaPresetId === "custom") {
 			return null;
 		}
-		return getPersonaPresetLabel(task.personaPresetId) ?? null;
-	}, [pomodoro.pendingSuggestion, tasks]);
+		return getPersonaPresetLabel(task.personaPresetId, locale) ?? null;
+	}, [pomodoro.pendingSuggestion, tasks, locale]);
 
 	const effectiveCheckInCoachLine =
 		onboardingState != null && shouldShowCheckInCoachFlag != null
-			? resolveCheckInCoachLine(onboardingState, shouldShowCheckInCoachFlag)
+			? resolveCheckInCoachLine(
+					onboardingState,
+					shouldShowCheckInCoachFlag,
+					locale,
+				)
 			: checkInCoachLine;
 
 	const effectiveSuggestionCoachLine =
@@ -156,6 +163,7 @@ export function PomodoroDashboardBody({
 					onboardingState,
 					shouldShowSuggestionCoachFlag,
 					suggestionPersonaLabel,
+					locale,
 				)
 			: suggestionCoachLine;
 

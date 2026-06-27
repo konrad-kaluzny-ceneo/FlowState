@@ -11,9 +11,12 @@ import {
 	Users,
 	Zap,
 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 
 import { WORK_TYPE_CONFIG } from "~/lib/design/work-type-config";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import {
+	getPersonaPresetLabel,
 	type PersonaPresetId,
 	TASK_PERSONA_PRESETS,
 } from "~/lib/task/persona-presets";
@@ -46,6 +49,9 @@ export function PersonaPresetPicker({
 	coachLine,
 	onDismissCoach,
 }: PersonaPresetPickerProps) {
+	const locale = useLocale() as UserLocale;
+	const tTasks = useTranslations("Tasks");
+	const tOnboarding = useTranslations("Onboarding.firstRun");
 	const customPressed = showCustomPanel || selectedPresetId === "custom";
 
 	return (
@@ -55,10 +61,11 @@ export function PersonaPresetPicker({
 					const config = WORK_TYPE_CONFIG[preset.workType];
 					const Icon = PRESET_ICONS[preset.id];
 					const isPressed = selectedPresetId === preset.id;
+					const label = getPersonaPresetLabel(preset.id, locale) ?? preset.id;
 
 					return (
 						<button
-							aria-label={preset.label}
+							aria-label={label}
 							aria-pressed={isPressed}
 							className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm transition ${
 								isPressed
@@ -75,7 +82,7 @@ export function PersonaPresetPicker({
 								aria-hidden
 								className={`size-4 ${isPressed ? config.text : "text-text-dimmed"}`}
 							/>
-							<span>{preset.label}</span>
+							<span>{label}</span>
 						</button>
 					);
 				})}
@@ -91,7 +98,7 @@ export function PersonaPresetPicker({
 					onMouseDown={(e) => e.preventDefault()}
 					type="button"
 				>
-					Custom
+					{tTasks("custom")}
 				</button>
 			</div>
 			{coachLine != null && (
@@ -107,7 +114,7 @@ export function PersonaPresetPicker({
 							onClick={onDismissCoach}
 							type="button"
 						>
-							Got it
+							{tOnboarding("guest.dismissLabel")}
 						</button>
 					)}
 				</div>

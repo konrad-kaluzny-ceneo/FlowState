@@ -1,12 +1,21 @@
 import { z } from "zod";
 
-export const forgotPasswordSchema = z.object({
-	email: z
-		.string()
-		.min(1, "Email is required")
-		.max(254, "Email must be 254 characters or less")
-		.email("Please enter a valid email address"),
-});
+import { createNamespaceTranslator } from "~/i18n/create-translator";
+import type { UserLocale } from "~/lib/domain/user-locale";
+
+export function createForgotPasswordSchema(locale: UserLocale = "en") {
+	const validation = createNamespaceTranslator("Auth.validation", locale);
+
+	return z.object({
+		email: z
+			.string()
+			.min(1, validation("emailRequired"))
+			.max(254, validation("emailMax"))
+			.email(validation("emailInvalid")),
+	});
+}
+
+export const forgotPasswordSchema = createForgotPasswordSchema();
 
 export interface ForgotPasswordFormState {
 	error?: string;

@@ -2,23 +2,30 @@
 
 import { NEON_AUTH_NETWORK_ERROR_CODES } from "@neondatabase/auth/next/server";
 import { redirect } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
 import { auth } from "~/lib/auth/server";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import type { SignInFormState } from "./sign-in-form";
 
 export async function signInAction(
 	_prevState: SignInFormState,
 	formData: FormData,
 ): Promise<SignInFormState> {
+	const locale = (await getLocale()) as UserLocale;
+	const t = await getTranslations({ locale, namespace: "Auth.signIn" });
+	const tCommon = await getTranslations({ locale, namespace: "Auth.common" });
+
 	const email = (formData.get("email") as string | null)?.trim() ?? "";
 	const password = (formData.get("password") as string | null) ?? "";
 
-	// Client-side validation: reject empty fields
 	if (!email || !password) {
 		const missing: string[] = [];
-		if (!email) missing.push("email");
-		if (!password) missing.push("password");
+		if (!email) missing.push(t("fieldEmail"));
+		if (!password) missing.push(t("fieldPassword"));
 		return {
-			error: `Please enter your ${missing.join(" and ")}.`,
+			error: t("missingFields", {
+				fields: missing.join(t("fieldJoiner")),
+			}),
 			email,
 		};
 	}
@@ -32,30 +39,25 @@ export async function signInAction(
 		if (result.error) {
 			const code = result.error.code;
 
-			// Check if it's a network error
 			if (
 				NEON_AUTH_NETWORK_ERROR_CODES.includes(
 					code as (typeof NEON_AUTH_NETWORK_ERROR_CODES)[number],
 				)
 			) {
 				return {
-					error:
-						"Could not complete the request. Please check your connection and try again.",
+					error: tCommon("networkError"),
 					email,
 				};
 			}
 
-			// Generic error for invalid credentials — don't reveal which field is wrong
 			return {
-				error: "Invalid email or password. Please try again.",
+				error: t("invalidCredentials"),
 				email,
 			};
 		}
 	} catch {
-		// Network or unexpected error
 		return {
-			error:
-				"Could not complete the request. Please check your connection and try again.",
+			error: tCommon("networkError"),
 			email,
 		};
 	}

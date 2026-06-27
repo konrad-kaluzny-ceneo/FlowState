@@ -1,5 +1,7 @@
+import { createNamespaceTranslator } from "~/i18n/create-translator";
 import type { CommitmentHorizon } from "~/lib/data-mode/types";
 import type { WorkTypeKey } from "~/lib/design/work-type-config";
+import type { UserLocale } from "~/lib/domain/user-locale";
 
 export type PersonaPresetId =
 	| "focus"
@@ -21,7 +23,6 @@ export type PersonaPresetCreateState = {
 
 export type TaskPersonaPreset = {
 	id: PersonaPresetId;
-	label: string;
 	workType: WorkTypeKey;
 	urgency: 1 | 2 | 3;
 	importance: 1 | 2 | 3;
@@ -44,7 +45,6 @@ export const PERSONA_PRESET_CUSTOM_ID = "custom" as const;
 export const TASK_PERSONA_PRESETS: readonly TaskPersonaPreset[] = [
 	{
 		id: "focus",
-		label: "Focus",
 		workType: "DEEP_WORK",
 		urgency: 2,
 		importance: 3,
@@ -53,7 +53,6 @@ export const TASK_PERSONA_PRESETS: readonly TaskPersonaPreset[] = [
 	},
 	{
 		id: "synchro",
-		label: "Synchro",
 		workType: "OPERATIONAL",
 		urgency: 2,
 		importance: 2,
@@ -62,7 +61,6 @@ export const TASK_PERSONA_PRESETS: readonly TaskPersonaPreset[] = [
 	},
 	{
 		id: "firefight",
-		label: "Firefight",
 		workType: "REACTIVE",
 		urgency: 3,
 		importance: 2,
@@ -71,7 +69,6 @@ export const TASK_PERSONA_PRESETS: readonly TaskPersonaPreset[] = [
 	},
 	{
 		id: "warm-up",
-		label: "Warm up",
 		workType: "DEEP_WORK",
 		urgency: 1,
 		importance: 2,
@@ -80,7 +77,6 @@ export const TASK_PERSONA_PRESETS: readonly TaskPersonaPreset[] = [
 	},
 	{
 		id: "meeting",
-		label: "Meeting",
 		workType: "OPERATIONAL",
 		urgency: 2,
 		importance: 2,
@@ -89,7 +85,6 @@ export const TASK_PERSONA_PRESETS: readonly TaskPersonaPreset[] = [
 	},
 	{
 		id: "plan",
-		label: "Plan",
 		workType: "DEEP_WORK",
 		urgency: 2,
 		importance: 3,
@@ -98,7 +93,6 @@ export const TASK_PERSONA_PRESETS: readonly TaskPersonaPreset[] = [
 	},
 	{
 		id: "research",
-		label: "Research",
 		workType: "DEEP_WORK",
 		urgency: 1,
 		importance: 2,
@@ -107,7 +101,6 @@ export const TASK_PERSONA_PRESETS: readonly TaskPersonaPreset[] = [
 	},
 	{
 		id: "quick",
-		label: "Quick",
 		workType: "OPERATIONAL",
 		urgency: 1,
 		importance: 1,
@@ -140,8 +133,15 @@ export function getPersonaPresetById(
 	return TASK_PERSONA_PRESETS.find((preset) => preset.id === id);
 }
 
-export function getPersonaPresetLabel(id: string): string | undefined {
-	return getPersonaPresetById(id)?.label;
+export function getPersonaPresetLabel(
+	id: string,
+	locale: UserLocale = "en",
+): string | undefined {
+	const preset = getPersonaPresetById(id);
+	if (preset == null) {
+		return undefined;
+	}
+	return createNamespaceTranslator("Tasks.persona", locale)(preset.id);
 }
 
 export function taskAttributesMatchPreset(

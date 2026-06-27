@@ -1,3 +1,5 @@
+import { createNamespaceTranslator } from "~/i18n/create-translator";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import type { GuestSnapshotV1 } from "~/lib/guest/schema";
 
 export type MergeSuccessInput = {
@@ -12,8 +14,9 @@ export type MergeSuccessCopy = {
 	dismissLabel: string;
 };
 
-const UNLOCK_LINE =
-	"You now have full sessions, energy check-ins, and session-aware task suggestions.";
+function mergeT(locale: UserLocale) {
+	return createNamespaceTranslator("Guest.merge", locale);
+}
 
 function compareBySortOrder(
 	a: GuestSnapshotV1["tasks"][number],
@@ -54,15 +57,17 @@ export function extractPreviewTaskTitles(
 function formatCountLine(
 	importedTasks: number,
 	importedCycles: number,
+	locale: UserLocale,
 ): string {
+	const t = mergeT(locale);
 	const parts: string[] = [];
 
 	if (importedTasks > 0) {
-		parts.push(importedTasks === 1 ? "1 task" : `${importedTasks} tasks`);
+		parts.push(t("taskCount", { count: importedTasks }));
 	}
 
 	if (importedCycles > 0) {
-		parts.push(importedCycles === 1 ? "1 cycle" : `${importedCycles} cycles`);
+		parts.push(t("cycleCount", { count: importedCycles }));
 	}
 
 	if (parts.length === 0) {
@@ -70,24 +75,29 @@ function formatCountLine(
 	}
 
 	if (parts.length === 1) {
-		return `Imported ${parts[0]}.`;
+		return t("importedSingle", { item: parts[0] ?? "" });
 	}
 
-	return `Imported ${parts[0]} and ${parts[1]}.`;
+	return t("importedDual", {
+		first: parts[0] ?? "",
+		second: parts[1] ?? "",
+	});
 }
 
 function formatPreviewSection(
 	importedTasks: number,
 	previewTitles: string[],
+	locale: UserLocale,
 ): string {
 	if (previewTitles.length === 0) {
 		return "";
 	}
 
+	const t = mergeT(locale);
 	const titleLines = previewTitles.map((title) => `• ${title}`);
 	const overflow =
 		importedTasks > previewTitles.length
-			? `+ ${importedTasks - previewTitles.length} more`
+			? t("overflow", { count: importedTasks - previewTitles.length })
 			: null;
 
 	return [...titleLines, ...(overflow ? [overflow] : [])].join("\n");
@@ -95,17 +105,23 @@ function formatPreviewSection(
 
 export function buildMergeSuccessCopy(
 	input: MergeSuccessInput,
+	locale: UserLocale = "en",
 ): MergeSuccessCopy {
+	const t = mergeT(locale);
 	const { importedTasks, importedCycles, previewTitles } = input;
-	const countLine = formatCountLine(importedTasks, importedCycles);
-	const previewSection = formatPreviewSection(importedTasks, previewTitles);
-	const bodyParts = [countLine, previewSection, UNLOCK_LINE].filter(
+	const countLine = formatCountLine(importedTasks, importedCycles, locale);
+	const previewSection = formatPreviewSection(
+		importedTasks,
+		previewTitles,
+		locale,
+	);
+	const bodyParts = [countLine, previewSection, t("unlockLine")].filter(
 		(part) => part.length > 0,
 	);
 
 	return {
-		title: "Your trial work is saved",
+		title: t("title"),
 		body: bodyParts.join("\n\n"),
-		dismissLabel: "Continue",
+		dismissLabel: t("dismissLabel"),
 	};
 }

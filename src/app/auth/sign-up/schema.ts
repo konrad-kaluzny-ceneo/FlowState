@@ -1,23 +1,42 @@
 import { z } from "zod";
 
-export const signUpSchema = z.object({
-	name: z
-		.string()
-		.min(1, "Name is required")
-		.max(100, "Name must be 100 characters or less")
-		.refine((val) => val.trim().length > 0, "Name cannot be only whitespace"),
-	email: z
-		.string()
-		.min(1, "Email is required")
-		.max(254, "Email must be 254 characters or less")
-		.email("Please enter a valid email address"),
-	password: z
-		.string()
-		.min(8, "Password must be at least 8 characters")
-		.max(128, "Password must be 128 characters or less"),
-});
+import { createNamespaceTranslator } from "~/i18n/create-translator";
+import type { UserLocale } from "~/lib/domain/user-locale";
 
-export const passwordSchema = signUpSchema.shape.password;
+export function createSignUpSchema(locale: UserLocale = "en") {
+	const validation = createNamespaceTranslator("Auth.validation", locale);
+	const signUpValidation = createNamespaceTranslator(
+		"Auth.signUp.validation",
+		locale,
+	);
+
+	return z.object({
+		name: z
+			.string()
+			.min(1, signUpValidation("nameRequired"))
+			.max(100, signUpValidation("nameMax"))
+			.refine(
+				(val) => val.trim().length > 0,
+				signUpValidation("nameWhitespace"),
+			),
+		email: z
+			.string()
+			.min(1, validation("emailRequired"))
+			.max(254, validation("emailMax"))
+			.email(validation("emailInvalid")),
+		password: z
+			.string()
+			.min(8, validation("passwordMin"))
+			.max(128, validation("passwordMax")),
+	});
+}
+
+export function createPasswordSchema(locale: UserLocale = "en") {
+	return createSignUpSchema(locale).shape.password;
+}
+
+export const signUpSchema = createSignUpSchema();
+export const passwordSchema = createPasswordSchema();
 
 export interface SignUpFormState {
 	errors: {

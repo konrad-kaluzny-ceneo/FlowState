@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { resetPasswordAction } from "./action";
 import type { ResetPasswordFormState } from "./schema";
@@ -10,21 +11,27 @@ const initialState: ResetPasswordFormState = {
 	errors: {},
 };
 
-function InvalidLinkMessage() {
+function InvalidLinkMessage({
+	invalidLink,
+	requestNewLink,
+}: {
+	invalidLink: string;
+	requestNewLink: string;
+}) {
 	return (
 		<div className="flex flex-col gap-4">
 			<div
 				className="rounded-md bg-red-500/10 p-3 text-red-300 text-sm"
 				role="alert"
 			>
-				This reset link is invalid or has expired.
+				{invalidLink}
 			</div>
 			<p className="text-center text-sm text-text-secondary">
 				<Link
 					className="text-accent-cta underline-offset-2 hover:underline"
 					href="/auth/forgot-password"
 				>
-					Request a new reset link
+					{requestNewLink}
 				</Link>
 			</p>
 		</div>
@@ -32,6 +39,9 @@ function InvalidLinkMessage() {
 }
 
 export function ResetPasswordForm() {
+	const t = useTranslations("Auth.resetPassword");
+	const tField = useTranslations("Auth.field");
+	const tAuth = useTranslations("Auth");
 	const [state, formAction, isPending] = useActionState(
 		resetPasswordAction,
 		initialState,
@@ -50,7 +60,12 @@ export function ResetPasswordForm() {
 	}
 
 	if (!token && !urlError) {
-		return <InvalidLinkMessage />;
+		return (
+			<InvalidLinkMessage
+				invalidLink={t("invalidLink")}
+				requestNewLink={t("requestNewLink")}
+			/>
+		);
 	}
 
 	if (!token) {
@@ -61,9 +76,9 @@ export function ResetPasswordForm() {
 						className="flex items-center justify-between rounded-md bg-red-500/10 p-3 text-red-300 text-sm"
 						role="alert"
 					>
-						<span>This reset link is invalid or has expired.</span>
+						<span>{t("invalidLink")}</span>
 						<button
-							aria-label="Dismiss error"
+							aria-label={tAuth("dismissErrorAria")}
 							className="ml-2 text-red-300 hover:text-red-200"
 							onClick={dismissUrlError}
 							type="button"
@@ -77,7 +92,7 @@ export function ResetPasswordForm() {
 						className="text-accent-cta underline-offset-2 hover:underline"
 						href="/auth/forgot-password"
 					>
-						Request a new reset link
+						{t("requestNewLink")}
 					</Link>
 				</p>
 			</div>
@@ -91,9 +106,9 @@ export function ResetPasswordForm() {
 					className="mb-4 flex items-center justify-between rounded-md bg-red-500/10 p-3 text-red-300 text-sm"
 					role="alert"
 				>
-					<span>This reset link is invalid or has expired.</span>
+					<span>{t("invalidLink")}</span>
 					<button
-						aria-label="Dismiss error"
+						aria-label={tAuth("dismissErrorAria")}
 						className="ml-2 text-red-300 hover:text-red-200"
 						onClick={dismissUrlError}
 						type="button"
@@ -113,13 +128,13 @@ export function ResetPasswordForm() {
 						role="alert"
 					>
 						<p>{state.errors.form}</p>
-						{state.errors.form.includes("invalid or has expired") && (
+						{state.errors.form === t("invalidLink") && (
 							<p className="mt-2">
 								<Link
 									className="text-accent-cta underline-offset-2 hover:underline"
 									href="/auth/forgot-password"
 								>
-									Request a new reset link
+									{t("requestNewLink")}
 								</Link>
 							</p>
 						)}
@@ -131,7 +146,7 @@ export function ResetPasswordForm() {
 						className="font-medium text-sm text-text-section"
 						htmlFor="password"
 					>
-						New password
+						{t("newPasswordLabel")}
 					</label>
 					<input
 						aria-describedby={
@@ -144,7 +159,7 @@ export function ResetPasswordForm() {
 						maxLength={128}
 						minLength={8}
 						name="password"
-						placeholder="At least 8 characters"
+						placeholder={tField("passwordPlaceholder")}
 						required
 						type="password"
 					/>
@@ -164,7 +179,7 @@ export function ResetPasswordForm() {
 						className="font-medium text-sm text-text-section"
 						htmlFor="confirmPassword"
 					>
-						Confirm password
+						{t("confirmLabel")}
 					</label>
 					<input
 						aria-describedby={
@@ -179,7 +194,7 @@ export function ResetPasswordForm() {
 						maxLength={128}
 						minLength={8}
 						name="confirmPassword"
-						placeholder="Confirm your password"
+						placeholder={t("confirmPlaceholder")}
 						required
 						type="password"
 					/>
@@ -200,7 +215,7 @@ export function ResetPasswordForm() {
 					disabled={isPending}
 					type="submit"
 				>
-					{isPending ? "Updating…" : "Set new password"}
+					{isPending ? t("submitting") : t("submit")}
 				</button>
 			</form>
 
@@ -209,7 +224,7 @@ export function ResetPasswordForm() {
 					className="text-accent-cta underline-offset-2 hover:underline"
 					href="/auth/sign-in"
 				>
-					Back to sign in
+					{tAuth("backToSignIn")}
 				</Link>
 			</p>
 		</>

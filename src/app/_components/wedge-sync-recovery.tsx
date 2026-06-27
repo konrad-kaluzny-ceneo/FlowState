@@ -1,30 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { overlayButtonClass } from "~/app/_components/overlay-shell";
 import type { PendingWedgeRecovery } from "~/hooks/use-pomodoro-cycle";
-
-const ENERGY_LABEL: Record<PendingWedgeRecovery["energy"], string> = {
-	FOCUSED: "Focused",
-	STEADY: "Steady",
-	FADING: "Fading",
-};
-
-function savedLocallyCopy(phase: PendingWedgeRecovery["phase"]): string {
-	switch (phase) {
-		case "check_in":
-			return "Your work cycle is saved on this device.";
-		case "complete_work":
-			return "Your check-in is saved — we will finish the transition when you retry.";
-		case "start_break":
-			return "Your work cycle is saved.";
-		case "suggestion_fetch":
-			return "Your break is still running.";
-		case "kickoff_session":
-			return "Your session has not started yet.";
-		case "kickoff_suggestion":
-			return "Your session is ready — we will load a suggestion when you retry.";
-	}
-}
 
 const WEDGE_SYNC_RECOVERY_HEADING_ID = "wedge-sync-recovery-heading";
 
@@ -41,6 +20,37 @@ export function WedgeSyncRecovery({
 	onDismiss,
 	isRetrying = false,
 }: WedgeSyncRecoveryProps) {
+	const t = useTranslations("WedgeSync");
+	const tEnergy = useTranslations("Energy");
+
+	function savedLocallyCopy(phase: PendingWedgeRecovery["phase"]): string {
+		switch (phase) {
+			case "check_in":
+				return t("savedCheckIn");
+			case "complete_work":
+				return t("savedCompleteWork");
+			case "start_break":
+				return t("savedStartBreak");
+			case "suggestion_fetch":
+				return t("savedSuggestionFetch");
+			case "kickoff_session":
+				return t("savedKickoffSession");
+			case "kickoff_suggestion":
+				return t("savedKickoffSuggestion");
+		}
+	}
+
+	function energyLabel(energy: PendingWedgeRecovery["energy"]): string {
+		switch (energy) {
+			case "FOCUSED":
+				return tEnergy("focused");
+			case "STEADY":
+				return tEnergy("steady");
+			case "FADING":
+				return tEnergy("fading");
+		}
+	}
+
 	return (
 		<section
 			aria-labelledby={WEDGE_SYNC_RECOVERY_HEADING_ID}
@@ -51,7 +61,7 @@ export function WedgeSyncRecovery({
 				className="font-semibold text-primary text-sm"
 				id={WEDGE_SYNC_RECOVERY_HEADING_ID}
 			>
-				Sync recovery
+				{t("heading")}
 			</h2>
 			<div
 				aria-atomic="true"
@@ -65,7 +75,7 @@ export function WedgeSyncRecovery({
 				</p>
 				{recovery.phase !== "kickoff_session" && (
 					<p className="mt-1 text-text-dimmed">
-						Energy: {ENERGY_LABEL[recovery.energy]} — no need to pick again.
+						{t("energyNote", { label: energyLabel(recovery.energy) })}
 					</p>
 				)}
 			</div>
@@ -76,14 +86,14 @@ export function WedgeSyncRecovery({
 					onClick={onRetry}
 					type="button"
 				>
-					Retry
+					{t("retry")}
 				</button>
 				<button
 					className={`${overlayButtonClass.secondaryFull} py-2 font-medium`}
 					onClick={onDismiss}
 					type="button"
 				>
-					Dismiss
+					{t("dismiss")}
 				</button>
 			</div>
 		</section>

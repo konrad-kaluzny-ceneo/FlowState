@@ -30,7 +30,7 @@ describe("persona-presets", () => {
 	});
 
 	it("getPersonaPresetById resolves catalog entries", () => {
-		expect(getPersonaPresetById("synchro")?.label).toBe("Synchro");
+		expect(getPersonaPresetById("synchro")?.id).toBe("synchro");
 		expect(getPersonaPresetById("removed-id")).toBeUndefined();
 	});
 
