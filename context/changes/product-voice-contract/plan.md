@@ -570,11 +570,11 @@ Close the slice by making the voice contract operational for future work, updati
 
 #### Automated
 
-- [x] 3.1 `pnpm check` passes.
-- [x] 3.2 `pnpm typecheck` passes.
-- [x] 3.3 `pnpm test` passes.
-- [x] 3.4 Copy-module tests continue to assert unchanged EN output for migrated strings.
-- [x] 3.5 Catalog key parity check passes for `en` and `pl`.
+- [x] 3.1 `pnpm check` passes. — 835255b
+- [x] 3.2 `pnpm typecheck` passes. — 835255b
+- [x] 3.3 `pnpm test` passes. — 835255b
+- [x] 3.4 Copy-module tests continue to assert unchanged EN output for migrated strings. — 835255b
+- [x] 3.5 Catalog key parity check passes for `en` and `pl`. — 835255b
 
 #### Manual
 
