@@ -2,5 +2,12 @@
 	"App": {
 		"title": "FlowState",
 		"description": "Mindful Pomodoro with session-aware task suggestions"
+	},
+	"Preferences": {
+		"language": {
+			"legend": "Language",
+			"en": "EN",
+			"pl": "PL"
+		}
 	}
 }

@@ -6,7 +6,9 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 
 import { auth } from "~/lib/auth/server";
+import type { OnboardingScope } from "~/lib/onboarding/types";
 import { TRPCReactProvider } from "~/trpc/react";
+import { GuestHeaderControls } from "./_components/guest-header-controls";
 import { OAuthSessionVerifier } from "./_components/oauth-session-verifier";
 import { ThemeProvider } from "./_components/theme-provider";
 import { ThemeScript } from "./_components/theme-script";
@@ -35,10 +37,14 @@ export default async function RootLayout({
 	const locale = await getLocale();
 	const messages = await getMessages();
 	let userName: string | null = null;
+	let userId: string | null = null;
 
 	try {
 		const result = await auth.getSession();
 		const user = result.data?.user;
+		if (user?.id) {
+			userId = user.id;
+		}
 		if (user?.name) {
 			userName = user.name;
 		} else if (user?.email) {
@@ -46,7 +52,12 @@ export default async function RootLayout({
 		}
 	} catch {
 		userName = null;
+		userId = null;
 	}
+
+	const scope: OnboardingScope = userId
+		? { mode: "authenticated", userId }
+		: { mode: "guest" };
 
 	return (
 		<html
@@ -63,11 +74,13 @@ export default async function RootLayout({
 					<TRPCReactProvider>
 						<ThemeProvider>
 							<OAuthSessionVerifier />
-							{userName && (
-								<header className="fixed top-0 right-0 z-50 p-4">
-									<UserMenu userName={userName} />
-								</header>
-							)}
+							<header className="fixed top-0 right-0 z-50 p-4">
+								{userName ? (
+									<UserMenu scope={scope} userName={userName} />
+								) : (
+									<GuestHeaderControls scope={scope} />
+								)}
+							</header>
 							{children}
 						</ThemeProvider>
 					</TRPCReactProvider>
