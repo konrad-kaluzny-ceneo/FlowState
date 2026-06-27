@@ -603,9 +603,9 @@ Close the slice by making the voice contract operational for future work, updati
 
 #### Automated
 
-- [x] 5.1 `pnpm check` passes after markdown/doc changes.
-- [x] 5.2 `context/foundation/product-voice.md` exists and includes EN and PL sections.
-- [x] 5.3 The document contains a future-slice acceptance checklist.
+- [x] 5.1 `pnpm check` passes after markdown/doc changes. — 122cb71
+- [x] 5.2 `context/foundation/product-voice.md` exists and includes EN and PL sections. — 122cb71
+- [x] 5.3 The document contains a future-slice acceptance checklist. — 122cb71
 
 #### Manual
 
@@ -617,10 +617,10 @@ Close the slice by making the voice contract operational for future work, updati
 
 #### Automated
 
-- [ ] 6.1 `pnpm check` passes.
-- [ ] 6.2 `pnpm typecheck` passes.
-- [ ] 6.3 `pnpm test` passes.
-- [ ] 6.4 Copy tests verify EN and PL target acceptance examples for rationale and recap closure.
+- [x] 6.1 `pnpm check` passes.
+- [x] 6.2 `pnpm typecheck` passes.
+- [x] 6.3 `pnpm test` passes.
+- [x] 6.4 Copy tests verify EN and PL target acceptance examples for rationale and recap closure.
 
 #### Manual
 

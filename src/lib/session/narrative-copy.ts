@@ -115,3 +115,33 @@ export function resolveIntentionWorkType(
 	}
 	return INTENTION_CHIP_WORK_TYPE_BY_TEST_ID[match.testId];
 }
+
+function dayMemoryT(locale: UserLocale) {
+	return createNamespaceTranslator("DayMemory", locale);
+}
+
+export function getDayMemorySectionDone(locale: UserLocale = "en"): string {
+	return dayMemoryT(locale)("sectionDone");
+}
+
+export function getDayMemorySectionRemains(locale: UserLocale = "en"): string {
+	return dayMemoryT(locale)("sectionRemains");
+}
+
+export function getDayMemorySectionReturnTo(locale: UserLocale = "en"): string {
+	return dayMemoryT(locale)("sectionReturnTo");
+}
+
+export type DayMemoryCollapsedInput = {
+	done: string;
+	remaining: string;
+	next: string;
+};
+
+/** F-14 acceptance: collapsed day-memory one-liner for home (S-42 formatter cites this). */
+export function buildDayMemoryCollapsedLine(
+	input: DayMemoryCollapsedInput,
+	locale: UserLocale = "en",
+): string {
+	return dayMemoryT(locale)("collapsedLine", input);
+}

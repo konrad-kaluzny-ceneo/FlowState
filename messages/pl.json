@@ -170,12 +170,12 @@
 			"override_preference": "Matches your last pick — continuing that thread",
 			"eisenhower_priority": "High urgency and importance — top of the queue",
 			"importance_focus": "Important work — good moment while you're focused",
-			"low_effort_fit": "Quick win — fits your fading energy",
+			"low_effort_fit": "Szybki krok — pasuje przy słabnącej energii",
 			"horizon_asap": "Due ASAP — time-sensitive commitment",
-			"kickoff_fresh": "Fresh session — here's a strong starting point",
+			"kickoff_fresh": "Nowa sesja — sensowny punkt startowy",
 			"kickoff_resume": "Back from break — ready for your next focus block",
 			"capacity_fit": "Fits ~{minutes} min left today",
-			"default": "Next up based on your energy and task mix"
+			"default": "Kolejny krok — zgodnie z energią i zadaniami na dziś"
 		},
 		"factorChips": {
 			"override_preference": "Last override",
@@ -285,9 +285,16 @@
 		"boundsBreak": "1 s – 30 min"
 	},
 	"Home": {
-		"offlineBanner": "You're offline — retry when you're back online.",
+		"offlineBanner": "Jesteś offline — spróbuj ponownie, gdy wrócisz online.",
 		"appName": "FlowState",
-		"tagline": "Manage your tasks. Stay in flow."
+		"tagline": "Zarządzaj zadaniami. Zostań w flow.",
+		"purposeHeader": "Spokojna odpowiedź na: co teraz?"
+	},
+	"DayMemory": {
+		"sectionDone": "Domknięte",
+		"sectionRemains": "Zostaje",
+		"sectionReturnTo": "Wróć tutaj",
+		"collapsedLine": "Zrobione: {done}. Zostało: {remaining}. Wróć spokojnie do: {next}."
 	},
 	"CycleComplete": {
 		"breakHeading": "Break's over!",

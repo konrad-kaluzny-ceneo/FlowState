@@ -18,6 +18,13 @@ export type RationaleKey =
 	| "capacity_fit"
 	| "default";
 
+/** F-14 acceptance examples — guarded by copy-contract tests. */
+export const F14_ACCEPTANCE_RATIONALE_KEYS = [
+	"default",
+	"kickoff_fresh",
+	"low_effort_fit",
+] as const satisfies readonly RationaleKey[];
+
 export function buildRationale(
 	key: RationaleKey,
 	context: ScoringContext,
