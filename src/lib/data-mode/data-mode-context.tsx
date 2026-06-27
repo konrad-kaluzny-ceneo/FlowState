@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, type ReactNode, useContext, useMemo } from "react";
+import {
+	createContext,
+	type ReactNode,
+	useCallback,
+	useContext,
+	useMemo,
+	useState,
+} from "react";
 
 import type { DataMode, Repositories } from "~/lib/data-mode/types";
 import { createGuestRepositories } from "~/lib/repositories/guest-repositories";
@@ -26,6 +33,10 @@ export function DataModeProvider({
 	children: ReactNode;
 }) {
 	const utils = api.useUtils();
+	const [refreshKey, setRefreshKey] = useState(0);
+	const refreshGuest = useCallback(() => {
+		setRefreshKey((key) => key + 1);
+	}, []);
 	const guestRepositories = useMemo(() => createGuestRepositories(), []);
 
 	const value = useMemo<DataModeContextValue>(() => {
@@ -33,8 +44,8 @@ export function DataModeProvider({
 			return {
 				mode,
 				...guestRepositories,
-				refreshKey: 0,
-				refreshGuest: () => {},
+				refreshKey,
+				refreshGuest,
 			};
 		}
 
@@ -130,10 +141,10 @@ export function DataModeProvider({
 			tasks: createServerTaskRepository(client),
 			cycles: createServerCycleRepository(client),
 			sessions: createServerSessionRepository(client),
-			refreshKey: 0,
-			refreshGuest: () => {},
+			refreshKey,
+			refreshGuest,
 		};
-	}, [mode, guestRepositories, utils]);
+	}, [mode, guestRepositories, refreshGuest, refreshKey, utils]);
 
 	return (
 		<DataModeContext.Provider value={value}>
