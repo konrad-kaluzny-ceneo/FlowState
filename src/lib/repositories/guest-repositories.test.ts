@@ -8,7 +8,10 @@ import {
 } from "~/lib/guest/schema";
 import { mutateSnapshot, saveSnapshot } from "~/lib/guest/store";
 import { createGuestRepositories } from "~/lib/repositories/guest-repositories";
-import { getStaleArchiveCutoff } from "~/lib/task/stale-task-archive";
+import {
+	getStaleArchiveCutoff,
+	STALE_TASK_ARCHIVE_DAYS,
+} from "~/lib/task/stale-task-archive";
 
 describe("guest repositories", () => {
 	beforeEach(() => {
@@ -440,6 +443,36 @@ describe("guest repositories", () => {
 			.filter((task) => task.status === "active")
 			.map((task) => task.title);
 		expect(activeTitles).toEqual(["Active", "Archived"]);
+	});
+
+	it("restored stale-archived task stays active after list sweep", async () => {
+		const staleAt = new Date();
+		staleAt.setDate(staleAt.getDate() - (STALE_TASK_ARCHIVE_DAYS + 1));
+		const archivedId = crypto.randomUUID();
+		saveSnapshot({
+			...createEmptyGuestSnapshot(),
+			tasks: [
+				{
+					id: archivedId,
+					title: "Stale archived",
+					status: "archived",
+					workType: "OPERATIONAL",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					sortOrder: 0,
+					resumeNote: null,
+					archivedAt: staleAt,
+					createdAt: staleAt,
+					updatedAt: staleAt,
+				},
+			],
+		});
+
+		const { tasks } = createGuestRepositories();
+		await tasks.restore({ id: archivedId });
+
+		const list = await tasks.list();
+		expect(list.find((task) => task.id === archivedId)?.status).toBe("active");
 	});
 
 	it("deleteArchived removes only archived tasks and rejects mixed sets", async () => {

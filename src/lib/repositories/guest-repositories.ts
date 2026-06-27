@@ -377,6 +377,7 @@ export function createGuestTaskRepository(): TaskRepository {
 				}
 
 				const sortOrder = nextGuestActiveSortOrder(snapshot.tasks);
+				const now = new Date();
 				return {
 					...snapshot,
 					tasks: snapshot.tasks.map((row) =>
@@ -386,6 +387,7 @@ export function createGuestTaskRepository(): TaskRepository {
 									status: "active" as const,
 									archivedAt: null,
 									sortOrder,
+									updatedAt: now,
 								}
 							: row,
 					),
