@@ -632,10 +632,10 @@ Close the slice by making the voice contract operational for future work, updati
 
 #### Automated
 
-- [ ] 7.1 `pnpm check` passes.
-- [ ] 7.2 `pnpm typecheck` passes.
-- [ ] 7.3 `pnpm test` passes.
-- [ ] 7.4 `set CI=true && pnpm test:e2e:belt` passes.
+- [x] 7.1 `pnpm check` passes.
+- [x] 7.2 `pnpm typecheck` passes.
+- [x] 7.3 `pnpm test` passes.
+- [x] 7.4 `set CI=true && pnpm test:e2e:belt` passes.
 
 #### Manual
 
