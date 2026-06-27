@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
@@ -33,7 +39,29 @@ vi.mock("~/hooks/use-task-mutations", () => ({
 }));
 
 vi.mock("./task-list", () => ({
-	TaskList: () => <div data-testid="task-list-stub" />,
+	TaskList: ({ onOpenArchive }: { onOpenArchive?: () => void }) => (
+		<div data-testid="task-list-stub">
+			{onOpenArchive != null ? (
+				<button
+					data-testid="task-archive-entry"
+					onClick={onOpenArchive}
+					type="button"
+				>
+					Archived tasks
+				</button>
+			) : null}
+		</div>
+	),
+}));
+
+vi.mock("./task-archive-view", () => ({
+	TaskArchiveView: ({ onBack }: { onBack: () => void }) => (
+		<div data-testid="task-archive-view">
+			<button data-testid="task-archive-back" onClick={onBack} type="button">
+				Back
+			</button>
+		</div>
+	),
 }));
 
 const mockGetNotificationPermission = vi.fn(
@@ -991,5 +1019,221 @@ describe("PomodoroDashboardBody wedge sync recovery", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
 		expect(dismissPendingWedgeRecovery).toHaveBeenCalledTimes(1);
+	});
+});
+
+const FILLED_PRIMARY_CTA_IDS = [
+	"suggestion-accept-btn",
+	"timer-start-cycle",
+	"timer-pause",
+	"timer-resume",
+] as const;
+
+function countEnabledPrimaryCtas(): number {
+	const primary = screen.getByTestId("home-primary-region");
+	return FILLED_PRIMARY_CTA_IDS.filter((id) => {
+		const element = within(primary).queryByTestId(id);
+		return element != null && !(element as HTMLButtonElement).disabled;
+	}).length;
+}
+
+function expectOutsidePrimaryRegion(testId: string): void {
+	const primary = screen.getByTestId("home-primary-region");
+	expect(within(primary).queryByTestId(testId)).toBeNull();
+}
+
+function expectInsideRegion(
+	regionId: "home-primary-region" | "home-secondary-region",
+	testId: string,
+): void {
+	expect(within(screen.getByTestId(regionId)).getByTestId(testId)).toBeTruthy();
+}
+
+const kickoffSuggestionReady = {
+	status: "ready" as const,
+	data: {
+		taskId: "task-1",
+		title: "Suggested task",
+		workType: "OPERATIONAL" as const,
+		weight: 2 as const,
+		rationale: "Best next task",
+		breakdown: null,
+	},
+};
+
+const breakSuggestionReady = {
+	status: "ready" as const,
+	data: {
+		taskId: "task-1",
+		title: "Suggested task",
+		workType: "OPERATIONAL" as const,
+		weight: 2 as const,
+		rationale: "Best next task",
+		breakdown: null,
+	},
+};
+
+describe("PomodoroDashboardBody home IA layout", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("idle kickoff shows exactly one filled primary CTA and demotes inventory controls", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTaskId: null,
+				pendingKickoffSuggestion: kickoffSuggestionReady,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(countEnabledPrimaryCtas()).toBe(1);
+		expectInsideRegion("home-primary-region", "suggestion-accept-btn");
+		expectOutsidePrimaryRegion("task-archive-entry");
+		expectInsideRegion("home-secondary-region", "task-list-stub");
+	});
+
+	it("returning state shows one filled primary CTA with inventory outside primary", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				cycleKind: null,
+				focusedTaskId: null,
+				continueTaskId: "task-1",
+				pendingKickoffSuggestion: kickoffSuggestionReady,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(countEnabledPrimaryCtas()).toBe(1);
+		expectInsideRegion("home-primary-region", "suggestion-accept-btn");
+		expectOutsidePrimaryRegion("task-archive-entry");
+	});
+
+	it("idle focused task shows timer start as the sole primary CTA", () => {
+		renderBody({
+			state: "idle",
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		expect(countEnabledPrimaryCtas()).toBe(1);
+		expectInsideRegion("home-primary-region", "timer-start-cycle");
+		expectOutsidePrimaryRegion("task-archive-entry");
+	});
+
+	it("active work keeps timer primary, hides recap, and demotes inventory", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "WORK",
+			activeCycle: { id: 42 },
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		expectInsideRegion("home-primary-region", "timer-pause");
+		expect(screen.queryByTestId("daily-recap-panel")).toBeNull();
+		expectInsideRegion("home-secondary-region", "task-list-stub");
+		expectOutsidePrimaryRegion("task-list-stub");
+	});
+
+	it("break with suggestion keeps next-focus primary and timer secondary", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				hasActiveSession: true,
+				state: "running",
+				cycleKind: "SHORT_BREAK",
+				activeCycle: { id: 42 },
+				focusedTask: { id: 1, title: "Focus task" },
+				pendingSuggestion: breakSuggestionReady,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(countEnabledPrimaryCtas()).toBe(1);
+		expectInsideRegion("home-primary-region", "suggestion-accept-btn");
+		expectInsideRegion("home-secondary-region", "timer-pause");
+		expectInsideRegion("home-secondary-region", "task-list-stub");
+	});
+
+	it("break without suggestion keeps timer primary with secondary inventory", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "SHORT_BREAK",
+			activeCycle: { id: 42 },
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		expect(countEnabledPrimaryCtas()).toBe(1);
+		expectInsideRegion("home-primary-region", "timer-pause");
+		expectInsideRegion("home-secondary-region", "task-list-stub");
+	});
+
+	it("steering keeps inline session energy primary without overlay gates", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTaskId: null,
+				showSessionEnergy: true,
+				sessionEnergyPending: true,
+				pendingKickoffSuggestion: kickoffSuggestionReady,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expectInsideRegion("home-primary-region", "session-energy-card");
+		expect(screen.queryByTestId("kickoff-readiness-overlay")).toBeNull();
+		expect(screen.queryByTestId("cycle-intention-prompt")).toBeNull();
+		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
+	});
+
+	it("archive view promotes archive primary and keeps back navigation reachable", () => {
+		renderBody({
+			state: "idle",
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		fireEvent.click(screen.getByTestId("task-archive-entry"));
+
+		expectInsideRegion("home-primary-region", "task-archive-view");
+		expectInsideRegion("home-primary-region", "task-archive-back");
+		expect(screen.queryByTestId("task-list-stub")).toBeNull();
 	});
 });

@@ -71,6 +71,18 @@ describe("DailyRecapPanel", () => {
 		expect(screen.queryByText(/Light timing for standups/i)).toBeNull();
 	});
 
+	it("starts collapsed on first paint with aria-expanded false", () => {
+		render(<DailyRecapPanel localDateKey={DATE_KEY} recap={sampleRecap} />);
+
+		const last24Toggle = screen.getByTestId("daily-recap-last24-toggle");
+		const todayToggle = screen.getByTestId("daily-recap-today-toggle");
+
+		expect(last24Toggle.getAttribute("aria-expanded")).toBe("false");
+		expect(todayToggle.getAttribute("aria-expanded")).toBe("false");
+		expect(screen.queryByTestId("daily-recap-last24")).toBeNull();
+		expect(screen.queryByTestId("daily-recap-today")).toBeNull();
+	});
+
 	it("collapses sections independently via aria-expanded toggles", () => {
 		render(<DailyRecapPanel localDateKey={DATE_KEY} recap={sampleRecap} />);
 

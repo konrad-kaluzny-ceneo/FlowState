@@ -383,12 +383,12 @@ No database, API, auth, or persisted data migration is required. Recap dismissal
 
 #### Automated
 
-- [x] 2.1 Run `pnpm change-impact` before dashboard edit
-- [x] 2.2 Consume home IA derivation from dashboard without hook/conductor changes
-- [x] 2.3 Render `Home.purposeHeader` through home shell
-- [x] 2.4 Make daily recap collapsed by default and hidden during active work
-- [x] 2.5 Preserve existing `data-testid` contracts
-- [x] 2.6 Run `pnpm check` for layout phase
+- [x] 2.1 Run `pnpm change-impact` before dashboard edit — 703401d
+- [x] 2.2 Consume home IA derivation from dashboard without hook/conductor changes — 703401d
+- [x] 2.3 Render `Home.purposeHeader` through home shell — 703401d
+- [x] 2.4 Make daily recap collapsed by default and hidden during active work — 703401d
+- [x] 2.5 Preserve existing `data-testid` contracts — 703401d
+- [x] 2.6 Run `pnpm check` for layout phase — 703401d
 
 #### Manual
 
@@ -400,12 +400,12 @@ No database, API, auth, or persisted data migration is required. Recap dismissal
 
 #### Automated
 
-- [ ] 3.1 Extend home shell component tests for purpose header
-- [ ] 3.2 Extend dashboard component tests for state priority matrix
-- [ ] 3.3 Extend daily recap tests for collapsed first paint
-- [ ] 3.4 Run targeted S-40 Vitest command
-- [ ] 3.5 Run `pnpm check`
-- [ ] 3.6 Run `pnpm test`
+- [x] 3.1 Extend home shell component tests for purpose header
+- [x] 3.2 Extend dashboard component tests for state priority matrix
+- [x] 3.3 Extend daily recap tests for collapsed first paint
+- [x] 3.4 Run targeted S-40 Vitest command
+- [x] 3.5 Run `pnpm check`
+- [x] 3.6 Run `pnpm test`
 
 #### Manual
 
