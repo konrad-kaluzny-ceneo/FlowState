@@ -617,10 +617,10 @@ Close the slice by making the voice contract operational for future work, updati
 
 #### Automated
 
-- [x] 6.1 `pnpm check` passes.
-- [x] 6.2 `pnpm typecheck` passes.
-- [x] 6.3 `pnpm test` passes.
-- [x] 6.4 Copy tests verify EN and PL target acceptance examples for rationale and recap closure.
+- [x] 6.1 `pnpm check` passes. — 0e280c2
+- [x] 6.2 `pnpm typecheck` passes. — 0e280c2
+- [x] 6.3 `pnpm test` passes. — 0e280c2
+- [x] 6.4 Copy tests verify EN and PL target acceptance examples for rationale and recap closure. — 0e280c2
 
 #### Manual
 
