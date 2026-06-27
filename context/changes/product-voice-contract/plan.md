@@ -555,10 +555,10 @@ Close the slice by making the voice contract operational for future work, updati
 
 #### Automated
 
-- [x] 2.1 `pnpm check` passes.
-- [x] 2.2 `pnpm typecheck` passes.
-- [x] 2.3 Preference tests for valid/invalid locale updates pass.
-- [x] 2.4 Component or hook tests prove explicit locale switch updates the active locale and persistence layer.
+- [x] 2.1 `pnpm check` passes. — 64db07c
+- [x] 2.2 `pnpm typecheck` passes. — 64db07c
+- [x] 2.3 Preference tests for valid/invalid locale updates pass. — 64db07c
+- [x] 2.4 Component or hook tests prove explicit locale switch updates the active locale and persistence layer. — 64db07c
 
 #### Manual
 
