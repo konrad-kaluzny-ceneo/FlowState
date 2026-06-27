@@ -2,6 +2,8 @@ import "~/styles/globals.css";
 
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 
 import { auth } from "~/lib/auth/server";
 import { TRPCReactProvider } from "~/trpc/react";
@@ -12,11 +14,15 @@ import { UserMenu } from "./_components/user-menu";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-	title: "FlowState",
-	description: "Mindful Pomodoro with session-aware task suggestions",
-	icons: [{ rel: "icon", url: "/favicon.ico" }],
-};
+export async function generateMetadata(): Promise<Metadata> {
+	const t = await getTranslations("App");
+
+	return {
+		title: t("title"),
+		description: t("description"),
+		icons: [{ rel: "icon", url: "/favicon.ico" }],
+	};
+}
 
 const geist = Geist({
 	subsets: ["latin"],
@@ -26,6 +32,8 @@ const geist = Geist({
 export default async function RootLayout({
 	children,
 }: Readonly<{ children: React.ReactNode }>) {
+	const locale = await getLocale();
+	const messages = await getMessages();
 	let userName: string | null = null;
 
 	try {
@@ -44,24 +52,26 @@ export default async function RootLayout({
 		<html
 			className={`${geist.variable}`}
 			data-theme="light"
-			lang="en"
+			lang={locale}
 			suppressHydrationWarning
 		>
 			<head>
 				<ThemeScript />
 			</head>
 			<body>
-				<TRPCReactProvider>
-					<ThemeProvider>
-						<OAuthSessionVerifier />
-						{userName && (
-							<header className="fixed top-0 right-0 z-50 p-4">
-								<UserMenu userName={userName} />
-							</header>
-						)}
-						{children}
-					</ThemeProvider>
-				</TRPCReactProvider>
+				<NextIntlClientProvider locale={locale} messages={messages}>
+					<TRPCReactProvider>
+						<ThemeProvider>
+							<OAuthSessionVerifier />
+							{userName && (
+								<header className="fixed top-0 right-0 z-50 p-4">
+									<UserMenu userName={userName} />
+								</header>
+							)}
+							{children}
+						</ThemeProvider>
+					</TRPCReactProvider>
+				</NextIntlClientProvider>
 			</body>
 		</html>
 	);

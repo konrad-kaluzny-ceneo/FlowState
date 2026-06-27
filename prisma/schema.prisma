@@ -51,34 +51,38 @@ enum CycleEndAudioMode {
   MUTED
 }
 
+enum UserLocale {
+  EN
+  PL
+}
+
 enum CommitmentHorizon {
   ASAP
   THIS_WEEK
   WHEN_POSSIBLE
 }
 
-
 // --- Models ---
 
 model Task {
-  id        Int       @id @default(autoincrement())
-  title     String    @db.VarChar(256)
-  status    String    @default("active") @db.VarChar(20)
-  userId    String    @map("user_id") @db.VarChar(255)
-  workType           WorkType           @default(OPERATIONAL) @map("work_type")
-  weight             Int                @default(2) @db.SmallInt
-  importance         Int                @default(2) @db.SmallInt
-  urgency            Int                @default(2) @db.SmallInt
-  effortMinutes      Int?               @map("effort_minutes")
-  commitmentHorizon  CommitmentHorizon  @default(WHEN_POSSIBLE) @map("commitment_horizon")
-  sortOrder          Int                @default(0) @map("sort_order")
-  resumeNote         String?            @map("resume_note") @db.VarChar(120)
-  personaPresetId    String?            @map("persona_preset_id") @db.VarChar(32)
-  isDailyStanding    Boolean            @default(false) @map("is_daily_standing")
-  createdAt DateTime  @default(now()) @map("createdAt") @db.Timestamptz
-  updatedAt DateTime? @updatedAt @map("updatedAt") @db.Timestamptz
+  id                Int               @id @default(autoincrement())
+  title             String            @db.VarChar(256)
+  status            String            @default("active") @db.VarChar(20)
+  userId            String            @map("user_id") @db.VarChar(255)
+  workType          WorkType          @default(OPERATIONAL) @map("work_type")
+  weight            Int               @default(2) @db.SmallInt
+  importance        Int               @default(2) @db.SmallInt
+  urgency           Int               @default(2) @db.SmallInt
+  effortMinutes     Int?              @map("effort_minutes")
+  commitmentHorizon CommitmentHorizon @default(WHEN_POSSIBLE) @map("commitment_horizon")
+  sortOrder         Int               @default(0) @map("sort_order")
+  resumeNote        String?           @map("resume_note") @db.VarChar(120)
+  personaPresetId   String?           @map("persona_preset_id") @db.VarChar(32)
+  isDailyStanding   Boolean           @default(false) @map("is_daily_standing")
+  createdAt         DateTime          @default(now()) @map("createdAt") @db.Timestamptz
+  updatedAt         DateTime?         @updatedAt @map("updatedAt") @db.Timestamptz
 
-  cycles Cycle[]
+  cycles         Cycle[]
   dayCompletions TaskDayCompletion[]
 
   lastFocusedSessions Session[] @relation("SessionLastFocusedTask")
@@ -95,20 +99,20 @@ model Task {
 }
 
 model Session {
-  id               Int          @id @default(autoincrement())
-  userId           String       @map("user_id") @db.VarChar(255)
-  state            SessionState @default(ACTIVE)
-  startedAt        DateTime     @default(now()) @map("started_at") @db.Timestamptz
-  endedAt          DateTime?    @map("ended_at") @db.Timestamptz
-  lastActivityAt   DateTime     @default(now()) @map("last_activity_at") @db.Timestamptz
-  interruptionCount Int         @default(0) @map("interruption_count")
-  archivedAt       DateTime?    @map("archived_at") @db.Timestamptz
-  closureLine      String?      @map("closure_line") @db.VarChar(120)
-  lastFocusedTaskId Int?        @map("last_focused_task_id")
+  id                Int          @id @default(autoincrement())
+  userId            String       @map("user_id") @db.VarChar(255)
+  state             SessionState @default(ACTIVE)
+  startedAt         DateTime     @default(now()) @map("started_at") @db.Timestamptz
+  endedAt           DateTime?    @map("ended_at") @db.Timestamptz
+  lastActivityAt    DateTime     @default(now()) @map("last_activity_at") @db.Timestamptz
+  interruptionCount Int          @default(0) @map("interruption_count")
+  archivedAt        DateTime?    @map("archived_at") @db.Timestamptz
+  closureLine       String?      @map("closure_line") @db.VarChar(120)
+  lastFocusedTaskId Int?         @map("last_focused_task_id")
 
   cycles              Cycle[]
   suggestionDecisions SuggestionDecision[]
-  lastFocusedTask     Task?    @relation("SessionLastFocusedTask", fields: [lastFocusedTaskId], references: [id], onDelete: SetNull)
+  lastFocusedTask     Task?                @relation("SessionLastFocusedTask", fields: [lastFocusedTaskId], references: [id], onDelete: SetNull)
 
   @@index([userId], name: "session_user_id_idx")
   @@index([state], name: "session_state_idx")
@@ -117,23 +121,23 @@ model Session {
 }
 
 model Cycle {
-  id                   Int        @id @default(autoincrement())
-  sessionId            Int        @map("session_id")
-  userId               String     @map("user_id") @db.VarChar(255)
-  taskId               Int?       @map("task_id")
-  kind                 CycleKind
-  state                CycleState @default(RUNNING)
-  configuredDurationSec Int       @map("configured_duration_sec")
-  startedAt            DateTime   @default(now()) @map("started_at") @db.Timestamptz
-  endedAt              DateTime?  @map("ended_at") @db.Timestamptz
-  pausedAt             DateTime?  @map("paused_at") @db.Timestamptz
-  remainingDurationSec Int?       @map("remaining_duration_sec")
-  intention            String?    @db.VarChar(80)
+  id                    Int        @id @default(autoincrement())
+  sessionId             Int        @map("session_id")
+  userId                String     @map("user_id") @db.VarChar(255)
+  taskId                Int?       @map("task_id")
+  kind                  CycleKind
+  state                 CycleState @default(RUNNING)
+  configuredDurationSec Int        @map("configured_duration_sec")
+  startedAt             DateTime   @default(now()) @map("started_at") @db.Timestamptz
+  endedAt               DateTime?  @map("ended_at") @db.Timestamptz
+  pausedAt              DateTime?  @map("paused_at") @db.Timestamptz
+  remainingDurationSec  Int?       @map("remaining_duration_sec")
+  intention             String?    @db.VarChar(80)
 
-  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  task    Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
-  checkIn             CheckIn?
-  suggestionDecision  SuggestionDecision?
+  session            Session             @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  task               Task?               @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  checkIn            CheckIn?
+  suggestionDecision SuggestionDecision?
 
   @@index([sessionId], name: "cycle_session_id_idx")
   @@index([userId], name: "cycle_user_id_idx")
@@ -174,10 +178,12 @@ model SuggestionDecision {
   @@index([sessionId, createdAt], name: "suggestion_decision_session_created_idx")
   @@map("flow_state_suggestion_decision")
 }
+
 model UserPreference {
-  userId              String             @id @map("user_id") @db.VarChar(255)
-  cycleEndAudioMode   CycleEndAudioMode  @default(NORMAL) @map("cycle_end_audio_mode")
-  updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+  userId            String            @id @map("user_id") @db.VarChar(255)
+  cycleEndAudioMode CycleEndAudioMode @default(NORMAL) @map("cycle_end_audio_mode")
+  language          UserLocale?       @map("language")
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("flow_state_user_preference")
 }
@@ -209,4 +215,3 @@ model TaskDayCompletion {
   @@index([userId, localDateKey], name: "task_day_completion_user_date_idx")
   @@map("flow_state_task_day_completion")
 }
-

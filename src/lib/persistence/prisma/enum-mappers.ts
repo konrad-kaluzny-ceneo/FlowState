@@ -2,6 +2,7 @@ import type {
 	CommitmentHorizon as PrismaCommitmentHorizon,
 	CycleEndAudioMode as PrismaCycleEndAudioMode,
 	EnergyLevel as PrismaEnergyLevel,
+	UserLocale as PrismaUserLocale,
 	WorkType as PrismaWorkType,
 } from "@prisma/generated";
 
@@ -9,6 +10,7 @@ import type {
 	CommitmentHorizon,
 	CycleEndAudioMode,
 	EnergyLevel,
+	UserLocale,
 	WorkType,
 } from "~/lib/domain";
 
@@ -64,6 +66,16 @@ const AUDIO_TO_PRISMA: Record<CycleEndAudioMode, PrismaCycleEndAudioMode> = {
 	muted: "MUTED",
 };
 
+const LOCALE_FROM_PRISMA: Record<PrismaUserLocale, UserLocale> = {
+	EN: "en",
+	PL: "pl",
+};
+
+const LOCALE_TO_PRISMA: Record<UserLocale, PrismaUserLocale> = {
+	en: "EN",
+	pl: "PL",
+};
+
 export function fromPrismaEnergyLevel(value: PrismaEnergyLevel): EnergyLevel {
 	return ENERGY_FROM_PRISMA[value];
 }
@@ -102,4 +114,12 @@ export function toPrismaCycleEndAudioMode(
 	value: CycleEndAudioMode,
 ): PrismaCycleEndAudioMode {
 	return AUDIO_TO_PRISMA[value];
+}
+
+export function fromPrismaUserLocale(value: PrismaUserLocale): UserLocale {
+	return LOCALE_FROM_PRISMA[value];
+}
+
+export function toPrismaUserLocale(value: UserLocale): PrismaUserLocale {
+	return LOCALE_TO_PRISMA[value];
 }

@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { ensureLocaleCookie } from "./src/i18n/locale-cookie";
 import { shouldBypassAuthMiddleware } from "./src/lib/auth/public-paths";
 import { auth } from "./src/lib/auth/server";
 
@@ -15,17 +16,15 @@ const runAuthProxy = auth.middleware({
 	loginUrl: "/auth/sign-in",
 });
 
-export function proxy(request: NextRequest) {
-	if (
-		shouldBypassAuthMiddleware(
-			request.nextUrl.pathname,
-			request.nextUrl.searchParams,
-		)
-	) {
-		return NextResponse.next();
-	}
+export async function proxy(request: NextRequest) {
+	const response = shouldBypassAuthMiddleware(
+		request.nextUrl.pathname,
+		request.nextUrl.searchParams,
+	)
+		? NextResponse.next()
+		: await runAuthProxy(request);
 
-	return runAuthProxy(request);
+	return ensureLocaleCookie(request, response);
 }
 
 export const config = {
