@@ -1,6 +1,6 @@
 import type { Task as PrismaTask } from "@prisma/generated";
 
-import type { DomainTask } from "~/lib/data-mode/types";
+import type { DomainTask, DomainTaskStatus } from "~/lib/data-mode/types";
 import {
 	fromPrismaCommitmentHorizon,
 	fromPrismaWorkType,
@@ -13,7 +13,7 @@ export function mapTaskFromPrisma(
 	return {
 		id: row.id,
 		title: row.title,
-		status: row.status,
+		status: row.status as DomainTaskStatus,
 		userId: row.userId,
 		createdAt: row.createdAt,
 		updatedAt: row.updatedAt,
@@ -27,6 +27,7 @@ export function mapTaskFromPrisma(
 		resumeNote: row.resumeNote,
 		personaPresetId: row.personaPresetId,
 		isDailyStanding: row.isDailyStanding,
+		archivedAt: row.archivedAt,
 		doneForToday: options?.doneForToday ?? false,
 	};
 }

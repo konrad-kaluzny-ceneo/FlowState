@@ -87,6 +87,7 @@ function makeTask(overrides: Partial<DomainTask> = {}): DomainTask {
 		sortOrder: 0,
 		resumeNote,
 		personaPresetId,
+		archivedAt: null,
 		...rest,
 	};
 }

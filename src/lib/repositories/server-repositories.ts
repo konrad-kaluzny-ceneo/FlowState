@@ -147,6 +147,19 @@ export function createServerTaskRepository(client: TrpcClient): TaskRepository {
 				"markDoneForToday is not supported via server repository",
 			);
 		},
+		listArchived: async () => {
+			throw new Error(
+				"listArchived is not supported via server repository yet",
+			);
+		},
+		restore: async () => {
+			throw new Error("restore is not supported via server repository yet");
+		},
+		deleteArchived: async () => {
+			throw new Error(
+				"deleteArchived is not supported via server repository yet",
+			);
+		},
 	};
 }
 

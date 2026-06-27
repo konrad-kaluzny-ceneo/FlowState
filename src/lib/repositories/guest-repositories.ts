@@ -32,6 +32,7 @@ function toDomainTask(
 		resumeNote: string | null;
 		personaPresetId: string | null;
 		isDailyStanding?: boolean;
+		archivedAt?: Date | null;
 		createdAt: Date;
 		updatedAt: Date | null;
 	},
@@ -40,10 +41,11 @@ function toDomainTask(
 	return {
 		id: task.id,
 		title: task.title,
-		status: task.status,
+		status: task.status as DomainTask["status"],
 		userId: GUEST_USER_ID,
 		createdAt: task.createdAt,
 		updatedAt: task.updatedAt,
+		archivedAt: task.archivedAt ?? null,
 		workType: task.workType,
 		weight: task.weight as 1 | 2 | 3,
 		importance: task.importance,
@@ -143,6 +145,7 @@ export function createGuestTaskRepository(): TaskRepository {
 				resumeNote: input.resumeNote ?? null,
 				personaPresetId: input.personaPresetId ?? null,
 				isDailyStanding: input.isDailyStanding ?? false,
+				archivedAt: null,
 				createdAt: now,
 				updatedAt: null,
 			};
@@ -294,6 +297,23 @@ export function createGuestTaskRepository(): TaskRepository {
 				throw new Error("Task is not marked as daily standing");
 			}
 			markGuestTaskDoneForToday(String(input.id));
+		},
+
+		async listArchived() {
+			const doneTodayIds = getGuestDoneForTodayTaskIds();
+			return sortTasksByOrder(
+				loadSnapshot().tasks.filter((task) => task.status === "archived"),
+			).map((task) => toDomainTask(task, doneTodayIds.has(task.id)));
+		},
+
+		async restore() {
+			throw new Error("restore is not implemented in guest repository yet");
+		},
+
+		async deleteArchived() {
+			throw new Error(
+				"deleteArchived is not implemented in guest repository yet",
+			);
 		},
 	};
 }

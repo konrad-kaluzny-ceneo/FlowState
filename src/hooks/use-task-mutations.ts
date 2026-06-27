@@ -83,6 +83,7 @@ function buildOptimisticCreateRow(
 		personaPresetId: input.personaPresetId ?? null,
 		isDailyStanding: input.isDailyStanding ?? false,
 		doneForToday: false,
+		archivedAt: null,
 		createdAt: now,
 		updatedAt: now,
 	};
