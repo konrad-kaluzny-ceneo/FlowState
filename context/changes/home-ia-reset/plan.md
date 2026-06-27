@@ -416,10 +416,10 @@ No database, API, auth, or persisted data migration is required. Recap dismissal
 
 #### Automated
 
-- [x] 4.1 Decide whether test-plan cookbook update is needed
-- [x] 4.2 Apply cookbook update only if a reusable S-40 test pattern emerged
-- [x] 4.3 Run `pnpm check`
-- [x] 4.4 Run `pnpm test`
+- [x] 4.1 Decide whether test-plan cookbook update is needed — 3c6fc55
+- [x] 4.2 Apply cookbook update only if a reusable S-40 test pattern emerged — 3c6fc55
+- [x] 4.3 Run `pnpm check` — 3c6fc55
+- [x] 4.4 Run `pnpm test` — 3c6fc55
 
 #### Manual
 
