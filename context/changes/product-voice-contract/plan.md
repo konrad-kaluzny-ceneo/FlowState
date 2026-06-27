@@ -603,9 +603,9 @@ Close the slice by making the voice contract operational for future work, updati
 
 #### Automated
 
-- [ ] 5.1 `pnpm check` passes after markdown/doc changes.
-- [ ] 5.2 `context/foundation/product-voice.md` exists and includes EN and PL sections.
-- [ ] 5.3 The document contains a future-slice acceptance checklist.
+- [x] 5.1 `pnpm check` passes after markdown/doc changes.
+- [x] 5.2 `context/foundation/product-voice.md` exists and includes EN and PL sections.
+- [x] 5.3 The document contains a future-slice acceptance checklist.
 
 #### Manual
 
