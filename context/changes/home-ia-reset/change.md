@@ -1,7 +1,7 @@
 ---
 change_id: home-ia-reset
 title: Home IA reset
-status: implemented
+status: impl_reviewed
 created: 2026-06-27
 updated: 2026-06-27
 archived_at: null
@@ -44,4 +44,4 @@ S-40 / Stream R — home answers "Co teraz?" with one dominant next-focus, recap
 - Component: `home-shell`, `pomodoro-dashboard` (state matrix + filled primary CTA oracle), `daily-recap-panel`, `task-list` smoke
 - Targeted run: `pnpm exec vitest run src/lib/home/home-session-state.test.ts src/app/_components/home-shell.test.tsx src/app/_components/pomodoro-dashboard.test.tsx src/app/_components/daily-recap-panel.test.tsx src/app/_components/task-list.test.tsx`
 
-**Next stage:** S8 — `/10x-impl-review home-ia-reset`
+**Next stage:** S9 — `/10x-linear-backlog sync` (pre-PR backlog sync)

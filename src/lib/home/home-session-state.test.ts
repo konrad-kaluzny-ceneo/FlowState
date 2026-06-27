@@ -125,6 +125,19 @@ describe("deriveHomeSessionState", () => {
 			);
 			expect(state).toBe("idle");
 		});
+
+		it("forces suggestion gate off for guest even when caller passes it enabled", () => {
+			const { state, modules } = deriveHomeSessionState(
+				baseInput({
+					dataMode: "guest",
+					enableSuggestionGate: true,
+					showSessionEnergy: true,
+					pendingKickoffSuggestionStatus: "ready",
+				}),
+			);
+			expect(state).toBe("idle");
+			expect(modules.nextFocus).toBe("hidden");
+		});
 	});
 
 	describe("module priority invariants", () => {

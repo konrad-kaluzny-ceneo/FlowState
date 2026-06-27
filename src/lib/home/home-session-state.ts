@@ -308,10 +308,20 @@ function deriveModulePriorities(
 	}
 }
 
+function normalizeGuestInput(
+	input: DeriveHomeSessionStateInput,
+): DeriveHomeSessionStateInput {
+	if (input.dataMode !== "guest") {
+		return input;
+	}
+	return { ...input, enableSuggestionGate: false };
+}
+
 export function deriveHomeSessionState(
 	input: DeriveHomeSessionStateInput,
 ): DeriveHomeSessionStateOutput {
-	const state = resolveSessionState(input);
-	const modules = deriveModulePriorities(state, input);
+	const normalizedInput = normalizeGuestInput(input);
+	const state = resolveSessionState(normalizedInput);
+	const modules = deriveModulePriorities(state, normalizedInput);
 	return { state, modules };
 }
