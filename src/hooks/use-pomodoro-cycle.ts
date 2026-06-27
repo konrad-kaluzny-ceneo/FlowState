@@ -131,9 +131,13 @@ function taskPoolHasKickoffCandidates(
 ): boolean {
 	return tasks.some(
 		(task) =>
-			!task.doneForToday && (task.status === "active" || task.isDailyStanding),
+			task.status !== "archived" &&
+			!task.doneForToday &&
+			(task.status === "active" || task.isDailyStanding),
 	);
 }
+
+export { taskPoolHasKickoffCandidates };
 
 /** E2E uses Playwright fake timers; server `startedAt` must not drive break expiry. */
 const useE2eClientTimer = process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER === "1";

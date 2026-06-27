@@ -36,7 +36,9 @@ describe("guest store", () => {
 		}));
 
 		expect(error).toBeNull();
-		expect(loadSnapshot().tasks).toEqual(snapshot.tasks);
+		expect(loadSnapshot().tasks).toEqual(
+			snapshot.tasks.map((task) => ({ ...task, archivedAt: null })),
+		);
 		expect(hasGuestData()).toBe(true);
 	});
 

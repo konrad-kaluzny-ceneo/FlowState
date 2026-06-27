@@ -1,6 +1,7 @@
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { matchesStaleArchivePredicate } from "~/lib/task/stale-task-archive";
 
 /**
  * Feature: neon-auth, Property 10: Task query isolation
@@ -15,6 +16,8 @@ type TaskRow = {
 	sortOrder: number;
 	createdAt: Date;
 	updatedAt: Date | null;
+	archivedAt: Date | null;
+	isDailyStanding: boolean;
 };
 
 // Store all tasks in an in-memory array; the mock db will filter them
@@ -31,11 +34,15 @@ function filterTasks(args: {
 	where?: {
 		userId?: string;
 		status?: string;
-		id?: number;
+		id?: number | { in?: number[] };
 	};
-	select?: { id?: true };
-	orderBy?: Array<{ sortOrder?: "asc" | "desc"; createdAt?: "asc" | "desc" }>;
-}): TaskRow[] | Array<{ id: number }> {
+	select?: { id?: true; status?: true };
+	orderBy?: Array<{
+		sortOrder?: "asc" | "desc";
+		createdAt?: "asc" | "desc";
+		archivedAt?: "asc" | "desc";
+	}>;
+}): TaskRow[] | Array<{ id: number; status?: string }> {
 	let rows = [...allTasks];
 
 	if (args.where?.userId != null) {
@@ -45,11 +52,24 @@ function filterTasks(args: {
 		rows = rows.filter((t) => t.status === args.where?.status);
 	}
 	if (args.where?.id != null) {
-		rows = rows.filter((t) => t.id === args.where?.id);
+		if (typeof args.where.id === "number") {
+			rows = rows.filter((t) => t.id === args.where?.id);
+		} else if (args.where.id.in != null) {
+			const allowed = new Set(args.where.id.in);
+			rows = rows.filter((t) => allowed.has(t.id));
+		}
 	}
 
 	if (args.orderBy) {
 		for (const clause of [...args.orderBy].reverse()) {
+			if (clause.archivedAt != null) {
+				const dir = clause.archivedAt === "asc" ? 1 : -1;
+				rows.sort((a, b) => {
+					const aTime = a.archivedAt?.getTime() ?? 0;
+					const bTime = b.archivedAt?.getTime() ?? 0;
+					return (aTime - bTime) * dir;
+				});
+			}
 			if (clause.sortOrder != null) {
 				const dir = clause.sortOrder === "asc" ? 1 : -1;
 				rows.sort((a, b) => (a.sortOrder - b.sortOrder) * dir);
@@ -64,7 +84,10 @@ function filterTasks(args: {
 	}
 
 	if (args.select?.id) {
-		return rows.map((t) => ({ id: t.id }));
+		return rows.map((t) => ({
+			id: t.id,
+			...(args.select?.status ? { status: t.status } : {}),
+		}));
 	}
 
 	return rows;
@@ -78,10 +101,13 @@ vi.mock("~/server/db/index", () => {
 
 	const mockCreate = vi.fn(() => Promise.resolve({ id: 1 }));
 	const mockFindFirst = vi.fn(
-		(args: { where?: { id?: number; userId?: string } }) => {
+		(args: { where?: { id?: number; userId?: string; status?: string } }) => {
 			return Promise.resolve(
 				allTasks.find(
-					(t) => t.id === args?.where?.id && t.userId === args?.where?.userId,
+					(t) =>
+						(args?.where?.id == null || t.id === args.where.id) &&
+						(args?.where?.userId == null || t.userId === args.where.userId) &&
+						(args?.where?.status == null || t.status === args.where.status),
 				) ?? null,
 			);
 		},
@@ -89,7 +115,7 @@ vi.mock("~/server/db/index", () => {
 	const mockUpdate = vi.fn(
 		(args: {
 			where: { id: number };
-			data: Partial<Pick<TaskRow, "sortOrder" | "status">>;
+			data: Partial<Pick<TaskRow, "sortOrder" | "status" | "archivedAt">>;
 		}) => {
 			const task = allTasks.find((t) => t.id === args.where.id);
 			if (!task) {
@@ -100,6 +126,53 @@ vi.mock("~/server/db/index", () => {
 		},
 	);
 	const mockDelete = vi.fn(() => Promise.resolve({ id: 1 }));
+	const mockUpdateMany = vi.fn(
+		(args: {
+			where: {
+				userId: string;
+				OR: Array<{
+					updatedAt?: { lte: Date };
+					createdAt?: { lte: Date };
+				}>;
+			};
+			data: { status: string; archivedAt: Date };
+		}) => {
+			const cutoff =
+				args.where.OR[0]?.updatedAt?.lte ?? args.where.OR[1]?.createdAt?.lte;
+			if (cutoff == null) {
+				return Promise.resolve({ count: 0 });
+			}
+			let count = 0;
+			for (const task of allTasks) {
+				if (
+					task.userId === args.where.userId &&
+					matchesStaleArchivePredicate(task, cutoff)
+				) {
+					task.status = args.data.status;
+					task.archivedAt = args.data.archivedAt;
+					count += 1;
+				}
+			}
+			return Promise.resolve({ count });
+		},
+	);
+	const mockDeleteMany = vi.fn(
+		(args: {
+			where: { userId: string; id: { in: number[] }; status: string };
+		}) => {
+			const ids = new Set(args.where.id.in);
+			const before = allTasks.length;
+			allTasks = allTasks.filter(
+				(task) =>
+					!(
+						task.userId === args.where.userId &&
+						ids.has(task.id) &&
+						task.status === args.where.status
+					),
+			);
+			return Promise.resolve({ count: before - allTasks.length });
+		},
+	);
 	const mockAggregate = vi.fn(
 		(args: {
 			where?: { userId?: string; status?: string };
@@ -120,6 +193,8 @@ vi.mock("~/server/db/index", () => {
 				findFirst: mockFindFirst,
 				update: mockUpdate,
 				delete: mockDelete,
+				updateMany: mockUpdateMany,
+				deleteMany: mockDeleteMany,
 				aggregate: mockAggregate,
 			},
 			$transaction: vi.fn(
@@ -204,6 +279,8 @@ describe("Feature: neon-auth, Property 10: Task query isolation", () => {
 					sortOrder: i,
 					createdAt: new Date(2024, 0, i + 1),
 					updatedAt: null,
+					archivedAt: null,
+					isDailyStanding: false,
 				});
 			}
 
@@ -261,6 +338,8 @@ describe("Feature: neon-auth, Property 10: Task query isolation", () => {
 				sortOrder: i,
 				createdAt: new Date(2024, 0, i + 1),
 				updatedAt: null,
+				archivedAt: null,
+				isDailyStanding: false,
 			});
 		}
 
@@ -299,6 +378,8 @@ describe("task reorder isolation", () => {
 				sortOrder: 0,
 				createdAt: new Date(2024, 0, 1),
 				updatedAt: null,
+				archivedAt: null,
+				isDailyStanding: false,
 			},
 			{
 				id: 2,
@@ -308,6 +389,8 @@ describe("task reorder isolation", () => {
 				sortOrder: 1,
 				createdAt: new Date(2024, 0, 2),
 				updatedAt: null,
+				archivedAt: null,
+				isDailyStanding: false,
 			},
 			{
 				id: 10,
@@ -317,6 +400,8 @@ describe("task reorder isolation", () => {
 				sortOrder: 0,
 				createdAt: new Date(2024, 0, 10),
 				updatedAt: null,
+				archivedAt: null,
+				isDailyStanding: false,
 			},
 			{
 				id: 11,
@@ -326,6 +411,8 @@ describe("task reorder isolation", () => {
 				sortOrder: 1,
 				createdAt: new Date(2024, 0, 11),
 				updatedAt: null,
+				archivedAt: null,
+				isDailyStanding: false,
 			},
 		];
 
@@ -343,5 +430,72 @@ describe("task reorder isolation", () => {
 
 		const aList = await taskCaller(USER_A).list();
 		expect(aList.map((t) => t.id)).toEqual([2, 1]);
+	});
+});
+
+describe("archive isolation", () => {
+	beforeEach(() => {
+		allTasks = [];
+		vi.clearAllMocks();
+	});
+
+	it("archiveList returns only the caller's archived tasks", async () => {
+		allTasks = [
+			{
+				id: 1,
+				title: "A archived",
+				status: "archived",
+				userId: USER_A,
+				sortOrder: 0,
+				createdAt: new Date("2026-01-01"),
+				updatedAt: null,
+				archivedAt: new Date("2026-06-20"),
+				isDailyStanding: false,
+			},
+			{
+				id: 2,
+				title: "B archived",
+				status: "archived",
+				userId: USER_B,
+				sortOrder: 0,
+				createdAt: new Date("2026-01-02"),
+				updatedAt: null,
+				archivedAt: new Date("2026-06-21"),
+				isDailyStanding: false,
+			},
+		];
+
+		const list = await taskCaller(USER_A).archiveList();
+
+		expect(list).toHaveLength(1);
+		expect(list[0]?.id).toBe(1);
+	});
+
+	it("restore and deleteArchived deny cross-user archived tasks without writes", async () => {
+		allTasks = [
+			{
+				id: 1,
+				title: "B archived",
+				status: "archived",
+				userId: USER_B,
+				sortOrder: 0,
+				createdAt: new Date("2026-01-01"),
+				updatedAt: null,
+				archivedAt: new Date("2026-06-20"),
+				isDailyStanding: false,
+			},
+		];
+
+		await expect(taskCaller(USER_A).restore({ id: 1 })).rejects.toMatchObject({
+			code: "NOT_FOUND",
+		});
+		await expect(
+			taskCaller(USER_A).deleteArchived({ ids: [1] }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+		expect(allTasks).toHaveLength(1);
+		expect(allTasks[0]?.status).toBe("archived");
+		expect(db.task.update).not.toHaveBeenCalled();
+		expect(db.task.deleteMany).not.toHaveBeenCalled();
 	});
 });

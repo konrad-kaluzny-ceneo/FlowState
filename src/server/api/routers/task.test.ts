@@ -1,6 +1,10 @@
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+	getStaleArchiveCutoff,
+	matchesStaleArchivePredicate,
+} from "~/lib/task/stale-task-archive";
 
 /**
  * Feature: neon-auth, Property 9: Task creation ownership
@@ -17,7 +21,17 @@ type TaskRow = {
 	userId: string;
 	sortOrder: number;
 	createdAt: Date;
+	updatedAt: Date | null;
+	archivedAt: Date | null;
 	isDailyStanding: boolean;
+	workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+	weight?: number;
+	importance?: number;
+	urgency?: number;
+	effortMinutes?: number | null;
+	commitmentHorizon?: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
+	personaPresetId?: string | null;
+	resumeNote?: string | null;
 };
 
 let allTasks: TaskRow[] = [];
@@ -40,32 +54,166 @@ vi.mock("~/server/db/index", () => {
 		db: {
 			task: {
 				findMany: vi.fn(
-					(args?: { where?: { userId?: string }; orderBy?: unknown }) => {
+					(args?: {
+						where?: {
+							userId?: string;
+							status?: string;
+							id?: { in?: number[] };
+						};
+						orderBy?: Array<{
+							sortOrder?: "asc" | "desc";
+							createdAt?: "asc" | "desc";
+							archivedAt?: "asc" | "desc";
+						}>;
+						select?: { id?: true; status?: true };
+					}) => {
 						let rows = [...allTasks];
 						if (args?.where?.userId != null) {
 							rows = rows.filter((t) => t.userId === args.where?.userId);
 						}
+						if (args?.where?.status != null) {
+							rows = rows.filter((t) => t.status === args.where?.status);
+						}
+						if (args?.where?.id?.in != null) {
+							const allowed = new Set(args.where.id.in);
+							rows = rows.filter((t) => allowed.has(t.id));
+						}
+						if (args?.orderBy) {
+							for (const clause of [...args.orderBy].reverse()) {
+								if (clause.archivedAt != null) {
+									const dir = clause.archivedAt === "asc" ? 1 : -1;
+									rows.sort((a, b) => {
+										const aTime = a.archivedAt?.getTime() ?? 0;
+										const bTime = b.archivedAt?.getTime() ?? 0;
+										return (aTime - bTime) * dir;
+									});
+								}
+								if (clause.createdAt != null) {
+									const dir = clause.createdAt === "asc" ? 1 : -1;
+									rows.sort(
+										(a, b) =>
+											(a.createdAt.getTime() - b.createdAt.getTime()) * dir,
+									);
+								}
+								if (clause.sortOrder != null) {
+									const dir = clause.sortOrder === "asc" ? 1 : -1;
+									rows.sort((a, b) => (a.sortOrder - b.sortOrder) * dir);
+								}
+							}
+						}
+						if (args?.select?.id) {
+							return Promise.resolve(
+								rows.map((t) => ({
+									id: t.id,
+									...(args.select?.status ? { status: t.status } : {}),
+								})),
+							);
+						}
 						return Promise.resolve(rows);
 					},
 				),
-				aggregate: vi.fn(() =>
-					Promise.resolve({ _max: { sortOrder: null as number | null } }),
+				aggregate: vi.fn(
+					(args?: { where?: { userId?: string; status?: string } }) => {
+						const rows = allTasks.filter(
+							(t) =>
+								(args?.where?.userId == null ||
+									t.userId === args.where.userId) &&
+								(args?.where?.status == null || t.status === args.where.status),
+						);
+						const maxSortOrder =
+							rows.length === 0
+								? null
+								: Math.max(...rows.map((t) => t.sortOrder));
+						return Promise.resolve({ _max: { sortOrder: maxSortOrder } });
+					},
 				),
 				create: vi.fn((args: { data: Record<string, unknown> }) => {
 					capturedData = args.data;
-					return Promise.resolve({ id: 1, ...args.data });
+					// Mirror the schema default so the returned row has a valid status.
+					return Promise.resolve({ status: "active", id: 1, ...args.data });
 				}),
 				findFirst: vi.fn(
-					(args?: { where?: { id?: number; userId?: string } }) => {
+					(args?: {
+						where?: { id?: number; userId?: string; status?: string };
+					}) => {
 						return Promise.resolve(
 							allTasks.find(
 								(t) =>
-									t.id === args?.where?.id && t.userId === args?.where?.userId,
+									(args?.where?.id == null || t.id === args.where.id) &&
+									(args?.where?.userId == null ||
+										t.userId === args.where.userId) &&
+									(args?.where?.status == null ||
+										t.status === args.where.status),
 							) ?? null,
 						);
 					},
 				),
-				update: vi.fn(() => Promise.resolve({ id: 1 })),
+				update: vi.fn(
+					(args: { where: { id: number }; data: Partial<TaskRow> }) => {
+						const task = allTasks.find((t) => t.id === args.where.id);
+						if (!task) {
+							throw new Error("not found");
+						}
+						Object.assign(task, args.data);
+						return Promise.resolve(task);
+					},
+				),
+				updateMany: vi.fn(
+					(args: {
+						where: {
+							userId: string;
+							status: string;
+							isDailyStanding: boolean;
+							OR: Array<{
+								updatedAt?: { lte: Date } | null;
+								createdAt?: { lte: Date };
+							}>;
+						};
+						data: { status: string; archivedAt: Date };
+					}) => {
+						const cutoff =
+							args.where.OR[0]?.updatedAt &&
+							typeof args.where.OR[0].updatedAt === "object"
+								? args.where.OR[0].updatedAt.lte
+								: args.where.OR[1]?.createdAt?.lte;
+						if (cutoff == null) {
+							return Promise.resolve({ count: 0 });
+						}
+						let count = 0;
+						for (const task of allTasks) {
+							if (
+								task.userId === args.where.userId &&
+								matchesStaleArchivePredicate(task, cutoff)
+							) {
+								task.status = args.data.status;
+								task.archivedAt = args.data.archivedAt;
+								count += 1;
+							}
+						}
+						return Promise.resolve({ count });
+					},
+				),
+				deleteMany: vi.fn(
+					(args: {
+						where: {
+							userId: string;
+							id: { in: number[] };
+							status: string;
+						};
+					}) => {
+						const ids = new Set(args.where.id.in);
+						const before = allTasks.length;
+						allTasks = allTasks.filter(
+							(task) =>
+								!(
+									task.userId === args.where.userId &&
+									ids.has(task.id) &&
+									task.status === args.where.status
+								),
+						);
+						return Promise.resolve({ count: before - allTasks.length });
+					},
+				),
 				delete: vi.fn(() => Promise.resolve({ id: 1 })),
 			},
 			taskDayCompletion: {
@@ -114,6 +262,20 @@ const { db } = await import("~/server/db/index");
 
 const createCaller = createCallerFactory(taskRouter);
 const USER_ID = "task-query-user";
+
+function makeTaskRow(
+	overrides: Partial<TaskRow> & Pick<TaskRow, "id" | "title" | "status">,
+): TaskRow {
+	return {
+		userId: USER_ID,
+		sortOrder: overrides.id,
+		createdAt: new Date("2026-06-01T00:00:00.000Z"),
+		updatedAt: null,
+		archivedAt: null,
+		isDailyStanding: false,
+		...overrides,
+	};
+}
 
 function taskCaller(userId: string = USER_ID) {
 	return createCaller({
@@ -188,24 +350,17 @@ describe("task query edge branches", () => {
 
 	it("list with localDateKey marks standing tasks done for that date", async () => {
 		allTasks = [
-			{
+			makeTaskRow({
 				id: 1,
 				title: "Standing",
 				status: "active",
-				userId: USER_ID,
-				sortOrder: 0,
-				createdAt: new Date(),
 				isDailyStanding: true,
-			},
-			{
+			}),
+			makeTaskRow({
 				id: 2,
 				title: "Regular",
 				status: "active",
-				userId: USER_ID,
-				sortOrder: 1,
-				createdAt: new Date(),
-				isDailyStanding: false,
-			},
+			}),
 		];
 		taskDayCompletions = [
 			{ userId: USER_ID, taskId: 1, localDateKey: "2026-06-19" },
@@ -224,24 +379,8 @@ describe("task query edge branches", () => {
 
 	it("reorder rejects when orderedIds do not match active owned set size", async () => {
 		allTasks = [
-			{
-				id: 1,
-				title: "One",
-				status: "active",
-				userId: USER_ID,
-				sortOrder: 0,
-				createdAt: new Date(),
-				isDailyStanding: false,
-			},
-			{
-				id: 2,
-				title: "Two",
-				status: "active",
-				userId: USER_ID,
-				sortOrder: 1,
-				createdAt: new Date(),
-				isDailyStanding: false,
-			},
+			makeTaskRow({ id: 1, title: "One", status: "active" }),
+			makeTaskRow({ id: 2, title: "Two", status: "active" }),
 		];
 
 		await expect(
@@ -253,5 +392,135 @@ describe("task query edge branches", () => {
 				where: { userId: USER_ID, status: "active" },
 			}),
 		);
+	});
+});
+
+describe("stale task archive sweep", () => {
+	const now = new Date();
+	const cutoff = getStaleArchiveCutoff(now);
+
+	beforeEach(() => {
+		allTasks = [];
+		taskDayCompletions = [];
+		vi.clearAllMocks();
+		vi.useRealTimers();
+	});
+
+	it("archives stale active non-standing tasks on list using updatedAt ?? createdAt", async () => {
+		// Freeze the clock so the cutoff recomputed inside list() matches the
+		// captured `cutoff`; otherwise a slow CI run can reclassify the "Fresh"
+		// task as stale. Only fake Date so the immediate-setTimeout shim still runs.
+		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.setSystemTime(now);
+
+		allTasks = [
+			makeTaskRow({
+				id: 1,
+				title: "Stale",
+				status: "active",
+				updatedAt: new Date(cutoff),
+			}),
+			makeTaskRow({
+				id: 2,
+				title: "Fresh",
+				status: "active",
+				updatedAt: new Date(cutoff.getTime() + 60_000),
+			}),
+			makeTaskRow({
+				id: 3,
+				title: "Standing stale",
+				status: "active",
+				isDailyStanding: true,
+				updatedAt: new Date("2020-01-01"),
+			}),
+			makeTaskRow({
+				id: 4,
+				title: "Completed stale",
+				status: "completed",
+				updatedAt: new Date("2020-01-01"),
+			}),
+			makeTaskRow({
+				id: 5,
+				title: "Already archived",
+				status: "archived",
+				archivedAt: new Date("2026-06-20"),
+				updatedAt: new Date("2020-01-01"),
+			}),
+		];
+
+		await taskCaller().list();
+
+		expect(allTasks.find((t) => t.id === 1)?.status).toBe("archived");
+		expect(allTasks.find((t) => t.id === 1)?.archivedAt).toBeInstanceOf(Date);
+		expect(allTasks.find((t) => t.id === 2)?.status).toBe("active");
+		expect(allTasks.find((t) => t.id === 3)?.status).toBe("active");
+		expect(allTasks.find((t) => t.id === 4)?.status).toBe("completed");
+		expect(allTasks.find((t) => t.id === 5)?.archivedAt).toEqual(
+			new Date("2026-06-20"),
+		);
+
+		vi.useRealTimers();
+	});
+
+	it("archiveList returns archived tasks sorted by archivedAt desc then createdAt desc", async () => {
+		allTasks = [
+			makeTaskRow({
+				id: 1,
+				title: "Older archive",
+				status: "archived",
+				archivedAt: new Date("2026-06-10T12:00:00.000Z"),
+				createdAt: new Date("2026-01-01"),
+			}),
+			makeTaskRow({
+				id: 2,
+				title: "Newer archive",
+				status: "archived",
+				archivedAt: new Date("2026-06-20T12:00:00.000Z"),
+				createdAt: new Date("2026-01-02"),
+			}),
+		];
+
+		const archived = await taskCaller().archiveList();
+
+		expect(archived.map((task) => task.id)).toEqual([2, 1]);
+	});
+
+	it("restore moves archived task to active tail and clears archivedAt", async () => {
+		allTasks = [
+			makeTaskRow({ id: 1, title: "Active", status: "active", sortOrder: 0 }),
+			makeTaskRow({
+				id: 2,
+				title: "Archived",
+				status: "archived",
+				sortOrder: 4,
+				archivedAt: new Date("2026-06-20"),
+			}),
+		];
+
+		const restored = await taskCaller().restore({ id: 2 });
+
+		expect(restored).toMatchObject({
+			id: 2,
+			status: "active",
+			archivedAt: null,
+			sortOrder: 1,
+		});
+	});
+
+	it("deleteArchived removes only archived owned ids and rejects mixed sets", async () => {
+		allTasks = [
+			makeTaskRow({ id: 1, title: "Archived A", status: "archived" }),
+			makeTaskRow({ id: 2, title: "Archived B", status: "archived" }),
+			makeTaskRow({ id: 3, title: "Active", status: "active" }),
+		];
+
+		const result = await taskCaller().deleteArchived({ ids: [1, 2] });
+
+		expect(result).toEqual({ deletedCount: 2 });
+		expect(allTasks.map((task) => task.id)).toEqual([3]);
+
+		await expect(
+			taskCaller().deleteArchived({ ids: [3] }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
 	});
 });

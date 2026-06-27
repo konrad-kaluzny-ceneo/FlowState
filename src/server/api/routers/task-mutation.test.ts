@@ -1,6 +1,7 @@
 import { test as fcTest } from "@fast-check/vitest";
 import fc from "fast-check";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { matchesStaleArchivePredicate } from "~/lib/task/stale-task-archive";
 
 /**
  * Feature: neon-auth, Property 11: Task mutation ownership with NOT_FOUND on failure
@@ -23,6 +24,7 @@ type TaskRow = {
 	isDailyStanding: boolean;
 	createdAt: Date;
 	updatedAt: Date | null;
+	archivedAt: Date | null;
 };
 
 type TaskDayCompletionRow = {
@@ -47,11 +49,11 @@ function filterTasks(args: {
 	where?: {
 		userId?: string;
 		status?: string;
-		id?: number;
+		id?: number | { in?: number[] };
 	};
-	select?: { id?: true };
+	select?: { id?: true; status?: true };
 	orderBy?: Array<{ sortOrder?: "asc" | "desc"; createdAt?: "asc" | "desc" }>;
-}): TaskRow[] | Array<{ id: number }> {
+}): TaskRow[] | Array<{ id: number; status?: string }> {
 	let rows = [...allTasks];
 
 	if (args.where?.userId != null) {
@@ -61,7 +63,12 @@ function filterTasks(args: {
 		rows = rows.filter((t) => t.status === args.where?.status);
 	}
 	if (args.where?.id != null) {
-		rows = rows.filter((t) => t.id === args.where?.id);
+		if (typeof args.where.id === "number") {
+			rows = rows.filter((t) => t.id === args.where?.id);
+		} else if (args.where.id.in != null) {
+			const allowed = new Set(args.where.id.in);
+			rows = rows.filter((t) => allowed.has(t.id));
+		}
 	}
 
 	if (args.orderBy) {
@@ -80,7 +87,10 @@ function filterTasks(args: {
 	}
 
 	if (args.select?.id) {
-		return rows.map((t) => ({ id: t.id }));
+		return rows.map((t) => ({
+			id: t.id,
+			...(args.select?.status ? { status: t.status } : {}),
+		}));
 	}
 
 	return rows;
@@ -134,16 +144,23 @@ vi.mock("~/server/db/index", () => {
 						isDailyStanding: Boolean(args.data.isDailyStanding ?? false),
 						createdAt: new Date(),
 						updatedAt: null,
+						archivedAt: null,
 					};
 					allTasks.push(row);
 					return Promise.resolve(row);
 				}),
 				findFirst: vi.fn(
-					(args: { where?: { id?: number; userId?: string } }) => {
+					(args: {
+						where?: { id?: number; userId?: string; status?: string };
+					}) => {
 						return Promise.resolve(
 							allTasks.find(
 								(t) =>
-									t.id === args?.where?.id && t.userId === args?.where?.userId,
+									(args?.where?.id == null || t.id === args.where.id) &&
+									(args?.where?.userId == null ||
+										t.userId === args.where.userId) &&
+									(args?.where?.status == null ||
+										t.status === args.where.status),
 							) ?? null,
 						);
 					},
@@ -158,6 +175,7 @@ vi.mock("~/server/db/index", () => {
 								| "status"
 								| "sortOrder"
 								| "updatedAt"
+								| "archivedAt"
 								| "weight"
 								| "urgency"
 								| "importance"
@@ -184,6 +202,58 @@ vi.mock("~/server/db/index", () => {
 					}
 					return Promise.resolve({ id: args.where.id });
 				}),
+				updateMany: vi.fn(
+					(args: {
+						where: {
+							userId: string;
+							OR: Array<{
+								updatedAt?: { lte: Date };
+								createdAt?: { lte: Date };
+							}>;
+						};
+						data: { status: string; archivedAt: Date };
+					}) => {
+						const cutoff =
+							args.where.OR[0]?.updatedAt?.lte ??
+							args.where.OR[1]?.createdAt?.lte;
+						if (cutoff == null) {
+							return Promise.resolve({ count: 0 });
+						}
+						let count = 0;
+						for (const task of allTasks) {
+							if (
+								task.userId === args.where.userId &&
+								matchesStaleArchivePredicate(task, cutoff)
+							) {
+								task.status = args.data.status;
+								task.archivedAt = args.data.archivedAt;
+								count += 1;
+							}
+						}
+						return Promise.resolve({ count });
+					},
+				),
+				deleteMany: vi.fn(
+					(args: {
+						where: {
+							userId: string;
+							id: { in: number[] };
+							status: string;
+						};
+					}) => {
+						const ids = new Set(args.where.id.in);
+						const before = allTasks.length;
+						allTasks = allTasks.filter(
+							(task) =>
+								!(
+									task.userId === args.where.userId &&
+									ids.has(task.id) &&
+									task.status === args.where.status
+								),
+						);
+						return Promise.resolve({ count: before - allTasks.length });
+					},
+				),
 			},
 			taskDayCompletion: {
 				findMany: vi.fn(
@@ -275,6 +345,7 @@ function makeTask(
 		isDailyStanding: false,
 		createdAt: new Date(),
 		updatedAt: null,
+		archivedAt: null,
 		...partial,
 	};
 }
@@ -786,5 +857,96 @@ describe("daily standing task flag", () => {
 				localDateKey: "2026-06-19",
 			}),
 		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+});
+
+describe("archive restore and bulk delete", () => {
+	beforeEach(() => {
+		allTasks = [];
+		taskDayCompletions = [];
+		nextTaskId = 1;
+		vi.clearAllMocks();
+	});
+
+	it("restore appends archived task to active sort order and clears archivedAt", async () => {
+		allTasks = [
+			makeTask({ id: 1, title: "Active", userId: USER_A, sortOrder: 0 }),
+			makeTask({
+				id: 2,
+				title: "Archived",
+				userId: USER_A,
+				status: "archived",
+				sortOrder: 9,
+				archivedAt: new Date("2026-06-20"),
+			}),
+		];
+
+		const restored = await taskCaller(USER_A).restore({ id: 2 });
+
+		expect(restored).toMatchObject({
+			id: 2,
+			status: "active",
+			archivedAt: null,
+			sortOrder: 1,
+		});
+	});
+
+	it("restore returns NOT_FOUND for non-archived task", async () => {
+		allTasks = [
+			makeTask({ id: 1, title: "Active", userId: USER_A, status: "active" }),
+		];
+
+		await expect(taskCaller(USER_A).restore({ id: 1 })).rejects.toMatchObject({
+			code: "NOT_FOUND",
+		});
+	});
+
+	it("deleteArchived rejects mixed active and archived ids", async () => {
+		allTasks = [
+			makeTask({
+				id: 1,
+				title: "Archived",
+				userId: USER_A,
+				status: "archived",
+			}),
+			makeTask({ id: 2, title: "Active", userId: USER_A, status: "active" }),
+			makeTask({
+				id: 3,
+				title: "Completed",
+				userId: USER_A,
+				status: "completed",
+			}),
+		];
+
+		await expect(
+			taskCaller(USER_A).deleteArchived({ ids: [1, 2] }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+		expect(allTasks).toHaveLength(3);
+
+		await expect(
+			taskCaller(USER_A).deleteArchived({ ids: [1, 99] }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+
+	it("deleteArchived deletes only archived user rows", async () => {
+		allTasks = [
+			makeTask({
+				id: 1,
+				title: "Archived",
+				userId: USER_A,
+				status: "archived",
+			}),
+			makeTask({
+				id: 2,
+				title: "Also archived",
+				userId: USER_A,
+				status: "archived",
+			}),
+		];
+
+		const result = await taskCaller(USER_A).deleteArchived({ ids: [1, 2] });
+
+		expect(result).toEqual({ deletedCount: 2 });
+		expect(allTasks).toHaveLength(0);
 	});
 });

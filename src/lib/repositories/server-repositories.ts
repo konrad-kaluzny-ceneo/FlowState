@@ -73,6 +73,11 @@ type TrpcClient = {
 		update: { mutate: (input: UpdateTaskInput) => Promise<void> };
 		delete: { mutate: (input: { id: number }) => Promise<void> };
 		reorder: { mutate: (input: { orderedIds: number[] }) => Promise<void> };
+		archiveList: { fetch: () => Promise<DomainTask[]> };
+		restore: { mutate: (input: { id: number }) => Promise<DomainTask> };
+		deleteArchived: {
+			mutate: (input: { ids: number[] }) => Promise<{ deletedCount: number }>;
+		};
 	};
 	cycle: {
 		getActive: { fetch: () => Promise<DomainActiveCycle | null> };
@@ -147,6 +152,18 @@ export function createServerTaskRepository(client: TrpcClient): TaskRepository {
 				"markDoneForToday is not supported via server repository",
 			);
 		},
+		listArchived: async () =>
+			(await client.task.archiveList.fetch()).map((task) =>
+				normalizeDomainTask(task),
+			),
+		restore: async (input) =>
+			normalizeDomainTask(
+				await client.task.restore.mutate({ id: toNumericId(input.id) }),
+			),
+		deleteArchived: async (input) =>
+			client.task.deleteArchived.mutate({
+				ids: input.ids.map(toNumericId),
+			}),
 	};
 }
 

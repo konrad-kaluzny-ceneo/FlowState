@@ -8,6 +8,10 @@ import {
 } from "~/lib/guest/schema";
 import { mutateSnapshot, saveSnapshot } from "~/lib/guest/store";
 import { createGuestRepositories } from "~/lib/repositories/guest-repositories";
+import {
+	getStaleArchiveCutoff,
+	STALE_TASK_ARCHIVE_DAYS,
+} from "~/lib/task/stale-task-archive";
 
 describe("guest repositories", () => {
 	beforeEach(() => {
@@ -328,5 +332,206 @@ describe("guest repositories", () => {
 
 		expect(active?.task).toBeNull();
 		expect(active?.taskId).not.toBeNull();
+	});
+
+	it("archives stale active non-standing tasks on list using updatedAt ?? createdAt", async () => {
+		const cutoff = getStaleArchiveCutoff(new Date());
+		const staleAt = new Date(cutoff);
+		const freshAt = new Date(cutoff.getTime() + 60_000);
+		saveSnapshot({
+			...createEmptyGuestSnapshot(),
+			tasks: [
+				{
+					id: crypto.randomUUID(),
+					title: "Stale",
+					status: "active",
+					workType: "OPERATIONAL",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					sortOrder: 0,
+					resumeNote: null,
+					createdAt: staleAt,
+					updatedAt: staleAt,
+				},
+				{
+					id: crypto.randomUUID(),
+					title: "Fresh",
+					status: "active",
+					workType: "OPERATIONAL",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					sortOrder: 1,
+					resumeNote: null,
+					createdAt: freshAt,
+					updatedAt: freshAt,
+				},
+				{
+					id: crypto.randomUUID(),
+					title: "Standing stale",
+					status: "active",
+					workType: "OPERATIONAL",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					isDailyStanding: true,
+					sortOrder: 2,
+					resumeNote: null,
+					createdAt: new Date("2020-01-01"),
+					updatedAt: new Date("2020-01-01"),
+				},
+			],
+		});
+
+		const { tasks } = createGuestRepositories();
+		const list = await tasks.list();
+
+		expect(list.find((task) => task.title === "Stale")?.status).toBe(
+			"archived",
+		);
+		expect(
+			list.find((task) => task.title === "Stale")?.archivedAt,
+		).toBeInstanceOf(Date);
+		expect(list.find((task) => task.title === "Fresh")?.status).toBe("active");
+		expect(list.find((task) => task.title === "Standing stale")?.status).toBe(
+			"active",
+		);
+	});
+
+	it("restores archived task to active tail sort order", async () => {
+		const archivedId = crypto.randomUUID();
+		saveSnapshot({
+			...createEmptyGuestSnapshot(),
+			tasks: [
+				{
+					id: crypto.randomUUID(),
+					title: "Active",
+					status: "active",
+					workType: "OPERATIONAL",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					sortOrder: 0,
+					resumeNote: null,
+					createdAt: new Date(),
+					updatedAt: null,
+				},
+				{
+					id: archivedId,
+					title: "Archived",
+					status: "archived",
+					workType: "OPERATIONAL",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					sortOrder: 4,
+					resumeNote: null,
+					archivedAt: new Date("2026-06-20"),
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				},
+			],
+		});
+
+		const { tasks } = createGuestRepositories();
+		const restored = await tasks.restore({ id: archivedId });
+
+		expect(restored).toMatchObject({
+			id: archivedId,
+			status: "active",
+			archivedAt: null,
+			sortOrder: 1,
+		});
+
+		const activeTitles = (await tasks.list())
+			.filter((task) => task.status === "active")
+			.map((task) => task.title);
+		expect(activeTitles).toEqual(["Active", "Archived"]);
+	});
+
+	it("restored stale-archived task stays active after list sweep", async () => {
+		const staleAt = new Date();
+		staleAt.setDate(staleAt.getDate() - (STALE_TASK_ARCHIVE_DAYS + 1));
+		const archivedId = crypto.randomUUID();
+		saveSnapshot({
+			...createEmptyGuestSnapshot(),
+			tasks: [
+				{
+					id: archivedId,
+					title: "Stale archived",
+					status: "archived",
+					workType: "OPERATIONAL",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					sortOrder: 0,
+					resumeNote: null,
+					archivedAt: staleAt,
+					createdAt: staleAt,
+					updatedAt: staleAt,
+				},
+			],
+		});
+
+		const { tasks } = createGuestRepositories();
+		await tasks.restore({ id: archivedId });
+
+		const list = await tasks.list();
+		expect(list.find((task) => task.id === archivedId)?.status).toBe("active");
+	});
+
+	it("deleteArchived removes only archived tasks and rejects mixed sets", async () => {
+		const archivedA = crypto.randomUUID();
+		const archivedB = crypto.randomUUID();
+		const activeId = crypto.randomUUID();
+		saveSnapshot({
+			...createEmptyGuestSnapshot(),
+			tasks: [
+				{
+					id: archivedA,
+					title: "Archived A",
+					status: "archived",
+					workType: "OPERATIONAL",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					sortOrder: 0,
+					resumeNote: null,
+					archivedAt: new Date("2026-06-10"),
+					createdAt: new Date("2026-01-01"),
+					updatedAt: null,
+				},
+				{
+					id: archivedB,
+					title: "Archived B",
+					status: "archived",
+					workType: "OPERATIONAL",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					sortOrder: 1,
+					resumeNote: null,
+					archivedAt: new Date("2026-06-11"),
+					createdAt: new Date("2026-01-02"),
+					updatedAt: null,
+				},
+				{
+					id: activeId,
+					title: "Active",
+					status: "active",
+					workType: "OPERATIONAL",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					sortOrder: 2,
+					resumeNote: null,
+					createdAt: new Date(),
+					updatedAt: null,
+				},
+			],
+		});
+
+		const { tasks } = createGuestRepositories();
+		const result = await tasks.deleteArchived({ ids: [archivedA, archivedB] });
+
+		expect(result).toEqual({ deletedCount: 2 });
+		const remaining = await tasks.list();
+		expect(remaining.map((task) => task.id)).toEqual([activeId]);
+
+		await expect(tasks.deleteArchived({ ids: [activeId] })).rejects.toThrow(
+			"Only archived tasks can be deleted",
+		);
 	});
 });

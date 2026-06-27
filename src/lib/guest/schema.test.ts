@@ -103,6 +103,32 @@ describe("guest schema", () => {
 		expect(parsed.tasks[0]?.importance).toBe(2);
 		expect(parsed.tasks[0]?.effortMinutes).toBeNull();
 		expect(parsed.tasks[0]?.commitmentHorizon).toBe("WHEN_POSSIBLE");
+		expect(parsed.tasks[0]?.archivedAt).toBeNull();
+	});
+
+	it("accepts archived tasks with archivedAt", () => {
+		const archivedAt = new Date("2026-06-20T12:00:00.000Z");
+		const raw = JSON.stringify({
+			version: 1,
+			tasks: [
+				{
+					id: "550e8400-e29b-41d4-a716-446655440002",
+					title: "Quiet task",
+					status: "archived",
+					workType: "OPERATIONAL",
+					weight: 2,
+					createdAt: "2026-05-20T10:00:00.000Z",
+					updatedAt: "2026-05-20T10:00:00.000Z",
+					archivedAt: archivedAt.toISOString(),
+				},
+			],
+			sessions: [],
+			cycles: [],
+		});
+
+		const parsed = parseGuestSnapshot(raw);
+		expect(parsed.tasks[0]?.status).toBe("archived");
+		expect(parsed.tasks[0]?.archivedAt).toEqual(archivedAt);
 	});
 
 	it("returns empty snapshot for corrupt JSON", () => {

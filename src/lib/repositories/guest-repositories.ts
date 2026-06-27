@@ -10,6 +10,10 @@ import {
 	markGuestTaskDoneForToday,
 } from "~/lib/guest/day-completions";
 import { loadSnapshot, mutateSnapshot } from "~/lib/guest/store";
+import {
+	getStaleArchiveCutoff,
+	matchesStaleArchivePredicate,
+} from "~/lib/task/stale-task-archive";
 
 const GUEST_USER_ID = "guest";
 
@@ -32,6 +36,7 @@ function toDomainTask(
 		resumeNote: string | null;
 		personaPresetId: string | null;
 		isDailyStanding?: boolean;
+		archivedAt?: Date | null;
 		createdAt: Date;
 		updatedAt: Date | null;
 	},
@@ -40,10 +45,11 @@ function toDomainTask(
 	return {
 		id: task.id,
 		title: task.title,
-		status: task.status,
+		status: task.status as DomainTask["status"],
 		userId: GUEST_USER_ID,
 		createdAt: task.createdAt,
 		updatedAt: task.updatedAt,
+		archivedAt: task.archivedAt ?? null,
 		workType: task.workType,
 		weight: task.weight as 1 | 2 | 3,
 		importance: task.importance,
@@ -105,9 +111,63 @@ function sortTasksByOrder<T extends { sortOrder: number; createdAt: Date }>(
 	});
 }
 
+function sortArchivedTasks<
+	T extends {
+		archivedAt?: Date | null;
+		createdAt: Date;
+	},
+>(tasks: T[]): T[] {
+	return [...tasks].sort((a, b) => {
+		const archivedDiff =
+			(b.archivedAt?.getTime() ?? 0) - (a.archivedAt?.getTime() ?? 0);
+		if (archivedDiff !== 0) {
+			return archivedDiff;
+		}
+		return b.createdAt.getTime() - a.createdAt.getTime();
+	});
+}
+
+function nextGuestActiveSortOrder(
+	tasks: Array<{ status: string; sortOrder: number }>,
+): number {
+	return (
+		tasks
+			.filter((task) => task.status === "active")
+			.reduce((max, task) => Math.max(max, task.sortOrder), -1) + 1
+	);
+}
+
+function archiveStaleGuestTasks(now: Date = new Date()): void {
+	const cutoff = getStaleArchiveCutoff(now);
+	mutateSnapshot((snapshot) => ({
+		...snapshot,
+		tasks: snapshot.tasks.map((task) => {
+			if (
+				!matchesStaleArchivePredicate(
+					{
+						status: task.status,
+						isDailyStanding: task.isDailyStanding ?? false,
+						updatedAt: task.updatedAt,
+						createdAt: task.createdAt,
+					},
+					cutoff,
+				)
+			) {
+				return task;
+			}
+			return {
+				...task,
+				status: "archived" as const,
+				archivedAt: now,
+			};
+		}),
+	}));
+}
+
 export function createGuestTaskRepository(): TaskRepository {
 	return {
 		async list() {
+			archiveStaleGuestTasks();
 			const doneTodayIds = getGuestDoneForTodayTaskIds();
 			return sortTasksByOrder(loadSnapshot().tasks).map((task) =>
 				toDomainTask(task, doneTodayIds.has(task.id)),
@@ -143,6 +203,7 @@ export function createGuestTaskRepository(): TaskRepository {
 				resumeNote: input.resumeNote ?? null,
 				personaPresetId: input.personaPresetId ?? null,
 				isDailyStanding: input.isDailyStanding ?? false,
+				archivedAt: null,
 				createdAt: now,
 				updatedAt: null,
 			};
@@ -165,6 +226,12 @@ export function createGuestTaskRepository(): TaskRepository {
 				tasks: snapshot.tasks.map((task) => {
 					if (task.id !== input.id) {
 						return task;
+					}
+
+					if (task.status === "archived") {
+						throw new Error(
+							"Cannot update an archived task; use restore or deleteArchived",
+						);
 					}
 
 					const wasCompleted = task.status === "completed";
@@ -294,6 +361,79 @@ export function createGuestTaskRepository(): TaskRepository {
 				throw new Error("Task is not marked as daily standing");
 			}
 			markGuestTaskDoneForToday(String(input.id));
+		},
+
+		async listArchived() {
+			archiveStaleGuestTasks();
+			const doneTodayIds = getGuestDoneForTodayTaskIds();
+			const archived = loadSnapshot().tasks.filter(
+				(task) => task.status === "archived",
+			);
+			return sortArchivedTasks(archived).map((task) =>
+				toDomainTask(task, doneTodayIds.has(task.id)),
+			);
+		},
+
+		async restore(input) {
+			const taskId = String(input.id);
+			const { error } = mutateSnapshot((snapshot) => {
+				const task = snapshot.tasks.find((row) => row.id === taskId);
+				if (task == null || task.status !== "archived") {
+					throw new Error("Task not found");
+				}
+
+				const sortOrder = nextGuestActiveSortOrder(snapshot.tasks);
+				const now = new Date();
+				return {
+					...snapshot,
+					tasks: snapshot.tasks.map((row) =>
+						row.id === taskId
+							? {
+									...row,
+									status: "active" as const,
+									archivedAt: null,
+									sortOrder,
+									updatedAt: now,
+								}
+							: row,
+					),
+				};
+			});
+
+			if (error != null) {
+				throw new Error(error);
+			}
+
+			const restored = loadSnapshot().tasks.find((row) => row.id === taskId);
+			if (restored == null) {
+				throw new Error("Task not found");
+			}
+
+			return toDomainTask(restored);
+		},
+
+		async deleteArchived(input) {
+			const ids = new Set(input.ids.map(String));
+			const { error } = mutateSnapshot((snapshot) => {
+				const rows = snapshot.tasks.filter((task) => ids.has(task.id));
+				if (rows.length !== ids.size) {
+					throw new Error("Task not found");
+				}
+				if (rows.some((row) => row.status !== "archived")) {
+					throw new Error("Only archived tasks can be deleted");
+				}
+
+				return {
+					...snapshot,
+					tasks: snapshot.tasks.filter((task) => !ids.has(task.id)),
+				};
+			});
+
+			if (error != null) {
+				throw new Error(error);
+			}
+
+			return { deletedCount: ids.size };
 		},
 	};
 }
