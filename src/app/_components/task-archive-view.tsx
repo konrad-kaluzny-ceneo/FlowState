@@ -85,14 +85,21 @@ export function TaskArchiveView({
 
 	const handleRestore = useCallback(
 		async (id: DomainTaskId) => {
-			await restoreTask({ id });
-			setSelectedIds((current) => {
-				const next = new Set(current);
-				next.delete(taskKey(id));
-				return next;
-			});
-			await refresh();
-			await onTasksChanged?.();
+			// Failures surface through useTaskMutations() error state; catch here so
+			// the void'd promise from the click handler cannot become an unhandled
+			// rejection.
+			try {
+				await restoreTask({ id });
+				setSelectedIds((current) => {
+					const next = new Set(current);
+					next.delete(taskKey(id));
+					return next;
+				});
+				await refresh();
+				await onTasksChanged?.();
+			} catch {
+				// Intentionally swallowed: error already reflected in hook state.
+			}
 		},
 		[onTasksChanged, refresh, restoreTask],
 	);
@@ -106,11 +113,17 @@ export function TaskArchiveView({
 			return;
 		}
 
-		await deleteArchivedTasks({ ids });
-		setSelectedIds(new Set());
-		setDeleteConfirmOpen(false);
-		await refresh();
-		await onTasksChanged?.();
+		// Failures surface through useTaskMutations() error state; catch here so the
+		// void'd promise from the click handler cannot become an unhandled rejection.
+		try {
+			await deleteArchivedTasks({ ids });
+			setSelectedIds(new Set());
+			setDeleteConfirmOpen(false);
+			await refresh();
+			await onTasksChanged?.();
+		} catch {
+			// Keep the confirm dialog open so the user can retry; error is shown.
+		}
 	}, [deleteArchivedTasks, onTasksChanged, refresh, selectedIds, tasks]);
 
 	return (

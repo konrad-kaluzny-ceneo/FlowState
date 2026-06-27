@@ -32,12 +32,24 @@ export function useArchiveTasks(options?: { enabled?: boolean }): {
 
 		let cancelled = false;
 		setGuestLoading(true);
-		void taskRepo.listArchived().then((tasks) => {
-			if (!cancelled) {
-				setGuestTasks(tasks);
-				setGuestLoading(false);
-			}
-		});
+		taskRepo
+			.listArchived()
+			.then((tasks) => {
+				if (!cancelled) {
+					setGuestTasks(tasks);
+				}
+			})
+			.catch(() => {
+				// Calm fallback: show an empty archive rather than a hard error.
+				if (!cancelled) {
+					setGuestTasks([]);
+				}
+			})
+			.finally(() => {
+				if (!cancelled) {
+					setGuestLoading(false);
+				}
+			});
 
 		return () => {
 			cancelled = true;
@@ -46,8 +58,12 @@ export function useArchiveTasks(options?: { enabled?: boolean }): {
 
 	const refresh = useCallback(async () => {
 		if (mode === "guest") {
-			const tasks = await taskRepo.listArchived();
-			setGuestTasks(tasks);
+			try {
+				const tasks = await taskRepo.listArchived();
+				setGuestTasks(tasks);
+			} catch {
+				// Preserve the currently shown list on a failed manual refresh.
+			}
 			return;
 		}
 		await utils.task.archiveList.invalidate();

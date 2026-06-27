@@ -160,6 +160,14 @@ export const taskRouter = createTRPCRouter({
 				throw new TRPCError({ code: "NOT_FOUND" });
 			}
 
+			if (existing.status === "archived") {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message:
+						"Archived tasks must be restored before updating; use restore or deleteArchived",
+				});
+			}
+
 			let updateData: typeof data & { sortOrder?: number; urgency?: number } =
 				data;
 

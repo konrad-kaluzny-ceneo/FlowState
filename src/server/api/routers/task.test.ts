@@ -129,7 +129,8 @@ vi.mock("~/server/db/index", () => {
 				),
 				create: vi.fn((args: { data: Record<string, unknown> }) => {
 					capturedData = args.data;
-					return Promise.resolve({ id: 1, ...args.data });
+					// Mirror the schema default so the returned row has a valid status.
+					return Promise.resolve({ status: "active", id: 1, ...args.data });
 				}),
 				findFirst: vi.fn(
 					(args?: {
@@ -402,9 +403,16 @@ describe("stale task archive sweep", () => {
 		allTasks = [];
 		taskDayCompletions = [];
 		vi.clearAllMocks();
+		vi.useRealTimers();
 	});
 
 	it("archives stale active non-standing tasks on list using updatedAt ?? createdAt", async () => {
+		// Freeze the clock so the cutoff recomputed inside list() matches the
+		// captured `cutoff`; otherwise a slow CI run can reclassify the "Fresh"
+		// task as stale. Only fake Date so the immediate-setTimeout shim still runs.
+		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.setSystemTime(now);
+
 		allTasks = [
 			makeTaskRow({
 				id: 1,
@@ -450,6 +458,8 @@ describe("stale task archive sweep", () => {
 		expect(allTasks.find((t) => t.id === 5)?.archivedAt).toEqual(
 			new Date("2026-06-20"),
 		);
+
+		vi.useRealTimers();
 	});
 
 	it("archiveList returns archived tasks sorted by archivedAt desc then createdAt desc", async () => {

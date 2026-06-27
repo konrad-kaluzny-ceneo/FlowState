@@ -228,6 +228,12 @@ export function createGuestTaskRepository(): TaskRepository {
 						return task;
 					}
 
+					if (task.status === "archived") {
+						throw new Error(
+							"Cannot update an archived task; use restore or deleteArchived",
+						);
+					}
+
 					const wasCompleted = task.status === "completed";
 					const becomingActive = input.status === "active";
 					let sortOrder = task.sortOrder;
