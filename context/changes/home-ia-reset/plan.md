@@ -370,10 +370,10 @@ No database, API, auth, or persisted data migration is required. Recap dismissal
 
 #### Automated
 
-- [x] 1.1 Add typed pure home IA derivation module
-- [x] 1.2 Add exhaustive home IA unit tests
-- [x] 1.3 Run targeted home IA unit test
-- [x] 1.4 Run `pnpm check` for pure module phase
+- [x] 1.1 Add typed pure home IA derivation module — e0f5c99
+- [x] 1.2 Add exhaustive home IA unit tests — e0f5c99
+- [x] 1.3 Run targeted home IA unit test — e0f5c99
+- [x] 1.4 Run `pnpm check` for pure module phase — e0f5c99
 
 #### Manual
 
