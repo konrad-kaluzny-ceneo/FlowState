@@ -540,10 +540,10 @@ Close the slice by making the voice contract operational for future work, updati
 
 #### Automated
 
-- [x] 1.1 `pnpm check` passes.
-- [x] 1.2 `pnpm typecheck` passes.
-- [x] 1.3 Locale resource files for `en` and `pl` have matching key structure.
-- [x] 1.4 Prisma migration is generated through `pnpm prisma migrate dev` if schema changes are implemented in this phase.
+- [x] 1.1 `pnpm check` passes. — 6259626
+- [x] 1.2 `pnpm typecheck` passes. — 6259626
+- [x] 1.3 Locale resource files for `en` and `pl` have matching key structure. — 6259626
+- [x] 1.4 Prisma migration is generated through `pnpm prisma migrate dev` if schema changes are implemented in this phase. — 6259626
 
 #### Manual
 
