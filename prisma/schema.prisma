@@ -79,6 +79,7 @@ model Task {
   resumeNote        String?           @map("resume_note") @db.VarChar(120)
   personaPresetId   String?           @map("persona_preset_id") @db.VarChar(32)
   isDailyStanding   Boolean           @default(false) @map("is_daily_standing")
+  archivedAt        DateTime?         @map("archived_at") @db.Timestamptz
   createdAt         DateTime          @default(now()) @map("createdAt") @db.Timestamptz
   updatedAt         DateTime?         @updatedAt @map("updatedAt") @db.Timestamptz
 
@@ -94,6 +95,7 @@ model Task {
   @@index([userId], name: "task_user_id_idx")
   @@index([userId, sortOrder], name: "task_user_sort_order_idx")
   @@index([userId, isDailyStanding], name: "task_user_daily_standing_idx")
+  @@index([userId, status, archivedAt], name: "task_user_status_archived_at_idx")
   @@index([workType], name: "task_work_type_idx")
   @@map("flow_state_task")
 }

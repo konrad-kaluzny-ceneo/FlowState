@@ -7,6 +7,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { TaskListData } from "~/hooks/use-task-mutations";
 import { defaultEisenhowerFields } from "~/lib/data-mode/types";
 
+type ArchiveListData = Array<
+	TaskListData[number] & { archivedAt: Date | null }
+>;
+
 type MutationLifecycle<
 	TInput = unknown,
 	TOutput = unknown,
@@ -34,8 +38,11 @@ type MutationLifecycle<
 };
 
 const cancelTaskList = vi.fn();
+const cancelArchiveList = vi.fn();
 let taskListCache: TaskListData | undefined;
+let archiveListCache: ArchiveListData | undefined;
 const getTaskListData = vi.fn(() => taskListCache);
+const getArchiveListData = vi.fn(() => archiveListCache);
 const setTaskListData = vi.fn(
 	(
 		_input: undefined,
@@ -44,19 +51,33 @@ const setTaskListData = vi.fn(
 		taskListCache = updater(taskListCache);
 	},
 );
+const setArchiveListData = vi.fn(
+	(
+		_input: undefined,
+		updater: (old: ArchiveListData | undefined) => ArchiveListData,
+	) => {
+		archiveListCache = updater(archiveListCache);
+	},
+);
 const invalidateTaskList = vi.fn();
+const invalidateArchiveList = vi.fn();
 const invalidateDailyRecap = vi.fn();
 
 const taskRepoCreate = vi.fn();
 const taskRepoUpdate = vi.fn();
 const taskRepoDelete = vi.fn();
 const taskRepoReorder = vi.fn();
+const taskRepoRestore = vi.fn();
+const taskRepoDeleteArchived = vi.fn();
+const refreshGuest = vi.fn();
 
 const createMutateAsync = vi.fn();
 const updateMutateAsync = vi.fn();
 const deleteMutateAsync = vi.fn();
 const reorderMutateAsync = vi.fn();
 const markDoneForTodayMutateAsync = vi.fn();
+const restoreMutateAsync = vi.fn();
+const deleteArchivedMutateAsync = vi.fn();
 
 const mutationLifecycles: {
 	create: MutationLifecycle;
@@ -64,12 +85,16 @@ const mutationLifecycles: {
 	delete: MutationLifecycle;
 	reorder: MutationLifecycle;
 	markDoneForToday: MutationLifecycle;
+	restore: MutationLifecycle;
+	deleteArchived: MutationLifecycle;
 } = {
 	create: {},
 	update: {},
 	delete: {},
 	reorder: {},
 	markDoneForToday: {},
+	restore: {},
+	deleteArchived: {},
 };
 
 let dataMode: "authenticated" | "guest" = "authenticated";
@@ -123,8 +148,11 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 			update: taskRepoUpdate,
 			delete: taskRepoDelete,
 			reorder: taskRepoReorder,
+			restore: taskRepoRestore,
+			deleteArchived: taskRepoDeleteArchived,
 			markDoneForToday: vi.fn(),
 		},
+		refreshGuest,
 	}),
 }));
 
@@ -137,6 +165,12 @@ vi.mock("~/trpc/react", () => ({
 					getData: getTaskListData,
 					setData: setTaskListData,
 					invalidate: invalidateTaskList,
+				},
+				archiveList: {
+					cancel: cancelArchiveList,
+					getData: getArchiveListData,
+					setData: setArchiveListData,
+					invalidate: invalidateArchiveList,
 				},
 			},
 			recap: {
@@ -191,6 +225,24 @@ vi.mock("~/trpc/react", () => ({
 					};
 				},
 			},
+			restore: {
+				useMutation: (opts: MutationLifecycle) => {
+					mutationLifecycles.restore = opts;
+					return {
+						mutateAsync: restoreMutateAsync,
+						isPending: false,
+					};
+				},
+			},
+			deleteArchived: {
+				useMutation: (opts: MutationLifecycle) => {
+					mutationLifecycles.deleteArchived = opts;
+					return {
+						mutateAsync: deleteArchivedMutateAsync,
+						isPending: false,
+					};
+				},
+			},
 		},
 	},
 }));
@@ -226,6 +278,7 @@ function makeTask(
 		resumeNote,
 		personaPresetId,
 		doneForToday: false,
+		archivedAt: null,
 		createdAt: new Date("2026-01-01T00:00:00Z"),
 		updatedAt: new Date("2026-01-01T00:00:00Z"),
 		...rest,
@@ -236,12 +289,16 @@ describe("useTaskMutations", () => {
 	beforeEach(() => {
 		dataMode = "authenticated";
 		taskListCache = [makeTask()];
+		archiveListCache = [];
 		vi.clearAllMocks();
 		mutationLifecycles.create = {};
 		mutationLifecycles.update = {};
 		mutationLifecycles.delete = {};
 		mutationLifecycles.reorder = {};
+		mutationLifecycles.restore = {};
+		mutationLifecycles.deleteArchived = {};
 		cancelTaskList.mockResolvedValue(undefined);
+		cancelArchiveList.mockResolvedValue(undefined);
 	});
 
 	it("optimistically appends on create and invalidates on settle", async () => {
@@ -559,5 +616,159 @@ describe("useTaskMutations", () => {
 
 		expect(updateMutateAsync).not.toHaveBeenCalled();
 		expect(deleteMutateAsync).not.toHaveBeenCalled();
+	});
+
+	it("optimistically restores archived task in task.list and archiveList before resolve", async () => {
+		taskListCache = [makeTask({ id: 1, title: "Active", sortOrder: 0 })];
+		archiveListCache = [
+			makeTask({
+				id: 2,
+				title: "Archived",
+				status: "archived",
+				sortOrder: 4,
+				archivedAt: new Date("2026-06-20"),
+			}),
+		];
+
+		const { result } = renderHook(() => useTaskMutations(), {
+			wrapper: createWrapper(),
+		});
+
+		await act(async () => {
+			await runMutationLifecycle(
+				mutationLifecycles.restore,
+				restoreMutateAsync,
+				{ id: 2 },
+				makeTask({
+					id: 2,
+					title: "Archived",
+					status: "active",
+					sortOrder: 1,
+					archivedAt: null,
+				}),
+			);
+		});
+
+		expect(cancelTaskList).toHaveBeenCalled();
+		expect(cancelArchiveList).toHaveBeenCalled();
+		expect(archiveListCache).toEqual([]);
+		expect(taskListCache?.map((task) => task.id)).toEqual([1, 2]);
+		expect(taskListCache?.[1]?.status).toBe("active");
+		expect(taskListCache?.[1]?.archivedAt).toBeNull();
+		expect(invalidateArchiveList).toHaveBeenCalled();
+		expect(result.current.error).toBeNull();
+	});
+
+	it("optimistically removes archived tasks from archiveList and task.list on bulk delete", async () => {
+		taskListCache = [
+			makeTask({ id: 1, title: "Active", status: "active" }),
+			makeTask({
+				id: 2,
+				title: "Archived A",
+				status: "archived",
+				archivedAt: new Date("2026-06-10"),
+			}),
+			makeTask({
+				id: 3,
+				title: "Archived B",
+				status: "archived",
+				archivedAt: new Date("2026-06-11"),
+			}),
+		];
+		archiveListCache = [
+			makeTask({
+				id: 2,
+				title: "Archived A",
+				status: "archived",
+				archivedAt: new Date("2026-06-10"),
+			}),
+			makeTask({
+				id: 3,
+				title: "Archived B",
+				status: "archived",
+				archivedAt: new Date("2026-06-11"),
+			}),
+		];
+
+		const { result } = renderHook(() => useTaskMutations(), {
+			wrapper: createWrapper(),
+		});
+
+		await act(async () => {
+			await runMutationLifecycle(
+				mutationLifecycles.deleteArchived,
+				deleteArchivedMutateAsync,
+				{ ids: [2, 3] },
+				{ deletedCount: 2 },
+			);
+		});
+
+		expect(archiveListCache).toEqual([]);
+		expect(taskListCache?.map((task) => task.id)).toEqual([1]);
+		expect(invalidateArchiveList).toHaveBeenCalled();
+		expect(result.current.error).toBeNull();
+	});
+
+	it("restores archive caches on failed restore", async () => {
+		const previousTasks = [makeTask({ id: 1 })];
+		const previousArchive = [
+			makeTask({
+				id: 2,
+				title: "Archived",
+				status: "archived",
+				archivedAt: new Date("2026-06-20"),
+			}),
+		];
+		taskListCache = previousTasks;
+		archiveListCache = previousArchive;
+
+		const { result } = renderHook(() => useTaskMutations(), {
+			wrapper: createWrapper(),
+		});
+
+		await act(async () => {
+			await runFailingMutationLifecycle(
+				mutationLifecycles.restore,
+				restoreMutateAsync,
+				{ id: 2 },
+				new Error("Restore failed"),
+			).catch(() => {});
+		});
+
+		await waitFor(() => {
+			expect(result.current.error).toBe(
+				"Something went wrong. Please try again.",
+			);
+		});
+
+		expect(taskListCache).toEqual(previousTasks);
+		expect(archiveListCache).toEqual(previousArchive);
+	});
+
+	it("delegates restore and deleteArchived to repository in guest mode", async () => {
+		dataMode = "guest";
+		taskRepoRestore.mockResolvedValue(
+			makeTask({ id: "guest-archived", status: "active", archivedAt: null }),
+		);
+		taskRepoDeleteArchived.mockResolvedValue({ deletedCount: 2 });
+
+		const { result } = renderHook(() => useTaskMutations(), {
+			wrapper: createWrapper(),
+		});
+
+		await act(async () => {
+			await result.current.restoreTask({ id: "guest-archived" });
+			await result.current.deleteArchivedTasks({
+				ids: ["guest-a", "guest-b"],
+			});
+		});
+
+		expect(taskRepoRestore).toHaveBeenCalledWith({ id: "guest-archived" });
+		expect(taskRepoDeleteArchived).toHaveBeenCalledWith({
+			ids: ["guest-a", "guest-b"],
+		});
+		expect(refreshGuest).toHaveBeenCalledTimes(2);
+		expect(restoreMutateAsync).not.toHaveBeenCalled();
+		expect(deleteArchivedMutateAsync).not.toHaveBeenCalled();
 	});
 });

@@ -23,13 +23,16 @@ export function defaultEisenhowerFields(weight: 1 | 2 | 3 = 2): {
 	};
 }
 
+export type DomainTaskStatus = "active" | "completed" | "archived";
+
 export type DomainTask = {
 	id: DomainTaskId;
 	title: string;
-	status: string;
+	status: DomainTaskStatus;
 	userId: string;
 	createdAt: Date;
 	updatedAt: Date | null;
+	archivedAt: Date | null;
 	workType: WorkType;
 	weight: 1 | 2 | 3;
 	importance: 1 | 2 | 3;
@@ -109,6 +112,11 @@ export interface TaskRepository {
 		id: DomainTaskId;
 		localDateKey: string;
 	}): Promise<void>;
+	listArchived(): Promise<DomainTask[]>;
+	restore(input: { id: DomainTaskId }): Promise<DomainTask>;
+	deleteArchived(input: {
+		ids: DomainTaskId[];
+	}): Promise<{ deletedCount: number }>;
 }
 
 export interface CycleRepository {

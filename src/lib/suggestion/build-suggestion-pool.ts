@@ -48,12 +48,16 @@ export async function buildSuggestionPool(
 	const tasks = await db.task.findMany({
 		where: {
 			userId,
+			status: { not: "archived" },
 			OR: [{ status: "active" }, { isDailyStanding: true }],
 		},
 		orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
 	});
 
 	return tasks.filter((task) => {
+		if (task.status === "archived") {
+			return false;
+		}
 		if (resolvedDoneTodayIds.has(task.id)) {
 			return false;
 		}

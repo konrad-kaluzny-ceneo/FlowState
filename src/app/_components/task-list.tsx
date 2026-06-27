@@ -214,6 +214,7 @@ type TaskListProps = {
 	footprints?: Record<string, TaskFootprint>;
 	chromeSubdued?: boolean;
 	focusShellActive?: boolean;
+	onOpenArchive?: () => void;
 };
 
 type SortableActiveTaskRowProps = {
@@ -563,6 +564,7 @@ export function TaskList({
 	footprints = {},
 	chromeSubdued = false,
 	focusShellActive = false,
+	onOpenArchive,
 }: TaskListProps) {
 	const locale = useLocale() as UserLocale;
 	const t = useTranslations("Tasks");
@@ -1166,6 +1168,22 @@ export function TaskList({
 						))}
 					</ul>
 				</section>
+			)}
+
+			{onOpenArchive != null && (
+				<div
+					className={focusChromeSubduedClass || undefined}
+					data-focus-chrome-subdued={focusShellActive ? "true" : undefined}
+				>
+					<button
+						className="text-sm text-text-secondary underline-offset-2 transition hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+						data-testid="task-archive-entry"
+						onClick={onOpenArchive}
+						type="button"
+					>
+						{t("archiveEntry")}
+					</button>
+				</div>
 			)}
 		</div>
 	);

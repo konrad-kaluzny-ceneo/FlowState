@@ -3,7 +3,7 @@ project: "FlowState"
 version: 3
 status: draft
 created: 2026-06-13
-updated: 2026-06-19
+updated: 2026-06-27
 context_type: brownfield
 product_type: web-app
 target_scale:
@@ -124,6 +124,15 @@ A developer, analyst, or team contributor whose workday is genuinely interrupt-d
 - **Then** remaining time is preserved, pause does not increment interruption count, and exceeding the cap ends the session calmly
 - **Before:** pause/resume not shipped.
 
+### US-05: User keeps active task list lean via stale-task archive
+
+- **Given** a logged-in user with active tasks that have had no user touch for three or more days
+- **When** they open the home task inventory or the dedicated archive view
+- **Then** those stale tasks no longer appear in the default active list, they are listed in the archive view, and the user can select multiple archived tasks and permanently remove them in one action
+- **Before:** all active tasks stayed in one list regardless of age; no bulk permanent delete in archive.
+
+Value: zwiększenie przejrzystości aplikacji przez zmniejszenie liczby wyświetlanych tasków.
+
 ## Scope of Change
 
 ### New capabilities (must-have)
@@ -138,6 +147,7 @@ A developer, analyst, or team contributor whose workday is genuinely interrupt-d
 - [new] Calm Garden illustration system on home accent, atmosphere, and empty states.
 - [new] Optimistic wedge transitions — check-in to suggestion perceived within 200ms.
 - [new] Calm network-loss recovery on wedge gates — user sees recoverable state, not silent loss.
+- [new] Stale-task archive — active tasks with no user touch for three or more days leave the default list and appear in a dedicated archive view; user can permanently remove multiple archived tasks in one action. Refs: US-05.
 
 ### Modified behavior
 
@@ -163,6 +173,7 @@ A developer, analyst, or team contributor whose workday is genuinely interrupt-d
 
 - **Backward compatibility:** Existing tasks, sessions, check-ins, and guest merge must continue working; new fields are additive.
 - **Guest scope:** Guest trial remains narrower — no full wedge stack, shortened narrative only.
+- **Task archive:** Auto-archive applies only to stale active tasks; mark-done completion semantics unchanged. Archived tasks are excluded from the wedge suggestion pool until restored or permanently removed.
 - **Data:** No breaking schema changes without migration path; guest blob merge policy unchanged (suffix on title collision).
 - **Integrations:** None external — in-app only.
 - **Preserved SLAs from PRD v2:** 200ms acknowledgement for user actions; 90-day session history retention; mainstream desktop browser support (two latest major versions of Chrome, Firefox, Safari, Edge).

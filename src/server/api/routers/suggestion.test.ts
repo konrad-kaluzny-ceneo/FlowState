@@ -207,7 +207,11 @@ vi.mock("~/server/db/index", () => ({
 		task: {
 			findMany: vi.fn(
 				(args: {
-					where: { userId?: string; status?: string };
+					where: {
+						userId?: string;
+						status?: string | { not: string };
+						OR?: Array<{ status?: string; isDailyStanding?: boolean }>;
+					};
 					orderBy?:
 						| { createdAt: "asc" }
 						| Array<{ sortOrder?: "asc"; createdAt?: "asc" }>;
@@ -216,8 +220,26 @@ vi.mock("~/server/db/index", () => ({
 						if (args.where.userId != null && t.userId !== args.where.userId) {
 							return false;
 						}
-						if (args.where.status != null && t.status !== args.where.status) {
-							return false;
+						const statusFilter = args.where.status;
+						if (statusFilter != null) {
+							if (typeof statusFilter === "string") {
+								if (t.status !== statusFilter) {
+									return false;
+								}
+							} else if (t.status === statusFilter.not) {
+								return false;
+							}
+						}
+						if (args.where.OR != null) {
+							const matches = args.where.OR.some((clause) => {
+								if (clause.status != null && t.status === clause.status) {
+									return true;
+								}
+								return clause.isDailyStanding === true && t.isDailyStanding;
+							});
+							if (!matches) {
+								return false;
+							}
 						}
 						return true;
 					});
@@ -1268,6 +1290,61 @@ describe("suggestion router", () => {
 		expect(result).toMatchObject({
 			taskId: 1,
 			title: "Inbox",
+		});
+	});
+
+	it("post-check-in excludes archived tasks including archived daily-standing rows", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		cycles = [
+			{
+				id: 10,
+				sessionId: 1,
+				userId: USER_ID,
+				kind: "WORK",
+				state: "COMPLETED",
+			},
+		];
+		checkIns = [{ cycleId: 10, userId: USER_ID, energy: "STEADY" }];
+		tasks = [
+			{
+				id: 1,
+				title: "Active inbox",
+				status: "active",
+				userId: USER_ID,
+				workType: "REACTIVE",
+				sortOrder: 0,
+				createdAt: new Date("2026-01-01"),
+				...taskDefaults(2),
+			},
+			{
+				id: 2,
+				title: "Archived standing",
+				status: "archived",
+				userId: USER_ID,
+				workType: "OPERATIONAL",
+				sortOrder: 1,
+				createdAt: new Date("2026-01-02"),
+				effortMinutes: 15,
+				isDailyStanding: true,
+				weight: 2,
+				importance: 2,
+				urgency: 2,
+				commitmentHorizon: "WHEN_POSSIBLE",
+			},
+		];
+
+		const result = await caller().next({
+			context: "post_check_in",
+			cycleId: 10,
+			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
+		});
+
+		expect(result).toMatchObject({
+			taskId: 1,
+			title: "Active inbox",
 		});
 	});
 });

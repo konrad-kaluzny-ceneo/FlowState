@@ -87,6 +87,7 @@ function makeTask(overrides: Partial<DomainTask> = {}): DomainTask {
 		sortOrder: 0,
 		resumeNote,
 		personaPresetId,
+		archivedAt: null,
 		...rest,
 	};
 }
@@ -811,5 +812,41 @@ describe("TaskList", () => {
 		);
 
 		expect(screen.queryByTestId("task-footprint-1")).toBeNull();
+	});
+
+	it("does not render archived tasks in active or completed sections", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({ id: 1, title: "Active task", status: "active" }),
+					makeTask({
+						id: 2,
+						title: "Archived task",
+						status: "archived",
+						archivedAt: new Date("2026-06-20"),
+					}),
+					makeTask({ id: 3, title: "Done task", status: "completed" }),
+				]}
+			/>,
+		);
+
+		expect(screen.getByText("Active (1)")).toBeTruthy();
+		expect(screen.getByText("Completed (1)")).toBeTruthy();
+		expect(screen.getByRole("button", { name: "Active task" })).toBeTruthy();
+		expect(screen.getByRole("button", { name: "Done task" })).toBeTruthy();
+		expect(screen.queryByRole("button", { name: "Archived task" })).toBeNull();
+	});
+
+	it("shows archive entry and calls onOpenArchive when clicked", () => {
+		const onOpenArchive = vi.fn();
+		renderTaskList(
+			<TaskList {...defaultProps} onOpenArchive={onOpenArchive} />,
+		);
+
+		const entry = screen.getByTestId("task-archive-entry");
+		expect(entry.textContent).toBe("Archived tasks");
+		fireEvent.click(entry);
+		expect(onOpenArchive).toHaveBeenCalledTimes(1);
 	});
 });

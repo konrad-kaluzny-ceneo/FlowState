@@ -24,6 +24,7 @@ import {
 	SessionFocusCard,
 } from "~/app/_components/session-steering-card";
 import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
+import { TaskArchiveView } from "~/app/_components/task-archive-view";
 import { TaskList } from "~/app/_components/task-list";
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
@@ -179,6 +180,9 @@ export function PomodoroDashboardBody({
 	const [isEndingSession, setIsEndingSession] = useState(false);
 	const [pendingStartAction, setPendingStartAction] =
 		useState<PendingStartAction | null>(null);
+	const [taskInventoryView, setTaskInventoryView] = useState<
+		"inventory" | "archive"
+	>("inventory");
 
 	const needsPermissionPrompt = useCallback(() => {
 		if (typeof window === "undefined" || shouldDeferFirstRun()) {
@@ -662,28 +666,36 @@ export function PomodoroDashboardBody({
 				recap={recap}
 			/>
 
-			<TaskList
-				chromeSubdued={breakAtmosphereActive}
-				continueTaskId={pomodoro.continueTaskId}
-				cycleKind={pomodoro.cycleKind}
-				cycleState={pomodoro.state}
-				focusedTaskId={pomodoro.focusedTaskId}
-				focusShellActive={workFocusShellActive}
-				footprints={recap.footprints}
-				highlightedTaskId={highlightedTaskId}
-				onFocusTask={(taskId, task) => {
-					pomodoro.selectTask(taskId, task);
-				}}
-				onMidCycleMarkComplete={(taskId, task) => {
-					pomodoro.onMidCycleMarkComplete(taskId, task);
-				}}
-				onRefresh={refreshTasks}
-				suggestionLoading={
-					pomodoro.pendingSuggestion.status === "loading" ||
-					pomodoro.pendingKickoffSuggestion.status === "loading"
-				}
-				tasks={tasks}
-			/>
+			{taskInventoryView === "archive" ? (
+				<TaskArchiveView
+					onBack={() => setTaskInventoryView("inventory")}
+					onTasksChanged={refreshTasks}
+				/>
+			) : (
+				<TaskList
+					chromeSubdued={breakAtmosphereActive}
+					continueTaskId={pomodoro.continueTaskId}
+					cycleKind={pomodoro.cycleKind}
+					cycleState={pomodoro.state}
+					focusedTaskId={pomodoro.focusedTaskId}
+					focusShellActive={workFocusShellActive}
+					footprints={recap.footprints}
+					highlightedTaskId={highlightedTaskId}
+					onFocusTask={(taskId, task) => {
+						pomodoro.selectTask(taskId, task);
+					}}
+					onMidCycleMarkComplete={(taskId, task) => {
+						pomodoro.onMidCycleMarkComplete(taskId, task);
+					}}
+					onOpenArchive={() => setTaskInventoryView("archive")}
+					onRefresh={refreshTasks}
+					suggestionLoading={
+						pomodoro.pendingSuggestion.status === "loading" ||
+						pomodoro.pendingKickoffSuggestion.status === "loading"
+					}
+					tasks={tasks}
+				/>
+			)}
 
 			{pomodoro.midCyclePendingTask != null && (
 				<MidCycleCompletionPrompt

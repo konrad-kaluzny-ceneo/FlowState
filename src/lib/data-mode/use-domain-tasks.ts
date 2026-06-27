@@ -38,6 +38,7 @@ function mapSnapshotToTasks(): DomainTask[] {
 			resumeNote: task.resumeNote ?? null,
 			personaPresetId: task.personaPresetId ?? null,
 			isDailyStanding: task.isDailyStanding ?? false,
+			archivedAt: task.archivedAt ?? null,
 			doneForToday: doneTodayIds.has(task.id),
 		}));
 }

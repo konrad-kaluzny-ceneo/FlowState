@@ -9,7 +9,7 @@ const otherTasks = [
 	{
 		id: 2,
 		title: "Second task",
-		status: "active",
+		status: "active" as const,
 		userId: "user-1",
 		createdAt: new Date(),
 		updatedAt: null,
@@ -18,6 +18,7 @@ const otherTasks = [
 		...defaultEisenhowerFields(2),
 		sortOrder: 0,
 		resumeNote: null,
+		archivedAt: null,
 	},
 ];
 

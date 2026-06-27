@@ -73,6 +73,7 @@ export async function importGuestSnapshot(
 					resumeNote: guestTask.resumeNote ?? null,
 					personaPresetId: guestTask.personaPresetId ?? null,
 					isDailyStanding: guestTask.isDailyStanding ?? false,
+					archivedAt: guestTask.archivedAt ?? null,
 				},
 			});
 
