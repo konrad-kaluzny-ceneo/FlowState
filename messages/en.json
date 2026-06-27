@@ -8,7 +8,18 @@
 			"legend": "Language",
 			"en": "EN",
 			"pl": "PL"
+		},
+		"theme": {
+			"legend": "Theme",
+			"light": "Light",
+			"dark": "Dark",
+			"system": "System"
 		}
+	},
+	"UserMenu": {
+		"signOut": "Sign out",
+		"signingOut": "Signing out…",
+		"signOutError": "Sign-out failed. Please try again."
 	},
 	"Onboarding": {
 		"firstRun": {

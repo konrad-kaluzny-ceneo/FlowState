@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { authClient } from "~/lib/auth/client";
 import type { OnboardingScope } from "~/lib/onboarding/types";
@@ -13,6 +14,7 @@ export function UserMenu({
 	userName: string;
 	scope: OnboardingScope;
 }) {
+	const t = useTranslations("UserMenu");
 	const [error, setError] = useState<string | null>(null);
 	const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -24,7 +26,7 @@ export function UserMenu({
 			await authClient.signOut();
 			window.location.href = "/auth/sign-in";
 		} catch {
-			setError("Sign-out failed. Please try again.");
+			setError(t("signOutError"));
 			setIsSigningOut(false);
 		}
 	}
@@ -39,7 +41,7 @@ export function UserMenu({
 				onClick={handleSignOut}
 				type="button"
 			>
-				{isSigningOut ? "Signing out…" : "Sign out"}
+				{isSigningOut ? t("signingOut") : t("signOut")}
 			</button>
 			{error && (
 				<span className="text-red-400 text-sm" role="alert">
