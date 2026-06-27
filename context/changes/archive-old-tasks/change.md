@@ -1,7 +1,7 @@
 ---
 change_id: archive-old-tasks
 title: Stale task archive
-status: implementing
+status: implemented
 created: 2026-06-27
 updated: 2026-06-27
 archived_at: null

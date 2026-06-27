@@ -7,6 +7,7 @@
  */
 import { expect, type Page } from "@playwright/test";
 import { MIN_WORK_DURATION_SEC } from "../../src/lib/duration-bounds";
+import { STALE_TASK_ARCHIVE_DAYS } from "../../src/lib/task/stale-task-archive";
 import { rehydrateFatigueSeedState } from "./cycle-recovery";
 import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
 import { expectTaskListVisible } from "./task-list-locator";
@@ -284,4 +285,114 @@ export async function seedWindDownFatigueScenario(
 		sessionId: session.id,
 		runningCycleId: running.id,
 	};
+}
+
+export type TaskTimestampSeed = {
+	createdAt?: Date;
+	updatedAt?: Date | null;
+	status?: string;
+	archivedAt?: Date | null;
+	isDailyStanding?: boolean;
+};
+
+function staleTouchDate(now = new Date()): Date {
+	const touch = new Date(now);
+	touch.setDate(touch.getDate() - (STALE_TASK_ARCHIVE_DAYS + 1));
+	return touch;
+}
+
+async function patchTaskTimestamps(taskId: number, patch: TaskTimestampSeed) {
+	const { db } = await import("../../src/server/db/index");
+	await db.task.update({
+		where: { id: taskId },
+		data: {
+			...(patch.createdAt != null ? { createdAt: patch.createdAt } : {}),
+			...(patch.updatedAt !== undefined ? { updatedAt: patch.updatedAt } : {}),
+			...(patch.status != null ? { status: patch.status } : {}),
+			...(patch.archivedAt !== undefined
+				? { archivedAt: patch.archivedAt }
+				: {}),
+			...(patch.isDailyStanding != null
+				? { isDailyStanding: patch.isDailyStanding }
+				: {}),
+		},
+	});
+}
+
+/** Create a task via tRPC, then set row timestamps/status for stale-archive scenarios. */
+export async function createTaskWithTimestamps(
+	page: Page,
+	input: {
+		title: string;
+		workType?: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+		weight?: number;
+		importance?: number;
+		isDailyStanding?: boolean;
+	},
+	timestamps: TaskTimestampSeed,
+): Promise<{ id: number; title: string }> {
+	const task = await trpcMutation<typeof input, { id: number; title: string }>(
+		page,
+		"task.create",
+		{
+			title: input.title,
+			...(input.workType != null ? { workType: input.workType } : {}),
+			...(input.weight != null ? { weight: input.weight } : {}),
+			...(input.importance != null ? { importance: input.importance } : {}),
+			...(input.isDailyStanding != null
+				? { isDailyStanding: input.isDailyStanding }
+				: {}),
+		},
+	);
+	if (Object.keys(timestamps).length > 0) {
+		await patchTaskTimestamps(task.id, timestamps);
+	}
+	return { id: task.id, title: input.title };
+}
+
+export type StaleArchiveSeed = {
+	staleTasks: Array<{ id: number; title: string }>;
+	freshTask: { id: number; title: string };
+};
+
+/** Seeds two stale active tasks and one fresh active task for S-44 archive e2e. */
+export async function seedStaleArchiveScenario(
+	page: Page,
+	options: {
+		staleTitles: [string, string];
+		freshTitle: string;
+	},
+): Promise<StaleArchiveSeed> {
+	await resetWorkerSessionViaApi(page);
+	const touchDate = staleTouchDate();
+
+	const staleTasks: Array<{ id: number; title: string }> = [];
+	for (const title of options.staleTitles) {
+		staleTasks.push(
+			await createTaskWithTimestamps(
+				page,
+				{ title, isDailyStanding: false },
+				{
+					createdAt: touchDate,
+					updatedAt: touchDate,
+					status: "active",
+					archivedAt: null,
+				},
+			),
+		);
+	}
+
+	const freshTask = await createTaskWithTimestamps(
+		page,
+		{
+			title: options.freshTitle,
+			workType: "DEEP_WORK",
+			weight: 3,
+			importance: 3,
+			isDailyStanding: false,
+		},
+		{},
+	);
+
+	return { staleTasks, freshTask };
 }

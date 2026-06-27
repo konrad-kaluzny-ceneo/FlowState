@@ -523,11 +523,11 @@ Additive migration only: `Task.archivedAt` starts as `null` for all existing tas
 
 #### Automated
 
-- [ ] 5.1 Targeted e2e scenario passes with `set CI=true && pnpm test:e2e e2e/archive-old-tasks.spec.ts`
+- [x] 5.1 Targeted e2e scenario passes with `set CI=true && pnpm test:e2e e2e/archive-old-tasks.spec.ts`
 - [ ] 5.2 If promoted to belt, `set CI=true && pnpm test:e2e:belt` passes and belt documentation stays accurate
-- [ ] 5.3 Full project quality gate passes with `pnpm check`
-- [ ] 5.4 Unit/integration suite passes with `pnpm test`
-- [ ] 5.5 Type checking passes with `pnpm typecheck` if not already covered by `pnpm check`
+- [x] 5.3 Full project quality gate passes with `pnpm check`
+- [x] 5.4 Unit/integration suite passes with `pnpm test`
+- [x] 5.5 Type checking passes with `pnpm typecheck` if not already covered by `pnpm check`
 
 #### Manual
 
