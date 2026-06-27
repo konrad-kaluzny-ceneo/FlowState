@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-27
 structure: split
-active_slices: [F-14]
+active_slices: []
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -89,7 +89,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-39 | accessible-wedge-gates | [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) | [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) | operate wedge gates with screen-reader-safe focus, live status, and keyboard-first accept/override/start controls | F-07, S-21, S-28 | US-01, desktop accessibility guardrails | done |
 | Q-08 | testing-prd-v3-wedge-coherence | — | — | (quality) prove PRD v3 wedge coherence across transition mutex, pause, optimistic/recovery, stuck-gate dismiss, and S-39 operability oracles | F-07, S-21, S-24, S-28, S-34, S-35, S-39 | US-01, US-04; test-plan Phase 8 | done |
 | Q-09 | testing-mutation-oracle-hardening | — | — | (quality) raise covered-code mutation score by killing survived mutants in hooks + server routers — strengthen weak oracles | S-01, S-03, S-05, S-07, S-08 | test-plan Phase 5; risks #1–#6 | done |
-| F-14 | product-voice-contract | [FLO-93](https://linear.app/flowstate-10xdev/issue/FLO-93/flowstate-product-voice-contract-f-14) | [#171](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/171) | (foundation) bilingual EN/PL system, then separated voice/copy contract | S-21, S-30, F-04, F-06 | Secondary / US-03 craft | active |
+| F-14 | product-voice-contract | [FLO-93](https://linear.app/flowstate-10xdev/issue/FLO-93/flowstate-product-voice-contract-f-14) | [#171](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/171) | (foundation) bilingual EN/PL system, then separated voice/copy contract | S-21, S-30, F-04, F-06 | Secondary / US-03 craft | done |
 | S-40 | home-ia-reset | [FLO-92](https://linear.app/flowstate-10xdev/issue/FLO-92/flowstate-home-ia-reset-s-40) | [#172](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/172) | home answers "Co teraz?" — one dominant next-focus, recap collapsed, inventory secondary | S-13, S-15, S-27, S-30, S-31; soft F-14 | Secondary / US-03 craft | proposed |
 | S-41 | desktop-calm-workbench | [FLO-89](https://linear.app/flowstate-10xdev/issue/FLO-89/flowstate-desktop-calm-workbench-s-41) | [#173](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/173) | lg≥1024 calm three-zone workbench; decision column primary; rail ≤3 blocks | S-40; soft F-14 | Secondary | proposed |
 | S-42 | mindful-day-memory | [FLO-90](https://linear.app/flowstate-10xdev/issue/FLO-90/flowstate-mindful-day-memory-s-42) | [#174](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/174) | S-30 phase 2 — Domknięte/Zostaje/Wróć tutaj narrative; formatter only | S-30, S-18; soft F-14 | **US-03** craft | proposed |
@@ -149,13 +149,13 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-39 | accessible-wedge-gates | **done** | PR [#168](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/168); pair [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) |
 | Q-08 | testing-prd-v3-wedge-coherence | **done** | archived PR [#169](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/169); no Linear/GitHub issue pair by design |
 | Q-09 | testing-mutation-oracle-hardening | **done** | archived PR [#170](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/170); no Linear/GitHub issue pair by design |
-| F-14 | product-voice-contract | **yes** | Stream R foundation; first `/10x-plan` target; split bilingual system phase from target copy phase |
+| F-14 | product-voice-contract | **done** | Stream R foundation; shipped PR [#177](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/177) |
 | S-40 | home-ia-reset | **no** | after F-14 planned; soft dep F-14 for copy zones |
 | S-41 | desktop-calm-workbench | **no** | hard dep S-40; desktop web layout only |
 | S-42 | mindful-day-memory | **no** | S-30 phase 2; formatter only; after F-14; best after S-40/S-41 |
 | S-43 | stateful-illustration-system | **no** | S-28 phase 2 absorption; may parallel S-41 once rail slot exists |
 
-**Recommended next:** **F-14** `product-voice-contract` — ready for `/10x-plan`; Stream R UX/UI story chapter.
+**Recommended next:** **S-40** `home-ia-reset` — Stream R UX/UI story chapter after F-14 shipped.
 
 ## Reference appendix (load on demand)
 
@@ -203,7 +203,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
-- **Q-09: (quality) raise covered-code mutation score by killing survived mutants in hooks + server routers — strengthen weak oracles** — Archived 2026-06-26 → `context/archive/2026-06-26-testing-mutation-oracle-hardening/`. PR [#170](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/170). Issues intentionally skipped. Lesson: middleware + Prisma `where` call-arg oracles kill isolation regressions mocks hide; hook file still below 65% band — user-visible clusters addressed, wedge/no-cov deferred per §6.7.
+- **F-14: (foundation) bilingual EN/PL system, then separated voice/copy contract** — Archived 2026-06-27 → `context/archive/2026-06-27-product-voice-contract/`. PR [#177](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/177). Issues [FLO-93](https://linear.app/flowstate-10xdev/issue/FLO-93) / [#171](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/171). Lesson: next-intl + cookie locale; split i18n infra from voice contract workstreams.
 - **S-39: operate wedge gates with screen-reader-safe focus, live status, and keyboard-first accept/override/start controls without losing the calm one-gate transition flow** — Archived 2026-06-26 → `context/archive/2026-06-26-accessible-wedge-gates/`. PR [#168](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/168). Issues [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167). Lesson: primitive-first modal contract in `OverlayScrim`; inline gates use polite live status; no new conductor gate.
 - **F-03: (foundation) Prisma 7 config hygiene** — Archived 2026-06-26 → `context/archive/2026-06-26-align-prisma-config/`. Lesson: —.
 - **S-38: mid-cycle end sets expectations — what counts in closure** — Archived 2026-06-24 → `context/archive/2026-06-23-session-end-mid-cycle-closure/`. PR [#162](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/162). Issues [FLO-87](https://linear.app/flowstate-10xdev/issue/FLO-87) / [#151](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/151). Lesson: S-38 mid-cycle copy gated to WORK via `cycleContext`; break confirm restores B-08 neutral wording; closure `interruptedMidCycle` only when ending during WORK running/paused.
