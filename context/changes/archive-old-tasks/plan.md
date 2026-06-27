@@ -489,11 +489,11 @@ Additive migration only: `Task.archivedAt` starts as `null` for all existing tas
 
 #### Automated
 
-- [x] 3.1 Guest repository tests prove stale sweep, daily-standing exemption, restore sort order, and archived-only bulk delete
-- [x] 3.2 Hook tests prove restore and bulk delete update `task.list` and `task.archiveList` UI caches before the mutation resolves, then reconcile/rollback correctly
-- [x] 3.3 Existing task create/update/delete/reorder/mark-done hook tests still pass
-- [x] 3.4 Targeted guest and hook test command passes
-- [x] 3.5 `pnpm check` passes after repository and hook changes
+- [x] 3.1 Guest repository tests prove stale sweep, daily-standing exemption, restore sort order, and archived-only bulk delete — dd9e431
+- [x] 3.2 Hook tests prove restore and bulk delete update `task.list` and `task.archiveList` UI caches before the mutation resolves, then reconcile/rollback correctly — dd9e431
+- [x] 3.3 Existing task create/update/delete/reorder/mark-done hook tests still pass — dd9e431
+- [x] 3.4 Targeted guest and hook test command passes — dd9e431
+- [x] 3.5 `pnpm check` passes after repository and hook changes — dd9e431
 
 #### Manual
 
@@ -505,11 +505,11 @@ Additive migration only: `Task.archivedAt` starts as `null` for all existing tas
 
 #### Automated
 
-- [ ] 4.1 Component tests prove archived tasks do not render in active or completed sections
-- [ ] 4.2 Component tests prove archive view multi-select, select-all, restore, delete confirmation, and empty states
-- [ ] 4.3 Translation structure remains valid for EN and PL with no orphan user-facing strings in the new UI
-- [ ] 4.4 Targeted component test command passes
-- [ ] 4.5 `pnpm check` passes after UI and message changes
+- [x] 4.1 Component tests prove archived tasks do not render in active or completed sections
+- [x] 4.2 Component tests prove archive view multi-select, select-all, restore, delete confirmation, and empty states
+- [x] 4.3 Translation structure remains valid for EN and PL with no orphan user-facing strings in the new UI
+- [x] 4.4 Targeted component test command passes
+- [x] 4.5 `pnpm check` passes after UI and message changes
 
 #### Manual
 
