@@ -472,12 +472,12 @@ Additive migration only: `Task.archivedAt` starts as `null` for all existing tas
 
 #### Automated
 
-- [ ] 2.1 Router tests cover stale predicate, three-day boundary, active-only behavior, daily-standing exemption, and no mutation of completed/archived tasks
-- [ ] 2.2 Router tests cover restore appending to active sort order and clearing `archivedAt`
-- [ ] 2.3 Router isolation tests cover cross-user archive list, restore, and `deleteArchived` denial/no-write
-- [ ] 2.4 Router tests prove `deleteArchived` rejects mixed active/completed/non-owned IDs and deletes only archived user rows
-- [ ] 2.5 Suggestion and hook/helper tests prove archived tasks are excluded from suggestion pools and kickoff eligibility while non-archived daily-standing tasks remain eligible unless done today
-- [ ] 2.6 Targeted router/suggestion eligibility test command passes
+- [x] 2.1 Router tests cover stale predicate, three-day boundary, active-only behavior, daily-standing exemption, and no mutation of completed/archived tasks
+- [x] 2.2 Router tests cover restore appending to active sort order and clearing `archivedAt`
+- [x] 2.3 Router isolation tests cover cross-user archive list, restore, and `deleteArchived` denial/no-write
+- [x] 2.4 Router tests prove `deleteArchived` rejects mixed active/completed/non-owned IDs and deletes only archived user rows
+- [x] 2.5 Suggestion and hook/helper tests prove archived tasks are excluded from suggestion pools and kickoff eligibility while non-archived daily-standing tasks remain eligible unless done today
+- [x] 2.6 Targeted router/suggestion eligibility test command passes
 
 #### Manual
 

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { commitmentHorizonSchema, workTypeSchema } from "~/lib/domain";
 import { mapTaskFromPrisma } from "~/lib/persistence/prisma/task-mapper";
 import { isStoredPersonaPresetId } from "~/lib/task/persona-presets";
+import { archiveStaleTasksForUser } from "~/lib/task/stale-task-archive";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const workTypeSchemaZod = z.enum(workTypeSchema);
@@ -45,6 +46,7 @@ export const taskRouter = createTRPCRouter({
 		)
 		.query(async ({ ctx, input }) => {
 			const userId = ctx.session.user.id;
+			await archiveStaleTasksForUser(ctx.db, userId);
 			const tasks = await ctx.db.task.findMany({
 				where: { userId },
 				orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
@@ -245,6 +247,68 @@ export const taskRouter = createTRPCRouter({
 			await ctx.db.task.delete({
 				where: { id: input.id },
 			});
+		}),
+
+	archiveList: protectedProcedure.query(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
+		await archiveStaleTasksForUser(ctx.db, userId);
+		const tasks = await ctx.db.task.findMany({
+			where: { userId, status: "archived" },
+			orderBy: [{ archivedAt: "desc" }, { createdAt: "desc" }],
+		});
+		return tasks.map((task) => mapTaskFromPrisma(task));
+	}),
+
+	restore: protectedProcedure
+		.input(z.object({ id: z.number().int() }))
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const existing = await ctx.db.task.findFirst({
+				where: { id: input.id, userId, status: "archived" },
+			});
+
+			if (!existing) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			const sortOrder = await nextActiveSortOrder(ctx.db, userId);
+			const row = await ctx.db.task.update({
+				where: { id: input.id },
+				data: {
+					status: "active",
+					archivedAt: null,
+					sortOrder,
+				},
+			});
+			return mapTaskFromPrisma(row);
+		}),
+
+	deleteArchived: protectedProcedure
+		.input(
+			z.object({
+				ids: z.array(z.number().int()).min(1).max(100),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+			const rows = await ctx.db.task.findMany({
+				where: { userId, id: { in: input.ids } },
+				select: { id: true, status: true },
+			});
+
+			if (rows.length !== input.ids.length) {
+				throw new TRPCError({ code: "BAD_REQUEST" });
+			}
+
+			if (rows.some((row) => row.status !== "archived")) {
+				throw new TRPCError({ code: "BAD_REQUEST" });
+			}
+
+			const { count } = await ctx.db.task.deleteMany({
+				where: { userId, id: { in: input.ids }, status: "archived" },
+			});
+
+			return { deletedCount: count };
 		}),
 
 	markDoneForToday: protectedProcedure

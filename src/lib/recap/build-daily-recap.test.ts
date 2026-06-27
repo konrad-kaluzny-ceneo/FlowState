@@ -86,15 +86,20 @@ function createMockDb() {
 				(args: {
 					where: {
 						userId: string;
-						status?: string;
+						status?: string | { not: string };
 						updatedAt?: { gte: Date };
 						OR?: Array<{ status: string } | { isDailyStanding: boolean }>;
 					};
 					orderBy?: unknown;
 				}) => {
 					let rows = tasks.filter((t) => t.userId === args.where.userId);
-					if (args.where.status != null) {
-						rows = rows.filter((t) => t.status === args.where.status);
+					const statusFilter = args.where.status;
+					if (statusFilter != null) {
+						if (typeof statusFilter === "string") {
+							rows = rows.filter((t) => t.status === statusFilter);
+						} else {
+							rows = rows.filter((t) => t.status !== statusFilter.not);
+						}
 					}
 					if (args.where.updatedAt?.gte != null) {
 						const gte = args.where.updatedAt.gte;
