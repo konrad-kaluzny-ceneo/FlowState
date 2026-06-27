@@ -456,11 +456,11 @@ Additive migration only: `Task.archivedAt` starts as `null` for all existing tas
 
 #### Automated
 
-- [x] 1.1 Prisma migration and generated client update cleanly with `pnpm prisma migrate dev`
-- [x] 1.2 TypeScript accepts `DomainTask` and mapper changes with `pnpm typecheck`
-- [x] 1.3 Guest snapshot parsing preserves old snapshots without `archivedAt` and accepts archived tasks in schema or repository tests
-- [x] 1.4 Guest import tests cover archived status and `archivedAt` preservation
-- [x] 1.5 Full project quality check passes with `pnpm check`
+- [x] 1.1 Prisma migration and generated client update cleanly with `pnpm prisma migrate dev` — 721b89c
+- [x] 1.2 TypeScript accepts `DomainTask` and mapper changes with `pnpm typecheck` — 721b89c
+- [x] 1.3 Guest snapshot parsing preserves old snapshots without `archivedAt` and accepts archived tasks in schema or repository tests — 721b89c
+- [x] 1.4 Guest import tests cover archived status and `archivedAt` preservation — 721b89c
+- [x] 1.5 Full project quality check passes with `pnpm check` — 721b89c
 
 #### Manual
 
