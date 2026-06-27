@@ -50,6 +50,7 @@ export function EndSessionConfirmOverlay({
 				</h2>
 				<p
 					className="mt-4 text-sm text-text-secondary"
+					data-testid="end-session-confirm-description"
 					id="end-session-confirm-description"
 				>
 					{copy.body}

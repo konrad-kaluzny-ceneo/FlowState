@@ -9,6 +9,10 @@ import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { completeKickoffReadiness } from "./helpers/kickoff";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import {
+	expectShortBreakPhaseHidden,
+	expectShortBreakPhaseVisible,
+} from "./helpers/timer-phase";
+import {
 	markTaskCompleteMidCycle,
 	startFocusedWorkCycle,
 } from "./helpers/work-cycle";
@@ -43,8 +47,8 @@ test.describe("Mid-cycle last task (Risk #3)", () => {
 		await expect(page.getByTestId("mid-cycle-end-break-btn")).toBeVisible();
 
 		await page.getByTestId("mid-cycle-end-break-btn").click();
-		await expect(page.getByText("Short Break")).toBeHidden();
+		await expectShortBreakPhaseHidden(page);
 		await completeCheckIn(page, "steady");
-		await expect(page.getByText("Short Break")).toBeVisible();
+		await expectShortBreakPhaseVisible(page);
 	});
 });

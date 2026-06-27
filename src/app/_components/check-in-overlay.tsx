@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import {
 	type CheckInEnergy,
 	type CheckInEnergyUi,
@@ -22,6 +24,8 @@ export function CheckInOverlay({
 	isSubmitting = false,
 	coachLine,
 }: CheckInOverlayProps) {
+	const t = useTranslations("CheckIn");
+
 	return (
 		<OverlayScrim
 			ariaDescribedBy="check-in-description"
@@ -36,13 +40,13 @@ export function CheckInOverlay({
 					className="font-semibold text-2xl text-primary"
 					id="check-in-heading"
 				>
-					How&apos;s your energy?
+					{t("heading")}
 				</h2>
 				<p
 					className="mt-2 text-sm text-text-secondary"
 					id="check-in-description"
 				>
-					Select one before your break starts.
+					{t("description")}
 				</p>
 				<EnergySelector
 					coachLine={coachLine}

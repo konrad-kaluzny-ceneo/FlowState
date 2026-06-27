@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import {
@@ -40,6 +41,7 @@ export function DurationPicker({
 	boundsLabel,
 	onValidationChange,
 }: DurationPickerProps) {
+	const t = useTranslations("DurationPicker");
 	const initial = splitSecToMinSec(valueSec);
 	const [minutesStr, setMinutesStr] = useState(String(initial.minutes));
 	const [secondsStr, setSecondsStr] = useState(String(initial.seconds));
@@ -111,7 +113,7 @@ export function DurationPicker({
 
 			<div className="mt-4 flex flex-col items-center gap-1">
 				<span className="text-sm text-text-secondary">
-					Custom ({boundsLabel})
+					{t("customLabel", { bounds: boundsLabel })}
 				</span>
 				<div className="flex items-center gap-2 text-sm text-text-secondary">
 					<input
@@ -126,7 +128,7 @@ export function DurationPicker({
 						type="number"
 						value={minutesStr}
 					/>
-					<span className="text-text-dimmed">min</span>
+					<span className="text-text-dimmed">{t("minUnit")}</span>
 					<input
 						className={`w-14 rounded border bg-surface-panel px-2 py-1 text-center text-primary ${
 							showError
@@ -139,11 +141,11 @@ export function DurationPicker({
 						type="number"
 						value={secondsStr}
 					/>
-					<span className="text-text-dimmed">sec</span>
+					<span className="text-text-dimmed">{t("secUnit")}</span>
 				</div>
 				{showError && (
 					<p className="text-center text-red-600 text-xs">
-						Must be within {boundsLabel}
+						{t("validationError", { bounds: boundsLabel })}
 					</p>
 				)}
 			</div>

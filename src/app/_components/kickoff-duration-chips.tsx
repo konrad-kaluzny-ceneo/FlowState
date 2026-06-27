@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import type { WorkType } from "~/lib/domain/work-type";
 
 import type { OnboardingScope } from "~/lib/onboarding/types";
@@ -15,32 +17,30 @@ type KickoffDurationChipsProps = {
 	onSelect: (sec: number) => void;
 };
 
-function formatMinutesLabel(sec: number): string {
-	const minutes = Math.round(sec / 60);
-	return `${minutes} min`;
-}
-
 export function KickoffDurationChips({
 	workType,
 	scope,
 	selectedSec,
 	onSelect,
 }: KickoffDurationChipsProps) {
+	const t = useTranslations("Kickoff");
 	const chipSec = resolveKickoffChipSec(workType, scope);
 	const remembered = getWorkTypeDuration(workType, scope) != null;
-	const label = remembered ? "your usual" : formatMinutesLabel(chipSec);
+	const minutes = Math.round(chipSec / 60);
+	const minutesLabel = t("minutesLabel", { minutes });
+	const label = remembered ? t("yourUsual") : minutesLabel;
 
 	return (
 		<div
 			className="flex w-full max-w-lg flex-col items-center gap-2"
 			data-testid="kickoff-duration-chips"
 		>
-			<p className="text-sm text-text-secondary">Suggested work duration</p>
+			<p className="text-sm text-text-secondary">{t("suggestedDuration")}</p>
 			<button
 				aria-label={
 					remembered
-						? `Your usual duration, ${formatMinutesLabel(chipSec)}`
-						: formatMinutesLabel(chipSec)
+						? t("usualDurationAria", { minutes: minutesLabel })
+						: minutesLabel
 				}
 				aria-pressed={selectedSec === chipSec}
 				className={`rounded-lg px-4 py-2 text-sm transition ${

@@ -90,6 +90,11 @@
 			"taskDone": "{count, plural, =0 {} one {# task done} other {# tasks done}}",
 			"separator": " · ",
 			"statsSeparator": ", "
+		},
+		"dashboard": {
+			"errorDismiss": "Dismiss",
+			"pauseEndSession": "Pause & end session",
+			"endSession": "End session"
 		}
 	},
 	"CatchUp": {
@@ -115,6 +120,13 @@
 		}
 	},
 	"Guest": {
+		"banner": {
+			"deviceOnly": "Your tasks are saved on this device only.",
+			"signIn": "Sign in",
+			"or": "or",
+			"signUp": "sign up",
+			"saveAcrossDevices": "to save across devices."
+		},
 		"merge": {
 			"title": "Your trial work is saved",
 			"dismissLabel": "Continue",
@@ -231,7 +243,17 @@
 			"plan": "Plan",
 			"research": "Research",
 			"quick": "Quick"
-		}
+		},
+		"fieldUrgency": "Urgency",
+		"fieldImportance": "Importance",
+		"fieldEffort": "Effort",
+		"fieldHorizon": "Horizon",
+		"fieldType": "Type",
+		"horizonThisWeek": "This week",
+		"horizonWhenPossible": "When possible",
+		"resumeNoteLabel": "Where you left off (optional)",
+		"resumeNotePlaceholder": "One line for when you return to this task",
+		"dailyStanding": "Daily standing"
 	},
 	"Timer": {
 		"sectionBreakAria": "Break timer",
@@ -445,6 +467,40 @@
 	"Energy": {
 		"focused": "Focused",
 		"steady": "Steady",
-		"fading": "Fading"
+		"fading": "Fading",
+		"legendEnergyLevel": "Energy level"
+	},
+	"CheckIn": {
+		"heading": "How's your energy?",
+		"description": "Select one before your break starts."
+	},
+	"FocusBudget": {
+		"title": "Today's focus hours",
+		"body": "Set a daily budget so suggestions fit what you have left.",
+		"dismissAria": "Dismiss focus budget prompt",
+		"notNow": "Not now",
+		"customAria": "Custom focus minutes",
+		"customPlaceholder": "Custom",
+		"set": "Set",
+		"saveError": "Could not save focus hours. Try again.",
+		"validationError": "Enter focus hours between 15 and 720 minutes."
+	},
+	"BreakAlerts": {
+		"permissionTitle": "Break alerts in other tabs",
+		"permissionDescription": "When you are in another tab, FlowState can send a calm notification and play your break chime when a break starts. You can turn this off anytime in break settings.",
+		"enableNotifications": "Enable notifications",
+		"notNow": "Not now"
+	},
+	"Kickoff": {
+		"suggestedDuration": "Suggested work duration",
+		"yourUsual": "your usual",
+		"minutesLabel": "{minutes} min",
+		"usualDurationAria": "Your usual duration, {minutes} min"
+	},
+	"DurationPicker": {
+		"customLabel": "Custom ({bounds})",
+		"minUnit": "min",
+		"secUnit": "sec",
+		"validationError": "Must be within {bounds}"
 	}
 }

@@ -12,6 +12,7 @@ import {
 	ensureIdleCycle,
 } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
+import { expectShortBreakPhaseVisible } from "./helpers/timer-phase";
 import { runWhileHidden } from "./helpers/visibility";
 import {
 	advanceClockThroughFastWork,
@@ -66,9 +67,7 @@ test.describe("@skip-belt Out-of-tab break alert", () => {
 		await runWhileHidden(page, async () => {
 			await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 			await page.getByTestId("check-in-energy-steady").click();
-			await expect(page.getByText("Short Break")).toBeVisible({
-				timeout: 15_000,
-			});
+			await expectShortBreakPhaseVisible(page, { timeout: 15_000 });
 		});
 
 		expect(await readBreakNotificationShown(page)).toBe(true);

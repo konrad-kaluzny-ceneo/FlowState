@@ -35,7 +35,8 @@ export async function completeCheckIn(
 						.getByTestId("wind-down-overlay")
 						.isVisible();
 					const shortBreakVisible = await page
-						.getByText("Short Break")
+						.getByTestId("timer-phase-label")
+						.filter({ hasText: "Short Break" })
 						.isVisible();
 					const checkInHidden = !(await page
 						.getByTestId("check-in-overlay")

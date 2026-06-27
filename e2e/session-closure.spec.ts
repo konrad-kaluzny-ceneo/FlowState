@@ -44,7 +44,7 @@ test.describe("Session closure (S-17)", () => {
 			timeout: 15_000,
 		});
 		await expect(
-			page.getByText(/Finished cycles and completed tasks/i),
+			page.getByTestId("end-session-confirm-description"),
 		).toBeVisible();
 		await page.getByTestId("end-session-confirm-btn").click();
 
@@ -87,9 +87,12 @@ test.describe("Session closure (S-17)", () => {
 		await expect(page.getByTestId("end-session-confirm-overlay")).toBeVisible({
 			timeout: 15_000,
 		});
-		await expect(page.getByText("Stay paused")).toBeVisible();
-
-		await expect(page.getByText(/paused focus block/i)).toBeVisible();
+		await expect(
+			page.getByTestId("end-session-confirm-cancel-btn"),
+		).toBeVisible();
+		await expect(
+			page.getByTestId("end-session-confirm-description"),
+		).toBeVisible();
 		await page.getByTestId("end-session-confirm-btn").click();
 
 		await expect(page.getByTestId("session-closure-overlay")).toBeVisible({

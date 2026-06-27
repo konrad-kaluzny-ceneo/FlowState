@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
 	Suspense,
 	useCallback,
@@ -136,6 +136,7 @@ export function PomodoroDashboardBody({
 	} = useDailyRecap();
 
 	const locale = useLocale() as UserLocale;
+	const tDashboard = useTranslations("Session.dashboard");
 	const suggestionPersonaLabel = useMemo(() => {
 		const pending = pomodoro.pendingSuggestion;
 		if (pending.status !== "ready") {
@@ -472,7 +473,7 @@ export function PomodoroDashboardBody({
 							onClick={pomodoro.clearError}
 							type="button"
 						>
-							Dismiss
+							{tDashboard("errorDismiss")}
 						</button>
 					</div>
 				)
@@ -811,7 +812,7 @@ export function PomodoroDashboardBody({
 							onClick={() => void handlePauseAndEndSessionClick()}
 							type="button"
 						>
-							Pause & end session
+							{tDashboard("pauseEndSession")}
 						</button>
 					)}
 					<button
@@ -821,7 +822,7 @@ export function PomodoroDashboardBody({
 						onClick={handleEndSessionClick}
 						type="button"
 					>
-						End session
+						{tDashboard("endSession")}
 					</button>
 				</div>
 			)}

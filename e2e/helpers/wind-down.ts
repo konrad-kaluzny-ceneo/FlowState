@@ -1,6 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
 import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
+import { expectShortBreakPhaseHidden } from "./timer-phase";
 import {
 	clickStartCycle,
 	ensureFakeClock,
@@ -49,7 +50,7 @@ export async function submitFadingCheckInExpectingWindDown(page: Page) {
 	});
 	await dismissKickoffReadinessIfVisible(page);
 	await page.getByRole("button", { name: "Continue later" }).click();
-	await expect(page.getByText("Short Break")).toBeHidden();
+	await expectShortBreakPhaseHidden(page);
 	await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 	await page.getByTestId("check-in-energy-fading").click();
 	await expectWindDownVisible(page);

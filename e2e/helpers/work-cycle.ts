@@ -13,6 +13,7 @@ import {
 	dismissFirstRunIfVisible,
 	dismissPresetCoachIfVisible,
 } from "./onboarding";
+import { expectShortBreakPhaseHidden } from "./timer-phase";
 
 /** Advance fake clock through a 1s work cycle (+ buffer for completion tick). */
 export const FAST_WORK_CLOCK_MS = 2500;
@@ -305,7 +306,7 @@ export async function completeWorkCycleWithCheckIn(
 	});
 	await dismissKickoffReadinessIfVisible(page);
 	await page.getByRole("button", { name: "Continue later" }).click();
-	await expect(page.getByText("Short Break")).toBeHidden();
+	await expectShortBreakPhaseHidden(page);
 	await completeCheckIn(page, energy);
 	await dismissWindDownIfVisible(page);
 }

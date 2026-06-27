@@ -131,7 +131,10 @@ export function TimerPanel({
 				}`}
 				data-testid={isPaused ? "timer-panel-paused" : "timer-panel-running"}
 			>
-				<p className="font-semibold text-sm text-text-section">
+				<p
+					className="font-semibold text-sm text-text-section"
+					data-testid="timer-phase-label"
+				>
 					{isPaused
 						? isBreak
 							? t("statusBreakPaused")

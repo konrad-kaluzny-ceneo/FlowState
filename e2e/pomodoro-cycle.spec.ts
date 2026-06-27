@@ -4,7 +4,6 @@
  * Spec role: risk proof (S-01 regression + check-in step)
  */
 
-import { BREAK_REENTRY_FOCUSED } from "../src/lib/session/transition-copy";
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
@@ -13,11 +12,15 @@ import {
 	ensureIdleCycle,
 } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
+import { expectShortBreakPhaseHidden } from "./helpers/timer-phase";
 import {
 	advanceClockThroughFastBreak,
 	advanceClockThroughFastWork,
 	startFocusedWorkCycle,
 } from "./helpers/work-cycle";
+
+/** EN baseline — Session.transition.breakReentryFocused (belt runs in EN). */
+const BREAK_REENTRY_FOCUSED = "Ready when you are — your focus is still here.";
 
 test.describe("Pomodoro cycle (S-01)", () => {
 	test.beforeEach(async ({ page }) => {
@@ -52,7 +55,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 
 		await dismissKickoffReadinessIfVisible(page);
 		await page.getByRole("button", { name: "Continue later" }).click();
-		await expect(page.getByText("Short Break")).toBeHidden();
+		await expectShortBreakPhaseHidden(page);
 		await completeCheckIn(page, "steady");
 		// S-06: suggestion card may appear during break — no interaction required for S-01
 
@@ -109,7 +112,7 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		});
 		await expect(markDone).toBeEnabled();
 		await markDone.click();
-		await expect(page.getByText("Short Break")).toBeHidden();
+		await expectShortBreakPhaseHidden(page);
 		await completeCheckIn(page, "steady");
 		// S-06: suggestion card may appear during break — no interaction required for S-01
 

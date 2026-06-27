@@ -13,6 +13,10 @@ import {
 } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import {
+	expectShortBreakPhaseHidden,
+	expectShortBreakPhaseVisible,
+} from "./helpers/timer-phase";
+import {
 	addTasks,
 	advanceClockThroughFastWork,
 	forgetFakeClock,
@@ -85,9 +89,9 @@ test.describe("Seed exemplar — Risk #7 check-in gate", () => {
 		await dismissKickoffReadinessIfVisible(page);
 		await page.getByRole("button", { name: "Continue later" }).click();
 
-		await expect(page.getByText("Short Break")).toBeHidden();
+		await expectShortBreakPhaseHidden(page);
 		await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 		await completeCheckIn(page, "steady");
-		await expect(page.getByText("Short Break")).toBeVisible();
+		await expectShortBreakPhaseVisible(page);
 	});
 });

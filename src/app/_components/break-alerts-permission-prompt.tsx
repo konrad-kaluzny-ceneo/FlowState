@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import {
 	OverlayCard,
 	OverlayScrim,
@@ -18,6 +20,8 @@ export function BreakAlertsPermissionPrompt({
 	onEnable,
 	onDismiss,
 }: BreakAlertsPermissionPromptProps) {
+	const t = useTranslations("BreakAlerts");
+
 	if (!visible) {
 		return null;
 	}
@@ -35,15 +39,13 @@ export function BreakAlertsPermissionPrompt({
 					className="font-semibold text-primary text-xl"
 					id="break-alerts-permission-heading"
 				>
-					Break alerts in other tabs
+					{t("permissionTitle")}
 				</h2>
 				<p
 					className="mt-3 text-sm text-text-secondary"
 					id="break-alerts-permission-description"
 				>
-					When you are in another tab, FlowState can send a calm notification
-					and play your break chime when a break starts. You can turn this off
-					anytime in break settings.
+					{t("permissionDescription")}
 				</p>
 				<div className="mt-6 flex flex-col gap-3">
 					<button
@@ -57,7 +59,7 @@ export function BreakAlertsPermissionPrompt({
 						}}
 						type="button"
 					>
-						Enable notifications
+						{t("enableNotifications")}
 					</button>
 					<button
 						className={overlayButtonClass.secondaryFull}
@@ -65,7 +67,7 @@ export function BreakAlertsPermissionPrompt({
 						onClick={onDismiss}
 						type="button"
 					>
-						Not now
+						{t("notNow")}
 					</button>
 				</div>
 			</OverlayCard>
