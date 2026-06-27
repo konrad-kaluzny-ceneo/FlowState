@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-27
 structure: split
-active_slices: []
+active_slices: [S-44]
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -94,7 +94,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-41 | desktop-calm-workbench | [FLO-89](https://linear.app/flowstate-10xdev/issue/FLO-89/flowstate-desktop-calm-workbench-s-41) | [#173](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/173) | lg≥1024 calm three-zone workbench; decision column primary; rail ≤3 blocks | S-40; soft F-14 | Secondary | proposed |
 | S-42 | mindful-day-memory | [FLO-90](https://linear.app/flowstate-10xdev/issue/FLO-90/flowstate-mindful-day-memory-s-42) | [#174](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/174) | S-30 phase 2 — Domknięte/Zostaje/Wróć tutaj narrative; formatter only | S-30, S-18; soft F-14 | **US-03** craft | proposed |
 | S-43 | stateful-illustration-system | [FLO-91](https://linear.app/flowstate-10xdev/issue/FLO-91/flowstate-stateful-illustration-system-s-43) | [#175](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/175) | S-28 phase 2 — state-bound Calm Garden on hero/rail; not on gates | S-28, F-06, F-07, S-39 | Secondary | proposed |
-| S-44 | archive-old-tasks | [FLO-94](https://linear.app/flowstate-10xdev/issue/FLO-94/flowstate-stale-task-archive-view-bulk-delete-s-44) | [#178](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/178) | review stale tasks in archive view; multi-select + permanent delete | S-09, S-13 | **US-05** | ready |
+| S-44 | archive-old-tasks | [FLO-94](https://linear.app/flowstate-10xdev/issue/FLO-94/flowstate-stale-task-archive-view-bulk-delete-s-44) | [#178](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/178) | review stale tasks in archive view; multi-select + permanent delete | S-09, S-13 | **US-05** | in review |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
