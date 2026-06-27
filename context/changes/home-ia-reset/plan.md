@@ -400,12 +400,12 @@ No database, API, auth, or persisted data migration is required. Recap dismissal
 
 #### Automated
 
-- [x] 3.1 Extend home shell component tests for purpose header
-- [x] 3.2 Extend dashboard component tests for state priority matrix
-- [x] 3.3 Extend daily recap tests for collapsed first paint
-- [x] 3.4 Run targeted S-40 Vitest command
-- [x] 3.5 Run `pnpm check`
-- [x] 3.6 Run `pnpm test`
+- [x] 3.1 Extend home shell component tests for purpose header — 441b6d7
+- [x] 3.2 Extend dashboard component tests for state priority matrix — 441b6d7
+- [x] 3.3 Extend daily recap tests for collapsed first paint — 441b6d7
+- [x] 3.4 Run targeted S-40 Vitest command — 441b6d7
+- [x] 3.5 Run `pnpm check` — 441b6d7
+- [x] 3.6 Run `pnpm test` — 441b6d7
 
 #### Manual
 
