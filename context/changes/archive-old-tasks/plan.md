@@ -505,11 +505,11 @@ Additive migration only: `Task.archivedAt` starts as `null` for all existing tas
 
 #### Automated
 
-- [x] 4.1 Component tests prove archived tasks do not render in active or completed sections
-- [x] 4.2 Component tests prove archive view multi-select, select-all, restore, delete confirmation, and empty states
-- [x] 4.3 Translation structure remains valid for EN and PL with no orphan user-facing strings in the new UI
-- [x] 4.4 Targeted component test command passes
-- [x] 4.5 `pnpm check` passes after UI and message changes
+- [x] 4.1 Component tests prove archived tasks do not render in active or completed sections — 0e86ec5
+- [x] 4.2 Component tests prove archive view multi-select, select-all, restore, delete confirmation, and empty states — 0e86ec5
+- [x] 4.3 Translation structure remains valid for EN and PL with no orphan user-facing strings in the new UI — 0e86ec5
+- [x] 4.4 Targeted component test command passes — 0e86ec5
+- [x] 4.5 `pnpm check` passes after UI and message changes — 0e86ec5
 
 #### Manual
 
