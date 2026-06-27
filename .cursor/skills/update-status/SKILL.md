@@ -1,6 +1,6 @@
 ---
 name: update-status
-description: Keeps FlowState roadmap.md, Linear (FLO team), and GitHub Issues in sync when starting, shipping, or rescoping work. Verifies two-way Linear-GitHub integration after status changes. Use when updating issue status, closing slices, syncing Linear and GitHub, editing roadmap.md, or after merge/PR with Fixes #N.
+description: Keeps FlowState roadmap.md, Linear (FLO team), and GitHub Issues aligned when starting, shipping, or rescoping work. Manually pairs and verifies FLO-* ↔ #* — no Linear ↔ GitHub auto-sync. Use when updating issue status, closing slices, syncing Linear and GitHub, editing roadmap.md, or after merge/PR with Fixes #N.
 ---
 
 # Update status (roadmap + Linear + GitHub)
@@ -15,7 +15,7 @@ Use with [@github-cli](../github-cli/SKILL.md) for `gh` auth and PR commands. Al
 | Linear | `FLO-*`, team `FLO`, project FlowState MVP | Linear MCP or app |
 | GitHub | `#*` on `konrad-kaluzny-ceneo/FlowState` | `gh issue …` |
 
-`roadmap.md` maps all three (At a glance + slice sections). Do not duplicate issues — **two-way Linear ↔ GitHub** sync is enabled.
+`roadmap.md` maps all three (At a glance + slice sections). **No Linear ↔ GitHub auto-sync** — this file is the pairing table; create and update both sides manually. Do not duplicate issues.
 
 ## Account (GitHub)
 
@@ -25,9 +25,9 @@ Use with [@github-cli](../github-cli/SKILL.md) for `gh` auth and PR commands. Al
 | Verify | `gh auth status` |
 | Switch | `gh auth switch --user konrad-kaluzny-ceneo` |
 
-## Verify sync (after any status/title change)
+## Verify pairing (after any status/title change)
 
-Look up `FLO-*` ↔ `#*` in `roadmap.md`, then compare **title**, **state** (open/closed vs Linear status/Done), and GitHub link on the Linear issue. Sync can lag 1–2 minutes.
+Look up `FLO-*` ↔ `#*` in `roadmap.md`, then compare **title** and **state** (open/closed vs Linear status/Done) on both sides. Update the other side manually if they diverge.
 
 | Changed in | Check with |
 |------------|------------|
@@ -42,7 +42,7 @@ gh issue view 7 --json number,title,state
 Linear MCP: get_issue id=FLO-8
 ```
 
-If still mismatched: refresh UIs; confirm GitHub attachment on Linear issue; re-apply change on the **source** system once. Manual patch on the other side only if integration is broken — comment on both. Update `roadmap.md` **Status** only when roadmap scope/state changes, not for every field sync.
+If still mismatched: refresh UIs; confirm the GitHub link on the Linear issue; patch the other side explicitly. Comment on both if the pair is ambiguous. Update `roadmap.md` **Status** only when roadmap scope/state changes, not for every field alignment check.
 
 ## Workflows
 
@@ -56,8 +56,8 @@ If still mismatched: refresh UIs; confirm GitHub attachment on Linear issue; re-
 
 ```
 - [ ] PR to main with Fixes #N (or linked issue)
-- [ ] Close/move issue in Linear OR GitHub (one side)
-- [ ] Verify sync (table above)
+- [ ] Close/move issue in Linear **and** GitHub (both sides)
+- [ ] Verify pairing (table above)
 - [ ] roadmap.md: Status + slice **Status:** + frontmatter updated
 - [ ] Optional: append roadmap ## Done on /10x-archive
 ```
@@ -65,7 +65,7 @@ If still mismatched: refresh UIs; confirm GitHub attachment on Linear issue; re-
 ### New scope
 
 1. Add row to `roadmap.md` first.
-2. Create issue in Linear **or** GitHub (mirror auto-created).
+2. Create issue in Linear **and** GitHub; cross-link both sides.
 3. **Verify pair** (`FLO-*` ↔ `#*`), then add IDs to roadmap tables/sections.
 
 ## Tools
@@ -82,7 +82,7 @@ Linear MCP server: `project-0-FlowState-linear` (Cursor). Use project filter `Fl
 
 - Never leave roadmap `done` while linked Linear or GitHub issue is still open.
 - Do not track MVP work without a roadmap row.
-- One status edit surface per change; verify the mirror, don't maintain two divergent truths.
+- Update both Linear and GitHub for each status change; `roadmap.md` is the pairing table — don't maintain two divergent truths.
 
 ## Reference
 
