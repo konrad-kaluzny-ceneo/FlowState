@@ -89,6 +89,11 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-39 | accessible-wedge-gates | [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) | [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) | operate wedge gates with screen-reader-safe focus, live status, and keyboard-first accept/override/start controls | F-07, S-21, S-28 | US-01, desktop accessibility guardrails | done |
 | Q-08 | testing-prd-v3-wedge-coherence | — | — | (quality) prove PRD v3 wedge coherence across transition mutex, pause, optimistic/recovery, stuck-gate dismiss, and S-39 operability oracles | F-07, S-21, S-24, S-28, S-34, S-35, S-39 | US-01, US-04; test-plan Phase 8 | done |
 | Q-09 | testing-mutation-oracle-hardening | — | — | (quality) raise covered-code mutation score by killing survived mutants in hooks + server routers — strengthen weak oracles | S-01, S-03, S-05, S-07, S-08 | test-plan Phase 5; risks #1–#6 | done |
+| F-14 | product-voice-contract | [FLO-93](https://linear.app/flowstate-10xdev/issue/FLO-93/flowstate-product-voice-contract-f-14) | [#171](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/171) | (foundation) Polish-first voice contract — promise, tone, copy zones | S-21, S-30, F-04, F-06 | Secondary / US-03 craft | proposed |
+| S-40 | home-ia-reset | [FLO-92](https://linear.app/flowstate-10xdev/issue/FLO-92/flowstate-home-ia-reset-s-40) | [#172](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/172) | home answers "Co teraz?" — one dominant next-focus, recap collapsed, inventory secondary | S-13, S-15, S-27, S-30, S-31; soft F-14 | Secondary / US-03 craft | proposed |
+| S-41 | desktop-calm-workbench | [FLO-89](https://linear.app/flowstate-10xdev/issue/FLO-89/flowstate-desktop-calm-workbench-s-41) | [#173](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/173) | lg≥1024 calm three-zone workbench; decision column primary; rail ≤3 blocks | S-40; soft F-14 | Secondary | proposed |
+| S-42 | mindful-day-memory | [FLO-90](https://linear.app/flowstate-10xdev/issue/FLO-90/flowstate-mindful-day-memory-s-42) | [#174](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/174) | S-30 phase 2 — Domknięte/Zostaje/Wróć tutaj narrative; formatter only | S-30, S-18; soft F-14 | **US-03** craft | proposed |
+| S-43 | stateful-illustration-system | [FLO-91](https://linear.app/flowstate-10xdev/issue/FLO-91/flowstate-stateful-illustration-system-s-43) | [#175](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/175) | S-28 phase 2 — state-bound Calm Garden on hero/rail; not on gates | S-28, F-06, F-07, S-39 | Secondary | proposed |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -113,6 +118,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | O | Choice revisit | break-alerts-out-of-tab (merged) → **S-37** | MVP: notification prefs on timer hub; broader pattern deferred |
 | P | Accessible wedge operation | F-07 + S-21 + S-28 → **S-39** | Unparks P-102/P-103 now that transition conductor, copy, and Calm Garden overlay craft have landed |
 | Q | PRD v3 quality hardening | S-39 → **Q-08** → **Q-09** | Q-08 test-plan Phase 8 (risks #8–#12); Q-09 test-plan Phase 5 mutation oracle hardening (risks #1–#6) |
+| R | UX/UI story chapter | **F-14** → **S-40** → **S-41** → **S-42** → **S-43** | UX/UI craft after quality hardening; expand batch 7; S-43 may parallel S-41 once rail slot exists |
 
 ## Backlog Handoff
 
@@ -143,8 +149,13 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-39 | accessible-wedge-gates | **done** | PR [#168](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/168); pair [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) |
 | Q-08 | testing-prd-v3-wedge-coherence | **done** | archived PR [#169](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/169); no Linear/GitHub issue pair by design |
 | Q-09 | testing-mutation-oracle-hardening | **done** | archived PR [#170](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/170); no Linear/GitHub issue pair by design |
+| F-14 | product-voice-contract | **yes** | Stream R foundation; first `/10x-plan` target; doc-only `product-voice.md` |
+| S-40 | home-ia-reset | **no** | after F-14 planned; soft dep F-14 for copy zones |
+| S-41 | desktop-calm-workbench | **no** | hard dep S-40; desktop web layout only |
+| S-42 | mindful-day-memory | **no** | S-30 phase 2; formatter only; after F-14; best after S-40/S-41 |
+| S-43 | stateful-illustration-system | **no** | S-28 phase 2 absorption; may parallel S-41 once rail slot exists |
 
-**Recommended next:** Q-09 archived — choose the next quality or product slice deliberately before opening work.
+**Recommended next:** **F-14** `product-voice-contract` — ready for `/10x-plan`; Stream R UX/UI story chapter.
 
 ## Reference appendix (load on demand)
 
@@ -182,6 +193,11 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | P-GAP-102 guest activation | S-11 extension | **done** — post-merge-wedge-coach PR [#159](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/159) |
 | B-08 PRD review (2026-06-21) | **B-09** + **S-38** | new proposed slices — pause-then-end vs mid-cycle closure expectations |
 | P-102 accessible wedge overlay gates + P-103 keyboard shortcuts | **S-39** | **done 2026-06-26** — PR [#168](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/168); pair [FLO-88](https://linear.app/flowstate-10xdev/issue/FLO-88) / [#167](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/167) |
+| P-703 Product Voice Contract | **F-14** | promote — foundation row |
+| P-701 Home IA Reset | **S-40** | promote — UX slice |
+| P-702 Desktop Calm Workbench | **S-41** | promote — hard dep S-40 |
+| P-704 Mindful Day Memory | **S-42** | promote — merge S-30 phase 2 |
+| P-705 Stateful Illustration System | **S-43** | promote — absorb S-28 phase 2 |
 
 Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-batches/README.md).
 

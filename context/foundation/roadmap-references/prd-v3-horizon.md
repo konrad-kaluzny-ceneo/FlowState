@@ -17,9 +17,13 @@ Brownfield PRD v3 contracts **efficient post-MVP deepening**: orchestrated wedge
 
 | Capability | Slice | Note |
 | --- | --- | --- |
-| WORK focus shell | S-31 | Ready |
-| Calm Garden illustrations | S-28 | Ready; overlay phase 2 in plan |
-| Break atmosphere | S-33 | After F-07; pairs S-21 |
+| WORK focus shell | S-31 | Done |
+| Calm Garden illustrations | S-28 | Done phase 1; phase 2 → **S-43** |
+| Break atmosphere | S-33 | Done |
+| Product voice contract | **F-14** | Proposed — Stream R foundation |
+| Home IA / desktop workbench | **S-40**, **S-41** | Proposed — "Co teraz?" hierarchy + calm desktop layout |
+| Mindful day memory | **S-42** | Proposed — S-30 phase 2 narrative formatter |
+| Stateful illustrations | **S-43** | Proposed — S-28 phase 2 on hero/rail only |
 
 ## Resolved PRD v3 open questions (roadmap impact)
 
@@ -33,7 +37,7 @@ Brownfield PRD v3 contracts **efficient post-MVP deepening**: orchestrated wedge
 
 ## Explicit non-goals (v3)
 
-Mobile, team/social, AI/ML scoring, external integrations, full analytics dashboard (S-30 = light footprint only), RRULE engine, fixed delivery deadline.
+Mobile, team/social, external integrations, RRULE engine, fixed delivery deadline.
 
 ## Out of PRD v3 must-have (remain proposed / parked)
 
