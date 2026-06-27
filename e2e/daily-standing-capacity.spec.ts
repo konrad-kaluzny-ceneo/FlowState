@@ -22,6 +22,7 @@ import {
 	expectSuggestionVisible,
 	waitForSuggestionNext,
 } from "./helpers/suggestion";
+import { expectTaskListVisible } from "./helpers/task-list-locator";
 import {
 	advanceClockThroughFastWork,
 	clickStartCycle,
@@ -38,7 +39,7 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
+		await expectTaskListVisible(page);
 		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		forgetFakeClock(page);
@@ -177,7 +178,7 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 		});
 
 		await page.reload();
-		await expect(page.getByTestId("task-list")).toBeVisible();
+		await expectTaskListVisible(page);
 		await dismissFirstRunIfVisible(page);
 		await dismissKickoffSteeringIfVisible(page);
 
@@ -189,7 +190,7 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 		await expect(standingRow.getByTestId("task-complete-button")).toBeVisible();
 
 		await expect(page.getByTestId("focus-budget-prompt")).toBeVisible();
-		await page.getByRole("button", { name: "2h" }).click();
+		await page.getByTestId("focus-budget-preset-120").click();
 		await expect(page.getByTestId("focus-budget-prompt")).toBeHidden({
 			timeout: 10_000,
 		});

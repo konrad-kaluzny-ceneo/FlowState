@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, X } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
 import type { DailyRecap, RecapTaskRow, TodayPlanRow } from "~/lib/recap/types";
@@ -24,38 +25,15 @@ function dismissForDate(localDateKey: string): void {
 	sessionStorage.setItem(`${DISMISS_KEY_PREFIX}${localDateKey}`, "1");
 }
 
-function formatTimeRange(row: RecapTaskRow): string {
+function formatTimeRange(row: RecapTaskRow, locale: string): string {
 	const options: Intl.DateTimeFormatOptions = {
 		hour: "2-digit",
 		minute: "2-digit",
 		hour12: false,
 	};
-	const locale = "en-GB";
 	const start = row.firstStartedAt.toLocaleTimeString(locale, options);
 	const end = row.lastEndedAt.toLocaleTimeString(locale, options);
 	return `${start}–${end}`;
-}
-
-function formatRecapRow(row: RecapTaskRow): string {
-	const label = row.completedWithoutCycle
-		? `Marked done · ${row.title}`
-		: row.title;
-	return `${label} · ${row.focusedMinutes}m · ${formatTimeRange(row)}`;
-}
-
-function formatTodayRow(row: TodayPlanRow): string {
-	const parts: string[] = [];
-	if (row.isDailyStanding) {
-		parts.push("Daily");
-	}
-	if (row.doneForToday) {
-		parts.push("Done today");
-	}
-	if (row.effortMinutes != null) {
-		parts.push(`${row.effortMinutes}m`);
-	}
-	parts.push(row.title);
-	return parts.join(" · ");
 }
 
 function SectionToggle({
@@ -91,10 +69,44 @@ export function DailyRecapPanel({
 	recap,
 	isLoading = false,
 }: DailyRecapPanelProps) {
+	const locale = useLocale();
+	const t = useTranslations("Recap");
 	const [dismissed, setDismissed] = useState(false);
 	const [last24Expanded, setLast24Expanded] = useState(true);
 	const [todayExpanded, setTodayExpanded] = useState(true);
 	const hasLast24Hours = recap.last24Hours.length > 0;
+
+	const formatRecapRow = useCallback(
+		(row: RecapTaskRow): string => {
+			const label = row.completedWithoutCycle
+				? t("markedDone", { title: row.title })
+				: row.title;
+			return t("rowFormat", {
+				label,
+				minutes: row.focusedMinutes,
+				range: formatTimeRange(row, locale),
+			});
+		},
+		[locale, t],
+	);
+
+	const formatTodayRow = useCallback(
+		(row: TodayPlanRow): string => {
+			const parts: string[] = [];
+			if (row.isDailyStanding) {
+				parts.push(t("todayDailyTag"));
+			}
+			if (row.doneForToday) {
+				parts.push(t("todayDoneTag"));
+			}
+			if (row.effortMinutes != null) {
+				parts.push(`${row.effortMinutes}m`);
+			}
+			parts.push(row.title);
+			return parts.join(" · ");
+		},
+		[t],
+	);
 
 	useEffect(() => {
 		setDismissed(isDismissedForDate(localDateKey));
@@ -117,9 +129,9 @@ export function DailyRecapPanel({
 			data-testid="daily-recap-panel"
 		>
 			<div className="flex items-start justify-between gap-3">
-				<p className="font-semibold text-sm text-text-section">Daily recap</p>
+				<p className="font-semibold text-sm text-text-section">{t("title")}</p>
 				<button
-					aria-label="Dismiss daily recap"
+					aria-label={t("dismissAria")}
 					className="shrink-0 rounded-md p-1 text-text-dimmed hover:text-text-section focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 					data-testid="daily-recap-dismiss"
 					onClick={handleDismiss}
@@ -134,7 +146,7 @@ export function DailyRecapPanel({
 					<section>
 						<SectionToggle
 							expanded={last24Expanded}
-							label="Last 24 hours"
+							label={t("sectionLast24")}
 							onToggle={() => setLast24Expanded((value) => !value)}
 							testId="daily-recap-last24-toggle"
 						/>
@@ -156,16 +168,14 @@ export function DailyRecapPanel({
 				<section>
 					<SectionToggle
 						expanded={todayExpanded}
-						label="Today"
+						label={t("sectionToday")}
 						onToggle={() => setTodayExpanded((value) => !value)}
 						testId="daily-recap-today-toggle"
 					/>
 					{todayExpanded && (
 						<div className="mt-2 space-y-1" data-testid="daily-recap-today">
 							{recap.todayPlan.length === 0 ? (
-								<p className="text-sm text-text-secondary">
-									Nothing on today&apos;s plan yet.
-								</p>
+								<p className="text-sm text-text-secondary">{t("todayEmpty")}</p>
 							) : (
 								recap.todayPlan.map((row) => (
 									<p

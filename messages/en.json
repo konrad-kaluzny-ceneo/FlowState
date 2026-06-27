@@ -1,0 +1,513 @@
+{
+	"App": {
+		"title": "FlowState",
+		"description": "Mindful Pomodoro with session-aware task suggestions"
+	},
+	"Preferences": {
+		"language": {
+			"legend": "Language",
+			"en": "EN",
+			"pl": "PL"
+		}
+	},
+	"Onboarding": {
+		"firstRun": {
+			"guest": {
+				"title": "Welcome to FlowState",
+				"body": "Add a task, tap Focus on it, then start a focus cycle. When you're ready for more, sign in to unlock energy check-ins and smart task suggestions after each cycle.",
+				"dismissLabel": "Got it"
+			},
+			"authenticated": {
+				"title": "Your wedge workflow",
+				"body": "When a focus cycle ends, you'll get a quick energy check-in. FlowState then suggests your best next task with a short rationale — accept the suggestion or pick any other task to focus.",
+				"dismissLabel": "Got it"
+			}
+		},
+		"coach": {
+			"checkIn": "This quick check-in helps FlowState suggest what fits your energy.",
+			"suggestion": "Accept the suggestion or tap Focus on any other task — you're always in control.",
+			"postMergeCheckIn": "Now that you're signed in, this check-in unlocks personalized next-task suggestions.",
+			"postMergeSuggestion": "FlowState picked this based on your energy — accept it or choose any task.",
+			"postMergeSuggestionWithPreset": "Your {preset} preset helped shape this pick — accept it or choose any task.",
+			"preset": "Presets pre-fill work type and priority — tap Custom if you want full control."
+		},
+		"authValue": {
+			"signInSubtitle": "Mindful focus cycles on your tasks — sign in to unlock full sessions, energy check-ins, and session-aware suggestions.",
+			"signUpHeading": "Your mindful Pomodoro workflow",
+			"signUpLine1": "Run focus cycles on the tasks you choose, one at a time.",
+			"signUpLine2": "After each cycle, log a quick energy check-in.",
+			"signUpLine3": "FlowState suggests your best next task with a short rationale."
+		}
+	},
+	"Session": {
+		"transition": {
+			"breakStartShort": "A brief pause — let your mind reset.",
+			"breakStartLong": "A longer rest — step away if you can, then return when ready.",
+			"breakReentryFocused": "Ready when you are — your focus is still here.",
+			"breakReentrySteady": "Ease back in — one cycle at a time.",
+			"breakReentryFading": "Whenever you're ready — no rush.",
+			"breakReentryNeutral": "Break complete — ready for the next cycle."
+		},
+		"windDown": {
+			"title": "Ready to wrap up?",
+			"body": "You've been at it a while — ending now is a valid choice, or you can keep going.",
+			"keepGoing": "Keep going",
+			"endSession": "End session"
+		},
+		"endSession": {
+			"title": "End this session?",
+			"bodyWork": "Finished cycles and completed tasks will appear in your summary. This in-progress focus block won't be counted.",
+			"bodyBreak": "The current cycle will stop and you'll see a short session summary. You can start fresh whenever you're ready.",
+			"confirmLabel": "End session",
+			"cancelLabel": "Keep going",
+			"pauseTitle": "End session while paused?",
+			"pauseBodyWork": "Finished cycles and completed tasks will appear in your summary. Your paused focus block won't be counted.",
+			"pauseBodyBreak": "Your timer is paused. Ending now will close the session and show a short summary — you can return when you're ready.",
+			"pauseCancelLabel": "Stay paused"
+		},
+		"narrative": {
+			"energyFocused": "focused",
+			"energySteady": "steady",
+			"energyFading": "fading",
+			"closurePrefix": "Session complete",
+			"closureTitle": "Session closed",
+			"closureDismiss": "Continue",
+			"handoffLeftOff": "Left off:",
+			"handoffContinue": "Continue:",
+			"handoffDismiss": "Dismiss",
+			"intentionDeepWork": "Deep work",
+			"intentionClearInbox": "Clear inbox",
+			"intentionShipFeature": "Ship a feature",
+			"midCycleNotCounted": "This focus block wasn't counted.",
+			"noFinishedCycles": "no finished cycles yet",
+			"takeBreath": "Take a breath.",
+			"pauseCapWithEnergy": "Your pause ran long — session complete — {stats}. {energy}.",
+			"pauseCapNoEnergy": "Your pause ran long — session complete — {stats}. Take a breath.",
+			"closureWithEnergy": "{prefix} — {stats}. {energy}.",
+			"closureNoEnergy": "{prefix} — {stats}. Take a breath.",
+			"feelingEnergy": "feeling {energy}",
+			"cycleCount": "{count, plural, one {# cycle} other {# cycles}}",
+			"taskDone": "{count, plural, =0 {} one {# task done} other {# tasks done}}",
+			"separator": " · ",
+			"statsSeparator": ", "
+		},
+		"dashboard": {
+			"errorDismiss": "Dismiss",
+			"pauseEndSession": "Pause & end session",
+			"endSession": "End session"
+		}
+	},
+	"CatchUp": {
+		"workCycleLabel": "Work cycle",
+		"longBreak": "Long break",
+		"shortBreak": "Short break",
+		"break": "Break",
+		"workConfirmHeadline": "{title} finished while you were away",
+		"workConfirmSubcopy": "Confirm your next step below.",
+		"breakConfirmHeadline": "{label} finished while you were away",
+		"breakConfirmSubcopy": "Ready for your next cycle when you are.",
+		"checkInHeadline": "Work cycle finished while you were away",
+		"checkInSubcopy": "Take a moment for your energy check-in below.",
+		"suggestionHeadline": "A task suggestion is waiting",
+		"suggestionSubcopy": "Review the suggested next task below.",
+		"endedAgo": {
+			"justNow": "just now",
+			"secondsAgo": "{count} seconds ago",
+			"minuteAgo": "1 minute ago",
+			"minutesAgo": "{count} minutes ago",
+			"hourAgo": "1 hour ago",
+			"hoursAgo": "{count} hours ago"
+		}
+	},
+	"Guest": {
+		"banner": {
+			"deviceOnly": "Your tasks are saved on this device only.",
+			"signIn": "Sign in",
+			"or": "or",
+			"signUp": "sign up",
+			"saveAcrossDevices": "to save across devices."
+		},
+		"merge": {
+			"title": "Your trial work is saved",
+			"dismissLabel": "Continue",
+			"unlockLine": "You now have full sessions, energy check-ins, and session-aware task suggestions.",
+			"importedSingle": "Imported {item}.",
+			"importedDual": "Imported {first} and {second}.",
+			"taskCount": "{count, plural, one {# task} other {# tasks}}",
+			"cycleCount": "{count, plural, one {# cycle} other {# cycles}}",
+			"overflow": "+ {count} more"
+		}
+	},
+	"Suggestion": {
+		"overrideAck": "Your pick is noted — we'll use it for the next suggestion.",
+		"heading": "Suggested next task",
+		"weightLight": "Light",
+		"weightMedium": "Medium",
+		"weightHeavy": "Heavy",
+		"urgencyPrefix": "U: ",
+		"importancePrefix": "I: ",
+		"asap": "ASAP",
+		"statusSlow": "Still working on it…",
+		"statusLoading": "Finding a good match…",
+		"statusReady": "Suggestion ready: {title}",
+		"statusEmpty": "No active tasks — add one or end session.",
+		"statusError": "Could not load a suggestion. Your break is still running.",
+		"resumeNote": "Left off: {note}",
+		"rationaleToggle": "Why this?",
+		"alsoConsidered": "Also considered:",
+		"acceptPending": "Focusing…",
+		"acceptLabel": "Focus this",
+		"retry": "Retry"
+	},
+	"Scoring": {
+		"rationale": {
+			"energy_deep": "Deep work — you're focused with few interruptions",
+			"energy_light": "Light ops — energy fading, better suited for lighter tasks",
+			"fatigue_many": "Light admin — energy dipping after {cycles} cycles",
+			"fatigue": "Light admin — session fatigue building",
+			"late_day": "Light task — late in the day, save deep work for tomorrow",
+			"interruptions": "Reactive work — session had several interruptions",
+			"override_preference": "Matches your last pick — continuing that thread",
+			"eisenhower_priority": "High urgency and importance — top of the queue",
+			"importance_focus": "Important work — good moment while you're focused",
+			"low_effort_fit": "Quick win — fits your fading energy",
+			"horizon_asap": "Due ASAP — time-sensitive commitment",
+			"kickoff_fresh": "Fresh session — here's a strong starting point",
+			"kickoff_resume": "Back from break — ready for your next focus block",
+			"capacity_fit": "Fits ~{minutes} min left today",
+			"default": "Next up based on your energy and task mix"
+		},
+		"factorChips": {
+			"override_preference": "Last override",
+			"interruptions": "Interruptions",
+			"late_day": "Time of day",
+			"fatigue": "Cycles completed",
+			"energy_deep": "Energy fit",
+			"energy_light": "Energy fit",
+			"eisenhower_priority": "High priority",
+			"importance_focus": "Important now",
+			"low_effort_fit": "Quick win",
+			"horizon_asap": "Due ASAP",
+			"capacity_fit": "Fits your remaining focus"
+		},
+		"personaTrust": {
+			"focus": "deep work matches how you framed this",
+			"synchro": "operational work fits your choice",
+			"firefight": "reactive work fits your choice",
+			"warm-up": "a light warm-up fits your choice",
+			"meeting": "meeting prep fits your choice",
+			"plan": "planning work fits your choice",
+			"research": "research fits how you framed this",
+			"quick": "a quick task fits your choice"
+		}
+	},
+	"Tasks": {
+		"axisLight": "Light",
+		"axisMedium": "Medium",
+		"axisHeavy": "Heavy",
+		"urgencyPrefix": "U: ",
+		"importancePrefix": "I: ",
+		"asap": "ASAP",
+		"custom": "Custom",
+		"effortMinutes": "{minutes}m",
+		"dragHandleAria": "Drag to reorder",
+		"doneForTodayTitle": "Done for today",
+		"markDoneForTodayAria": "Done for today",
+		"markCompleteAria": "Mark complete",
+		"continueHere": "Continue here",
+		"daily": "Daily",
+		"focusedAria": "Focused",
+		"focusAria": "Focus",
+		"deleteAria": "Delete task",
+		"footprint": "Last focused {ago} · {minutes}m total",
+		"errorDismiss": "Dismiss",
+		"createTitlePlaceholder": "Add a new task...",
+		"createAddAria": "Add",
+		"createEffortLabel": "Effort",
+		"createEffortPlaceholder": "min",
+		"createClearEffort": "Clear",
+		"sectionActive": "Active ({count})",
+		"sectionCompleted": "Completed ({count})",
+		"revertAria": "Revert to active",
+		"workType": {
+			"DEEP_WORK": "Deep",
+			"OPERATIONAL": "Ops",
+			"REACTIVE": "Reactive"
+		},
+		"persona": {
+			"focus": "Focus",
+			"synchro": "Synchro",
+			"firefight": "Firefight",
+			"warm-up": "Warm up",
+			"meeting": "Meeting",
+			"plan": "Plan",
+			"research": "Research",
+			"quick": "Quick"
+		},
+		"fieldUrgency": "Urgency",
+		"fieldImportance": "Importance",
+		"fieldEffort": "Effort",
+		"fieldHorizon": "Horizon",
+		"fieldType": "Type",
+		"horizonThisWeek": "This week",
+		"horizonWhenPossible": "When possible",
+		"resumeNoteLabel": "Where you left off (optional)",
+		"resumeNotePlaceholder": "One line for when you return to this task",
+		"dailyStanding": "Daily standing"
+	},
+	"Timer": {
+		"sectionBreakAria": "Break timer",
+		"sectionFocusAria": "Focus timer",
+		"breakLong": "Long Break",
+		"breakShort": "Short Break",
+		"statusBreakPaused": "Break paused",
+		"statusPaused": "Paused",
+		"statusFocusingOn": "Focusing on",
+		"focusedTaskFallback": "Task",
+		"resumeBreakAria": "Resume break",
+		"resumeAria": "Resume",
+		"pauseBreakAria": "Pause break",
+		"pauseAria": "Pause",
+		"endBreakEarlyAria": "End break early",
+		"interruptAria": "Interrupt",
+		"sectionReadyAria": "Ready to focus",
+		"idleReadyToFocusOn": "Ready to focus on",
+		"idleWorkDuration": "Work duration",
+		"boundsWork": "1 s – 90 min",
+		"startCycleForTask": "Start cycle for {title}",
+		"startCycleAria": "Start cycle",
+		"starting": "Starting...",
+		"startLabel": "Start Cycle",
+		"breakSettingsHide": "Hide break settings ▲",
+		"breakSettingsShow": "Break settings ▼",
+		"breakSettingsShort": "Short break",
+		"breakSettingsLong": "Long break",
+		"boundsBreak": "1 s – 30 min"
+	},
+	"Home": {
+		"offlineBanner": "You're offline — retry when you're back online.",
+		"appName": "FlowState",
+		"tagline": "Manage your tasks. Stay in flow.",
+		"purposeHeader": "A calm answer to: what to do next?"
+	},
+	"DayMemory": {
+		"sectionDone": "Done",
+		"sectionRemains": "Remains",
+		"sectionReturnTo": "Return to",
+		"collapsedLine": "Done: {done}. Remains: {remaining}. Return calmly to: {next}."
+	},
+	"CycleComplete": {
+		"breakHeading": "Break's over!",
+		"breakReentryFallback": "{breakLabel} complete — ready for the next cycle.",
+		"breakContinueWithTask": "Continue with {title}",
+		"breakContinue": "Continue",
+		"breakChooseDifferent": "Choose different task",
+		"workDoneForToday": "Done for today",
+		"workMarkComplete": "Done — mark task complete",
+		"workHeading": "Cycle Complete!",
+		"workContinueLater": "Continue later",
+		"workTaskInactiveNote": "This task is no longer active — you can only continue later."
+	},
+	"MidCycle": {
+		"heading": "Task complete",
+		"bodyHasOthers": "Continue this cycle with another task, or end now for a break.",
+		"bodyNoOthers": "No other active tasks — end the cycle and take a break.",
+		"resumeNoteLabel": "Where will you pick up? (optional)",
+		"resumeNotePlaceholder": "One line — where you left off on the next task",
+		"resumeNoteSkip": "Skip note",
+		"continueSelected": "Continue with selected task",
+		"endAndBreak": "End cycle and break"
+	},
+	"WedgeSync": {
+		"energyFocused": "Focused",
+		"energySteady": "Steady",
+		"energyFading": "Fading",
+		"savedCheckIn": "Your work cycle is saved on this device.",
+		"savedCompleteWork": "Your check-in is saved — we will finish the transition when you retry.",
+		"savedStartBreak": "Your work cycle is saved.",
+		"savedSuggestionFetch": "Your break is still running.",
+		"savedKickoffSession": "Your session has not started yet.",
+		"savedKickoffSuggestion": "Your session is ready — we will load a suggestion when you retry.",
+		"heading": "Sync recovery",
+		"energyNote": "Energy: {label} — no need to pick again.",
+		"retry": "Retry",
+		"dismiss": "Dismiss"
+	},
+	"Recap": {
+		"markedDone": "Marked done · {title}",
+		"rowFormat": "{label} · {minutes}m · {range}",
+		"todayDailyTag": "Daily",
+		"todayDoneTag": "Done today",
+		"title": "Daily recap",
+		"dismissAria": "Dismiss daily recap",
+		"sectionLast24": "Last 24 hours",
+		"sectionToday": "Today",
+		"todayEmpty": "Nothing on today's plan yet."
+	},
+	"EmptyTasks": {
+		"guest": "No active tasks yet — add one to start a focus cycle. Sign in to unlock energy check-ins and smart suggestions.",
+		"authenticated": "No active tasks yet — add one to start a focus cycle.",
+		"addButton": "Add a task"
+	},
+	"Errors": {
+		"cycle": {
+			"suggestionDecisionSaveFailed": "Could not save suggestion preference. Your choice is kept locally.",
+			"kickoffSuggestionLoadFailed": "Could not load kickoff suggestion. Try again.",
+			"sessionStartFailed": "Could not start your session. Try again.",
+			"cycleInProgress": "Finish or dismiss the current cycle before starting another.",
+			"noTaskSelected": "Select a task before starting a cycle.",
+			"startFailed": "Could not start the cycle. Check your connection and try again.",
+			"interruptFailed": "Could not interrupt the cycle. Try again.",
+			"pauseFailed": "Could not pause the cycle. Try again.",
+			"resumeFailed": "Could not resume the cycle. Try again.",
+			"breakStartFailed": "Break could not start. Your work cycle was saved.",
+			"completionSaveFailed": "Could not save cycle completion. Check your connection and try again.",
+			"switchTaskFailed": "Could not switch tasks. Try again.",
+			"checkInSaveFailed": "Could not save check-in. Try again.",
+			"suggestionLoadBreakRunning": "Could not load suggestion. Your break is running — tap Retry.",
+			"suggestionLoadFailed": "Could not load suggestion. Try again.",
+			"endSessionFailed": "Could not end the session. Try again."
+		},
+		"task": {
+			"notFound": "Task not found",
+			"generic": "Something went wrong. Please try again."
+		}
+	},
+	"Auth": {
+		"dividerOr": "or",
+		"dismissErrorAria": "Dismiss error",
+		"dismissMessageAria": "Dismiss message",
+		"backToSignIn": "Back to sign in",
+		"field": {
+			"nameLabel": "Name",
+			"namePlaceholder": "Your name",
+			"emailLabel": "Email",
+			"emailPlaceholder": "you@example.com",
+			"passwordLabel": "Password",
+			"passwordPlaceholder": "At least 8 characters"
+		},
+		"validation": {
+			"emailRequired": "Email is required",
+			"emailMax": "Email must be 254 characters or less",
+			"emailInvalid": "Please enter a valid email address",
+			"passwordMin": "Password must be at least 8 characters",
+			"passwordMax": "Password must be 128 characters or less"
+		},
+		"common": {
+			"networkError": "Could not complete the request. Please check your connection and try again."
+		},
+		"google": {
+			"signIn": "Sign in with Google",
+			"signUp": "Sign up with Google",
+			"redirecting": "Redirecting…"
+		},
+		"signIn": {
+			"title": "Sign in to FlowState",
+			"oauthError": "Could not sign in with Google. Please try again or use email and password.",
+			"resetSuccess": "Password updated. Sign in with your new password.",
+			"passwordPlaceholder": "••••••••",
+			"forgotPassword": "Forgot password?",
+			"submitting": "Signing in…",
+			"submit": "Sign in",
+			"noAccount": "Don't have an account?",
+			"signUpLink": "Sign up",
+			"missingFields": "Please enter your {fields}.",
+			"fieldEmail": "email",
+			"fieldPassword": "password",
+			"fieldJoiner": " and ",
+			"invalidCredentials": "Invalid email or password. Please try again."
+		},
+		"signUp": {
+			"title": "Create account",
+			"oauthError": "Could not sign up with Google. Please try again or use email and password.",
+			"submit": "Create account",
+			"submitting": "Creating account...",
+			"haveAccount": "Already have an account?",
+			"signInLink": "Sign in",
+			"validation": {
+				"nameRequired": "Name is required",
+				"nameMax": "Name must be 100 characters or less",
+				"nameWhitespace": "Name cannot be only whitespace"
+			},
+			"error": {
+				"emailExists": "This email is already associated with an existing account",
+				"generic": "Could not complete the request. Please try again."
+			}
+		},
+		"forgotPassword": {
+			"title": "Reset your password",
+			"subtitle": "Enter your email and we'll send you a link to reset your password.",
+			"successMessage": "If an account exists for that email, we've sent a reset link.",
+			"googlePrompt": "Signed up with Google?",
+			"googleLink": "Use Google sign-in instead",
+			"submitting": "Sending…",
+			"submit": "Send reset link",
+			"rememberPrompt": "Remember your password?",
+			"signInLink": "Sign in",
+			"emailInvalid": "Please enter a valid email address."
+		},
+		"resetPassword": {
+			"title": "Set a new password",
+			"subtitle": "Choose a new password for your account.",
+			"invalidLink": "This reset link is invalid or has expired.",
+			"requestNewLink": "Request a new reset link",
+			"newPasswordLabel": "New password",
+			"confirmLabel": "Confirm password",
+			"confirmPlaceholder": "Confirm your password",
+			"submitting": "Updating…",
+			"submit": "Set new password",
+			"validationMismatch": "Passwords do not match"
+		}
+	},
+	"SessionSteering": {
+		"energyHeading": "How's your energy to start?",
+		"energyBody": "We'll use this to suggest your first task.",
+		"energySkip": "Skip",
+		"focusHeading": "What's your focus this session?",
+		"focusBody": "Helps bias your first task suggestion.",
+		"focusLegend": "Focus intention options",
+		"focusCustomAria": "Custom focus intention",
+		"focusCustomPlaceholder": "Or type your own…",
+		"focusCustomSubmit": "Set focus",
+		"focusSkip": "Skip for now"
+	},
+	"Energy": {
+		"focused": "Focused",
+		"steady": "Steady",
+		"fading": "Fading",
+		"legendEnergyLevel": "Energy level"
+	},
+	"CheckIn": {
+		"heading": "How's your energy?",
+		"description": "Select one before your break starts."
+	},
+	"FocusBudget": {
+		"title": "Today's focus hours",
+		"body": "Set a daily budget so suggestions fit what you have left.",
+		"dismissAria": "Dismiss focus budget prompt",
+		"notNow": "Not now",
+		"customAria": "Custom focus minutes",
+		"customPlaceholder": "Custom",
+		"set": "Set",
+		"saveError": "Could not save focus hours. Try again.",
+		"validationError": "Enter focus hours between 15 and 720 minutes."
+	},
+	"BreakAlerts": {
+		"permissionTitle": "Break alerts in other tabs",
+		"permissionDescription": "When you are in another tab, FlowState can send a calm notification and play your break chime when a break starts. You can turn this off anytime in break settings.",
+		"enableNotifications": "Enable notifications",
+		"notNow": "Not now"
+	},
+	"Kickoff": {
+		"suggestedDuration": "Suggested work duration",
+		"yourUsual": "your usual",
+		"minutesLabel": "{minutes} min",
+		"usualDurationAria": "Your usual duration, {minutes} min"
+	},
+	"DurationPicker": {
+		"customLabel": "Custom ({bounds})",
+		"minUnit": "min",
+		"secUnit": "sec",
+		"validationError": "Must be within {bounds}"
+	}
+}

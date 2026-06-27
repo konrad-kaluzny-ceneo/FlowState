@@ -1,15 +1,16 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { KeyboardEvent, ReactNode } from "react";
 
 import { StyledCheckbox } from "~/app/_components/styled-checkbox";
 import type { CommitmentHorizon } from "~/lib/data-mode/types";
 import { WORK_TYPE_CONFIG } from "~/lib/design/work-type-config";
 
-const HORIZON_OPTIONS: { value: CommitmentHorizon; label: string }[] = [
-	{ value: "ASAP", label: "ASAP" },
-	{ value: "THIS_WEEK", label: "This week" },
-	{ value: "WHEN_POSSIBLE", label: "When possible" },
+const HORIZON_VALUES: CommitmentHorizon[] = [
+	"ASAP",
+	"THIS_WEEK",
+	"WHEN_POSSIBLE",
 ];
 
 const TITLE_FIELD_CLASS =
@@ -76,39 +77,49 @@ function EisenhowerAttributeFields({
 	onEffortMinutesChange,
 	onCommitmentHorizonChange,
 }: EisenhowerAttributeFieldsProps) {
+	const t = useTranslations("Tasks");
+
+	const axisOptions = [
+		{ value: 1 as const, label: t("axisLight") },
+		{ value: 2 as const, label: t("axisMedium") },
+		{ value: 3 as const, label: t("axisHeavy") },
+	];
+
+	const horizonOptions = HORIZON_VALUES.map((value) => ({
+		value,
+		label:
+			value === "ASAP"
+				? t("asap")
+				: value === "THIS_WEEK"
+					? t("horizonThisWeek")
+					: t("horizonWhenPossible"),
+	}));
+
 	return (
 		<>
 			<div className="flex flex-wrap items-center gap-2">
 				<span className="w-16 shrink-0 text-text-secondary text-xs">
-					Urgency
+					{t("fieldUrgency")}
 				</span>
 				<SegmentedControl
 					onChange={(value) => onUrgencyChange(value as 1 | 2 | 3)}
-					options={[
-						{ value: 1 as const, label: "Light" },
-						{ value: 2 as const, label: "Medium" },
-						{ value: 3 as const, label: "Heavy" },
-					]}
+					options={axisOptions}
 					value={urgency}
 				/>
 			</div>
 			<div className="flex flex-wrap items-center gap-2">
 				<span className="w-16 shrink-0 text-text-secondary text-xs">
-					Importance
+					{t("fieldImportance")}
 				</span>
 				<SegmentedControl
 					onChange={(value) => onImportanceChange(value as 1 | 2 | 3)}
-					options={[
-						{ value: 1 as const, label: "Light" },
-						{ value: 2 as const, label: "Medium" },
-						{ value: 3 as const, label: "Heavy" },
-					]}
+					options={axisOptions}
 					value={importance}
 				/>
 			</div>
 			<div className="flex flex-wrap items-center gap-2">
 				<span className="w-16 shrink-0 text-text-secondary text-xs">
-					Effort
+					{t("fieldEffort")}
 				</span>
 				<input
 					className="w-24 rounded-md bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
@@ -116,7 +127,7 @@ function EisenhowerAttributeFields({
 					max={240}
 					min={5}
 					onChange={(event) => onEffortMinutesChange(event.target.value)}
-					placeholder="min"
+					placeholder={t("createEffortPlaceholder")}
 					type="number"
 					value={effortMinutes}
 				/>
@@ -126,13 +137,13 @@ function EisenhowerAttributeFields({
 						onClick={() => onEffortMinutesChange("")}
 						type="button"
 					>
-						Clear
+						{t("createClearEffort")}
 					</button>
 				)}
 			</div>
 			<div className="flex flex-wrap items-center gap-2">
 				<span className="w-16 shrink-0 text-text-secondary text-xs">
-					Horizon
+					{t("fieldHorizon")}
 				</span>
 				<SegmentedControl
 					colorMap={{
@@ -143,7 +154,7 @@ function EisenhowerAttributeFields({
 					onChange={(value) =>
 						onCommitmentHorizonChange(value as CommitmentHorizon)
 					}
-					options={HORIZON_OPTIONS}
+					options={horizonOptions}
 					value={commitmentHorizon}
 				/>
 			</div>
@@ -204,8 +215,15 @@ export function TaskFieldsPanel({
 	personaPresetPicker,
 	presetEffortField,
 }: TaskFieldsPanelProps) {
+	const t = useTranslations("Tasks");
 	const showWorkType = mode === "edit" || showAttributeFields;
 	const showEisenhower = mode === "edit" || showAttributeFields;
+
+	const workTypeOptions = [
+		{ value: "DEEP_WORK" as const, label: t("workType.DEEP_WORK") },
+		{ value: "OPERATIONAL" as const, label: t("workType.OPERATIONAL") },
+		{ value: "REACTIVE" as const, label: t("workType.REACTIVE") },
+	];
 
 	return (
 		<div className="space-y-2" data-testid={`task-fields-panel-${mode}`}>
@@ -225,14 +243,14 @@ export function TaskFieldsPanel({
 						className="block text-text-secondary text-xs"
 						htmlFor={resumeNoteFieldId}
 					>
-						Where you left off (optional)
+						{t("resumeNoteLabel")}
 					</label>
 					<textarea
 						className="w-full resize-none rounded-lg border border-border-subtle bg-surface-card px-4 py-2 text-primary text-sm focus:border-text-secondary focus:outline-none"
 						id={resumeNoteFieldId}
 						maxLength={120}
 						onChange={(event) => onResumeNoteChange(event.target.value)}
-						placeholder="One line for when you return to this task"
+						placeholder={t("resumeNotePlaceholder")}
 						rows={2}
 						value={resumeNote}
 					/>
@@ -242,7 +260,7 @@ export function TaskFieldsPanel({
 			<StyledCheckbox
 				checked={isDailyStanding}
 				data-testid="daily-standing-toggle"
-				label="Daily standing"
+				label={t("dailyStanding")}
 				onChange={onIsDailyStandingChange}
 			/>
 			{mode === "create" && presetEffortField}
@@ -259,7 +277,7 @@ export function TaskFieldsPanel({
 				>
 					<div className="flex flex-wrap items-center gap-2">
 						<span className="w-16 shrink-0 text-text-secondary text-xs">
-							Type
+							{t("fieldType")}
 						</span>
 						<SegmentedControl
 							colorMap={{
@@ -268,11 +286,7 @@ export function TaskFieldsPanel({
 								REACTIVE: WORK_TYPE_CONFIG.REACTIVE.segmentActive,
 							}}
 							onChange={onWorkTypeChange}
-							options={[
-								{ value: "DEEP_WORK" as const, label: "Deep" },
-								{ value: "OPERATIONAL" as const, label: "Ops" },
-								{ value: "REACTIVE" as const, label: "Reactive" },
-							]}
+							options={workTypeOptions}
 							value={workType}
 						/>
 					</div>

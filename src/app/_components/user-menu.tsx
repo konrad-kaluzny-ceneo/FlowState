@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { authClient } from "~/lib/auth/client";
-import type { ThemePreference } from "~/lib/design/theme";
-import { useTheme } from "./theme-provider";
+import type { OnboardingScope } from "~/lib/onboarding/types";
 
-const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
-	{ value: "light", label: "Light" },
-	{ value: "dark", label: "Dark" },
-	{ value: "system", label: "System" },
-];
+import { HeaderPreferenceControls } from "./header-preference-controls";
 
-export function UserMenu({ userName }: { userName: string }) {
-	const { preference, setTheme } = useTheme();
+export function UserMenu({
+	userName,
+	scope,
+}: {
+	userName: string;
+	scope: OnboardingScope;
+}) {
 	const [error, setError] = useState<string | null>(null);
 	const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -31,35 +31,7 @@ export function UserMenu({ userName }: { userName: string }) {
 
 	return (
 		<div className="flex items-center gap-3">
-			<fieldset
-				className="flex items-center gap-1 rounded-md border border-border-subtle bg-surface-card p-0.5"
-				data-testid="theme-toggle"
-			>
-				<legend className="sr-only">Theme</legend>
-				{THEME_OPTIONS.map((option) => {
-					const isSelected = preference === option.value;
-					return (
-						<label
-							className={`cursor-pointer rounded px-2 py-1 font-medium text-xs transition-colors ${
-								isSelected
-									? "bg-segment-active text-on-cta"
-									: "text-text-secondary hover:bg-surface-card-muted hover:text-primary"
-							}`}
-							key={option.value}
-						>
-							<input
-								checked={isSelected}
-								className="sr-only"
-								name="theme"
-								onChange={() => setTheme(option.value)}
-								type="radio"
-								value={option.value}
-							/>
-							{option.label}
-						</label>
-					);
-				})}
-			</fieldset>
+			<HeaderPreferenceControls scope={scope} />
 			<span className="text-primary text-sm">{userName}</span>
 			<button
 				className="rounded-md border border-border-subtle bg-surface-card px-3 py-1.5 font-medium text-primary text-sm transition-colors hover:bg-surface-card-muted disabled:opacity-50"

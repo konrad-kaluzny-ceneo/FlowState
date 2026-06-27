@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { FirstRunOverlay } from "~/app/_components/first-run-overlay";
 import { GuestBanner } from "~/app/_components/guest-banner";
 import { GuestImportOnMount } from "~/app/_components/guest-import-on-mount";
@@ -42,6 +44,7 @@ function MergeSuccessOverlayMount() {
 }
 
 function OfflineBanner() {
+	const t = useTranslations("Home");
 	const isOnline = useOnlineStatus();
 
 	if (isOnline) {
@@ -54,7 +57,7 @@ function OfflineBanner() {
 			data-testid="offline-banner"
 			role="status"
 		>
-			You&apos;re offline — retry when you&apos;re back online.
+			{t("offlineBanner")}
 		</div>
 	);
 }
@@ -66,6 +69,7 @@ function HomeShellContent({
 	isAuthenticated: boolean;
 	userId: string | null;
 }) {
+	const t = useTranslations("Home");
 	const mode = isAuthenticated ? "authenticated" : "guest";
 	const { isFirstRunVisible, dismissFirstRun } = useOnboarding();
 	const { mergeSuccessVisible } = useGuestMergeUi();
@@ -92,10 +96,10 @@ function HomeShellContent({
 					<OfflineBanner />
 					<header className="space-y-2 text-center">
 						<HomeHeroSprig />
-						<h1 className="font-semibold text-4xl tracking-tight">FlowState</h1>
-						<p className="text-sm text-text-secondary">
-							Manage your tasks. Stay in flow.
-						</p>
+						<h1 className="font-semibold text-4xl tracking-tight">
+							{t("appName")}
+						</h1>
+						<p className="text-sm text-text-secondary">{t("tagline")}</p>
 					</header>
 					{!isAuthenticated && <GuestBanner />}
 					<PomodoroDashboard />

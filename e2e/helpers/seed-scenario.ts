@@ -6,10 +6,10 @@
  * the wind-down gate. Belt tests call `seedWindDownFatigueScenario` instead of 3× UI cycles.
  */
 import { expect, type Page } from "@playwright/test";
-
 import { MIN_WORK_DURATION_SEC } from "../../src/lib/duration-bounds";
 import { rehydrateFatigueSeedState } from "./cycle-recovery";
 import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
+import { expectTaskListVisible } from "./task-list-locator";
 import { forgetFakeClock, resetFakeClock } from "./work-cycle";
 
 const FATIGUE_COMPLETED_WORK_CYCLES = 3;
@@ -261,7 +261,7 @@ export async function seedWindDownFatigueScenario(
 	);
 	await page.reload();
 	await getActiveAfterReload;
-	await expect(page.getByTestId("task-list")).toBeVisible();
+	await expectTaskListVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	await rehydrateFatigueSeedState(page, session.id);
 	await resetFakeClock(page);

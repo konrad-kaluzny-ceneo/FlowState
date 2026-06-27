@@ -8,6 +8,7 @@ import {
 	clearOnboardingKeys,
 	dismissFirstRunIfVisible,
 } from "./helpers/onboarding";
+import { expectTaskListVisible } from "./helpers/task-list-locator";
 
 test("authenticated user sees app shell with task list", async ({ page }) => {
 	await page.goto("/");
@@ -18,5 +19,5 @@ test("authenticated user sees app shell with task list", async ({ page }) => {
 	await expect(page.getByRole("heading", { name: "FlowState" })).toBeVisible();
 
 	// Task list container rendered (proves TaskList component loaded)
-	await expect(page.getByTestId("task-list")).toBeVisible();
+	await expectTaskListVisible(page);
 });

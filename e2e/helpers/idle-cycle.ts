@@ -6,6 +6,7 @@ import {
 	dismissKickoffSteeringIfVisible,
 } from "./kickoff";
 import { dismissFirstRunIfVisible } from "./onboarding";
+import { taskListLocator } from "./task-list-locator";
 
 async function clickEndSessionWithConfirmIfNeeded(
 	page: Page,
@@ -124,6 +125,8 @@ export async function ensureIdleCycle(page: Page) {
 			if (await page.getByTestId("wind-down-overlay").isVisible()) {
 				await page.getByTestId("wind-down-keep-going-btn").click();
 			}
+			await dismissTaskSuggestionIfVisible(page);
+			await dismissKickoffSteeringIfVisible(page);
 			throw new Error("check-in completed — re-check idle");
 		}
 
@@ -155,6 +158,8 @@ export async function ensureIdleCycle(page: Page) {
 		await expect(page.getByTestId("timer-panel-running")).toBeHidden();
 		await expect(page.getByTestId("check-in-overlay")).toBeHidden();
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeHidden();
-		await expect(page.getByPlaceholder("Add a new task...")).toBeEnabled();
+		await expect(
+			taskListLocator(page).getByPlaceholder("Add a new task..."),
+		).toBeEnabled();
 	}).toPass({ timeout: 30_000 });
 }

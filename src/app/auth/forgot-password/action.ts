@@ -1,22 +1,31 @@
 "use server";
 
 import { NEON_AUTH_NETWORK_ERROR_CODES } from "@neondatabase/auth/next/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { getRequestOrigin } from "~/lib/auth/request-origin";
 import { auth } from "~/lib/auth/server";
-import { type ForgotPasswordFormState, forgotPasswordSchema } from "./schema";
+import type { UserLocale } from "~/lib/domain/user-locale";
+import {
+	createForgotPasswordSchema,
+	type ForgotPasswordFormState,
+} from "./schema";
 
 export async function forgotPasswordAction(
 	_prevState: ForgotPasswordFormState,
 	formData: FormData,
 ): Promise<ForgotPasswordFormState> {
+	const locale = (await getLocale()) as UserLocale;
+	const t = await getTranslations({ locale, namespace: "Auth.forgotPassword" });
+	const tCommon = await getTranslations({ locale, namespace: "Auth.common" });
+
 	const email = (formData.get("email") as string | null)?.trim() ?? "";
 
-	const result = forgotPasswordSchema.safeParse({ email });
+	const result = createForgotPasswordSchema(locale).safeParse({ email });
 
 	if (!result.success) {
 		const fieldErrors = result.error.flatten().fieldErrors;
 		return {
-			error: fieldErrors.email?.[0] ?? "Please enter a valid email address.",
+			error: fieldErrors.email?.[0] ?? t("emailInvalid"),
 			email,
 		};
 	}
@@ -39,17 +48,14 @@ export async function forgotPasswordAction(
 				)
 			) {
 				return {
-					error:
-						"Could not complete the request. Please check your connection and try again.",
+					error: tCommon("networkError"),
 					email: validatedEmail,
 				};
 			}
 
-			// Non-enumerating: do not reveal whether the email exists
 			return { success: true, email: validatedEmail };
 		}
 	} catch {
-		// Non-enumerating: treat unexpected errors as success
 		return { success: true, email: validatedEmail };
 	}
 

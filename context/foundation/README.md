@@ -18,6 +18,7 @@ Foundation docs are **not** auto-loaded into the agent's context window. Pull th
 | `test-plan.md` | Test strategy and cookbook (§6) |
 | `test-stack.md` | Pointer to runners and commands (for `/10x-tdd`) |
 | `lessons.md` | Before `/10x-plan` or `/10x-implement` |
+| `product-voice.md` | Changing user-facing copy, i18n keys, tone, or bilingual acceptance zones (F-14+) |
 | `infrastructure.md` | Deploying, debugging production, changing hosting setup |
 | `health-check.md` | Auditing dependencies, reviewing project health |
 

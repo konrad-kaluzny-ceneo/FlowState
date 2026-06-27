@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import {
 	OverlayCard,
 	OverlayScrim,
@@ -36,6 +38,9 @@ export function CycleCompleteOverlay({
 	onDismissPreFocus,
 	reentryCopy = null,
 }: CycleCompleteOverlayProps) {
+	const t = useTranslations("CycleComplete");
+	const tCatchUp = useTranslations("CatchUp");
+
 	if (state !== "completed") {
 		return null;
 	}
@@ -44,6 +49,10 @@ export function CycleCompleteOverlay({
 
 	if (isBreak) {
 		const hasPreFocus = preFocusedTask != null;
+		const breakLabel =
+			cycleKind === "LONG_BREAK"
+				? tCatchUp("longBreak")
+				: tCatchUp("shortBreak");
 
 		return (
 			<OverlayScrim
@@ -68,15 +77,14 @@ export function CycleCompleteOverlay({
 						className="font-semibold text-2xl text-accent-break"
 						id="break-complete-heading"
 					>
-						Break&apos;s over!
+						{t("breakHeading")}
 					</h2>
 					<p
 						className="mt-2 text-sm text-text-secondary"
 						data-testid="break-reentry-copy"
 						id="break-complete-description"
 					>
-						{reentryCopy ??
-							`${cycleKind === "LONG_BREAK" ? "Long break" : "Short break"} complete — ready for the next cycle.`}
+						{reentryCopy ?? t("breakReentryFallback", { breakLabel })}
 					</p>
 					<div className="mt-8 flex flex-col gap-3">
 						<button
@@ -91,8 +99,10 @@ export function CycleCompleteOverlay({
 							type="button"
 						>
 							{hasPreFocus
-								? `Continue with ${preFocusedTask.title}`
-								: "Continue"}
+								? t("breakContinueWithTask", {
+										title: preFocusedTask.title,
+									})
+								: t("breakContinue")}
 						</button>
 						{hasPreFocus && onDismissPreFocus != null && (
 							<button
@@ -101,7 +111,7 @@ export function CycleCompleteOverlay({
 								onClick={onDismissPreFocus}
 								type="button"
 							>
-								Choose different task
+								{t("breakChooseDifferent")}
 							</button>
 						)}
 					</div>
@@ -111,8 +121,8 @@ export function CycleCompleteOverlay({
 	}
 
 	const primaryActionLabel = primaryMarksDoneForToday
-		? "Done for today"
-		: "Done — mark task complete";
+		? t("workDoneForToday")
+		: t("workMarkComplete");
 
 	return (
 		<OverlayScrim
@@ -129,7 +139,7 @@ export function CycleCompleteOverlay({
 					className="font-semibold text-2xl text-primary"
 					id="cycle-complete-heading"
 				>
-					Cycle Complete!
+					{t("workHeading")}
 				</h2>
 				{focusedTask != null && (
 					<p
@@ -155,12 +165,12 @@ export function CycleCompleteOverlay({
 						onClick={() => void onConfirm(false)}
 						type="button"
 					>
-						Continue later
+						{t("workContinueLater")}
 					</button>
 				</div>
 				{!canMarkTaskDone && (
 					<p className="mt-4 text-text-dimmed text-xs">
-						This task is no longer active — you can only continue later.
+						{t("workTaskInactiveNote")}
 					</p>
 				)}
 			</OverlayCard>

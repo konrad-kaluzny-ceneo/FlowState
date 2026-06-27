@@ -18,6 +18,11 @@ import {
 	seedWindDownFatigueScenario,
 } from "./helpers/seed-scenario";
 import { waitForSuggestionNext } from "./helpers/suggestion";
+import { expectTaskListVisible } from "./helpers/task-list-locator";
+import {
+	expectShortBreakPhaseHidden,
+	expectShortBreakPhaseVisible,
+} from "./helpers/timer-phase";
 import {
 	advanceClockThroughWorkSec,
 	completeSteadyWorkCycleAndResumeIdle,
@@ -71,7 +76,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 	test.beforeEach(async ({ page }) => {
 		forgetFakeClock(page);
 		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
+		await expectTaskListVisible(page);
 		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		forgetFakeClock(page);
@@ -98,7 +103,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		await expectWindDownVisible(page, {
 			rationale: /energy dipping after 4 cycles/,
 		});
-		await expect(page.getByText("Short Break")).toBeHidden();
+		await expectShortBreakPhaseHidden(page);
 		await expect(page.getByTestId("task-suggestion-card")).toBeHidden();
 	});
 
@@ -178,7 +183,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		});
 		await expect(page.getByTestId("task-suggestion-card")).toBeHidden();
 		await expect(page.getByPlaceholder("Add a new task...")).toBeEnabled();
-		await expect(page.getByTestId("task-list")).toBeVisible();
+		await expectTaskListVisible(page);
 	});
 
 	test("keep going suppresses wind-down until next check-in @skip-belt", async ({
@@ -215,7 +220,7 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		await page.getByRole("button", { name: "Continue later" }).click();
 		await completeCheckIn(page, "fading");
 		await expect(page.getByTestId("wind-down-overlay")).toBeHidden();
-		await expect(page.getByText("Short Break")).toBeVisible();
+		await expectShortBreakPhaseVisible(page);
 	});
 
 	test("steady or focused energy with fatigue skips wind-down @skip-belt", async ({
@@ -270,6 +275,6 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		await suggestionResponse;
 
 		await expect(page.getByTestId("wind-down-overlay")).toBeHidden();
-		await expect(page.getByText("Short Break")).toBeVisible();
+		await expectShortBreakPhaseVisible(page);
 	});
 });

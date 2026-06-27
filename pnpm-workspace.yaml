@@ -7,8 +7,10 @@ strictDepBuilds: true
 
 onlyBuiltDependencies:
   - "@biomejs/biome"
+  - "@parcel/watcher"
   - "@prisma/client"
   - "@prisma/engines"
+  - "@swc/core"
   - esbuild
   - lefthook
   - prisma
@@ -16,8 +18,10 @@ onlyBuiltDependencies:
 
 # Packages approved to run build scripts (managed by `pnpm approve-builds`)
 allowBuilds:
+  "@parcel/watcher": true
   "@prisma/client": true
   "@prisma/engines": true
+  "@swc/core": true
   core-js: true
   esbuild: true
   lefthook: true

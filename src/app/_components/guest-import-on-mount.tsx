@@ -1,12 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { importGuestSnapshotAction } from "~/app/_actions/import-guest-snapshot";
 import { useGuestMergeUi } from "~/app/_components/guest-merge-ui-context";
 import { resetActiveCycleRecoveryGuard } from "~/hooks/use-pomodoro-cycle";
 import { useRepositories } from "~/lib/data-mode/data-mode-context";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import {
 	loadGuestSnapshotForImport,
 	markGuestImportAttempted,
@@ -23,6 +25,7 @@ import { enableAuthenticatedWedgeCoach } from "~/lib/onboarding/storage";
 import { api } from "~/trpc/react";
 
 export function GuestImportOnMount({ userId }: { userId: string }) {
+	const locale = useLocale() as UserLocale;
 	const { mode } = useRepositories();
 	const { showMergeSuccess } = useGuestMergeUi();
 	const utils = api.useUtils();
@@ -71,11 +74,14 @@ export function GuestImportOnMount({ userId }: { userId: string }) {
 				const showMergeModal = importedTasks > 0 || importedCycles > 0;
 
 				if (showMergeModal) {
-					const copy = buildMergeSuccessCopy({
-						importedTasks,
-						importedCycles,
-						previewTitles,
-					});
+					const copy = buildMergeSuccessCopy(
+						{
+							importedTasks,
+							importedCycles,
+							previewTitles,
+						},
+						locale,
+					);
 					showMergeSuccessRef.current(copy);
 				}
 
@@ -100,7 +106,7 @@ export function GuestImportOnMount({ userId }: { userId: string }) {
 				setImportInFlight(false);
 			}
 		})();
-	}, [mode, userId]);
+	}, [mode, userId, locale]);
 
 	if (importError == null) {
 		return null;

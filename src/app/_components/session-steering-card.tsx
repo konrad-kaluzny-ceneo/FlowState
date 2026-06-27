@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
 import {
@@ -7,7 +8,8 @@ import {
 	EnergySelector,
 } from "~/app/_components/energy-selector";
 import { overlayButtonClass } from "~/app/_components/overlay-shell";
-import { INTENTION_CHIP_OPTIONS } from "~/lib/session/narrative-copy";
+import type { UserLocale } from "~/lib/domain/user-locale";
+import { getIntentionChipOptions } from "~/lib/session/narrative-copy";
 
 type SessionEnergyCardProps = {
 	onSelect: (energy: CheckInEnergy) => void;
@@ -20,6 +22,8 @@ export function SessionEnergyCard({
 	onSkip,
 	disabled = false,
 }: SessionEnergyCardProps) {
+	const t = useTranslations("SessionSteering");
+
 	return (
 		<section
 			aria-labelledby="session-energy-heading"
@@ -30,11 +34,9 @@ export function SessionEnergyCard({
 				className="font-semibold text-lg text-primary"
 				id="session-energy-heading"
 			>
-				How&apos;s your energy to start?
+				{t("energyHeading")}
 			</h2>
-			<p className="mt-1 text-sm text-text-secondary">
-				We&apos;ll use this to suggest your first task.
-			</p>
+			<p className="mt-1 text-sm text-text-secondary">{t("energyBody")}</p>
 			<EnergySelector disabled={disabled} onSelect={onSelect} />
 			<button
 				className={`${overlayButtonClass.secondary} mt-3 w-full py-2 text-sm text-text-dimmed hover:text-text-secondary sm:py-2.5`}
@@ -43,7 +45,7 @@ export function SessionEnergyCard({
 				onClick={onSkip}
 				type="button"
 			>
-				Skip
+				{t("energySkip")}
 			</button>
 		</section>
 	);
@@ -60,7 +62,10 @@ export function SessionFocusCard({
 	onSkip,
 	isSubmitting = false,
 }: SessionFocusCardProps) {
+	const locale = useLocale() as UserLocale;
+	const t = useTranslations("SessionSteering");
 	const [customIntention, setCustomIntention] = useState("");
+	const intentionChips = getIntentionChipOptions(locale);
 
 	const handleChipSelect = (label: string) => {
 		onComplete(label);
@@ -84,15 +89,13 @@ export function SessionFocusCard({
 				className="font-semibold text-lg text-primary"
 				id="session-focus-heading"
 			>
-				What&apos;s your focus this session?
+				{t("focusHeading")}
 			</h2>
-			<p className="mt-1 text-sm text-text-secondary">
-				Helps bias your first task suggestion.
-			</p>
+			<p className="mt-1 text-sm text-text-secondary">{t("focusBody")}</p>
 			<fieldset className="mt-4 border-0 p-0">
-				<legend className="sr-only">Focus intention options</legend>
+				<legend className="sr-only">{t("focusLegend")}</legend>
 				<div className="flex flex-wrap gap-2">
-					{INTENTION_CHIP_OPTIONS.map((chip) => (
+					{intentionChips.map((chip) => (
 						<button
 							className="rounded-lg bg-segment-inactive px-3 py-2 text-sm text-text-secondary transition hover:bg-surface-panel disabled:opacity-40"
 							data-testid={`steering-intention-${chip.testId}`}
@@ -107,13 +110,13 @@ export function SessionFocusCard({
 				</div>
 			</fieldset>
 			<input
-				aria-label="Custom focus intention"
+				aria-label={t("focusCustomAria")}
 				className="mt-3 w-full rounded-lg border border-border-subtle bg-surface-panel px-3 py-2 text-sm text-text-primary placeholder:text-text-dimmed"
 				data-testid="steering-intention-input"
 				disabled={isSubmitting}
 				maxLength={80}
 				onChange={(event) => setCustomIntention(event.target.value)}
-				placeholder="Or type your own…"
+				placeholder={t("focusCustomPlaceholder")}
 				value={customIntention}
 			/>
 			<div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -124,7 +127,7 @@ export function SessionFocusCard({
 					onClick={handleCustomSubmit}
 					type="button"
 				>
-					Use this focus
+					{t("focusCustomSubmit")}
 				</button>
 				<button
 					className={`${overlayButtonClass.secondary} w-full flex-1 py-2 text-sm text-text-dimmed hover:text-text-secondary sm:py-2.5`}
@@ -133,7 +136,7 @@ export function SessionFocusCard({
 					onClick={onSkip}
 					type="button"
 				>
-					Skip
+					{t("focusSkip")}
 				</button>
 			</div>
 		</section>

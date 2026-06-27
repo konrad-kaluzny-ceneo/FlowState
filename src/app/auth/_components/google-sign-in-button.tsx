@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { authClient } from "~/lib/auth/client";
 
@@ -12,10 +13,10 @@ export function GoogleSignInButton({
 	mode,
 	errorCallbackURL,
 }: GoogleSignInButtonProps) {
+	const t = useTranslations("Auth.google");
 	const [isLoading, setIsLoading] = useState(false);
 
-	const label =
-		mode === "sign-in" ? "Sign in with Google" : "Sign up with Google";
+	const label = mode === "sign-in" ? t("signIn") : t("signUp");
 
 	async function handleClick() {
 		setIsLoading(true);
@@ -62,7 +63,7 @@ export function GoogleSignInButton({
 					fill="#EA4335"
 				/>
 			</svg>
-			{isLoading ? "Redirecting…" : label}
+			{isLoading ? t("redirecting") : label}
 		</button>
 	);
 }

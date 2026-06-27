@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { AuthDivider } from "~/app/auth/_components/auth-divider";
 import { GoogleSignInButton } from "~/app/auth/_components/google-sign-in-button";
@@ -18,6 +19,9 @@ const initialState: SignInFormState = {
 };
 
 export function SignInForm() {
+	const t = useTranslations("Auth.signIn");
+	const tField = useTranslations("Auth.field");
+	const tAuth = useTranslations("Auth");
 	const [state, formAction, isPending] = useActionState(
 		signInAction,
 		initialState,
@@ -42,12 +46,9 @@ export function SignInForm() {
 					className="mb-4 flex items-center justify-between rounded-md bg-red-500/10 p-3 text-red-300 text-sm"
 					role="alert"
 				>
-					<span>
-						Could not sign in with Google. Please try again or use email and
-						password.
-					</span>
+					<span>{t("oauthError")}</span>
 					<button
-						aria-label="Dismiss error"
+						aria-label={tAuth("dismissErrorAria")}
 						className="ml-2 text-red-300 hover:text-red-200"
 						onClick={dismissOAuthError}
 						type="button"
@@ -62,9 +63,9 @@ export function SignInForm() {
 					className="mb-4 flex items-center justify-between rounded-md bg-green-500/10 p-3 text-green-300 text-sm"
 					role="status"
 				>
-					<span>Password updated. Sign in with your new password.</span>
+					<span>{t("resetSuccess")}</span>
 					<button
-						aria-label="Dismiss message"
+						aria-label={tAuth("dismissMessageAria")}
 						className="ml-2 text-green-300 hover:text-green-200"
 						onClick={dismissResetSuccess}
 						type="button"
@@ -90,7 +91,7 @@ export function SignInForm() {
 						className="font-medium text-sm text-text-section"
 						htmlFor="email"
 					>
-						Email
+						{tField("emailLabel")}
 					</label>
 					<input
 						aria-required="true"
@@ -100,7 +101,7 @@ export function SignInForm() {
 						id="email"
 						maxLength={254}
 						name="email"
-						placeholder="you@example.com"
+						placeholder={tField("emailPlaceholder")}
 						required
 						type="email"
 					/>
@@ -111,7 +112,7 @@ export function SignInForm() {
 						className="font-medium text-sm text-text-section"
 						htmlFor="password"
 					>
-						Password
+						{tField("passwordLabel")}
 					</label>
 					<input
 						autoComplete="current-password"
@@ -119,7 +120,7 @@ export function SignInForm() {
 						id="password"
 						maxLength={128}
 						name="password"
-						placeholder="••••••••"
+						placeholder={t("passwordPlaceholder")}
 						required
 						type="password"
 					/>
@@ -128,7 +129,7 @@ export function SignInForm() {
 							className="text-accent-cta text-sm underline-offset-2 hover:underline"
 							href="/auth/forgot-password"
 						>
-							Forgot password?
+							{t("forgotPassword")}
 						</Link>
 					</div>
 				</div>
@@ -139,7 +140,7 @@ export function SignInForm() {
 					disabled={isPending}
 					type="submit"
 				>
-					{isPending ? "Signing in…" : "Sign in"}
+					{isPending ? t("submitting") : t("submit")}
 				</button>
 			</form>
 
@@ -155,12 +156,12 @@ export function SignInForm() {
 			</div>
 
 			<p className="mt-6 text-center text-sm text-text-secondary">
-				Don&apos;t have an account?{" "}
+				{t("noAccount")}{" "}
 				<Link
 					className="text-accent-cta underline-offset-2 hover:underline"
 					href="/auth/sign-up"
 				>
-					Sign up
+					{t("signUpLink")}
 				</Link>
 			</p>
 		</>

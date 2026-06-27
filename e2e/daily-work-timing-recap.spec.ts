@@ -9,6 +9,7 @@ import { ensureIdleCycle } from "./helpers/idle-cycle";
 import { dismissKickoffSteeringIfVisible } from "./helpers/kickoff";
 import { dismissFirstRunIfVisible } from "./helpers/onboarding";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
+import { expectTaskListVisible } from "./helpers/task-list-locator";
 import {
 	addTasks,
 	advanceClockThroughFastWork,
@@ -28,7 +29,7 @@ test.describe("Daily work timing recap (S-30)", () => {
 		forgetFakeClock(page);
 		await resetWorkerSessionViaApi(page);
 		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
+		await expectTaskListVisible(page);
 		await waitForCycleGetActive(page);
 		const cleanReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),

@@ -8,12 +8,16 @@ import { ensureIdleCycle } from "./helpers/idle-cycle";
 import { completeKickoffSteering } from "./helpers/kickoff";
 import { dismissFirstRunIfVisible } from "./helpers/onboarding";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
+import {
+	expectTaskListVisible,
+	taskListLocator,
+} from "./helpers/task-list-locator";
 import { addTask, startFocusedWorkCycle } from "./helpers/work-cycle";
 
 test.describe("Session return continue row (S-17)", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
+		await expectTaskListVisible(page);
 		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		const cleanReload = page.waitForResponse(
@@ -59,7 +63,7 @@ test.describe("Session return continue row (S-17)", () => {
 		);
 		await page.reload();
 		await lastEndedReady;
-		await expect(page.getByTestId("task-list")).toBeVisible({
+		await expect(taskListLocator(page)).toBeVisible({
 			timeout: 20_000,
 		});
 		await dismissFirstRunIfVisible(page);

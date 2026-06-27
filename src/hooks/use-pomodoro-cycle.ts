@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import {
 	useCallback,
 	useEffect,
@@ -34,6 +35,7 @@ type CreatedActiveCycle = Omit<DomainActiveCycle, "task"> & {
 };
 
 import type { EnergyLevel } from "~/lib/domain/energy-level";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import {
 	getLongBreakDuration,
 	getShortBreakDuration,
@@ -66,7 +68,7 @@ import {
 	shouldShowWindDownNudge,
 } from "~/lib/session/wind-down-nudge";
 import {
-	OVERRIDE_ACK_LINE,
+	getOverrideAckLine,
 	OVERRIDE_ACK_VISIBLE_MS,
 } from "~/lib/suggestion/override-ack-copy";
 import { formatLocalDateKey } from "~/lib/time/local-date-key";
@@ -357,6 +359,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		activeTaskIdsRef.current = options?.activeTaskIds;
 	}, [options?.activeTaskIds]);
 
+	const locale = useLocale() as UserLocale;
+	const tErrors = useTranslations("Errors.cycle");
 	const mode = useDataMode();
 	const { cycles, sessions, tasks, refreshGuest } = useRepositories();
 	const utils = api.useUtils();
@@ -1163,12 +1167,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const showOverrideAck = useCallback(() => {
 		clearOverrideAck();
-		setOverrideAcknowledgement(OVERRIDE_ACK_LINE);
+		setOverrideAcknowledgement(getOverrideAckLine(locale));
 		overrideAckTimerRef.current = setTimeout(() => {
 			setOverrideAcknowledgement(null);
 			overrideAckTimerRef.current = null;
 		}, OVERRIDE_ACK_VISIBLE_MS);
-	}, [clearOverrideAck]);
+	}, [clearOverrideAck, locale]);
 
 	const clearBreakTransitionLine = useCallback(() => {
 		if (breakTransitionTimerRef.current != null) {
@@ -1181,13 +1185,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const showBreakTransitionLine = useCallback(
 		(breakKind: BreakKind) => {
 			clearBreakTransitionLine();
-			setBreakTransitionLine(getBreakStartLine(breakKind));
+			setBreakTransitionLine(getBreakStartLine(breakKind, locale));
 			breakTransitionTimerRef.current = setTimeout(() => {
 				setBreakTransitionLine(null);
 				breakTransitionTimerRef.current = null;
 			}, BREAK_TRANSITION_VISIBLE_MS);
 		},
-		[clearBreakTransitionLine],
+		[clearBreakTransitionLine, locale],
 	);
 
 	const clearKickoffSuggestion = useCallback(() => {
@@ -1244,12 +1248,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					}),
 				);
 			} catch {
-				setError(
-					"Could not save suggestion preference. Your choice is kept locally.",
-				);
+				setError(tErrors("suggestionDecisionSaveFailed"));
 			}
 		},
-		[suggestionCycleId, recordDecisionMutation],
+		[suggestionCycleId, recordDecisionMutation, tErrors],
 	);
 
 	const recordKickoffDecision = useCallback(
@@ -1267,12 +1269,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					}),
 				);
 			} catch {
-				setError(
-					"Could not save suggestion preference. Your choice is kept locally.",
-				);
+				setError(tErrors("suggestionDecisionSaveFailed"));
 			}
 		},
-		[_activeSessionId, recordDecisionMutation],
+		[_activeSessionId, recordDecisionMutation, tErrors],
 	);
 
 	const fetchPostCheckInSuggestion = useCallback(
@@ -1413,8 +1413,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					if (gen !== kickoffFetchGenRef.current) {
 						return;
 					}
-					const recoveryMessage =
-						"Could not load kickoff suggestion. Try again.";
+					const recoveryMessage = tErrors("kickoffSuggestionLoadFailed");
 					pendingWedgeIntentRef.current = {
 						phase: "kickoff_suggestion",
 						energy,
@@ -1434,7 +1433,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				}
 			})();
 		},
-		[suggestionNextKickoff],
+		[suggestionNextKickoff, tErrors],
 	);
 
 	const kickoffReadyTaskId =
@@ -1707,7 +1706,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				if (gen !== kickoffFetchGenRef.current) {
 					return;
 				}
-				const recoveryMessage = "Could not start your session. Try again.";
+				const recoveryMessage = tErrors("sessionStartFailed");
 				pendingWedgeIntentRef.current = {
 					phase: "kickoff_session",
 					energy: "STEADY",
@@ -1726,6 +1725,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		sessionEnergyPending,
 		sessionFocusPending,
 		pendingKickoffSuggestion.status,
+		tErrors,
 	]);
 
 	useEffect(() => {
@@ -1928,14 +1928,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setStagedKickoffDurationSec(null);
 
 			if (state !== "idle") {
-				setError(
-					"Finish or dismiss the current cycle before starting another.",
-				);
+				setError(tErrors("cycleInProgress"));
 				return;
 			}
 
 			if (focusedTaskId == null) {
-				setError("Select a task before starting a cycle.");
+				setError(tErrors("noTaskSelected"));
 				return;
 			}
 
@@ -2079,9 +2077,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				if (useOptimisticStart) {
 					rollbackOptimisticStart();
 				}
-				setError(
-					"Could not start the cycle. Check your connection and try again.",
-				);
+				setError(tErrors("startFailed"));
 			}
 		},
 		[
@@ -2102,6 +2098,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			completedWorkCycles,
 			sessionIntention,
 			maybePresentTimeoutClosure,
+			tErrors,
 		],
 	);
 
@@ -2211,7 +2208,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					startWorker(interruptSnapshot.endTime);
 				}
 			}
-			setError("Could not interrupt the cycle. Try again.");
+			setError(tErrors("interruptFailed"));
 		}
 	}, [
 		activeCycle,
@@ -2224,6 +2221,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		state,
 		stopWorker,
 		clearSuggestion,
+		tErrors,
 	]);
 
 	const pause = useCallback(async () => {
@@ -2293,7 +2291,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				endTimeRef.current = pauseSnapshot.endTime;
 				startWorker(pauseSnapshot.endTime);
 			}
-			setError("Could not pause the cycle. Try again.");
+			setError(tErrors("pauseFailed"));
 		}
 	}, [
 		activeCycle,
@@ -2307,6 +2305,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		stopWorker,
 		resolvePersistedCycleId,
 		clearBreakTransitionLine,
+		tErrors,
 	]);
 
 	const resume = useCallback(async () => {
@@ -2377,7 +2376,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				endTimeRef.current = null;
 				stopWorker();
 			}
-			setError("Could not resume the cycle. Try again.");
+			setError(tErrors("resumeFailed"));
 		}
 	}, [
 		activeCycle,
@@ -2390,6 +2389,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		state,
 		stopWorker,
 		resolvePersistedCycleId,
+		tErrors,
 	]);
 
 	const startBreakAfterWorkComplete = useCallback(
@@ -2458,9 +2458,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			try {
 				cycleId = await resolvePersistableCycleId();
 			} catch {
-				setError(
-					"Could not save cycle completion. Check your connection and try again.",
-				);
+				setError(tErrors("completionSaveFailed"));
 				return false;
 			}
 
@@ -2480,9 +2478,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					),
 				);
 			} catch {
-				setError(
-					"Could not save cycle completion. Check your connection and try again.",
-				);
+				setError(tErrors("completionSaveFailed"));
 				return false;
 			}
 
@@ -2522,6 +2518,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			utils.task.list,
 			_activeSessionId,
 			refreshNarrativeStats,
+			tErrors,
 		],
 	);
 
@@ -2539,9 +2536,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			try {
 				cycleId = await resolvePersistableCycleId();
 			} catch {
-				setError(
-					"Could not save cycle completion. Check your connection and try again.",
-				);
+				setError(tErrors("completionSaveFailed"));
 				return;
 			}
 
@@ -2561,9 +2556,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					),
 				);
 			} catch {
-				setError(
-					"Could not save cycle completion. Check your connection and try again.",
-				);
+				setError(tErrors("completionSaveFailed"));
 				return;
 			}
 
@@ -2576,7 +2569,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				try {
 					await startBreakAfterWorkComplete(markTaskDone);
 				} catch {
-					setError("Break could not start. Your work cycle was saved.");
+					setError(tErrors("breakStartFailed"));
 					setState("idle");
 					setRemainingMs(0);
 					setActiveCycle(null);
@@ -2624,6 +2617,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			preFocusedTask,
 			clearSuggestion,
 			clearBreakTransitionLine,
+			tErrors,
 		],
 	);
 
@@ -2761,8 +2755,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			void (async () => {
 				let failurePhase: WedgeSyncPhase = "check_in";
-				let failureMessage =
-					"Break could not start. Your work cycle was saved.";
+				let failureMessage = tErrors("breakStartFailed");
 				try {
 					if (!checkInAlreadySaved) {
 						failurePhase = "check_in";
@@ -2775,7 +2768,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 								energy,
 							});
 						} catch {
-							failureMessage = "Could not save check-in. Try again.";
+							failureMessage = tErrors("checkInSaveFailed");
 							throw new Error("check-in-failed");
 						}
 					}
@@ -2878,12 +2871,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						failurePhase === "start_break"
 					) {
 						if (failurePhase === "suggestion_fetch") {
-							setError(
-								"Could not load suggestion. Your break is running — tap Retry.",
-							);
+							setError(tErrors("suggestionLoadBreakRunning"));
 							setPendingWedgeRecovery({
-								message:
-									"Could not load suggestion. Your break is running — tap Retry.",
+								message: tErrors("suggestionLoadBreakRunning"),
 								phase: failurePhase,
 								energy,
 							});
@@ -2921,6 +2911,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			rollbackOptimisticCheckInTransition,
 			fireBreakOutOfTabAlert,
 			showBreakTransitionLine,
+			tErrors,
 		],
 	);
 
@@ -2936,8 +2927,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			const workCycleId = intent.workCycleId;
 			const gen = suggestionFetchGenRef.current;
 			const endSuggestionFetch = beginSuggestionFetch();
-			const failureMessage =
-				"Break could not start. Your work cycle was saved.";
+			const failureMessage = tErrors("breakStartFailed");
 			try {
 				const createCall = cycles.create({
 					kind: intent.breakKind,
@@ -3003,6 +2993,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			invalidateServerCycle,
 			startWorker,
 			utils.task.list,
+			tErrors,
 		],
 	);
 
@@ -3063,7 +3054,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					utils.task.list.invalidate(),
 				]);
 			} catch {
-				setError("Could not switch tasks. Try again.");
+				setError(tErrors("switchTaskFailed"));
 			} finally {
 				setIsMidCycleSubmitting(false);
 			}
@@ -3076,6 +3067,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			invalidateServerCycle,
 			resolvePersistableCycleId,
 			utils.task.list,
+			tErrors,
 		],
 	);
 
@@ -3119,7 +3111,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			try {
 				workCycleId = await resolveServerCycleId();
 			} catch {
-				setError("Could not save check-in. Try again.");
+				setError(tErrors("checkInSaveFailed"));
 				return;
 			}
 
@@ -3157,7 +3149,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 							setPendingMarkTaskDone(null);
 							setAwaitingWindDown(true);
 						} catch {
-							const recoveryMessage = "Could not save check-in. Try again.";
+							const recoveryMessage = tErrors("checkInSaveFailed");
 							pendingWedgeIntentRef.current = {
 								phase: "check_in",
 								energy,
@@ -3201,7 +3193,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					void refreshNarrativeStats(_activeSessionId);
 				}
 			} catch {
-				setError("Could not save check-in. Try again.");
+				setError(tErrors("checkInSaveFailed"));
 			} finally {
 				setIsConfirming(false);
 			}
@@ -3218,6 +3210,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			resolveServerCycleId,
 			refreshNarrativeStats,
 			_activeSessionId,
+			tErrors,
 		],
 	);
 
@@ -3258,7 +3251,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						break;
 					}
 					const gen = suggestionFetchGenRef.current;
-					const failureMessage = "Could not load suggestion. Try again.";
+					const failureMessage = tErrors("suggestionLoadFailed");
 					const endSuggestionFetch = beginSuggestionFetch();
 					setPendingSuggestion({ status: "loading" });
 					try {
@@ -3288,7 +3281,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					break;
 				}
 				case "kickoff_session": {
-					const failureMessage = "Could not start your session. Try again.";
+					const failureMessage = tErrors("sessionStartFailed");
 					try {
 						const session = await sessions.getOrCreateActive();
 						setActiveSessionId(session.id);
@@ -3336,6 +3329,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		retryBreakCreateAfterCheckIn,
 		sessions,
 		submitCheckIn,
+		tErrors,
 	]);
 
 	const onMidCycleEndCycleAndBreak = useCallback(async () => {
@@ -3370,7 +3364,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				);
 				await startBreakAfterWorkComplete(true);
 			} catch {
-				setError("Break could not start. Your work cycle was saved.");
+				setError(tErrors("breakStartFailed"));
 				setState("idle");
 				setRemainingMs(0);
 				setActiveCycle(null);
@@ -3395,6 +3389,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		resolvePersistableCycleId,
 		startBreakAfterWorkComplete,
 		stopWorker,
+		tErrors,
 	]);
 
 	const endSession = useCallback(
@@ -3453,7 +3448,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					lastFocusedTaskId: focusedTaskId,
 				});
 			} catch {
-				setError("Could not end the session. Try again.");
+				setError(tErrors("endSessionFailed"));
 				return;
 			}
 
@@ -3510,6 +3505,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			clearKickoffIdleFlags,
 			clearPauseCapTimer,
 			clearBreakTransitionLine,
+			tErrors,
 		],
 	);
 

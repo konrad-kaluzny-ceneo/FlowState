@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { forgotPasswordAction } from "./action";
 import type { ForgotPasswordFormState } from "./schema";
@@ -10,6 +11,9 @@ const initialState: ForgotPasswordFormState = {
 };
 
 export function ForgotPasswordForm() {
+	const t = useTranslations("Auth.forgotPassword");
+	const tField = useTranslations("Auth.field");
+	const tAuth = useTranslations("Auth");
 	const [state, formAction, isPending] = useActionState(
 		forgotPasswordAction,
 		initialState,
@@ -22,16 +26,16 @@ export function ForgotPasswordForm() {
 					className="rounded-md bg-green-500/10 p-3 text-green-300 text-sm"
 					role="status"
 				>
-					If an account exists for that email, we&apos;ve sent a reset link.
+					{t("successMessage")}
 				</div>
 
 				<p className="text-center text-sm text-text-secondary">
-					Signed up with Google?{" "}
+					{t("googlePrompt")}{" "}
 					<Link
 						className="text-accent-cta underline-offset-2 hover:underline"
 						href="/auth/sign-in"
 					>
-						Use Google sign-in instead
+						{t("googleLink")}
 					</Link>
 				</p>
 
@@ -40,7 +44,7 @@ export function ForgotPasswordForm() {
 						className="text-accent-cta underline-offset-2 hover:underline"
 						href="/auth/sign-in"
 					>
-						Back to sign in
+						{tAuth("backToSignIn")}
 					</Link>
 				</p>
 			</div>
@@ -65,7 +69,7 @@ export function ForgotPasswordForm() {
 						className="font-medium text-sm text-text-section"
 						htmlFor="email"
 					>
-						Email
+						{tField("emailLabel")}
 					</label>
 					<input
 						aria-required="true"
@@ -75,7 +79,7 @@ export function ForgotPasswordForm() {
 						id="email"
 						maxLength={254}
 						name="email"
-						placeholder="you@example.com"
+						placeholder={tField("emailPlaceholder")}
 						required
 						type="email"
 					/>
@@ -87,17 +91,17 @@ export function ForgotPasswordForm() {
 					disabled={isPending}
 					type="submit"
 				>
-					{isPending ? "Sending…" : "Send reset link"}
+					{isPending ? t("submitting") : t("submit")}
 				</button>
 			</form>
 
 			<p className="mt-6 text-center text-sm text-text-secondary">
-				Remember your password?{" "}
+				{t("rememberPrompt")}{" "}
 				<Link
 					className="text-accent-cta underline-offset-2 hover:underline"
 					href="/auth/sign-in"
 				>
-					Sign in
+					{t("signInLink")}
 				</Link>
 			</p>
 		</>

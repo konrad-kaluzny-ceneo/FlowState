@@ -1,6 +1,7 @@
 "use client";
 
 import { Pause, Play, Square } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import type {
@@ -77,6 +78,7 @@ export function TimerPanel({
 	outOfTabBreakAlertsEnabled = true,
 	onOutOfTabBreakAlertsChange,
 }: TimerPanelProps) {
+	const t = useTranslations("Timer");
 	const [workDurationSec, setWorkDurationSec] = useState(
 		() => preferredWorkDurationSec ?? getLastDuration(),
 	);
@@ -116,12 +118,12 @@ export function TimerPanel({
 	if (state === "running" || state === "paused") {
 		const isBreak = cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
 		const breakLabel =
-			cycleKind === "LONG_BREAK" ? "Long Break" : "Short Break";
+			cycleKind === "LONG_BREAK" ? t("breakLong") : t("breakShort");
 		const isPaused = state === "paused";
 
 		return (
 			<section
-				aria-label={isBreak ? "Break timer" : "Focus timer"}
+				aria-label={isBreak ? t("sectionBreakAria") : t("sectionFocusAria")}
 				className={`w-full max-w-lg rounded-xl border p-6 text-center shadow-sm ${
 					isBreak
 						? "border-border-break bg-surface-break"
@@ -129,18 +131,21 @@ export function TimerPanel({
 				}`}
 				data-testid={isPaused ? "timer-panel-paused" : "timer-panel-running"}
 			>
-				<p className="font-semibold text-sm text-text-section">
+				<p
+					className="font-semibold text-sm text-text-section"
+					data-testid="timer-phase-label"
+				>
 					{isPaused
 						? isBreak
-							? "Break paused"
-							: "Paused"
+							? t("statusBreakPaused")
+							: t("statusPaused")
 						: isBreak
 							? breakLabel
-							: "Focusing on"}
+							: t("statusFocusingOn")}
 				</p>
 				{!isBreak && (
 					<p className="mt-1 font-semibold text-primary text-xl">
-						{focusedTask?.title ?? "Task"}
+						{focusedTask?.title ?? t("focusedTaskFallback")}
 					</p>
 				)}
 				<p
@@ -153,7 +158,7 @@ export function TimerPanel({
 				</p>
 				{isPaused ? (
 					<button
-						aria-label={isBreak ? "Resume break" : "Resume"}
+						aria-label={isBreak ? t("resumeBreakAria") : t("resumeAria")}
 						className="mt-6 flex w-full items-center justify-center rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 						data-testid="timer-resume"
 						onClick={() => void onResume()}
@@ -164,7 +169,7 @@ export function TimerPanel({
 				) : (
 					<div className="mt-6 flex flex-col gap-3">
 						<button
-							aria-label={isBreak ? "Pause break" : "Pause"}
+							aria-label={isBreak ? t("pauseBreakAria") : t("pauseAria")}
 							className="flex w-full items-center justify-center rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 							data-testid="timer-pause"
 							onClick={() => void onPause()}
@@ -173,7 +178,7 @@ export function TimerPanel({
 							<Pause aria-hidden="true" className="h-5 w-5" />
 						</button>
 						<button
-							aria-label={isBreak ? "End break early" : "Interrupt"}
+							aria-label={isBreak ? t("endBreakEarlyAria") : t("interruptAria")}
 							className="flex w-full items-center justify-center rounded-lg bg-red-600 px-4 py-2 font-semibold text-on-cta transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 							data-testid="timer-interrupt"
 							onClick={() => void onInterrupt()}
@@ -203,27 +208,27 @@ export function TimerPanel({
 
 	const startLabel =
 		focusedTask != null
-			? `Start cycle for ${focusedTask.title}`
-			: "Start cycle";
+			? t("startCycleForTask", { title: focusedTask.title })
+			: t("startCycleAria");
 
 	return (
 		<section
-			aria-label="Ready to focus"
+			aria-label={t("sectionReadyAria")}
 			className="w-full max-w-lg rounded-xl border border-card-border bg-surface-card p-6 shadow-sm"
 			data-testid="timer-panel-idle"
 		>
 			<p className="text-center font-semibold text-sm text-text-section">
-				Ready to focus on
+				{t("idleReadyToFocusOn")}
 			</p>
 			<p className="text-center font-semibold text-primary text-xl">
 				{focusedTask?.title}
 			</p>
 
 			<p className="mt-4 text-center text-sm text-text-secondary">
-				Work duration
+				{t("idleWorkDuration")}
 			</p>
 			<DurationPicker
-				boundsLabel="1 s – 90 min"
+				boundsLabel={t("boundsWork")}
 				maxSec={workMaxSec}
 				minSec={workMinSec}
 				onChangeSec={(sec) => {
@@ -245,7 +250,7 @@ export function TimerPanel({
 				type="button"
 			>
 				<span aria-hidden="true">
-					{isStarting ? "Starting..." : "Start Cycle"}
+					{isStarting ? t("starting") : t("startLabel")}
 				</span>
 			</button>
 
@@ -270,7 +275,7 @@ export function TimerPanel({
 					onClick={() => setShowBreakSettings(!showBreakSettings)}
 					type="button"
 				>
-					{showBreakSettings ? "Hide break settings ▲" : "Break settings ▼"}
+					{showBreakSettings ? t("breakSettingsHide") : t("breakSettingsShow")}
 				</button>
 
 				{showBreakSettings && (
@@ -280,10 +285,10 @@ export function TimerPanel({
 					>
 						<div>
 							<p className="mb-2 text-center text-sm text-text-secondary">
-								Short break
+								{t("breakSettingsShort")}
 							</p>
 							<DurationPicker
-								boundsLabel="1 s – 30 min"
+								boundsLabel={t("boundsBreak")}
 								maxSec={breakMaxSec}
 								minSec={breakMinSec}
 								onChangeSec={(sec) => {
@@ -297,10 +302,10 @@ export function TimerPanel({
 						</div>
 						<div>
 							<p className="mb-2 text-center text-sm text-text-secondary">
-								Long break
+								{t("breakSettingsLong")}
 							</p>
 							<DurationPicker
-								boundsLabel="1 s – 30 min"
+								boundsLabel={t("boundsBreak")}
 								maxSec={breakMaxSec}
 								minSec={breakMinSec}
 								onChangeSec={(sec) => {

@@ -25,7 +25,7 @@ FlowState is a Next.js Pomodoro app on the T3-style stack. Agents run terminal c
 
 - Page UI: `_components/` co-located with the route. tRPC routers: `src/server/api/routers/<feature>.ts` — every router must be registered in `@src/server/api/root.ts`.
 - Path alias `~/` → `src/`. Tabs (size 2), LF; enforced by `@biome.json`, `@.editorconfig`, `@.gitattributes`.
-- Prisma tables: `@@map("flow_state_<name>")`; import via `@prisma/generated`. Product: `@context/foundation/prd.md` (v3); US map: `@context/foundation/prd-refs.md`; context router: `@context/README.md`. Roadmap: `@context/foundation/roadmap.md` + `roadmap-references/items/`. Visual: `@DESIGN.md`.
+- Prisma tables: `@@map("flow_state_<name>")`; import via `@prisma/generated`. Product: `@context/foundation/prd.md` (v3); US map: `@context/foundation/prd-refs.md`; voice/copy: `@context/foundation/product-voice.md`; context router: `@context/README.md`. Roadmap: `@context/foundation/roadmap.md` + `roadmap-references/items/`. Visual: `@DESIGN.md`.
 
 ## Wedge domain rules
 

@@ -6,12 +6,13 @@ import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
+import { expectTaskListVisible } from "./helpers/task-list-locator";
 import { startFocusedWorkCycle } from "./helpers/work-cycle";
 
 test.describe("Session closure (S-17)", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
+		await expectTaskListVisible(page);
 		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		const cleanReload = page.waitForResponse(
@@ -44,7 +45,7 @@ test.describe("Session closure (S-17)", () => {
 			timeout: 15_000,
 		});
 		await expect(
-			page.getByText(/Finished cycles and completed tasks/i),
+			page.getByTestId("end-session-confirm-description"),
 		).toBeVisible();
 		await page.getByTestId("end-session-confirm-btn").click();
 
@@ -87,9 +88,12 @@ test.describe("Session closure (S-17)", () => {
 		await expect(page.getByTestId("end-session-confirm-overlay")).toBeVisible({
 			timeout: 15_000,
 		});
-		await expect(page.getByText("Stay paused")).toBeVisible();
-
-		await expect(page.getByText(/paused focus block/i)).toBeVisible();
+		await expect(
+			page.getByTestId("end-session-confirm-cancel-btn"),
+		).toBeVisible();
+		await expect(
+			page.getByTestId("end-session-confirm-description"),
+		).toBeVisible();
 		await page.getByTestId("end-session-confirm-btn").click();
 
 		await expect(page.getByTestId("session-closure-overlay")).toBeVisible({

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
 	OverlayCard,
@@ -27,6 +28,7 @@ export function MidCycleCompletionPrompt({
 	onEndCycleAndBreak,
 	isSubmitting = false,
 }: MidCycleCompletionPromptProps) {
+	const t = useTranslations("MidCycle");
 	const [selectedTaskId, setSelectedTaskId] = useState<DomainTaskId | null>(
 		null,
 	);
@@ -38,7 +40,7 @@ export function MidCycleCompletionPrompt({
 		<OverlayScrim testId="mid-cycle-prompt-overlay">
 			<OverlayCard centered={false}>
 				<h2 className="text-center font-semibold text-2xl text-primary">
-					Task complete
+					{t("heading")}
 				</h2>
 				{pendingTask != null && (
 					<p className="mt-2 text-center text-sm text-text-secondary">
@@ -46,9 +48,7 @@ export function MidCycleCompletionPrompt({
 					</p>
 				)}
 				<p className="mt-4 text-center text-sm text-text-secondary">
-					{hasOtherTasks
-						? "Continue this cycle with another task, or end now for a break."
-						: "No other active tasks — end the cycle and take a break."}
+					{hasOtherTasks ? t("bodyHasOthers") : t("bodyNoOthers")}
 				</p>
 
 				{hasOtherTasks && (
@@ -81,7 +81,7 @@ export function MidCycleCompletionPrompt({
 							className="block text-sm text-text-secondary"
 							htmlFor="mid-cycle-resume-note"
 						>
-							Where will you pick up? (optional)
+							{t("resumeNoteLabel")}
 						</label>
 						<textarea
 							className="w-full resize-none rounded-lg border border-border-subtle bg-surface-panel px-3 py-2 text-primary text-sm focus:outline-none focus:ring-2 focus:ring-focus-ring"
@@ -90,7 +90,7 @@ export function MidCycleCompletionPrompt({
 							id="mid-cycle-resume-note"
 							maxLength={120}
 							onChange={(event) => setResumeNote(event.target.value)}
-							placeholder="One line — where you left off on the next task"
+							placeholder={t("resumeNotePlaceholder")}
 							rows={2}
 							value={resumeNote}
 						/>
@@ -101,7 +101,7 @@ export function MidCycleCompletionPrompt({
 							onClick={() => setResumeNote("")}
 							type="button"
 						>
-							Skip note
+							{t("resumeNoteSkip")}
 						</button>
 					</div>
 				)}
@@ -123,7 +123,7 @@ export function MidCycleCompletionPrompt({
 							}}
 							type="button"
 						>
-							Continue with selected task
+							{t("continueSelected")}
 						</button>
 					)}
 					<button
@@ -133,7 +133,7 @@ export function MidCycleCompletionPrompt({
 						onClick={() => void onEndCycleAndBreak()}
 						type="button"
 					>
-						End cycle and break
+						{t("endAndBreak")}
 					</button>
 				</div>
 			</OverlayCard>

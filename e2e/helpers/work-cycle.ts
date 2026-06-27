@@ -1,5 +1,4 @@
 import { expect, type Locator, type Page } from "@playwright/test";
-
 import { splitSecToMinSec } from "../../src/lib/duration-input";
 import { completeCheckIn } from "./check-in";
 import {
@@ -13,6 +12,8 @@ import {
 	dismissFirstRunIfVisible,
 	dismissPresetCoachIfVisible,
 } from "./onboarding";
+import { taskListLocator } from "./task-list-locator";
+import { expectShortBreakPhaseHidden } from "./timer-phase";
 
 /** Advance fake clock through a 1s work cycle (+ buffer for completion tick). */
 export const FAST_WORK_CLOCK_MS = 2500;
@@ -241,7 +242,7 @@ export async function addTaskWithAttributes(
 	await dismissFirstRunIfVisible(page);
 	await dismissPresetCoachIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
-	const addForm = page.getByTestId("task-list").locator("form");
+	const addForm = taskListLocator(page).locator("form");
 	const customButton = addForm.getByTestId("persona-preset-custom");
 	const detailsToggle = addForm.getByRole("button", { name: "+ Details" });
 	if (await customButton.isVisible()) {
@@ -305,7 +306,7 @@ export async function completeWorkCycleWithCheckIn(
 	});
 	await dismissKickoffReadinessIfVisible(page);
 	await page.getByRole("button", { name: "Continue later" }).click();
-	await expect(page.getByText("Short Break")).toBeHidden();
+	await expectShortBreakPhaseHidden(page);
 	await completeCheckIn(page, energy);
 	await dismissWindDownIfVisible(page);
 }

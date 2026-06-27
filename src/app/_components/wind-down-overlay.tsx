@@ -1,15 +1,18 @@
 "use client";
 
+import { useLocale } from "next-intl";
+
 import {
 	OverlayCard,
 	OverlayScrim,
 	overlayButtonClass,
 } from "~/app/_components/overlay-shell";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import {
-	WIND_DOWN_BODY,
-	WIND_DOWN_END_SESSION_LABEL,
-	WIND_DOWN_KEEP_GOING_LABEL,
-	WIND_DOWN_TITLE,
+	getWindDownBody,
+	getWindDownEndSessionLabel,
+	getWindDownKeepGoingLabel,
+	getWindDownTitle,
 } from "~/lib/session/wind-down-copy";
 
 type WindDownOverlayProps = {
@@ -25,6 +28,8 @@ export function WindDownOverlay({
 	onEndSession,
 	isSubmitting = false,
 }: WindDownOverlayProps) {
+	const locale = useLocale() as UserLocale;
+
 	return (
 		<OverlayScrim
 			ariaDescribedBy="wind-down-description"
@@ -38,13 +43,13 @@ export function WindDownOverlay({
 					className="font-semibold text-2xl text-primary"
 					id="wind-down-heading"
 				>
-					{WIND_DOWN_TITLE}
+					{getWindDownTitle(locale)}
 				</h2>
 				<p
 					className="mt-4 text-sm text-text-secondary"
 					id="wind-down-description"
 				>
-					{WIND_DOWN_BODY}
+					{getWindDownBody(locale)}
 				</p>
 				<p
 					className="mt-2 text-accent-cta/70 text-xs"
@@ -60,7 +65,7 @@ export function WindDownOverlay({
 						onClick={onKeepGoing}
 						type="button"
 					>
-						{WIND_DOWN_KEEP_GOING_LABEL}
+						{getWindDownKeepGoingLabel(locale)}
 					</button>
 					<button
 						className="w-full rounded-lg border border-border-subtle py-3 text-sm text-text-secondary transition hover:border-red-400/40 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
@@ -69,7 +74,7 @@ export function WindDownOverlay({
 						onClick={onEndSession}
 						type="button"
 					>
-						{WIND_DOWN_END_SESSION_LABEL}
+						{getWindDownEndSessionLabel(locale)}
 					</button>
 				</div>
 			</OverlayCard>

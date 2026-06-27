@@ -1,13 +1,15 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 export type CheckInEnergyUi = "focused" | "steady" | "fading";
 
 export type CheckInEnergy = "FOCUSED" | "STEADY" | "FADING";
 
-const ENERGY_OPTIONS: {
+const ENERGY_OPTION_DEFS: {
 	ui: CheckInEnergyUi;
 	value: CheckInEnergy;
-	label: string;
+	messageKey: "focused" | "steady" | "fading";
 	testId: string;
 	buttonClass: string;
 	iconClass: string;
@@ -15,7 +17,7 @@ const ENERGY_OPTIONS: {
 	{
 		ui: "focused",
 		value: "FOCUSED",
-		label: "Focused",
+		messageKey: "focused",
 		testId: "check-in-energy-focused",
 		buttonClass:
 			"border-energy-focused-border bg-energy-focused-bg hover:border-energy-focused-border hover:bg-energy-focused-bg",
@@ -24,7 +26,7 @@ const ENERGY_OPTIONS: {
 	{
 		ui: "steady",
 		value: "STEADY",
-		label: "Steady",
+		messageKey: "steady",
 		testId: "check-in-energy-steady",
 		buttonClass:
 			"border-energy-steady-border bg-energy-steady-bg hover:border-energy-steady-border hover:bg-energy-steady-bg",
@@ -33,7 +35,7 @@ const ENERGY_OPTIONS: {
 	{
 		ui: "fading",
 		value: "FADING",
-		label: "Fading",
+		messageKey: "fading",
 		testId: "check-in-energy-fading",
 		buttonClass:
 			"border-energy-fading-border bg-energy-fading-bg hover:border-energy-fading-border hover:bg-energy-fading-bg",
@@ -117,6 +119,8 @@ export function EnergySelector({
 	disabled = false,
 	coachLine,
 }: EnergySelectorProps) {
+	const t = useTranslations("Energy");
+
 	return (
 		<>
 			{coachLine != null && (
@@ -128,9 +132,9 @@ export function EnergySelector({
 				</p>
 			)}
 			<fieldset className="mt-4 border-0 p-0 sm:mt-6">
-				<legend className="sr-only">Energy level</legend>
+				<legend className="sr-only">{t("legendEnergyLevel")}</legend>
 				<div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
-					{ENERGY_OPTIONS.map((option) => (
+					{ENERGY_OPTION_DEFS.map((option) => (
 						<button
 							className={`flex flex-1 flex-col items-center justify-center gap-1.5 rounded-lg border px-2 py-3 font-semibold text-primary transition disabled:opacity-50 sm:py-2.5 ${option.buttonClass}`}
 							data-testid={option.testId}
@@ -143,7 +147,7 @@ export function EnergySelector({
 								className={`h-5 w-5 shrink-0 ${option.iconClass}`}
 								ui={option.ui}
 							/>
-							<span>{option.label}</span>
+							<span>{t(option.messageKey)}</span>
 						</button>
 					))}
 				</div>

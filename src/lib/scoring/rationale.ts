@@ -1,3 +1,5 @@
+import { createNamespaceTranslator } from "~/i18n/create-translator";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import type { ScoringContext } from "./score-task";
 
 export type RationaleKey =
@@ -16,42 +18,52 @@ export type RationaleKey =
 	| "capacity_fit"
 	| "default";
 
+/** F-14 acceptance examples — guarded by copy-contract tests. */
+export const F14_ACCEPTANCE_RATIONALE_KEYS = [
+	"default",
+	"kickoff_fresh",
+	"low_effort_fit",
+] as const satisfies readonly RationaleKey[];
+
 export function buildRationale(
 	key: RationaleKey,
 	context: ScoringContext,
+	locale: UserLocale = "en",
 ): string {
+	const t = createNamespaceTranslator("Scoring.rationale", locale);
+
 	switch (key) {
 		case "energy_deep":
-			return "Deep work — you're focused with few interruptions";
+			return t("energy_deep");
 		case "energy_light":
-			return "Light ops — energy fading, better suited for lighter tasks";
+			return t("energy_light");
 		case "fatigue":
 			return context.completedWorkCycles >= 2
-				? `Light admin — energy dipping after ${context.completedWorkCycles} cycles`
-				: "Light admin — session fatigue building";
+				? t("fatigue_many", { cycles: context.completedWorkCycles })
+				: t("fatigue");
 		case "late_day":
-			return "Light task — late in the day, save deep work for tomorrow";
+			return t("late_day");
 		case "interruptions":
-			return "Reactive work — session had several interruptions";
+			return t("interruptions");
 		case "override_preference":
-			return "Matches your last pick — continuing that thread";
+			return t("override_preference");
 		case "eisenhower_priority":
-			return "High urgency and importance — top of the queue";
+			return t("eisenhower_priority");
 		case "importance_focus":
-			return "Important work — good moment while you're focused";
+			return t("importance_focus");
 		case "low_effort_fit":
-			return "Quick win — fits your fading energy";
+			return t("low_effort_fit");
 		case "horizon_asap":
-			return "Due ASAP — time-sensitive commitment";
+			return t("horizon_asap");
 		case "kickoff_fresh":
-			return "Fresh session — here's a strong starting point";
+			return t("kickoff_fresh");
 		case "kickoff_resume":
-			return "Back from break — ready for your next focus block";
+			return t("kickoff_resume");
 		case "capacity_fit": {
 			const minutes = context.remainingFocusMinutes ?? 0;
-			return `Fits ~${minutes} min left today`;
+			return t("capacity_fit", { minutes });
 		}
 		default:
-			return "Next up based on your energy and task mix";
+			return t("default");
 	}
 }

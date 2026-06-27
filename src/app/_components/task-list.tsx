@@ -16,6 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Plus, Target } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
@@ -33,8 +34,12 @@ import type {
 	DomainTask,
 	DomainTaskId,
 } from "~/lib/data-mode/types";
-import { WORK_TYPE_CONFIG } from "~/lib/design/work-type-config";
-import { PRESET_COACH_LINE } from "~/lib/onboarding/copy";
+import {
+	getWorkTypeLabel,
+	WORK_TYPE_CONFIG,
+} from "~/lib/design/work-type-config";
+import type { UserLocale } from "~/lib/domain/user-locale";
+import { getPresetCoachLine } from "~/lib/onboarding/copy";
 import type { TaskFootprint } from "~/lib/recap/types";
 import {
 	applyPersonaPresetToCreateState,
@@ -45,18 +50,29 @@ import {
 } from "~/lib/task/persona-presets";
 import { formatLocalDateKey } from "~/lib/time/local-date-key";
 
-const AXIS_LABELS = { 1: "Light", 2: "Medium", 3: "Heavy" } as const;
+function axisLabel(
+	level: 1 | 2 | 3,
+	t: ReturnType<typeof useTranslations<"Tasks">>,
+): string {
+	if (level === 1) return t("axisLight");
+	if (level === 2) return t("axisMedium");
+	return t("axisHeavy");
+}
 
 function EisenhowerDetailBadges({
 	workType,
 	urgency,
 	importance,
 	commitmentHorizon,
+	locale,
+	t,
 }: {
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	urgency: 1 | 2 | 3;
 	importance: 1 | 2 | 3;
 	commitmentHorizon: CommitmentHorizon;
+	locale: UserLocale;
+	t: ReturnType<typeof useTranslations<"Tasks">>;
 }) {
 	const config = WORK_TYPE_CONFIG[workType];
 	return (
@@ -64,17 +80,19 @@ function EisenhowerDetailBadges({
 			<span
 				className={`rounded-full px-2 py-0.5 font-medium text-xs ${config.bg} ${config.text}`}
 			>
-				{config.label}
+				{getWorkTypeLabel(workType, locale)}
 			</span>
 			<span className="rounded-full bg-surface-panel px-2 py-0.5 font-medium text-text-secondary text-xs">
-				U: {AXIS_LABELS[urgency]}
+				{t("urgencyPrefix")}
+				{axisLabel(urgency, t)}
 			</span>
 			<span className="rounded-full bg-worktype-deep-bg px-2 py-0.5 font-medium text-worktype-deep-text text-xs">
-				I: {AXIS_LABELS[importance]}
+				{t("importancePrefix")}
+				{axisLabel(importance, t)}
 			</span>
 			{commitmentHorizon === "ASAP" && (
 				<span className="rounded-full bg-worktype-reactive-bg px-2 py-0.5 font-medium text-worktype-reactive-text text-xs">
-					ASAP
+					{t("asap")}
 				</span>
 			)}
 		</>
@@ -89,6 +107,8 @@ function TaskBadges({
 	commitmentHorizon,
 	effortMinutes,
 	dimmed = false,
+	locale,
+	t,
 }: {
 	personaPresetId: string | null;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
@@ -97,6 +117,8 @@ function TaskBadges({
 	commitmentHorizon: CommitmentHorizon;
 	effortMinutes: number | null;
 	dimmed?: boolean;
+	locale: UserLocale;
+	t: ReturnType<typeof useTranslations<"Tasks">>;
 }) {
 	const dimClass = dimmed ? "opacity-60" : "";
 	const displayMode = getTaskBadgeDisplayMode({
@@ -114,6 +136,8 @@ function TaskBadges({
 				<EisenhowerDetailBadges
 					commitmentHorizon={commitmentHorizon}
 					importance={importance}
+					locale={locale}
+					t={t}
 					urgency={urgency}
 					workType={workType}
 				/>
@@ -122,7 +146,7 @@ function TaskBadges({
 	}
 
 	if (displayMode === "persona") {
-		const label = getPersonaPresetLabel(personaPresetId ?? "");
+		const label = getPersonaPresetLabel(personaPresetId ?? "", locale);
 		const config = WORK_TYPE_CONFIG[workType];
 		return (
 			<span className={`flex min-w-0 flex-wrap items-center gap-1 ${dimClass}`}>
@@ -137,7 +161,7 @@ function TaskBadges({
 						className="rounded-full bg-surface-panel px-2 py-0.5 font-medium text-text-secondary text-xs"
 						data-testid="task-effort-badge"
 					>
-						{effortMinutes}m
+						{t("effortMinutes", { minutes: effortMinutes })}
 					</span>
 				)}
 			</span>
@@ -150,11 +174,13 @@ function TaskBadges({
 				className="rounded-full bg-surface-panel px-2 py-0.5 font-medium text-text-secondary text-xs"
 				data-testid="task-custom-badge"
 			>
-				Custom
+				{t("custom")}
 			</span>
 			<EisenhowerDetailBadges
 				commitmentHorizon={commitmentHorizon}
 				importance={importance}
+				locale={locale}
+				t={t}
 				urgency={urgency}
 				workType={workType}
 			/>
@@ -235,6 +261,8 @@ type SortableActiveTaskRowProps = {
 	completingTaskId: DomainTaskId | null;
 	onBeginComplete: (taskId: DomainTaskId) => void;
 	footprints: Record<string, TaskFootprint>;
+	locale: UserLocale;
+	t: ReturnType<typeof useTranslations<"Tasks">>;
 };
 
 function SortableActiveTaskRow({
@@ -277,6 +305,8 @@ function SortableActiveTaskRow({
 	completingTaskId,
 	onBeginComplete,
 	footprints,
+	locale,
+	t,
 }: SortableActiveTaskRowProps) {
 	const {
 		attributes,
@@ -319,7 +349,7 @@ function SortableActiveTaskRow({
 		>
 			<div className="flex w-full min-w-0 items-start gap-2">
 				<button
-					aria-label="Drag to reorder"
+					aria-label={t("dragHandleAria")}
 					className={`mt-0.5 shrink-0 cursor-grab px-1 text-text-dimmed transition hover:text-text-secondary active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30 ${
 						dragDisabled ? "pointer-events-none" : ""
 					}`}
@@ -335,14 +365,16 @@ function SortableActiveTaskRow({
 				{task.doneForToday ? (
 					<span
 						className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-accent-success bg-accent-success/20 text-accent-success text-xs"
-						title="Done for today"
+						title={t("doneForTodayTitle")}
 					>
 						✓
 					</span>
 				) : (
 					<button
 						aria-label={
-							task.isDailyStanding ? "Done for today" : "Mark complete"
+							task.isDailyStanding
+								? t("markDoneForTodayAria")
+								: t("markCompleteAria")
 						}
 						className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
 						data-testid="task-complete-button"
@@ -442,7 +474,7 @@ function SortableActiveTaskRow({
 					data-testid="continue-here-row"
 				>
 					<span aria-hidden="true">→</span>
-					Continue here
+					{t("continueHere")}
 				</p>
 			)}
 			{editingId !== task.id && (
@@ -453,7 +485,7 @@ function SortableActiveTaskRow({
 								className="rounded-full bg-accent-suggestion/20 px-2 py-0.5 font-medium text-accent-suggestion text-xs"
 								data-testid="daily-standing-badge"
 							>
-								Daily
+								{t("daily")}
 							</span>
 						)}
 						<TaskBadges
@@ -461,14 +493,18 @@ function SortableActiveTaskRow({
 							dimmed={task.doneForToday}
 							effortMinutes={task.effortMinutes}
 							importance={task.importance}
+							locale={locale}
 							personaPresetId={task.personaPresetId}
+							t={t}
 							urgency={task.urgency}
 							workType={task.workType}
 						/>
 					</span>
 					<div className="flex shrink-0 items-center gap-1">
 						<button
-							aria-label={focusedTaskId === task.id ? "Focused" : "Focus"}
+							aria-label={
+								focusedTaskId === task.id ? t("focusedAria") : t("focusAria")
+							}
 							className={`rounded-lg p-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
 								focusedTaskId === task.id
 									? "bg-accent-cta text-on-cta"
@@ -481,7 +517,7 @@ function SortableActiveTaskRow({
 							<Target aria-hidden="true" className="h-4 w-4" />
 						</button>
 						<button
-							aria-label="Delete task"
+							aria-label={t("deleteAria")}
 							className="shrink-0 px-1 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
 							disabled={cycleLocked || isMutating}
 							onClick={() => {
@@ -499,8 +535,14 @@ function SortableActiveTaskRow({
 					className="pl-9 text-sm text-text-secondary"
 					data-testid={`task-footprint-${task.id}`}
 				>
-					Last focused {formatEndedAgo(footprint.lastFocusedAt.getTime())} ·{" "}
-					{footprint.cumulativeMinutes}m total
+					{t("footprint", {
+						ago: formatEndedAgo(
+							footprint.lastFocusedAt.getTime(),
+							Date.now(),
+							locale,
+						),
+						minutes: footprint.cumulativeMinutes,
+					})}
 				</p>
 			)}
 		</li>
@@ -522,6 +564,8 @@ export function TaskList({
 	chromeSubdued = false,
 	focusShellActive = false,
 }: TaskListProps) {
+	const locale = useLocale() as UserLocale;
+	const t = useTranslations("Tasks");
 	const mode = useDataMode();
 	const { shouldShowPresetCoach, markPresetCoachDismissed } =
 		usePresetCoachOnboarding();
@@ -804,7 +848,7 @@ export function TaskList({
 						onClick={clearError}
 						type="button"
 					>
-						Dismiss
+						{t("errorDismiss")}
 					</button>
 				</div>
 			)}
@@ -843,14 +887,14 @@ export function TaskList({
 					<input
 						className={`flex-1 ${TITLE_FIELD_CLASS}`}
 						onChange={(e) => setNewTitle(e.target.value)}
-						placeholder="Add a new task..."
+						placeholder={t("createTitlePlaceholder")}
 						ref={addTaskInputRef}
 						type="text"
 						value={newTitle}
 					/>
 					<button
 						aria-busy={isCreating}
-						aria-label="Add"
+						aria-label={t("createAddAria")}
 						className="rounded-lg bg-accent-cta p-2 font-medium text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
 						disabled={isCreating || !newTitle.trim()}
 						type="submit"
@@ -886,7 +930,9 @@ export function TaskList({
 					}}
 					personaPresetPicker={
 						<PersonaPresetPicker
-							coachLine={shouldShowPresetCoach ? PRESET_COACH_LINE : undefined}
+							coachLine={
+								shouldShowPresetCoach ? getPresetCoachLine(locale) : undefined
+							}
 							onDismissCoach={
 								shouldShowPresetCoach ? markPresetCoachDismissed : undefined
 							}
@@ -903,7 +949,7 @@ export function TaskList({
 						selectedPresetId != null && selectedPresetId !== "custom" ? (
 							<div className="flex flex-wrap items-center gap-2">
 								<span className="w-16 shrink-0 text-text-secondary text-xs">
-									Effort
+									{t("createEffortLabel")}
 								</span>
 								<input
 									className="w-24 rounded-md bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
@@ -912,7 +958,7 @@ export function TaskList({
 									max={240}
 									min={5}
 									onChange={(e) => setNewEffortMinutes(e.target.value)}
-									placeholder="min"
+									placeholder={t("createEffortPlaceholder")}
 									type="number"
 									value={newEffortMinutes}
 								/>
@@ -922,7 +968,7 @@ export function TaskList({
 										onClick={() => setNewEffortMinutes("")}
 										type="button"
 									>
-										Clear
+										{t("createClearEffort")}
 									</button>
 								)}
 							</div>
@@ -937,7 +983,7 @@ export function TaskList({
 
 			<section>
 				<h2 className="mb-2 font-semibold text-lg text-text-section">
-					Active ({activeTasks.length})
+					{t("sectionActive", { count: activeTasks.length })}
 				</h2>
 				{activeTasks.length === 0 ? (
 					<EmptyActiveTasksGuide
@@ -976,6 +1022,7 @@ export function TaskList({
 										highlightedTaskId={highlightedTaskId}
 										isMutating={isMutating}
 										key={String(task.id)}
+										locale={locale}
 										markCompleteLocked={markCompleteLocked}
 										onBeginComplete={beginCompleteAnimation}
 										onCommitEdit={commitEditIfDirty}
@@ -994,6 +1041,7 @@ export function TaskList({
 										onSetEditWorkType={setEditWorkType}
 										onStartEditing={startEditing}
 										onUpdateTask={updateTask}
+										t={t}
 										task={task}
 									/>
 								))}
@@ -1009,7 +1057,7 @@ export function TaskList({
 					data-focus-chrome-subdued={focusShellActive ? "true" : undefined}
 				>
 					<h2 className="mb-2 font-semibold text-lg text-text-section">
-						Completed ({completedTasks.length})
+						{t("sectionCompleted", { count: completedTasks.length })}
 					</h2>
 					<ul className="space-y-2">
 						{completedTasks.map((task) => (
@@ -1019,7 +1067,7 @@ export function TaskList({
 							>
 								<div className="flex w-full min-w-0 items-start gap-2">
 									<button
-										aria-label="Revert to active"
+										aria-label={t("revertAria")}
 										className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-accent-success bg-accent-success/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
 										disabled={cycleLocked || isMutating}
 										onClick={() => {
@@ -1095,12 +1143,14 @@ export function TaskList({
 											dimmed
 											effortMinutes={task.effortMinutes}
 											importance={task.importance}
+											locale={locale}
 											personaPresetId={task.personaPresetId}
+											t={t}
 											urgency={task.urgency}
 											workType={task.workType}
 										/>
 										<button
-											aria-label="Delete task"
+											aria-label={t("deleteAria")}
 											className="shrink-0 px-1 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
 											disabled={cycleLocked || isMutating}
 											onClick={() => {

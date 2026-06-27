@@ -12,6 +12,11 @@ import {
 	ensureIdleCycle,
 } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
+import { expectTaskListVisible } from "./helpers/task-list-locator";
+import {
+	expectShortBreakPhaseHidden,
+	expectShortBreakPhaseVisible,
+} from "./helpers/timer-phase";
 import {
 	addTasks,
 	advanceClockThroughFastWork,
@@ -27,7 +32,7 @@ test.beforeEach(async ({ page }) => {
 	// API reset before navigation — avoid hydrating a stale RUNNING cycle (R3 → R7).
 	await resetWorkerSessionViaApi(page);
 	await page.goto("/");
-	await expect(page.getByTestId("task-list")).toBeVisible();
+	await expectTaskListVisible(page);
 	await waitForCycleGetActive(page);
 	const cleanReload = page.waitForResponse(
 		(response) => response.url().includes("cycle.getActive") && response.ok(),
@@ -85,9 +90,9 @@ test.describe("Seed exemplar — Risk #7 check-in gate", () => {
 		await dismissKickoffReadinessIfVisible(page);
 		await page.getByRole("button", { name: "Continue later" }).click();
 
-		await expect(page.getByText("Short Break")).toBeHidden();
+		await expectShortBreakPhaseHidden(page);
 		await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 		await completeCheckIn(page, "steady");
-		await expect(page.getByText("Short Break")).toBeVisible();
+		await expectShortBreakPhaseVisible(page);
 	});
 });

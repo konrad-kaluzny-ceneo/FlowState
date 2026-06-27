@@ -1,11 +1,14 @@
+import { getLocale } from "next-intl/server";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import { type AuthPageVariant, getAuthValueCopy } from "~/lib/onboarding/copy";
 
 type AuthValueNarrativeProps = {
 	variant: AuthPageVariant;
 };
 
-export function AuthValueNarrative({ variant }: AuthValueNarrativeProps) {
-	const copy = getAuthValueCopy(variant);
+export async function AuthValueNarrative({ variant }: AuthValueNarrativeProps) {
+	const locale = (await getLocale()) as UserLocale;
+	const copy = getAuthValueCopy(variant, locale);
 
 	if (variant === "sign-in" && copy.subtitle) {
 		return (

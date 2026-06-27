@@ -8,6 +8,7 @@ import {
 	dismissFirstRunIfVisible,
 	dismissMergeSuccessIfVisible,
 } from "./helpers/onboarding";
+import { expectTaskListVisible } from "./helpers/task-list-locator";
 import { createTestUser, signInAsUser } from "./helpers/user";
 import { addTask } from "./helpers/work-cycle";
 
@@ -29,7 +30,7 @@ test.describe("Guest merge on sign-in (S-08 / Risk #5)", () => {
 		await page.evaluate(() => localStorage.clear());
 		await page.reload();
 		await expect(page.getByTestId("guest-banner")).toBeVisible();
-		await expect(page.getByTestId("task-list")).toBeVisible();
+		await expectTaskListVisible(page);
 		await dismissFirstRunIfVisible(page);
 
 		await addTask(page, taskTitle);

@@ -1,8 +1,9 @@
+import type { UserLocale } from "~/lib/domain/user-locale";
 import {
-	CHECK_IN_COACH_LINE,
+	getCheckInCoachLine,
+	getPostMergeCheckInCoachLine,
 	getPostMergeSuggestionCoachLine,
-	POST_MERGE_CHECK_IN_COACH_LINE,
-	SUGGESTION_COACH_LINE,
+	getSuggestionCoachLine,
 } from "~/lib/onboarding/copy";
 import type { OnboardingState } from "~/lib/onboarding/types";
 
@@ -15,28 +16,30 @@ export function isPostMergeWedgeCoachActive(state: OnboardingState): boolean {
 export function resolveCheckInCoachLine(
 	state: OnboardingState,
 	shouldShow: boolean,
+	locale: UserLocale = "en",
 ): string | undefined {
 	if (!shouldShow) {
 		return undefined;
 	}
 	if (isPostMergeWedgeCoachActive(state)) {
-		return POST_MERGE_CHECK_IN_COACH_LINE;
+		return getPostMergeCheckInCoachLine(locale);
 	}
-	return CHECK_IN_COACH_LINE;
+	return getCheckInCoachLine(locale);
 }
 
 export function resolveSuggestionCoachLine(
 	state: OnboardingState,
 	shouldShow: boolean,
 	personaPresetLabel: string | null,
+	locale: UserLocale = "en",
 ): string | undefined {
 	if (!shouldShow) {
 		return undefined;
 	}
 	if (isPostMergeWedgeCoachActive(state)) {
-		return getPostMergeSuggestionCoachLine(personaPresetLabel);
+		return getPostMergeSuggestionCoachLine(personaPresetLabel, locale);
 	}
-	return SUGGESTION_COACH_LINE;
+	return getSuggestionCoachLine(locale);
 }
 
 export function completeAuthenticatedWedgeCoach(

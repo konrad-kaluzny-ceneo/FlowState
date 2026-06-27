@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
 const DISMISS_KEY_PREFIX = "flowstate:focus-budget-dismiss:";
@@ -36,6 +37,7 @@ export function FocusBudgetPrompt({
 	isSettingBudget,
 	onSetBudget,
 }: FocusBudgetPromptProps) {
+	const t = useTranslations("FocusBudget");
 	const [dismissed, setDismissed] = useState(() =>
 		isDismissedForDate(localDateKey),
 	);
@@ -52,20 +54,20 @@ export function FocusBudgetPrompt({
 			try {
 				await onSetBudget(minutes);
 			} catch {
-				setError("Could not save focus hours. Try again.");
+				setError(t("saveError"));
 			}
 		},
-		[onSetBudget],
+		[onSetBudget, t],
 	);
 
 	const handleCustomSubmit = useCallback(async () => {
 		const parsed = Number.parseInt(customMinutes.trim(), 10);
 		if (!Number.isFinite(parsed) || parsed < 15 || parsed > 720) {
-			setError("Enter focus hours between 15 and 720 minutes.");
+			setError(t("validationError"));
 			return;
 		}
 		await handleSetBudget(parsed);
-	}, [customMinutes, handleSetBudget]);
+	}, [customMinutes, handleSetBudget, t]);
 
 	const handleDismiss = useCallback(() => {
 		dismissForDate(localDateKey);
@@ -83,26 +85,24 @@ export function FocusBudgetPrompt({
 		>
 			<div className="flex items-start justify-between gap-3">
 				<div className="space-y-1">
-					<p className="font-medium text-primary text-sm">
-						Today&apos;s focus hours
-					</p>
-					<p className="text-text-secondary text-xs">
-						Set a daily budget so suggestions fit what you have left.
-					</p>
+					<p className="font-medium text-primary text-sm">{t("title")}</p>
+					<p className="text-text-secondary text-xs">{t("body")}</p>
 				</div>
 				<button
-					aria-label="Dismiss focus budget prompt"
+					aria-label={t("dismissAria")}
 					className="shrink-0 text-text-dimmed text-xs hover:text-text-section"
+					data-testid="focus-budget-dismiss-btn"
 					onClick={handleDismiss}
 					type="button"
 				>
-					Not now
+					{t("notNow")}
 				</button>
 			</div>
 			<div className="mt-3 flex flex-wrap gap-2">
 				{PRESET_MINUTES.map((preset) => (
 					<button
 						className="rounded-lg bg-segment-inactive px-3 py-1.5 text-sm text-text-secondary transition hover:bg-surface-card-muted disabled:opacity-50"
+						data-testid={`focus-budget-preset-${preset.minutes}`}
 						disabled={isSettingBudget}
 						key={preset.minutes}
 						onClick={() => void handleSetBudget(preset.minutes)}
@@ -114,7 +114,7 @@ export function FocusBudgetPrompt({
 			</div>
 			<div className="mt-3 flex flex-wrap items-center gap-2">
 				<input
-					aria-label="Custom focus minutes"
+					aria-label={t("customAria")}
 					className="w-24 rounded-md bg-surface-card px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
 					inputMode="numeric"
 					max={720}
@@ -123,17 +123,18 @@ export function FocusBudgetPrompt({
 						setCustomMinutes(event.target.value);
 						setError(null);
 					}}
-					placeholder="Custom"
+					placeholder={t("customPlaceholder")}
 					type="number"
 					value={customMinutes}
 				/>
 				<button
 					className="rounded-lg bg-accent-cta px-3 py-1.5 font-medium text-on-cta text-xs transition hover:bg-accent-cta-hover disabled:opacity-50"
+					data-testid="focus-budget-set-btn"
 					disabled={isSettingBudget || customMinutes.trim() === ""}
 					onClick={() => void handleCustomSubmit()}
 					type="button"
 				>
-					Set
+					{t("set")}
 				</button>
 			</div>
 			{error != null && (

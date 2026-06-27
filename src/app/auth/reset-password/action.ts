@@ -2,13 +2,22 @@
 
 import { NEON_AUTH_NETWORK_ERROR_CODES } from "@neondatabase/auth/next/server";
 import { redirect } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
 import { auth } from "~/lib/auth/server";
-import { type ResetPasswordFormState, resetPasswordSchema } from "./schema";
+import type { UserLocale } from "~/lib/domain/user-locale";
+import {
+	createResetPasswordSchema,
+	type ResetPasswordFormState,
+} from "./schema";
 
 export async function resetPasswordAction(
 	_prevState: ResetPasswordFormState,
 	formData: FormData,
 ): Promise<ResetPasswordFormState> {
+	const locale = (await getLocale()) as UserLocale;
+	const t = await getTranslations({ locale, namespace: "Auth.resetPassword" });
+	const tCommon = await getTranslations({ locale, namespace: "Auth.common" });
+
 	const token = (formData.get("token") as string | null)?.trim() ?? "";
 	const password = (formData.get("password") as string | null) ?? "";
 	const confirmPassword =
@@ -17,12 +26,15 @@ export async function resetPasswordAction(
 	if (!token) {
 		return {
 			errors: {
-				form: "This reset link is invalid or has expired.",
+				form: t("invalidLink"),
 			},
 		};
 	}
 
-	const result = resetPasswordSchema.safeParse({ password, confirmPassword });
+	const result = createResetPasswordSchema(locale).safeParse({
+		password,
+		confirmPassword,
+	});
 
 	if (!result.success) {
 		const fieldErrors = result.error.flatten().fieldErrors;
@@ -50,21 +62,21 @@ export async function resetPasswordAction(
 			) {
 				return {
 					errors: {
-						form: "Could not complete the request. Please check your connection and try again.",
+						form: tCommon("networkError"),
 					},
 				};
 			}
 
 			return {
 				errors: {
-					form: "This reset link is invalid or has expired.",
+					form: t("invalidLink"),
 				},
 			};
 		}
 	} catch {
 		return {
 			errors: {
-				form: "Could not complete the request. Please check your connection and try again.",
+				form: tCommon("networkError"),
 			},
 		};
 	}

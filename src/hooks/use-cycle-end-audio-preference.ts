@@ -49,10 +49,8 @@ export function useCycleEndAudioPreference(scope: OnboardingScope) {
 	const utils = api.useUtils();
 
 	const setMutation = api.preference.set.useMutation({
-		onSuccess: (_data, variables) => {
-			utils.preference.get.setData(undefined, {
-				cycleEndAudioMode: variables.cycleEndAudioMode,
-			});
+		onSuccess: (data) => {
+			utils.preference.get.setData(undefined, data);
 		},
 	});
 

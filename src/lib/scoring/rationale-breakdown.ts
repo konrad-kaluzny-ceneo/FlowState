@@ -1,3 +1,6 @@
+import { createNamespaceTranslator } from "~/i18n/create-translator";
+import type { UserLocale } from "~/lib/domain/user-locale";
+
 import { getFactorContributions } from "./dominant-factor";
 import { buildRationale, type RationaleKey } from "./rationale";
 import type { ScoringContext, ScoringTask } from "./score-task";
@@ -10,18 +13,18 @@ export type RationaleBreakdown = {
 	alsoConsidered: string[];
 };
 
-export const FACTOR_CHIP_LABELS: Partial<Record<RationaleKey, string>> = {
-	override_preference: "Last override",
-	interruptions: "Interruptions",
-	late_day: "Time of day",
-	fatigue: "Cycles completed",
-	energy_deep: "Energy fit",
-	energy_light: "Energy fit",
-	eisenhower_priority: "High priority",
-	importance_focus: "Important now",
-	low_effort_fit: "Quick win",
-	horizon_asap: "Due ASAP",
-	capacity_fit: "Fits your remaining focus",
+const FACTOR_CHIP_KEYS: Partial<Record<RationaleKey, string>> = {
+	override_preference: "override_preference",
+	interruptions: "interruptions",
+	late_day: "late_day",
+	fatigue: "fatigue",
+	energy_deep: "energy_deep",
+	energy_light: "energy_light",
+	eisenhower_priority: "eisenhower_priority",
+	importance_focus: "importance_focus",
+	low_effort_fit: "low_effort_fit",
+	horizon_asap: "horizon_asap",
+	capacity_fit: "capacity_fit",
 };
 
 const EXCLUDED_CHIP_KEYS = new Set<RationaleKey>([
@@ -30,10 +33,31 @@ const EXCLUDED_CHIP_KEYS = new Set<RationaleKey>([
 	"kickoff_resume",
 ]);
 
+export function getFactorChipLabel(
+	key: RationaleKey,
+	locale: UserLocale = "en",
+): string | undefined {
+	const messageKey = FACTOR_CHIP_KEYS[key];
+	if (messageKey == null) {
+		return undefined;
+	}
+	return createNamespaceTranslator("Scoring.factorChips", locale)(messageKey);
+}
+
+/** @deprecated Use getFactorChipLabel(key, locale) */
+export const FACTOR_CHIP_LABELS: Partial<Record<RationaleKey, string>> =
+	Object.fromEntries(
+		Object.entries(FACTOR_CHIP_KEYS).map(([key, messageKey]) => [
+			key,
+			createNamespaceTranslator("Scoring.factorChips", "en")(messageKey),
+		]),
+	) as Partial<Record<RationaleKey, string>>;
+
 export function buildRationaleBreakdown(
 	task: ScoringTask,
 	context: ScoringContext,
 	opts: { headline: string; headlineKey: RationaleKey },
+	locale: UserLocale = "en",
 ): RationaleBreakdown {
 	const ranked = getFactorContributions(task, context)
 		.filter((contribution) => contribution.magnitude > 0)
@@ -45,7 +69,7 @@ export function buildRationaleBreakdown(
 
 	const dominant = secondary.slice(0, 3).map((contribution) => ({
 		key: contribution.key,
-		copy: buildRationale(contribution.key, context),
+		copy: buildRationale(contribution.key, context, locale),
 	}));
 
 	const alsoConsidered: string[] = [];
@@ -55,7 +79,7 @@ export function buildRationaleBreakdown(
 		if (EXCLUDED_CHIP_KEYS.has(contribution.key)) {
 			continue;
 		}
-		const label = FACTOR_CHIP_LABELS[contribution.key];
+		const label = getFactorChipLabel(contribution.key, locale);
 		if (label == null || seenChipLabels.has(label)) {
 			continue;
 		}

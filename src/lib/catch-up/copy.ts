@@ -1,3 +1,6 @@
+import { createNamespaceTranslator } from "~/i18n/create-translator";
+import type { UserLocale } from "~/lib/domain/user-locale";
+
 import type { CatchUpGate } from "./types";
 
 export type CatchUpCopyContext = {
@@ -11,42 +14,55 @@ export type CatchUpCopy = {
 	subcopy: string;
 };
 
-function breakLabel(cycleKind: CatchUpCopyContext["cycleKind"]): string {
+function catchUpT(locale: UserLocale) {
+	return createNamespaceTranslator("CatchUp", locale);
+}
+
+function breakLabel(
+	cycleKind: CatchUpCopyContext["cycleKind"],
+	locale: UserLocale,
+): string {
+	const t = catchUpT(locale);
 	if (cycleKind === "LONG_BREAK") {
-		return "Long break";
+		return t("longBreak");
 	}
 	if (cycleKind === "SHORT_BREAK") {
-		return "Short break";
+		return t("shortBreak");
 	}
-	return "Break";
+	return t("break");
 }
 
 export function getCatchUpCopy(
 	gate: CatchUpGate,
 	ctx: CatchUpCopyContext,
+	locale: UserLocale = "en",
 ): CatchUpCopy {
+	const t = catchUpT(locale);
+
 	switch (gate) {
 		case "WORK_CONFIRM": {
-			const title = ctx.taskTitle?.trim() || "Work cycle";
+			const title = ctx.taskTitle?.trim() || t("workCycleLabel");
 			return {
-				headline: `${title} finished while you were away`,
-				subcopy: "Confirm your next step below.",
+				headline: t("workConfirmHeadline", { title }),
+				subcopy: t("workConfirmSubcopy"),
 			};
 		}
 		case "BREAK_CONFIRM":
 			return {
-				headline: `${breakLabel(ctx.cycleKind)} finished while you were away`,
-				subcopy: "Ready for your next cycle when you are.",
+				headline: t("breakConfirmHeadline", {
+					label: breakLabel(ctx.cycleKind, locale),
+				}),
+				subcopy: t("breakConfirmSubcopy"),
 			};
 		case "CHECK_IN":
 			return {
-				headline: "Work cycle finished while you were away",
-				subcopy: "Take a moment for your energy check-in below.",
+				headline: t("checkInHeadline"),
+				subcopy: t("checkInSubcopy"),
 			};
 		case "SUGGESTION_ACCEPT":
 			return {
-				headline: "A task suggestion is waiting",
-				subcopy: "Review the suggested next task below.",
+				headline: t("suggestionHeadline"),
+				subcopy: t("suggestionSubcopy"),
 			};
 	}
 }

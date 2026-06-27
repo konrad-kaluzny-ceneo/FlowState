@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { TRPCClientError } from "@trpc/client";
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 
 import {
@@ -34,11 +35,14 @@ function currentTaskListInput() {
 	return { localDateKey: formatLocalDateKey() };
 }
 
-function formatTaskMutationError(err: unknown): string {
+function formatTaskMutationError(
+	err: unknown,
+	t: (key: "notFound" | "generic") => string,
+): string {
 	if (err instanceof TRPCClientError && err.shape?.code === "NOT_FOUND") {
-		return "Task not found";
+		return t("notFound");
 	}
-	return "Something went wrong. Please try again.";
+	return t("generic");
 }
 
 function isTempTaskId(id: number): boolean {
@@ -153,6 +157,7 @@ function reorderActiveTasks(
 }
 
 export function useTaskMutations() {
+	const tErrors = useTranslations("Errors.task");
 	const mode = useDataMode();
 	const { tasks: taskRepo } = useRepositories();
 	const utils = api.useUtils();
@@ -198,9 +203,9 @@ export function useTaskMutations() {
 					: currentTaskListInput();
 				utils.task.list.setData(listInput, () => context.previousTasks);
 			}
-			setError(formatTaskMutationError(err));
+			setError(formatTaskMutationError(err, tErrors));
 		},
-		[utils],
+		[utils, tErrors],
 	);
 
 	const createMutation = api.task.create.useMutation({
@@ -295,7 +300,7 @@ export function useTaskMutations() {
 					() => context.previousTasks,
 				);
 			}
-			setError(formatTaskMutationError(err));
+			setError(formatTaskMutationError(err, tErrors));
 		},
 		onSettled: handleSettled,
 	});

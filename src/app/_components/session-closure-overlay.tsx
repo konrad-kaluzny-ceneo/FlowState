@@ -1,13 +1,16 @@
 "use client";
 
+import { useLocale } from "next-intl";
+
 import {
 	OverlayCard,
 	OverlayScrim,
 	overlayButtonClass,
 } from "~/app/_components/overlay-shell";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import {
-	CLOSURE_DISMISS_LABEL,
-	CLOSURE_TITLE,
+	getClosureDismissLabel,
+	getClosureTitle,
 } from "~/lib/session/narrative-copy";
 
 type SessionClosureOverlayProps = {
@@ -19,6 +22,10 @@ export function SessionClosureOverlay({
 	closureLine,
 	onDismiss,
 }: SessionClosureOverlayProps) {
+	const locale = useLocale() as UserLocale;
+	const title = getClosureTitle(locale);
+	const dismissLabel = getClosureDismissLabel(locale);
+
 	return (
 		<OverlayScrim
 			ariaDescribedBy="session-closure-description"
@@ -33,7 +40,7 @@ export function SessionClosureOverlay({
 					className="font-semibold text-2xl text-primary"
 					id="session-closure-heading"
 				>
-					{CLOSURE_TITLE}
+					{title}
 				</h2>
 				<p
 					className="mt-4 text-sm text-text-secondary"
@@ -48,7 +55,7 @@ export function SessionClosureOverlay({
 					onClick={onDismiss}
 					type="button"
 				>
-					{CLOSURE_DISMISS_LABEL}
+					{dismissLabel}
 				</button>
 			</OverlayCard>
 		</OverlayScrim>

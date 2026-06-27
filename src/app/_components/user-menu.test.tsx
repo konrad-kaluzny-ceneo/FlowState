@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import { THEME_STORAGE_KEY } from "~/lib/design/theme";
+import messages from "../../../messages/en.json";
 
 import { ThemeProvider } from "./theme-provider";
 import { UserMenu } from "./user-menu";
@@ -10,10 +11,22 @@ const { signOut } = vi.hoisted(() => ({
 	signOut: vi.fn(),
 }));
 
+const setLocale = vi.hoisted(() => vi.fn());
+
 vi.mock("~/lib/auth/client", () => ({
 	authClient: {
 		signOut,
 	},
+}));
+
+vi.mock("~/hooks/use-language-preference", () => ({
+	useLanguagePreference: () => ({
+		locale: "en",
+		setLocale,
+		isPending: false,
+		persistError: null,
+		isHydrated: true,
+	}),
 }));
 
 function mockMatchMedia(matchesDark = false) {
@@ -39,9 +52,14 @@ function mockMatchMedia(matchesDark = false) {
 
 function renderUserMenu(userName = "Konrad") {
 	return render(
-		<ThemeProvider>
-			<UserMenu userName={userName} />
-		</ThemeProvider>,
+		<NextIntlClientProvider locale="en" messages={messages}>
+			<ThemeProvider>
+				<UserMenu
+					scope={{ mode: "authenticated", userId: "user-1" }}
+					userName={userName}
+				/>
+			</ThemeProvider>
+		</NextIntlClientProvider>,
 	);
 }
 
@@ -124,5 +142,14 @@ describe("UserMenu", () => {
 		}
 
 		expect(document.documentElement.dataset.theme).toBe("dark");
+	});
+
+	it("renders language switch and calls setLocale when Polish is selected", () => {
+		renderUserMenu();
+
+		expect(screen.getByTestId("language-switch")).toBeTruthy();
+		fireEvent.click(screen.getByRole("radio", { name: "PL" }));
+
+		expect(setLocale).toHaveBeenCalledWith("pl");
 	});
 });

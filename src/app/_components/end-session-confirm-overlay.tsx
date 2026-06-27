@@ -1,10 +1,13 @@
 "use client";
 
+import { useLocale } from "next-intl";
+
 import {
 	OverlayCard,
 	OverlayScrim,
 	overlayButtonClass,
 } from "~/app/_components/overlay-shell";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import {
 	type EndSessionConfirmVariant,
 	type EndSessionCycleContext,
@@ -26,7 +29,8 @@ export function EndSessionConfirmOverlay({
 	variant = "immediate",
 	cycleContext = "work",
 }: EndSessionConfirmOverlayProps) {
-	const copy = getEndSessionConfirmCopy(variant, cycleContext);
+	const locale = useLocale() as UserLocale;
+	const copy = getEndSessionConfirmCopy(variant, cycleContext, locale);
 
 	return (
 		<OverlayScrim
@@ -46,6 +50,7 @@ export function EndSessionConfirmOverlay({
 				</h2>
 				<p
 					className="mt-4 text-sm text-text-secondary"
+					data-testid="end-session-confirm-description"
 					id="end-session-confirm-description"
 				>
 					{copy.body}

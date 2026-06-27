@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { toPrismaCycleEndAudioMode } from "~/lib/persistence/prisma/enum-mappers";
+import type {
+	toPrismaCycleEndAudioMode,
+	toPrismaUserLocale,
+} from "~/lib/persistence/prisma/enum-mappers";
 
 vi.mock("~/lib/auth/server", () => ({
 	auth: { getSession: vi.fn() },
@@ -8,6 +11,7 @@ vi.mock("~/lib/auth/server", () => ({
 type PreferenceRow = {
 	userId: string;
 	cycleEndAudioMode: ReturnType<typeof toPrismaCycleEndAudioMode>;
+	language: ReturnType<typeof toPrismaUserLocale> | null;
 	updatedAt: Date;
 };
 
@@ -28,20 +32,30 @@ vi.mock("~/server/db/index", () => ({
 					create: {
 						userId: string;
 						cycleEndAudioMode: PrismaAudioMode;
+						language?: ReturnType<typeof toPrismaUserLocale> | null;
 					};
-					update: { cycleEndAudioMode: PrismaAudioMode };
+					update: {
+						cycleEndAudioMode?: PrismaAudioMode;
+						language?: ReturnType<typeof toPrismaUserLocale> | null;
+					};
 				}) => {
 					const existing = preferences.find(
 						(p) => p.userId === args.where.userId,
 					);
 					if (existing) {
-						existing.cycleEndAudioMode = args.update.cycleEndAudioMode;
+						if (args.update.cycleEndAudioMode !== undefined) {
+							existing.cycleEndAudioMode = args.update.cycleEndAudioMode;
+						}
+						if (args.update.language !== undefined) {
+							existing.language = args.update.language;
+						}
 						existing.updatedAt = new Date();
 						return Promise.resolve(existing);
 					}
 					const row: PreferenceRow = {
 						userId: args.create.userId,
 						cycleEndAudioMode: args.create.cycleEndAudioMode,
+						language: args.create.language ?? null,
 						updatedAt: new Date(),
 					};
 					preferences.push(row);
@@ -89,7 +103,7 @@ describe("preference router", () => {
 
 		const result = await caller.get();
 
-		expect(result).toEqual({ cycleEndAudioMode: "normal" });
+		expect(result).toEqual({ cycleEndAudioMode: "normal", language: null });
 	});
 
 	it("set persists cycleEndAudioMode and get returns stored value", async () => {
@@ -98,20 +112,21 @@ describe("preference router", () => {
 		await caller.set({ cycleEndAudioMode: "muted" });
 		const result = await caller.get();
 
-		expect(result).toEqual({ cycleEndAudioMode: "muted" });
+		expect(result).toEqual({ cycleEndAudioMode: "muted", language: null });
 	});
 
 	it("get returns only the caller's preference, not another user's row", async () => {
 		preferences.push({
 			userId: USER_B,
 			cycleEndAudioMode: "SOFT",
+			language: null,
 			updatedAt: new Date(),
 		});
 
 		const caller = preferenceCaller(USER_A);
 		const result = await caller.get();
 
-		expect(result).toEqual({ cycleEndAudioMode: "normal" });
+		expect(result).toEqual({ cycleEndAudioMode: "normal", language: null });
 	});
 
 	it("set for one user does not overwrite another user's preference", async () => {
@@ -121,8 +136,14 @@ describe("preference router", () => {
 		await callerB.set({ cycleEndAudioMode: "soft" });
 		await callerA.set({ cycleEndAudioMode: "muted" });
 
-		expect(await callerA.get()).toEqual({ cycleEndAudioMode: "muted" });
-		expect(await callerB.get()).toEqual({ cycleEndAudioMode: "soft" });
+		expect(await callerA.get()).toEqual({
+			cycleEndAudioMode: "muted",
+			language: null,
+		});
+		expect(await callerB.get()).toEqual({
+			cycleEndAudioMode: "soft",
+			language: null,
+		});
 	});
 
 	it("rejects invalid cycleEndAudioMode enum values", async () => {
@@ -131,5 +152,22 @@ describe("preference router", () => {
 		await expect(
 			caller.set({ cycleEndAudioMode: "loud" as "normal" }),
 		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+
+	it("set persists language and get returns stored value", async () => {
+		const caller = preferenceCaller(USER_A);
+
+		await caller.set({ language: "pl" });
+		const result = await caller.get();
+
+		expect(result).toEqual({ cycleEndAudioMode: "normal", language: "pl" });
+	});
+
+	it("rejects invalid language enum values", async () => {
+		const caller = preferenceCaller(USER_A);
+
+		await expect(caller.set({ language: "de" as "en" })).rejects.toMatchObject({
+			code: "BAD_REQUEST",
+		});
 	});
 });
