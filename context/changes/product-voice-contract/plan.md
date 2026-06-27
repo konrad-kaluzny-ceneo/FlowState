@@ -588,10 +588,10 @@ Close the slice by making the voice contract operational for future work, updati
 
 #### Automated
 
-- [x] 4.1 `pnpm check` passes.
-- [x] 4.2 `pnpm typecheck` passes.
-- [x] 4.3 `pnpm test` passes.
-- [x] 4.4 `set CI=true && pnpm test:e2e:belt` passes.
+- [x] 4.1 `pnpm check` passes. — c60c558
+- [x] 4.2 `pnpm typecheck` passes. — c60c558
+- [x] 4.3 `pnpm test` passes. — c60c558
+- [x] 4.4 `set CI=true && pnpm test:e2e:belt` passes. — c60c558
 
 #### Manual
 
