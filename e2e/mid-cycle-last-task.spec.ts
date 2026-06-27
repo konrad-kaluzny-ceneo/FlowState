@@ -8,6 +8,7 @@ import { completeCheckIn } from "./helpers/check-in";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { completeKickoffReadiness } from "./helpers/kickoff";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
+import { expectTaskListVisible } from "./helpers/task-list-locator";
 import {
 	expectShortBreakPhaseHidden,
 	expectShortBreakPhaseVisible,
@@ -20,7 +21,7 @@ import {
 test.describe("Mid-cycle last task (Risk #3)", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
+		await expectTaskListVisible(page);
 		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		const cleanReload = page.waitForResponse(

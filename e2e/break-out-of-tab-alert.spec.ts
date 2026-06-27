@@ -12,6 +12,7 @@ import {
 	ensureIdleCycle,
 } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
+import { expectTaskListVisible } from "./helpers/task-list-locator";
 import { expectShortBreakPhaseVisible } from "./helpers/timer-phase";
 import { runWhileHidden } from "./helpers/visibility";
 import {
@@ -26,7 +27,7 @@ test.beforeEach(async ({ page }) => {
 	forgetFakeClock(page);
 	await resetWorkerSessionViaApi(page);
 	await page.goto("/");
-	await expect(page.getByTestId("task-list")).toBeVisible();
+	await expectTaskListVisible(page);
 	await waitForCycleGetActive(page);
 	const cleanReload = page.waitForResponse(
 		(response) => response.url().includes("cycle.getActive") && response.ok(),

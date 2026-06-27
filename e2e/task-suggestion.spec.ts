@@ -13,6 +13,7 @@ import {
 	overrideSuggestionByFocusingTask,
 	waitForSuggestionNext,
 } from "./helpers/suggestion";
+import { expectTaskListVisible } from "./helpers/task-list-locator";
 import {
 	addTaskWithAttributes,
 	advanceClockThroughBreakSec,
@@ -31,7 +32,7 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
+		await expectTaskListVisible(page);
 		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		forgetFakeClock(page);

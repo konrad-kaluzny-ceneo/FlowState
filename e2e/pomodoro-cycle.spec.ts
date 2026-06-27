@@ -1,3 +1,4 @@
+import { expectTaskListVisible } from "./helpers/task-list-locator";
 /**
  * Risk: S-01 / #7 — pomodoro cycle completion overlay, check-in gate, task done flow
  * Modeled on: e2e/seed.spec.ts
@@ -25,7 +26,7 @@ const BREAK_REENTRY_FOCUSED = "Ready when you are — your focus is still here."
 test.describe("Pomodoro cycle (S-01)", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
-		await expect(page.getByTestId("task-list")).toBeVisible();
+		await expectTaskListVisible(page);
 		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		const cleanReload = page.waitForResponse(
