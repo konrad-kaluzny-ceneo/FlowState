@@ -34,10 +34,16 @@ describe("DailyRecapPanel", () => {
 		sessionStorage.clear();
 	});
 
+	function expandRecapSections() {
+		fireEvent.click(screen.getByTestId("daily-recap-last24-toggle"));
+		fireEvent.click(screen.getByTestId("daily-recap-today-toggle"));
+	}
+
 	it("renders last 24h and today rows", () => {
 		render(<DailyRecapPanel localDateKey={DATE_KEY} recap={sampleRecap} />);
 
 		expect(screen.getByTestId("daily-recap-panel")).toBeTruthy();
+		expandRecapSections();
 		expect(screen.getByTestId("daily-recap-last24").textContent).toContain(
 			"Write recap",
 		);
@@ -71,19 +77,21 @@ describe("DailyRecapPanel", () => {
 		const last24Toggle = screen.getByTestId("daily-recap-last24-toggle");
 		const todayToggle = screen.getByTestId("daily-recap-today-toggle");
 
-		expect(last24Toggle.getAttribute("aria-expanded")).toBe("true");
-		expect(todayToggle.getAttribute("aria-expanded")).toBe("true");
+		expect(last24Toggle.getAttribute("aria-expanded")).toBe("false");
+		expect(todayToggle.getAttribute("aria-expanded")).toBe("false");
 		expect(last24Toggle.className).not.toContain("hover:underline");
 		expect(todayToggle.className).not.toContain("hover:underline");
+		expect(screen.queryByTestId("daily-recap-last24")).toBeNull();
+		expect(screen.queryByTestId("daily-recap-today")).toBeNull();
 
 		fireEvent.click(last24Toggle);
-		expect(last24Toggle.getAttribute("aria-expanded")).toBe("false");
-		expect(screen.queryByTestId("daily-recap-last24")).toBeNull();
-		expect(screen.getByTestId("daily-recap-today")).toBeTruthy();
+		expect(last24Toggle.getAttribute("aria-expanded")).toBe("true");
+		expect(screen.getByTestId("daily-recap-last24")).toBeTruthy();
+		expect(screen.queryByTestId("daily-recap-today")).toBeNull();
 
 		fireEvent.click(todayToggle);
-		expect(todayToggle.getAttribute("aria-expanded")).toBe("false");
-		expect(screen.queryByTestId("daily-recap-today")).toBeNull();
+		expect(todayToggle.getAttribute("aria-expanded")).toBe("true");
+		expect(screen.getByTestId("daily-recap-today")).toBeTruthy();
 	});
 
 	it("dismiss hides panel for the local date key", () => {
@@ -109,6 +117,7 @@ describe("DailyRecapPanel", () => {
 		).toBeNull();
 		expect(screen.queryByTestId("daily-recap-last24-toggle")).toBeNull();
 		expect(screen.queryByTestId("daily-recap-last24")).toBeNull();
+		fireEvent.click(screen.getByTestId("daily-recap-today-toggle"));
 		expect(screen.getByText(/Nothing on today's plan yet/i)).toBeTruthy();
 	});
 

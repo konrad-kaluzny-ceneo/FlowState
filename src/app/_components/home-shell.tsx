@@ -99,6 +99,12 @@ function HomeShellContent({
 						<h1 className="font-semibold text-4xl tracking-tight">
 							{t("appName")}
 						</h1>
+						<p
+							className="font-medium text-base text-text-primary"
+							data-testid="home-purpose-header"
+						>
+							{t("purposeHeader")}
+						</p>
 						<p className="text-sm text-text-secondary">{t("tagline")}</p>
 					</header>
 					{!isAuthenticated && <GuestBanner />}

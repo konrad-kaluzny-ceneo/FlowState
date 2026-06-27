@@ -383,12 +383,12 @@ No database, API, auth, or persisted data migration is required. Recap dismissal
 
 #### Automated
 
-- [ ] 2.1 Run `pnpm change-impact` before dashboard edit
-- [ ] 2.2 Consume home IA derivation from dashboard without hook/conductor changes
-- [ ] 2.3 Render `Home.purposeHeader` through home shell
-- [ ] 2.4 Make daily recap collapsed by default and hidden during active work
-- [ ] 2.5 Preserve existing `data-testid` contracts
-- [ ] 2.6 Run `pnpm check` for layout phase
+- [x] 2.1 Run `pnpm change-impact` before dashboard edit
+- [x] 2.2 Consume home IA derivation from dashboard without hook/conductor changes
+- [x] 2.3 Render `Home.purposeHeader` through home shell
+- [x] 2.4 Make daily recap collapsed by default and hidden during active work
+- [x] 2.5 Preserve existing `data-testid` contracts
+- [x] 2.6 Run `pnpm check` for layout phase
 
 #### Manual
 
