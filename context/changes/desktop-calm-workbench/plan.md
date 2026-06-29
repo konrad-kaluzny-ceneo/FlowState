@@ -335,12 +335,12 @@ No database, environment, or persisted-data migration is required. This is a cli
 
 #### Automated
 
-- [x] 3.1 Verify S-40 region-membership scenarios still pass
-- [x] 3.2 Verify S-41 rail structural oracles pass
-- [x] 3.3 Verify desktop class/structure assertions pass without pixel measurement
-- [x] 3.4 Run targeted Vitest command
-- [x] 3.5 Run pnpm check
-- [x] 3.6 Run pnpm test
+- [x] 3.1 Verify S-40 region-membership scenarios still pass — 4923547
+- [x] 3.2 Verify S-41 rail structural oracles pass — 4923547
+- [x] 3.3 Verify desktop class/structure assertions pass without pixel measurement — 4923547
+- [x] 3.4 Run targeted Vitest command — 4923547
+- [x] 3.5 Run pnpm check — 4923547
+- [x] 3.6 Run pnpm test — 4923547
 
 #### Manual
 
