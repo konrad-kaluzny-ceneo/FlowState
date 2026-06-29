@@ -1244,7 +1244,7 @@ describe("PomodoroDashboardBody home IA layout", () => {
 		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
 	});
 
-	it("archive view promotes archive primary and keeps back navigation reachable", () => {
+	it("archive view keeps archive in secondary zone and back navigation reachable", () => {
 		renderBody({
 			state: "idle",
 			focusedTask: { id: 1, title: "Focus task" },
@@ -1252,8 +1252,8 @@ describe("PomodoroDashboardBody home IA layout", () => {
 
 		fireEvent.click(screen.getByTestId("task-archive-entry"));
 
-		expectInsideRegion("home-primary-region", "task-archive-view");
-		expectInsideRegion("home-primary-region", "task-archive-back");
+		expectInsideRegion("home-secondary-region", "task-archive-view");
+		expectInsideRegion("home-secondary-region", "task-archive-back");
 		expect(screen.queryByTestId("task-list-stub")).toBeNull();
 	});
 });

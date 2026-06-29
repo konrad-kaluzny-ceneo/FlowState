@@ -5,7 +5,7 @@ import {
 	deriveHomeSessionState,
 	HOME_MODULE_KEYS,
 	type HomeModuleKey,
-} from "./home-session-state";
+} from "~/lib/home/home-session-state";
 
 function baseInput(
 	overrides: Partial<DeriveHomeSessionStateInput> = {},
@@ -165,14 +165,16 @@ describe("deriveHomeSessionState", () => {
 			expect(modules.inventory).toBe("secondary");
 		});
 
-		it("promotes archive and hides list inventory when archive view is active", () => {
+		it("keeps archive secondary and hides list inventory when archive view is active", () => {
 			const { modules } = deriveHomeSessionState(
 				baseInput({
 					taskInventoryView: "archive",
+					pendingKickoffSuggestionStatus: "ready",
 				}),
 			);
-			expect(modules.archive).toBe("primary");
+			expect(modules.archive).toBe("secondary");
 			expect(modules.inventory).toBe("hidden");
+			expect(modules.nextFocus).toBe("primary");
 		});
 
 		it("never shows return handoff banner module", () => {

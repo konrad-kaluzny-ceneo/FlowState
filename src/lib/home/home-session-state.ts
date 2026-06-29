@@ -167,7 +167,7 @@ function applyInventoryArchiveView(
 	input: DeriveHomeSessionStateInput,
 ): void {
 	if (input.taskInventoryView === "archive") {
-		modules.archive = "primary";
+		modules.archive = "secondary";
 		modules.inventory = "hidden";
 	}
 }
