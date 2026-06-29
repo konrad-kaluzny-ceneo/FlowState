@@ -1,7 +1,7 @@
 ---
 change_id: desktop-calm-workbench
 title: Desktop calm three-zone workbench (lg≥1024)
-status: implemented
+status: impl_reviewed
 created: 2026-06-29
 updated: 2026-06-29
 archived_at: null
