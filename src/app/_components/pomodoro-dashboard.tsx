@@ -17,6 +17,8 @@ import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { DailyRecapPanel } from "~/app/_components/daily-recap-panel";
 import { EndSessionConfirmOverlay } from "~/app/_components/end-session-confirm-overlay";
 import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
+import { GuestContextRail } from "~/app/_components/guest-context-rail";
+import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
@@ -53,6 +55,7 @@ import {
 	useGuestDomainTasks,
 } from "~/lib/data-mode/use-domain-tasks";
 import { shouldShowBreakAtmosphere } from "~/lib/design/break-atmosphere";
+import { HomeHeroSprig } from "~/lib/design/illustrations/home-hero-sprig";
 import { shouldShowWorkFocusShell } from "~/lib/design/work-focus-shell";
 import type { UserLocale } from "~/lib/domain/user-locale";
 import {
@@ -767,6 +770,63 @@ export function PomodoroDashboardBody({
 			/>
 		) : null;
 
+	const standingTaskFacts = useMemo(
+		() =>
+			tasks
+				.filter((task) => task.isDailyStanding)
+				.map((task) => ({
+					title: task.title,
+					doneForToday: task.doneForToday === true,
+				})),
+		[tasks],
+	);
+
+	const recapPanel =
+		dataMode === "authenticated" && moduleVisible("recap") ? (
+			<DailyRecapPanel
+				isLoading={recapLoading}
+				localDateKey={recapDateKey}
+				recap={recap}
+			/>
+		) : null;
+
+	const focusBudgetPrompt =
+		dayPlan != null ? (
+			<FocusBudgetPrompt
+				hasBudget={dayPlan.hasBudget}
+				isLoading={dayPlan.isLoading}
+				isSettingBudget={dayPlan.isSettingBudget}
+				localDateKey={dayPlan.localDateKey}
+				onSetBudget={dayPlan.setBudget}
+			/>
+		) : null;
+
+	const authenticatedContextRail = (
+		<>
+			<div className="w-full" data-testid="home-rail-illustration">
+				<HomeHeroSprig />
+			</div>
+			{recapPanel}
+			{dayPlan != null ? (
+				<HomeFocusSummary
+					budgetMinutes={dayPlan.budgetMinutes}
+					hasBudget={dayPlan.hasBudget}
+					isLoading={dayPlan.isLoading}
+					remainingMinutes={dayPlan.remainingMinutes}
+					standingTasks={standingTaskFacts}
+					usedMinutes={dayPlan.usedMinutes}
+				/>
+			) : null}
+		</>
+	);
+
+	const contextRailContent =
+		dataMode === "authenticated" ? (
+			authenticatedContextRail
+		) : (
+			<GuestContextRail />
+		);
+
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8 lg:max-w-7xl">
 			{pomodoro.pendingWedgeRecovery != null ? (
@@ -831,30 +891,19 @@ export function PomodoroDashboardBody({
 							</p>
 						)}
 						{dayPlan != null && (
-							<FocusBudgetPrompt
-								hasBudget={dayPlan.hasBudget}
-								isLoading={dayPlan.isLoading}
-								isSettingBudget={dayPlan.isSettingBudget}
-								localDateKey={dayPlan.localDateKey}
-								onSetBudget={dayPlan.setBudget}
-							/>
+							<div className="w-full lg:hidden">{focusBudgetPrompt}</div>
 						)}
-						{moduleVisible("recap") && (
-							<DailyRecapPanel
-								isLoading={recapLoading}
-								localDateKey={recapDateKey}
-								recap={recap}
-							/>
+						{recapPanel != null && (
+							<div className="w-full lg:hidden">{recapPanel}</div>
 						)}
 						{moduleInZone("inventory", "secondary") && taskInventory}
 						{moduleInZone("archive", "secondary") && taskArchive}
 					</HomeLayoutRegion>
 				</div>
 
-				<HomeLayoutRegion
-					className="hidden lg:flex"
-					testId="home-context-rail"
-				/>
+				<HomeLayoutRegion className="hidden lg:flex" testId="home-context-rail">
+					{contextRailContent}
+				</HomeLayoutRegion>
 			</div>
 
 			{pomodoro.midCyclePendingTask != null && (

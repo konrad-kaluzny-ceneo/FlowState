@@ -138,6 +138,10 @@
 			"signUp": "sign up",
 			"saveAcrossDevices": "to save across devices."
 		},
+		"rail": {
+			"valueProp": "Sign in to save tasks across devices and unlock energy check-ins with smart suggestions.",
+			"guidance": "Add a task when you are ready — your first focus cycle can start right here."
+		},
 		"merge": {
 			"title": "Your trial work is saved",
 			"dismissLabel": "Continue",
@@ -318,6 +322,11 @@
 		"appName": "FlowState",
 		"tagline": "Manage your tasks. Stay in flow.",
 		"purposeHeader": "A calm answer to: what to do next?"
+	},
+	"HomeFocusSummary": {
+		"budgetLine": "{used} of {budget} focus hours used · {remaining} left",
+		"standingOpen": "{count, plural, one {# daily standing task open} other {# daily standing tasks open}}",
+		"standingDone": "{count, plural, one {# daily standing task done for today} other {# daily standing tasks done for today}}"
 	},
 	"DayMemory": {
 		"sectionDone": "Done",

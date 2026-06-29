@@ -1309,3 +1309,122 @@ describe("PomodoroDashboardBody desktop workbench frame", () => {
 		expect(inventoryZone.className).toContain("lg:flex");
 	});
 });
+
+const AUTH_RAIL_BLOCK_IDS = [
+	"home-rail-illustration",
+	"daily-recap-panel",
+	"home-focus-summary",
+] as const;
+
+const GUEST_RAIL_BLOCK_IDS = [
+	"guest-rail-value-prop",
+	"guest-rail-activation-hint",
+	"guest-rail-guidance",
+] as const;
+
+function getAcceptedRailBlocks(ids: readonly string[]): string[] {
+	const rail = screen.getByTestId("home-context-rail");
+	return ids.filter((id) => within(rail).queryByTestId(id) != null);
+}
+
+const mockDayPlanWithBudget = {
+	localDateKey: "2026-06-20",
+	hasBudget: true,
+	isLoading: false,
+	budgetMinutes: 240,
+	remainingMinutes: 120,
+	usedMinutes: 120,
+	isSettingBudget: false,
+	setBudget: vi.fn(),
+};
+
+describe("PomodoroDashboardBody context rail content", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("authenticated rail has at most three accepted blocks with illustration, recap, and focus summary when budget is set", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTaskId: null,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				dayPlan={mockDayPlanWithBudget}
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		const blocks = getAcceptedRailBlocks(AUTH_RAIL_BLOCK_IDS);
+		expect(blocks.length).toBeLessThanOrEqual(3);
+		expect(blocks).toContain("home-rail-illustration");
+		expect(blocks).toContain("daily-recap-panel");
+		expect(blocks).toContain("home-focus-summary");
+		expect(screen.queryByTestId("focus-budget-prompt")).toBeNull();
+		expect(countEnabledPrimaryCtas()).toBeLessThanOrEqual(1);
+	});
+
+	it("guest rail has at most three accepted blocks with sign-in value, activation hint, and calm guidance", () => {
+		renderBody({
+			state: "idle",
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		const rail = screen.getByTestId("home-context-rail");
+		const blocks = getAcceptedRailBlocks(GUEST_RAIL_BLOCK_IDS);
+		expect(blocks.length).toBeLessThanOrEqual(3);
+		expect(blocks).toContain("guest-rail-value-prop");
+		expect(blocks).toContain("guest-rail-activation-hint");
+		expect(blocks).toContain("guest-rail-guidance");
+		expect(within(rail).queryByTestId("daily-recap-panel")).toBeNull();
+		expect(within(rail).queryByTestId("focus-budget-prompt")).toBeNull();
+		expect(within(rail).queryByTestId("home-focus-summary")).toBeNull();
+	});
+
+	it("guest rail excludes persisted-data panels from the document tree", () => {
+		renderBody({
+			state: "idle",
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		expect(screen.queryByTestId("daily-recap-panel")).toBeNull();
+		expect(screen.queryByTestId("focus-budget-prompt")).toBeNull();
+		expect(screen.queryByTestId("home-focus-summary")).toBeNull();
+	});
+
+	it("rail content does not add filled primary CTAs to the decision region", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTaskId: null,
+				pendingKickoffSuggestion: kickoffSuggestionReady,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				dayPlan={mockDayPlanWithBudget}
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(getAcceptedRailBlocks(AUTH_RAIL_BLOCK_IDS).length).toBeGreaterThan(
+			0,
+		);
+		expect(countEnabledPrimaryCtas()).toBe(1);
+		expectInsideRegion("home-primary-region", "suggestion-accept-btn");
+	});
+});
