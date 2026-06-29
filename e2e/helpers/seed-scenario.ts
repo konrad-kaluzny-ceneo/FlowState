@@ -174,8 +174,15 @@ export async function resetWorkerSessionViaApi(page: Page) {
 		try {
 			await trpcMutation(page, "task.delete", { id: task.id });
 		} catch (error) {
+			// Idempotent cleanup: the row may already be gone between list and
+			// delete (concurrent reset / cascade). tRPC surfaces this as NOT_FOUND,
+			// and Prisma's underlying P2025 message ("No record was found for a
+			// delete.") — swallow both so seed reset stays deterministic.
 			const message = error instanceof Error ? error.message : String(error);
-			if (!message.includes("NOT_FOUND")) {
+			const isAlreadyDeleted = /NOT_FOUND|No record was found|P2025/i.test(
+				message,
+			);
+			if (!isAlreadyDeleted) {
 				throw error;
 			}
 		}
