@@ -1257,3 +1257,55 @@ describe("PomodoroDashboardBody home IA layout", () => {
 		expect(screen.queryByTestId("task-list-stub")).toBeNull();
 	});
 });
+
+describe("PomodoroDashboardBody desktop workbench frame", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("widens dashboard root at lg breakpoint", () => {
+		const { container } = renderBody({
+			state: "idle",
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		const root = container.firstElementChild;
+		expect(root?.className).toContain("max-w-lg");
+		expect(root?.className).toContain("lg:max-w-7xl");
+	});
+
+	it("applies desktop workbench grid with 62/38 decision-rail split", () => {
+		renderBody({
+			state: "idle",
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		const grid = screen.getByTestId("home-workbench-grid");
+		expect(grid.className).toContain("lg:grid");
+		expect(grid.className).toContain(
+			"lg:grid-cols-[minmax(0,62fr)_minmax(0,38fr)]",
+		);
+	});
+
+	it("renders structural context rail zone for desktop layout", () => {
+		renderBody({
+			state: "idle",
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		const rail = screen.getByTestId("home-context-rail");
+		expect(rail.className).toContain("hidden");
+		expect(rail.className).toContain("lg:flex");
+	});
+
+	it("renders structural inventory zone hidden below lg", () => {
+		renderBody({
+			state: "idle",
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		const inventoryZone = screen.getByTestId("home-inventory-zone");
+		expect(inventoryZone.className).toContain("hidden");
+		expect(inventoryZone.className).toContain("lg:flex");
+	});
+});

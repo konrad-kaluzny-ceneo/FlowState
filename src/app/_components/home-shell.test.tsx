@@ -155,4 +155,14 @@ describe("HomeShell", () => {
 		expect(screen.getByTestId("guest-import-on-mount")).toBeTruthy();
 		expect(screen.getByTestId("pomodoro-dashboard")).toBeTruthy();
 	});
+
+	it("widens shell container at lg breakpoint for desktop workbench", () => {
+		mergeUiState.mergeSuccessVisible = false;
+		render(<HomeShell isAuthenticated={false} userId={null} />);
+
+		const main = screen.getByRole("main");
+		const container = main.querySelector(".container");
+		expect(container).toBeTruthy();
+		expect(container?.className).toContain("lg:max-w-7xl");
+	});
 });
