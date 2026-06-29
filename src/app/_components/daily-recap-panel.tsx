@@ -72,8 +72,8 @@ export function DailyRecapPanel({
 	const locale = useLocale();
 	const t = useTranslations("Recap");
 	const [dismissed, setDismissed] = useState(false);
-	const [last24Expanded, setLast24Expanded] = useState(true);
-	const [todayExpanded, setTodayExpanded] = useState(true);
+	const [last24Expanded, setLast24Expanded] = useState(false);
+	const [todayExpanded, setTodayExpanded] = useState(false);
 	const hasLast24Hours = recap.last24Hours.length > 0;
 
 	const formatRecapRow = useCallback(
@@ -110,8 +110,8 @@ export function DailyRecapPanel({
 
 	useEffect(() => {
 		setDismissed(isDismissedForDate(localDateKey));
-		setLast24Expanded(true);
-		setTodayExpanded(true);
+		setLast24Expanded(false);
+		setTodayExpanded(false);
 	}, [localDateKey]);
 
 	const handleDismiss = useCallback(() => {

@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import {
+	type ReactNode,
 	Suspense,
 	useCallback,
 	useEffect,
@@ -54,6 +55,10 @@ import {
 import { shouldShowBreakAtmosphere } from "~/lib/design/break-atmosphere";
 import { shouldShowWorkFocusShell } from "~/lib/design/work-focus-shell";
 import type { UserLocale } from "~/lib/domain/user-locale";
+import {
+	deriveHomeSessionState,
+	type HomeModuleKey,
+} from "~/lib/home/home-session-state";
 import { shouldDeferFirstRun } from "~/lib/onboarding/defer";
 import {
 	resolveCheckInCoachLine,
@@ -65,6 +70,32 @@ import { getPersonaPresetLabel } from "~/lib/task/persona-presets";
 import { resolveWedgeBeat } from "~/lib/wedge/transition-conductor";
 
 type DayPlanView = ReturnType<typeof useDayPlan>;
+
+function mapSuggestionGateStatus(
+	status: "idle" | "loading" | "ready" | "empty" | "error",
+): "idle" | "loading" | "ready" | "error" {
+	if (status === "empty") {
+		return "ready";
+	}
+	return status;
+}
+
+function HomeLayoutRegion({
+	children,
+	testId,
+}: {
+	children: ReactNode;
+	testId: "home-primary-region" | "home-secondary-region";
+}) {
+	return (
+		<div
+			className="flex w-full flex-col items-center gap-8"
+			data-testid={testId}
+		>
+			{children}
+		</div>
+	);
+}
 
 export function PomodoroDashboardBody({
 	tasks,
@@ -137,6 +168,8 @@ export function PomodoroDashboardBody({
 	} = useDailyRecap();
 
 	const locale = useLocale() as UserLocale;
+	const dataMode =
+		onboardingScope.mode === "authenticated" ? "authenticated" : "guest";
 	const tDashboard = useTranslations("Session.dashboard");
 	const suggestionPersonaLabel = useMemo(() => {
 		const pending = pomodoro.pendingSuggestion;
@@ -453,6 +486,279 @@ export function PomodoroDashboardBody({
 			? getBreakReentryLine(pomodoro.narrativeLatestEnergy)
 			: null;
 
+	const homeIa = useMemo(
+		() =>
+			deriveHomeSessionState({
+				dataMode,
+				cycleKind: pomodoro.cycleKind,
+				cycleState: pomodoro.state,
+				wedgeGateActive,
+				enableSuggestionGate,
+				showSessionEnergy: pomodoro.showSessionEnergy,
+				showSessionFocus: pomodoro.showSessionFocus,
+				pendingKickoffSuggestionStatus: mapSuggestionGateStatus(
+					pomodoro.pendingKickoffSuggestion.status,
+				),
+				pendingSuggestionStatus: mapSuggestionGateStatus(
+					pomodoro.pendingSuggestion.status,
+				),
+				focusedTaskId: pomodoro.focusedTaskId,
+				continueTaskId: pomodoro.continueTaskId,
+				hasPreFocusedKickoff: pomodoro.hasPreFocusedKickoff,
+				workTypeDurationScopeAvailable: workTypeDurationScope != null,
+				taskInventoryView: taskInventoryView === "archive" ? "archive" : "list",
+				recapAvailable: !recapLoading,
+				showInFlowSummary,
+				showBreakTransitionLine,
+			}),
+		[
+			dataMode,
+			pomodoro.cycleKind,
+			pomodoro.state,
+			wedgeGateActive,
+			enableSuggestionGate,
+			pomodoro.showSessionEnergy,
+			pomodoro.showSessionFocus,
+			pomodoro.pendingKickoffSuggestion.status,
+			pomodoro.pendingSuggestion.status,
+			pomodoro.focusedTaskId,
+			pomodoro.continueTaskId,
+			pomodoro.hasPreFocusedKickoff,
+			workTypeDurationScope,
+			taskInventoryView,
+			recapLoading,
+			showInFlowSummary,
+			showBreakTransitionLine,
+		],
+	);
+
+	const moduleInZone = (key: HomeModuleKey, zone: "primary" | "secondary") =>
+		homeIa.modules[key] === zone;
+	const moduleVisible = (key: HomeModuleKey) =>
+		homeIa.modules[key] !== "hidden";
+
+	const nextFocusUiActive =
+		showKickoffCard || showKickoffDurationChips || showSuggestionCard;
+
+	const timerShown =
+		showTimer &&
+		(moduleVisible("timer") ||
+			pomodoro.state === "completed" ||
+			((pomodoro.focusedTaskId != null || pomodoro.focusedTask != null) &&
+				!nextFocusUiActive));
+
+	const timerZone: "primary" | "secondary" | null = !timerShown
+		? null
+		: moduleInZone("timer", "primary")
+			? "primary"
+			: moduleInZone("timer", "secondary")
+				? "secondary"
+				: "primary";
+
+	const steeringCards =
+		enableSuggestionGate &&
+		moduleVisible("steering") &&
+		(pomodoro.showSessionEnergy || pomodoro.showSessionFocus) ? (
+			<>
+				{pomodoro.showSessionEnergy && (
+					<SessionEnergyCard
+						disabled={pomodoro.sessionSteeringSubmitting}
+						onSelect={handleCompleteEnergy}
+						onSkip={handleSkipEnergy}
+					/>
+				)}
+				{pomodoro.showSessionFocus && (
+					<SessionFocusCard
+						isSubmitting={pomodoro.sessionSteeringSubmitting}
+						onComplete={handleCompleteFocus}
+						onSkip={handleSkipFocus}
+					/>
+				)}
+			</>
+		) : null;
+
+	const statusLines =
+		showInFlowSummary || showBreakTransitionLine ? (
+			<>
+				{showInFlowSummary && (
+					<p
+						aria-atomic="true"
+						aria-live="polite"
+						className="w-full max-w-lg rounded-lg border border-border-subtle bg-surface-panel/50 px-4 py-2 text-center text-sm text-text-secondary"
+						data-testid="session-inflow-summary"
+					>
+						{pomodoro.inFlowSummaryLine}
+					</p>
+				)}
+				{showBreakTransitionLine && (
+					<button
+						aria-atomic="true"
+						aria-live="polite"
+						className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
+						data-testid="break-transition-line"
+						onClick={pomodoro.clearBreakTransitionLine}
+						type="button"
+					>
+						{pomodoro.breakTransitionLine}
+					</button>
+				)}
+			</>
+		) : null;
+
+	const kickoffDurationChips =
+		moduleVisible("nextFocus") &&
+		showKickoffDurationChips &&
+		kickoffWorkType != null &&
+		workTypeDurationScope != null ? (
+			<KickoffDurationChips
+				onSelect={(sec) => {
+					pomodoro.selectKickoffDuration(
+						kickoffWorkType,
+						sec,
+						workTypeDurationScope,
+					);
+				}}
+				scope={workTypeDurationScope}
+				selectedSec={pomodoro.stagedKickoffDurationSec ?? undefined}
+				workType={kickoffWorkType}
+			/>
+		) : null;
+
+	const timerPanel = timerShown ? (
+		<TimerPanel
+			cycleEndAudioMode={cycleEndAudioMode}
+			cycleKind={pomodoro.cycleKind}
+			focusedTask={pomodoro.focusedTask}
+			isStarting={false}
+			onCycleEndAudioModeChange={setCycleEndAudioMode}
+			onInterrupt={pomodoro.interrupt}
+			onOutOfTabBreakAlertsChange={setOutOfTabBreakAlertsEnabled}
+			onPause={pomodoro.pause}
+			onResume={pomodoro.resume}
+			onStart={handleStartWithPermission}
+			onWorkDurationManualChange={pomodoro.clearStagedKickoffDuration}
+			outOfTabBreakAlertsEnabled={outOfTabBreakAlertsEnabled}
+			preferredWorkDurationSec={pomodoro.stagedKickoffDurationSec}
+			remainingMs={pomodoro.remainingMs}
+			state={pomodoro.state}
+		/>
+	) : null;
+
+	const breakSuggestionCard =
+		moduleVisible("nextFocus") && showSuggestionCard ? (
+			pomodoro.pendingSuggestion.status === "loading" ? (
+				<TaskSuggestionCard status="loading" />
+			) : pomodoro.pendingSuggestion.status === "ready" ? (
+				<div className="w-full max-w-lg">
+					{showSuggestionCatchUp && catchUp != null && (
+						<TabReturnCatchUp
+							catchUp={catchUp}
+							cycleKind={pomodoro.cycleKind}
+							taskTitle={pomodoro.focusedTask?.title}
+						/>
+					)}
+					<TaskSuggestionCard
+						coachLine={effectiveSuggestionCoachLine}
+						onAccept={() => {
+							pomodoro.dismissCatchUp();
+							onSuggestionCoachSeen?.();
+							void pomodoro.acceptSuggestion();
+						}}
+						status="ready"
+						suggestion={{
+							taskId: Number(pomodoro.pendingSuggestion.data.taskId),
+							title: pomodoro.pendingSuggestion.data.title,
+							workType: pomodoro.pendingSuggestion.data.workType,
+							weight: pomodoro.pendingSuggestion.data.weight,
+							urgency: pomodoro.pendingSuggestion.data.urgency,
+							importance: pomodoro.pendingSuggestion.data.importance,
+							commitmentHorizon:
+								pomodoro.pendingSuggestion.data.commitmentHorizon,
+							rationale: pomodoro.pendingSuggestion.data.rationale,
+							breakdown: pomodoro.pendingSuggestion.data.breakdown,
+							resumeNote: pomodoro.pendingSuggestion.data.resumeNote,
+						}}
+					/>
+				</div>
+			) : pomodoro.pendingSuggestion.status === "empty" ? (
+				<TaskSuggestionCard status="empty" />
+			) : pomodoro.pendingSuggestion.status === "error" ? (
+				<TaskSuggestionCard onRetry={pomodoro.retrySuggestion} status="error" />
+			) : null
+		) : null;
+
+	const kickoffSuggestionCard =
+		moduleVisible("nextFocus") && showKickoffCard ? (
+			pomodoro.pendingKickoffSuggestion.status === "loading" ? (
+				<TaskSuggestionCard status="loading" />
+			) : pomodoro.pendingKickoffSuggestion.status === "ready" ? (
+				<TaskSuggestionCard
+					coachLine={effectiveSuggestionCoachLine}
+					isAccepting={pomodoro.isAcceptingKickoffSuggestion}
+					onAccept={() => {
+						onSuggestionCoachSeen?.();
+						void pomodoro.acceptKickoffSuggestion();
+					}}
+					status="ready"
+					suggestion={{
+						taskId: Number(pomodoro.pendingKickoffSuggestion.data.taskId),
+						title: pomodoro.pendingKickoffSuggestion.data.title,
+						workType: pomodoro.pendingKickoffSuggestion.data.workType,
+						weight: pomodoro.pendingKickoffSuggestion.data.weight,
+						urgency: pomodoro.pendingKickoffSuggestion.data.urgency,
+						importance: pomodoro.pendingKickoffSuggestion.data.importance,
+						commitmentHorizon:
+							pomodoro.pendingKickoffSuggestion.data.commitmentHorizon,
+						rationale: pomodoro.pendingKickoffSuggestion.data.rationale,
+						breakdown: pomodoro.pendingKickoffSuggestion.data.breakdown,
+						resumeNote: pomodoro.pendingKickoffSuggestion.data.resumeNote,
+					}}
+				/>
+			) : pomodoro.pendingKickoffSuggestion.status === "empty" ? (
+				<TaskSuggestionCard status="empty" />
+			) : pomodoro.pendingKickoffSuggestion.status === "error" ? (
+				<TaskSuggestionCard
+					onRetry={pomodoro.retryKickoffSuggestion}
+					status="error"
+				/>
+			) : null
+		) : null;
+
+	const taskInventory =
+		moduleVisible("inventory") && taskInventoryView === "inventory" ? (
+			<TaskList
+				chromeSubdued={breakAtmosphereActive}
+				continueTaskId={pomodoro.continueTaskId}
+				cycleKind={pomodoro.cycleKind}
+				cycleState={pomodoro.state}
+				focusedTaskId={pomodoro.focusedTaskId}
+				focusShellActive={workFocusShellActive}
+				footprints={recap.footprints}
+				highlightedTaskId={highlightedTaskId}
+				onFocusTask={(taskId, task) => {
+					pomodoro.selectTask(taskId, task);
+				}}
+				onMidCycleMarkComplete={(taskId, task) => {
+					pomodoro.onMidCycleMarkComplete(taskId, task);
+				}}
+				onOpenArchive={() => setTaskInventoryView("archive")}
+				onRefresh={refreshTasks}
+				suggestionLoading={
+					pomodoro.pendingSuggestion.status === "loading" ||
+					pomodoro.pendingKickoffSuggestion.status === "loading"
+				}
+				tasks={tasks}
+			/>
+		) : null;
+
+	const taskArchive =
+		moduleVisible("archive") && taskInventoryView === "archive" ? (
+			<TaskArchiveView
+				onBack={() => setTaskInventoryView("inventory")}
+				onTasksChanged={refreshTasks}
+			/>
+		) : null;
+
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8">
 			{pomodoro.pendingWedgeRecovery != null ? (
@@ -483,219 +789,48 @@ export function PomodoroDashboardBody({
 				)
 			)}
 
-			{enableSuggestionGate && pomodoro.showSessionEnergy && (
-				<SessionEnergyCard
-					disabled={pomodoro.sessionSteeringSubmitting}
-					onSelect={handleCompleteEnergy}
-					onSkip={handleSkipEnergy}
-				/>
-			)}
+			<HomeLayoutRegion testId="home-primary-region">
+				{moduleInZone("steering", "primary") && steeringCards}
+				{moduleInZone("nextFocus", "primary") && kickoffDurationChips}
+				{timerZone === "primary" && timerPanel}
+				{moduleInZone("nextFocus", "primary") && breakSuggestionCard}
+				{moduleInZone("nextFocus", "primary") && kickoffSuggestionCard}
+				{moduleInZone("archive", "primary") && taskArchive}
+			</HomeLayoutRegion>
 
-			{enableSuggestionGate && pomodoro.showSessionFocus && (
-				<SessionFocusCard
-					isSubmitting={pomodoro.sessionSteeringSubmitting}
-					onComplete={handleCompleteFocus}
-					onSkip={handleSkipFocus}
-				/>
-			)}
-
-			{showInFlowSummary && (
-				<p
-					aria-atomic="true"
-					aria-live="polite"
-					className="w-full max-w-lg rounded-lg border border-border-subtle bg-surface-panel/50 px-4 py-2 text-center text-sm text-text-secondary"
-					data-testid="session-inflow-summary"
-				>
-					{pomodoro.inFlowSummaryLine}
-				</p>
-			)}
-
-			{showBreakTransitionLine && (
-				<button
-					aria-atomic="true"
-					aria-live="polite"
-					className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
-					data-testid="break-transition-line"
-					onClick={pomodoro.clearBreakTransitionLine}
-					type="button"
-				>
-					{pomodoro.breakTransitionLine}
-				</button>
-			)}
-
-			{showKickoffDurationChips &&
-				kickoffWorkType != null &&
-				workTypeDurationScope != null && (
-					<KickoffDurationChips
-						onSelect={(sec) => {
-							pomodoro.selectKickoffDuration(
-								kickoffWorkType,
-								sec,
-								workTypeDurationScope,
-							);
-						}}
-						scope={workTypeDurationScope}
-						selectedSec={pomodoro.stagedKickoffDurationSec ?? undefined}
-						workType={kickoffWorkType}
+			<HomeLayoutRegion testId="home-secondary-region">
+				{statusLines}
+				{timerZone === "secondary" && timerPanel}
+				{moduleInZone("steering", "secondary") && steeringCards}
+				{pomodoro.overrideAcknowledgement != null && (
+					<p
+						aria-atomic="true"
+						aria-live="polite"
+						className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
+						data-testid="suggestion-override-ack"
+					>
+						{pomodoro.overrideAcknowledgement}
+					</p>
+				)}
+				{dayPlan != null && (
+					<FocusBudgetPrompt
+						hasBudget={dayPlan.hasBudget}
+						isLoading={dayPlan.isLoading}
+						isSettingBudget={dayPlan.isSettingBudget}
+						localDateKey={dayPlan.localDateKey}
+						onSetBudget={dayPlan.setBudget}
 					/>
 				)}
-
-			{showTimer && (
-				<TimerPanel
-					cycleEndAudioMode={cycleEndAudioMode}
-					cycleKind={pomodoro.cycleKind}
-					focusedTask={pomodoro.focusedTask}
-					isStarting={false}
-					onCycleEndAudioModeChange={setCycleEndAudioMode}
-					onInterrupt={pomodoro.interrupt}
-					onOutOfTabBreakAlertsChange={setOutOfTabBreakAlertsEnabled}
-					onPause={pomodoro.pause}
-					onResume={pomodoro.resume}
-					onStart={handleStartWithPermission}
-					onWorkDurationManualChange={pomodoro.clearStagedKickoffDuration}
-					outOfTabBreakAlertsEnabled={outOfTabBreakAlertsEnabled}
-					preferredWorkDurationSec={pomodoro.stagedKickoffDurationSec}
-					remainingMs={pomodoro.remainingMs}
-					state={pomodoro.state}
-				/>
-			)}
-
-			{showSuggestionCard &&
-				(pomodoro.pendingSuggestion.status === "loading" ? (
-					<TaskSuggestionCard status="loading" />
-				) : pomodoro.pendingSuggestion.status === "ready" ? (
-					<div className="w-full max-w-lg">
-						{showSuggestionCatchUp && catchUp != null && (
-							<TabReturnCatchUp
-								catchUp={catchUp}
-								cycleKind={pomodoro.cycleKind}
-								taskTitle={pomodoro.focusedTask?.title}
-							/>
-						)}
-						<TaskSuggestionCard
-							coachLine={effectiveSuggestionCoachLine}
-							onAccept={() => {
-								pomodoro.dismissCatchUp();
-								onSuggestionCoachSeen?.();
-								void pomodoro.acceptSuggestion();
-							}}
-							status="ready"
-							suggestion={{
-								taskId: Number(pomodoro.pendingSuggestion.data.taskId),
-								title: pomodoro.pendingSuggestion.data.title,
-								workType: pomodoro.pendingSuggestion.data.workType,
-								weight: pomodoro.pendingSuggestion.data.weight,
-								urgency: pomodoro.pendingSuggestion.data.urgency,
-								importance: pomodoro.pendingSuggestion.data.importance,
-								commitmentHorizon:
-									pomodoro.pendingSuggestion.data.commitmentHorizon,
-								rationale: pomodoro.pendingSuggestion.data.rationale,
-								breakdown: pomodoro.pendingSuggestion.data.breakdown,
-								resumeNote: pomodoro.pendingSuggestion.data.resumeNote,
-							}}
-						/>
-					</div>
-				) : pomodoro.pendingSuggestion.status === "empty" ? (
-					<TaskSuggestionCard status="empty" />
-				) : pomodoro.pendingSuggestion.status === "error" ? (
-					<TaskSuggestionCard
-						onRetry={pomodoro.retrySuggestion}
-						status="error"
+				{moduleVisible("recap") && (
+					<DailyRecapPanel
+						isLoading={recapLoading}
+						localDateKey={recapDateKey}
+						recap={recap}
 					/>
-				) : null)}
-
-			{showKickoffCard &&
-				(pomodoro.pendingKickoffSuggestion.status === "loading" ? (
-					<TaskSuggestionCard status="loading" />
-				) : pomodoro.pendingKickoffSuggestion.status === "ready" ? (
-					<TaskSuggestionCard
-						coachLine={effectiveSuggestionCoachLine}
-						isAccepting={pomodoro.isAcceptingKickoffSuggestion}
-						onAccept={() => {
-							onSuggestionCoachSeen?.();
-							void pomodoro.acceptKickoffSuggestion();
-						}}
-						status="ready"
-						suggestion={{
-							taskId: Number(pomodoro.pendingKickoffSuggestion.data.taskId),
-							title: pomodoro.pendingKickoffSuggestion.data.title,
-							workType: pomodoro.pendingKickoffSuggestion.data.workType,
-							weight: pomodoro.pendingKickoffSuggestion.data.weight,
-							urgency: pomodoro.pendingKickoffSuggestion.data.urgency,
-							importance: pomodoro.pendingKickoffSuggestion.data.importance,
-							commitmentHorizon:
-								pomodoro.pendingKickoffSuggestion.data.commitmentHorizon,
-							rationale: pomodoro.pendingKickoffSuggestion.data.rationale,
-							breakdown: pomodoro.pendingKickoffSuggestion.data.breakdown,
-							resumeNote: pomodoro.pendingKickoffSuggestion.data.resumeNote,
-						}}
-					/>
-				) : pomodoro.pendingKickoffSuggestion.status === "empty" ? (
-					<TaskSuggestionCard status="empty" />
-				) : pomodoro.pendingKickoffSuggestion.status === "error" ? (
-					<TaskSuggestionCard
-						onRetry={pomodoro.retryKickoffSuggestion}
-						status="error"
-					/>
-				) : null)}
-
-			{pomodoro.overrideAcknowledgement != null && (
-				<p
-					aria-atomic="true"
-					aria-live="polite"
-					className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
-					data-testid="suggestion-override-ack"
-				>
-					{pomodoro.overrideAcknowledgement}
-				</p>
-			)}
-
-			{dayPlan != null && (
-				<FocusBudgetPrompt
-					hasBudget={dayPlan.hasBudget}
-					isLoading={dayPlan.isLoading}
-					isSettingBudget={dayPlan.isSettingBudget}
-					localDateKey={dayPlan.localDateKey}
-					onSetBudget={dayPlan.setBudget}
-				/>
-			)}
-
-			<DailyRecapPanel
-				isLoading={recapLoading}
-				localDateKey={recapDateKey}
-				recap={recap}
-			/>
-
-			{taskInventoryView === "archive" ? (
-				<TaskArchiveView
-					onBack={() => setTaskInventoryView("inventory")}
-					onTasksChanged={refreshTasks}
-				/>
-			) : (
-				<TaskList
-					chromeSubdued={breakAtmosphereActive}
-					continueTaskId={pomodoro.continueTaskId}
-					cycleKind={pomodoro.cycleKind}
-					cycleState={pomodoro.state}
-					focusedTaskId={pomodoro.focusedTaskId}
-					focusShellActive={workFocusShellActive}
-					footprints={recap.footprints}
-					highlightedTaskId={highlightedTaskId}
-					onFocusTask={(taskId, task) => {
-						pomodoro.selectTask(taskId, task);
-					}}
-					onMidCycleMarkComplete={(taskId, task) => {
-						pomodoro.onMidCycleMarkComplete(taskId, task);
-					}}
-					onOpenArchive={() => setTaskInventoryView("archive")}
-					onRefresh={refreshTasks}
-					suggestionLoading={
-						pomodoro.pendingSuggestion.status === "loading" ||
-						pomodoro.pendingKickoffSuggestion.status === "loading"
-					}
-					tasks={tasks}
-				/>
-			)}
+				)}
+				{moduleInZone("inventory", "secondary") && taskInventory}
+				{moduleInZone("archive", "secondary") && taskArchive}
+			</HomeLayoutRegion>
 
 			{pomodoro.midCyclePendingTask != null && (
 				<MidCycleCompletionPrompt

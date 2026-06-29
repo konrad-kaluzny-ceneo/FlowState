@@ -70,6 +70,8 @@ test.describe("Daily work timing recap (S-30)", () => {
 		await expect(page.getByTestId("daily-recap-panel")).toBeVisible({
 			timeout: 15_000,
 		});
+		// Recap sections default to collapsed (S-40 home IA reset); expand last 24h first.
+		await page.getByTestId("daily-recap-last24-toggle").click();
 		await expect(page.getByTestId("daily-recap-last24")).toContainText(
 			taskTitle,
 		);

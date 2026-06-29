@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getTestMessages } from "~/i18n/test-intl";
+
 import { HomeShell } from "./home-shell";
 
 const firstRunOverlayProps = vi.fn();
@@ -128,5 +130,29 @@ describe("HomeShell", () => {
 		render(<HomeShell isAuthenticated={false} userId={null} />);
 
 		expect(screen.queryByTestId("offline-banner")).toBeNull();
+	});
+
+	it("renders the purpose header and dashboard for guest users", () => {
+		mergeUiState.mergeSuccessVisible = false;
+		const messages = getTestMessages("en");
+
+		render(<HomeShell isAuthenticated={false} userId={null} />);
+
+		const purposeHeader = screen.getByTestId("home-purpose-header");
+		expect(purposeHeader.textContent).toBe(messages.Home.purposeHeader);
+		expect(screen.getByTestId("pomodoro-dashboard")).toBeTruthy();
+	});
+
+	it("renders the purpose header for authenticated users", () => {
+		mergeUiState.mergeSuccessVisible = false;
+		const messages = getTestMessages("en");
+
+		render(<HomeShell isAuthenticated={true} userId="user-1" />);
+
+		expect(screen.getByTestId("home-purpose-header").textContent).toBe(
+			messages.Home.purposeHeader,
+		);
+		expect(screen.getByTestId("guest-import-on-mount")).toBeTruthy();
+		expect(screen.getByTestId("pomodoro-dashboard")).toBeTruthy();
 	});
 });
