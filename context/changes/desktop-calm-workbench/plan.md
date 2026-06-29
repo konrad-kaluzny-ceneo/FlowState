@@ -320,10 +320,10 @@ No database, environment, or persisted-data migration is required. This is a cli
 
 #### Automated
 
-- [x] 2.1 Verify authenticated rail has <=3 accepted blocks
-- [x] 2.2 Verify guest rail has <=3 accepted blocks
-- [x] 2.3 Verify guest rail excludes persisted-data panels
-- [x] 2.4 Verify rail content does not add primary CTAs to decision region
+- [x] 2.1 Verify authenticated rail has <=3 accepted blocks — e7a4130
+- [x] 2.2 Verify guest rail has <=3 accepted blocks — e7a4130
+- [x] 2.3 Verify guest rail excludes persisted-data panels — e7a4130
+- [x] 2.4 Verify rail content does not add primary CTAs to decision region — e7a4130
 
 #### Manual
 
