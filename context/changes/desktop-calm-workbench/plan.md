@@ -305,10 +305,10 @@ No database, environment, or persisted-data migration is required. This is a cli
 
 #### Automated
 
-- [x] 1.1 Verify centered desktop workbench class contract — 1f46152
-- [x] 1.2 Verify decision/rail split class contract — 1f46152
-- [x] 1.3 Verify S-40 mobile region oracles remain green — 1f46152
-- [x] 1.4 Run timer-hub change-impact preflight — 1f46152
+- [x] 1.1 Verify centered desktop workbench class contract — 77c9dc6
+- [x] 1.2 Verify decision/rail split class contract — 77c9dc6
+- [x] 1.3 Verify S-40 mobile region oracles remain green — 77c9dc6
+- [x] 1.4 Run timer-hub change-impact preflight — 77c9dc6
 
 #### Manual
 
