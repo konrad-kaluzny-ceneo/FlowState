@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-06-29
 structure: split
-active_slices: []
+active_slices: [desktop-calm-workbench]
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -91,7 +91,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | Q-09 | testing-mutation-oracle-hardening | — | — | (quality) raise covered-code mutation score by killing survived mutants in hooks + server routers — strengthen weak oracles | S-01, S-03, S-05, S-07, S-08 | test-plan Phase 5; risks #1–#6 | done |
 | F-14 | product-voice-contract | [FLO-93](https://linear.app/flowstate-10xdev/issue/FLO-93/flowstate-product-voice-contract-f-14) | [#171](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/171) | (foundation) bilingual EN/PL system, then separated voice/copy contract | S-21, S-30, F-04, F-06 | Secondary / US-03 craft | done |
 | S-40 | home-ia-reset | [FLO-92](https://linear.app/flowstate-10xdev/issue/FLO-92/flowstate-home-ia-reset-s-40) | [#172](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/172) | home answers "Co teraz?" — one dominant next-focus, recap collapsed, inventory secondary | S-13, S-15, S-27, S-30, S-31; soft F-14 | Secondary / US-03 craft | done |
-| S-41 | desktop-calm-workbench | [FLO-89](https://linear.app/flowstate-10xdev/issue/FLO-89/flowstate-desktop-calm-workbench-s-41) | [#173](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/173) | lg≥1024 calm three-zone workbench; decision column primary; rail ≤3 blocks | S-40; soft F-14 | Secondary | proposed |
+| S-41 | desktop-calm-workbench | [FLO-89](https://linear.app/flowstate-10xdev/issue/FLO-89/flowstate-desktop-calm-workbench-s-41) | [#173](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/173) | lg≥1024 calm three-zone workbench; decision column primary; rail ≤3 blocks | S-40; soft F-14 | Secondary | active |
 | S-42 | mindful-day-memory | [FLO-90](https://linear.app/flowstate-10xdev/issue/FLO-90/flowstate-mindful-day-memory-s-42) | [#174](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/174) | S-30 phase 2 — Domknięte/Zostaje/Wróć tutaj narrative; formatter only | S-30, S-18; soft F-14 | **US-03** craft | proposed |
 | S-43 | stateful-illustration-system | [FLO-91](https://linear.app/flowstate-10xdev/issue/FLO-91/flowstate-stateful-illustration-system-s-43) | [#175](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/175) | S-28 phase 2 — state-bound Calm Garden on hero/rail; not on gates | S-28, F-06, F-07, S-39 | Secondary | proposed |
 | S-44 | archive-old-tasks | [FLO-94](https://linear.app/flowstate-10xdev/issue/FLO-94/flowstate-stale-task-archive-view-bulk-delete-s-44) | [#178](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/178) | review stale tasks in archive view; multi-select + permanent delete | S-09, S-13 | **US-05** | done |
