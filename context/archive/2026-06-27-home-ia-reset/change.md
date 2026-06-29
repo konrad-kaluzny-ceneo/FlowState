@@ -1,10 +1,10 @@
 ---
 change_id: home-ia-reset
 title: Home IA reset
-status: impl_reviewed
+status: archived
 created: 2026-06-27
-updated: 2026-06-27
-archived_at: null
+updated: 2026-06-29
+archived_at: 2026-06-29T08:15:00Z
 ---
 
 ## Notes
