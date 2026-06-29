@@ -24,6 +24,11 @@ test.describe("Guest merge on sign-in (S-08 / Risk #5)", () => {
 
 		test.setTimeout(90_000);
 
+		// S-41 moves the guest sign-in CTA into the desktop context rail and hides
+		// the header GuestBanner at lg. Drive this guest-merge flow at mobile width
+		// so the header banner remains the guest-mode oracle.
+		await page.setViewportSize({ width: 390, height: 844 });
+
 		const taskTitle = `Guest Merge ${Date.now()}`;
 
 		await page.goto("/");

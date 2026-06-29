@@ -67,12 +67,18 @@ test.describe("Daily work timing recap (S-30)", () => {
 		await completeWorkCycleWithCheckIn(page, "steady");
 		await recapResponse;
 
-		await expect(page.getByTestId("daily-recap-panel")).toBeVisible({
+		// S-41 renders the recap in two zones (secondary below lg, context rail at
+		// lg) gated purely by CSS, so both copies live in the DOM at once. Scope to
+		// the visible instance to avoid Playwright strict-mode violations.
+		const visibleRecap = page.locator(
+			'[data-testid="daily-recap-panel"]:visible',
+		);
+		await expect(visibleRecap).toBeVisible({
 			timeout: 15_000,
 		});
 		// Recap sections default to collapsed (S-40 home IA reset); expand last 24h first.
-		await page.getByTestId("daily-recap-last24-toggle").click();
-		await expect(page.getByTestId("daily-recap-last24")).toContainText(
+		await visibleRecap.getByTestId("daily-recap-last24-toggle").click();
+		await expect(visibleRecap.getByTestId("daily-recap-last24")).toContainText(
 			taskTitle,
 		);
 
@@ -80,7 +86,9 @@ test.describe("Daily work timing recap (S-30)", () => {
 			page.locator('[data-testid^="task-footprint-"]'),
 		).toContainText(/m total/i);
 
-		await page.getByTestId("daily-recap-dismiss").click();
-		await expect(page.getByTestId("daily-recap-panel")).toBeHidden();
+		await visibleRecap.getByTestId("daily-recap-dismiss").click();
+		await expect(
+			page.locator('[data-testid="daily-recap-panel"]:visible'),
+		).toHaveCount(0);
 	});
 });

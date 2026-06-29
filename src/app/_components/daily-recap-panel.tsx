@@ -125,7 +125,7 @@ export function DailyRecapPanel({
 
 	return (
 		<div
-			className="w-full max-w-lg rounded-lg border border-card-border bg-surface-card px-4 py-3 shadow-sm"
+			className="w-full max-w-lg rounded-lg border border-card-border bg-surface-card px-4 py-3 shadow-sm lg:max-w-none"
 			data-testid="daily-recap-panel"
 		>
 			<div className="flex items-start justify-between gap-3">

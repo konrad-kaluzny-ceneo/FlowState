@@ -17,6 +17,8 @@ import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { DailyRecapPanel } from "~/app/_components/daily-recap-panel";
 import { EndSessionConfirmOverlay } from "~/app/_components/end-session-confirm-overlay";
 import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
+import { GuestContextRail } from "~/app/_components/guest-context-rail";
+import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
@@ -53,6 +55,7 @@ import {
 	useGuestDomainTasks,
 } from "~/lib/data-mode/use-domain-tasks";
 import { shouldShowBreakAtmosphere } from "~/lib/design/break-atmosphere";
+import { HomeHeroSprig } from "~/lib/design/illustrations/home-hero-sprig";
 import { shouldShowWorkFocusShell } from "~/lib/design/work-focus-shell";
 import type { UserLocale } from "~/lib/domain/user-locale";
 import {
@@ -80,16 +83,24 @@ function mapSuggestionGateStatus(
 	return status;
 }
 
+type HomeLayoutRegionTestId =
+	| "home-primary-region"
+	| "home-secondary-region"
+	| "home-inventory-zone"
+	| "home-context-rail";
+
 function HomeLayoutRegion({
 	children,
 	testId,
+	className = "",
 }: {
-	children: ReactNode;
-	testId: "home-primary-region" | "home-secondary-region";
+	children?: ReactNode;
+	testId: HomeLayoutRegionTestId;
+	className?: string;
 }) {
 	return (
 		<div
-			className="flex w-full flex-col items-center gap-8"
+			className={`flex w-full flex-col items-center gap-8${className ? ` ${className}` : ""}`}
 			data-testid={testId}
 		>
 			{children}
@@ -759,8 +770,65 @@ export function PomodoroDashboardBody({
 			/>
 		) : null;
 
+	const standingTaskFacts = useMemo(
+		() =>
+			tasks
+				.filter((task) => task.isDailyStanding)
+				.map((task) => ({
+					title: task.title,
+					doneForToday: task.doneForToday === true,
+				})),
+		[tasks],
+	);
+
+	const recapPanel =
+		dataMode === "authenticated" && moduleVisible("recap") ? (
+			<DailyRecapPanel
+				isLoading={recapLoading}
+				localDateKey={recapDateKey}
+				recap={recap}
+			/>
+		) : null;
+
+	const focusBudgetPrompt =
+		dayPlan != null ? (
+			<FocusBudgetPrompt
+				hasBudget={dayPlan.hasBudget}
+				isLoading={dayPlan.isLoading}
+				isSettingBudget={dayPlan.isSettingBudget}
+				localDateKey={dayPlan.localDateKey}
+				onSetBudget={dayPlan.setBudget}
+			/>
+		) : null;
+
+	const authenticatedContextRail = (
+		<>
+			<div className="w-full" data-testid="home-rail-illustration">
+				<HomeHeroSprig />
+			</div>
+			{recapPanel}
+			{dayPlan != null ? (
+				<HomeFocusSummary
+					budgetMinutes={dayPlan.budgetMinutes}
+					hasBudget={dayPlan.hasBudget}
+					isLoading={dayPlan.isLoading}
+					remainingMinutes={dayPlan.remainingMinutes}
+					standingTasks={standingTaskFacts}
+					usedMinutes={dayPlan.usedMinutes}
+				/>
+			) : null}
+		</>
+	);
+
+	const contextRailContent =
+		dataMode === "authenticated" ? (
+			authenticatedContextRail
+		) : (
+			<GuestContextRail />
+		);
+
 	return (
-		<div className="flex w-full max-w-lg flex-col items-center gap-8">
+		<div className="flex w-full max-w-lg flex-col items-center gap-8 lg:max-w-7xl">
 			{pomodoro.pendingWedgeRecovery != null ? (
 				<WedgeSyncRecovery
 					isRetrying={pomodoro.isWedgeSyncRetrying || pomodoro.isConfirming}
@@ -789,48 +857,54 @@ export function PomodoroDashboardBody({
 				)
 			)}
 
-			<HomeLayoutRegion testId="home-primary-region">
-				{moduleInZone("steering", "primary") && steeringCards}
-				{moduleInZone("nextFocus", "primary") && kickoffDurationChips}
-				{timerZone === "primary" && timerPanel}
-				{moduleInZone("nextFocus", "primary") && breakSuggestionCard}
-				{moduleInZone("nextFocus", "primary") && kickoffSuggestionCard}
-				{moduleInZone("archive", "primary") && taskArchive}
-			</HomeLayoutRegion>
+			<div
+				className="flex w-full flex-col items-center gap-8 lg:grid lg:w-full lg:grid-cols-[minmax(0,62fr)_minmax(0,38fr)] lg:items-start lg:gap-8"
+				data-testid="home-workbench-grid"
+			>
+				<div className="flex w-full flex-col items-center gap-8">
+					<HomeLayoutRegion testId="home-primary-region">
+						{moduleInZone("steering", "primary") && steeringCards}
+						{moduleInZone("nextFocus", "primary") && kickoffDurationChips}
+						{timerZone === "primary" && timerPanel}
+						{moduleInZone("nextFocus", "primary") && breakSuggestionCard}
+						{moduleInZone("nextFocus", "primary") && kickoffSuggestionCard}
+						{moduleInZone("archive", "primary") && taskArchive}
+					</HomeLayoutRegion>
 
-			<HomeLayoutRegion testId="home-secondary-region">
-				{statusLines}
-				{timerZone === "secondary" && timerPanel}
-				{moduleInZone("steering", "secondary") && steeringCards}
-				{pomodoro.overrideAcknowledgement != null && (
-					<p
-						aria-atomic="true"
-						aria-live="polite"
-						className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
-						data-testid="suggestion-override-ack"
-					>
-						{pomodoro.overrideAcknowledgement}
-					</p>
-				)}
-				{dayPlan != null && (
-					<FocusBudgetPrompt
-						hasBudget={dayPlan.hasBudget}
-						isLoading={dayPlan.isLoading}
-						isSettingBudget={dayPlan.isSettingBudget}
-						localDateKey={dayPlan.localDateKey}
-						onSetBudget={dayPlan.setBudget}
+					<HomeLayoutRegion
+						className="hidden lg:flex"
+						testId="home-inventory-zone"
 					/>
-				)}
-				{moduleVisible("recap") && (
-					<DailyRecapPanel
-						isLoading={recapLoading}
-						localDateKey={recapDateKey}
-						recap={recap}
-					/>
-				)}
-				{moduleInZone("inventory", "secondary") && taskInventory}
-				{moduleInZone("archive", "secondary") && taskArchive}
-			</HomeLayoutRegion>
+
+					<HomeLayoutRegion testId="home-secondary-region">
+						{statusLines}
+						{timerZone === "secondary" && timerPanel}
+						{moduleInZone("steering", "secondary") && steeringCards}
+						{pomodoro.overrideAcknowledgement != null && (
+							<p
+								aria-atomic="true"
+								aria-live="polite"
+								className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
+								data-testid="suggestion-override-ack"
+							>
+								{pomodoro.overrideAcknowledgement}
+							</p>
+						)}
+						{dayPlan != null && (
+							<div className="w-full lg:hidden">{focusBudgetPrompt}</div>
+						)}
+						{recapPanel != null && (
+							<div className="w-full lg:hidden">{recapPanel}</div>
+						)}
+						{moduleInZone("inventory", "secondary") && taskInventory}
+						{moduleInZone("archive", "secondary") && taskArchive}
+					</HomeLayoutRegion>
+				</div>
+
+				<HomeLayoutRegion className="hidden lg:flex" testId="home-context-rail">
+					{contextRailContent}
+				</HomeLayoutRegion>
+			</div>
 
 			{pomodoro.midCyclePendingTask != null && (
 				<MidCycleCompletionPrompt

@@ -3,14 +3,23 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
-export function GuestBanner() {
+type GuestBannerProps = {
+	variant?: "header" | "rail-activation";
+};
+
+export function GuestBanner({ variant = "header" }: GuestBannerProps) {
 	const t = useTranslations("Guest.banner");
 
+	const className =
+		variant === "header"
+			? "w-full max-w-lg rounded-lg border border-amber-400/30 bg-surface-card px-4 py-3 text-amber-900 text-sm lg:hidden"
+			: "w-full max-w-lg rounded-lg border border-amber-400/30 bg-surface-card px-4 py-3 text-amber-900 text-sm lg:max-w-none";
+
+	const testId =
+		variant === "header" ? "guest-banner" : "guest-rail-activation-hint";
+
 	return (
-		<div
-			className="w-full max-w-lg rounded-lg border border-amber-400/30 bg-surface-card px-4 py-3 text-amber-900 text-sm"
-			data-testid="guest-banner"
-		>
+		<div className={className} data-testid={testId}>
 			<p>
 				{t("deviceOnly")}{" "}
 				<Link

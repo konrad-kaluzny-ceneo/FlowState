@@ -138,6 +138,10 @@
 			"signUp": "zarejestruj się",
 			"saveAcrossDevices": "aby zapisać je na wszystkich urządzeniach."
 		},
+		"rail": {
+			"valueProp": "Zaloguj się, aby zapisywać zadania na wszystkich urządzeniach i odblokować sprawdzanie energii ze smart sugestiami.",
+			"guidance": "Dodaj zadanie, gdy będziesz gotowy — pierwszy cykl skupienia może zacząć się tutaj."
+		},
 		"merge": {
 			"title": "Twoja próbna praca jest zapisana",
 			"dismissLabel": "Dalej",
@@ -318,6 +322,11 @@
 		"appName": "FlowState",
 		"tagline": "Zarządzaj zadaniami. Zostań w flow.",
 		"purposeHeader": "Spokojna odpowiedź na: co teraz?"
+	},
+	"HomeFocusSummary": {
+		"budgetLine": "Wykorzystano {used} z {budget} godzin skupienia · zostało {remaining}",
+		"standingOpen": "{count, plural, one {# codzienne zadanie stałe otwarte} few {# codzienne zadania stałe otwarte} many {# codziennych zadań stałych otwartych} other {# codziennego zadania stałego otwartego}}",
+		"standingDone": "{count, plural, one {# codzienne zadanie stałe domknięte na dziś} few {# codzienne zadania stałe domknięte na dziś} many {# codziennych zadań stałych domkniętych na dziś} other {# codziennego zadania stałego domkniętego na dziś}}"
 	},
 	"DayMemory": {
 		"sectionDone": "Domknięte",

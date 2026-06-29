@@ -17,4 +17,18 @@ describe("GuestBanner", () => {
 			"http://localhost:3000/auth/sign-up",
 		);
 	});
+
+	it("hides header variant at lg breakpoint", () => {
+		render(<GuestBanner variant="header" />);
+
+		expect(screen.getByTestId("guest-banner").className).toContain("lg:hidden");
+	});
+
+	it("renders rail activation variant with full-width desktop class", () => {
+		render(<GuestBanner variant="rail-activation" />);
+
+		const block = screen.getByTestId("guest-rail-activation-hint");
+		expect(block.className).toContain("lg:max-w-none");
+		expect(screen.getByRole("link", { name: "Sign in" })).toBeTruthy();
+	});
 });

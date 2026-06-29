@@ -17,6 +17,11 @@ test.describe("Guest trial (S-08)", () => {
 
 		test.setTimeout(60_000);
 
+		// S-41 moves the guest sign-in CTA into the desktop context rail and hides
+		// the header GuestBanner at lg. Drive this guest-trial flow at mobile width
+		// so the header banner remains the guest-mode oracle.
+		await page.setViewportSize({ width: 390, height: 844 });
+
 		const taskTitle = `Guest E2E ${Date.now()}`;
 
 		await page.goto("/");

@@ -10,9 +10,10 @@ const mergeUiState = vi.hoisted(() => ({
 	mergeSuccessVisible: false,
 }));
 
-vi.mock("~/app/_components/guest-banner", () => ({
-	GuestBanner: () => <div data-testid="guest-banner" />,
-}));
+vi.mock("~/app/_components/guest-banner", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("./guest-banner")>();
+	return actual;
+});
 
 vi.mock("~/app/_components/guest-import-on-mount", () => ({
 	GuestImportOnMount: () => <div data-testid="guest-import-on-mount" />,
@@ -94,6 +95,14 @@ describe("HomeShell", () => {
 		expect(screen.getByTestId("pomodoro-dashboard")).toBeTruthy();
 	});
 
+	it("suppresses guest header banner at lg breakpoint while keeping it in the tree", () => {
+		mergeUiState.mergeSuccessVisible = false;
+		render(<HomeShell isAuthenticated={false} userId={null} />);
+
+		const banner = screen.getByTestId("guest-banner");
+		expect(banner.className).toContain("lg:hidden");
+	});
+
 	it("mounts guest import and hides guest banner when authenticated", () => {
 		mergeUiState.mergeSuccessVisible = false;
 		render(<HomeShell isAuthenticated={true} userId="user-1" />);
@@ -154,5 +163,15 @@ describe("HomeShell", () => {
 		);
 		expect(screen.getByTestId("guest-import-on-mount")).toBeTruthy();
 		expect(screen.getByTestId("pomodoro-dashboard")).toBeTruthy();
+	});
+
+	it("widens shell container at lg breakpoint for desktop workbench", () => {
+		mergeUiState.mergeSuccessVisible = false;
+		render(<HomeShell isAuthenticated={false} userId={null} />);
+
+		const main = screen.getByRole("main");
+		const container = main.querySelector(".container");
+		expect(container).toBeTruthy();
+		expect(container?.className).toContain("lg:max-w-7xl");
 	});
 });
