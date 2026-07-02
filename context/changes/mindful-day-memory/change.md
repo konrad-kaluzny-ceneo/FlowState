@@ -3,7 +3,7 @@ change_id: mindful-day-memory
 slice: S-42
 title: Mindful day memory
 status: impl_reviewed
-created: 2026-07-02
+created: 2026-06-30
 updated: 2026-07-02
 ---
 
@@ -16,6 +16,8 @@ updated: 2026-07-02
 **Prerequisites (done):** S-30 daily-work-timing-recap, S-18 task-resume-context-note, soft F-14 product-voice-contract; best placed after S-40 home-ia-reset / S-41 desktop-calm-workbench (both done)
 
 **Relationship:** S-30 `daily-work-timing-recap` Phase 2 — presentation/formatter only over the existing recap builder. This is explicitly a formatter-only, presentation-layer change. Do not add new backend queries (tRPC/Prisma).
+
+**Tracking:** Linear [FLO-90], GitHub [#174].
 
 **Acceptance criteria:**
 - `format-day-memory.ts` pure formatter over the EXISTING `DailyRecap` — no new tRPC/Prisma queries
