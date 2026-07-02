@@ -14,15 +14,15 @@ A Pomodoro-based productivity app that combines focused work sessions with adapt
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 15 (App Router, Turbopack) |
+| Framework | Next.js 16 (App Router, Turbopack) |
 | Language | TypeScript |
 | UI | React 19, Tailwind CSS 4 |
 | API | tRPC 11 + Tanstack React Query |
-| Database | Neon Postgres (serverless driver) |
-| ORM | Drizzle |
+| Database | Neon Serverless Postgres |
+| ORM | Prisma 7 (`@prisma/adapter-neon`) |
 | Auth | Neon Auth |
 | Linter/Formatter | Biome |
-| Testing | Vitest + Testing Library |
+| Testing | Vitest + Playwright (e2e) |
 | Deployment | Vercel |
 
 ## Prerequisites
@@ -47,12 +47,19 @@ A Pomodoro-based productivity app that combines focused work sessions with adapt
    cp .env.example .env
    ```
 
-   Fill in your Neon database connection strings:
+   Fill in your Neon database and auth variables (see `.env.example`):
 
    ```env
+   # Neon DB
    DATABASE_URL="postgresql://user:password@host:5432/dbname"
    DATABASE_URL_UNPOOLED="postgresql://user:password@host:5432/dbname"
+
+   # Neon Auth (required at runtime — validated in src/env.js)
+   NEON_AUTH_BASE_URL="https://your-project.neonauth.com"
+   NEON_AUTH_COOKIE_SECRET="your-secret-at-least-32-characters-long"
    ```
+
+   Optional: `CURSOR_API_KEY` for `scripts/cursor-review` only (not used by the Next.js app).
 
 3. **Run database migrations:**
 
@@ -72,17 +79,19 @@ A Pomodoro-based productivity app that combines focused work sessions with adapt
 
 | Command | Description |
 |---------|-------------|
-| `pnpm dev` | Start dev server with Turbopack |
-| `pnpm build` | Run migrations + production build |
+| `pnpm dev` | Regenerate Prisma client and start dev server (Turbopack) |
+| `pnpm build` | Regenerate Prisma client and production build |
 | `pnpm start` | Start production server |
-| `pnpm test` | Run tests (single run) |
+| `pnpm test` | Run unit/integration tests (single run) |
 | `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:e2e:belt` | Run CI e2e belt (critical flows) |
 | `pnpm typecheck` | TypeScript type checking |
 | `pnpm check` | Biome lint + format check |
 | `pnpm check:write` | Auto-fix lint/format issues |
-| `pnpm db:generate` | Generate Drizzle migration files |
-| `pnpm db:migrate` | Apply pending migrations |
-| `pnpm db:studio` | Open Drizzle Studio (DB browser) |
+| `pnpm db:generate` | Regenerate Prisma client (`prisma generate`) |
+| `pnpm db:migrate` | Create and apply migrations in dev (`prisma migrate dev`) |
+| `pnpm db:migrate:prod` | Apply pending migrations in production (`prisma migrate deploy`) |
+| `pnpm db:studio` | Open Prisma Studio (DB browser) |
 
 ## Local quality gates
 
@@ -110,12 +119,20 @@ src/
 ├── app/                  # Next.js App Router pages and layouts
 │   ├── _components/      # Page-level components
 │   └── api/              # API routes (tRPC handler)
+├── hooks/                # React hooks (Pomodoro cycle, etc.)
+├── i18n/                 # Internationalization
+├── lib/                  # Shared utilities, data mode, wedge logic
 ├── server/
 │   ├── api/              # tRPC routers and procedures
-│   └── db/              # Drizzle schema and DB client
+│   └── db/               # Prisma client (Neon adapter)
 ├── trpc/                 # tRPC client setup (React + server)
+├── workers/              # Web Workers (timer)
 ├── styles/               # Global CSS (Tailwind)
 └── env.js                # Environment variable schema (Zod)
+
+prisma/
+├── schema.prisma         # Database schema (source of truth)
+└── migrations/           # Prisma migration files
 ```
 
 ## Deployment
