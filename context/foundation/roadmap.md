@@ -3,7 +3,7 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-06-30
+updated: 2026-07-02
 structure: split
 active_slices: [mindful-day-memory]
 prd_version: 3
@@ -92,7 +92,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | F-14 | product-voice-contract | [FLO-93](https://linear.app/flowstate-10xdev/issue/FLO-93/flowstate-product-voice-contract-f-14) | [#171](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/171) | (foundation) bilingual EN/PL system, then separated voice/copy contract | S-21, S-30, F-04, F-06 | Secondary / US-03 craft | done |
 | S-40 | home-ia-reset | [FLO-92](https://linear.app/flowstate-10xdev/issue/FLO-92/flowstate-home-ia-reset-s-40) | [#172](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/172) | home answers "Co teraz?" — one dominant next-focus, recap collapsed, inventory secondary | S-13, S-15, S-27, S-30, S-31; soft F-14 | Secondary / US-03 craft | done |
 | S-41 | desktop-calm-workbench | [FLO-89](https://linear.app/flowstate-10xdev/issue/FLO-89/flowstate-desktop-calm-workbench-s-41) | [#173](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/173) | lg≥1024 calm three-zone workbench; decision column primary; rail ≤3 blocks | S-40; soft F-14 | Secondary | done |
-| S-42 | mindful-day-memory | [FLO-90](https://linear.app/flowstate-10xdev/issue/FLO-90/flowstate-mindful-day-memory-s-42) | [#174](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/174) | S-30 phase 2 — Domknięte/Zostaje/Wróć tutaj narrative; formatter only | S-30, S-18; soft F-14 | **US-03** craft | active |
+| S-42 | mindful-day-memory | [FLO-90](https://linear.app/flowstate-10xdev/issue/FLO-90/flowstate-mindful-day-memory-s-42) | [#174](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/174) | S-30 phase 2 — Domknięte/Zostaje/Wróć tutaj narrative; formatter only | S-30, S-18; soft F-14 | **US-03** craft | done |
 | S-43 | stateful-illustration-system | [FLO-91](https://linear.app/flowstate-10xdev/issue/FLO-91/flowstate-stateful-illustration-system-s-43) | [#175](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/175) | S-28 phase 2 — state-bound Calm Garden on hero/rail; not on gates | S-28, F-06, F-07, S-39 | Secondary | proposed |
 | S-44 | archive-old-tasks | [FLO-94](https://linear.app/flowstate-10xdev/issue/FLO-94/flowstate-stale-task-archive-view-bulk-delete-s-44) | [#178](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/178) | review stale tasks in archive view; multi-select + permanent delete | S-09, S-13 | **US-05** | done |
 
@@ -206,6 +206,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **S-42: user sees calm day memory — Domknięte / Zostaje / Wróć tutaj — instead of a raw timing log; collapsed one-line on home; expanded view has exactly three narrative sections; helps closure and return context** — Archived 2026-07-02 → `context/archive/2026-06-30-mindful-day-memory/`. PR [#184](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/184). Issues [FLO-90](https://linear.app/flowstate-10xdev/issue/FLO-90/flowstate-mindful-day-memory-s-42) / [#174](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/174). Lesson: —.
 - **S-41: lg≥1024 calm three-zone workbench; decision column primary; rail ≤3 blocks** — Archived 2026-06-29 → `context/archive/2026-06-29-desktop-calm-workbench/`. PR [#182](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/182). Issues [FLO-89](https://linear.app/flowstate-10xdev/issue/FLO-89/flowstate-desktop-calm-workbench-s-41) / [#173](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/173). Lesson: —.
 - **S-40: home answers "Co teraz?" — one dominant next-focus, recap collapsed, inventory secondary** — Archived 2026-06-29 → `context/archive/2026-06-27-home-ia-reset/`. PR [#181](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/181). Issues [FLO-92](https://linear.app/flowstate-10xdev/issue/FLO-92) / [#172](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/172). Lesson: pure `deriveHomeSessionState` matrix keeps IA testable; archive view stays secondary to preserve one-dominant-CTA contract.
 - **S-44: user can review tasks older than 3 days in a separate archive view and permanently delete selected items via multi-select + delete selected** — Archived 2026-06-27 → `context/archive/2026-06-27-archive-old-tasks/`. PR [#179](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/179). Issues [FLO-94](https://linear.app/flowstate-10xdev/issue/FLO-94) / [#178](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/178). Lesson: —.

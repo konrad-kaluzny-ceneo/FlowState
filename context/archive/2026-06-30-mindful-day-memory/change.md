@@ -2,9 +2,10 @@
 change_id: mindful-day-memory
 slice: S-42
 title: Mindful day memory
-status: impl_reviewed
+status: archived
 created: 2026-06-30
 updated: 2026-07-02
+archived_at: 2026-07-02T13:29:28Z
 ---
 
 # Mindful day memory (S-42)
