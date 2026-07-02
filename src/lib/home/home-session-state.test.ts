@@ -28,6 +28,7 @@ function baseInput(
 		recapAvailable: true,
 		showInFlowSummary: false,
 		showBreakTransitionLine: false,
+		recentlyClosedSession: false,
 		...overrides,
 	};
 }
@@ -100,6 +101,32 @@ describe("deriveHomeSessionState", () => {
 				}),
 			);
 			expect(state).toBe("returning");
+		});
+	});
+
+	describe("recentlyClosedSession pass-through", () => {
+		it("does not change the resolved state when true", () => {
+			const { state } = deriveHomeSessionState(
+				baseInput({ recentlyClosedSession: true }),
+			);
+			expect(state).toBe("idle");
+		});
+
+		it("does not change the resolved state during active work when true", () => {
+			const { state } = deriveHomeSessionState(
+				baseInput({
+					cycleKind: "WORK",
+					cycleState: "running",
+					recentlyClosedSession: true,
+				}),
+			);
+			expect(state).toBe("active_work");
+		});
+
+		it("defaults to undefined without affecting output when omitted", () => {
+			const { state, modules } = deriveHomeSessionState(baseInput());
+			expect(state).toBe("idle");
+			expect(modules.purposeHeader).toBe("secondary");
 		});
 	});
 
