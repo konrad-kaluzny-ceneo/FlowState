@@ -1463,6 +1463,155 @@ const mockDayPlanWithBudget = {
 	setBudget: vi.fn(),
 };
 
+describe("PomodoroDashboardBody rail illustration variant", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	function renderAuthenticatedBody(overrides: Record<string, unknown> = {}) {
+		usePomodoroCycleMock.mockReturnValue(makePomodoroMock(overrides));
+
+		return render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+	}
+
+	function railVariantElement(): Element | null {
+		return screen
+			.getByTestId("home-rail-illustration")
+			.querySelector("[data-illustration-variant]");
+	}
+
+	it("renders the idle variant in the rail slot at rest", () => {
+		renderAuthenticatedBody({ state: "idle" });
+
+		expect(
+			railVariantElement()?.getAttribute("data-illustration-variant"),
+		).toBe("idle");
+	});
+
+	it("renders the work variant with energy tint during a running work cycle", () => {
+		renderAuthenticatedBody({
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "WORK",
+			activeCycle: { id: 42 },
+			focusedTask: { id: 1, title: "Focus task" },
+			narrativeLatestEnergy: "FOCUSED",
+		});
+
+		const element = railVariantElement();
+		expect(element?.getAttribute("data-illustration-variant")).toBe("work");
+		expect(element?.getAttribute("data-illustration-energy")).toBe("FOCUSED");
+	});
+
+	it("renders the break variant without energy tint during a running break", () => {
+		renderAuthenticatedBody({
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "SHORT_BREAK",
+			activeCycle: { id: 42 },
+			narrativeLatestEnergy: "FOCUSED",
+		});
+
+		const element = railVariantElement();
+		expect(element?.getAttribute("data-illustration-variant")).toBe("break");
+		expect(element?.getAttribute("data-illustration-energy")).toBeNull();
+	});
+
+	it("renders the energy_choice variant while inline session steering is open", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				showSessionEnergy: true,
+				sessionEnergyPending: true,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(
+			railVariantElement()?.getAttribute("data-illustration-variant"),
+		).toBe("energy_choice");
+	});
+
+	it("shows the closure variant after the session closure gate dismisses, then clears on the next state change", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
+			}),
+		);
+
+		const { rerender } = render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("session-closure-overlay")).toBeTruthy();
+
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({ pendingClosureLine: null }),
+		);
+		rerender(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.queryByTestId("session-closure-overlay")).toBeNull();
+		expect(
+			railVariantElement()?.getAttribute("data-illustration-variant"),
+		).toBe("closure");
+
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				hasActiveSession: true,
+				state: "running",
+				cycleKind: "WORK",
+				activeCycle: { id: 42 },
+				focusedTask: { id: 1, title: "Focus task" },
+			}),
+		);
+		rerender(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(
+			railVariantElement()?.getAttribute("data-illustration-variant"),
+		).toBe("work");
+	});
+});
+
 describe("PomodoroDashboardBody context rail content", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();

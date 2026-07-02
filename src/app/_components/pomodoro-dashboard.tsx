@@ -56,12 +56,18 @@ import {
 	useGuestDomainTasks,
 } from "~/lib/data-mode/use-domain-tasks";
 import { shouldShowBreakAtmosphere } from "~/lib/design/break-atmosphere";
+import { usePublishHomeIllustrationVariant } from "~/lib/design/home-illustration-variant";
+import {
+	resolveIllustrationEnergyTint,
+	resolveIllustrationVariant,
+} from "~/lib/design/illustration-variant";
 import { HomeHeroSprig } from "~/lib/design/illustrations/home-hero-sprig";
 import { shouldShowWorkFocusShell } from "~/lib/design/work-focus-shell";
 import type { UserLocale } from "~/lib/domain/user-locale";
 import {
 	deriveHomeSessionState,
 	type HomeModuleKey,
+	type HomeSessionState,
 } from "~/lib/home/home-session-state";
 import { shouldDeferFirstRun } from "~/lib/onboarding/defer";
 import {
@@ -442,6 +448,20 @@ export function PomodoroDashboardBody({
 
 	const wedgeGateActive = wedgeBeat.activeGate !== "none";
 
+	// S-43: transient closure flag — set when the session_closure gate
+	// transitions visible → dismissed, cleared on the next session-state
+	// change (mirrors the showInFlowSummary clear-on-next-transition pattern).
+	const sessionClosureVisible =
+		wedgeBeat.showSessionClosure && pomodoro.pendingClosureLine != null;
+	const [recentlyClosedSession, setRecentlyClosedSession] = useState(false);
+	const prevSessionClosureVisibleRef = useRef(false);
+	useEffect(() => {
+		if (prevSessionClosureVisibleRef.current && !sessionClosureVisible) {
+			setRecentlyClosedSession(true);
+		}
+		prevSessionClosureVisibleRef.current = sessionClosureVisible;
+	}, [sessionClosureVisible]);
+
 	const breakAtmosphereActive = shouldShowBreakAtmosphere({
 		cycleKind: pomodoro.cycleKind,
 		state: pomodoro.state,
@@ -522,6 +542,7 @@ export function PomodoroDashboardBody({
 				recapAvailable: !recapLoading,
 				showInFlowSummary,
 				showBreakTransitionLine,
+				recentlyClosedSession,
 			}),
 		[
 			dataMode,
@@ -541,8 +562,48 @@ export function PomodoroDashboardBody({
 			recapLoading,
 			showInFlowSummary,
 			showBreakTransitionLine,
+			recentlyClosedSession,
 		],
 	);
+
+	const recentlyClosedAtStateRef = useRef<HomeSessionState | null>(null);
+	useEffect(() => {
+		if (!recentlyClosedSession) {
+			recentlyClosedAtStateRef.current = null;
+			return;
+		}
+		if (recentlyClosedAtStateRef.current == null) {
+			recentlyClosedAtStateRef.current = homeIa.state;
+			return;
+		}
+		if (recentlyClosedAtStateRef.current !== homeIa.state) {
+			recentlyClosedAtStateRef.current = null;
+			setRecentlyClosedSession(false);
+		}
+	}, [recentlyClosedSession, homeIa.state]);
+
+	// S-43: single illustration-variant derivation — same render pass as
+	// deriveHomeSessionState(), downstream of committed cycle state (S-34).
+	// Published once; consumed by the hero (via context in HomeShellContent)
+	// and by the rail slot below.
+	const homeIllustration = useMemo(() => {
+		const input = {
+			state: homeIa.state,
+			narrativeLatestEnergy: pomodoro.narrativeLatestEnergy,
+			recentlyClosedSession,
+			wedgeGateActive,
+		};
+		return {
+			variant: resolveIllustrationVariant(input),
+			energyTint: resolveIllustrationEnergyTint(input),
+		};
+	}, [
+		homeIa.state,
+		pomodoro.narrativeLatestEnergy,
+		recentlyClosedSession,
+		wedgeGateActive,
+	]);
+	usePublishHomeIllustrationVariant(homeIllustration);
 
 	const moduleInZone = (key: HomeModuleKey, zone: "primary" | "secondary") =>
 		homeIa.modules[key] === zone;
@@ -807,7 +868,10 @@ export function PomodoroDashboardBody({
 	const authenticatedContextRail = (
 		<>
 			<div className="w-full" data-testid="home-rail-illustration">
-				<HomeHeroSprig />
+				<HomeHeroSprig
+					energyTint={homeIllustration.energyTint}
+					variant={homeIllustration.variant}
+				/>
 			</div>
 			{recapPanel}
 			{dayPlan != null ? (

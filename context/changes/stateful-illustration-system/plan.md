@@ -302,11 +302,11 @@ Not applicable — no persisted data model changes; `recentlyClosedSession` is e
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `pnpm vitest run src/lib/design/illustrations/`
-- [ ] 2.2 Unit tests pass: `pnpm vitest run src/app/_components/pomodoro-dashboard.test.tsx`
-- [ ] 2.3 Type checking passes: `pnpm typecheck`
-- [ ] 2.4 Linting passes: `pnpm lint`
-- [ ] 2.5 Build succeeds: `pnpm build`
+- [x] 2.1 Unit tests pass: `pnpm vitest run src/lib/design/illustrations/`
+- [x] 2.2 Unit tests pass: `pnpm vitest run src/app/_components/pomodoro-dashboard.test.tsx`
+- [x] 2.3 Type checking passes: `pnpm typecheck`
+- [x] 2.4 Linting passes: `pnpm lint`
+- [x] 2.5 Build succeeds: `pnpm build`
 
 #### Manual
 

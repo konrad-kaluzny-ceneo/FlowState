@@ -1,20 +1,34 @@
+import type { IllustrationVariant } from "~/lib/design/illustration-variant";
+
+const SPRIG_POSE: Record<IllustrationVariant, string> = {
+	idle: "rotate-0",
+	energy_choice: "-rotate-3",
+	work: "scale-105",
+	break: "rotate-3 opacity-80",
+	return: "-rotate-6",
+	closure: "scale-95 opacity-75",
+};
+
 type CalmGardenSprigProps = {
+	variant: IllustrationVariant;
 	className?: string;
 	"data-testid"?: string;
 };
 
 /** Single-weight botanical line-art sprig. */
 export function CalmGardenSprig({
+	variant,
 	className = "",
 	"data-testid": testId,
 }: CalmGardenSprigProps) {
 	return (
 		<svg
 			aria-hidden="true"
-			className={`text-accent-break ${className}`}
+			className={`transition duration-200 motion-reduce:transition-none ${SPRIG_POSE[variant]} ${className}`}
+			data-illustration-variant={variant}
 			data-testid={testId}
 			fill="none"
-			stroke="currentColor"
+			stroke="var(--illustration-sprig-stroke, var(--color-accent-break))"
 			strokeLinecap="round"
 			strokeLinejoin="round"
 			strokeWidth="1.5"
@@ -29,7 +43,7 @@ export function CalmGardenSprig({
 			<ellipse
 				cx="24"
 				cy="18"
-				fill="currentColor"
+				fill="var(--illustration-sprig-stroke, var(--color-accent-break))"
 				rx="2"
 				ry="3"
 				stroke="none"
