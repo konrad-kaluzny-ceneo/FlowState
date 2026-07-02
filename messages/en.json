@@ -333,6 +333,7 @@
 		"sectionRemains": "Remains",
 		"sectionReturnTo": "Return to",
 		"collapsedLine": "Done: {done}. Remains: {remaining}. Return calmly to: {next}.",
+		"collapsedLineNoReturn": "Done: {done}. Remains: {remaining}.",
 		"doneCount": "{count, plural, one {# task} other {# tasks}}",
 		"remainingCount": "{count, plural, one {# open} other {# open}}"
 	},

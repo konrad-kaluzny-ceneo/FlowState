@@ -333,6 +333,7 @@
 		"sectionRemains": "Zostaje",
 		"sectionReturnTo": "Wróć tutaj",
 		"collapsedLine": "Zrobione: {done}. Zostało: {remaining}. Wróć spokojnie do: {next}.",
+		"collapsedLineNoReturn": "Zrobione: {done}. Zostało: {remaining}.",
 		"doneCount": "{count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}}",
 		"remainingCount": "{count, plural, one {# otwarte} few {# otwarte} many {# otwartych} other {# otwarte}}"
 	},

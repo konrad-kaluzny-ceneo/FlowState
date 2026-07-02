@@ -281,7 +281,7 @@ describe("formatDayMemory — collapsed line composition", () => {
 		);
 	});
 
-	it("falls back to the section return-to label when there is no next task", () => {
+	it("omits the return-to clause entirely when there is no next task", () => {
 		const recap = buildRecap({
 			last24Hours: [
 				{
@@ -301,8 +301,31 @@ describe("formatDayMemory — collapsed line composition", () => {
 			locale: "en",
 		});
 
+		expect(result.collapsedLine).toBe("Done: 1 task. Remains: 0 open.");
+	});
+
+	it("omits the return-to clause entirely when there is no next task (PL)", () => {
+		const recap = buildRecap({
+			last24Hours: [
+				{
+					taskId: "t1",
+					title: "Napisz testy",
+					firstStartedAt: new Date("2026-07-02T08:00:00Z"),
+					lastEndedAt: new Date("2026-07-02T09:00:00Z"),
+					focusedMinutes: 45,
+				},
+			],
+		});
+
+		const result = formatDayMemory({
+			recap,
+			tasks: [],
+			continueTaskId: null,
+			locale: "pl",
+		});
+
 		expect(result.collapsedLine).toBe(
-			"Done: 1 task. Remains: 0 open. Return calmly to: Return to.",
+			"Zrobione: 1 zadanie. Zostało: 0 otwartych.",
 		);
 	});
 });

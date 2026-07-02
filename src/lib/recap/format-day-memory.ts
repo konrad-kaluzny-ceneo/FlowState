@@ -2,6 +2,7 @@ import type { DomainTaskId } from "~/lib/data-mode/types";
 import type { UserLocale } from "~/lib/domain/user-locale";
 import {
 	buildDayMemoryCollapsedLine,
+	buildDayMemoryCollapsedLineNoReturn,
 	getDayMemoryDoneCount,
 	getDayMemoryRemainingCount,
 	getDayMemorySectionDone,
@@ -72,14 +73,26 @@ export function formatDayMemory(input: FormatDayMemoryInput): DayMemory {
 	const remainsLabel = getDayMemorySectionRemains(locale);
 	const returnToLabel = getDayMemorySectionReturnTo(locale);
 
-	const collapsedLine = buildDayMemoryCollapsedLine(
-		{
-			done: getDayMemoryDoneCount(doneItems.length, locale),
-			remaining: getDayMemoryRemainingCount(remainingItems.length, locale),
-			next: returnTo?.taskTitle ?? returnToLabel,
-		},
+	const doneCount = getDayMemoryDoneCount(doneItems.length, locale);
+	const remainingCount = getDayMemoryRemainingCount(
+		remainingItems.length,
 		locale,
 	);
+
+	const collapsedLine =
+		returnTo != null
+			? buildDayMemoryCollapsedLine(
+					{
+						done: doneCount,
+						remaining: remainingCount,
+						next: returnTo.taskTitle,
+					},
+					locale,
+				)
+			: buildDayMemoryCollapsedLineNoReturn(
+					{ done: doneCount, remaining: remainingCount },
+					locale,
+				);
 
 	const hasContent =
 		doneItems.length > 0 || remainingItems.length > 0 || returnTo != null;
