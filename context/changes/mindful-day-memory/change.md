@@ -1,7 +1,7 @@
 ---
 change_id: mindful-day-memory
 title: Mindful day memory (S-42) — Domknięte/Zostaje/Wróć tutaj day-memory narrative
-status: new
+status: planned
 created: 2026-06-30
 updated: 2026-06-30
 archived_at: null
