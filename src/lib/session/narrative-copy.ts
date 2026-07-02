@@ -145,3 +145,32 @@ export function buildDayMemoryCollapsedLine(
 ): string {
 	return dayMemoryT(locale)("collapsedLine", input);
 }
+
+export type DayMemoryCollapsedNoReturnInput = {
+	done: string;
+	remaining: string;
+};
+
+/** Collapsed day-memory one-liner variant for when there is no return-to task (S-42 formatter). */
+export function buildDayMemoryCollapsedLineNoReturn(
+	input: DayMemoryCollapsedNoReturnInput,
+	locale: UserLocale = "en",
+): string {
+	return dayMemoryT(locale)("collapsedLineNoReturn", input);
+}
+
+/** ICU-plural count string for done tasks (S-42 formatter). Mirrors HomeFocusSummary.standingOpen/standingDone. */
+export function getDayMemoryDoneCount(
+	count: number,
+	locale: UserLocale = "en",
+): string {
+	return dayMemoryT(locale)("doneCount", { count });
+}
+
+/** ICU-plural count string for remaining tasks (S-42 formatter). Mirrors HomeFocusSummary.standingOpen/standingDone. */
+export function getDayMemoryRemainingCount(
+	count: number,
+	locale: UserLocale = "en",
+): string {
+	return dayMemoryT(locale)("remainingCount", { count });
+}
