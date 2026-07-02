@@ -257,10 +257,10 @@ None — purely additive, no schema or data changes.
 
 #### Automated
 
-- [x] 2.1 Component unit tests pass: `pnpm vitest run src/app/_components/day-memory-line.test.tsx`
-- [x] 2.2 Type checking passes: `pnpm typecheck`
-- [x] 2.3 Linting passes: `pnpm lint`
-- [x] 2.4 Full unit suite unaffected: `pnpm test`
+- [x] 2.1 Component unit tests pass: `pnpm vitest run src/app/_components/day-memory-line.test.tsx` — 9126713
+- [x] 2.2 Type checking passes: `pnpm typecheck` — 9126713
+- [x] 2.3 Linting passes: `pnpm lint` — 9126713
+- [x] 2.4 Full unit suite unaffected: `pnpm test` — 9126713
 
 ### Phase 3: Home integration
 
