@@ -317,9 +317,9 @@ Not applicable — no persisted data model changes; `recentlyClosedSession` is e
 
 #### Automated
 
-- [x] 3.1 New guardrail test passes: `pnpm vitest run src/lib/design/illustrations/no-illustrations-on-gates.test.ts`
-- [x] 3.2 Full unit suite passes: `pnpm vitest run`
-- [x] 3.3 Type checking passes: `pnpm typecheck`
+- [x] 3.1 New guardrail test passes: `pnpm vitest run src/lib/design/illustrations/no-illustrations-on-gates.test.ts` — bffdacb
+- [x] 3.2 Full unit suite passes: `pnpm vitest run` — bffdacb
+- [x] 3.3 Type checking passes: `pnpm typecheck` — bffdacb
 
 ### Phase 4: E2E verification — state-bound illustration on hero/rail, absent from gates
 
