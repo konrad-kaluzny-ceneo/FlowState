@@ -246,12 +246,12 @@ None — purely additive, no schema or data changes.
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `pnpm vitest run src/lib/recap/format-day-memory.test.ts`
-- [x] 1.2 Type checking passes: `pnpm typecheck`
-- [x] 1.3 Linting passes: `pnpm lint`
-- [x] 1.4 Full unit suite unaffected: `pnpm test`
-- [x] 1.5 `DayMemory.doneCount`/`remainingCount` ICU plural keys added (EN + PL) and i18n parity test passes: `pnpm vitest run src/i18n/messages-parity.test.ts`
-- [x] 1.6 PL plural boundary tests (1 / 2 / 5) pass for done/remaining counts
+- [x] 1.1 Unit tests pass: `pnpm vitest run src/lib/recap/format-day-memory.test.ts` — ad3acfa
+- [x] 1.2 Type checking passes: `pnpm typecheck` — ad3acfa
+- [x] 1.3 Linting passes: `pnpm lint` — ad3acfa
+- [x] 1.4 Full unit suite unaffected: `pnpm test` — ad3acfa
+- [x] 1.5 `DayMemory.doneCount`/`remainingCount` ICU plural keys added (EN + PL) and i18n parity test passes: `pnpm vitest run src/i18n/messages-parity.test.ts` — ad3acfa
+- [x] 1.6 PL plural boundary tests (1 / 2 / 5) pass for done/remaining counts — ad3acfa
 
 ### Phase 2: Day-memory presentational component
 
