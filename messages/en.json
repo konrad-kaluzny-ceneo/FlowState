@@ -332,7 +332,9 @@
 		"sectionDone": "Done",
 		"sectionRemains": "Remains",
 		"sectionReturnTo": "Return to",
-		"collapsedLine": "Done: {done}. Remains: {remaining}. Return calmly to: {next}."
+		"collapsedLine": "Done: {done}. Remains: {remaining}. Return calmly to: {next}.",
+		"doneCount": "{count, plural, one {# task} other {# tasks}}",
+		"remainingCount": "{count, plural, one {# open} other {# open}}"
 	},
 	"CycleComplete": {
 		"breakHeading": "Break's over!",

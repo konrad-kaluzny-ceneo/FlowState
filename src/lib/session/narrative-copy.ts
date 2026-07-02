@@ -145,3 +145,19 @@ export function buildDayMemoryCollapsedLine(
 ): string {
 	return dayMemoryT(locale)("collapsedLine", input);
 }
+
+/** ICU-plural count string for done tasks (S-42 formatter). Mirrors HomeFocusSummary.standingOpen/standingDone. */
+export function getDayMemoryDoneCount(
+	count: number,
+	locale: UserLocale = "en",
+): string {
+	return dayMemoryT(locale)("doneCount", { count });
+}
+
+/** ICU-plural count string for remaining tasks (S-42 formatter). Mirrors HomeFocusSummary.standingOpen/standingDone. */
+export function getDayMemoryRemainingCount(
+	count: number,
+	locale: UserLocale = "en",
+): string {
+	return dayMemoryT(locale)("remainingCount", { count });
+}

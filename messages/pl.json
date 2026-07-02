@@ -332,7 +332,9 @@
 		"sectionDone": "Domknięte",
 		"sectionRemains": "Zostaje",
 		"sectionReturnTo": "Wróć tutaj",
-		"collapsedLine": "Zrobione: {done}. Zostało: {remaining}. Wróć spokojnie do: {next}."
+		"collapsedLine": "Zrobione: {done}. Zostało: {remaining}. Wróć spokojnie do: {next}.",
+		"doneCount": "{count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}}",
+		"remainingCount": "{count, plural, one {# otwarte} few {# otwarte} many {# otwartych} other {# otwarte}}"
 	},
 	"CycleComplete": {
 		"breakHeading": "Koniec przerwy!",
