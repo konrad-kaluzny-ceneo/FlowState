@@ -41,6 +41,7 @@ import {
 	getShortBreakDuration,
 	setLastDuration,
 } from "~/lib/duration-storage";
+import { GUEST_STORAGE_KEY, type GuestSession } from "~/lib/guest/schema";
 import { loadSnapshot, subscribeGuestStore } from "~/lib/guest/store";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import { PAUSE_CAP_MS } from "~/lib/pause-cap";
@@ -101,6 +102,24 @@ function wasClosureShown(sessionId: number | string): boolean {
 		return false;
 	}
 	return sessionStorage.getItem(closureShownStorageKey(sessionId)) === "1";
+}
+
+let cachedGuestLastEndedKey: string | undefined;
+let cachedGuestLastEnded: GuestSession | null = null;
+
+function getGuestLastEndedSnapshot(): GuestSession | null {
+	if (typeof window === "undefined") {
+		return null;
+	}
+
+	const storageValue = localStorage.getItem(GUEST_STORAGE_KEY) ?? "";
+	if (storageValue === cachedGuestLastEndedKey) {
+		return cachedGuestLastEnded;
+	}
+
+	cachedGuestLastEndedKey = storageValue;
+	cachedGuestLastEnded = findGuestLastEndedSession(loadSnapshot().sessions);
+	return cachedGuestLastEnded;
 }
 
 type CompleteCycleArgs = {
@@ -464,7 +483,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const guestLastEnded = useSyncExternalStore(
 		subscribeGuestStore,
-		() => findGuestLastEndedSession(loadSnapshot().sessions),
+		getGuestLastEndedSnapshot,
 		() => null,
 	);
 

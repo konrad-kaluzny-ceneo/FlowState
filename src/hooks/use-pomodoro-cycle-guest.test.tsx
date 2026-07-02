@@ -296,3 +296,105 @@ describe("usePomodoroCycle guest catchUp", () => {
 		}
 	});
 });
+
+describe("usePomodoroCycle guest continueTaskId after session end", () => {
+	beforeEach(() => {
+		localStorage.clear();
+		resetActiveCycleRecoveryForTests();
+	});
+
+	afterEach(() => {
+		localStorage.clear();
+	});
+
+	it("does not crash and resolves a stable continueTaskId once a guest session has ended", async () => {
+		const { tasks, sessions } = createGuestRepositories();
+		const task = await tasks.create({ title: "Guest return task" });
+		await sessions.getOrCreateActive();
+		await sessions.end({ lastFocusedTaskId: task.id });
+
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => {});
+
+		try {
+			const { result, rerender } = renderHook(
+				() =>
+					usePomodoroCycle({
+						continueTasks: [{ id: task.id, status: "active" }],
+					}),
+				{ wrapper: createWrapper() },
+			);
+
+			await waitFor(() => {
+				expect(result.current.continueTaskId).toBe(task.id);
+			});
+
+			const firstContinueTaskId = result.current.continueTaskId;
+			rerender();
+			rerender();
+			expect(result.current.continueTaskId).toBe(firstContinueTaskId);
+
+			const loggedGetSnapshotWarning = consoleError.mock.calls.some((args) =>
+				args.some(
+					(arg) =>
+						typeof arg === "string" &&
+						arg.includes("getSnapshot should be cached"),
+				),
+			);
+			expect(loggedGetSnapshotWarning).toBe(false);
+		} finally {
+			consoleError.mockRestore();
+		}
+	});
+
+	it("does not crash on a fresh mount simulating a page reload after session end", async () => {
+		const { tasks, sessions } = createGuestRepositories();
+		const task = await tasks.create({ title: "Guest reload task" });
+		await sessions.getOrCreateActive();
+		await sessions.end({ lastFocusedTaskId: task.id });
+
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => {});
+
+		try {
+			const { result, unmount } = renderHook(
+				() =>
+					usePomodoroCycle({
+						continueTasks: [{ id: task.id, status: "active" }],
+					}),
+				{ wrapper: createWrapper() },
+			);
+
+			await waitFor(() => {
+				expect(result.current.continueTaskId).toBe(task.id);
+			});
+
+			unmount();
+
+			const reloaded = renderHook(
+				() =>
+					usePomodoroCycle({
+						continueTasks: [{ id: task.id, status: "active" }],
+					}),
+				{ wrapper: createWrapper() },
+			);
+
+			await waitFor(() => {
+				expect(reloaded.result.current.continueTaskId).toBe(task.id);
+			});
+
+			const loggedGetSnapshotWarning = consoleError.mock.calls.some((args) =>
+				args.some(
+					(arg) =>
+						typeof arg === "string" &&
+						arg.includes("getSnapshot should be cached"),
+				),
+			);
+			expect(loggedGetSnapshotWarning).toBe(false);
+		} finally {
+			consoleError.mockRestore();
+		}
+	});
+});
