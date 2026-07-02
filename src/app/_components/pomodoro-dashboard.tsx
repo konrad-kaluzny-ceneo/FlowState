@@ -15,6 +15,7 @@ import { BreakAlertsPermissionPrompt } from "~/app/_components/break-alerts-perm
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { DailyRecapPanel } from "~/app/_components/daily-recap-panel";
+import { DayMemoryLine } from "~/app/_components/day-memory-line";
 import { EndSessionConfirmOverlay } from "~/app/_components/end-session-confirm-overlay";
 import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
 import { GuestContextRail } from "~/app/_components/guest-context-rail";
@@ -548,6 +549,8 @@ export function PomodoroDashboardBody({
 	const moduleVisible = (key: HomeModuleKey) =>
 		homeIa.modules[key] !== "hidden";
 
+	const dayMemoryVisible = homeIa.state !== "active_work";
+
 	const nextFocusUiActive =
 		showKickoffCard || showKickoffDurationChips || showSuggestionCard;
 
@@ -863,6 +866,14 @@ export function PomodoroDashboardBody({
 			>
 				<div className="flex w-full flex-col items-center gap-8">
 					<HomeLayoutRegion testId="home-primary-region">
+						{dayMemoryVisible && (
+							<DayMemoryLine
+								continueTaskId={pomodoro.continueTaskId}
+								isLoading={recapLoading}
+								recap={recap}
+								tasks={tasks}
+							/>
+						)}
 						{moduleInZone("steering", "primary") && steeringCards}
 						{moduleInZone("nextFocus", "primary") && kickoffDurationChips}
 						{timerZone === "primary" && timerPanel}

@@ -29,13 +29,21 @@ vi.mock("~/hooks/use-e2e-expose-cycle-recovery", () => ({
 	useE2eExposeCycleRecovery: () => {},
 }));
 
+const useDailyRecapMock = vi.fn();
+
 vi.mock("~/hooks/use-daily-recap", () => ({
-	useDailyRecap: () => ({
-		recap: { last24Hours: [], todayPlan: [], footprints: {} },
-		isLoading: false,
-		localDateKey: "2026-06-20",
-	}),
+	useDailyRecap: (...args: unknown[]) => useDailyRecapMock(...args),
 }));
+
+const defaultDailyRecap = {
+	recap: { last24Hours: [], todayPlan: [], footprints: {} },
+	isLoading: false,
+	localDateKey: "2026-06-20",
+};
+
+beforeEach(() => {
+	useDailyRecapMock.mockReturnValue(defaultDailyRecap);
+});
 
 vi.mock("~/hooks/use-task-mutations", () => ({
 	useTaskMutations: () => ({
@@ -1255,6 +1263,123 @@ describe("PomodoroDashboardBody home IA layout", () => {
 		expectInsideRegion("home-secondary-region", "task-archive-view");
 		expectInsideRegion("home-secondary-region", "task-archive-back");
 		expect(screen.queryByTestId("task-list-stub")).toBeNull();
+	});
+});
+
+const nonEmptyDailyRecap = {
+	recap: {
+		last24Hours: [
+			{
+				taskId: "task-1",
+				title: "Focus task",
+				firstStartedAt: new Date("2026-06-20T09:00:00Z"),
+				lastEndedAt: new Date("2026-06-20T09:45:00Z"),
+				focusedMinutes: 45,
+			},
+		],
+		todayPlan: [
+			{
+				taskId: "task-2",
+				title: "Remaining task",
+				isDailyStanding: false,
+				doneForToday: false,
+				effortMinutes: null,
+			},
+		],
+		footprints: {},
+	},
+	isLoading: false,
+	localDateKey: "2026-06-20",
+};
+
+describe("PomodoroDashboardBody day-memory line", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("shows day-memory line inside home-primary-region when recap has content", () => {
+		useDailyRecapMock.mockReturnValue(nonEmptyDailyRecap);
+
+		renderBody({
+			state: "idle",
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		expectInsideRegion("home-primary-region", "day-memory-line");
+	});
+
+	it("hides day-memory line during active work even when recap has content", () => {
+		useDailyRecapMock.mockReturnValue(nonEmptyDailyRecap);
+
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "WORK",
+			activeCycle: { id: 42 },
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		expect(screen.queryByTestId("day-memory-line")).toBeNull();
+	});
+
+	it("omits day-memory line when recap has no content", () => {
+		useDailyRecapMock.mockReturnValue(defaultDailyRecap);
+
+		renderBody({
+			state: "idle",
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		expect(screen.queryByTestId("day-memory-line")).toBeNull();
+	});
+
+	it("shows day-memory line again once active work ends and idle state returns", () => {
+		useDailyRecapMock.mockReturnValue(nonEmptyDailyRecap);
+
+		const { rerender } = render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				hasActiveSession: true,
+				state: "running",
+				cycleKind: "WORK",
+				activeCycle: { id: 42 },
+				focusedTask: { id: 1, title: "Focus task" },
+			}),
+		);
+		rerender(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.queryByTestId("day-memory-line")).toBeNull();
+
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTask: { id: 1, title: "Focus task" },
+			}),
+		);
+		rerender(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expectInsideRegion("home-primary-region", "day-memory-line");
 	});
 });
 
