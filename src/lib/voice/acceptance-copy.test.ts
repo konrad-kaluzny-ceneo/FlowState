@@ -12,8 +12,6 @@ import {
 	getDayMemorySectionReturnTo,
 } from "~/lib/session/narrative-copy";
 
-import { getHomePurposeHeader } from "./home-purpose";
-
 const baseContext: ScoringContext = {
 	energy: "FADING",
 	completedWorkCycles: 0,
@@ -22,17 +20,8 @@ const baseContext: ScoringContext = {
 	lastOverrideWorkType: undefined,
 };
 
-describe("F-14 voice acceptance — home purpose header", () => {
-	it("answers the 5-second purpose test in EN", () => {
-		expect(getHomePurposeHeader("en")).toBe(
-			"A calm answer to: what to do next?",
-		);
-	});
-
-	it("answers the 5-second purpose test in PL", () => {
-		expect(getHomePurposeHeader("pl")).toBe("Spokojna odpowiedź na: co teraz?");
-	});
-});
+// Home purpose header acceptance removed 2026-07-03 per D-07 (hero deleted;
+// see product-voice.md §5-second purpose test for the amended contract).
 
 describe("F-14 voice acceptance — first suggestion rationale", () => {
 	it.each(

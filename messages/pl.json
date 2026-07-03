@@ -321,10 +321,7 @@
 		"boundsBreak": "1 s – 30 min"
 	},
 	"Home": {
-		"offlineBanner": "Jesteś offline — spróbuj ponownie, gdy wrócisz online.",
-		"appName": "FlowState",
-		"tagline": "Zarządzaj zadaniami. Zostań w flow.",
-		"purposeHeader": "Spokojna odpowiedź na: co teraz?"
+		"offlineBanner": "Jesteś offline — spróbuj ponownie, gdy wrócisz online."
 	},
 	"HomeFocusSummary": {
 		"budgetLine": "Wykorzystano {used} z {budget} godzin skupienia · zostało {remaining}",

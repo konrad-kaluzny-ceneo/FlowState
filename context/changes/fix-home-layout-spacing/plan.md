@@ -332,33 +332,33 @@ No data or API changes. Single-PR change; revert = revert the PR. The deleted `h
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `npm run test`
-- [x] 1.2 Type checking passes: `npm run typecheck`
-- [x] 1.3 Lint/format passes: `npm run check`
-- [x] 1.4 E2E belt passes: `npm run test:e2e:belt`
+- [x] 1.1 Unit tests pass: `npm run test` — 4bde5d8
+- [x] 1.2 Type checking passes: `npm run typecheck` — 4bde5d8
+- [x] 1.3 Lint/format passes: `npm run check` — 4bde5d8
+- [x] 1.4 E2E belt passes: `npm run test:e2e:belt` — 4bde5d8
 
 #### Manual
 
-- [x] 1.5 375px: navbar overlaps nothing on home (guest + auth) and /auth/sign-in
-- [x] 1.6 1280px: navbar layout correct in both themes
-- [x] 1.7 No phantom scrollbar on any page
-- [x] 1.8 Navbar sign-out works → /auth/sign-in
+- [x] 1.5 375px: navbar overlaps nothing on home (guest + auth) and /auth/sign-in — 4bde5d8
+- [x] 1.6 1280px: navbar layout correct in both themes — 4bde5d8
+- [x] 1.7 No phantom scrollbar on any page — 4bde5d8
+- [x] 1.8 Navbar sign-out works → /auth/sign-in — 4bde5d8
 
 ### Phase 2: Hero Removal + Voice-Contract Amendment
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `npm run test`
-- [ ] 2.2 Type checking passes: `npm run typecheck`
-- [ ] 2.3 Lint passes: `npm run check`
-- [ ] 2.4 No orphaned i18n keys (`purposeHeader|tagline` grep clean)
-- [ ] 2.5 E2E belt passes: `npm run test:e2e:belt`
+- [x] 2.1 Unit tests pass: `npm run test`
+- [x] 2.2 Type checking passes: `npm run typecheck`
+- [x] 2.3 Lint passes: `npm run check`
+- [x] 2.4 No orphaned i18n keys (`purposeHeader|tagline` grep clean)
+- [x] 2.5 E2E belt passes: `npm run test:e2e:belt`
 
 #### Manual
 
-- [ ] 2.6 Home opens directly with content; no hero hole
-- [ ] 2.7 Rail illustration still state-driven on desktop
-- [ ] 2.8 PL + EN render without missing-message warnings
+- [x] 2.6 Home opens directly with content; no hero hole
+- [x] 2.7 Rail illustration still state-driven on desktop
+- [x] 2.8 PL + EN render without missing-message warnings
 
 ### Phase 3: Layout Composition Contract
 
