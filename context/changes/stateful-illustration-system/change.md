@@ -1,7 +1,7 @@
 ---
 change_id: stateful-illustration-system
 title: S-28 phase 2 — state-bound Calm Garden illustrations on hero/rail, not on wedge gates
-status: implementing
+status: impl_reviewed
 created: 2026-07-02
 updated: 2026-07-03
 archived_at: null
