@@ -261,3 +261,5 @@ auth.json
 
 # Claude Code agent worktrees (nested checkouts; must not be scanned by root tooling)
 .claude/worktrees/
+.claude/skills/10x-*
+.claude/skills/next-slice-selector
