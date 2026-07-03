@@ -310,7 +310,7 @@ Not applicable — no persisted data model changes; `recentlyClosedSession` is e
 
 #### Manual
 
-- [ ] 2.6 Hero and rail illustration visibly change tint/pose across idle → energy_choice → work → break → return → closure in a live authenticated session
+- [x] 2.6 Hero and rail illustration visibly change tint/pose across idle → energy_choice → work → break → return → closure in a live authenticated session
 - [ ] 2.7 Crossfade feels smooth (~200ms) with motion enabled; instant swap with `prefers-reduced-motion: reduce`
 
 ### Phase 3: Guardrail — illustrations never render on wedge gates
@@ -325,9 +325,9 @@ Not applicable — no persisted data model changes; `recentlyClosedSession` is e
 
 #### Automated
 
-- [ ] 4.1 New E2E spec passes: `pnpm exec playwright test e2e/stateful-illustration.spec.ts`
-- [ ] 4.2 Accessibility scan passes: `pnpm test:e2e:a11y`
-- [ ] 4.3 Full belt suite still passes: `pnpm test:e2e:belt`
+- [x] 4.1 New E2E spec passes: `pnpm exec playwright test e2e/stateful-illustration.spec.ts`
+- [x] 4.2 Accessibility scan passes: `pnpm test:e2e:a11y`
+- [x] 4.3 Full belt suite still passes: `pnpm test:e2e:belt`
 
 #### Manual
 
