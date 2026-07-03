@@ -94,7 +94,7 @@ Add `resolveIllustrationVariant()` as a pure, framework-free function mapping se
 
 ### Overview
 
-Parameterize `CalmGardenBlob`, `CalmGardenSprig`, and `HomeHeroSprig` with a `variant: IllustrationVariant` prop (tint/pose only, same viewBox/markup shape); wire both render sites (`home-shell.tsx`, `pomodoro-dashboard.tsx`) to pass the variant computed once in `PomodoroDashboardBody` via the Phase 1 resolver. Apply the S-31/S-33 shell-wash convention (`data-illustration-variant` attribute + CSS custom-property tokens + `transition-colors`/`transition-opacity` + `motion-reduce:transition-none`) for the crossfade.
+Parameterize `CalmGardenBlob`, `CalmGardenSprig`, and `HomeHeroSprig` with a `variant: IllustrationVariant` prop (tint/pose only, same viewBox/markup shape); wire both render sites (`home-shell.tsx`, `pomodoro-dashboard.tsx`) to consume one shared variant value — resolved once via the Phase 1 resolver inside `PomodoroDashboardBody` (where the session-state inputs live) and published through `HomeIllustrationVariantProvider` so the sibling hero reads the same value (see §4 below for the verified render-tree constraint). Apply the S-31/S-33 shell-wash convention (`data-illustration-variant` attribute + CSS custom-property tokens + `transition-colors`/`transition-opacity` + `motion-reduce:transition-none`) for the crossfade.
 
 ### Changes Required:
 
