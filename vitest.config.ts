@@ -8,7 +8,12 @@ export default defineConfig({
 		environment: "jsdom",
 		globals: true,
 		setupFiles: ["./src/test/setup.ts"],
-		exclude: [...configDefaults.exclude, "e2e/**", ".stryker-tmp/**"],
+		exclude: [
+			...configDefaults.exclude,
+			"e2e/**",
+			".stryker-tmp/**",
+			".claude/worktrees/**",
+		],
 		env: {
 			SKIP_ENV_VALIDATION: "1",
 			DATABASE_URL: "postgresql://test:test@localhost:5432/test",

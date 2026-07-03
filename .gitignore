@@ -258,3 +258,6 @@ auth.json
 # Impeccable skills (duplicate harness installs; canonical copy under .cursor/skills/)
 .github/skills/
 .kiro/skills/
+
+# Claude Code agent worktrees (nested checkouts; must not be scanned by root tooling)
+.claude/worktrees/
