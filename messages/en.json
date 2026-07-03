@@ -21,6 +21,9 @@
 		"signingOut": "Signing out…",
 		"signOutError": "Sign-out failed. Please try again."
 	},
+	"Navbar": {
+		"brand": "FlowState"
+	},
 	"Onboarding": {
 		"firstRun": {
 			"guest": {

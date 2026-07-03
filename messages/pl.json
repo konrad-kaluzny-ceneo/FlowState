@@ -21,6 +21,9 @@
 		"signingOut": "Wylogowywanie…",
 		"signOutError": "Wylogowanie nie powiodło się. Spróbuj ponownie."
 	},
+	"Navbar": {
+		"brand": "FlowState"
+	},
 	"Onboarding": {
 		"firstRun": {
 			"guest": {

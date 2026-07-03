@@ -34,7 +34,7 @@ export function UserMenu({
 	return (
 		<div className="flex items-center gap-3">
 			<HeaderPreferenceControls scope={scope} />
-			<span className="text-primary text-sm">{userName}</span>
+			<span className="hidden text-primary text-sm lg:inline">{userName}</span>
 			<button
 				className="rounded-md border border-border-subtle bg-surface-card px-3 py-1.5 font-medium text-primary text-sm transition-colors hover:bg-surface-card-muted disabled:opacity-50"
 				disabled={isSigningOut}

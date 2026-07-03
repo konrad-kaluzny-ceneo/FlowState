@@ -8,11 +8,10 @@ import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { auth } from "~/lib/auth/server";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import { TRPCReactProvider } from "~/trpc/react";
-import { GuestHeaderControls } from "./_components/guest-header-controls";
+import { AppNavbar } from "./_components/app-navbar";
 import { OAuthSessionVerifier } from "./_components/oauth-session-verifier";
 import { ThemeProvider } from "./_components/theme-provider";
 import { ThemeScript } from "./_components/theme-script";
-import { UserMenu } from "./_components/user-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -69,18 +68,12 @@ export default async function RootLayout({
 			<head>
 				<ThemeScript />
 			</head>
-			<body>
+			<body className="flex min-h-screen flex-col">
 				<NextIntlClientProvider locale={locale} messages={messages}>
 					<TRPCReactProvider>
 						<ThemeProvider>
 							<OAuthSessionVerifier />
-							<header className="fixed top-0 right-0 z-50 p-4">
-								{userName ? (
-									<UserMenu scope={scope} userName={userName} />
-								) : (
-									<GuestHeaderControls scope={scope} />
-								)}
-							</header>
+							<AppNavbar scope={scope} userName={userName} />
 							{children}
 						</ThemeProvider>
 					</TRPCReactProvider>
