@@ -41,6 +41,14 @@ export type DeriveHomeSessionStateInput = {
 	recapAvailable: boolean;
 	showInFlowSummary: boolean;
 	showBreakTransitionLine: boolean;
+	/**
+	 * Transient flag set when the session closure gate has just dismissed;
+	 * cleared on the next state-relevant change. Passed through only — it
+	 * does not affect `resolveSessionState()`'s 5-value output. Consumed by
+	 * `resolveIllustrationVariant()` (`~/lib/design/illustration-variant`) to
+	 * resolve the `closure` illustration variant. Defaults to `false`.
+	 */
+	recentlyClosedSession?: boolean;
 };
 
 export type DeriveHomeSessionStateOutput = {

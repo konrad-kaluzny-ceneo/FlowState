@@ -165,6 +165,15 @@ describe("HomeShell", () => {
 		expect(screen.getByTestId("pomodoro-dashboard")).toBeTruthy();
 	});
 
+	it("renders the hero sprig with the idle variant baseline", () => {
+		mergeUiState.mergeSuccessVisible = false;
+		render(<HomeShell isAuthenticated={false} userId={null} />);
+
+		const hero = screen.getByTestId("home-hero-sprig");
+		expect(hero.getAttribute("data-illustration-variant")).toBe("idle");
+		expect(hero.getAttribute("data-illustration-energy")).toBeNull();
+	});
+
 	it("widens shell container at lg breakpoint for desktop workbench", () => {
 		mergeUiState.mergeSuccessVisible = false;
 		render(<HomeShell isAuthenticated={false} userId={null} />);

@@ -180,3 +180,53 @@
 	--color-shell-top: #1e1c1a;
 	--color-shell-bottom: #252220;
 }
+
+/* S-43: stateful illustration system — Calm Garden tint tokens per variant.
+   All values reuse existing semantic --color-* tokens (theme-aware). */
+[data-illustration-variant] {
+	--illustration-blob-outer: var(--color-surface-break);
+	--illustration-blob-inner: var(--color-energy-steady-bg);
+	--illustration-blob-accent: var(--color-accent-break);
+	--illustration-sprig-stroke: var(--color-accent-break);
+}
+
+[data-illustration-variant="energy_choice"] {
+	--illustration-blob-inner: var(--color-energy-focused-bg);
+	--illustration-sprig-stroke: var(--color-energy-steady);
+}
+
+[data-illustration-variant="work"] {
+	--illustration-blob-outer: var(--color-surface-card-muted);
+	--illustration-blob-inner: var(--color-energy-focused-bg);
+	--illustration-sprig-stroke: var(--color-energy-focused);
+}
+
+[data-illustration-variant="break"] {
+	--illustration-blob-inner: var(--color-surface-break);
+}
+
+[data-illustration-variant="return"] {
+	--illustration-blob-inner: var(--color-surface-panel);
+	--illustration-sprig-stroke: var(--color-accent-cta);
+}
+
+[data-illustration-variant="closure"] {
+	--illustration-blob-inner: var(--color-surface-card-muted);
+	--illustration-sprig-stroke: var(--color-accent-success);
+}
+
+/* Energy tint — publisher scopes it to work/energy_choice variants only */
+[data-illustration-energy="FOCUSED"] [data-illustration-variant] {
+	--illustration-blob-inner: var(--color-energy-focused-bg);
+	--illustration-sprig-stroke: var(--color-energy-focused);
+}
+
+[data-illustration-energy="STEADY"] [data-illustration-variant] {
+	--illustration-blob-inner: var(--color-energy-steady-bg);
+	--illustration-sprig-stroke: var(--color-energy-steady);
+}
+
+[data-illustration-energy="FADING"] [data-illustration-variant] {
+	--illustration-blob-inner: var(--color-energy-fading-bg);
+	--illustration-sprig-stroke: var(--color-energy-fading);
+}
