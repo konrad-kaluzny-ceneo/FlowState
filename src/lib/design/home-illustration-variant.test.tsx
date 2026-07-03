@@ -45,4 +45,25 @@ describe("home-illustration-variant context", () => {
 		expect(consumer.getAttribute("data-variant")).toBe("work");
 		expect(consumer.getAttribute("data-energy")).toBe("FOCUSED");
 	});
+
+	it("resets consumers to the idle baseline when the publisher unmounts", () => {
+		const { rerender } = render(
+			<HomeIllustrationVariantProvider>
+				<Consumer />
+				<Publisher illustration={{ variant: "work", energyTint: "FOCUSED" }} />
+			</HomeIllustrationVariantProvider>,
+		);
+
+		const consumer = screen.getByTestId("illustration-consumer");
+		expect(consumer.getAttribute("data-variant")).toBe("work");
+
+		rerender(
+			<HomeIllustrationVariantProvider>
+				<Consumer />
+			</HomeIllustrationVariantProvider>,
+		);
+
+		expect(consumer.getAttribute("data-variant")).toBe("idle");
+		expect(consumer.getAttribute("data-energy")).toBe("");
+	});
 });

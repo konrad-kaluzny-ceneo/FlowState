@@ -451,16 +451,23 @@ export function PomodoroDashboardBody({
 	// S-43: transient closure flag — set when the session_closure gate
 	// transitions visible → dismissed, cleared on the next session-state
 	// change (mirrors the showInFlowSummary clear-on-next-transition pattern).
+	// Guarded on pendingClosureLine == null so the flag only fires for a real
+	// dismissal (dismissSessionClosure clears the line) — never when the gate
+	// is merely suppressed (cyclePaused / cycle recovery) with the line intact.
 	const sessionClosureVisible =
 		wedgeBeat.showSessionClosure && pomodoro.pendingClosureLine != null;
 	const [recentlyClosedSession, setRecentlyClosedSession] = useState(false);
 	const prevSessionClosureVisibleRef = useRef(false);
 	useEffect(() => {
-		if (prevSessionClosureVisibleRef.current && !sessionClosureVisible) {
+		if (
+			prevSessionClosureVisibleRef.current &&
+			!sessionClosureVisible &&
+			pomodoro.pendingClosureLine == null
+		) {
 			setRecentlyClosedSession(true);
 		}
 		prevSessionClosureVisibleRef.current = sessionClosureVisible;
-	}, [sessionClosureVisible]);
+	}, [sessionClosureVisible, pomodoro.pendingClosureLine]);
 
 	const breakAtmosphereActive = shouldShowBreakAtmosphere({
 		cycleKind: pomodoro.cycleKind,

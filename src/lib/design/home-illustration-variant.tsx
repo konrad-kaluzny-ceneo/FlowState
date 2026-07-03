@@ -73,4 +73,16 @@ export function usePublishHomeIllustrationVariant(
 	useEffect(() => {
 		publish?.(illustration);
 	}, [publish, illustration]);
+
+	// Reset consumers to the calm idle baseline when the publisher unmounts,
+	// so a surviving hero never keeps a stale variant (e.g. `work`) after the
+	// dashboard body is swapped out (error boundary, suspense, mode remount).
+	useEffect(() => {
+		if (publish == null) {
+			return;
+		}
+		return () => {
+			publish(IDLE_ILLUSTRATION_STATE);
+		};
+	}, [publish]);
 }

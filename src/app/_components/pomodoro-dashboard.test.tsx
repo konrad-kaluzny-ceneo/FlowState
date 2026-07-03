@@ -1610,6 +1610,53 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 			railVariantElement()?.getAttribute("data-illustration-variant"),
 		).toBe("work");
 	});
+
+	it("does not show the closure variant when the gate is suppressed without dismissal", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
+			}),
+		);
+
+		const { rerender } = render(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("session-closure-overlay")).toBeTruthy();
+
+		// Gate hidden by cycle recovery (running work cycle) while the closure
+		// line is still pending — a suppression, not a dismissal.
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
+				hasActiveSession: true,
+				state: "running",
+				cycleKind: "WORK",
+				activeCycle: { id: 42 },
+				focusedTask: { id: 1, title: "Focus task" },
+			}),
+		);
+		rerender(
+			<PomodoroDashboardBody
+				cycleEndAudioMode="muted"
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				setCycleEndAudioMode={vi.fn()}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.queryByTestId("session-closure-overlay")).toBeNull();
+		expect(
+			railVariantElement()?.getAttribute("data-illustration-variant"),
+		).toBe("work");
+	});
 });
 
 describe("PomodoroDashboardBody context rail content", () => {
