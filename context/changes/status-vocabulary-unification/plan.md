@@ -143,6 +143,8 @@ Update all `messages/pl.json` keys that carry banned status vocabulary to unifie
 | `DayMemory.collapsedLineNoReturn` | `Ukończone: {done}. Aktywne: {remaining}.` |
 | `DayMemory.remainingCount` | plural: `aktywne` / `aktywnych` (preserve ICU plural structure) |
 
+**Addendum (impl-review 2026-07-04):** `remainingCount` ships as `zadanie`/`zadania`/`zadań` — mirrors `doneCount` and EN `{n} open`, avoiding redundant "Aktywne: N aktywne."
+
 #### 2. HomeFocusSummary namespace
 
 **File**: `messages/pl.json`
@@ -310,43 +312,43 @@ No data migration. Existing users see new PL copy on next page load. EN locale u
 
 #### Automated
 
-- [ ] 1.1 `pnpm check` passes after contract edits
-- [ ] 1.2 Grep `product-voice.md` — no Domknięte/Zostaje/Zrobione in status-label contexts
+- [x] 1.1 `pnpm check` passes after contract edits
+- [x] 1.2 Grep `product-voice.md` — no Domknięte/Zostaje/Zrobione in status-label contexts
 
 #### Manual
 
-- [ ] 1.3 Contract reads coherently; unified vocabulary explicit
+- [x] 1.3 Contract reads coherently; unified vocabulary explicit
 
 ### Phase 2: Polish Message Catalog
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec vitest run src/i18n/messages-parity.test.ts`
-- [ ] 2.2 Grep `messages/pl.json` — banned terms absent from target namespaces
+- [x] 2.1 `pnpm exec vitest run src/i18n/messages-parity.test.ts`
+- [x] 2.2 Grep `messages/pl.json` — banned terms absent from target namespaces
 
 #### Manual
 
-- [ ] 2.3 PL strings grammatically natural (especially HomeFocusSummary plurals)
+- [x] 2.3 PL strings grammatically natural (especially HomeFocusSummary plurals)
 
 ### Phase 3: Test Oracle Updates
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run src/lib/voice/acceptance-copy.test.ts src/lib/recap/format-day-memory.test.ts`
-- [ ] 3.2 `pnpm check`
-- [ ] 3.3 `pnpm test`
+- [x] 3.1 `pnpm exec vitest run src/lib/voice/acceptance-copy.test.ts src/lib/recap/format-day-memory.test.ts`
+- [x] 3.2 `pnpm check`
+- [x] 3.3 `pnpm test`
 
 ### Phase 4: Full Verification + PL Manual Pass
 
 #### Automated
 
-- [ ] 4.1 `pnpm check`
-- [ ] 4.2 `pnpm test`
-- [ ] 4.3 Grep `messages/pl.json` — zero banned status roots in target keys
+- [x] 4.1 `pnpm check`
+- [x] 4.2 `pnpm test`
+- [x] 4.3 Grep `messages/pl.json` — zero banned status roots in target keys
 
 #### Manual
 
-- [ ] 4.4 PL home day-memory collapsed + expanded sections
-- [ ] 4.5 PL recap today-done tag + marked-done line
-- [ ] 4.6 PL task list sections unchanged (regression)
-- [ ] 4.7 PL home focus summary standing counts
+- [x] 4.4 PL home day-memory collapsed + expanded sections
+- [x] 4.5 PL recap today-done tag + marked-done line
+- [x] 4.6 PL task list sections unchanged (regression)
+- [x] 4.7 PL home focus summary standing counts

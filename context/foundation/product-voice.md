@@ -12,7 +12,7 @@ FlowState speaks in **English** and **Polish** with one voice. Copy helps the us
 | | EN | PL |
 | --- | --- | --- |
 | **Core** | Answer "what do I do right now?" and recover context after disruption. | Odpowiedź na: **co teraz?** — i spokojne odzyskanie kontekstu po przerwaniu. |
-| **Success** | A calm end-of-day feeling — clear separation of done vs. remains — not maximum throughput. | Spokojne domknięcie dnia — wiadomo, co domknięte, a co zostaje — nie maksymalna wydajność. |
+| **Success** | A calm end-of-day feeling — clear separation of done vs. remains — not maximum throughput. | Spokojne domknięcie dnia — wiadomo, co ukończone, a co aktywne — nie maksymalna wydajność. |
 | **Wedge** | Session-aware next-task suggestion with a one-line rationale the user can accept or override. | Sugestia następnego zadania po cyklu z jednym zdaniem „dlaczego" — akceptujesz lub wybierasz inne. |
 
 ---
@@ -42,8 +42,8 @@ Three words: **mindful**, **clear**, **trustworthy**.
 | Agency | you're always in control; your pick | zawsze Ty decydujesz; Twój wybór | Every suggestion surface |
 | Energy | focused / steady / fading | skupiony / stabilny / słabnący | Neutral, never judgmental |
 | Session end | session complete; wrap up | sesja zakończona; domknij | Not *crushed it* |
-| Day memory — done | Done / Domknięte | section label (S-42) |
-| Day memory — remains | Remains / Zostaje | open work honestly |
+| Day memory — done | Done / Ukończone | section label; aligned with `Tasks.sectionCompleted` |
+| Day memory — remains | Remains / Aktywne | open work honestly; aligned with `Tasks.sectionActive` |
 | Day memory — return | Return to / Wróć tutaj | names last focus after interruption |
 | Override | noted; continuing that thread | zapisany; kontynuujemy ten wątek | Acknowledge without penalizing |
 
@@ -129,10 +129,12 @@ One line; calm; preserves override freedom (`Suggestion.overrideAck`).
 
 ### Day memory closure (done / remains / return-to)
 
+> **PL status vocabulary (amended 2026-07-04, D-10):** Done/remains labels use **Ukończone** / **Aktywne** app-wide — unified with task-list section headers. S-42 zoned vocabulary (Domknięte / Zostaje / Zrobione) is unieważnione.
+
 | Role | EN label | PL label | Message key |
 | --- | --- | --- | --- |
-| Done | Done | Domknięte | `DayMemory.sectionDone` |
-| Remains | Remains | Zostaje | `DayMemory.sectionRemains` |
+| Done | Done | Ukończone | `DayMemory.sectionDone` |
+| Remains | Remains | Aktywne | `DayMemory.sectionRemains` |
 | Return-to | Return to | Wróć tutaj | `DayMemory.sectionReturnTo` |
 
 **Collapsed one-line** (home, S-42):
@@ -140,7 +142,7 @@ One line; calm; preserves override freedom (`Suggestion.overrideAck`).
 | Locale | Template | Key |
 | --- | --- | --- |
 | EN | Done: {done}. Remains: {remaining}. Return calmly to: {next}. | `DayMemory.collapsedLine` |
-| PL | Zrobione: {done}. Zostało: {remaining}. Wróć spokojnie do: {next}. | `DayMemory.collapsedLine` |
+| PL | Ukończone: {done}. Aktywne: {remaining}. Wróć spokojnie do: {next}. | `DayMemory.collapsedLine` |
 
 ---
 
@@ -159,7 +161,7 @@ One line; calm; preserves override freedom (`Suggestion.overrideAck`).
 
 | | Copy |
 | --- | --- |
-| ✓ PL | Zrobione: 2 zadania. Zostało: 3. Wróć spokojnie do: API review. |
+| ✓ PL | Ukończone: 2 zadania. Aktywne: 3 zadania. Wróć spokojnie do: API review. |
 | ✗ PL | Świetna robota! 2/5 ukończone — zostało tylko 3! |
 
 ### Transition
@@ -179,7 +181,7 @@ One line; calm; preserves override freedom (`Suggestion.overrideAck`).
 - [ ] **Copy zone** — change maps to a zone in §Copy zones; no orphan strings in components.
 - [ ] **5-second purpose test** — home/entry changes still answer *what to do next / co teraz*.
 - [ ] **One-line rationale** — suggestion rationale stays one calm line; override freedom preserved.
-- [ ] **Day memory vocabulary** — done/remains/return-to use `DayMemory` labels (Domknięte / Zostaje / Wróć tutaj in PL).
+- [ ] **Day memory vocabulary** — done/remains/return-to use `DayMemory` labels (Ukończone / Aktywne / Wróć tutaj in PL).
 - [ ] **Transition beat budget** — at most one interstitial line + one gate; no stacked copy.
 - [ ] **Non-examples avoided** — no streaks, productivity-bro, AI-slop, or punitive tone (§Avoided vocabulary).
 - [ ] **Length budgets** — closure/resume lines respect 120-character caps unless schema follow-up is documented.
