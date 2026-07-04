@@ -606,7 +606,7 @@ export function TaskList({
 		useState<CommitmentHorizon>(
 			DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon,
 		);
-	const [newIsDailyStanding, setNewIsDailyStanding] = useState(false);
+	const [newIsDailyStanding, setNewIsDailyStanding] = useState(true);
 
 	function resetCreateFormState() {
 		setNewTitle("");
@@ -617,7 +617,7 @@ export function TaskList({
 		setNewImportance(DEFAULT_CREATE_FORM_ATTRIBUTES.importance);
 		setNewEffortMinutes(DEFAULT_CREATE_FORM_ATTRIBUTES.effortMinutes);
 		setNewCommitmentHorizon(DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon);
-		setNewIsDailyStanding(false);
+		setNewIsDailyStanding(true);
 	}
 
 	function applyPresetToCreateForm(presetId: PersonaPresetId) {

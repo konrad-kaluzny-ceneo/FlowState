@@ -384,14 +384,14 @@ No DB migration. Onboarding localStorage may retain `presetCoachDismissed: true/
 
 #### Automated
 
-- [x] 1.1 `pnpm exec vitest run src/app/_components/styled-checkbox.test.tsx src/app/_components/task-fields-panel.test.tsx src/app/_components/task-list.test.tsx`
-- [x] 1.2 `pnpm check`
-- [x] 1.3 `pnpm test`
+- [x] 1.1 `pnpm exec vitest run src/app/_components/styled-checkbox.test.tsx src/app/_components/task-fields-panel.test.tsx src/app/_components/task-list.test.tsx` — 27f4477
+- [x] 1.2 `pnpm check` — 27f4477
+- [x] 1.3 `pnpm test` — 27f4477
 
 #### Manual
 
-- [x] 1.4 Inline edit daily label toggles edit checkbox only (EN)
-- [x] 1.5 Same verification in PL locale
+- [x] 1.4 Inline edit daily label toggles edit checkbox only (EN) — 27f4477
+- [x] 1.5 Same verification in PL locale — 27f4477
 
 ### Phase 2: Daily Standing Default Checked (D-03)
 

@@ -455,7 +455,7 @@ describe("TaskList", () => {
 				effortMinutes: Number.parseInt(applied.effortMinutes, 10),
 				commitmentHorizon: applied.commitmentHorizon,
 				personaPresetId: presetId,
-				isDailyStanding: false,
+				isDailyStanding: true,
 			});
 		});
 	});
@@ -687,7 +687,7 @@ describe("TaskList", () => {
 		const toggle = within(
 			screen.getByTestId("task-fields-panel-create"),
 		).getByTestId("daily-standing-toggle") as HTMLInputElement;
-		expect(toggle.checked).toBe(false);
+		expect(toggle.checked).toBe(true);
 		expect(screen.getByTestId("daily-standing-badge").textContent).toBe(
 			"Daily",
 		);
@@ -722,7 +722,7 @@ describe("TaskList", () => {
 		const createToggle = within(
 			screen.getByTestId("task-fields-panel-create"),
 		).getByTestId("daily-standing-toggle") as HTMLInputElement;
-		expect(createToggle.checked).toBe(false);
+		expect(createToggle.checked).toBe(true);
 		expect(createToggle.id).toBe("daily-standing-create");
 
 		fireEvent.click(screen.getByRole("button", { name: "Stand-up" }));
@@ -737,7 +737,7 @@ describe("TaskList", () => {
 
 		fireEvent.click(within(editRow).getByText("Daily standing"));
 		expect(editToggle.checked).toBe(false);
-		expect(createToggle.checked).toBe(false);
+		expect(createToggle.checked).toBe(true);
 	});
 
 	it("does not use line-through on done-for-today active task titles", () => {
