@@ -502,6 +502,7 @@ export function useTaskMutations() {
 					urgency: input.urgency as 1 | 2 | 3 | undefined,
 					effortMinutes: input.effortMinutes,
 					commitmentHorizon: input.commitmentHorizon,
+					personaPresetId: input.personaPresetId ?? null,
 					isDailyStanding: input.isDailyStanding,
 				});
 			}

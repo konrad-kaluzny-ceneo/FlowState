@@ -302,49 +302,49 @@ No DB migration. Existing tasks with stored `personaPresetId` immediately show p
 
 #### Automated
 
-- [ ] 1.1 `pnpm exec vitest run src/lib/task/persona-presets.test.ts src/app/_components/task-list.test.tsx`
-- [ ] 1.2 `pnpm check`
-- [ ] 1.3 `pnpm test`
+- [x] 1.1 `pnpm exec vitest run src/lib/task/persona-presets.test.ts src/app/_components/task-list.test.tsx`
+- [x] 1.2 `pnpm check`
+- [x] 1.3 `pnpm test`
 
 #### Manual
 
-- [ ] 1.4 Auth: Gaszenie create → edit urgency → badge still Gaszenie
-- [ ] 1.5 Guest: preset create shows persona badge
+- [x] 1.4 Auth: Gaszenie create → edit urgency → badge still Gaszenie
+- [x] 1.5 Guest: preset create shows persona badge
 
 ### Phase 2: Horizon UX + Edit Row Overflow (D-08)
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx src/app/_components/task-fields-panel.test.tsx`
-- [ ] 2.2 `pnpm check`
-- [ ] 2.3 `pnpm test`
+- [x] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx src/app/_components/task-fields-panel.test.tsx`
+- [x] 2.2 `pnpm check`
+- [x] 2.3 `pnpm test`
 
 #### Manual
 
-- [ ] 2.4 Inline edit ASAP → Gdy się da → distinct highlight + save persists
-- [ ] 2.5 ~320px viewport: third chip clickable without premature panel close
+- [x] 2.4 Inline edit ASAP → Gdy się da → distinct highlight + save persists
+- [x] 2.5 ~320px viewport: third chip clickable without premature panel close
 
 ### Phase 3: Blur-Save Hardening (D-08)
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
-- [ ] 3.2 `pnpm check`
-- [ ] 3.3 `pnpm test`
+- [x] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
+- [x] 3.2 `pnpm check`
+- [x] 3.3 `pnpm test`
 
 #### Manual
 
-- [ ] 3.4 Safari/touch: tap horizon chip without panel closing early
+- [x] 3.4 Safari/touch: tap horizon chip without panel closing early
 
 ### Phase 4: Belt + Manual Repro Checklist
 
 #### Automated
 
-- [ ] 4.1 `pnpm check`
-- [ ] 4.2 `pnpm test`
-- [ ] 4.3 `set CI=true && pnpm test:e2e:belt`
+- [x] 4.1 `pnpm check`
+- [x] 4.2 `pnpm test`
+- [x] 4.3 `set CI=true && pnpm test:e2e:belt`
 
 #### Manual
 
-- [ ] 4.4 Complete D-09 repro checklist from plan
-- [ ] 4.5 Complete D-08 repro checklist from plan
+- [x] 4.4 Complete D-09 repro checklist from plan
+- [x] 4.5 Complete D-08 repro checklist from plan

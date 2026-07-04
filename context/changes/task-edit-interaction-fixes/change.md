@@ -1,7 +1,7 @@
 ---
 change_id: task-edit-interaction-fixes
 title: Task edit interaction fixes
-status: planned
+status: implementing
 created: 2026-07-04
 updated: 2026-07-04
 archived_at: null

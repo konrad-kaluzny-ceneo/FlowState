@@ -490,10 +490,34 @@ describe("useTaskMutations", () => {
 			await result.current.createTask({ title: "Guest task" });
 		});
 
-		expect(taskRepoCreate).toHaveBeenCalledWith({ title: "Guest task" });
+		expect(taskRepoCreate).toHaveBeenCalledWith(
+			expect.objectContaining({ title: "Guest task", personaPresetId: null }),
+		);
 		expect(cancelTaskList).not.toHaveBeenCalled();
 		expect(setTaskListData).not.toHaveBeenCalled();
 		expect(createMutateAsync).not.toHaveBeenCalled();
+	});
+
+	it("forwards personaPresetId to guest repository on create", async () => {
+		dataMode = "guest";
+		taskRepoCreate.mockResolvedValue(
+			makeTask({ id: 99, personaPresetId: "firefight" }),
+		);
+
+		const { result } = renderHook(() => useTaskMutations(), {
+			wrapper: createWrapper(),
+		});
+
+		await act(async () => {
+			await result.current.createTask({
+				title: "Guest preset task",
+				personaPresetId: "firefight",
+			});
+		});
+
+		expect(taskRepoCreate).toHaveBeenCalledWith(
+			expect.objectContaining({ personaPresetId: "firefight" }),
+		);
 	});
 
 	it("clears error via clearError", async () => {
