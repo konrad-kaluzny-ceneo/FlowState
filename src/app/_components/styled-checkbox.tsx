@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+
 type StyledCheckboxProps = {
 	checked: boolean;
 	onChange: (checked: boolean) => void;
@@ -19,7 +21,8 @@ export function StyledCheckbox({
 	className = "",
 	"data-testid": dataTestId,
 }: StyledCheckboxProps) {
-	const inputId = id ?? dataTestId;
+	const autoId = useId();
+	const inputId = id ?? autoId;
 
 	return (
 		<label

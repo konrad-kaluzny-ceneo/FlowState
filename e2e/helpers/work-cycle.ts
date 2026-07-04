@@ -61,7 +61,9 @@ async function waitForTaskCreateSettled(addButton: Locator) {
 
 /** Belt specs expect generic tasks — uncheck daily standing default for create flows. */
 async function uncheckDailyStandingDefault(page: Page) {
-	const toggle = page.getByTestId("daily-standing-toggle");
+	const toggle = page
+		.getByTestId("task-fields-panel-create")
+		.getByTestId("daily-standing-toggle");
 	if (!(await toggle.isVisible())) {
 		return;
 	}

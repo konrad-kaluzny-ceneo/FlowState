@@ -415,6 +415,7 @@ function SortableActiveTaskRow({
 					>
 						<TaskFieldsPanel
 							commitmentHorizon={editCommitmentHorizon}
+							dailyStandingFieldId={`daily-standing-edit-${String(task.id)}`}
 							effortMinutes={editEffortMinutes}
 							importance={editImportance}
 							isDailyStanding={editIsDailyStanding}
@@ -605,7 +606,7 @@ export function TaskList({
 		useState<CommitmentHorizon>(
 			DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon,
 		);
-	const [newIsDailyStanding, setNewIsDailyStanding] = useState(false);
+	const [newIsDailyStanding, setNewIsDailyStanding] = useState(true);
 
 	function resetCreateFormState() {
 		setNewTitle("");
@@ -616,7 +617,7 @@ export function TaskList({
 		setNewImportance(DEFAULT_CREATE_FORM_ATTRIBUTES.importance);
 		setNewEffortMinutes(DEFAULT_CREATE_FORM_ATTRIBUTES.effortMinutes);
 		setNewCommitmentHorizon(DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon);
-		setNewIsDailyStanding(false);
+		setNewIsDailyStanding(true);
 	}
 
 	function applyPresetToCreateForm(presetId: PersonaPresetId) {
@@ -910,6 +911,7 @@ export function TaskList({
 				</div>
 				<TaskFieldsPanel
 					commitmentHorizon={newCommitmentHorizon}
+					dailyStandingFieldId="daily-standing-create"
 					effortMinutes={newEffortMinutes}
 					importance={newImportance}
 					includeTitle={false}
@@ -1102,6 +1104,7 @@ export function TaskList({
 										>
 											<TaskFieldsPanel
 												commitmentHorizon={editCommitmentHorizon}
+												dailyStandingFieldId={`daily-standing-edit-${String(task.id)}`}
 												effortMinutes={editEffortMinutes}
 												importance={editImportance}
 												isDailyStanding={editIsDailyStanding}
