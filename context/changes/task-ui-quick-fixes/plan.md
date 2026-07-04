@@ -423,12 +423,12 @@ No DB migration. Onboarding localStorage may retain `presetCoachDismissed: true/
 
 #### Automated
 
-- [x] 4.1 Grep clean: no preset-coach / getPresetCoachLine / dismissPresetCoachIfVisible references
-- [x] 4.2 `pnpm check`
-- [x] 4.3 `pnpm test`
-- [x] 4.4 `set CI=true && pnpm test:e2e:belt`
+- [x] 4.1 Grep clean: no preset-coach / getPresetCoachLine / dismissPresetCoachIfVisible references — 540da4a
+- [x] 4.2 `pnpm check` — 540da4a
+- [x] 4.3 `pnpm test` — 540da4a
+- [x] 4.4 `set CI=true && pnpm test:e2e:belt` — 540da4a
 
 #### Manual
 
-- [ ] 4.5 No preset coach banner on create form (guest + auth)
-- [ ] 4.6 Belt task-creation flows unaffected
+- [x] 4.5 No preset coach banner on create form (guest + auth) — 540da4a
+- [x] 4.6 Belt task-creation flows unaffected — 540da4a
