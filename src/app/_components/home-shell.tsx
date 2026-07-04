@@ -18,11 +18,7 @@ import {
 import { useOnlineStatus } from "~/hooks/use-online-status";
 import { useTestIdVisible } from "~/hooks/use-test-id-visible";
 import { DataModeProvider } from "~/lib/data-mode/data-mode-context";
-import {
-	HomeIllustrationVariantProvider,
-	useHomeIllustrationVariant,
-} from "~/lib/design/home-illustration-variant";
-import { HomeHeroSprig } from "~/lib/design/illustrations/home-hero-sprig";
+import { HomeIllustrationVariantProvider } from "~/lib/design/home-illustration-variant";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 
 type HomeShellProps = {
@@ -73,12 +69,11 @@ function HomeShellContent({
 	isAuthenticated: boolean;
 	userId: string | null;
 }) {
-	const t = useTranslations("Home");
+	const t = useTranslations("Navbar");
 	const mode = isAuthenticated ? "authenticated" : "guest";
 	const { isFirstRunVisible, dismissFirstRun } = useOnboarding();
 	const { mergeSuccessVisible } = useGuestMergeUi();
 	const cycleCompleteVisible = useTestIdVisible("cycle-complete-overlay");
-	const homeIllustration = useHomeIllustrationVariant();
 
 	return (
 		<DataModeProvider mode={mode}>
@@ -94,27 +89,12 @@ function HomeShellContent({
 				}
 			/>
 			<main
-				className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-shell-top to-shell-bottom text-primary transition-colors duration-300 motion-reduce:transition-none"
+				className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-shell-top to-shell-bottom text-primary transition-colors duration-300 motion-reduce:transition-none"
 				id="home-shell-main"
 			>
 				<div className="container flex flex-col items-center justify-center gap-8 px-4 py-16 lg:max-w-7xl">
+					<h1 className="sr-only">{t("brand")}</h1>
 					<OfflineBanner />
-					<header className="space-y-2 text-center">
-						<HomeHeroSprig
-							energyTint={homeIllustration.energyTint}
-							variant={homeIllustration.variant}
-						/>
-						<h1 className="font-semibold text-4xl tracking-tight">
-							{t("appName")}
-						</h1>
-						<p
-							className="font-medium text-base text-text-primary"
-							data-testid="home-purpose-header"
-						>
-							{t("purposeHeader")}
-						</p>
-						<p className="text-sm text-text-secondary">{t("tagline")}</p>
-					</header>
 					{!isAuthenticated && <GuestBanner />}
 					<PomodoroDashboard />
 				</div>

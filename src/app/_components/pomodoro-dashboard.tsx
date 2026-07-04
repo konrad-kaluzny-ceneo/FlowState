@@ -75,6 +75,7 @@ import {
 	resolveSuggestionCoachLine,
 } from "~/lib/onboarding/post-merge-wedge-coach";
 import type { OnboardingScope, OnboardingState } from "~/lib/onboarding/types";
+import { formatDayMemory } from "~/lib/recap/format-day-memory";
 import { getBreakReentryLine } from "~/lib/session/transition-copy";
 import { getPersonaPresetLabel } from "~/lib/task/persona-presets";
 import { resolveWedgeBeat } from "~/lib/wedge/transition-conductor";
@@ -93,9 +94,9 @@ function mapSuggestionGateStatus(
 type HomeLayoutRegionTestId =
 	| "home-primary-region"
 	| "home-secondary-region"
-	| "home-inventory-zone"
 	| "home-context-rail";
 
+/** Zone owns the width contract: children stay w-full and never self-cap. */
 function HomeLayoutRegion({
 	children,
 	testId,
@@ -107,7 +108,7 @@ function HomeLayoutRegion({
 }) {
 	return (
 		<div
-			className={`flex w-full flex-col items-center gap-8${className ? ` ${className}` : ""}`}
+			className={`flex w-full max-w-lg flex-col items-center gap-section lg:max-w-none${className ? ` ${className}` : ""}`}
 			data-testid={testId}
 		>
 			{children}
@@ -617,7 +618,20 @@ export function PomodoroDashboardBody({
 	const moduleVisible = (key: HomeModuleKey) =>
 		homeIa.modules[key] !== "hidden";
 
-	const dayMemoryVisible = homeIa.state !== "active_work";
+	// Mirrors DayMemoryLine's internal null-return (loading / no content) so
+	// the primary region doesn't render around an empty component.
+	const dayMemoryHasContent = useMemo(
+		() =>
+			formatDayMemory({
+				recap,
+				tasks,
+				continueTaskId: pomodoro.continueTaskId,
+				locale,
+			}).hasContent,
+		[recap, tasks, pomodoro.continueTaskId, locale],
+	);
+	const dayMemoryVisible =
+		homeIa.state !== "active_work" && !recapLoading && dayMemoryHasContent;
 
 	const nextFocusUiActive =
 		showKickoffCard || showKickoffDurationChips || showSuggestionCard;
@@ -666,7 +680,7 @@ export function PomodoroDashboardBody({
 					<p
 						aria-atomic="true"
 						aria-live="polite"
-						className="w-full max-w-lg rounded-lg border border-border-subtle bg-surface-panel/50 px-4 py-2 text-center text-sm text-text-secondary"
+						className="w-full rounded-lg border border-border-subtle bg-surface-panel/50 px-4 py-2 text-center text-sm text-text-secondary"
 						data-testid="session-inflow-summary"
 					>
 						{pomodoro.inFlowSummaryLine}
@@ -676,7 +690,7 @@ export function PomodoroDashboardBody({
 					<button
 						aria-atomic="true"
 						aria-live="polite"
-						className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
+						className="w-full rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
 						data-testid="break-transition-line"
 						onClick={pomodoro.clearBreakTransitionLine}
 						type="button"
@@ -731,7 +745,7 @@ export function PomodoroDashboardBody({
 			pomodoro.pendingSuggestion.status === "loading" ? (
 				<TaskSuggestionCard status="loading" />
 			) : pomodoro.pendingSuggestion.status === "ready" ? (
-				<div className="w-full max-w-lg">
+				<div className="w-full">
 					{showSuggestionCatchUp && catchUp != null && (
 						<TabReturnCatchUp
 							catchUp={catchUp}
@@ -901,6 +915,29 @@ export function PomodoroDashboardBody({
 			<GuestContextRail />
 		);
 
+	// Empty regions render nothing so they contribute no gap. Each boolean
+	// mirrors its region's child gates verbatim — keep them in sync when a
+	// child is added or its condition changes.
+	const primaryRegionHasContent =
+		dayMemoryVisible ||
+		(moduleInZone("steering", "primary") && steeringCards != null) ||
+		(moduleInZone("nextFocus", "primary") &&
+			(kickoffDurationChips != null ||
+				breakSuggestionCard != null ||
+				kickoffSuggestionCard != null)) ||
+		timerZone === "primary" ||
+		(moduleInZone("archive", "primary") && taskArchive != null);
+
+	const secondaryRegionHasContent =
+		statusLines != null ||
+		timerZone === "secondary" ||
+		(moduleInZone("steering", "secondary") && steeringCards != null) ||
+		pomodoro.overrideAcknowledgement != null ||
+		dayPlan != null ||
+		recapPanel != null ||
+		(moduleInZone("inventory", "secondary") && taskInventory != null) ||
+		(moduleInZone("archive", "secondary") && taskArchive != null);
+
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8 lg:max-w-7xl">
 			{pomodoro.pendingWedgeRecovery != null ? (
@@ -935,52 +972,51 @@ export function PomodoroDashboardBody({
 				className="flex w-full flex-col items-center gap-8 lg:grid lg:w-full lg:grid-cols-[minmax(0,62fr)_minmax(0,38fr)] lg:items-start lg:gap-8"
 				data-testid="home-workbench-grid"
 			>
-				<div className="flex w-full flex-col items-center gap-8">
-					<HomeLayoutRegion testId="home-primary-region">
-						{dayMemoryVisible && (
-							<DayMemoryLine
-								continueTaskId={pomodoro.continueTaskId}
-								isLoading={recapLoading}
-								recap={recap}
-								tasks={tasks}
-							/>
-						)}
-						{moduleInZone("steering", "primary") && steeringCards}
-						{moduleInZone("nextFocus", "primary") && kickoffDurationChips}
-						{timerZone === "primary" && timerPanel}
-						{moduleInZone("nextFocus", "primary") && breakSuggestionCard}
-						{moduleInZone("nextFocus", "primary") && kickoffSuggestionCard}
-						{moduleInZone("archive", "primary") && taskArchive}
-					</HomeLayoutRegion>
+				<div className="flex w-full flex-col items-center gap-section">
+					{primaryRegionHasContent && (
+						<HomeLayoutRegion testId="home-primary-region">
+							{dayMemoryVisible && (
+								<DayMemoryLine
+									continueTaskId={pomodoro.continueTaskId}
+									isLoading={recapLoading}
+									recap={recap}
+									tasks={tasks}
+								/>
+							)}
+							{moduleInZone("steering", "primary") && steeringCards}
+							{moduleInZone("nextFocus", "primary") && kickoffDurationChips}
+							{timerZone === "primary" && timerPanel}
+							{moduleInZone("nextFocus", "primary") && breakSuggestionCard}
+							{moduleInZone("nextFocus", "primary") && kickoffSuggestionCard}
+							{moduleInZone("archive", "primary") && taskArchive}
+						</HomeLayoutRegion>
+					)}
 
-					<HomeLayoutRegion
-						className="hidden lg:flex"
-						testId="home-inventory-zone"
-					/>
-
-					<HomeLayoutRegion testId="home-secondary-region">
-						{statusLines}
-						{timerZone === "secondary" && timerPanel}
-						{moduleInZone("steering", "secondary") && steeringCards}
-						{pomodoro.overrideAcknowledgement != null && (
-							<p
-								aria-atomic="true"
-								aria-live="polite"
-								className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
-								data-testid="suggestion-override-ack"
-							>
-								{pomodoro.overrideAcknowledgement}
-							</p>
-						)}
-						{dayPlan != null && (
-							<div className="w-full lg:hidden">{focusBudgetPrompt}</div>
-						)}
-						{recapPanel != null && (
-							<div className="w-full lg:hidden">{recapPanel}</div>
-						)}
-						{moduleInZone("inventory", "secondary") && taskInventory}
-						{moduleInZone("archive", "secondary") && taskArchive}
-					</HomeLayoutRegion>
+					{secondaryRegionHasContent && (
+						<HomeLayoutRegion testId="home-secondary-region">
+							{statusLines}
+							{timerZone === "secondary" && timerPanel}
+							{moduleInZone("steering", "secondary") && steeringCards}
+							{pomodoro.overrideAcknowledgement != null && (
+								<p
+									aria-atomic="true"
+									aria-live="polite"
+									className="w-full rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
+									data-testid="suggestion-override-ack"
+								>
+									{pomodoro.overrideAcknowledgement}
+								</p>
+							)}
+							{dayPlan != null && (
+								<div className="w-full lg:hidden">{focusBudgetPrompt}</div>
+							)}
+							{recapPanel != null && (
+								<div className="w-full lg:hidden">{recapPanel}</div>
+							)}
+							{moduleInZone("inventory", "secondary") && taskInventory}
+							{moduleInZone("archive", "secondary") && taskArchive}
+						</HomeLayoutRegion>
+					)}
 				</div>
 
 				<HomeLayoutRegion className="hidden lg:flex" testId="home-context-rail">

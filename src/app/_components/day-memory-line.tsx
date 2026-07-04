@@ -40,7 +40,7 @@ export function DayMemoryLine({
 
 	return (
 		<div
-			className="w-full max-w-lg rounded-lg border border-card-border bg-surface-card px-4 py-3 shadow-sm lg:max-w-none"
+			className="w-full rounded-lg border border-card-border bg-surface-card px-4 py-3 shadow-sm"
 			data-testid="day-memory-line"
 		>
 			<button

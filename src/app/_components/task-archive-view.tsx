@@ -127,7 +127,7 @@ export function TaskArchiveView({
 	}, [deleteArchivedTasks, onTasksChanged, refresh, selectedIds, tasks]);
 
 	return (
-		<div className="w-full max-w-lg space-y-4" data-testid="task-archive-view">
+		<div className="w-full space-y-4" data-testid="task-archive-view">
 			<div className="flex items-start gap-3">
 				<button
 					aria-label={t("archiveBack")}

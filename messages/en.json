@@ -21,6 +21,9 @@
 		"signingOut": "Signing out…",
 		"signOutError": "Sign-out failed. Please try again."
 	},
+	"Navbar": {
+		"brand": "FlowState"
+	},
 	"Onboarding": {
 		"firstRun": {
 			"guest": {
@@ -318,10 +321,7 @@
 		"boundsBreak": "1 s – 30 min"
 	},
 	"Home": {
-		"offlineBanner": "You're offline — retry when you're back online.",
-		"appName": "FlowState",
-		"tagline": "Manage your tasks. Stay in flow.",
-		"purposeHeader": "A calm answer to: what to do next?"
+		"offlineBanner": "You're offline — retry when you're back online."
 	},
 	"HomeFocusSummary": {
 		"budgetLine": "{used} of {budget} focus hours used · {remaining} left",

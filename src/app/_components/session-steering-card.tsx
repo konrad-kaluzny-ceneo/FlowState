@@ -27,7 +27,7 @@ export function SessionEnergyCard({
 	return (
 		<section
 			aria-labelledby="session-energy-heading"
-			className="w-full max-w-lg rounded-xl border border-border-subtle bg-surface-panel/80 p-5 shadow-sm"
+			className="w-full rounded-xl border border-border-subtle bg-surface-panel/80 p-5 shadow-sm"
 			data-testid="session-energy-card"
 		>
 			<h2
@@ -82,7 +82,7 @@ export function SessionFocusCard({
 	return (
 		<section
 			aria-labelledby="session-focus-heading"
-			className="w-full max-w-lg rounded-xl border border-border-subtle bg-surface-panel/80 p-5 shadow-sm"
+			className="w-full rounded-xl border border-border-subtle bg-surface-panel/80 p-5 shadow-sm"
 			data-testid="session-focus-card"
 		>
 			<h2

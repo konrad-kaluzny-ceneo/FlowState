@@ -67,7 +67,7 @@ Map user-facing strings to zones before editing. Each zone has a message namespa
 
 | Zone | Purpose | Catalog / module | F-14 acceptance |
 | --- | --- | --- | --- |
-| **Home purpose header** | 5-second purpose test on idle home | `Home.purposeHeader` | Yes — EN + PL target copy |
+| **Home purpose header** | *(removed 2026-07-03 per D-07 — hero deleted; the idle home's first card now carries the purpose test; navbar carries brand via `Navbar.brand`)* | ~~`Home.purposeHeader`~~ (deleted) | Superseded |
 | **Suggestion rationale** | One calm line why this task | `Scoring.rationale.*` | Yes — `default`, `kickoff_fresh`, `low_effort_fit` |
 | **Day memory closure** | Done / remains / return-to on home recap | `DayMemory.*` | Yes — section labels + collapsed line |
 | **Wedge transitions** | One interstitial line per beat | `Session.transition.*` | Voice exemplar; migrate only |
@@ -87,14 +87,11 @@ Map user-facing strings to zones before editing. Each zone has a message namespa
 | --- | --- | --- |
 | Required | what to do next | co teraz |
 
-**Target header strings** (S-40 cites these; F-14 ships catalog keys):
+**How the test is answered** (amended 2026-07-03 per D-07, `fix-home-layout-spacing`):
 
-| Locale | String | Message key |
-| --- | --- | --- |
-| EN | A calm answer to: what to do next? | `Home.purposeHeader` |
-| PL | Spokojna odpowiedź na: co teraz? | `Home.purposeHeader` |
+The hero section — and with it the explicit purpose header (`Home.purposeHeader`, deleted) — was removed by product decision D-07 (defect register `mvp-defect-intake`). The navbar carries brand only (`Navbar.brand`). The 5-second test is now answered by the **interface itself**: the idle home opens directly on the primary region's first card (energy question / day memory / kickoff suggestion), which asks or answers *co teraz* without a headline. Any change to the idle home must keep that first card decision-shaped — if the maintainer script fails, restore an explicit purpose line rather than a hero.
 
-The header supports the test — it is not a hero rewrite. Visual hierarchy and one dominant CTA remain S-40's job.
+Visual hierarchy and one dominant CTA remain S-40's job.
 
 ---
 

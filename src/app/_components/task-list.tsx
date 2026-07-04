@@ -834,7 +834,11 @@ export function TaskList({
 
 	return (
 		<div
-			className={`w-full max-w-lg space-y-6${chromeSubdued ? "opacity-80 saturate-75" : ""}`}
+			className={
+				chromeSubdued
+					? "w-full space-y-section opacity-80 saturate-75"
+					: "w-full space-y-section"
+			}
 			data-break-chrome-subdued={chromeSubdued ? "true" : undefined}
 			data-testid="task-list"
 		>
