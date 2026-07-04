@@ -1,7 +1,7 @@
 ---
 change_id: fix-home-layout-spacing
 title: Fix home layout spacing
-status: implementing
+status: implemented
 created: 2026-07-03
 updated: 2026-07-03
 archived_at: null

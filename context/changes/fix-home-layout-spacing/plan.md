@@ -381,12 +381,12 @@ No data or API changes. Single-PR change; revert = revert the PR. The deleted `h
 
 #### Automated
 
-- [x] 4.1 layout-rhythm spec passes on chromium
-- [x] 4.2 layout-rhythm spec passes on mobile-chromium
-- [x] 4.3 Full belt passes: `npm run test:e2e:belt`
-- [x] 4.4 Lint + typecheck pass
+- [x] 4.1 layout-rhythm spec passes on chromium — 1679121
+- [x] 4.2 layout-rhythm spec passes on mobile-chromium — 1679121
+- [x] 4.3 Full belt passes: `npm run test:e2e:belt` — 1679121
+- [x] 4.4 Lint + typecheck pass — 1679121
 
 #### Manual
 
-- [x] 4.5 Oracle bites on an injected width regression
-- [x] 4.6 Belt runtime increase acceptable
+- [x] 4.5 Oracle bites on an injected width regression — 1679121
+- [x] 4.6 Belt runtime increase acceptable — 1679121
