@@ -241,7 +241,7 @@ describe("buildDailyRecap", () => {
 				id: 4,
 				userId: USER,
 				title: "Standing",
-				status: "completed",
+				status: "active",
 				isDailyStanding: true,
 				effortMinutes: 15,
 				sortOrder: 1,
