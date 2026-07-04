@@ -8,10 +8,7 @@ import {
 	dismissTaskSuggestionIfVisible,
 	waitForTimerPanelIdle,
 } from "./idle-cycle";
-import {
-	dismissFirstRunIfVisible,
-	dismissPresetCoachIfVisible,
-} from "./onboarding";
+import { dismissFirstRunIfVisible } from "./onboarding";
 import { taskListLocator } from "./task-list-locator";
 import { expectShortBreakPhaseHidden } from "./timer-phase";
 
@@ -242,7 +239,6 @@ export async function addTaskWithAttributes(
 	weight: TaskWeightLabel,
 ) {
 	await dismissFirstRunIfVisible(page);
-	await dismissPresetCoachIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	const addForm = taskListLocator(page).locator("form");
 	const customButton = addForm.getByTestId("persona-preset-custom");

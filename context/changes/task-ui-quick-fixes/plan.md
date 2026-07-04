@@ -397,38 +397,38 @@ No DB migration. Onboarding localStorage may retain `presetCoachDismissed: true/
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
-- [ ] 2.2 `pnpm check`
-- [ ] 2.3 `pnpm test`
+- [x] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` — 2ee2e26
+- [x] 2.2 `pnpm check` — 2ee2e26
+- [x] 2.3 `pnpm test` — 2ee2e26
 
 #### Manual
 
-- [ ] 2.4 Create form defaults checked; resets checked after submit
-- [ ] 2.5 Created task shows daily-standing badge when left checked
+- [x] 2.4 Create form defaults checked; resets checked after submit — 2ee2e26
+- [x] 2.5 Created task shows daily-standing badge when left checked — 2ee2e26
 
 ### Phase 3: BreakAlerts i18n (D-11)
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run src/app/_components/out-of-tab-break-alerts-control.test.tsx src/i18n/messages-parity.test.ts`
-- [ ] 3.2 `pnpm check`
-- [ ] 3.3 `pnpm test`
+- [x] 3.1 `pnpm exec vitest run src/app/_components/out-of-tab-break-alerts-control.test.tsx src/i18n/messages-parity.test.ts` — 30fc296
+- [x] 3.2 `pnpm check` — 30fc296
+- [x] 3.3 `pnpm test` — 30fc296
 
 #### Manual
 
-- [ ] 3.4 PL locale: toggle label and hints translated
-- [ ] 3.5 Denied-permission retry button translated in PL
+- [x] 3.4 PL locale: toggle label and hints translated — 30fc296
+- [x] 3.5 Denied-permission retry button translated in PL — 30fc296
 
 ### Phase 4: Preset Coach Removal + Belt (D-02)
 
 #### Automated
 
-- [ ] 4.1 Grep clean: no preset-coach / getPresetCoachLine / dismissPresetCoachIfVisible references
-- [ ] 4.2 `pnpm check`
-- [ ] 4.3 `pnpm test`
-- [ ] 4.4 `set CI=true && pnpm test:e2e:belt`
+- [x] 4.1 Grep clean: no preset-coach / getPresetCoachLine / dismissPresetCoachIfVisible references — 540da4a
+- [x] 4.2 `pnpm check` — 540da4a
+- [x] 4.3 `pnpm test` — 540da4a
+- [x] 4.4 `set CI=true && pnpm test:e2e:belt` — 540da4a
 
 #### Manual
 
-- [ ] 4.5 No preset coach banner on create form (guest + auth)
-- [ ] 4.6 Belt task-creation flows unaffected
+- [x] 4.5 No preset coach banner on create form (guest + auth) — 540da4a
+- [x] 4.6 Belt task-creation flows unaffected — 540da4a

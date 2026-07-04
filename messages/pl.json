@@ -42,8 +42,7 @@
 			"suggestion": "Przyjmij sugestię lub wybierz Skup się przy dowolnym innym zadaniu — zawsze decydujesz Ty.",
 			"postMergeCheckIn": "Skoro już się zalogowałeś, to sprawdzenie odblokowuje spersonalizowane sugestie następnych zadań.",
 			"postMergeSuggestion": "FlowState wybrał to na podstawie Twojej energii — przyjmij lub wybierz dowolne zadanie.",
-			"postMergeSuggestionWithPreset": "Twój zestaw {preset} pomógł dopasować ten wybór — przyjmij lub wybierz dowolne zadanie.",
-			"preset": "Zestawy wstępnie ustawiają typ pracy i priorytet — wybierz Własny, jeśli chcesz pełną kontrolę."
+			"postMergeSuggestionWithPreset": "Twój zestaw {preset} pomógł dopasować ten wybór — przyjmij lub wybierz dowolne zadanie."
 		},
 		"authValue": {
 			"signInSubtitle": "Uważne cykle skupienia na Twoich zadaniach — zaloguj się, aby odblokować pełne sesje, sprawdzanie energii i sugestie dopasowane do sesji.",
@@ -537,7 +536,11 @@
 		"permissionTitle": "Powiadomienia o przerwie w innych kartach",
 		"permissionDescription": "Gdy jesteś w innej karcie, FlowState może wysłać spokojne powiadomienie i odtworzyć dźwięk przerwy, gdy się ona rozpocznie. Możesz to wyłączyć w każdej chwili w ustawieniach przerwy.",
 		"enableNotifications": "Włącz powiadomienia",
-		"notNow": "Nie teraz"
+		"notNow": "Nie teraz",
+		"settingsToggleLabel": "Powiadom mnie, gdy zacznie się przerwa (inna karta)",
+		"permissionDeniedHint": "Powiadomienia są zablokowane w przeglądarce. Nadal możesz odtwarzać dźwięk w tle, gdy ta opcja jest włączona.",
+		"tryAgain": "Spróbuj ponownie",
+		"permissionDefaultHint": "Nadal potrzebne jest zezwolenie przeglądarki — wyłącz i włącz ponownie lub zezwól, gdy pojawi się prośba."
 	},
 	"Kickoff": {
 		"suggestedDuration": "Sugerowany czas pracy",
