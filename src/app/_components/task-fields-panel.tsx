@@ -149,7 +149,7 @@ function EisenhowerAttributeFields({
 					colorMap={{
 						ASAP: "bg-worktype-reactive-bg text-worktype-reactive-text",
 						THIS_WEEK: "bg-worktype-deep-bg text-worktype-deep-text",
-						WHEN_POSSIBLE: "bg-surface-panel text-text-section",
+						WHEN_POSSIBLE: "bg-worktype-ops-bg text-worktype-ops-text",
 					}}
 					onChange={(value) =>
 						onCommitmentHorizonChange(value as CommitmentHorizon)

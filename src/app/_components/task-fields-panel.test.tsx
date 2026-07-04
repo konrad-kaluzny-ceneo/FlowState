@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { IntlTestWrapper } from "~/i18n/test-intl";
 
 import { TaskFieldsPanel } from "./task-fields-panel";
 
@@ -106,5 +107,22 @@ describe("TaskFieldsPanel", () => {
 			key: "Enter",
 		});
 		expect(onTitleKeyDown).toHaveBeenCalled();
+	});
+
+	it("applies ops color classes to active WHEN_POSSIBLE horizon segment", () => {
+		render(
+			<IntlTestWrapper>
+				<TaskFieldsPanel
+					mode="edit"
+					{...defaultProps}
+					commitmentHorizon="WHEN_POSSIBLE"
+				/>
+			</IntlTestWrapper>,
+		);
+
+		const whenPossible = screen.getByRole("button", { name: "When possible" });
+		expect(whenPossible.className).toContain("bg-worktype-ops-bg");
+		expect(whenPossible.className).toContain("text-worktype-ops-text");
+		expect(whenPossible.getAttribute("aria-pressed")).toBe("true");
 	});
 });

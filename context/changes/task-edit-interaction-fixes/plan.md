@@ -302,14 +302,14 @@ No DB migration. Existing tasks with stored `personaPresetId` immediately show p
 
 #### Automated
 
-- [x] 1.1 `pnpm exec vitest run src/lib/task/persona-presets.test.ts src/app/_components/task-list.test.tsx`
-- [x] 1.2 `pnpm check`
-- [x] 1.3 `pnpm test`
+- [x] 1.1 `pnpm exec vitest run src/lib/task/persona-presets.test.ts src/app/_components/task-list.test.tsx` — 0b068a8
+- [x] 1.2 `pnpm check` — 0b068a8
+- [x] 1.3 `pnpm test` — 0b068a8
 
 #### Manual
 
-- [x] 1.4 Auth: Gaszenie create → edit urgency → badge still Gaszenie
-- [x] 1.5 Guest: preset create shows persona badge
+- [x] 1.4 Auth: Gaszenie create → edit urgency → badge still Gaszenie — 0b068a8
+- [x] 1.5 Guest: preset create shows persona badge — 0b068a8
 
 ### Phase 2: Horizon UX + Edit Row Overflow (D-08)
 
