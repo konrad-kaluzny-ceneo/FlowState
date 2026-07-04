@@ -775,24 +775,16 @@ describe("TaskList", () => {
 		expect(screen.getByTestId("daily-standing-badge").textContent).toBe(
 			"Daily",
 		);
-		const standingCompleteButton = screen.getByRole("button", {
-			name: "Done for today",
-		});
-		const regularCompleteButton = screen.getByRole("button", {
+		const completeButtons = screen.getAllByRole("button", {
 			name: "Mark complete",
 		});
-		expect(standingCompleteButton.className).toContain("border-2");
-		expect(standingCompleteButton.className).toContain("h-5");
-		expect(standingCompleteButton.className).toContain("w-5");
-		expect(regularCompleteButton.className).toContain("border-2");
-		expect(regularCompleteButton.className).toContain("h-5");
-		expect(regularCompleteButton.className).toContain("w-5");
-		expect(standingCompleteButton.getAttribute("data-testid")).toBe(
-			"task-complete-button",
-		);
-		expect(regularCompleteButton.getAttribute("data-testid")).toBe(
-			"task-complete-button",
-		);
+		expect(completeButtons).toHaveLength(2);
+		for (const button of completeButtons) {
+			expect(button.className).toContain("border-2");
+			expect(button.className).toContain("h-5");
+			expect(button.className).toContain("w-5");
+			expect(button.getAttribute("data-testid")).toBe("task-complete-button");
+		}
 	});
 
 	it("isolates daily standing toggle between create form and inline edit", () => {
@@ -824,6 +816,29 @@ describe("TaskList", () => {
 		expect(createToggle.checked).toBe(true);
 	});
 
+	it("done-for-today active tasks still expose a completable checkbox", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						id: 1,
+						title: "Stand-up",
+						isDailyStanding: true,
+						doneForToday: true,
+					}),
+				]}
+			/>,
+		);
+
+		const completeButton = screen.getByRole("button", {
+			name: "Mark complete",
+		});
+		expect(completeButton.getAttribute("data-testid")).toBe(
+			"task-complete-button",
+		);
+	});
+
 	it("does not use line-through on done-for-today active task titles", () => {
 		renderTaskList(
 			<TaskList
@@ -842,6 +857,26 @@ describe("TaskList", () => {
 		const titleButton = screen.getByRole("button", { name: "Stand-up" });
 		expect(titleButton.className).not.toContain("line-through");
 		expect(titleButton.className).toContain("text-text-dimmed");
+	});
+
+	it("shows daily standing badge on completed tasks", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						id: 1,
+						title: "Stand-up",
+						status: "completed",
+						isDailyStanding: true,
+					}),
+				]}
+			/>,
+		);
+
+		expect(screen.getByTestId("daily-standing-badge").textContent).toBe(
+			"Daily",
+		);
 	});
 
 	it("opens edit panel when clicking a completed task title", () => {
@@ -864,7 +899,7 @@ describe("TaskList", () => {
 		expect(screen.getByTestId("task-fields-title")).toBeTruthy();
 	});
 
-	it("calls markDoneForToday for standing tasks instead of global complete", () => {
+	it("marks standing tasks complete like any other active task", () => {
 		renderTaskList(
 			<TaskList
 				{...defaultProps}
@@ -872,16 +907,13 @@ describe("TaskList", () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByRole("button", { name: "Done for today" }));
+		fireEvent.click(screen.getByRole("button", { name: "Mark complete" }));
 
-		expect(markDoneForToday).toHaveBeenCalledWith({
-			id: 1,
-			localDateKey: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
-		});
-		expect(updateTask).not.toHaveBeenCalledWith({
+		expect(updateTask).toHaveBeenCalledWith({
 			id: 1,
 			status: "completed",
 		});
+		expect(markDoneForToday).not.toHaveBeenCalled();
 	});
 
 	it("shows footprint on focused row when recap data exists", () => {

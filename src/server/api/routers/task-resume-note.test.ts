@@ -26,6 +26,9 @@ vi.mock("~/server/db/index", () => ({
 			}),
 			delete: vi.fn(() => Promise.resolve({ id: 1 })),
 		},
+		taskDayCompletion: {
+			deleteMany: vi.fn(() => Promise.resolve({ count: 0 })),
+		},
 	},
 }));
 

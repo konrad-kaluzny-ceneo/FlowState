@@ -85,6 +85,17 @@ export function markGuestTaskDoneForToday(taskId: string): void {
 	});
 }
 
+export function clearGuestTaskDoneForToday(taskId: string): void {
+	const store = readStore();
+	if (!store.taskIds.includes(taskId)) {
+		return;
+	}
+	writeStore({
+		localDateKey: store.localDateKey,
+		taskIds: store.taskIds.filter((id) => id !== taskId),
+	});
+}
+
 export function getGuestDoneForTodayTaskIds(): Set<string> {
 	return new Set(readStore().taskIds);
 }

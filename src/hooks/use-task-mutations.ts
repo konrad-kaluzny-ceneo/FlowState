@@ -132,6 +132,9 @@ function normalizeUpdatePatch(
 	if (urgency != null) {
 		patch.urgency = urgency as TaskListItem["urgency"];
 	}
+	if (fields.status === "completed") {
+		patch.doneForToday = false;
+	}
 	return patch;
 }
 

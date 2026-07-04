@@ -47,7 +47,9 @@ import {
 	type PersonaPresetId,
 	resolveTaskPersonaBadge,
 } from "~/lib/task/persona-presets";
-import { formatLocalDateKey } from "~/lib/time/local-date-key";
+
+const STUCK_DONE_FOR_TODAY_HEAL_KEY =
+	"flowstate:healed-stuck-done-for-today-v1";
 
 function axisLabel(
 	level: 1 | 2 | 3,
@@ -262,7 +264,6 @@ type SortableActiveTaskRowProps = {
 	}) => Promise<void>;
 	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void | Promise<void>;
 	onDeleteTask: (input: { id: DomainTaskId }) => Promise<void>;
-	onMarkDoneForToday: (taskId: DomainTaskId) => void;
 	completingTaskId: DomainTaskId | null;
 	onBeginComplete: (taskId: DomainTaskId) => void;
 	footprints: Record<string, TaskFootprint>;
@@ -308,7 +309,6 @@ function SortableActiveTaskRow({
 	onUpdateTask,
 	onFocusTask,
 	onDeleteTask,
-	onMarkDoneForToday,
 	completingTaskId,
 	onBeginComplete,
 	footprints,
@@ -371,43 +371,25 @@ function SortableActiveTaskRow({
 				>
 					⋮⋮
 				</button>
-				{task.doneForToday ? (
-					<span
-						className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-accent-success bg-accent-success/20 text-accent-success text-xs"
-						title={t("doneForTodayTitle")}
-					>
-						✓
-					</span>
-				) : (
-					<button
-						aria-label={
-							task.isDailyStanding
-								? t("markDoneForTodayAria")
-								: t("markCompleteAria")
+				<button
+					aria-label={t("markCompleteAria")}
+					className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
+					data-testid="task-complete-button"
+					disabled={markCompleteLocked || isMutating}
+					onClick={() => {
+						if (canMidCycleMarkComplete && onMidCycleMarkComplete != null) {
+							onMidCycleMarkComplete(task.id, task);
+							return;
 						}
-						className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
-						data-testid="task-complete-button"
-						disabled={markCompleteLocked || isMutating}
-						onClick={() => {
-							if (task.isDailyStanding) {
-								onMarkDoneForToday(task.id);
-								return;
-							}
 
-							if (canMidCycleMarkComplete && onMidCycleMarkComplete != null) {
-								onMidCycleMarkComplete(task.id, task);
-								return;
-							}
-
-							onBeginComplete(task.id);
-							void onUpdateTask({
-								id: task.id,
-								status: "completed",
-							});
-						}}
-						type="button"
-					/>
-				)}
+						onBeginComplete(task.id);
+						void onUpdateTask({
+							id: task.id,
+							status: "completed",
+						});
+					}}
+					type="button"
+				/>
 				{editingId === task.id ? (
 					// biome-ignore lint/a11y/noStaticElementInteractions: focus-outside commit when leaving edit panel
 					<div
@@ -579,7 +561,6 @@ export function TaskList({
 		updateTask,
 		deleteTask,
 		reorderTasks,
-		markDoneForToday,
 		isMutating,
 		isCreating,
 		error,
@@ -650,6 +631,7 @@ export function TaskList({
 	const [completingTaskId, setCompletingTaskId] = useState<DomainTaskId | null>(
 		null,
 	);
+	const stuckHealStartedRef = useRef(false);
 
 	function beginCompleteAnimation(taskId: DomainTaskId) {
 		setCompletingTaskId(taskId);
@@ -849,15 +831,6 @@ export function TaskList({
 		setEditIsDailyStanding(task.isDailyStanding);
 	}
 
-	const localDateKey = formatLocalDateKey();
-
-	const handleMarkDoneForToday = useCallback(
-		(taskId: DomainTaskId) => {
-			void markDoneForToday({ id: taskId, localDateKey });
-		},
-		[localDateKey, markDoneForToday],
-	);
-
 	const handleFocusTask = useCallback(
 		async (taskId: DomainTaskId, task: DomainTask) => {
 			if (editingId != null) {
@@ -867,6 +840,37 @@ export function TaskList({
 		},
 		[commitEditIfDirty, editingId, onFocusTask],
 	);
+
+	useEffect(() => {
+		if (typeof window === "undefined") {
+			return;
+		}
+		if (localStorage.getItem(STUCK_DONE_FOR_TODAY_HEAL_KEY) != null) {
+			return;
+		}
+		if (stuckHealStartedRef.current) {
+			return;
+		}
+
+		const stuckTasks = tasks.filter(
+			(task) => task.status === "active" && task.doneForToday === true,
+		);
+		if (stuckTasks.length === 0) {
+			return;
+		}
+
+		stuckHealStartedRef.current = true;
+		void (async () => {
+			try {
+				for (const task of stuckTasks) {
+					await updateTask({ id: task.id, status: "completed" });
+				}
+				localStorage.setItem(STUCK_DONE_FOR_TODAY_HEAL_KEY, "1");
+			} finally {
+				stuckHealStartedRef.current = false;
+			}
+		})();
+	}, [tasks, updateTask]);
 
 	const focusChromeSubduedClass = focusShellActive
 		? "opacity-60 saturate-75 transition-opacity duration-300 motion-reduce:transition-none"
@@ -1073,7 +1077,6 @@ export function TaskList({
 											handleEditPanelPointerDownCapture
 										}
 										onFocusTask={handleFocusTask}
-										onMarkDoneForToday={handleMarkDoneForToday}
 										onMidCycleMarkComplete={onMidCycleMarkComplete}
 										onSetEditCommitmentHorizon={setEditCommitmentHorizon}
 										onSetEditEffortMinutes={setEditEffortMinutes}
@@ -1178,17 +1181,27 @@ export function TaskList({
 								</div>
 								{editingId !== task.id && (
 									<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-7">
-										<TaskBadges
-											commitmentHorizon={task.commitmentHorizon}
-											dimmed
-											effortMinutes={task.effortMinutes}
-											importance={task.importance}
-											locale={locale}
-											personaPresetId={task.personaPresetId}
-											t={t}
-											urgency={task.urgency}
-											workType={task.workType}
-										/>
+										<span className="flex min-w-0 flex-wrap items-center gap-1">
+											{task.isDailyStanding && (
+												<span
+													className="rounded-full bg-accent-suggestion/20 px-2 py-0.5 font-medium text-accent-suggestion text-xs opacity-60"
+													data-testid="daily-standing-badge"
+												>
+													{t("daily")}
+												</span>
+											)}
+											<TaskBadges
+												commitmentHorizon={task.commitmentHorizon}
+												dimmed
+												effortMinutes={task.effortMinutes}
+												importance={task.importance}
+												locale={locale}
+												personaPresetId={task.personaPresetId}
+												t={t}
+												urgency={task.urgency}
+												workType={task.workType}
+											/>
+										</span>
 										<button
 											aria-label={t("deleteAria")}
 											className="shrink-0 px-1 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"

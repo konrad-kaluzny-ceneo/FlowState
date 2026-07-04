@@ -186,6 +186,9 @@ export const taskRouter = createTRPCRouter({
 
 			if (data.status === "completed") {
 				updateData = { ...updateData, resumeNote: null };
+				await ctx.db.taskDayCompletion.deleteMany({
+					where: { userId: ctx.session.user.id, taskId: id },
+				});
 			}
 
 			await ctx.db.task.update({
