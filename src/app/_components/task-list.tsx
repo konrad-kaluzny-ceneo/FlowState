@@ -17,6 +17,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Plus, Target } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import type { FocusEvent, PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
@@ -43,8 +44,8 @@ import {
 	applyPersonaPresetToCreateState,
 	DEFAULT_CREATE_FORM_ATTRIBUTES,
 	getPersonaPresetLabel,
-	getTaskBadgeDisplayMode,
 	type PersonaPresetId,
+	resolveTaskPersonaBadge,
 } from "~/lib/task/persona-presets";
 import { formatLocalDateKey } from "~/lib/time/local-date-key";
 
@@ -119,7 +120,7 @@ function TaskBadges({
 	t: ReturnType<typeof useTranslations<"Tasks">>;
 }) {
 	const dimClass = dimmed ? "opacity-60" : "";
-	const displayMode = getTaskBadgeDisplayMode({
+	const badge = resolveTaskPersonaBadge({
 		personaPresetId,
 		workType,
 		urgency,
@@ -127,6 +128,7 @@ function TaskBadges({
 		commitmentHorizon,
 		effortMinutes,
 	});
+	const displayMode = badge.mode;
 
 	if (displayMode === "legacy") {
 		return (
@@ -143,8 +145,8 @@ function TaskBadges({
 		);
 	}
 
-	if (displayMode === "persona") {
-		const label = getPersonaPresetLabel(personaPresetId ?? "", locale);
+	if (displayMode === "persona" && badge.presetId != null) {
+		const label = getPersonaPresetLabel(badge.presetId, locale);
 		const config = WORK_TYPE_CONFIG[workType];
 		return (
 			<span className={`flex min-w-0 flex-wrap items-center gap-1 ${dimClass}`}>
@@ -236,6 +238,10 @@ type SortableActiveTaskRowProps = {
 	canMidCycleMarkComplete: boolean;
 	focusLocked: boolean;
 	editPanelRef?: React.RefObject<HTMLDivElement | null>;
+	onEditPanelBlur: (event: FocusEvent<HTMLDivElement>) => void;
+	onEditPanelPointerDownCapture: (
+		event: ReactPointerEvent<HTMLDivElement>,
+	) => void;
 	onCommitEdit: () => void | Promise<void>;
 	onStartEditing: (task: DomainTask) => void | Promise<void>;
 	onSetEditingId: (id: DomainTaskId | null) => void;
@@ -285,6 +291,8 @@ function SortableActiveTaskRow({
 	canMidCycleMarkComplete,
 	focusLocked,
 	editPanelRef,
+	onEditPanelBlur,
+	onEditPanelPointerDownCapture,
 	onCommitEdit,
 	onStartEditing,
 	onSetEditingId,
@@ -333,7 +341,9 @@ function SortableActiveTaskRow({
 
 	return (
 		<li
-			className={`flex max-w-full flex-col gap-2 overflow-hidden rounded-lg border border-transparent bg-surface-card px-4 py-3 ${
+			className={`flex max-w-full flex-col gap-2 ${
+				editingId === task.id ? "overflow-visible" : "overflow-hidden"
+			} rounded-lg border border-transparent bg-surface-card px-4 py-3 ${
 				focusedTaskId === task.id ? "ring-2 ring-focus" : ""
 			} ${
 				isHighlightedRow ? "ring-2 ring-accent-suggestion" : ""
@@ -402,13 +412,8 @@ function SortableActiveTaskRow({
 					// biome-ignore lint/a11y/noStaticElementInteractions: focus-outside commit when leaving edit panel
 					<div
 						className="min-w-0 flex-1 space-y-2"
-						onBlur={(event) => {
-							const next = event.relatedTarget;
-							if (next instanceof Node && event.currentTarget.contains(next)) {
-								return;
-							}
-							void onCommitEdit();
-						}}
+						onBlur={onEditPanelBlur}
+						onPointerDownCapture={onEditPanelPointerDownCapture}
 						ref={editPanelRef}
 					>
 						<TaskFieldsPanel
@@ -710,8 +715,18 @@ export function TaskList({
 
 	const editPanelRef = useRef<HTMLDivElement | null>(null);
 	const commitInFlightRef = useRef<Promise<void> | null>(null);
+	const blurCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const cancelPendingBlurCommit = useCallback(() => {
+		if (blurCommitTimerRef.current != null) {
+			clearTimeout(blurCommitTimerRef.current);
+			blurCommitTimerRef.current = null;
+		}
+	}, []);
 
 	const commitEditIfDirty = useCallback(async () => {
+		cancelPendingBlurCommit();
+
 		if (commitInFlightRef.current) {
 			await commitInFlightRef.current;
 			return;
@@ -765,7 +780,42 @@ export function TaskList({
 		editResumeNote,
 		editIsDailyStanding,
 		updateTask,
+		cancelPendingBlurCommit,
 	]);
+
+	const handleEditPanelBlur = useCallback(
+		(event: FocusEvent<HTMLDivElement>) => {
+			const next = event.relatedTarget;
+			if (next instanceof Node && event.currentTarget.contains(next)) {
+				return;
+			}
+			cancelPendingBlurCommit();
+			blurCommitTimerRef.current = setTimeout(() => {
+				blurCommitTimerRef.current = null;
+				void commitEditIfDirty();
+			}, 0);
+		},
+		[cancelPendingBlurCommit, commitEditIfDirty],
+	);
+
+	const handleEditPanelPointerDownCapture = useCallback(
+		(event: ReactPointerEvent<HTMLDivElement>) => {
+			const target = event.target;
+			if (
+				target instanceof HTMLButtonElement &&
+				target.hasAttribute("aria-pressed")
+			) {
+				cancelPendingBlurCommit();
+			}
+		},
+		[cancelPendingBlurCommit],
+	);
+
+	useEffect(() => {
+		if (editingId == null) {
+			cancelPendingBlurCommit();
+		}
+	}, [editingId, cancelPendingBlurCommit]);
 
 	useEffect(() => {
 		if (editingId == null) {
@@ -1025,6 +1075,10 @@ export function TaskList({
 										onBeginComplete={beginCompleteAnimation}
 										onCommitEdit={commitEditIfDirty}
 										onDeleteTask={deleteTask}
+										onEditPanelBlur={handleEditPanelBlur}
+										onEditPanelPointerDownCapture={
+											handleEditPanelPointerDownCapture
+										}
 										onFocusTask={handleFocusTask}
 										onMarkDoneForToday={handleMarkDoneForToday}
 										onMidCycleMarkComplete={onMidCycleMarkComplete}
@@ -1060,7 +1114,9 @@ export function TaskList({
 					<ul className="space-y-2">
 						{completedTasks.map((task) => (
 							<li
-								className="flex max-w-full flex-col gap-2 overflow-hidden rounded-lg border border-transparent bg-surface-card-muted px-4 py-3"
+								className={`flex max-w-full flex-col gap-2 ${
+									editingId === task.id ? "overflow-visible" : "overflow-hidden"
+								} rounded-lg border border-transparent bg-surface-card-muted px-4 py-3`}
 								key={String(task.id)}
 							>
 								<div className="flex w-full min-w-0 items-start gap-2">
@@ -1080,16 +1136,8 @@ export function TaskList({
 										// biome-ignore lint/a11y/noStaticElementInteractions: focus-outside commit when leaving edit panel
 										<div
 											className="min-w-0 flex-1 space-y-2"
-											onBlur={(event) => {
-												const next = event.relatedTarget;
-												if (
-													next instanceof Node &&
-													event.currentTarget.contains(next)
-												) {
-													return;
-												}
-												void commitEditIfDirty();
-											}}
+											onBlur={handleEditPanelBlur}
+											onPointerDownCapture={handleEditPanelPointerDownCapture}
 											ref={editPanelRef}
 										>
 											<TaskFieldsPanel

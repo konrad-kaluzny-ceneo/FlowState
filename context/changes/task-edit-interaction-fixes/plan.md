@@ -315,14 +315,14 @@ No DB migration. Existing tasks with stored `personaPresetId` immediately show p
 
 #### Automated
 
-- [x] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx src/app/_components/task-fields-panel.test.tsx`
-- [x] 2.2 `pnpm check`
-- [x] 2.3 `pnpm test`
+- [x] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx src/app/_components/task-fields-panel.test.tsx` — aa5f0b2
+- [x] 2.2 `pnpm check` — aa5f0b2
+- [x] 2.3 `pnpm test` — aa5f0b2
 
 #### Manual
 
-- [x] 2.4 Inline edit ASAP → Gdy się da → distinct highlight + save persists
-- [x] 2.5 ~320px viewport: third chip clickable without premature panel close
+- [x] 2.4 Inline edit ASAP → Gdy się da → distinct highlight + save persists — aa5f0b2
+- [x] 2.5 ~320px viewport: third chip clickable without premature panel close — aa5f0b2
 
 ### Phase 3: Blur-Save Hardening (D-08)
 

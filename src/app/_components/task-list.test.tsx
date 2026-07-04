@@ -13,6 +13,7 @@ import type { DomainTask } from "~/lib/data-mode/types";
 import { defaultEisenhowerFields } from "~/lib/data-mode/types";
 import {
 	applyPersonaPresetToCreateState,
+	getPersonaPresetById,
 	getPersonaPresetLabel,
 	TASK_PERSONA_PRESETS,
 } from "~/lib/task/persona-presets";
@@ -336,6 +337,57 @@ describe("TaskList", () => {
 		expect(updateTask).toHaveBeenCalledTimes(1);
 	});
 
+	it("persists horizon change when committing after SegmentedControl edit", async () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ commitmentHorizon: "ASAP" })]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "Short title" }));
+		fireEvent.click(screen.getByRole("button", { name: "When possible" }));
+
+		expect(
+			screen
+				.getByRole("button", { name: "When possible" })
+				.getAttribute("aria-pressed"),
+		).toBe("true");
+
+		fireEvent.pointerDown(document.body);
+
+		await waitFor(() => {
+			expect(updateTask).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: 1,
+					commitmentHorizon: "WHEN_POSSIBLE",
+				}),
+			);
+		});
+	});
+
+	it("keeps edit open and updates horizon after blur with null relatedTarget", async () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ commitmentHorizon: "ASAP" })]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "Short title" }));
+		const titleField = screen.getByTestId("task-fields-title");
+		fireEvent.blur(titleField, { relatedTarget: null });
+		fireEvent.click(screen.getByRole("button", { name: "When possible" }));
+
+		expect(screen.getByTestId("task-fields-panel-edit")).toBeTruthy();
+		expect(
+			screen
+				.getByRole("button", { name: "When possible" })
+				.getAttribute("aria-pressed"),
+		).toBe("true");
+		expect(updateTask).not.toHaveBeenCalled();
+	});
+
 	it("allows focusing and saving effort when inline editing an existing task", async () => {
 		renderTaskList(
 			<TaskList {...defaultProps} tasks={[makeTask({ effortMinutes: 30 })]} />,
@@ -537,6 +589,62 @@ describe("TaskList", () => {
 		expect(screen.queryByTestId("task-custom-badge")).toBeNull();
 	});
 
+	it("shows preset label when current attributes match a preset bundle", () => {
+		const preset = getPersonaPresetById("firefight");
+		expect(preset).toBeDefined();
+		if (preset == null) {
+			return;
+		}
+
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						personaPresetId: null,
+						workType: preset.workType,
+						urgency: preset.urgency,
+						importance: preset.importance,
+						effortMinutes: preset.effortMinutes,
+						commitmentHorizon: preset.commitmentHorizon,
+					}),
+				]}
+			/>,
+		);
+
+		expect(screen.getByTestId("task-persona-badge").textContent).toBe(
+			"Firefight",
+		);
+		expect(screen.queryByTestId("task-custom-badge")).toBeNull();
+	});
+
+	it("shows Custom badge when stored preset id no longer matches attributes", () => {
+		const preset = getPersonaPresetById("firefight");
+		expect(preset).toBeDefined();
+		if (preset == null) {
+			return;
+		}
+
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						personaPresetId: "firefight",
+						workType: preset.workType,
+						urgency: 1,
+						importance: preset.importance,
+						effortMinutes: preset.effortMinutes,
+						commitmentHorizon: preset.commitmentHorizon,
+					}),
+				]}
+			/>,
+		);
+
+		expect(screen.getByTestId("task-custom-badge").textContent).toBe("Custom");
+		expect(screen.queryByTestId("task-persona-badge")).toBeNull();
+	});
+
 	it("shows Custom badge with Eisenhower detail for custom persona tasks", () => {
 		renderTaskList(
 			<TaskList
@@ -560,23 +668,24 @@ describe("TaskList", () => {
 		expect(screen.queryByTestId("task-persona-badge")).toBeNull();
 	});
 
-	it("legacy tasks without personaPresetId keep Eisenhower badges", () => {
+	it("legacy tasks without personaPresetId keep Eisenhower badges when attrs match no preset", () => {
 		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[
 					makeTask({
 						personaPresetId: null,
-						workType: "OPERATIONAL",
-						urgency: 2,
-						importance: 2,
+						workType: "DEEP_WORK",
+						urgency: 3,
+						importance: 1,
+						commitmentHorizon: "WHEN_POSSIBLE",
 					}),
 				]}
 			/>,
 		);
 
-		expect(screen.getByText("Ops")).toBeTruthy();
-		expect(screen.getByText("U: Medium")).toBeTruthy();
+		expect(screen.getByText("Deep")).toBeTruthy();
+		expect(screen.getByText("U: Heavy")).toBeTruthy();
 		expect(screen.queryByTestId("task-persona-badge")).toBeNull();
 		expect(screen.queryByTestId("task-custom-badge")).toBeNull();
 	});
