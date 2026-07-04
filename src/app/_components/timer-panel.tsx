@@ -124,7 +124,7 @@ export function TimerPanel({
 		return (
 			<section
 				aria-label={isBreak ? t("sectionBreakAria") : t("sectionFocusAria")}
-				className={`w-full max-w-lg rounded-xl border p-6 text-center shadow-sm ${
+				className={`w-full rounded-xl border p-6 text-center shadow-sm ${
 					isBreak
 						? "border-border-break bg-surface-break"
 						: "border-card-border bg-surface-card"
@@ -214,7 +214,7 @@ export function TimerPanel({
 	return (
 		<section
 			aria-label={t("sectionReadyAria")}
-			className="w-full max-w-lg rounded-xl border border-card-border bg-surface-card p-6 shadow-sm"
+			className="w-full rounded-xl border border-card-border bg-surface-card p-6 shadow-sm"
 			data-testid="timer-panel-idle"
 		>
 			<p className="text-center font-semibold text-sm text-text-section">

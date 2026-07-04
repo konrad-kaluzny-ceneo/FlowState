@@ -32,7 +32,7 @@ export function KickoffDurationChips({
 
 	return (
 		<div
-			className="flex w-full max-w-lg flex-col items-center gap-2"
+			className="flex w-full flex-col items-center gap-2"
 			data-testid="kickoff-duration-chips"
 		>
 			<p className="text-sm text-text-secondary">{t("suggestedDuration")}</p>

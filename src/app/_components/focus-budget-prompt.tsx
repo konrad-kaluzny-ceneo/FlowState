@@ -80,7 +80,7 @@ export function FocusBudgetPrompt({
 
 	return (
 		<div
-			className="w-full max-w-lg rounded-lg border border-border-subtle bg-surface-panel px-4 py-3"
+			className="w-full rounded-lg border border-border-subtle bg-surface-panel px-4 py-3"
 			data-testid="focus-budget-prompt"
 		>
 			<div className="flex items-start justify-between gap-3">

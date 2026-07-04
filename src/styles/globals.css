@@ -5,6 +5,10 @@
 		var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
 		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
+	/* Spacing — DESIGN.md section-gap: gap between sections within a column
+	   (zone-level seams keep gap-8). */
+	--spacing-section: 1.5rem;
+
 	/* Shell & surfaces — light-default (cool stone) */
 	--color-shell-top: #faf8f5;
 	--color-shell-bottom: #edeae4;

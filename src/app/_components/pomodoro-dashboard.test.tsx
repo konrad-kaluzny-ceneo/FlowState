@@ -1054,7 +1054,11 @@ const FILLED_PRIMARY_CTA_IDS = [
 ] as const;
 
 function countEnabledPrimaryCtas(): number {
-	const primary = screen.getByTestId("home-primary-region");
+	// Empty regions no longer render (D-01 composition contract).
+	const primary = screen.queryByTestId("home-primary-region");
+	if (primary == null) {
+		return 0;
+	}
 	return FILLED_PRIMARY_CTA_IDS.filter((id) => {
 		const element = within(primary).queryByTestId(id);
 		return element != null && !(element as HTMLButtonElement).disabled;
@@ -1062,7 +1066,10 @@ function countEnabledPrimaryCtas(): number {
 }
 
 function expectOutsidePrimaryRegion(testId: string): void {
-	const primary = screen.getByTestId("home-primary-region");
+	const primary = screen.queryByTestId("home-primary-region");
+	if (primary == null) {
+		return;
+	}
 	expect(within(primary).queryByTestId(testId)).toBeNull();
 }
 
@@ -1423,15 +1430,53 @@ describe("PomodoroDashboardBody desktop workbench frame", () => {
 		expect(rail.className).toContain("lg:flex");
 	});
 
-	it("renders structural inventory zone hidden below lg", () => {
+	it("does not render the retired inventory zone placeholder", () => {
 		renderBody({
 			state: "idle",
 			focusedTask: { id: 1, title: "Focus task" },
 		});
 
-		const inventoryZone = screen.getByTestId("home-inventory-zone");
-		expect(inventoryZone.className).toContain("hidden");
-		expect(inventoryZone.className).toContain("lg:flex");
+		expect(screen.queryByTestId("home-inventory-zone")).toBeNull();
+	});
+
+	it("regions own the width contract and section gap", () => {
+		renderBody({
+			state: "idle",
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		for (const testId of [
+			"home-primary-region",
+			"home-secondary-region",
+			"home-context-rail",
+		]) {
+			const region = screen.getByTestId(testId);
+			expect(region.className).toContain("max-w-lg");
+			expect(region.className).toContain("lg:max-w-none");
+			expect(region.className).toContain("gap-section");
+		}
+	});
+
+	it("never renders an empty layout region", () => {
+		for (const overrides of [
+			{ state: "idle" as const },
+			{ state: "idle" as const, focusedTask: { id: 1, title: "Focus task" } },
+			{ state: "running" as const, focusedTask: { id: 1, title: "Focus" } },
+			{ state: "break" as const },
+		]) {
+			const { unmount } = renderBody(overrides);
+			for (const testId of [
+				"home-primary-region",
+				"home-secondary-region",
+				"home-context-rail",
+			]) {
+				const region = screen.queryByTestId(testId);
+				if (region != null) {
+					expect(region.childElementCount).toBeGreaterThan(0);
+				}
+			}
+			unmount();
+		}
 	});
 });
 

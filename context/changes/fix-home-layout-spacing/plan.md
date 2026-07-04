@@ -348,34 +348,34 @@ No data or API changes. Single-PR change; revert = revert the PR. The deleted `h
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `npm run test`
-- [x] 2.2 Type checking passes: `npm run typecheck`
-- [x] 2.3 Lint passes: `npm run check`
-- [x] 2.4 No orphaned i18n keys (`purposeHeader|tagline` grep clean)
-- [x] 2.5 E2E belt passes: `npm run test:e2e:belt`
+- [x] 2.1 Unit tests pass: `npm run test` — 8a1a53a
+- [x] 2.2 Type checking passes: `npm run typecheck` — 8a1a53a
+- [x] 2.3 Lint passes: `npm run check` — 8a1a53a
+- [x] 2.4 No orphaned i18n keys (`purposeHeader|tagline` grep clean) — 8a1a53a
+- [x] 2.5 E2E belt passes: `npm run test:e2e:belt` — 8a1a53a
 
 #### Manual
 
-- [x] 2.6 Home opens directly with content; no hero hole
-- [x] 2.7 Rail illustration still state-driven on desktop
-- [x] 2.8 PL + EN render without missing-message warnings
+- [x] 2.6 Home opens directly with content; no hero hole — 8a1a53a
+- [x] 2.7 Rail illustration still state-driven on desktop — 8a1a53a
+- [x] 2.8 PL + EN render without missing-message warnings — 8a1a53a
 
 ### Phase 3: Layout Composition Contract
 
 #### Automated
 
-- [ ] 3.1 Unit tests pass: `npm run test`
-- [ ] 3.2 Type checking passes: `npm run typecheck`
-- [ ] 3.3 Lint passes: `npm run check`
-- [ ] 3.4 Width-cap grep clean outside documented exceptions
-- [ ] 3.5 E2E belt passes: `npm run test:e2e:belt`
+- [x] 3.1 Unit tests pass: `npm run test`
+- [x] 3.2 Type checking passes: `npm run typecheck`
+- [x] 3.3 Lint passes: `npm run check`
+- [x] 3.4 Width-cap grep clean outside documented exceptions
+- [x] 3.5 E2E belt passes: `npm run test:e2e:belt`
 
 #### Manual
 
-- [ ] 3.6 1280px: one left edge per column; rail aligned
-- [ ] 3.7 375px: uniform 24px rhythm, no doubled gaps
-- [ ] 3.8 State walk shows no holes or layout jumps
-- [ ] 3.9 Both themes pass the "space to breathe" check
+- [x] 3.6 1280px: one left edge per column; rail aligned
+- [x] 3.7 375px: uniform 24px rhythm, no doubled gaps
+- [x] 3.8 State walk shows no holes or layout jumps
+- [x] 3.9 Both themes pass the "space to breathe" check
 
 ### Phase 4: Visual-Rhythm Belt
 
