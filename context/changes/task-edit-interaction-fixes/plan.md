@@ -64,7 +64,7 @@ Four phases. **D-09 first** (high confidence, isolated oracle + hook). **D-08 UX
 
 **Edit-mode overflow** — Conditionally omit `overflow-hidden` from `<li>` when `editingId === task.id` (or use `overflow-visible` override). Keep `overflow-hidden` in read mode for rounded-corner clipping.
 
-**Deferred blur commit** — On edit panel `onBlur`, schedule `commitEditIfDirty` via `requestAnimationFrame` or `setTimeout(0)`; store timer id; cancel if a SegmentedControl `mousedown`/`pointerdown` fires on the panel before timer runs. Do not remove existing `relatedTarget` containment check — defer only when leaving panel.
+**Deferred blur commit** — On edit panel `onBlur`, schedule `commitEditIfDirty` via `setTimeout(0)`; store timer id; cancel on **any** in-panel `pointerdown` (chips, effort input, daily-standing checkbox, clear-effort). Commit reads latest edit state from `editDraftRef` so the deferred callback cannot save stale values. Do not remove existing `relatedTarget` containment check — defer only when leaving panel.
 
 ## Phase 1: Preset Badge Oracle + Guest Parity (D-09)
 
@@ -212,7 +212,7 @@ Defer panel blur commit so Safari/touch flows where `relatedTarget` is null do n
 
 **Intent**: If user clicks a SegmentedControl button, cancel pending blur commit so click handler runs first.
 
-**Contract**: Add `onPointerDown` capture on edit panel container (same wrapper as blur) that clears pending blur timer when target is inside a segmented control button (`role` or testid pattern).
+**Contract**: Add `onPointerDown` capture on edit panel container (same wrapper as blur) that clears the pending blur timer on **any** in-panel interaction (SegmentedControl chips, effort input, daily-standing checkbox, clear-effort button).
 
 #### 3. Component test for blur + horizon
 

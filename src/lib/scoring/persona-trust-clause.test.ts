@@ -39,11 +39,16 @@ describe("buildPersonaTrustClause", () => {
 			return;
 		}
 
+		const mismatchedUrgency = (preset.urgency === 3 ? 1 : preset.urgency + 1) as
+			| 1
+			| 2
+			| 3;
+
 		expect(
 			buildPersonaTrustClauseForTask({
 				personaPresetId: "firefight",
 				workType: preset.workType,
-				urgency: 1,
+				urgency: mismatchedUrgency,
 				importance: preset.importance,
 				commitmentHorizon: preset.commitmentHorizon,
 				effortMinutes: preset.effortMinutes,

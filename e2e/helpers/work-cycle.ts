@@ -65,7 +65,7 @@ async function uncheckDailyStandingDefault(page: Page) {
 		return;
 	}
 	if (await toggle.isChecked()) {
-		await page.getByText("Daily standing", { exact: true }).click();
+		await toggle.click();
 		await expect(toggle).not.toBeChecked();
 	}
 }

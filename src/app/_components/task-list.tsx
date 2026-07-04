@@ -48,9 +48,6 @@ import {
 	resolveTaskPersonaBadge,
 } from "~/lib/task/persona-presets";
 
-const STUCK_DONE_FOR_TODAY_HEAL_KEY =
-	"flowstate:healed-stuck-done-for-today-v1";
-
 function axisLabel(
 	level: 1 | 2 | 3,
 	t: ReturnType<typeof useTranslations<"Tasks">>,
@@ -631,7 +628,6 @@ export function TaskList({
 	const [completingTaskId, setCompletingTaskId] = useState<DomainTaskId | null>(
 		null,
 	);
-	const stuckHealStartedRef = useRef(false);
 
 	function beginCompleteAnimation(taskId: DomainTaskId) {
 		setCompletingTaskId(taskId);
@@ -698,6 +694,29 @@ export function TaskList({
 	const editPanelRef = useRef<HTMLDivElement | null>(null);
 	const commitInFlightRef = useRef<Promise<void> | null>(null);
 	const blurCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const editDraftRef = useRef({
+		editingId: null as DomainTaskId | null,
+		editTitle: "",
+		editWorkType: "OPERATIONAL" as "DEEP_WORK" | "OPERATIONAL" | "REACTIVE",
+		editUrgency: 2 as 1 | 2 | 3,
+		editImportance: 2 as 1 | 2 | 3,
+		editEffortMinutes: "",
+		editCommitmentHorizon: "WHEN_POSSIBLE" as CommitmentHorizon,
+		editResumeNote: "",
+		editIsDailyStanding: false,
+	});
+
+	editDraftRef.current = {
+		editingId,
+		editTitle,
+		editWorkType,
+		editUrgency,
+		editImportance,
+		editEffortMinutes,
+		editCommitmentHorizon,
+		editResumeNote,
+		editIsDailyStanding,
+	};
 
 	const cancelPendingBlurCommit = useCallback(() => {
 		if (blurCommitTimerRef.current != null) {
@@ -714,12 +733,13 @@ export function TaskList({
 			return;
 		}
 
-		if (editingId == null) {
-			return;
-		}
-
 		const run = async () => {
-			if (!editTitle.trim()) {
+			const draft = editDraftRef.current;
+			if (draft.editingId == null) {
+				return;
+			}
+
+			if (!draft.editTitle.trim()) {
 				setEditingId(null);
 				setEditTitle("");
 				setEditResumeNote("");
@@ -727,17 +747,19 @@ export function TaskList({
 			}
 
 			await updateTask({
-				id: editingId,
-				title: editTitle.trim(),
-				workType: editWorkType,
-				urgency: editUrgency,
-				weight: editUrgency,
-				importance: editImportance,
-				effortMinutes: parseEffortMinutes(editEffortMinutes),
-				commitmentHorizon: editCommitmentHorizon,
+				id: draft.editingId,
+				title: draft.editTitle.trim(),
+				workType: draft.editWorkType,
+				urgency: draft.editUrgency,
+				weight: draft.editUrgency,
+				importance: draft.editImportance,
+				effortMinutes: parseEffortMinutes(draft.editEffortMinutes),
+				commitmentHorizon: draft.editCommitmentHorizon,
 				resumeNote:
-					editResumeNote.trim().length > 0 ? editResumeNote.trim() : null,
-				isDailyStanding: editIsDailyStanding,
+					draft.editResumeNote.trim().length > 0
+						? draft.editResumeNote.trim()
+						: null,
+				isDailyStanding: draft.editIsDailyStanding,
 			});
 			setEditingId(null);
 			setEditTitle("");
@@ -751,19 +773,7 @@ export function TaskList({
 		} finally {
 			commitInFlightRef.current = null;
 		}
-	}, [
-		editingId,
-		editTitle,
-		editWorkType,
-		editUrgency,
-		editImportance,
-		editEffortMinutes,
-		editCommitmentHorizon,
-		editResumeNote,
-		editIsDailyStanding,
-		updateTask,
-		cancelPendingBlurCommit,
-	]);
+	}, [updateTask, cancelPendingBlurCommit]);
 
 	const handleEditPanelBlur = useCallback(
 		(event: FocusEvent<HTMLDivElement>) => {
@@ -840,37 +850,6 @@ export function TaskList({
 		},
 		[commitEditIfDirty, editingId, onFocusTask],
 	);
-
-	useEffect(() => {
-		if (typeof window === "undefined") {
-			return;
-		}
-		if (localStorage.getItem(STUCK_DONE_FOR_TODAY_HEAL_KEY) != null) {
-			return;
-		}
-		if (stuckHealStartedRef.current) {
-			return;
-		}
-
-		const stuckTasks = tasks.filter(
-			(task) => task.status === "active" && task.doneForToday === true,
-		);
-		if (stuckTasks.length === 0) {
-			return;
-		}
-
-		stuckHealStartedRef.current = true;
-		void (async () => {
-			try {
-				for (const task of stuckTasks) {
-					await updateTask({ id: task.id, status: "completed" });
-				}
-				localStorage.setItem(STUCK_DONE_FOR_TODAY_HEAL_KEY, "1");
-			} finally {
-				stuckHealStartedRef.current = false;
-			}
-		})();
-	}, [tasks, updateTask]);
 
 	const focusChromeSubduedClass = focusShellActive
 		? "opacity-60 saturate-75 transition-opacity duration-300 motion-reduce:transition-none"

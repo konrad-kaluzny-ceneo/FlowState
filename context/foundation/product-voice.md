@@ -42,8 +42,8 @@ Three words: **mindful**, **clear**, **trustworthy**.
 | Agency | you're always in control; your pick | zawsze Ty decydujesz; Twój wybór | Every suggestion surface |
 | Energy | focused / steady / fading | skupiony / stabilny / słabnący | Neutral, never judgmental |
 | Session end | session complete; wrap up | sesja zakończona; domknij | Not *crushed it* |
-| Day memory — done | Done / Ukończone | section label; aligned with `Tasks.sectionCompleted` |
-| Day memory — remains | Remains / Aktywne | open work honestly; aligned with `Tasks.sectionActive` |
+| Day memory — done | Done | Ukończone | section label; aligned with `Tasks.sectionCompleted` |
+| Day memory — remains | Remains | Aktywne | open work honestly; aligned with `Tasks.sectionActive` |
 | Day memory — return | Return to / Wróć tutaj | names last focus after interruption |
 | Override | noted; continuing that thread | zapisany; kontynuujemy ten wątek | Acknowledge without penalizing |
 

@@ -141,7 +141,7 @@ Update all `messages/pl.json` keys that carry banned status vocabulary to unifie
 | `DayMemory.sectionRemains` | `Aktywne` |
 | `DayMemory.collapsedLine` | `Ukończone: {done}. Aktywne: {remaining}. Wróć spokojnie do: {next}.` |
 | `DayMemory.collapsedLineNoReturn` | `Ukończone: {done}. Aktywne: {remaining}.` |
-| `DayMemory.remainingCount` | plural: `aktywne` / `aktywnych` (preserve ICU plural structure) |
+| `DayMemory.remainingCount` | plural: `zadanie` / `zadania` / `zadań` (matches shipped copy and tests) |
 
 **Addendum (impl-review 2026-07-04):** `remainingCount` ships as `zadanie`/`zadania`/`zadań` — mirrors `doneCount` and EN `{n} open`, avoiding redundant "Aktywne: N aktywne."
 

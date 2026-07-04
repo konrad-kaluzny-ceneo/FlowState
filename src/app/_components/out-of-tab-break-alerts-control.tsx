@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { StyledCheckbox } from "~/app/_components/styled-checkbox";
 import {
@@ -24,6 +24,21 @@ export function OutOfTabBreakAlertsControl({
 	const [permission, setPermission] = useState(getNotificationPermission);
 	const deniedHintId = useId();
 	const defaultHintId = useId();
+
+	useEffect(() => {
+		const syncPermission = () => {
+			setPermission(getNotificationPermission());
+		};
+
+		syncPermission();
+		document.addEventListener("visibilitychange", syncPermission);
+		window.addEventListener("focus", syncPermission);
+
+		return () => {
+			document.removeEventListener("visibilitychange", syncPermission);
+			window.removeEventListener("focus", syncPermission);
+		};
+	}, []);
 
 	const permissionHintId =
 		permission === "denied"
