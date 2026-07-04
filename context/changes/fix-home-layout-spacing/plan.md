@@ -364,29 +364,29 @@ No data or API changes. Single-PR change; revert = revert the PR. The deleted `h
 
 #### Automated
 
-- [x] 3.1 Unit tests pass: `npm run test`
-- [x] 3.2 Type checking passes: `npm run typecheck`
-- [x] 3.3 Lint passes: `npm run check`
-- [x] 3.4 Width-cap grep clean outside documented exceptions
-- [x] 3.5 E2E belt passes: `npm run test:e2e:belt`
+- [x] 3.1 Unit tests pass: `npm run test` — 72af0e9
+- [x] 3.2 Type checking passes: `npm run typecheck` — 72af0e9
+- [x] 3.3 Lint passes: `npm run check` — 72af0e9
+- [x] 3.4 Width-cap grep clean outside documented exceptions — 72af0e9
+- [x] 3.5 E2E belt passes: `npm run test:e2e:belt` — 72af0e9
 
 #### Manual
 
-- [x] 3.6 1280px: one left edge per column; rail aligned
-- [x] 3.7 375px: uniform 24px rhythm, no doubled gaps
-- [x] 3.8 State walk shows no holes or layout jumps
-- [x] 3.9 Both themes pass the "space to breathe" check
+- [x] 3.6 1280px: one left edge per column; rail aligned — 72af0e9
+- [x] 3.7 375px: uniform 24px rhythm, no doubled gaps — 72af0e9
+- [x] 3.8 State walk shows no holes or layout jumps — 72af0e9
+- [x] 3.9 Both themes pass the "space to breathe" check — 72af0e9
 
 ### Phase 4: Visual-Rhythm Belt
 
 #### Automated
 
-- [ ] 4.1 layout-rhythm spec passes on chromium
-- [ ] 4.2 layout-rhythm spec passes on mobile-chromium
-- [ ] 4.3 Full belt passes: `npm run test:e2e:belt`
-- [ ] 4.4 Lint + typecheck pass
+- [x] 4.1 layout-rhythm spec passes on chromium
+- [x] 4.2 layout-rhythm spec passes on mobile-chromium
+- [x] 4.3 Full belt passes: `npm run test:e2e:belt`
+- [x] 4.4 Lint + typecheck pass
 
 #### Manual
 
-- [ ] 4.5 Oracle bites on an injected width regression
-- [ ] 4.6 Belt runtime increase acceptable
+- [x] 4.5 Oracle bites on an injected width regression
+- [x] 4.6 Belt runtime increase acceptable

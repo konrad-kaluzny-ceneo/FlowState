@@ -71,6 +71,16 @@ export default defineConfig({
 			},
 			testMatch: /guest-.*\.spec\.ts/,
 		},
+		{
+			// Visual-rhythm belt at phone width (fix-home-layout-spacing).
+			// Scoped to the layout spec so the mobile pass doesn't double belt time.
+			name: "mobile-chromium",
+			use: {
+				...devices["Desktop Chrome"],
+				viewport: { width: 375, height: 812 },
+			},
+			testMatch: /layout-rhythm\.spec\.ts/,
+		},
 	],
 	webServer: {
 		command: webServerCommand,
