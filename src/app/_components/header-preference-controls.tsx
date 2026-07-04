@@ -1,11 +1,11 @@
 "use client";
 
+import { GlobeIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LanguageSwitch } from "~/app/_components/language-switch";
 import { useLanguagePreference } from "~/hooks/use-language-preference";
 import type { ThemePreference } from "~/lib/design/theme";
 import type { OnboardingScope } from "~/lib/onboarding/types";
-
 import { useTheme } from "./theme-provider";
 
 const THEME_OPTIONS: {
@@ -60,7 +60,8 @@ export function HeaderPreferenceControls({
 								type="radio"
 								value={option.value}
 							/>
-							{t(option.labelKey)}
+							<ThemeIcon icon={option.labelKey} />
+							<span className="sr-only">{t(option.labelKey)}</span>
 						</label>
 					);
 				})}
@@ -72,4 +73,17 @@ export function HeaderPreferenceControls({
 			)}
 		</div>
 	);
+}
+
+function ThemeIcon({ icon }: { icon: "light" | "dark" | "system" }) {
+	switch (icon) {
+		case "light":
+			return <SunIcon className="h-4 w-4" />;
+		case "dark":
+			return <MoonIcon className="h-4 w-4" />;
+		case "system":
+			return <GlobeIcon className="h-4 w-4" />;
+		default:
+			return null;
+	}
 }
