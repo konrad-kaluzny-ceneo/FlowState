@@ -8,6 +8,7 @@ type StyledCheckboxProps = {
 	label: string;
 	disabled?: boolean;
 	id?: string;
+	ariaDescribedBy?: string;
 	className?: string;
 	"data-testid"?: string;
 };
@@ -18,6 +19,7 @@ export function StyledCheckbox({
 	label,
 	disabled = false,
 	id,
+	ariaDescribedBy,
 	className = "",
 	"data-testid": dataTestId,
 }: StyledCheckboxProps) {
@@ -30,6 +32,7 @@ export function StyledCheckbox({
 			htmlFor={inputId}
 		>
 			<input
+				aria-describedby={ariaDescribedBy}
 				checked={checked}
 				className="peer sr-only"
 				data-testid={dataTestId}

@@ -64,10 +64,6 @@ export const POST_MERGE_CHECK_IN_COACH_LINE = getPostMergeCheckInCoachLine();
 export const POST_MERGE_SUGGESTION_COACH_LINE =
 	getPostMergeSuggestionCoachLine(null);
 
-/** @deprecated Use getPostMergeSuggestionCoachLine with preset */
-export const POST_MERGE_SUGGESTION_COACH_WITH_PRESET_LINE =
-	"Your {preset} preset helped shape this pick — accept it or choose any task.";
-
 export type AuthPageVariant = "sign-in" | "sign-up";
 
 export type AuthValueCopy = {

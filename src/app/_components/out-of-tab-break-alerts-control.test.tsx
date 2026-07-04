@@ -84,4 +84,36 @@ describe("OutOfTabBreakAlertsControl", () => {
 			expect(onChange).toHaveBeenCalledWith(true);
 		});
 	});
+
+	it("associates permission hint with toggle via aria-describedby", () => {
+		mockGetPermission.mockReturnValue("denied");
+		renderControl({ enabled: true, onChange: vi.fn() });
+
+		const toggle = screen.getByTestId(
+			"out-of-tab-break-alerts-toggle",
+		) as HTMLInputElement;
+		const hint = screen
+			.getByText(messages.BreakAlerts.permissionDeniedHint)
+			.closest("div[id]");
+
+		expect(toggle.getAttribute("aria-describedby")).toBe(hint?.id);
+	});
+
+	it("refreshes permission hint after retry", async () => {
+		mockGetPermission.mockReturnValue("denied");
+		mockRequestPermission.mockResolvedValue("granted");
+		renderControl({ enabled: true, onChange: vi.fn() });
+
+		expect(
+			screen.getByText(messages.BreakAlerts.permissionDeniedHint),
+		).toBeTruthy();
+
+		fireEvent.click(screen.getByTestId("out-of-tab-break-alerts-retry"));
+
+		await waitFor(() => {
+			expect(
+				screen.queryByText(messages.BreakAlerts.permissionDeniedHint),
+			).toBeNull();
+		});
+	});
 });

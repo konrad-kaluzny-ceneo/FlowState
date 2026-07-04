@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useId, useState } from "react";
 
 import { StyledCheckbox } from "~/app/_components/styled-checkbox";
 import {
@@ -20,7 +21,23 @@ export function OutOfTabBreakAlertsControl({
 	disabled = false,
 }: OutOfTabBreakAlertsControlProps) {
 	const t = useTranslations("BreakAlerts");
-	const permission = getNotificationPermission();
+	const [permission, setPermission] = useState(getNotificationPermission);
+	const deniedHintId = useId();
+	const defaultHintId = useId();
+
+	const permissionHintId =
+		permission === "denied"
+			? deniedHintId
+			: permission === "default" && enabled
+				? defaultHintId
+				: undefined;
+
+	const handleRetry = () => {
+		void (async () => {
+			const next = await requestNotificationPermission();
+			setPermission(next);
+		})();
+	};
 
 	const handleToggle = (next: boolean) => {
 		if (!next) {
@@ -30,7 +47,8 @@ export function OutOfTabBreakAlertsControl({
 
 		void (async () => {
 			if (permission === "default") {
-				await requestNotificationPermission();
+				const nextPermission = await requestNotificationPermission();
+				setPermission(nextPermission);
 			}
 			onChange(true);
 		})();
@@ -42,6 +60,7 @@ export function OutOfTabBreakAlertsControl({
 			data-testid="out-of-tab-break-alerts-control"
 		>
 			<StyledCheckbox
+				ariaDescribedBy={permissionHintId}
 				checked={enabled}
 				className="justify-center"
 				data-testid="out-of-tab-break-alerts-toggle"
@@ -50,12 +69,15 @@ export function OutOfTabBreakAlertsControl({
 				onChange={handleToggle}
 			/>
 			{permission === "denied" && (
-				<div className="mt-2 text-center text-text-dimmed text-xs">
+				<div
+					className="mt-2 text-center text-text-dimmed text-xs"
+					id={deniedHintId}
+				>
 					<p>{t("permissionDeniedHint")}</p>
 					<button
 						className="mt-2 underline hover:text-text-secondary"
 						data-testid="out-of-tab-break-alerts-retry"
-						onClick={() => void requestNotificationPermission()}
+						onClick={handleRetry}
 						type="button"
 					>
 						{t("tryAgain")}
@@ -63,7 +85,10 @@ export function OutOfTabBreakAlertsControl({
 				</div>
 			)}
 			{permission === "default" && enabled && (
-				<p className="mt-2 text-center text-text-dimmed text-xs">
+				<p
+					className="mt-2 text-center text-text-dimmed text-xs"
+					id={defaultHintId}
+				>
 					{t("permissionDefaultHint")}
 				</p>
 			)}
