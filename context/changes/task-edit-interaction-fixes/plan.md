@@ -328,13 +328,13 @@ No DB migration. Existing tasks with stored `personaPresetId` immediately show p
 
 #### Automated
 
-- [x] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
-- [x] 3.2 `pnpm check`
-- [x] 3.3 `pnpm test`
+- [x] 3.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` — b3f40f0
+- [x] 3.2 `pnpm check` — b3f40f0
+- [x] 3.3 `pnpm test` — b3f40f0
 
 #### Manual
 
-- [x] 3.4 Safari/touch: tap horizon chip without panel closing early
+- [x] 3.4 Safari/touch: tap horizon chip without panel closing early — b3f40f0
 
 ### Phase 4: Belt + Manual Repro Checklist
 
