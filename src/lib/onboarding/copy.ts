@@ -51,10 +51,6 @@ export function getPostMergeSuggestionCoachLine(
 	return t("postMergeSuggestion");
 }
 
-export function getPresetCoachLine(locale: UserLocale = "en"): string {
-	return createNamespaceTranslator("Onboarding.coach", locale)("preset");
-}
-
 /** @deprecated Use getCheckInCoachLine(locale) — EN default for test compatibility. */
 export const CHECK_IN_COACH_LINE = getCheckInCoachLine();
 
@@ -71,9 +67,6 @@ export const POST_MERGE_SUGGESTION_COACH_LINE =
 /** @deprecated Use getPostMergeSuggestionCoachLine with preset */
 export const POST_MERGE_SUGGESTION_COACH_WITH_PRESET_LINE =
 	"Your {preset} preset helped shape this pick — accept it or choose any task.";
-
-/** @deprecated Use getPresetCoachLine(locale) */
-export const PRESET_COACH_LINE = getPresetCoachLine();
 
 export type AuthPageVariant = "sign-in" | "sign-up";
 

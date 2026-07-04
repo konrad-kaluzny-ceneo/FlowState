@@ -53,15 +53,6 @@ export async function dismissMergeSuccessIfVisible(
 	await expect(overlay).toBeHidden({ timeout: 10_000 });
 }
 
-export async function dismissPresetCoachIfVisible(page: Page) {
-	const coach = page.getByTestId("preset-coach");
-	if (!(await coach.isVisible().catch(() => false))) {
-		return;
-	}
-	await page.getByTestId("preset-coach-dismiss-btn").click();
-	await expect(coach).toBeHidden({ timeout: 5000 });
-}
-
 export async function dismissFirstRunIfVisible(page: Page) {
 	for (let attempt = 0; attempt < 3; attempt++) {
 		await dismissMergeSuccessIfVisible(page);

@@ -11,7 +11,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IntlTestWrapper } from "~/i18n/test-intl";
 import type { DomainTask } from "~/lib/data-mode/types";
 import { defaultEisenhowerFields } from "~/lib/data-mode/types";
-import { getPresetCoachLine } from "~/lib/onboarding/copy";
 import {
 	applyPersonaPresetToCreateState,
 	getPersonaPresetLabel,
@@ -19,16 +18,6 @@ import {
 } from "~/lib/task/persona-presets";
 
 import { TaskList } from "./task-list";
-
-const markPresetCoachDismissed = vi.fn();
-const presetCoachMock = {
-	shouldShowPresetCoach: false,
-	markPresetCoachDismissed,
-};
-
-vi.mock("~/hooks/use-onboarding-state", () => ({
-	usePresetCoachOnboarding: () => presetCoachMock,
-}));
 
 const dndTestState = {
 	onDragEndRef: null as ((event: DragEndEvent) => void) | null,
@@ -166,7 +155,6 @@ function submitCreateForm() {
 describe("TaskList", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		presetCoachMock.shouldShowPresetCoach = false;
 	});
 
 	it("shows Continue here subtitle without resume note on continue row", () => {
@@ -512,19 +500,6 @@ describe("TaskList", () => {
 		expect(
 			screen.getByTestId("persona-preset-synchro").getAttribute("aria-pressed"),
 		).toBe("true");
-	});
-
-	it("preset coach dismiss calls markPresetCoachDismissed", () => {
-		presetCoachMock.shouldShowPresetCoach = true;
-
-		renderTaskList(<TaskList {...defaultProps} />);
-
-		expect(screen.getByTestId("preset-coach")).toBeTruthy();
-		expect(screen.getByText(getPresetCoachLine())).toBeTruthy();
-
-		fireEvent.click(screen.getByTestId("preset-coach-dismiss-btn"));
-
-		expect(markPresetCoachDismissed).toHaveBeenCalledTimes(1);
 	});
 
 	it("shows ASAP badge on active task when horizon is ASAP", () => {

@@ -25,7 +25,6 @@ import {
 	TaskFieldsPanel,
 	TITLE_FIELD_CLASS,
 } from "~/app/_components/task-fields-panel";
-import { usePresetCoachOnboarding } from "~/hooks/use-onboarding-state";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { formatEndedAgo } from "~/lib/catch-up/format-ended-ago";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
@@ -39,7 +38,6 @@ import {
 	WORK_TYPE_CONFIG,
 } from "~/lib/design/work-type-config";
 import type { UserLocale } from "~/lib/domain/user-locale";
-import { getPresetCoachLine } from "~/lib/onboarding/copy";
 import type { TaskFootprint } from "~/lib/recap/types";
 import {
 	applyPersonaPresetToCreateState,
@@ -570,8 +568,6 @@ export function TaskList({
 	const locale = useLocale() as UserLocale;
 	const t = useTranslations("Tasks");
 	const mode = useDataMode();
-	const { shouldShowPresetCoach, markPresetCoachDismissed } =
-		usePresetCoachOnboarding();
 	const addTaskInputRef = useRef<HTMLInputElement>(null);
 	const {
 		createTask,
@@ -938,12 +934,6 @@ export function TaskList({
 					}}
 					personaPresetPicker={
 						<PersonaPresetPicker
-							coachLine={
-								shouldShowPresetCoach ? getPresetCoachLine(locale) : undefined
-							}
-							onDismissCoach={
-								shouldShowPresetCoach ? markPresetCoachDismissed : undefined
-							}
 							onSelectCustom={() => {
 								setShowCustomPanel(true);
 								markCreateFormCustom();

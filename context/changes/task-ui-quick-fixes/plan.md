@@ -410,23 +410,23 @@ No DB migration. Onboarding localStorage may retain `presetCoachDismissed: true/
 
 #### Automated
 
-- [x] 3.1 `pnpm exec vitest run src/app/_components/out-of-tab-break-alerts-control.test.tsx src/i18n/messages-parity.test.ts`
-- [x] 3.2 `pnpm check`
-- [x] 3.3 `pnpm test`
+- [x] 3.1 `pnpm exec vitest run src/app/_components/out-of-tab-break-alerts-control.test.tsx src/i18n/messages-parity.test.ts` — 30fc296
+- [x] 3.2 `pnpm check` — 30fc296
+- [x] 3.3 `pnpm test` — 30fc296
 
 #### Manual
 
-- [x] 3.4 PL locale: toggle label and hints translated
-- [x] 3.5 Denied-permission retry button translated in PL
+- [x] 3.4 PL locale: toggle label and hints translated — 30fc296
+- [x] 3.5 Denied-permission retry button translated in PL — 30fc296
 
 ### Phase 4: Preset Coach Removal + Belt (D-02)
 
 #### Automated
 
-- [ ] 4.1 Grep clean: no preset-coach / getPresetCoachLine / dismissPresetCoachIfVisible references
-- [ ] 4.2 `pnpm check`
-- [ ] 4.3 `pnpm test`
-- [ ] 4.4 `set CI=true && pnpm test:e2e:belt`
+- [x] 4.1 Grep clean: no preset-coach / getPresetCoachLine / dismissPresetCoachIfVisible references
+- [x] 4.2 `pnpm check`
+- [x] 4.3 `pnpm test`
+- [x] 4.4 `set CI=true && pnpm test:e2e:belt`
 
 #### Manual
 

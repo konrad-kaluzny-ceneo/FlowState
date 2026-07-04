@@ -37,8 +37,6 @@ type PersonaPresetPickerProps = {
 	showCustomPanel: boolean;
 	onSelectPreset: (presetId: PersonaPresetId) => void;
 	onSelectCustom: () => void;
-	coachLine?: string;
-	onDismissCoach?: () => void;
 };
 
 export function PersonaPresetPicker({
@@ -46,12 +44,9 @@ export function PersonaPresetPicker({
 	showCustomPanel,
 	onSelectPreset,
 	onSelectCustom,
-	coachLine,
-	onDismissCoach,
 }: PersonaPresetPickerProps) {
 	const locale = useLocale() as UserLocale;
 	const tTasks = useTranslations("Tasks");
-	const tOnboarding = useTranslations("Onboarding.firstRun");
 	const customPressed = showCustomPanel || selectedPresetId === "custom";
 
 	return (
@@ -101,24 +96,6 @@ export function PersonaPresetPicker({
 					{tTasks("custom")}
 				</button>
 			</div>
-			{coachLine != null && (
-				<div
-					className="flex items-start justify-between gap-2 rounded-lg border border-border-subtle bg-surface-panel px-3 py-2 text-sm text-text-secondary"
-					data-testid="preset-coach"
-				>
-					<p>{coachLine}</p>
-					{onDismissCoach != null && (
-						<button
-							className="shrink-0 text-text-dimmed text-xs underline transition hover:text-text-section"
-							data-testid="preset-coach-dismiss-btn"
-							onClick={onDismissCoach}
-							type="button"
-						>
-							{tOnboarding("guest.dismissLabel")}
-						</button>
-					)}
-				</div>
-			)}
 		</div>
 	);
 }
