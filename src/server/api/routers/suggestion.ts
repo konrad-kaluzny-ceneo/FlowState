@@ -9,7 +9,7 @@ import {
 	formatTaskRationale,
 } from "~/lib/scoring/dominant-factor";
 import {
-	buildPersonaTrustClause,
+	buildPersonaTrustClauseForTask,
 	composeSuggestionRationale,
 } from "~/lib/scoring/persona-trust-clause";
 import { buildRationaleBreakdown } from "~/lib/scoring/rationale-breakdown";
@@ -146,10 +146,25 @@ async function verifyOwnedTasks(
 async function applyPersonaTrustToRationale(
 	db: DbClient,
 	userId: string,
-	task: { id: number; personaPresetId: string | null },
+	task: {
+		id: number;
+		personaPresetId: string | null;
+		workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+		urgency: number;
+		importance: number;
+		commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
+		effortMinutes: number | null;
+	},
 	scoringRationale: string,
 ): Promise<string> {
-	const personaClause = buildPersonaTrustClause(task.personaPresetId);
+	const personaClause = buildPersonaTrustClauseForTask({
+		personaPresetId: task.personaPresetId,
+		workType: task.workType,
+		urgency: task.urgency as 1 | 2 | 3,
+		importance: task.importance as 1 | 2 | 3,
+		commitmentHorizon: task.commitmentHorizon,
+		effortMinutes: task.effortMinutes,
+	});
 	if (personaClause == null) {
 		return scoringRationale;
 	}

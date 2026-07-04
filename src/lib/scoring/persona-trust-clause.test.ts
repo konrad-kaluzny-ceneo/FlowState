@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { getPersonaPresetById } from "~/lib/task/persona-presets";
 
 import {
 	buildPersonaTrustClause,
+	buildPersonaTrustClauseForTask,
 	composeSuggestionRationale,
 } from "./persona-trust-clause";
 
@@ -28,6 +30,44 @@ describe("buildPersonaTrustClause", () => {
 
 	it("returns null for unknown catalog id", () => {
 		expect(buildPersonaTrustClause("deep-planning")).toBeNull();
+	});
+
+	it("returns null when live attrs no longer match stored preset", () => {
+		const preset = getPersonaPresetById("firefight");
+		expect(preset).toBeDefined();
+		if (preset == null) {
+			return;
+		}
+
+		expect(
+			buildPersonaTrustClauseForTask({
+				personaPresetId: "firefight",
+				workType: preset.workType,
+				urgency: 1,
+				importance: preset.importance,
+				commitmentHorizon: preset.commitmentHorizon,
+				effortMinutes: preset.effortMinutes,
+			}),
+		).toBeNull();
+	});
+
+	it("returns clause when attrs match a preset bundle", () => {
+		const preset = getPersonaPresetById("synchro");
+		expect(preset).toBeDefined();
+		if (preset == null) {
+			return;
+		}
+
+		expect(
+			buildPersonaTrustClauseForTask({
+				personaPresetId: null,
+				workType: preset.workType,
+				urgency: preset.urgency,
+				importance: preset.importance,
+				commitmentHorizon: preset.commitmentHorizon,
+				effortMinutes: null,
+			}),
+		).toBe("Synchro — operational work fits your choice.");
 	});
 });
 

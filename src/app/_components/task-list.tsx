@@ -798,24 +798,17 @@ export function TaskList({
 		[cancelPendingBlurCommit, commitEditIfDirty],
 	);
 
-	const handleEditPanelPointerDownCapture = useCallback(
-		(event: ReactPointerEvent<HTMLDivElement>) => {
-			const target = event.target;
-			if (
-				target instanceof HTMLButtonElement &&
-				target.hasAttribute("aria-pressed")
-			) {
-				cancelPendingBlurCommit();
-			}
-		},
-		[cancelPendingBlurCommit],
-	);
+	const handleEditPanelPointerDownCapture = useCallback(() => {
+		cancelPendingBlurCommit();
+	}, [cancelPendingBlurCommit]);
 
 	useEffect(() => {
 		if (editingId == null) {
 			cancelPendingBlurCommit();
 		}
 	}, [editingId, cancelPendingBlurCommit]);
+
+	useEffect(() => () => cancelPendingBlurCommit(), [cancelPendingBlurCommit]);
 
 	useEffect(() => {
 		if (editingId == null) {

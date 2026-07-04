@@ -4,7 +4,7 @@
 - **Plan**: context/changes/status-vocabulary-unification/plan.md
 - **Scope**: Full plan (Phases 1–4)
 - **Date**: 2026-07-04
-- **Verdict**: NEEDS ATTENTION
+- **Verdict**: APPROVED (post-triage)
 - **Findings**: 0 critical, 4 warnings, 3 observations
 
 ## Verdicts
@@ -95,7 +95,7 @@
 - **Location**: N/A (git state)
 - **Detail**: Commit `88934d8` message references status-vocabulary-unification but primarily added plan artifacts and unrelated `task-list` edits. `product-voice.md`, `messages/pl.json` D-10 strings, and test oracles exist in working tree vs HEAD — not yet committed as a cohesive D-10 diff.
 - **Fix**: Stage and commit D-10 files explicitly before merge; avoid mixing with `persona-trust-clause` / `suggestion.ts` edits on same commit unless intentional.
-- **Decision**: FIXED — user requested explicit D-10 commit (pending below)
+- **Decision**: FIXED — committed as `92a47ea` (D-10 files only)
 
 ### F6 — `product-voice.md` footnote retains banned terms
 

@@ -25,8 +25,9 @@ From `context/changes/task-edit-interaction-fixes/research.md` and `context/chan
 
 ## Desired End State
 
-- Task created with preset "Gaszenie" shows **"Gaszenie"** badge after create, after reload, and **after inline edit** that changes urgency/horizon/work type (effort-only edits already worked).
-- Guest mode: preset create persists and displays persona badge same as auth.
+- Task created with preset "Gaszenie" shows **"Gaszenie"** badge when its settings match the Gaszenie bundle (after create, after reload).
+- **Inline edit:** badge reflects **current settings** — matching a preset bundle shows that preset tag; diverged settings show **Własny** or Eisenhower (legacy rows).
+- Guest mode: preset create persists and displays persona badge when settings match.
 - Horizon "Gdy się da" has **visually distinct active state**; inline edit from ASAP → WHEN_POSSIBLE updates selection and persists on save.
 - Edit-mode task rows do not clip horizon chip hit targets at narrow widths.
 - Blur-save does not close edit panel before SegmentedControl horizon click (Safari-safe).
@@ -37,7 +38,16 @@ From `context/changes/task-edit-interaction-fixes/research.md` and `context/chan
 - **Create-form custom panel behavior** — selecting preset then opening Własny and changing attrs still sends `"custom"` at Add; separate product question.
 - **Clearing or rewriting `personaPresetId` on inline edit** — persistence unchanged; display only.
 - **D-10 status vocabulary**, **D-04 illustrations**, **layout/navbar** — other fix waves.
-- **New Eisenhower "preset + detail when diverged" fourth mode** — simpler rule: valid catalog id → always `"persona"` mode (preset label + effort badge as today).
+- **New Eisenhower "preset + detail when diverged" fourth mode** — replaced by attribute-match oracle (see addendum below).
+
+## Product addendum (2026-07-04)
+
+**Supersedes** the draft oracle in Critical Implementation Details below: preset **tag label follows live settings**, not stored `personaPresetId` alone.
+
+- `findMatchingPersonaPresetId` / `resolveTaskPersonaBadge`: when task attributes match a catalog preset bundle (`ignoreEffort: true`), show that preset's tag; effort does not affect which preset matches.
+- Stored `personaPresetId` is **not cleared** on inline edit; display only.
+- Diverged attrs with a stored preset id → `"custom-detail"` (Własny); null id + no match → `"legacy"`.
+- Confirmed in manual QA during implementation.
 - **E2E spec for every D-08 repro variant** — component tests + manual checklist; belt unchanged unless regressions found.
 
 ## Implementation Approach
@@ -46,7 +56,7 @@ Four phases. **D-09 first** (high confidence, isolated oracle + hook). **D-08 UX
 
 ## Critical Implementation Details
 
-**Badge oracle contract** — After revision, `getTaskBadgeDisplayMode` returns `"persona"` for any valid catalog `personaPresetId` (not `"custom"`, not `null`, known in `TASK_PERSONA_PRESETS`). `"legacy"`, `"custom-detail"` paths unchanged for null/custom/unknown ids. Update the divergence test to expect `"persona"` instead of `"custom-detail"`.
+**Badge oracle contract (superseded by addendum — kept for history)** — Original draft: `getTaskBadgeDisplayMode` returns `"persona"` for any valid catalog `personaPresetId`. **Shipped rule:** attribute-match via `resolveTaskPersonaBadge` (see Product addendum).
 
 **Guest create parity** — Add `personaPresetId: input.personaPresetId ?? null` to guest branch of `createTask` at `use-task-mutations.ts:497-506`. Auth path already forwards via `createMutation`.
 
@@ -68,9 +78,9 @@ Revise display oracle per product decision; forward `personaPresetId` in guest c
 
 **File**: `src/lib/task/persona-presets.ts`
 
-**Intent**: Valid catalog preset id always yields `"persona"` display mode regardless of attribute divergence from preset bundle.
+**Intent**: Tag label resolves from **matching attribute bundle** (`findMatchingPersonaPresetId` / `resolveTaskPersonaBadge`); guest create forwards `personaPresetId`.
 
-**Contract**: In `getTaskBadgeDisplayMode` (`:176-198`), after unknown-id guard, return `"persona"` for valid catalog ids. Remove or bypass the `taskAttributesMatchPreset` divergence branch that returns `"custom-detail"`.
+**Contract**: `resolveTaskPersonaBadge` returns `"persona"` + matching preset id when live attrs match a catalog bundle; `"custom-detail"` when stored id diverges; `"legacy"` when null id and no match.
 
 #### 2. Oracle unit tests
 
@@ -78,7 +88,7 @@ Revise display oracle per product decision; forward `personaPresetId` in guest c
 
 **Intent**: Encode new contract; replace divergence → custom-detail expectation at `:178-194`.
 
-**Contract**: Test renamed/revised: diverged attrs + valid preset id → `"persona"`. Keep existing tests for null, custom, unknown id, matching attrs.
+**Contract**: Tests for attribute-match oracle: diverged attrs + stored id → `"custom-detail"`; attrs match bundle → `"persona"` with correct label; null id + matching attrs → `"persona"`.
 
 #### 3. Guest create hook
 
@@ -94,7 +104,7 @@ Revise display oracle per product decision; forward `personaPresetId` in guest c
 
 **Intent**: Oracle change visible in UI — preset label survives inline edit.
 
-**Contract**: New test: render task row with `personaPresetId: "firefight"` and attrs diverging from firefight bundle → `task-persona-badge` shows preset label (EN: "Firefight", use messages import). Optional: guest-mode create with preset if test harness supports guest `DataModeProvider`.
+**Contract**: New test: attrs match firefight bundle → `task-persona-badge` shows "Firefight"; diverged attrs with stored id → `task-custom-badge`.
 
 #### 5. Guest hook test (if co-located pattern exists)
 
@@ -115,8 +125,8 @@ Revise display oracle per product decision; forward `personaPresetId` in guest c
 #### Manual Verification:
 
 - Auth: Select "Gaszenie" → Add → badge shows "Gaszenie"
-- Inline edit urgency on that task → save → badge still "Gaszenie" (not "Własny")
-- Guest (if available): same preset flow shows persona badge
+- Inline edit attrs **away** from Gaszenie bundle → badge becomes Własny; restore Gaszenie settings → badge returns
+- Guest (if available): preset create shows persona badge when settings match
 
 **Implementation Note**: Pause for manual confirmation before Phase 2.
 
@@ -261,7 +271,7 @@ Full verification gate and documented manual repro for D-08/D-09 variants from r
 
 ### Unit Tests:
 
-- `persona-presets.test.ts` — oracle branches including divergence → persona
+- `persona-presets.test.ts` — attribute-match oracle branches
 - `task-list.test.tsx` — badge after diverged attrs; horizon chip click + save; blur deferral
 
 ### Integration Tests:
@@ -271,7 +281,7 @@ Full verification gate and documented manual repro for D-08/D-09 variants from r
 
 ### Manual Testing Steps:
 
-1. D-09: Gaszenie create → edit urgency → still Gaszenie (PL)
+1. D-09: Gaszenie create → edit attrs away → Własny; restore settings → Gaszenie (PL)
 2. D-09: Guest preset create shows badge
 3. D-08: Horizon chip distinct active state + persistence
 4. D-08: Narrow viewport chip not clipped
@@ -308,7 +318,7 @@ No DB migration. Existing tasks with stored `personaPresetId` immediately show p
 
 #### Manual
 
-- [x] 1.4 Auth: Gaszenie create → edit urgency → badge still Gaszenie — 0b068a8
+- [x] 1.4 Auth: Gaszenie create → edit attrs away → Własny; restore settings → Gaszenie — 0b068a8
 - [x] 1.5 Guest: preset create shows persona badge — 0b068a8
 
 ### Phase 2: Horizon UX + Edit Row Overflow (D-08)
