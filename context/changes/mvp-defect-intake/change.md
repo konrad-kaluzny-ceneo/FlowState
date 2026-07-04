@@ -3,7 +3,7 @@ change_id: mvp-defect-intake
 title: Post-MVP defect intake — collected user reports before fix planning
 status: preparing
 created: 2026-07-03
-updated: 2026-07-03
+updated: 2026-07-04
 archived_at: null
 ---
 

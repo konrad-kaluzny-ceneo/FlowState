@@ -1,0 +1,45 @@
+{
+	"mcpServers": {
+		"context7": {
+			"command": "npx",
+			"args": ["-y", "@upstash/context7-mcp@latest"],
+			"disabled": false,
+			"autoApprove": ["resolve-library-id", "query-docs"]
+		},
+		"vercel": {
+			"url": "https://mcp.vercel.com",
+			"autoApprove": [
+				"list_deployments",
+				"get_deployment_build_logs",
+				"get_deployment",
+				"get_runtime_logs"
+			]
+		},
+		"linear": {
+			"command": "npx",
+			"args": ["-y", "mcp-remote", "https://mcp.linear.app/mcp"],
+			"autoApprove": [
+				"list_issue_labels",
+				"list_issue_statuses",
+				"save_project",
+				"create_issue_label",
+				"create_issue_label",
+				"create_issue_label",
+				"save_issue",
+				"save_issue",
+				"list_issues",
+				"get_issue",
+				"get_issue",
+				"get_issue",
+				"search_documentation",
+				"save_milestone",
+				"save_milestone",
+				"save_milestone",
+				"save_milestone",
+				"save_document",
+				"list_cycles",
+				"save_comment"
+			]
+		}
+	}
+}

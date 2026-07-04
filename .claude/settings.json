@@ -1,0 +1,14 @@
+{
+	"files.eol": "\n",
+	"plugins": {
+		"prisma": {
+			"enabled": true
+		}
+	},
+	"chat.hookFilesLocations": {
+		".cursor/hooks.json": true,
+		".github/hooks": false,
+		".claude/settings.json": false,
+		".claude/settings.local.json": false
+	}
+}
