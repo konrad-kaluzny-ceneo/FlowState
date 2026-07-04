@@ -302,6 +302,29 @@ vi.mock("~/server/db/index", () => {
 						return Promise.resolve(args.create);
 					},
 				),
+				deleteMany: vi.fn(
+					(args: { where: { userId?: string; taskId?: number } }) => {
+						const before = taskDayCompletions.length;
+						taskDayCompletions = taskDayCompletions.filter((row) => {
+							if (
+								args.where.userId != null &&
+								row.userId !== args.where.userId
+							) {
+								return true;
+							}
+							if (
+								args.where.taskId != null &&
+								row.taskId !== args.where.taskId
+							) {
+								return true;
+							}
+							return false;
+						});
+						return Promise.resolve({
+							count: before - taskDayCompletions.length,
+						});
+					},
+				),
 			},
 			$transaction: vi.fn(
 				async (ops: Array<Promise<unknown>> | ((tx: unknown) => unknown)) => {
@@ -815,6 +838,28 @@ describe("daily standing task flag", () => {
 		await taskCaller(USER_A).update({ id: 1, isDailyStanding: true });
 
 		expect(allTasks.find((t) => t.id === 1)?.isDailyStanding).toBe(true);
+	});
+
+	it("update to completed clears daily completion records for the task", async () => {
+		allTasks = [
+			makeTask({
+				id: 1,
+				title: "Daily review",
+				userId: USER_A,
+				isDailyStanding: true,
+			}),
+		];
+		taskDayCompletions = [
+			{ userId: USER_A, taskId: 1, localDateKey: "2026-06-19" },
+		];
+
+		await taskCaller(USER_A).update({ id: 1, status: "completed" });
+
+		expect(db.taskDayCompletion.deleteMany).toHaveBeenCalledWith({
+			where: { userId: USER_A, taskId: 1 },
+		});
+		expect(taskDayCompletions).toEqual([]);
+		expect(allTasks.find((t) => t.id === 1)?.status).toBe("completed");
 	});
 
 	it("markDoneForToday upserts completion for standing task", async () => {

@@ -11,24 +11,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IntlTestWrapper } from "~/i18n/test-intl";
 import type { DomainTask } from "~/lib/data-mode/types";
 import { defaultEisenhowerFields } from "~/lib/data-mode/types";
-import { getPresetCoachLine } from "~/lib/onboarding/copy";
 import {
 	applyPersonaPresetToCreateState,
+	getPersonaPresetById,
 	getPersonaPresetLabel,
 	TASK_PERSONA_PRESETS,
 } from "~/lib/task/persona-presets";
 
 import { TaskList } from "./task-list";
-
-const markPresetCoachDismissed = vi.fn();
-const presetCoachMock = {
-	shouldShowPresetCoach: false,
-	markPresetCoachDismissed,
-};
-
-vi.mock("~/hooks/use-onboarding-state", () => ({
-	usePresetCoachOnboarding: () => presetCoachMock,
-}));
 
 const dndTestState = {
 	onDragEndRef: null as ((event: DragEndEvent) => void) | null,
@@ -166,7 +156,6 @@ function submitCreateForm() {
 describe("TaskList", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		presetCoachMock.shouldShowPresetCoach = false;
 	});
 
 	it("shows Continue here subtitle without resume note on continue row", () => {
@@ -348,6 +337,57 @@ describe("TaskList", () => {
 		expect(updateTask).toHaveBeenCalledTimes(1);
 	});
 
+	it("persists horizon change when committing after SegmentedControl edit", async () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ commitmentHorizon: "ASAP" })]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "Short title" }));
+		fireEvent.click(screen.getByRole("button", { name: "When possible" }));
+
+		expect(
+			screen
+				.getByRole("button", { name: "When possible" })
+				.getAttribute("aria-pressed"),
+		).toBe("true");
+
+		fireEvent.pointerDown(document.body);
+
+		await waitFor(() => {
+			expect(updateTask).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: 1,
+					commitmentHorizon: "WHEN_POSSIBLE",
+				}),
+			);
+		});
+	});
+
+	it("keeps edit open and updates horizon after blur with null relatedTarget", async () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ commitmentHorizon: "ASAP" })]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "Short title" }));
+		const titleField = screen.getByTestId("task-fields-title");
+		fireEvent.blur(titleField, { relatedTarget: null });
+		fireEvent.click(screen.getByRole("button", { name: "When possible" }));
+
+		expect(screen.getByTestId("task-fields-panel-edit")).toBeTruthy();
+		expect(
+			screen
+				.getByRole("button", { name: "When possible" })
+				.getAttribute("aria-pressed"),
+		).toBe("true");
+		expect(updateTask).not.toHaveBeenCalled();
+	});
+
 	it("allows focusing and saving effort when inline editing an existing task", async () => {
 		renderTaskList(
 			<TaskList {...defaultProps} tasks={[makeTask({ effortMinutes: 30 })]} />,
@@ -455,7 +495,7 @@ describe("TaskList", () => {
 				effortMinutes: Number.parseInt(applied.effortMinutes, 10),
 				commitmentHorizon: applied.commitmentHorizon,
 				personaPresetId: presetId,
-				isDailyStanding: false,
+				isDailyStanding: true,
 			});
 		});
 	});
@@ -514,19 +554,6 @@ describe("TaskList", () => {
 		).toBe("true");
 	});
 
-	it("preset coach dismiss calls markPresetCoachDismissed", () => {
-		presetCoachMock.shouldShowPresetCoach = true;
-
-		renderTaskList(<TaskList {...defaultProps} />);
-
-		expect(screen.getByTestId("preset-coach")).toBeTruthy();
-		expect(screen.getByText(getPresetCoachLine())).toBeTruthy();
-
-		fireEvent.click(screen.getByTestId("preset-coach-dismiss-btn"));
-
-		expect(markPresetCoachDismissed).toHaveBeenCalledTimes(1);
-	});
-
 	it("shows ASAP badge on active task when horizon is ASAP", () => {
 		renderTaskList(
 			<TaskList
@@ -562,6 +589,62 @@ describe("TaskList", () => {
 		expect(screen.queryByTestId("task-custom-badge")).toBeNull();
 	});
 
+	it("shows preset label when current attributes match a preset bundle", () => {
+		const preset = getPersonaPresetById("firefight");
+		expect(preset).toBeDefined();
+		if (preset == null) {
+			return;
+		}
+
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						personaPresetId: null,
+						workType: preset.workType,
+						urgency: preset.urgency,
+						importance: preset.importance,
+						effortMinutes: preset.effortMinutes,
+						commitmentHorizon: preset.commitmentHorizon,
+					}),
+				]}
+			/>,
+		);
+
+		expect(screen.getByTestId("task-persona-badge").textContent).toBe(
+			"Firefight",
+		);
+		expect(screen.queryByTestId("task-custom-badge")).toBeNull();
+	});
+
+	it("shows Custom badge when stored preset id no longer matches attributes", () => {
+		const preset = getPersonaPresetById("firefight");
+		expect(preset).toBeDefined();
+		if (preset == null) {
+			return;
+		}
+
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						personaPresetId: "firefight",
+						workType: preset.workType,
+						urgency: 1,
+						importance: preset.importance,
+						effortMinutes: preset.effortMinutes,
+						commitmentHorizon: preset.commitmentHorizon,
+					}),
+				]}
+			/>,
+		);
+
+		expect(screen.getByTestId("task-custom-badge").textContent).toBe("Custom");
+		expect(screen.queryByTestId("task-persona-badge")).toBeNull();
+	});
+
 	it("shows Custom badge with Eisenhower detail for custom persona tasks", () => {
 		renderTaskList(
 			<TaskList
@@ -585,23 +668,24 @@ describe("TaskList", () => {
 		expect(screen.queryByTestId("task-persona-badge")).toBeNull();
 	});
 
-	it("legacy tasks without personaPresetId keep Eisenhower badges", () => {
+	it("legacy tasks without personaPresetId keep Eisenhower badges when attrs match no preset", () => {
 		renderTaskList(
 			<TaskList
 				{...defaultProps}
 				tasks={[
 					makeTask({
 						personaPresetId: null,
-						workType: "OPERATIONAL",
-						urgency: 2,
-						importance: 2,
+						workType: "DEEP_WORK",
+						urgency: 3,
+						importance: 1,
+						commitmentHorizon: "WHEN_POSSIBLE",
 					}),
 				]}
 			/>,
 		);
 
-		expect(screen.getByText("Ops")).toBeTruthy();
-		expect(screen.getByText("U: Medium")).toBeTruthy();
+		expect(screen.getByText("Deep")).toBeTruthy();
+		expect(screen.getByText("U: Heavy")).toBeTruthy();
 		expect(screen.queryByTestId("task-persona-badge")).toBeNull();
 		expect(screen.queryByTestId("task-custom-badge")).toBeNull();
 	});
@@ -684,29 +768,73 @@ describe("TaskList", () => {
 			/>,
 		);
 
-		const toggle = screen.getByTestId(
-			"daily-standing-toggle",
-		) as HTMLInputElement;
-		expect(toggle.checked).toBe(false);
+		const toggle = within(
+			screen.getByTestId("task-fields-panel-create"),
+		).getByTestId("daily-standing-toggle") as HTMLInputElement;
+		expect(toggle.checked).toBe(true);
 		expect(screen.getByTestId("daily-standing-badge").textContent).toBe(
 			"Daily",
 		);
-		const standingCompleteButton = screen.getByRole("button", {
-			name: "Done for today",
-		});
-		const regularCompleteButton = screen.getByRole("button", {
+		const completeButtons = screen.getAllByRole("button", {
 			name: "Mark complete",
 		});
-		expect(standingCompleteButton.className).toContain("border-2");
-		expect(standingCompleteButton.className).toContain("h-5");
-		expect(standingCompleteButton.className).toContain("w-5");
-		expect(regularCompleteButton.className).toContain("border-2");
-		expect(regularCompleteButton.className).toContain("h-5");
-		expect(regularCompleteButton.className).toContain("w-5");
-		expect(standingCompleteButton.getAttribute("data-testid")).toBe(
-			"task-complete-button",
+		expect(completeButtons).toHaveLength(2);
+		for (const button of completeButtons) {
+			expect(button.className).toContain("border-2");
+			expect(button.className).toContain("h-5");
+			expect(button.className).toContain("w-5");
+			expect(button.getAttribute("data-testid")).toBe("task-complete-button");
+		}
+	});
+
+	it("isolates daily standing toggle between create form and inline edit", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Stand-up", isDailyStanding: true })]}
+			/>,
 		);
-		expect(regularCompleteButton.getAttribute("data-testid")).toBe(
+
+		const createToggle = within(
+			screen.getByTestId("task-fields-panel-create"),
+		).getByTestId("daily-standing-toggle") as HTMLInputElement;
+		expect(createToggle.checked).toBe(true);
+		expect(createToggle.id).toBe("daily-standing-create");
+
+		fireEvent.click(screen.getByRole("button", { name: "Stand-up" }));
+
+		const editRow = screen.getByTestId("active-task-row");
+		const editToggle = within(editRow).getByTestId(
+			"daily-standing-toggle",
+		) as HTMLInputElement;
+		expect(editToggle.checked).toBe(true);
+		expect(editToggle.id).toBe("daily-standing-edit-1");
+		expect(editToggle.id).not.toBe(createToggle.id);
+
+		fireEvent.click(within(editRow).getByText("Daily standing"));
+		expect(editToggle.checked).toBe(false);
+		expect(createToggle.checked).toBe(true);
+	});
+
+	it("done-for-today active tasks still expose a completable checkbox", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						id: 1,
+						title: "Stand-up",
+						isDailyStanding: true,
+						doneForToday: true,
+					}),
+				]}
+			/>,
+		);
+
+		const completeButton = screen.getByRole("button", {
+			name: "Mark complete",
+		});
+		expect(completeButton.getAttribute("data-testid")).toBe(
 			"task-complete-button",
 		);
 	});
@@ -731,6 +859,26 @@ describe("TaskList", () => {
 		expect(titleButton.className).toContain("text-text-dimmed");
 	});
 
+	it("shows daily standing badge on completed tasks", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({
+						id: 1,
+						title: "Stand-up",
+						status: "completed",
+						isDailyStanding: true,
+					}),
+				]}
+			/>,
+		);
+
+		expect(screen.getByTestId("daily-standing-badge").textContent).toBe(
+			"Daily",
+		);
+	});
+
 	it("opens edit panel when clicking a completed task title", () => {
 		renderTaskList(
 			<TaskList
@@ -751,7 +899,7 @@ describe("TaskList", () => {
 		expect(screen.getByTestId("task-fields-title")).toBeTruthy();
 	});
 
-	it("calls markDoneForToday for standing tasks instead of global complete", () => {
+	it("marks standing tasks complete like any other active task", () => {
 		renderTaskList(
 			<TaskList
 				{...defaultProps}
@@ -759,16 +907,13 @@ describe("TaskList", () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByRole("button", { name: "Done for today" }));
+		fireEvent.click(screen.getByRole("button", { name: "Mark complete" }));
 
-		expect(markDoneForToday).toHaveBeenCalledWith({
-			id: 1,
-			localDateKey: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
-		});
-		expect(updateTask).not.toHaveBeenCalledWith({
+		expect(updateTask).toHaveBeenCalledWith({
 			id: 1,
 			status: "completed",
 		});
+		expect(markDoneForToday).not.toHaveBeenCalled();
 	});
 
 	it("shows footprint on focused row when recap data exists", () => {

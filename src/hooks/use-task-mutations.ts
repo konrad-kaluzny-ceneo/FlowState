@@ -132,6 +132,9 @@ function normalizeUpdatePatch(
 	if (urgency != null) {
 		patch.urgency = urgency as TaskListItem["urgency"];
 	}
+	if (fields.status === "completed") {
+		patch.doneForToday = false;
+	}
 	return patch;
 }
 
@@ -502,6 +505,7 @@ export function useTaskMutations() {
 					urgency: input.urgency as 1 | 2 | 3 | undefined,
 					effortMinutes: input.effortMinutes,
 					commitmentHorizon: input.commitmentHorizon,
+					personaPresetId: input.personaPresetId ?? null,
 					isDailyStanding: input.isDailyStanding,
 				});
 			}

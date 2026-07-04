@@ -173,28 +173,59 @@ export function taskAttributesMatchPreset(
 	return true;
 }
 
+export function findMatchingPersonaPresetId(
+	task: TaskPresetAttributes,
+	options?: { preferredId?: string | null },
+): PersonaPresetId | null {
+	const preferred = options?.preferredId;
+	if (
+		preferred != null &&
+		preferred !== PERSONA_PRESET_CUSTOM_ID &&
+		getPersonaPresetById(preferred) != null &&
+		taskAttributesMatchPreset(task, preferred, { ignoreEffort: true })
+	) {
+		return preferred as PersonaPresetId;
+	}
+
+	for (const preset of TASK_PERSONA_PRESETS) {
+		if (taskAttributesMatchPreset(task, preset.id, { ignoreEffort: true })) {
+			return preset.id;
+		}
+	}
+
+	return null;
+}
+
+export function resolveTaskPersonaBadge(
+	task: TaskPresetAttributes & {
+		personaPresetId: string | null;
+	},
+): { mode: TaskBadgeDisplayMode; presetId: PersonaPresetId | null } {
+	if (task.personaPresetId === PERSONA_PRESET_CUSTOM_ID) {
+		return { mode: "custom-detail", presetId: null };
+	}
+
+	const matchingId = findMatchingPersonaPresetId(task, {
+		preferredId: task.personaPresetId,
+	});
+
+	if (matchingId != null) {
+		return { mode: "persona", presetId: matchingId };
+	}
+
+	if (task.personaPresetId == null) {
+		return { mode: "legacy", presetId: null };
+	}
+
+	return { mode: "custom-detail", presetId: null };
+}
+
 export function getTaskBadgeDisplayMode(
 	task: TaskPresetAttributes & {
 		personaPresetId: string | null;
 	},
 ): TaskBadgeDisplayMode {
-	if (task.personaPresetId == null) {
-		return "legacy";
-	}
-	if (task.personaPresetId === PERSONA_PRESET_CUSTOM_ID) {
-		return "custom-detail";
-	}
-	if (getPersonaPresetById(task.personaPresetId) == null) {
-		return "custom-detail";
-	}
-	if (
-		taskAttributesMatchPreset(task, task.personaPresetId, {
-			ignoreEffort: true,
-		})
-	) {
-		return "persona";
-	}
-	return "custom-detail";
+	return resolveTaskPersonaBadge(task).mode;
 }
 
 export function applyPersonaPresetToCreateState(

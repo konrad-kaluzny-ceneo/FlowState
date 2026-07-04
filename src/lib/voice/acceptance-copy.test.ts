@@ -65,9 +65,9 @@ describe("F-14 voice acceptance — day memory closure", () => {
 		expect(getDayMemorySectionReturnTo("en")).toBe("Return to");
 	});
 
-	it("exposes Domknięte / Zostaje / Wróć tutaj in PL", () => {
-		expect(getDayMemorySectionDone("pl")).toBe("Domknięte");
-		expect(getDayMemorySectionRemains("pl")).toBe("Zostaje");
+	it("exposes Ukończone / Aktywne / Wróć tutaj in PL", () => {
+		expect(getDayMemorySectionDone("pl")).toBe("Ukończone");
+		expect(getDayMemorySectionRemains("pl")).toBe("Aktywne");
 		expect(getDayMemorySectionReturnTo("pl")).toBe("Wróć tutaj");
 	});
 
@@ -76,12 +76,14 @@ describe("F-14 voice acceptance — day memory closure", () => {
 			buildDayMemoryCollapsedLine(
 				{
 					done: "2 zadania",
-					remaining: "3",
+					remaining: "3 zadania",
 					next: "API review",
 				},
 				"pl",
 			),
-		).toBe("Zrobione: 2 zadania. Zostało: 3. Wróć spokojnie do: API review.");
+		).toBe(
+			"Ukończone: 2 zadania. Aktywne: 3 zadania. Wróć spokojnie do: API review.",
+		);
 	});
 
 	it("builds collapsed recap line in EN within one-line budget", () => {

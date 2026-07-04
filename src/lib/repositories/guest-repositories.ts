@@ -6,6 +6,7 @@ import type {
 	TaskRepository,
 } from "~/lib/data-mode/types";
 import {
+	clearGuestTaskDoneForToday,
 	getGuestDoneForTodayTaskIds,
 	markGuestTaskDoneForToday,
 } from "~/lib/guest/day-completions";
@@ -293,6 +294,10 @@ export function createGuestTaskRepository(): TaskRepository {
 
 			if (error != null) {
 				throw new Error(error);
+			}
+
+			if (input.status === "completed") {
+				clearGuestTaskDoneForToday(String(input.id));
 			}
 		},
 

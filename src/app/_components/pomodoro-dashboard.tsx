@@ -77,7 +77,10 @@ import {
 import type { OnboardingScope, OnboardingState } from "~/lib/onboarding/types";
 import { formatDayMemory } from "~/lib/recap/format-day-memory";
 import { getBreakReentryLine } from "~/lib/session/transition-copy";
-import { getPersonaPresetLabel } from "~/lib/task/persona-presets";
+import {
+	getPersonaPresetLabel,
+	resolveTaskPersonaBadge,
+} from "~/lib/task/persona-presets";
 import { resolveWedgeBeat } from "~/lib/wedge/transition-conductor";
 
 type DayPlanView = ReturnType<typeof useDayPlan>;
@@ -196,10 +199,21 @@ export function PomodoroDashboardBody({
 			return null;
 		}
 		const task = tasks.find((t) => t.id === pending.data.taskId);
-		if (task?.personaPresetId == null || task.personaPresetId === "custom") {
+		if (task == null || task.personaPresetId === "custom") {
 			return null;
 		}
-		return getPersonaPresetLabel(task.personaPresetId, locale) ?? null;
+		const badge = resolveTaskPersonaBadge({
+			personaPresetId: task.personaPresetId,
+			workType: task.workType,
+			urgency: task.urgency,
+			importance: task.importance,
+			commitmentHorizon: task.commitmentHorizon,
+			effortMinutes: task.effortMinutes,
+		});
+		if (badge.mode !== "persona" || badge.presetId == null) {
+			return null;
+		}
+		return getPersonaPresetLabel(badge.presetId, locale) ?? null;
 	}, [pomodoro.pendingSuggestion, tasks, locale]);
 
 	const effectiveCheckInCoachLine =

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { IntlTestWrapper } from "~/i18n/test-intl";
 
 import { TaskFieldsPanel } from "./task-fields-panel";
 
@@ -62,6 +63,20 @@ describe("TaskFieldsPanel", () => {
 		expect(screen.getByTestId("daily-standing-toggle")).toBeTruthy();
 	});
 
+	it("forwards dailyStandingFieldId to the checkbox input", () => {
+		render(
+			<TaskFieldsPanel
+				dailyStandingFieldId="test-daily-id"
+				mode="edit"
+				{...defaultProps}
+			/>,
+		);
+
+		const input = document.getElementById("test-daily-id");
+		expect(input).not.toBeNull();
+		expect(input?.getAttribute("data-testid")).toBe("daily-standing-toggle");
+	});
+
 	it("renders persona preset picker only in create mode", () => {
 		render(
 			<TaskFieldsPanel
@@ -92,5 +107,22 @@ describe("TaskFieldsPanel", () => {
 			key: "Enter",
 		});
 		expect(onTitleKeyDown).toHaveBeenCalled();
+	});
+
+	it("applies ops color classes to active WHEN_POSSIBLE horizon segment", () => {
+		render(
+			<IntlTestWrapper>
+				<TaskFieldsPanel
+					mode="edit"
+					{...defaultProps}
+					commitmentHorizon="WHEN_POSSIBLE"
+				/>
+			</IntlTestWrapper>,
+		);
+
+		const whenPossible = screen.getByRole("button", { name: "When possible" });
+		expect(whenPossible.className).toContain("bg-worktype-ops-bg");
+		expect(whenPossible.className).toContain("text-worktype-ops-text");
+		expect(whenPossible.getAttribute("aria-pressed")).toBe("true");
 	});
 });

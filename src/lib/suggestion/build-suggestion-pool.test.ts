@@ -55,8 +55,7 @@ function createDb(tasks: TaskRow[]) {
 				(args: {
 					where: {
 						userId?: string;
-						status?: { not: string };
-						OR?: Array<{ status?: string; isDailyStanding?: boolean }>;
+						status?: string | { not: string };
 					};
 				}) => {
 					return Promise.resolve(
@@ -67,24 +66,11 @@ function createDb(tasks: TaskRow[]) {
 							) {
 								return false;
 							}
-							if (
-								args.where.status?.not != null &&
-								task.status === args.where.status.not
-							) {
-								return false;
+							if (typeof args.where.status === "string") {
+								return task.status === args.where.status;
 							}
-							if (args.where.OR != null) {
-								const matches = args.where.OR.some((clause) => {
-									if (clause.status != null && task.status === clause.status) {
-										return true;
-									}
-									return (
-										clause.isDailyStanding === true && task.isDailyStanding
-									);
-								});
-								if (!matches) {
-									return false;
-								}
+							if (args.where.status?.not != null) {
+								return task.status !== args.where.status.not;
 							}
 							return true;
 						}),
@@ -133,12 +119,34 @@ describe("buildSuggestionPool archive exclusion", () => {
 		expect(pool.map((task) => task.id)).toEqual([2]);
 	});
 
-	it("keeps eligible non-archived daily-standing tasks unless done today", async () => {
+	it("excludes completed daily-standing tasks from the pool", async () => {
 		const tasks = [
 			makeTask({
 				id: 1,
 				title: "Standing",
 				status: "completed",
+				isDailyStanding: true,
+			}),
+			makeTask({
+				id: 2,
+				title: "Standing active",
+				status: "active",
+				isDailyStanding: true,
+			}),
+		];
+		const db = createDb(tasks);
+
+		const pool = await buildSuggestionPool(db, USER_ID, LOCAL_DATE_KEY);
+
+		expect(pool.map((task) => task.id)).toEqual([2]);
+	});
+
+	it("excludes active daily-standing tasks marked done for today", async () => {
+		const tasks = [
+			makeTask({
+				id: 1,
+				title: "Standing",
+				status: "active",
 				isDailyStanding: true,
 			}),
 		];

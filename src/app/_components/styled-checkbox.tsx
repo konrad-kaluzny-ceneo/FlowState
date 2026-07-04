@@ -1,11 +1,14 @@
 "use client";
 
+import { useId } from "react";
+
 type StyledCheckboxProps = {
 	checked: boolean;
 	onChange: (checked: boolean) => void;
 	label: string;
 	disabled?: boolean;
 	id?: string;
+	ariaDescribedBy?: string;
 	className?: string;
 	"data-testid"?: string;
 };
@@ -16,10 +19,12 @@ export function StyledCheckbox({
 	label,
 	disabled = false,
 	id,
+	ariaDescribedBy,
 	className = "",
 	"data-testid": dataTestId,
 }: StyledCheckboxProps) {
-	const inputId = id ?? dataTestId;
+	const autoId = useId();
+	const inputId = id ?? autoId;
 
 	return (
 		<label
@@ -27,6 +32,7 @@ export function StyledCheckbox({
 			htmlFor={inputId}
 		>
 			<input
+				aria-describedby={ariaDescribedBy}
 				checked={checked}
 				className="peer sr-only"
 				data-testid={dataTestId}

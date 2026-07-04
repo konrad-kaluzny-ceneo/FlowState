@@ -7,7 +7,7 @@ import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import {
 	createTaskViaApi,
-	markStandingDoneForToday,
+	markStandingComplete,
 	seedCapacitySuggestionScenario,
 } from "./helpers/daily-plan";
 import {
@@ -109,7 +109,7 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 		}
 	});
 
-	test("standing task marked done for today is excluded from kickoff suggestions", async ({
+	test("completed daily standing task is excluded from kickoff suggestions", async ({
 		page,
 	}) => {
 		test.setTimeout(60_000);
@@ -135,7 +135,7 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 		await dismissFirstRunIfVisible(page);
 		await dismissKickoffSteeringIfVisible(page);
 
-		await markStandingDoneForToday(page, standingTitle);
+		await markStandingComplete(page, standingTitle);
 		await expect(
 			page
 				.getByRole("listitem")

@@ -1,0 +1,33 @@
+{
+	"files.eol": "\n",
+	"hooks": {
+		"afterFileEdit": [
+			{
+				"command": "node scripts/agent-hooks/lint.mjs",
+				"matcher": "Write|StrReplace|Edit",
+				"timeout": 15
+			},
+			{
+				"command": "node scripts/agent-hooks/typecheck.mjs",
+				"matcher": "Write|StrReplace|Edit",
+				"timeout": 60
+			},
+			{
+				"command": "node scripts/agent-hooks/related-tests.mjs",
+				"matcher": "Write|StrReplace|Edit",
+				"timeout": 120
+			}
+		]
+	},
+	"plugins": {
+		"prisma": {
+			"enabled": true
+		}
+	},
+	"chat.hookFilesLocations": {
+		".cursor/hooks.json": true,
+		".github/hooks": false,
+		".claude/settings.json": false,
+		".claude/settings.local.json": false
+	}
+}

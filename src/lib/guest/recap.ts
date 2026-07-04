@@ -83,15 +83,7 @@ function buildGuestSuggestionPool(
 	doneTodayIds: ReadonlySet<string>,
 ): GuestTask[] {
 	return tasks
-		.filter((task) => {
-			if (doneTodayIds.has(task.id)) {
-				return false;
-			}
-			if (task.status === "active") {
-				return true;
-			}
-			return task.isDailyStanding ?? false;
-		})
+		.filter((task) => task.status === "active" && !doneTodayIds.has(task.id))
 		.sort((a, b) => {
 			if (a.sortOrder !== b.sortOrder) {
 				return a.sortOrder - b.sortOrder;

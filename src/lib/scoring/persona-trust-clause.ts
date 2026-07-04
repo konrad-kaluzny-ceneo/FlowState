@@ -4,6 +4,8 @@ import {
 	getPersonaPresetLabel,
 	PERSONA_PRESET_CUSTOM_ID,
 	type PersonaPresetId,
+	resolveTaskPersonaBadge,
+	type TaskPresetAttributes,
 } from "~/lib/task/persona-presets";
 
 const PERSONA_TRUST_KEYS: Record<PersonaPresetId, string> = {
@@ -40,6 +42,17 @@ export function buildPersonaTrustClause(
 		locale,
 	)(hintKey);
 	return `${label} — ${hint}.`;
+}
+
+export function buildPersonaTrustClauseForTask(
+	task: TaskPresetAttributes & { personaPresetId: string | null },
+	locale: UserLocale = "en",
+): string | null {
+	const badge = resolveTaskPersonaBadge(task);
+	if (badge.mode !== "persona" || badge.presetId == null) {
+		return null;
+	}
+	return buildPersonaTrustClause(badge.presetId, locale);
 }
 
 export function composeSuggestionRationale(

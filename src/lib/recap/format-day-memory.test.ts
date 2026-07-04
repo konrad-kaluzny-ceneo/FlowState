@@ -277,7 +277,7 @@ describe("formatDayMemory — collapsed line composition", () => {
 		});
 
 		expect(result.collapsedLine).toBe(
-			"Zrobione: 1 zadanie. Zostało: 3 otwarte. Wróć spokojnie do: Przegląd API.",
+			"Ukończone: 1 zadanie. Aktywne: 3 zadania. Wróć spokojnie do: Przegląd API.",
 		);
 	});
 
@@ -325,7 +325,7 @@ describe("formatDayMemory — collapsed line composition", () => {
 		});
 
 		expect(result.collapsedLine).toBe(
-			"Zrobione: 1 zadanie. Zostało: 0 otwartych.",
+			"Ukończone: 1 zadanie. Aktywne: 0 zadań.",
 		);
 	});
 });
@@ -357,9 +357,9 @@ describe("formatDayMemory — PL plural boundaries (1 / 2 / 5)", () => {
 	});
 
 	it.each([
-		[1, "1 otwarte"],
-		[2, "2 otwarte"],
-		[5, "5 otwartych"],
+		[1, "1 zadanie"],
+		[2, "2 zadania"],
+		[5, "5 zadań"],
 	])("renders remainingCount=%i as %s inside the PL collapsed line", (count, expected) => {
 		const recap = buildRecap({
 			todayPlan: Array.from({ length: count }, (_, index) => ({

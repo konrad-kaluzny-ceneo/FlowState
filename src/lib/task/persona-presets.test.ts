@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
 	applyPersonaPresetToCreateState,
+	findMatchingPersonaPresetId,
 	getPersonaPresetById,
 	getPersonaPresetLabel,
 	getTaskBadgeDisplayMode,
 	PERSONA_PRESET_CUSTOM_ID,
+	resolveTaskPersonaBadge,
 	TASK_PERSONA_PRESETS,
 	taskAttributesMatchPreset,
 } from "./persona-presets";
@@ -117,13 +119,13 @@ describe("persona-presets", () => {
 		).toBe(false);
 	});
 
-	it("getTaskBadgeDisplayMode returns legacy for null personaPresetId", () => {
+	it("getTaskBadgeDisplayMode returns legacy when attrs match no preset", () => {
 		expect(
 			getTaskBadgeDisplayMode({
 				personaPresetId: null,
-				workType: "OPERATIONAL",
-				urgency: 2,
-				importance: 2,
+				workType: "DEEP_WORK",
+				urgency: 3,
+				importance: 1,
 				commitmentHorizon: "WHEN_POSSIBLE",
 				effortMinutes: null,
 			}),
@@ -162,7 +164,20 @@ describe("persona-presets", () => {
 		).toBe("custom-detail");
 	});
 
-	it("getTaskBadgeDisplayMode returns custom-detail for unknown stored id", () => {
+	it("getTaskBadgeDisplayMode returns custom-detail for unknown stored id when attrs match no preset", () => {
+		expect(
+			getTaskBadgeDisplayMode({
+				personaPresetId: "deep-planning",
+				workType: "DEEP_WORK",
+				urgency: 3,
+				importance: 1,
+				commitmentHorizon: "WHEN_POSSIBLE",
+				effortMinutes: 5,
+			}),
+		).toBe("custom-detail");
+	});
+
+	it("getTaskBadgeDisplayMode returns persona for unknown stored id when attrs match a preset", () => {
 		expect(
 			getTaskBadgeDisplayMode({
 				personaPresetId: "deep-planning",
@@ -172,10 +187,10 @@ describe("persona-presets", () => {
 				commitmentHorizon: "THIS_WEEK",
 				effortMinutes: 60,
 			}),
-		).toBe("custom-detail");
+		).toBe("persona");
 	});
 
-	it("getTaskBadgeDisplayMode returns custom-detail when non-effort attrs diverge", () => {
+	it("getTaskBadgeDisplayMode returns custom-detail when non-effort attrs diverge from stored preset", () => {
 		const preset = getPersonaPresetById("focus");
 		expect(preset).toBeDefined();
 		if (preset == null) {
@@ -192,5 +207,61 @@ describe("persona-presets", () => {
 				effortMinutes: preset.effortMinutes,
 			}),
 		).toBe("custom-detail");
+	});
+
+	it("findMatchingPersonaPresetId resolves preset from current attributes", () => {
+		const preset = getPersonaPresetById("firefight");
+		expect(preset).toBeDefined();
+		if (preset == null) {
+			return;
+		}
+
+		expect(
+			findMatchingPersonaPresetId({
+				workType: preset.workType,
+				urgency: preset.urgency,
+				importance: preset.importance,
+				commitmentHorizon: preset.commitmentHorizon,
+				effortMinutes: 99,
+			}),
+		).toBe("firefight");
+	});
+
+	it("getTaskBadgeDisplayMode returns persona when attrs match preset without stored id", () => {
+		const preset = getPersonaPresetById("synchro");
+		expect(preset).toBeDefined();
+		if (preset == null) {
+			return;
+		}
+
+		expect(
+			getTaskBadgeDisplayMode({
+				personaPresetId: null,
+				workType: preset.workType,
+				urgency: preset.urgency,
+				importance: preset.importance,
+				commitmentHorizon: preset.commitmentHorizon,
+				effortMinutes: null,
+			}),
+		).toBe("persona");
+	});
+
+	it("resolveTaskPersonaBadge returns matching preset id for label lookup", () => {
+		const preset = getPersonaPresetById("firefight");
+		expect(preset).toBeDefined();
+		if (preset == null) {
+			return;
+		}
+
+		expect(
+			resolveTaskPersonaBadge({
+				personaPresetId: "focus",
+				workType: preset.workType,
+				urgency: preset.urgency,
+				importance: preset.importance,
+				commitmentHorizon: preset.commitmentHorizon,
+				effortMinutes: preset.effortMinutes,
+			}),
+		).toEqual({ mode: "persona", presetId: "firefight" });
 	});
 });

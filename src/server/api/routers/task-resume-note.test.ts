@@ -26,6 +26,17 @@ vi.mock("~/server/db/index", () => ({
 			}),
 			delete: vi.fn(() => Promise.resolve({ id: 1 })),
 		},
+		taskDayCompletion: {
+			deleteMany: vi.fn(() => Promise.resolve({ count: 0 })),
+		},
+		$transaction: vi.fn(
+			async (ops: Array<Promise<unknown>> | ((tx: unknown) => unknown)) => {
+				if (typeof ops === "function") {
+					return ops((await import("~/server/db/index")).db);
+				}
+				return Promise.all(ops);
+			},
+		),
 	},
 }));
 

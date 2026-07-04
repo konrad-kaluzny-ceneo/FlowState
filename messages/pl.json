@@ -42,8 +42,7 @@
 			"suggestion": "Przyjmij sugestię lub wybierz Skup się przy dowolnym innym zadaniu — zawsze decydujesz Ty.",
 			"postMergeCheckIn": "Skoro już się zalogowałeś, to sprawdzenie odblokowuje spersonalizowane sugestie następnych zadań.",
 			"postMergeSuggestion": "FlowState wybrał to na podstawie Twojej energii — przyjmij lub wybierz dowolne zadanie.",
-			"postMergeSuggestionWithPreset": "Twój zestaw {preset} pomógł dopasować ten wybór — przyjmij lub wybierz dowolne zadanie.",
-			"preset": "Zestawy wstępnie ustawiają typ pracy i priorytet — wybierz Własny, jeśli chcesz pełną kontrolę."
+			"postMergeSuggestionWithPreset": "Twój zestaw {preset} pomógł dopasować ten wybór — przyjmij lub wybierz dowolne zadanie."
 		},
 		"authValue": {
 			"signInSubtitle": "Uważne cykle skupienia na Twoich zadaniach — zaloguj się, aby odblokować pełne sesje, sprawdzanie energii i sugestie dopasowane do sesji.",
@@ -101,7 +100,7 @@
 			"closureNoEnergy": "{prefix} — {stats}. Złap oddech.",
 			"feelingEnergy": "czujesz się {energy}",
 			"cycleCount": "{count, plural, one {# cykl} few {# cykle} many {# cykli} other {# cyklu}}",
-			"taskDone": "{count, plural, =0 {} one {# zadanie zrobione} few {# zadania zrobione} many {# zadań zrobionych} other {# zadania zrobione}}",
+			"taskDone": "{count, plural, =0 {} one {# zadanie ukończone} few {# zadania ukończone} many {# zadań ukończonych} other {# zadania ukończone}}",
 			"separator": " · ",
 			"statsSeparator": ", "
 		},
@@ -220,9 +219,9 @@
 		}
 	},
 	"Tasks": {
-		"axisLight": "Lekkie",
-		"axisMedium": "Średnie",
-		"axisHeavy": "Ciężkie",
+		"axisLight": "Niska",
+		"axisMedium": "Średnia",
+		"axisHeavy": "Wysoka",
 		"urgencyPrefix": "P: ",
 		"importancePrefix": "W: ",
 		"asap": "ASAP",
@@ -248,9 +247,9 @@
 		"sectionCompleted": "Ukończone ({count})",
 		"revertAria": "Przywróć do aktywnych",
 		"workType": {
-			"DEEP_WORK": "Głęboka",
-			"OPERATIONAL": "Operacyjna",
-			"REACTIVE": "Reaktywna"
+			"DEEP_WORK": "Głębokie",
+			"OPERATIONAL": "Operacyjne",
+			"REACTIVE": "Reaktywne"
 		},
 		"persona": {
 			"focus": "Skupienie",
@@ -325,17 +324,17 @@
 	},
 	"HomeFocusSummary": {
 		"budgetLine": "Wykorzystano {used} z {budget} godzin skupienia · zostało {remaining}",
-		"standingOpen": "{count, plural, one {# codzienne zadanie stałe otwarte} few {# codzienne zadania stałe otwarte} many {# codziennych zadań stałych otwartych} other {# codziennego zadania stałego otwartego}}",
-		"standingDone": "{count, plural, one {# codzienne zadanie stałe domknięte na dziś} few {# codzienne zadania stałe domknięte na dziś} many {# codziennych zadań stałych domkniętych na dziś} other {# codziennego zadania stałego domkniętego na dziś}}"
+		"standingOpen": "{count, plural, one {# codzienne zadanie stałe aktywne} few {# codzienne zadania stałe aktywne} many {# codziennych zadań stałych aktywnych} other {# codziennego zadania stałego aktywnego}}",
+		"standingDone": "{count, plural, one {# codzienne zadanie stałe ukończone na dziś} few {# codzienne zadania stałe ukończone na dziś} many {# codziennych zadań stałych ukończonych na dziś} other {# codziennego zadania stałego ukończonego na dziś}}"
 	},
 	"DayMemory": {
-		"sectionDone": "Domknięte",
-		"sectionRemains": "Zostaje",
+		"sectionDone": "Ukończone",
+		"sectionRemains": "Aktywne",
 		"sectionReturnTo": "Wróć tutaj",
-		"collapsedLine": "Zrobione: {done}. Zostało: {remaining}. Wróć spokojnie do: {next}.",
-		"collapsedLineNoReturn": "Zrobione: {done}. Zostało: {remaining}.",
+		"collapsedLine": "Ukończone: {done}. Aktywne: {remaining}. Wróć spokojnie do: {next}.",
+		"collapsedLineNoReturn": "Ukończone: {done}. Aktywne: {remaining}.",
 		"doneCount": "{count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}}",
-		"remainingCount": "{count, plural, one {# otwarte} few {# otwarte} many {# otwartych} other {# otwarte}}"
+		"remainingCount": "{count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}}"
 	},
 	"CycleComplete": {
 		"breakHeading": "Koniec przerwy!",
@@ -375,10 +374,10 @@
 		"dismiss": "Zamknij"
 	},
 	"Recap": {
-		"markedDone": "Oznaczono jako zrobione · {title}",
+		"markedDone": "Oznaczono jako ukończone · {title}",
 		"rowFormat": "{label} · {minutes} min · {range}",
 		"todayDailyTag": "Codzienne",
-		"todayDoneTag": "Zrobione dziś",
+		"todayDoneTag": "Ukończone dziś",
 		"title": "Codzienne podsumowanie",
 		"dismissAria": "Zamknij codzienne podsumowanie",
 		"sectionLast24": "Ostatnie 24 godziny",
@@ -537,7 +536,11 @@
 		"permissionTitle": "Powiadomienia o przerwie w innych kartach",
 		"permissionDescription": "Gdy jesteś w innej karcie, FlowState może wysłać spokojne powiadomienie i odtworzyć dźwięk przerwy, gdy się ona rozpocznie. Możesz to wyłączyć w każdej chwili w ustawieniach przerwy.",
 		"enableNotifications": "Włącz powiadomienia",
-		"notNow": "Nie teraz"
+		"notNow": "Nie teraz",
+		"settingsToggleLabel": "Powiadom mnie, gdy zacznie się przerwa (inna karta)",
+		"permissionDeniedHint": "Powiadomienia są zablokowane w przeglądarce. Nadal możesz odtwarzać dźwięk w tle, gdy ta opcja jest włączona.",
+		"tryAgain": "Spróbuj ponownie",
+		"permissionDefaultHint": "Nadal potrzebne jest zezwolenie przeglądarki — wyłącz i włącz ponownie lub zezwól, gdy pojawi się prośba."
 	},
 	"Kickoff": {
 		"suggestedDuration": "Sugerowany czas pracy",

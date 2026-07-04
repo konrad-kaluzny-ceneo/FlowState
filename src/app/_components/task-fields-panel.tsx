@@ -149,7 +149,7 @@ function EisenhowerAttributeFields({
 					colorMap={{
 						ASAP: "bg-worktype-reactive-bg text-worktype-reactive-text",
 						THIS_WEEK: "bg-worktype-deep-bg text-worktype-deep-text",
-						WHEN_POSSIBLE: "bg-surface-panel text-text-section",
+						WHEN_POSSIBLE: "bg-worktype-ops-bg text-worktype-ops-text",
 					}}
 					onChange={(value) =>
 						onCommitmentHorizonChange(value as CommitmentHorizon)
@@ -173,6 +173,7 @@ export type TaskFieldsPanelProps = {
 	resumeNote?: string;
 	onResumeNoteChange?: (value: string) => void;
 	resumeNoteFieldId?: string;
+	dailyStandingFieldId?: string;
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	onWorkTypeChange: (value: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE") => void;
 	urgency: 1 | 2 | 3;
@@ -199,6 +200,7 @@ export function TaskFieldsPanel({
 	resumeNote = "",
 	onResumeNoteChange,
 	resumeNoteFieldId,
+	dailyStandingFieldId,
 	workType,
 	onWorkTypeChange,
 	urgency,
@@ -260,6 +262,7 @@ export function TaskFieldsPanel({
 			<StyledCheckbox
 				checked={isDailyStanding}
 				data-testid="daily-standing-toggle"
+				id={dailyStandingFieldId}
 				label={t("dailyStanding")}
 				onChange={onIsDailyStandingChange}
 			/>

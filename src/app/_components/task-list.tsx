@@ -17,6 +17,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Plus, Target } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import type { FocusEvent, PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
@@ -25,7 +26,6 @@ import {
 	TaskFieldsPanel,
 	TITLE_FIELD_CLASS,
 } from "~/app/_components/task-fields-panel";
-import { usePresetCoachOnboarding } from "~/hooks/use-onboarding-state";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { formatEndedAgo } from "~/lib/catch-up/format-ended-ago";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
@@ -39,16 +39,14 @@ import {
 	WORK_TYPE_CONFIG,
 } from "~/lib/design/work-type-config";
 import type { UserLocale } from "~/lib/domain/user-locale";
-import { getPresetCoachLine } from "~/lib/onboarding/copy";
 import type { TaskFootprint } from "~/lib/recap/types";
 import {
 	applyPersonaPresetToCreateState,
 	DEFAULT_CREATE_FORM_ATTRIBUTES,
 	getPersonaPresetLabel,
-	getTaskBadgeDisplayMode,
 	type PersonaPresetId,
+	resolveTaskPersonaBadge,
 } from "~/lib/task/persona-presets";
-import { formatLocalDateKey } from "~/lib/time/local-date-key";
 
 function axisLabel(
 	level: 1 | 2 | 3,
@@ -121,7 +119,7 @@ function TaskBadges({
 	t: ReturnType<typeof useTranslations<"Tasks">>;
 }) {
 	const dimClass = dimmed ? "opacity-60" : "";
-	const displayMode = getTaskBadgeDisplayMode({
+	const badge = resolveTaskPersonaBadge({
 		personaPresetId,
 		workType,
 		urgency,
@@ -129,6 +127,7 @@ function TaskBadges({
 		commitmentHorizon,
 		effortMinutes,
 	});
+	const displayMode = badge.mode;
 
 	if (displayMode === "legacy") {
 		return (
@@ -145,8 +144,8 @@ function TaskBadges({
 		);
 	}
 
-	if (displayMode === "persona") {
-		const label = getPersonaPresetLabel(personaPresetId ?? "", locale);
+	if (displayMode === "persona" && badge.presetId != null) {
+		const label = getPersonaPresetLabel(badge.presetId, locale);
 		const config = WORK_TYPE_CONFIG[workType];
 		return (
 			<span className={`flex min-w-0 flex-wrap items-center gap-1 ${dimClass}`}>
@@ -238,6 +237,10 @@ type SortableActiveTaskRowProps = {
 	canMidCycleMarkComplete: boolean;
 	focusLocked: boolean;
 	editPanelRef?: React.RefObject<HTMLDivElement | null>;
+	onEditPanelBlur: (event: FocusEvent<HTMLDivElement>) => void;
+	onEditPanelPointerDownCapture: (
+		event: ReactPointerEvent<HTMLDivElement>,
+	) => void;
 	onCommitEdit: () => void | Promise<void>;
 	onStartEditing: (task: DomainTask) => void | Promise<void>;
 	onSetEditingId: (id: DomainTaskId | null) => void;
@@ -258,7 +261,6 @@ type SortableActiveTaskRowProps = {
 	}) => Promise<void>;
 	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void | Promise<void>;
 	onDeleteTask: (input: { id: DomainTaskId }) => Promise<void>;
-	onMarkDoneForToday: (taskId: DomainTaskId) => void;
 	completingTaskId: DomainTaskId | null;
 	onBeginComplete: (taskId: DomainTaskId) => void;
 	footprints: Record<string, TaskFootprint>;
@@ -287,6 +289,8 @@ function SortableActiveTaskRow({
 	canMidCycleMarkComplete,
 	focusLocked,
 	editPanelRef,
+	onEditPanelBlur,
+	onEditPanelPointerDownCapture,
 	onCommitEdit,
 	onStartEditing,
 	onSetEditingId,
@@ -302,7 +306,6 @@ function SortableActiveTaskRow({
 	onUpdateTask,
 	onFocusTask,
 	onDeleteTask,
-	onMarkDoneForToday,
 	completingTaskId,
 	onBeginComplete,
 	footprints,
@@ -335,7 +338,9 @@ function SortableActiveTaskRow({
 
 	return (
 		<li
-			className={`flex max-w-full flex-col gap-2 overflow-hidden rounded-lg border border-transparent bg-surface-card px-4 py-3 ${
+			className={`flex max-w-full flex-col gap-2 ${
+				editingId === task.id ? "overflow-visible" : "overflow-hidden"
+			} rounded-lg border border-transparent bg-surface-card px-4 py-3 ${
 				focusedTaskId === task.id ? "ring-2 ring-focus" : ""
 			} ${
 				isHighlightedRow ? "ring-2 ring-accent-suggestion" : ""
@@ -363,58 +368,36 @@ function SortableActiveTaskRow({
 				>
 					⋮⋮
 				</button>
-				{task.doneForToday ? (
-					<span
-						className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-accent-success bg-accent-success/20 text-accent-success text-xs"
-						title={t("doneForTodayTitle")}
-					>
-						✓
-					</span>
-				) : (
-					<button
-						aria-label={
-							task.isDailyStanding
-								? t("markDoneForTodayAria")
-								: t("markCompleteAria")
+				<button
+					aria-label={t("markCompleteAria")}
+					className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
+					data-testid="task-complete-button"
+					disabled={markCompleteLocked || isMutating}
+					onClick={() => {
+						if (canMidCycleMarkComplete && onMidCycleMarkComplete != null) {
+							onMidCycleMarkComplete(task.id, task);
+							return;
 						}
-						className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
-						data-testid="task-complete-button"
-						disabled={markCompleteLocked || isMutating}
-						onClick={() => {
-							if (task.isDailyStanding) {
-								onMarkDoneForToday(task.id);
-								return;
-							}
 
-							if (canMidCycleMarkComplete && onMidCycleMarkComplete != null) {
-								onMidCycleMarkComplete(task.id, task);
-								return;
-							}
-
-							onBeginComplete(task.id);
-							void onUpdateTask({
-								id: task.id,
-								status: "completed",
-							});
-						}}
-						type="button"
-					/>
-				)}
+						onBeginComplete(task.id);
+						void onUpdateTask({
+							id: task.id,
+							status: "completed",
+						});
+					}}
+					type="button"
+				/>
 				{editingId === task.id ? (
 					// biome-ignore lint/a11y/noStaticElementInteractions: focus-outside commit when leaving edit panel
 					<div
 						className="min-w-0 flex-1 space-y-2"
-						onBlur={(event) => {
-							const next = event.relatedTarget;
-							if (next instanceof Node && event.currentTarget.contains(next)) {
-								return;
-							}
-							void onCommitEdit();
-						}}
+						onBlur={onEditPanelBlur}
+						onPointerDownCapture={onEditPanelPointerDownCapture}
 						ref={editPanelRef}
 					>
 						<TaskFieldsPanel
 							commitmentHorizon={editCommitmentHorizon}
+							dailyStandingFieldId={`daily-standing-edit-${String(task.id)}`}
 							effortMinutes={editEffortMinutes}
 							importance={editImportance}
 							isDailyStanding={editIsDailyStanding}
@@ -569,15 +552,12 @@ export function TaskList({
 	const locale = useLocale() as UserLocale;
 	const t = useTranslations("Tasks");
 	const mode = useDataMode();
-	const { shouldShowPresetCoach, markPresetCoachDismissed } =
-		usePresetCoachOnboarding();
 	const addTaskInputRef = useRef<HTMLInputElement>(null);
 	const {
 		createTask,
 		updateTask,
 		deleteTask,
 		reorderTasks,
-		markDoneForToday,
 		isMutating,
 		isCreating,
 		error,
@@ -605,7 +585,7 @@ export function TaskList({
 		useState<CommitmentHorizon>(
 			DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon,
 		);
-	const [newIsDailyStanding, setNewIsDailyStanding] = useState(false);
+	const [newIsDailyStanding, setNewIsDailyStanding] = useState(true);
 
 	function resetCreateFormState() {
 		setNewTitle("");
@@ -616,7 +596,7 @@ export function TaskList({
 		setNewImportance(DEFAULT_CREATE_FORM_ATTRIBUTES.importance);
 		setNewEffortMinutes(DEFAULT_CREATE_FORM_ATTRIBUTES.effortMinutes);
 		setNewCommitmentHorizon(DEFAULT_CREATE_FORM_ATTRIBUTES.commitmentHorizon);
-		setNewIsDailyStanding(false);
+		setNewIsDailyStanding(true);
 	}
 
 	function applyPresetToCreateForm(presetId: PersonaPresetId) {
@@ -713,19 +693,53 @@ export function TaskList({
 
 	const editPanelRef = useRef<HTMLDivElement | null>(null);
 	const commitInFlightRef = useRef<Promise<void> | null>(null);
+	const blurCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const editDraftRef = useRef({
+		editingId: null as DomainTaskId | null,
+		editTitle: "",
+		editWorkType: "OPERATIONAL" as "DEEP_WORK" | "OPERATIONAL" | "REACTIVE",
+		editUrgency: 2 as 1 | 2 | 3,
+		editImportance: 2 as 1 | 2 | 3,
+		editEffortMinutes: "",
+		editCommitmentHorizon: "WHEN_POSSIBLE" as CommitmentHorizon,
+		editResumeNote: "",
+		editIsDailyStanding: false,
+	});
+
+	editDraftRef.current = {
+		editingId,
+		editTitle,
+		editWorkType,
+		editUrgency,
+		editImportance,
+		editEffortMinutes,
+		editCommitmentHorizon,
+		editResumeNote,
+		editIsDailyStanding,
+	};
+
+	const cancelPendingBlurCommit = useCallback(() => {
+		if (blurCommitTimerRef.current != null) {
+			clearTimeout(blurCommitTimerRef.current);
+			blurCommitTimerRef.current = null;
+		}
+	}, []);
 
 	const commitEditIfDirty = useCallback(async () => {
+		cancelPendingBlurCommit();
+
 		if (commitInFlightRef.current) {
 			await commitInFlightRef.current;
 			return;
 		}
 
-		if (editingId == null) {
-			return;
-		}
-
 		const run = async () => {
-			if (!editTitle.trim()) {
+			const draft = editDraftRef.current;
+			if (draft.editingId == null) {
+				return;
+			}
+
+			if (!draft.editTitle.trim()) {
 				setEditingId(null);
 				setEditTitle("");
 				setEditResumeNote("");
@@ -733,17 +747,19 @@ export function TaskList({
 			}
 
 			await updateTask({
-				id: editingId,
-				title: editTitle.trim(),
-				workType: editWorkType,
-				urgency: editUrgency,
-				weight: editUrgency,
-				importance: editImportance,
-				effortMinutes: parseEffortMinutes(editEffortMinutes),
-				commitmentHorizon: editCommitmentHorizon,
+				id: draft.editingId,
+				title: draft.editTitle.trim(),
+				workType: draft.editWorkType,
+				urgency: draft.editUrgency,
+				weight: draft.editUrgency,
+				importance: draft.editImportance,
+				effortMinutes: parseEffortMinutes(draft.editEffortMinutes),
+				commitmentHorizon: draft.editCommitmentHorizon,
 				resumeNote:
-					editResumeNote.trim().length > 0 ? editResumeNote.trim() : null,
-				isDailyStanding: editIsDailyStanding,
+					draft.editResumeNote.trim().length > 0
+						? draft.editResumeNote.trim()
+						: null,
+				isDailyStanding: draft.editIsDailyStanding,
 			});
 			setEditingId(null);
 			setEditTitle("");
@@ -757,18 +773,34 @@ export function TaskList({
 		} finally {
 			commitInFlightRef.current = null;
 		}
-	}, [
-		editingId,
-		editTitle,
-		editWorkType,
-		editUrgency,
-		editImportance,
-		editEffortMinutes,
-		editCommitmentHorizon,
-		editResumeNote,
-		editIsDailyStanding,
-		updateTask,
-	]);
+	}, [updateTask, cancelPendingBlurCommit]);
+
+	const handleEditPanelBlur = useCallback(
+		(event: FocusEvent<HTMLDivElement>) => {
+			const next = event.relatedTarget;
+			if (next instanceof Node && event.currentTarget.contains(next)) {
+				return;
+			}
+			cancelPendingBlurCommit();
+			blurCommitTimerRef.current = setTimeout(() => {
+				blurCommitTimerRef.current = null;
+				void commitEditIfDirty();
+			}, 0);
+		},
+		[cancelPendingBlurCommit, commitEditIfDirty],
+	);
+
+	const handleEditPanelPointerDownCapture = useCallback(() => {
+		cancelPendingBlurCommit();
+	}, [cancelPendingBlurCommit]);
+
+	useEffect(() => {
+		if (editingId == null) {
+			cancelPendingBlurCommit();
+		}
+	}, [editingId, cancelPendingBlurCommit]);
+
+	useEffect(() => () => cancelPendingBlurCommit(), [cancelPendingBlurCommit]);
 
 	useEffect(() => {
 		if (editingId == null) {
@@ -808,15 +840,6 @@ export function TaskList({
 		setEditResumeNote(task.resumeNote ?? "");
 		setEditIsDailyStanding(task.isDailyStanding);
 	}
-
-	const localDateKey = formatLocalDateKey();
-
-	const handleMarkDoneForToday = useCallback(
-		(taskId: DomainTaskId) => {
-			void markDoneForToday({ id: taskId, localDateKey });
-		},
-		[localDateKey, markDoneForToday],
-	);
 
 	const handleFocusTask = useCallback(
 		async (taskId: DomainTaskId, task: DomainTask) => {
@@ -910,6 +933,7 @@ export function TaskList({
 				</div>
 				<TaskFieldsPanel
 					commitmentHorizon={newCommitmentHorizon}
+					dailyStandingFieldId="daily-standing-create"
 					effortMinutes={newEffortMinutes}
 					importance={newImportance}
 					includeTitle={false}
@@ -936,12 +960,6 @@ export function TaskList({
 					}}
 					personaPresetPicker={
 						<PersonaPresetPicker
-							coachLine={
-								shouldShowPresetCoach ? getPresetCoachLine(locale) : undefined
-							}
-							onDismissCoach={
-								shouldShowPresetCoach ? markPresetCoachDismissed : undefined
-							}
 							onSelectCustom={() => {
 								setShowCustomPanel(true);
 								markCreateFormCustom();
@@ -1033,8 +1051,11 @@ export function TaskList({
 										onBeginComplete={beginCompleteAnimation}
 										onCommitEdit={commitEditIfDirty}
 										onDeleteTask={deleteTask}
+										onEditPanelBlur={handleEditPanelBlur}
+										onEditPanelPointerDownCapture={
+											handleEditPanelPointerDownCapture
+										}
 										onFocusTask={handleFocusTask}
-										onMarkDoneForToday={handleMarkDoneForToday}
 										onMidCycleMarkComplete={onMidCycleMarkComplete}
 										onSetEditCommitmentHorizon={setEditCommitmentHorizon}
 										onSetEditEffortMinutes={setEditEffortMinutes}
@@ -1068,7 +1089,9 @@ export function TaskList({
 					<ul className="space-y-2">
 						{completedTasks.map((task) => (
 							<li
-								className="flex max-w-full flex-col gap-2 overflow-hidden rounded-lg border border-transparent bg-surface-card-muted px-4 py-3"
+								className={`flex max-w-full flex-col gap-2 ${
+									editingId === task.id ? "overflow-visible" : "overflow-hidden"
+								} rounded-lg border border-transparent bg-surface-card-muted px-4 py-3`}
 								key={String(task.id)}
 							>
 								<div className="flex w-full min-w-0 items-start gap-2">
@@ -1088,20 +1111,13 @@ export function TaskList({
 										// biome-ignore lint/a11y/noStaticElementInteractions: focus-outside commit when leaving edit panel
 										<div
 											className="min-w-0 flex-1 space-y-2"
-											onBlur={(event) => {
-												const next = event.relatedTarget;
-												if (
-													next instanceof Node &&
-													event.currentTarget.contains(next)
-												) {
-													return;
-												}
-												void commitEditIfDirty();
-											}}
+											onBlur={handleEditPanelBlur}
+											onPointerDownCapture={handleEditPanelPointerDownCapture}
 											ref={editPanelRef}
 										>
 											<TaskFieldsPanel
 												commitmentHorizon={editCommitmentHorizon}
+												dailyStandingFieldId={`daily-standing-edit-${String(task.id)}`}
 												effortMinutes={editEffortMinutes}
 												importance={editImportance}
 												isDailyStanding={editIsDailyStanding}
@@ -1144,17 +1160,27 @@ export function TaskList({
 								</div>
 								{editingId !== task.id && (
 									<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-7">
-										<TaskBadges
-											commitmentHorizon={task.commitmentHorizon}
-											dimmed
-											effortMinutes={task.effortMinutes}
-											importance={task.importance}
-											locale={locale}
-											personaPresetId={task.personaPresetId}
-											t={t}
-											urgency={task.urgency}
-											workType={task.workType}
-										/>
+										<span className="flex min-w-0 flex-wrap items-center gap-1">
+											{task.isDailyStanding && (
+												<span
+													className="rounded-full bg-accent-suggestion/20 px-2 py-0.5 font-medium text-accent-suggestion text-xs opacity-60"
+													data-testid="daily-standing-badge"
+												>
+													{t("daily")}
+												</span>
+											)}
+											<TaskBadges
+												commitmentHorizon={task.commitmentHorizon}
+												dimmed
+												effortMinutes={task.effortMinutes}
+												importance={task.importance}
+												locale={locale}
+												personaPresetId={task.personaPresetId}
+												t={t}
+												urgency={task.urgency}
+												workType={task.workType}
+											/>
+										</span>
 										<button
 											aria-label={t("deleteAria")}
 											className="shrink-0 px-1 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
