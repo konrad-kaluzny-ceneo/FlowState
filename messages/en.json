@@ -42,8 +42,7 @@
 			"suggestion": "Accept the suggestion or tap Focus on any other task — you're always in control.",
 			"postMergeCheckIn": "Now that you're signed in, this check-in unlocks personalized next-task suggestions.",
 			"postMergeSuggestion": "FlowState picked this based on your energy — accept it or choose any task.",
-			"postMergeSuggestionWithPreset": "Your {preset} preset helped shape this pick — accept it or choose any task.",
-			"preset": "Presets pre-fill work type and priority — tap Custom if you want full control."
+			"postMergeSuggestionWithPreset": "Your {preset} preset helped shape this pick — accept it or choose any task."
 		},
 		"authValue": {
 			"signInSubtitle": "Mindful focus cycles on your tasks — sign in to unlock full sessions, energy check-ins, and session-aware suggestions.",
@@ -537,7 +536,11 @@
 		"permissionTitle": "Break alerts in other tabs",
 		"permissionDescription": "When you are in another tab, FlowState can send a calm notification and play your break chime when a break starts. You can turn this off anytime in break settings.",
 		"enableNotifications": "Enable notifications",
-		"notNow": "Not now"
+		"notNow": "Not now",
+		"settingsToggleLabel": "Alert me when break starts (other tab)",
+		"permissionDeniedHint": "Notifications are blocked in your browser. You can still get background audio when this is on.",
+		"tryAgain": "Try again",
+		"permissionDefaultHint": "Browser permission is still needed — toggle off and on, or allow when prompted."
 	},
 	"Kickoff": {
 		"suggestedDuration": "Suggested work duration",

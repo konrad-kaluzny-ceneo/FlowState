@@ -397,27 +397,27 @@ No DB migration. Onboarding localStorage may retain `presetCoachDismissed: true/
 
 #### Automated
 
-- [x] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
-- [x] 2.2 `pnpm check`
-- [x] 2.3 `pnpm test`
+- [x] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx` — 2ee2e26
+- [x] 2.2 `pnpm check` — 2ee2e26
+- [x] 2.3 `pnpm test` — 2ee2e26
 
 #### Manual
 
-- [x] 2.4 Create form defaults checked; resets checked after submit
-- [x] 2.5 Created task shows daily-standing badge when left checked
+- [x] 2.4 Create form defaults checked; resets checked after submit — 2ee2e26
+- [x] 2.5 Created task shows daily-standing badge when left checked — 2ee2e26
 
 ### Phase 3: BreakAlerts i18n (D-11)
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run src/app/_components/out-of-tab-break-alerts-control.test.tsx src/i18n/messages-parity.test.ts`
-- [ ] 3.2 `pnpm check`
-- [ ] 3.3 `pnpm test`
+- [x] 3.1 `pnpm exec vitest run src/app/_components/out-of-tab-break-alerts-control.test.tsx src/i18n/messages-parity.test.ts`
+- [x] 3.2 `pnpm check`
+- [x] 3.3 `pnpm test`
 
 #### Manual
 
-- [ ] 3.4 PL locale: toggle label and hints translated
-- [ ] 3.5 Denied-permission retry button translated in PL
+- [x] 3.4 PL locale: toggle label and hints translated
+- [x] 3.5 Denied-permission retry button translated in PL
 
 ### Phase 4: Preset Coach Removal + Belt (D-02)
 
