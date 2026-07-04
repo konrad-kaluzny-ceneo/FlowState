@@ -3,7 +3,7 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-07-02
+updated: 2026-07-04
 structure: split
 active_slices: [stateful-illustration-system]
 prd_version: 3
@@ -95,6 +95,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-42 | mindful-day-memory | [FLO-90](https://linear.app/flowstate-10xdev/issue/FLO-90/flowstate-mindful-day-memory-s-42) | [#174](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/174) | S-30 phase 2 — Domknięte/Zostaje/Wróć tutaj narrative; formatter only | S-30, S-18; soft F-14 | **US-03** craft | done |
 | S-43 | stateful-illustration-system | [FLO-91](https://linear.app/flowstate-10xdev/issue/FLO-91/flowstate-stateful-illustration-system-s-43) | [#175](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/175) | S-28 phase 2 — state-bound Calm Garden on hero/rail; not on gates | S-28, F-06, F-07, S-39 | Secondary | in review |
 | S-44 | archive-old-tasks | [FLO-94](https://linear.app/flowstate-10xdev/issue/FLO-94/flowstate-stale-task-archive-view-bulk-delete-s-44) | [#178](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/178) | review stale tasks in archive view; multi-select + permanent delete | S-09, S-13 | **US-05** | done |
+| S-45 | ui-refactor | — | — | (epic — phased in plan.md) experience the makiety redesign: 5-section nav (Fokus/Zadania/Plan dnia/Podsumowanie/Ustawienia), green retint, ring timer, minimal task cards + add-task modal, once-per-day steering | S-40, S-41, S-43, F-06 | **ui-refactor PRD thread** (2 amendments) | new |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -121,6 +122,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | Q | PRD v3 quality hardening | S-39 → **Q-08** → **Q-09** | Q-08 test-plan Phase 8 (risks #8–#12); Q-09 test-plan Phase 5 mutation oracle hardening (risks #1–#6) |
 | R | UX/UI story chapter | **F-14** → **S-40** → **S-41** → **S-42** → **S-43** | UX/UI craft after quality hardening; expand batch 7; S-43 may parallel S-41 once rail slot exists |
 | S | Task inventory hygiene | **S-44** | Stale-task archive + bulk delete; parallel S-40 for nav placement |
+| T | UI redesign (makiety) | **S-45** (phased in plan.md) | Builds on Stream R craft (S-40/S-41/S-43) + F-06 tokens; nav shell + 5 sections + green retint; 2 PRD amendments (Podsumowanie charts, Ustawienia page); graphics entry-gated |
 
 ## Backlog Handoff
 
@@ -157,6 +159,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-42 | mindful-day-memory | **no** | S-30 phase 2; formatter only; after F-14; best after S-40/S-41 |
 | S-43 | stateful-illustration-system | **yes** | S-28 phase 2 absorption; may parallel S-41 once rail slot exists; S-41 shipped — rail slot exists |
 | S-44 | archive-old-tasks | **yes** | task inventory hygiene; soft dep S-40 for archive entry placement |
+| S-45 | ui-refactor | **yes** | redesign epic; research + scope locked (`context/changes/ui-refactor/`); phased internally in plan.md (Tier 0 token restyle → Tier 1 Fokus recompose → Tier 2 nav shell + Zadania → Podsumowanie/Ustawienia). **Blocking prereqs:** 2 PRD amendments (registered in prd.md thread) + user-supplied graphics for photo-hero phases. Create Linear/GitHub pair before/at plan. |
 
 **Recommended next:** **S-41** `desktop-calm-workbench` — Stream R desktop layout; hard dep S-40 shipped.
 
