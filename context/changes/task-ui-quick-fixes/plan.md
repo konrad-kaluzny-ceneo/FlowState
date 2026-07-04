@@ -397,14 +397,14 @@ No DB migration. Onboarding localStorage may retain `presetCoachDismissed: true/
 
 #### Automated
 
-- [ ] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
-- [ ] 2.2 `pnpm check`
-- [ ] 2.3 `pnpm test`
+- [x] 2.1 `pnpm exec vitest run src/app/_components/task-list.test.tsx`
+- [x] 2.2 `pnpm check`
+- [x] 2.3 `pnpm test`
 
 #### Manual
 
-- [ ] 2.4 Create form defaults checked; resets checked after submit
-- [ ] 2.5 Created task shows daily-standing badge when left checked
+- [x] 2.4 Create form defaults checked; resets checked after submit
+- [x] 2.5 Created task shows daily-standing badge when left checked
 
 ### Phase 3: BreakAlerts i18n (D-11)
 
