@@ -62,6 +62,20 @@ describe("TaskFieldsPanel", () => {
 		expect(screen.getByTestId("daily-standing-toggle")).toBeTruthy();
 	});
 
+	it("forwards dailyStandingFieldId to the checkbox input", () => {
+		render(
+			<TaskFieldsPanel
+				dailyStandingFieldId="test-daily-id"
+				mode="edit"
+				{...defaultProps}
+			/>,
+		);
+
+		const input = document.getElementById("test-daily-id");
+		expect(input).not.toBeNull();
+		expect(input?.getAttribute("data-testid")).toBe("daily-standing-toggle");
+	});
+
 	it("renders persona preset picker only in create mode", () => {
 		render(
 			<TaskFieldsPanel

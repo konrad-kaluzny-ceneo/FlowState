@@ -415,6 +415,7 @@ function SortableActiveTaskRow({
 					>
 						<TaskFieldsPanel
 							commitmentHorizon={editCommitmentHorizon}
+							dailyStandingFieldId={`daily-standing-edit-${String(task.id)}`}
 							effortMinutes={editEffortMinutes}
 							importance={editImportance}
 							isDailyStanding={editIsDailyStanding}
@@ -910,6 +911,7 @@ export function TaskList({
 				</div>
 				<TaskFieldsPanel
 					commitmentHorizon={newCommitmentHorizon}
+					dailyStandingFieldId="daily-standing-create"
 					effortMinutes={newEffortMinutes}
 					importance={newImportance}
 					includeTitle={false}
@@ -1102,6 +1104,7 @@ export function TaskList({
 										>
 											<TaskFieldsPanel
 												commitmentHorizon={editCommitmentHorizon}
+												dailyStandingFieldId={`daily-standing-edit-${String(task.id)}`}
 												effortMinutes={editEffortMinutes}
 												importance={editImportance}
 												isDailyStanding={editIsDailyStanding}

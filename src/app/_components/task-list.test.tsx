@@ -684,9 +684,9 @@ describe("TaskList", () => {
 			/>,
 		);
 
-		const toggle = screen.getByTestId(
-			"daily-standing-toggle",
-		) as HTMLInputElement;
+		const toggle = within(
+			screen.getByTestId("task-fields-panel-create"),
+		).getByTestId("daily-standing-toggle") as HTMLInputElement;
 		expect(toggle.checked).toBe(false);
 		expect(screen.getByTestId("daily-standing-badge").textContent).toBe(
 			"Daily",
@@ -709,6 +709,35 @@ describe("TaskList", () => {
 		expect(regularCompleteButton.getAttribute("data-testid")).toBe(
 			"task-complete-button",
 		);
+	});
+
+	it("isolates daily standing toggle between create form and inline edit", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Stand-up", isDailyStanding: true })]}
+			/>,
+		);
+
+		const createToggle = within(
+			screen.getByTestId("task-fields-panel-create"),
+		).getByTestId("daily-standing-toggle") as HTMLInputElement;
+		expect(createToggle.checked).toBe(false);
+		expect(createToggle.id).toBe("daily-standing-create");
+
+		fireEvent.click(screen.getByRole("button", { name: "Stand-up" }));
+
+		const editRow = screen.getByTestId("active-task-row");
+		const editToggle = within(editRow).getByTestId(
+			"daily-standing-toggle",
+		) as HTMLInputElement;
+		expect(editToggle.checked).toBe(true);
+		expect(editToggle.id).toBe("daily-standing-edit-1");
+		expect(editToggle.id).not.toBe(createToggle.id);
+
+		fireEvent.click(within(editRow).getByText("Daily standing"));
+		expect(editToggle.checked).toBe(false);
+		expect(createToggle.checked).toBe(false);
 	});
 
 	it("does not use line-through on done-for-today active task titles", () => {
