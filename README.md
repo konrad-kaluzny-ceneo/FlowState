@@ -1,6 +1,39 @@
 # FlowState
 
-A Pomodoro-based productivity app that combines focused work sessions with adaptive task suggestions and mindful transitions. Built for knowledge workers who face constant context-switching and want to end the day feeling calm and in control — not overstimulated.
+Przestań walczyć z listą zadań. Zacznij naprawdę pracować.
+
+FlowState pomaga pracować spokojniej i skuteczniej. Planuj dzień, wybieraj jedno najważniejsze zadanie i realizuj je w sesjach głębokiego skupienia, bez ciągłego przełączania uwagi i poczucia przytłoczenia.
+
+![FlowState](./promo-header.png)
+
+## Odzyskaj spokój w pracy
+
+FlowState to aplikacja stworzona dla osób, które chcą odzyskać kontrolę nad swoim dniem pracy. Zamiast kolejnego rozbudowanego menedżera zadań otrzymujesz spokojne środowisko, które pomaga skupić się na jednej rzeczy naraz i ograniczyć ciągłe przełączanie uwagi.
+
+Aplikacja łączy świadome planowanie dnia, sesje Pomodoro oraz zasady Deep Work, dzięki czemu łatwiej utrzymać koncentrację i realizować zadania, które naprawdę mają znaczenie. FlowState prowadzi Cię przez cały proces: od zaplanowania dnia, przez wybór najważniejszego zadania, aż po podsumowanie wykonanej pracy.
+
+Interfejs został zaprojektowany tak, aby nie rozpraszał. Na ekranie widzisz tylko to, czego potrzebujesz w danym momencie, dzięki czemu możesz skupić się na pracy zamiast na zarządzaniu kolejną listą zadań.
+
+## Co oferuje FlowState?
+
+- Planowanie dnia z podziałem na sesje pracy i przerwy.
+- Minimalistyczne zarządzanie zadaniami.
+- Sesje Pomodoro wspierające zdrowy rytm pracy.
+- Ograniczenie przełączania kontekstu poprzez pracę nad jednym zadaniem.
+- Statystyki pomagające budować dobre nawyki, zamiast rozliczać z produktywności.
+
+## Dla kogo?
+
+FlowState powstał z myślą o programistach, testerach, projektantach, freelancerach, managerach i wszystkich osobach pracujących umysłowo, które każdego dnia mierzą się z nadmiarem zadań, spotkań i rozpraszaczy.
+
+## Nasza filozofia
+
+Nie chodzi o robienie większej liczby rzeczy. Chodzi o wykonywanie właściwych zadań we właściwym czasie, z pełnym skupieniem i bez poczucia ciągłego chaosu.
+
+**FlowState. Mniej chaosu. Więcej skupienia.**
+
+![FlowState](./promo.png)
+
 
 ## What it does
 
