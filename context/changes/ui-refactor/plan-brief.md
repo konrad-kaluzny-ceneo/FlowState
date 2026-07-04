@@ -29,6 +29,8 @@ A calm, timer-centric **Fokus** screen (ring timer, current task, day progress, 
 | `project` field | Freeform string + typeahead | Minimal model/migration; no CRUD entity | Plan |
 | `planned` lifecycle | Planned = manual backlog; daily-standing stay active; focusing auto-promotes | Coherent plan-vs-execute split without starving the focus engine | Plan |
 | Focus hero | Immersive full-bleed only during active work | Uses the asset meaningfully without cluttering idle | Plan |
+| Guest route access | All 5 routes guest-public | Preserves today's no-account trial through the route split | Plan (review) |
+| Airier scale | Introduce `--radius-*`/`--text-*` tokens | No such tokens exist today; keeps scale single-source per DESIGN.md | Plan (review) |
 | Sequencing | Restyle-first, shell-last | Earliest payoff; riskiest cycle-lift lands last against finished pieces | Plan |
 
 ## Scope
@@ -58,14 +60,15 @@ Build the aesthetic substrate (tokens → primitives) first, then the two touchy
 | 11. Nav shell + routes | Sidebar/bottom nav + real routes | Timer must survive navigation |
 | 12. Hero + polish + regression | Remaining heroes, responsive/dark/a11y sweep | Regression surface across all views |
 
-**Prerequisites:** Graphics delivered (`public/images/heroes/`); PRD amendments landed; visx to be added in Phase 8. Stay on `features/mvp-defect-intake` (merges soon).
+**Prerequisites:** Graphics delivered (`public/images/heroes/`); PRD amendments landed; visx to be added in Phase 8 (in `dependencies`, not `devDependencies`). Work lands on `features/ui-refactor`.
 **Estimated effort:** Large — ~12 phases; roughly 8–12 focused sessions, front-loaded on aesthetics, back-loaded on the shell/lift integration.
 
 ## Open Risks & Assumptions
 
-- Lifting the ~3,600-line cycle hook is a wrap, not a rewrite — assumed the hook's `renderHook` tests stay valid with only consumers switching to context. Verified feasible; still the riskiest phase.
-- Defaulting new tasks to `planned` changes creation UX and the suggestion pool; mitigated by the daily-standing exception + focus auto-promotion, but needs thorough test coverage.
-- Some Podsumowanie widgets (best-time-of-day, date navigation) are deferred with placeholders — the dashboard won't be 100% pixel-complete vs. the mockup this pass.
+- Lifting the ~3,750-line cycle hook is more than a context wrap: the hook takes 4 page-derived props and sits above the auth/guest task-source branch, so those must be lifted too, and `pomodoro-dashboard.test.tsx`'s module-path hook mock needs reworking. The hook's own `renderHook` tests do stay valid. Still the riskiest phase, and must mount exactly once (per-instance Worker + `visibilitychange` listener).
+- Defaulting new tasks to `planned` touches `status` at 4+ enforcement sites — two fail hard if missed: the mapper allow-list throws in dev, and the guest Zod enum silently discards the whole snapshot (data loss). The default fork must be mirrored in 3 creation paths.
+- The route split will bounce guests to sign-in unless the guest-public allow-list (`public-paths.ts`) is widened to all 5 routes — decided in, but easy to forget.
+- Some Podsumowanie widgets (best-time-of-day, date navigation) are deferred with placeholders — the dashboard won't be 100% pixel-complete vs. the mockup this pass. The session-type donut needs an "uncategorized" bucket for cycles with no task (`taskId` is nullable).
 
 ## Success Criteria (Summary)
 

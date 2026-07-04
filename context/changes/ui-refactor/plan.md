@@ -49,7 +49,10 @@ Build the aesthetic substrate (tokens, primitives) first, then the two touchy is
 - **Cycle-lift ordering (Phase 10).** The provider must be mounted **above** every route that renders the timer or reads cycle state, but **below** `TRPCReactProvider`/`ThemeProvider`. `DataModeProvider` moves up with it (the cycle hook depends on data-mode repositories). The Worker/fallback-interval lifecycle must remain a **single instance** — mounting the provider twice would double-tick. Guard with the existing visibility-recalc path ([use-pomodoro-cycle.ts:817](src/hooks/use-pomodoro-cycle.ts)).
 - **Wedge/overlay discipline (Phases 6, 10, 11).** Lessons L-"wedge" ([context/foundation/lessons.md](context/foundation/lessons.md)) warns transition/overlay changes regress into dead-ends. The day-start gate (Phase 6) and any nav-driven state transition (Phase 11) each need a **dismiss-oracle test** proving the gate cannot trap the user.
 - **Latency contract (L-04).** Each new interactive surface (modal save, nav switch, inline promote-to-active, chart render) needs its own perceived-latency guard, not just a slice-level one.
-- **Planned lifecycle fork.** Tasks created in the **Zadania view** default to `planned` and are **excluded from the Fokus suggestion/kickoff pool**; **daily-standing** tasks are created `active`; **focusing/starting** a planned task auto-promotes it to `active`. Two creation paths with different defaults — both must be covered by tests.
+- **Planned lifecycle fork.** Tasks created in the **Zadania view** default to `planned` and are **excluded from the Fokus suggestion/kickoff pool**; **daily-standing** tasks are created `active`; **focusing/starting** a planned task auto-promotes it to `active`. The `isDailyStanding ? active : planned` default must be written in **three synchronized places** (server router, guest repo, optimistic client — all default to `active` today); miss one and modes diverge.
+- **`planned` breaks on read at two enforcement sites the schema change doesn't cover.** The mapper allow-list (`task-mapper.ts:9-13`) **throws in dev** on an unknown DB status; the guest Zod enum (`guest/schema.ts:16`) **silently discards the whole guest snapshot** (data loss) on an unknown status. Both must gain `"planned"` in Phase 4, not just the domain type.
+- **Route split must not lock out guests (Phase 11).** Only `/` is guest-public today (`public-paths.ts:6`); `proxy.ts` redirects all other unauthenticated paths to sign-in. All 5 new routes must be added to the guest allow-list (per decision) or the no-account trial regresses.
+- **Cycle provider single-mount (Phase 10).** The hook spawns a per-instance Worker and a document `visibilitychange` listener; the provider must mount **exactly once**. It also consumes 4 page-derived props + the auth/guest task source, which must be lifted alongside `DataModeProvider` — this is not a pure context wrap.
 
 ---
 
@@ -65,9 +68,11 @@ Retint the accent taupe → muted green and move the radius/type/spacing scale t
 
 **File**: `src/styles/globals.css`
 
-**Intent**: Replace the taupe CTA/active/focus accents with the mockup's muted green, and bump the radius/type/spacing tokens so the UI "breathes." Verify the dark `@theme` block gets a parallel retint so dark-mode parity holds.
+**Intent**: Replace the taupe CTA/active/focus accents with the mockup's muted green, and introduce a radius/type scale so the UI "breathes." Verify the dark `@theme` block gets a parallel retint so dark-mode parity holds.
 
-**Contract**: Edit the light `@theme` tokens ([globals.css:12](src/styles/globals.css)) and dark tokens ([globals.css:70](src/styles/globals.css)). Retarget `--color-accent-cta` (from `#736d62`), `--color-segment-active`, and the focus-ring token to the green family; keep the existing semantic greens (`accent-break`, `accent-success`) distinct so break/success semantics don't collide with the new primary. Raise the max radius above `0.75rem` and base body size above `0.875rem` per the mockup. No hard-coded hex outside this file — all consumers read tokens.
+**Contract**: Edit the light `@theme` tokens ([globals.css:3-67](src/styles/globals.css)) and dark tokens ([globals.css:70-119](src/styles/globals.css)). Retarget the three green targets by their **exact token names**: `--color-accent-cta` (from `#736d62`, plus `--color-accent-cta-hover`/`--color-on-cta`), `--color-segment-active` (**currently the same taupe `#736d62` — must be retinted in the same pass or it mismatches the CTA**), and `--color-focus-ring` (the alias `--color-focus` follows it). Keep the existing semantic greens `--color-accent-break` (`#3d8f82`) and `--color-accent-success` (`#3a8f65`) distinct so break/success semantics don't collide with the new primary.
+
+**Scale — introduce tokens (per decision):** no radius or base-text-size tokens exist today (radii/type are ad-hoc Tailwind utility classes). Add new `--radius-*` and `--text-*` (or equivalent) tokens to the `@theme` block for the airier mockup scale, and migrate the key consumers (cards, timer, task rows) to read them, so the scale has a single source of truth per DESIGN.md. Also retint the one non-tokenized hard-coded color in a touched component: the `bg-red-600 hover:bg-red-500` interrupt button ([timer-panel.tsx:182](src/app/_components/timer-panel.tsx)) → a danger token, since a token-only retint won't reach it. (The only other hex outside `globals.css` is the Google-logo SVG in `google-sign-in-button.tsx` — intentional brand color, leave it.)
 
 #### 2. Canonical spec sync
 
@@ -168,7 +173,9 @@ Replace the numeric mono countdown with a circular SVG ring, driven by the exist
 
 **Intent**: Render the countdown as the mockup's large central ring with the time and phase label inside, while keeping all start/pause/resume/interrupt controls and their behavior.
 
-**Contract**: Compute `progress = (configuredDurationMs - remainingMs) / configuredDurationMs` and render an SVG ring (stroke-dasharray) tinted with the green accent token; keep the numeric time as the ring's center label ([timer-panel.tsx:152](src/app/_components/timer-panel.tsx)). No change to the Worker/fallback ticking lifecycle ([use-pomodoro-cycle.ts:744](src/hooks/use-pomodoro-cycle.ts)) or to `remainingMs` semantics. Preserve existing test-visible labels/roles or update tests deliberately.
+**Contract**: Compute `progress = (configuredDurationMs - remainingMs) / configuredDurationMs` and render an SVG ring (stroke-dasharray) tinted with the green accent token; keep the numeric time as the ring's center label ([timer-panel.tsx:151-158](src/app/_components/timer-panel.tsx)). **The total duration is NOT currently a `TimerPanel` prop** — only `remainingMs` is passed ([timer-panel.tsx:47](src/app/_components/timer-panel.tsx), fed from `pomodoro.remainingMs`). Thread the total in as a new prop from `activeCycle.configuredDurationSec` (exposed by the hook) — the panel cannot compute progress without it. No change to the Worker/fallback ticking lifecycle or to `remainingMs` semantics.
+
+**Test/a11y contract to preserve** ([timer-panel.test.tsx](src/app/_components/timer-panel.test.tsx)): keep the `timer-countdown` testid holding the formatted time text; keep testids `timer-panel-idle`/`-running`/`-paused`, `timer-pause`/`-interrupt`/`-resume`; keep the `region` named "Focus timer" and the button labels. **Critical:** the countdown element must remain **without `aria-live`** (the tests assert its absence) — the animated ring must not introduce a live region around the time.
 
 #### 2. Ring component (optional extraction)
 
@@ -205,13 +212,17 @@ Add the `project` freeform field and the `planned` status value across the model
 
 ### Changes Required:
 
-#### 1. Domain type + guest schema
+#### 1. Domain type + guest schema + status enforcement sites
 
-**File**: `src/lib/data-mode/types.ts`, `src/lib/guest/schema.ts`
+**File**: `src/lib/data-mode/types.ts`, `src/lib/guest/schema.ts`, `src/lib/persistence/prisma/task-mapper.ts`
 
-**Intent**: Extend the domain to carry `project` and the new status.
+**Intent**: Extend the domain to carry `project` and the new status — and add `"planned"` at **every** enforcement site, not just the domain type, or planned tasks break on read.
 
-**Contract**: `DomainTaskStatus` gains `"planned"` ([types.ts:26](src/lib/data-mode/types.ts)); `DomainTask` gains `project: string | null` (after `resumeNote`). Mirror both in `guestTaskSchema` ([guest/schema.ts:13](src/lib/guest/schema.ts)) with graceful defaults for existing local snapshots (`project` → `null`; unknown status tolerated).
+**Contract**: `DomainTaskStatus` gains `"planned"` ([types.ts:26](src/lib/data-mode/types.ts)); `DomainTask` gains `project: string | null` (after `resumeNote`, [types.ts:43](src/lib/data-mode/types.ts)). Also widen the `TaskRepository.update` status union ([types.ts:103](src/lib/data-mode/types.ts)).
+
+**Two enforcement sites the naive change misses (both fail hard):**
+- **Mapper allow-list** — `DOMAIN_TASK_STATUSES` ([task-mapper.ts:9-13](src/lib/persistence/prisma/task-mapper.ts)) is a hardcoded `["active","completed","archived"]`; `toDomainTaskStatus` **throws `Unexpected task status from database` in dev** (silently coerces to `active` in prod) for any `planned` row read back. Add `"planned"` here. Map `project` in the mapper too ([task-mapper.ts:27-51](src/lib/persistence/prisma/task-mapper.ts)).
+- **Guest Zod enum** — `guestTaskSchema.status` is `z.enum(["active","completed","archived"])` ([guest/schema.ts:16](src/lib/guest/schema.ts)); on a `planned` value `parseGuestSnapshot` **discards the ENTIRE snapshot** (`→ createEmptyGuestSnapshot()`, [schema.ts:162-168](src/lib/guest/schema.ts)) — silent guest data loss. Add `"planned"` to this enum **and** the `GuestTask` TS type ([schema.ts:37](src/lib/guest/schema.ts)). A new optional `project` key is safe (schema strips unknowns; not `.strict()`).
 
 #### 2. Prisma column
 
@@ -227,15 +238,20 @@ Add the `project` freeform field and the `planned` status value across the model
 
 **Intent**: Accept/return `project`, allow the `planned` status in transitions, and implement default-status + promotion rules.
 
-**Contract**: Add `project` to `create`/`update` inputs; widen `update`'s status enum ([task.ts:134](src/server/api/routers/task.ts)) to include `"planned"`. `create` gains an explicit status: **default `planned`** for standard creates, **`active`** when `isDailyStanding` is true. Add/extend a promotion path so starting/focusing a task sets `status: "active"` (auto-promote). Map `project` in `task-mapper.ts`. Keep `reorder`/`markDoneForToday` operating on `active` only.
+**Contract**: Add `project` to `create`/`update` inputs; widen `update`'s status enum ([task.ts:134](src/server/api/routers/task.ts), currently `z.enum(["active","completed"])`) to include `"planned"`. Add/extend a promotion path so starting/focusing a task sets `status: "active"` (auto-promote). Keep `reorder`/`markDoneForToday` operating on `active` only. `isDailyStanding` already exists on the create input ([task.ts:89](src/server/api/routers/task.ts)).
 
-#### 4. Suggestion-pool exclusion
+**Default-status fork must be written in THREE synchronized places.** `create` sets **no** status today ([task.ts:104-125](src/server/api/routers/task.ts)) — it relies on the DB default `active`. The new rule `status = isDailyStanding ? "active" : "planned"` is a first-time explicit write, and it must be mirrored identically in all three creation paths or guest/optimistic tasks silently diverge to `active`:
+- server router `create` ([task.ts:104-125](src/server/api/routers/task.ts));
+- guest repo `create` ([guest-repositories.ts:196](src/lib/guest/guest-repositories.ts), currently hardcodes `status: "active" as const`);
+- optimistic client `buildOptimisticCreateRow` ([use-task-mutations.ts:86](src/app/_components/use-task-mutations.ts), hardcodes `status: "active"`).
 
-**File**: `src/lib/recap/*` / suggestion source (the "done today"/kickoff pool builder)
+#### 4. Suggestion-pool exclusion (five filter sites + one leak)
 
-**Intent**: Ensure `planned` tasks never surface as Fokus suggestions until promoted.
+**File**: `src/lib/suggestion/build-suggestion-pool.ts`, `src/server/api/routers/suggestion.ts`, `src/lib/guest/recap.ts`, `src/hooks/use-pomodoro-cycle.ts`
 
-**Contract**: Wherever the kickoff/suggestion pool filters tasks, restrict to `status === "active"`. Verify no path pulls `planned` into focus candidates.
+**Intent**: Ensure `planned` tasks never surface as Fokus suggestions/kickoff candidates until promoted.
+
+**Contract**: The pool is filtered to `status === "active"` in several places — since the filter is *inclusive of active only*, `planned` is excluded for free at the server pool ([build-suggestion-pool.ts:48-56](src/lib/suggestion/build-suggestion-pool.ts), which also powers recap's todayPlan via [build-daily-recap.ts:75](src/lib/recap/build-daily-recap.ts)), the ownership re-check ([suggestion.ts:128](src/server/api/routers/suggestion.ts),`:135`), and the guest path ([guest/recap.ts:86](src/lib/guest/recap.ts)). **The one real leak:** `taskPoolHasKickoffCandidates` ([use-pomodoro-cycle.ts:144-156](src/hooks/use-pomodoro-cycle.ts)) gates the kickoff wedge with `status === "active" || task.isDailyStanding` — a `planned` **and** `isDailyStanding` task would slip through the `|| isDailyStanding` branch. Per this plan's lifecycle daily-standing tasks are created `active`, so this shouldn't occur — but the invariant is implicit; add a test asserting a `planned` daily-standing row (if constructible) never enters kickoff, or tighten the branch.
 
 ### Success Criteria:
 
@@ -252,6 +268,7 @@ Add the `project` freeform field and the `planned` status value across the model
 - Focusing/starting a planned task promotes it to `active`.
 - A `planned` task never appears as a focus suggestion until promoted.
 - Existing tasks (all `active`) are unaffected after migration.
+- A `planned` task round-trips through the mapper without throwing, and a guest snapshot containing a `planned` task loads without being silently dropped.
 
 **Implementation Note**: After automated verification passes, pause for manual confirmation before proceeding.
 
@@ -424,7 +441,7 @@ Build the analytics dashboard: KPI cards, per-hour focus bar chart, session-type
 
 **Intent**: Add the low-level, CSS-variable-themeable visx primitives.
 
-**Contract**: Add `@visx/*` packages (shape/scale/group/axis as needed). No wrapper UI kit; charts are hand-composed to match DESIGN.md.
+**Contract**: Add `@visx/*` packages (shape/scale/group/axis as needed) to **`dependencies`, not `devDependencies`** — the error-level `not-to-dev-dep` depcruise rule ([.dependency-cruiser.cjs:137-156](.dependency-cruiser.cjs)) fails the build if production `src/**` imports a devDependency. No wrapper UI kit; charts are hand-composed to match DESIGN.md.
 
 #### 2. Recap-query augmentation + aggregation
 
@@ -432,7 +449,7 @@ Build the analytics dashboard: KPI cards, per-hour focus bar chart, session-type
 
 **Intent**: Expose the data the charts need — per-hour focus buckets, per-`workType` totals, and task done/partial/undone counts — for today.
 
-**Contract**: Extend the recap query to also select `task.workType` ([build-daily-recap.ts:38](src/lib/recap/build-daily-recap.ts)). Add an aggregation util that bins completed WORK `Cycle` rows by `startedAt` hour and by `workType`, and computes KPI totals (tasks X/Y, focus minutes, session count, avg length). Map "partial" = tasks with focus cycles but not `completed`. Return via the recap tRPC procedure ([recap.ts:10](src/server/api/routers/recap.ts)).
+**Contract**: Extend the recap query to also select `task.workType` ([build-daily-recap.ts:38](src/lib/recap/build-daily-recap.ts), currently `{ id, title }` only; thread `workType` through `CycleWithTask`/`RecapTaskRow` too). Add an aggregation util that bins completed WORK `Cycle` rows (`kind=WORK`, `state=COMPLETED`, `startedAt` within today) by hour and by `workType`, and computes KPI totals (tasks X/Y, focus minutes, session count, avg length). **`Cycle.taskId` is nullable** — cycles with no task have no `workType`; give the session-type donut an explicit **"uncategorized"** bucket rather than dropping them. Map "partial" = tasks with focus cycles but not `completed`. Return via the recap tRPC procedure ([recap.ts:10](src/server/api/routers/recap.ts)); `buildDailyRecap` uses a rolling 24h window, so a new aggregation (or a sibling procedure) is the clean seam.
 
 #### 3. Podsumowanie view + charts
 
@@ -518,7 +535,9 @@ Isolate the single riskiest change: lift `usePomodoroCycle` (and `DataModeProvid
 
 **Intent**: Wrap the existing hook once and expose its value via context, guaranteeing a single Worker/interval instance.
 
-**Contract**: Provider calls `usePomodoroCycle` ([use-pomodoro-cycle.ts:360](src/hooks/use-pomodoro-cycle.ts)) and provides its return object; `usePomodoroCycleContext()` consumes it. The hook itself is unchanged (its `renderHook` tests stay valid). Mounted once, above all timer/cycle consumers.
+**Contract**: Provider (a `"use client"` wrapper) calls `usePomodoroCycle` ([use-pomodoro-cycle.ts:360](src/hooks/use-pomodoro-cycle.ts), ~3,750 lines, ~90-field return) and provides its return object; `usePomodoroCycleContext()` consumes it. The hook's own `renderHook` tests stay valid — they `vi.mock` `data-mode-context` and never mount a real provider ([use-pomodoro-cycle.test.tsx](src/hooks/use-pomodoro-cycle.test.tsx)). Mounted **exactly once** — a second mount double-ticks (per-instance Worker at [:791](src/hooks/use-pomodoro-cycle.ts)) and double-fires the document `visibilitychange` listener ([:1161](src/hooks/use-pomodoro-cycle.ts)).
+
+**The hook is NOT a pure context consumer — it takes 4 page-derived props.** At its single call site ([pomodoro-dashboard.tsx:176-184](src/app/_components/pomodoro-dashboard.tsx)) it receives `getCycleEndAudioMode`, `getOutOfTabBreakAlertsEnabled`, `activeTaskIds`, and `continueTasks` — all derived inside the dashboard from `tasks` + preference hooks scoped to `onboardingScope`/`DataMode`. Those inputs (the task source and the two preference resolvers) must be lifted to the provider too, not just the hook call. This is the real cost of the phase, and it interacts with #2 below.
 
 #### 2. Move providers up + switch consumers
 
@@ -526,7 +545,9 @@ Isolate the single riskiest change: lift `usePomodoroCycle` (and `DataModeProvid
 
 **Intent**: Relocate `DataModeProvider` and the new cycle provider to a shared layout position, and point consumers at the context.
 
-**Contract**: Place `PomodoroCycleProvider` (+ `DataModeProvider`) below `TRPCReactProvider`/`ThemeProvider` and above the content ([layout.tsx:33](src/app/layout.tsx)). `PomodoroDashboardBody` stops instantiating the hook ([pomodoro-dashboard.tsx:43](src/app/_components/pomodoro-dashboard.tsx)) and reads `usePomodoroCycleContext()`. Keep `OnboardingProvider`/`GuestMergeUiProvider`/`HomeIllustrationVariantProvider` scoping intact (move only what the cycle depends on).
+**Contract**: Place `PomodoroCycleProvider` (+ `DataModeProvider`) below `NextIntlClientProvider`/`TRPCReactProvider`/`ThemeProvider` and around `{children}` ([layout.tsx:72-77](src/app/layout.tsx)) — the layout stays an async server component, so the provider is a client wrapper inserted around children. `DataModeProvider` currently lives page-scoped at [home-shell.tsx:79](src/app/_components/home-shell.tsx); lifting it means restructuring `home-shell.tsx` and touching `page.tsx`. `PomodoroDashboardBody` stops instantiating the hook ([pomodoro-dashboard.tsx:176](src/app/_components/pomodoro-dashboard.tsx)) and reads `usePomodoroCycleContext()`. Keep `OnboardingProvider`/`GuestMergeUiProvider`/`HomeIllustrationVariantProvider` scoping intact (move only what the cycle depends on).
+
+**Resolve the auth/guest task source above the branch.** Today `PomodoroDashboard` branches on `useDataMode()` into `AuthenticatedPomodoroDashboard` (`useDomainTasks`/Suspense) vs `GuestPomodoroDashboard` (`useGuestDomainTasks`) ([pomodoro-dashboard.tsx:1252-1257](src/app/_components/pomodoro-dashboard.tsx)), each building `tasks` differently. Since the hook now lives above this branch, the task source + preference resolvers it needs must be resolved at the provider level for both modes.
 
 #### 3. Test wrapper updates
 
@@ -534,7 +555,7 @@ Isolate the single riskiest change: lift `usePomodoroCycle` (and `DataModeProvid
 
 **Intent**: Consumer tests now need the provider wrapper.
 
-**Contract**: Wrap render trees in `PomodoroCycleProvider` (or a test double). `use-pomodoro-cycle.test.tsx` (hook-level) remains as-is.
+**Contract**: `pomodoro-dashboard.test.tsx` currently mocks the hook by module path (`vi.mock("~/hooks/use-pomodoro-cycle", …)`) and injects `usePomodoroCycleMock` — this breaks when the body reads from context instead of calling the hook. Switch those tests to **mock the new context hook** (`usePomodoroCycleContext`) or wrap render trees in `PomodoroCycleProvider` with a test double. `home-shell.test.tsx` is affected by the provider re-nesting too. `use-pomodoro-cycle.test.tsx`/`-guest.test.tsx` (hook-level, `renderHook`) remain as-is.
 
 ### Success Criteria:
 
@@ -569,15 +590,17 @@ Introduce the sidebar (desktop) + bottom nav (mobile) and split the app into rea
 
 **Intent**: Replace the bare top bar with the mockup's sidebar + mobile bottom nav (Fokus / Zadania / Plan dnia / Podsumowanie / Ustawienia) with lucide icons and active-state highlighting.
 
-**Contract**: Sidebar on desktop, fixed bottom nav on mobile (same 5 sections); brand mark (`CalmGardenSprig`) at top; notification/user controls in the header row per mockup. Nav labels via next-intl (extend the `Navbar` namespace, currently only `brand`). Active section derived from the route.
+**Contract**: Sidebar on desktop, fixed bottom nav on mobile (same 5 sections); brand mark (`CalmGardenSprig`) at top; notification/user controls in the header row per mockup. Nav labels via next-intl — extend the `Navbar` namespace (currently only `brand`) in **both** repo-root catalogs `messages/en.json` and `messages/pl.json`, or the `messages-parity.test.ts` fails. Active section derived from the route.
 
-#### 2. Routes
+#### 2. Routes + guest-public allow-list
 
-**File**: `src/app/focus/page.tsx`, `src/app/tasks/page.tsx`, `src/app/plan/page.tsx`, `src/app/summary/page.tsx`, `src/app/settings/page.tsx` (new); `src/app/page.tsx` (redirect)
+**File**: `src/app/focus/page.tsx`, `src/app/tasks/page.tsx`, `src/app/plan/page.tsx`, `src/app/summary/page.tsx`, `src/app/settings/page.tsx` (new); `src/app/page.tsx` (redirect); `src/lib/auth/public-paths.ts`, `src/proxy.test.ts`
 
-**Intent**: Give each view a real URL and deep-linkability; the shared layout keeps the timer alive.
+**Intent**: Give each view a real URL and deep-linkability; the shared layout keeps the timer alive — **without bouncing guests to sign-in.**
 
 **Contract**: Each route renders its finished view component (Phases 5–9) inside the shell. `/` redirects to `/focus`. English canonical slugs; user-facing labels localized. Ensure the layout wrapping these routes hosts the Phase-10 providers so state persists across navigation.
+
+**Auth gate (per decision — all 5 routes guest-public).** Today `isGuestPublicPath` hardcodes `pathname === "/"` as the *only* guest-public path ([public-paths.ts:4-6](src/lib/auth/public-paths.ts)); `proxy.ts` (Next 16 renamed middleware → `proxy.ts` at repo root) redirects every other unauthenticated request to `/auth/sign-in` ([proxy.ts:15-17](proxy.ts)). Add `/focus`, `/tasks`, `/plan`, `/summary`, `/settings` to the guest allow-list so the no-account trial (which the `proxy.ts` comment explicitly protects) survives the split, and update the asserting `src/proxy.test.ts` / `public-paths` tests.
 
 #### 3. Remove temporary home-hosting
 
@@ -603,6 +626,7 @@ Introduce the sidebar (desktop) + bottom nav (mobile) and split the app into rea
 - All 5 sections reachable via sidebar (desktop) and bottom nav (mobile); active state correct.
 - Start a session on Fokus, navigate to Zadania/Podsumowanie and back — timer kept ticking.
 - Deep-linking to each route works and renders inside the shell.
+- A signed-out **guest** can reach all 5 routes (no bounce to `/auth/sign-in`); deep-linking `/tasks` as a guest renders, not redirects.
 
 **Implementation Note**: After automated verification passes, pause for manual confirmation before proceeding.
 
@@ -776,6 +800,7 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 - [ ] 4.6 Focusing a planned task promotes it to `active`
 - [ ] 4.7 Planned tasks excluded from focus suggestions
 - [ ] 4.8 Existing tasks unaffected post-migration
+- [ ] 4.9 Planned task round-trips the mapper (no throw) and guest snapshot with a planned task loads (not dropped)
 
 ### Phase 5: Zadania View
 
@@ -883,6 +908,7 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 - [ ] 11.7 All 5 sections reachable (sidebar + bottom nav); active state correct
 - [ ] 11.8 Timer keeps ticking across navigation mid-session
 - [ ] 11.9 Deep-linking each route renders inside the shell
+- [ ] 11.10 Signed-out guest reaches all 5 routes with no bounce to sign-in
 
 ### Phase 12: Onboarding Hero, Polish & Regression
 
