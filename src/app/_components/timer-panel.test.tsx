@@ -205,4 +205,53 @@ describe("TimerPanel", () => {
 		expect(countdown.getAttribute("aria-live")).toBeNull();
 		expect(screen.getByRole("region", { name: "Focus timer" })).toBeTruthy();
 	});
+
+	it("renders a full ring when no configured duration is known", () => {
+		const { container } = render(
+			<TimerPanel {...defaultProps} remainingMs={125_000} state="running" />,
+		);
+
+		const progressCircle = container.querySelectorAll("circle")[1];
+		expect(progressCircle?.getAttribute("stroke-dashoffset")).toBe(
+			progressCircle?.getAttribute("stroke-dasharray"),
+		);
+	});
+
+	it("fills the ring proportionally to elapsed time", () => {
+		const { container } = render(
+			<TimerPanel
+				{...defaultProps}
+				configuredDurationSec={1000}
+				remainingMs={250_000}
+				state="running"
+			/>,
+		);
+
+		const progressCircle = container.querySelectorAll("circle")[1];
+		const circumference = Number(
+			progressCircle?.getAttribute("stroke-dasharray"),
+		);
+		const dashOffset = Number(
+			progressCircle?.getAttribute("stroke-dashoffset"),
+		);
+
+		expect(dashOffset).toBeCloseTo(circumference * 0.25, 5);
+	});
+
+	it("keeps the countdown legible with the break ring tint while paused", () => {
+		render(
+			<TimerPanel
+				{...defaultProps}
+				configuredDurationSec={300}
+				cycleKind="SHORT_BREAK"
+				remainingMs={150_000}
+				state="paused"
+			/>,
+		);
+
+		const progressCircle = document.querySelectorAll("circle")[1];
+		expect(progressCircle?.getAttribute("class")).toContain(
+			"stroke-accent-break",
+		);
+	});
 });

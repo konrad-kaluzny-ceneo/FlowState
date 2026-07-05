@@ -736,6 +736,9 @@ export function PomodoroDashboardBody({
 
 	const timerPanel = timerShown ? (
 		<TimerPanel
+			configuredDurationSec={
+				pomodoro.activeCycle?.configuredDurationSec ?? null
+			}
 			cycleEndAudioMode={cycleEndAudioMode}
 			cycleKind={pomodoro.cycleKind}
 			focusedTask={pomodoro.focusedTask}

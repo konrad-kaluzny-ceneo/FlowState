@@ -760,30 +760,30 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `pnpm typecheck`
-- [x] 2.2 Lint/format passes: `pnpm check`
-- [x] 2.3 Unit tests pass (incl. new primitive tests): `pnpm test`
-- [x] 2.4 Accessibility e2e passes: `pnpm test:e2e:a11y`
+- [x] 2.1 Type checking passes: `pnpm typecheck` — 4f440fb
+- [x] 2.2 Lint/format passes: `pnpm check` — 4f440fb
+- [x] 2.3 Unit tests pass (incl. new primitive tests): `pnpm test` — 4f440fb
+- [x] 2.4 Accessibility e2e passes: `pnpm test:e2e:a11y` — 4f440fb
 
 #### Manual
 
-- [x] 2.5 Tabs + Select fully keyboard-operable and labelled
-- [x] 2.6 Refactored work-type control behaves identically
+- [x] 2.5 Tabs + Select fully keyboard-operable and labelled — 4f440fb
+- [x] 2.6 Refactored work-type control behaves identically — 4f440fb
 
 ### Phase 3: Ring Timer
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `pnpm typecheck`
-- [ ] 3.2 Lint/format passes: `pnpm check`
-- [ ] 3.3 Unit tests pass (timer-panel + ring): `pnpm test`
-- [ ] 3.4 Pomodoro e2e passes: `pnpm test:e2e`
+- [x] 3.1 Type checking passes: `pnpm typecheck`
+- [x] 3.2 Lint/format passes: `pnpm check`
+- [x] 3.3 Unit tests pass (timer-panel + ring): `pnpm test`
+- [x] 3.4 Pomodoro e2e passes: `pnpm test:e2e`
 
 #### Manual
 
-- [ ] 3.5 Ring fills smoothly; center shows time + phase
-- [ ] 3.6 Pause/resume/interrupt reflected in ring
-- [ ] 3.7 Light + dark ring legibility
+- [x] 3.5 Ring fills smoothly; center shows time + phase
+- [x] 3.6 Pause/resume/interrupt reflected in ring
+- [x] 3.7 Light + dark ring legibility
 
 ### Phase 4: Tasks Model & Backend
 

@@ -32,6 +32,7 @@ import { formatRemainingMs } from "~/lib/format-remaining";
 import { CycleAudioPreferenceControl } from "./cycle-audio-preference-control";
 import { DurationPicker } from "./duration-picker";
 import { OutOfTabBreakAlertsControl } from "./out-of-tab-break-alerts-control";
+import { ProgressRing } from "./ui/progress-ring";
 
 function OutOfTabBreakAlertsSection({
 	enabled,
@@ -53,6 +54,7 @@ type TimerPanelProps = {
 	onInterrupt: () => Promise<void>;
 	isStarting?: boolean;
 	cycleKind?: CycleKind | null;
+	configuredDurationSec?: number | null;
 	preferredWorkDurationSec?: number | null;
 	onWorkDurationManualChange?: () => void;
 	cycleEndAudioMode?: CycleEndAudioMode;
@@ -71,6 +73,7 @@ export function TimerPanel({
 	onInterrupt,
 	isStarting = false,
 	cycleKind = null,
+	configuredDurationSec = null,
 	preferredWorkDurationSec = null,
 	onWorkDurationManualChange,
 	cycleEndAudioMode = "normal",
@@ -120,6 +123,12 @@ export function TimerPanel({
 		const breakLabel =
 			cycleKind === "LONG_BREAK" ? t("breakLong") : t("breakShort");
 		const isPaused = state === "paused";
+		const configuredDurationMs =
+			configuredDurationSec != null ? configuredDurationSec * 1000 : null;
+		const ringProgress =
+			configuredDurationMs != null && configuredDurationMs > 0
+				? (configuredDurationMs - remainingMs) / configuredDurationMs
+				: 0;
 
 		return (
 			<section
@@ -148,14 +157,23 @@ export function TimerPanel({
 						{focusedTask?.title ?? t("focusedTaskFallback")}
 					</p>
 				)}
-				<p
-					className={`mt-4 font-mono font-semibold text-timer tabular-nums tracking-tight ${
-						isBreak ? "text-accent-break" : "text-primary"
-					}`}
-					data-testid="timer-countdown"
-				>
-					{formatRemainingMs(remainingMs)}
-				</p>
+				<div className="mt-4 flex justify-center">
+					<ProgressRing
+						progress={ringProgress}
+						progressClassName={
+							isBreak ? "stroke-accent-break" : "stroke-accent-cta"
+						}
+					>
+						<p
+							className={`font-mono font-semibold text-timer tabular-nums tracking-tight ${
+								isBreak ? "text-accent-break" : "text-primary"
+							}`}
+							data-testid="timer-countdown"
+						>
+							{formatRemainingMs(remainingMs)}
+						</p>
+					</ProgressRing>
+				</div>
 				{isPaused ? (
 					<button
 						aria-label={isBreak ? t("resumeBreakAria") : t("resumeAria")}
