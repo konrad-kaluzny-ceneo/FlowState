@@ -126,6 +126,7 @@ const tasks: DomainTask[] = [
 		...defaultEisenhowerFields(2),
 		sortOrder: 0,
 		resumeNote: null,
+		project: null,
 		archivedAt: null,
 	},
 ];

@@ -276,6 +276,7 @@ function makeTask(
 		...defaultEisenhowerFields(weight),
 		sortOrder: 0,
 		resumeNote,
+		project: null,
 		personaPresetId,
 		doneForToday: false,
 		archivedAt: null,

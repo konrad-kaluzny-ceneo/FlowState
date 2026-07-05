@@ -13,7 +13,7 @@ export const commitmentHorizonSchema = z.enum([
 export const guestTaskSchema = z.object({
 	id: z.string().uuid(),
 	title: z.string().min(1).max(256),
-	status: z.enum(["active", "completed", "archived"]),
+	status: z.enum(["active", "completed", "archived", "planned"]),
 	workType: z
 		.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"])
 		.default("OPERATIONAL"),
@@ -24,6 +24,7 @@ export const guestTaskSchema = z.object({
 	commitmentHorizon: commitmentHorizonSchema.optional(),
 	sortOrder: z.number().int().min(0).optional(),
 	resumeNote: z.string().max(120).nullable().optional(),
+	project: z.string().max(256).nullable().optional(),
 	personaPresetId: z.string().max(32).nullable().optional(),
 	isDailyStanding: z.boolean().optional(),
 	archivedAt: z.coerce.date().nullable().optional(),
@@ -34,7 +35,7 @@ export const guestTaskSchema = z.object({
 export type GuestTask = {
 	id: string;
 	title: string;
-	status: "active" | "completed" | "archived";
+	status: "active" | "completed" | "archived" | "planned";
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: number;
 	importance: 1 | 2 | 3;
@@ -43,6 +44,7 @@ export type GuestTask = {
 	commitmentHorizon: z.infer<typeof commitmentHorizonSchema>;
 	sortOrder: number;
 	resumeNote: string | null;
+	project: string | null;
 	personaPresetId: string | null;
 	isDailyStanding?: boolean;
 	archivedAt?: Date | null;
@@ -64,6 +66,7 @@ function normalizeGuestTasks(
 			commitmentHorizon: task.commitmentHorizon ?? "WHEN_POSSIBLE",
 			sortOrder: task.sortOrder ?? index,
 			resumeNote: task.resumeNote ?? null,
+			project: task.project ?? null,
 			personaPresetId: task.personaPresetId ?? null,
 			isDailyStanding: task.isDailyStanding ?? false,
 			archivedAt: task.archivedAt ?? null,

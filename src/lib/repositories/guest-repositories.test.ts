@@ -50,6 +50,33 @@ describe("guest repositories", () => {
 		expect(list[0]?.effortMinutes).toBe(15);
 	});
 
+	it("creates a normal task as planned and a daily-standing task as active", async () => {
+		const { tasks } = createGuestRepositories();
+		const backlog = await tasks.create({ title: "Backlog item" });
+		const standing = await tasks.create({
+			title: "Standing item",
+			isDailyStanding: true,
+		});
+
+		expect(backlog.status).toBe("planned");
+		expect(standing.status).toBe("active");
+	});
+
+	it("promotes a planned task to active when a WORK cycle focuses it", async () => {
+		const { tasks, cycles } = createGuestRepositories();
+		const task = await tasks.create({ title: "Backlog item" });
+		expect(task.status).toBe("planned");
+
+		await cycles.create({
+			kind: "WORK",
+			configuredDurationSec: 900,
+			taskId: task.id,
+		});
+
+		const list = await tasks.list();
+		expect(list.find((t) => t.id === task.id)?.status).toBe("active");
+	});
+
 	it("starts and retrieves an active cycle", async () => {
 		const { tasks, cycles } = createGuestRepositories();
 		const task = await tasks.create({ title: "Focus me" });
@@ -145,6 +172,7 @@ describe("guest repositories", () => {
 					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					resumeNote: null,
+					project: null,
 					createdAt: startedAt,
 					updatedAt: null,
 				},
@@ -190,8 +218,11 @@ describe("guest repositories", () => {
 
 	it("appends new tasks at the tail sortOrder", async () => {
 		const { tasks } = createGuestRepositories();
-		const first = await tasks.create({ title: "First" });
-		const second = await tasks.create({ title: "Second" });
+		const first = await tasks.create({ title: "First", isDailyStanding: true });
+		const second = await tasks.create({
+			title: "Second",
+			isDailyStanding: true,
+		});
 
 		expect(first.sortOrder).toBe(0);
 		expect(second.sortOrder).toBe(1);
@@ -202,9 +233,12 @@ describe("guest repositories", () => {
 
 	it("reorders active tasks and persists sortOrder in snapshot", async () => {
 		const { tasks } = createGuestRepositories();
-		const first = await tasks.create({ title: "First" });
-		const second = await tasks.create({ title: "Second" });
-		const third = await tasks.create({ title: "Third" });
+		const first = await tasks.create({ title: "First", isDailyStanding: true });
+		const second = await tasks.create({
+			title: "Second",
+			isDailyStanding: true,
+		});
+		const third = await tasks.create({ title: "Third", isDailyStanding: true });
 
 		await tasks.reorder({
 			orderedIds: [third.id, first.id, second.id],
@@ -245,10 +279,13 @@ describe("guest repositories", () => {
 
 	it("reactivates completed task at the tail sortOrder", async () => {
 		const { tasks } = createGuestRepositories();
-		const task = await tasks.create({ title: "Reopen me" });
+		const task = await tasks.create({
+			title: "Reopen me",
+			isDailyStanding: true,
+		});
 
 		await tasks.update({ id: task.id, status: "completed" });
-		await tasks.create({ title: "Active tail" });
+		await tasks.create({ title: "Active tail", isDailyStanding: true });
 		await tasks.update({ id: task.id, status: "active" });
 
 		const list = await tasks.list();
@@ -281,8 +318,11 @@ describe("guest repositories", () => {
 
 	it("rejects invalid reorder requests", async () => {
 		const { tasks } = createGuestRepositories();
-		const first = await tasks.create({ title: "First" });
-		const second = await tasks.create({ title: "Second" });
+		const first = await tasks.create({ title: "First", isDailyStanding: true });
+		const second = await tasks.create({
+			title: "Second",
+			isDailyStanding: true,
+		});
 
 		await expect(tasks.reorder({ orderedIds: [first.id] })).rejects.toThrow(
 			"Invalid reorder",
@@ -350,6 +390,7 @@ describe("guest repositories", () => {
 					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					resumeNote: null,
+					project: null,
 					createdAt: staleAt,
 					updatedAt: staleAt,
 				},
@@ -362,6 +403,7 @@ describe("guest repositories", () => {
 					...defaultEisenhowerFields(2),
 					sortOrder: 1,
 					resumeNote: null,
+					project: null,
 					createdAt: freshAt,
 					updatedAt: freshAt,
 				},
@@ -375,6 +417,7 @@ describe("guest repositories", () => {
 					isDailyStanding: true,
 					sortOrder: 2,
 					resumeNote: null,
+					project: null,
 					createdAt: new Date("2020-01-01"),
 					updatedAt: new Date("2020-01-01"),
 				},
@@ -410,6 +453,7 @@ describe("guest repositories", () => {
 					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					resumeNote: null,
+					project: null,
 					createdAt: new Date(),
 					updatedAt: null,
 				},
@@ -422,6 +466,7 @@ describe("guest repositories", () => {
 					...defaultEisenhowerFields(2),
 					sortOrder: 4,
 					resumeNote: null,
+					project: null,
 					archivedAt: new Date("2026-06-20"),
 					createdAt: new Date(),
 					updatedAt: new Date(),
@@ -461,6 +506,7 @@ describe("guest repositories", () => {
 					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					resumeNote: null,
+					project: null,
 					archivedAt: staleAt,
 					createdAt: staleAt,
 					updatedAt: staleAt,
@@ -491,6 +537,7 @@ describe("guest repositories", () => {
 					...defaultEisenhowerFields(2),
 					sortOrder: 0,
 					resumeNote: null,
+					project: null,
 					archivedAt: new Date("2026-06-10"),
 					createdAt: new Date("2026-01-01"),
 					updatedAt: null,
@@ -504,6 +551,7 @@ describe("guest repositories", () => {
 					...defaultEisenhowerFields(2),
 					sortOrder: 1,
 					resumeNote: null,
+					project: null,
 					archivedAt: new Date("2026-06-11"),
 					createdAt: new Date("2026-01-02"),
 					updatedAt: null,
@@ -517,6 +565,7 @@ describe("guest repositories", () => {
 					...defaultEisenhowerFields(2),
 					sortOrder: 2,
 					resumeNote: null,
+					project: null,
 					createdAt: new Date(),
 					updatedAt: null,
 				},

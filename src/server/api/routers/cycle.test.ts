@@ -25,6 +25,7 @@ type TaskRecord = {
 	title: string;
 	status: string;
 	userId: string;
+	sortOrder?: number;
 };
 
 let cycles: CycleRecord[] = [];
@@ -320,11 +321,28 @@ vi.mock("~/server/db/index", () => {
 					},
 				),
 				update: vi.fn(
-					(args: { where: { id: number }; data: { status: string } }) => {
+					(args: {
+						where: { id: number };
+						data: Partial<Pick<TaskRecord, "status" | "sortOrder">>;
+					}) => {
 						const task = tasks.find((t) => t.id === args.where.id);
 						if (!task) throw new Error("not found");
-						task.status = args.data.status;
+						Object.assign(task, args.data);
 						return Promise.resolve(task);
+					},
+				),
+				aggregate: vi.fn(
+					(args: { where: { userId?: string; status?: string } }) => {
+						const rows = tasks.filter(
+							(t) =>
+								(args.where.userId == null || t.userId === args.where.userId) &&
+								(args.where.status == null || t.status === args.where.status),
+						);
+						const maxSortOrder =
+							rows.length === 0
+								? null
+								: Math.max(...rows.map((t) => t.sortOrder ?? 0));
+						return Promise.resolve({ _max: { sortOrder: maxSortOrder } });
 					},
 				),
 			},
@@ -1033,6 +1051,57 @@ describe("cycle router lifecycle", () => {
 		expect(sessions[0]?.userId).toBe(USER_ID);
 	});
 
+	it("create promotes a planned task to active when a WORK cycle focuses it", async () => {
+		tasks = [
+			{
+				id: 4,
+				title: "Planned",
+				status: "planned",
+				userId: USER_ID,
+				sortOrder: 0,
+			},
+		];
+
+		await caller().create({
+			kind: "WORK",
+			configuredDurationSec: 1500,
+			taskId: 4,
+		});
+
+		expect(tasks.find((t) => t.id === 4)?.status).toBe("active");
+	});
+
+	it("create does not promote a planned task on a non-WORK cycle", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+		];
+		tasks = [
+			{
+				id: 5,
+				title: "Planned",
+				status: "planned",
+				userId: USER_ID,
+				sortOrder: 0,
+			},
+		];
+
+		await caller().create({
+			sessionId: 1,
+			kind: "SHORT_BREAK",
+			configuredDurationSec: 300,
+			taskId: 5,
+		});
+
+		expect(tasks.find((t) => t.id === 5)?.status).toBe("planned");
+	});
+
 	describe("lastActivityAt updates", () => {
 		it("create updates session lastActivityAt", async () => {
 			const oldDate = new Date("2026-01-01T00:00:00Z");
@@ -1161,6 +1230,45 @@ describe("cycle router lifecycle", () => {
 			expect(result.startedAt).toEqual(new Date("2026-06-06T10:00:00Z"));
 			expect(result.configuredDurationSec).toBe(1500);
 			expect(cycles[0]?.taskId).toBe(11);
+		});
+
+		it("promotes a planned task to active on rebind", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+			tasks = [
+				{ id: 10, title: "First", status: "active", userId: USER_ID },
+				{
+					id: 11,
+					title: "Second",
+					status: "planned",
+					userId: USER_ID,
+					sortOrder: 0,
+				},
+			];
+			cycles = [
+				{
+					id: 1,
+					sessionId: 1,
+					userId: USER_ID,
+					taskId: 10,
+					kind: "WORK",
+					state: "RUNNING",
+					configuredDurationSec: 1500,
+					startedAt: new Date(),
+					endedAt: null,
+				},
+			];
+
+			await caller().rebindTask({ cycleId: 1, taskId: 11 });
+			expect(tasks.find((t) => t.id === 11)?.status).toBe("active");
 		});
 
 		it("increments session interruptionCount on rebind", async () => {

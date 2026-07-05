@@ -5,6 +5,7 @@ import { getMinWorkDurationSec } from "~/lib/duration-bounds";
 import { computeCycleFocusedMinutes } from "~/lib/recap/compute-cycle-focused-minutes";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
+import { nextActiveSortOrder } from "~/server/api/routers/task";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const minWorkCycleSec = getMinWorkDurationSec();
@@ -103,6 +104,7 @@ export const cycleRouter = createTRPCRouter({
 				throw new TRPCError({ code: "NOT_FOUND" });
 			}
 
+			let taskToPromote: { id: number } | null = null;
 			if (input.taskId != null) {
 				const task = await ctx.db.task.findFirst({
 					where: { id: input.taskId, userId: ctx.session.user.id },
@@ -110,6 +112,10 @@ export const cycleRouter = createTRPCRouter({
 
 				if (!task) {
 					throw new TRPCError({ code: "NOT_FOUND" });
+				}
+
+				if (input.kind === "WORK" && task.status === "planned") {
+					taskToPromote = { id: task.id };
 				}
 			}
 
@@ -126,6 +132,16 @@ export const cycleRouter = createTRPCRouter({
 						throw new TRPCError({
 							code: "CONFLICT",
 							message: "A cycle is already running",
+						});
+					}
+
+					if (taskToPromote != null) {
+						await tx.task.update({
+							where: { id: taskToPromote.id },
+							data: {
+								status: "active",
+								sortOrder: await nextActiveSortOrder(tx, ctx.session.user.id),
+							},
 						});
 					}
 
@@ -300,6 +316,16 @@ export const cycleRouter = createTRPCRouter({
 					throw new TRPCError({
 						code: "BAD_REQUEST",
 						message: "Only a running work cycle can rebind its task",
+					});
+				}
+
+				if (task.status === "planned") {
+					await tx.task.update({
+						where: { id: task.id },
+						data: {
+							status: "active",
+							sortOrder: await nextActiveSortOrder(tx, ctx.session.user.id),
+						},
 					});
 				}
 

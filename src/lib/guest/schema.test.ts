@@ -27,6 +27,7 @@ describe("guest schema", () => {
 					commitmentHorizon: "ASAP" as const,
 					sortOrder: 0,
 					resumeNote: null,
+					project: null,
 					personaPresetId: null,
 					createdAt: new Date("2026-05-29T10:00:00.000Z"),
 					updatedAt: null,
@@ -67,6 +68,7 @@ describe("guest schema", () => {
 					commitmentHorizon: "WHEN_POSSIBLE" as const,
 					sortOrder: 0,
 					resumeNote: null,
+					project: null,
 					personaPresetId: "synchro" as const,
 					createdAt: new Date("2026-05-29T10:00:00.000Z"),
 					updatedAt: null,
@@ -129,6 +131,53 @@ describe("guest schema", () => {
 		const parsed = parseGuestSnapshot(raw);
 		expect(parsed.tasks[0]?.status).toBe("archived");
 		expect(parsed.tasks[0]?.archivedAt).toEqual(archivedAt);
+	});
+
+	it("accepts a planned task without discarding the snapshot, and round-trips project", () => {
+		const raw = JSON.stringify({
+			version: 1,
+			tasks: [
+				{
+					id: "550e8400-e29b-41d4-a716-446655440003",
+					title: "Backlog task",
+					status: "planned",
+					workType: "OPERATIONAL",
+					weight: 2,
+					project: "Acme",
+					createdAt: "2026-07-01T00:00:00.000Z",
+					updatedAt: null,
+				},
+			],
+			sessions: [],
+			cycles: [],
+		});
+
+		const parsed = parseGuestSnapshot(raw);
+		expect(parsed.tasks).toHaveLength(1);
+		expect(parsed.tasks[0]?.status).toBe("planned");
+		expect(parsed.tasks[0]?.project).toBe("Acme");
+	});
+
+	it("defaults project to null when absent", () => {
+		const raw = JSON.stringify({
+			version: 1,
+			tasks: [
+				{
+					id: "550e8400-e29b-41d4-a716-446655440004",
+					title: "No project",
+					status: "active",
+					workType: "OPERATIONAL",
+					weight: 2,
+					createdAt: "2026-07-01T00:00:00.000Z",
+					updatedAt: null,
+				},
+			],
+			sessions: [],
+			cycles: [],
+		});
+
+		const parsed = parseGuestSnapshot(raw);
+		expect(parsed.tasks[0]?.project).toBeNull();
 	});
 
 	it("returns empty snapshot for corrupt JSON", () => {

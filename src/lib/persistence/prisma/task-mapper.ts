@@ -10,6 +10,7 @@ const DOMAIN_TASK_STATUSES: readonly DomainTaskStatus[] = [
 	"active",
 	"completed",
 	"archived",
+	"planned",
 ];
 
 // Task.status is a free-form String column, so validate it at the persistence
@@ -43,6 +44,7 @@ export function mapTaskFromPrisma(
 		commitmentHorizon: fromPrismaCommitmentHorizon(row.commitmentHorizon),
 		sortOrder: row.sortOrder,
 		resumeNote: row.resumeNote,
+		project: row.project ?? null,
 		personaPresetId: row.personaPresetId,
 		isDailyStanding: row.isDailyStanding,
 		archivedAt: row.archivedAt,

@@ -76,6 +76,7 @@ function makeTask(overrides: Partial<DomainTask> = {}): DomainTask {
 		...defaultEisenhowerFields(2),
 		sortOrder: 0,
 		resumeNote,
+		project: null,
 		personaPresetId,
 		archivedAt: null,
 		...rest,

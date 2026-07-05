@@ -55,6 +55,7 @@ function makeArchivedTask(overrides: Partial<DomainTask> = {}): DomainTask {
 		...defaultEisenhowerFields(2),
 		sortOrder: 0,
 		resumeNote: null,
+		project: null,
 		personaPresetId: null,
 		isDailyStanding: false,
 		...overrides,

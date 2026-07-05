@@ -23,6 +23,7 @@ describe("buildGuestDailyRecap", () => {
 			commitmentHorizon: "WHEN_POSSIBLE",
 			sortOrder: 0,
 			resumeNote: null,
+			project: null,
 			personaPresetId: null,
 			isDailyStanding: false,
 			createdAt: NOW,
@@ -64,6 +65,7 @@ describe("buildGuestDailyRecap", () => {
 				commitmentHorizon: "WHEN_POSSIBLE",
 				sortOrder: 0,
 				resumeNote: null,
+				project: null,
 				personaPresetId: null,
 				isDailyStanding: false,
 				createdAt: NOW,
@@ -81,6 +83,7 @@ describe("buildGuestDailyRecap", () => {
 				commitmentHorizon: "WHEN_POSSIBLE",
 				sortOrder: 1,
 				resumeNote: null,
+				project: null,
 				personaPresetId: null,
 				isDailyStanding: true,
 				createdAt: NOW,
@@ -96,5 +99,51 @@ describe("buildGuestDailyRecap", () => {
 		);
 
 		expect(recap.todayPlan.map((row) => row.taskId)).toEqual([TASK_A]);
+	});
+
+	it("excludes planned tasks from today plan", () => {
+		const snapshot = createEmptyGuestSnapshot();
+		snapshot.tasks.push(
+			{
+				id: TASK_A,
+				title: "Backlog",
+				status: "planned",
+				workType: "OPERATIONAL",
+				weight: 2,
+				importance: 2,
+				urgency: 2,
+				effortMinutes: null,
+				commitmentHorizon: "WHEN_POSSIBLE",
+				sortOrder: 0,
+				resumeNote: null,
+				project: null,
+				personaPresetId: null,
+				isDailyStanding: false,
+				createdAt: NOW,
+				updatedAt: NOW,
+			},
+			{
+				id: TASK_B,
+				title: "Ready",
+				status: "active",
+				workType: "OPERATIONAL",
+				weight: 2,
+				importance: 2,
+				urgency: 2,
+				effortMinutes: null,
+				commitmentHorizon: "WHEN_POSSIBLE",
+				sortOrder: 1,
+				resumeNote: null,
+				project: null,
+				personaPresetId: null,
+				isDailyStanding: false,
+				createdAt: NOW,
+				updatedAt: NOW,
+			},
+		);
+
+		const recap = buildGuestDailyRecap(snapshot, DATE_KEY, new Set(), NOW);
+
+		expect(recap.todayPlan.map((row) => row.taskId)).toEqual([TASK_B]);
 	});
 });

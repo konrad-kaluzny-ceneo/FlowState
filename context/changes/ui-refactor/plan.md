@@ -774,33 +774,33 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `pnpm typecheck`
-- [x] 3.2 Lint/format passes: `pnpm check`
-- [x] 3.3 Unit tests pass (timer-panel + ring): `pnpm test`
-- [x] 3.4 Pomodoro e2e passes: `pnpm test:e2e`
+- [x] 3.1 Type checking passes: `pnpm typecheck` — 8b77465
+- [x] 3.2 Lint/format passes: `pnpm check` — 8b77465
+- [x] 3.3 Unit tests pass (timer-panel + ring): `pnpm test` — 8b77465
+- [x] 3.4 Pomodoro e2e passes: `pnpm test:e2e` — 8b77465
 
 #### Manual
 
-- [x] 3.5 Ring fills smoothly; center shows time + phase
-- [x] 3.6 Pause/resume/interrupt reflected in ring
-- [x] 3.7 Light + dark ring legibility
+- [x] 3.5 Ring fills smoothly; center shows time + phase — 8b77465
+- [x] 3.6 Pause/resume/interrupt reflected in ring — 8b77465
+- [x] 3.7 Light + dark ring legibility — 8b77465
 
 ### Phase 4: Tasks Model & Backend
 
 #### Automated
 
-- [ ] 4.1 Migration applies cleanly: `pnpm db:migrate`
-- [ ] 4.2 Type checking passes: `pnpm typecheck`
-- [ ] 4.3 Lint/format passes: `pnpm check`
-- [ ] 4.4 Unit + router tests pass: `pnpm test`
+- [x] 4.1 Migration applies cleanly: `pnpm db:migrate`
+- [x] 4.2 Type checking passes: `pnpm typecheck`
+- [x] 4.3 Lint/format passes: `pnpm check`
+- [x] 4.4 Unit + router tests pass: `pnpm test`
 
 #### Manual
 
-- [ ] 4.5 Normal create → `planned`; daily-standing → `active`
-- [ ] 4.6 Focusing a planned task promotes it to `active`
-- [ ] 4.7 Planned tasks excluded from focus suggestions
-- [ ] 4.8 Existing tasks unaffected post-migration
-- [ ] 4.9 Planned task round-trips the mapper (no throw) and guest snapshot with a planned task loads (not dropped)
+- [x] 4.5 Normal create → `planned`; daily-standing → `active`
+- [x] 4.6 Focusing a planned task promotes it to `active`
+- [x] 4.7 Planned tasks excluded from focus suggestions
+- [x] 4.8 Existing tasks unaffected post-migration
+- [x] 4.9 Planned task round-trips the mapper (no throw) and guest snapshot with a planned task loads (not dropped)
 
 ### Phase 5: Zadania View
 

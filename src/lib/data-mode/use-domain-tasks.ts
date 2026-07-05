@@ -36,6 +36,7 @@ function mapSnapshotToTasks(): DomainTask[] {
 			commitmentHorizon: task.commitmentHorizon,
 			sortOrder: task.sortOrder,
 			resumeNote: task.resumeNote ?? null,
+			project: task.project ?? null,
 			personaPresetId: task.personaPresetId ?? null,
 			isDailyStanding: task.isDailyStanding ?? false,
 			archivedAt: task.archivedAt ?? null,

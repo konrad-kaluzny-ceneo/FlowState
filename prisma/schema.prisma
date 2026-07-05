@@ -77,6 +77,7 @@ model Task {
   commitmentHorizon CommitmentHorizon @default(WHEN_POSSIBLE) @map("commitment_horizon")
   sortOrder         Int               @default(0) @map("sort_order")
   resumeNote        String?           @map("resume_note") @db.VarChar(120)
+  project           String?           @db.VarChar(256)
   personaPresetId   String?           @map("persona_preset_id") @db.VarChar(32)
   isDailyStanding   Boolean           @default(false) @map("is_daily_standing")
   archivedAt        DateTime?         @map("archived_at") @db.Timestamptz
