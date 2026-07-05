@@ -56,19 +56,6 @@ async function waitForTaskCreateSettled(addButton: Locator) {
 	});
 }
 
-/** Belt specs expect generic tasks — uncheck daily standing default for create flows. */
-async function uncheckDailyStandingDefault(page: Page) {
-	const panel = page.getByTestId("task-fields-panel-create");
-	const toggle = panel.getByTestId("daily-standing-toggle");
-	if (!(await toggle.isVisible())) {
-		return;
-	}
-	if (await toggle.isChecked()) {
-		await panel.getByText("Daily standing", { exact: true }).click();
-		await expect(toggle).not.toBeChecked();
-	}
-}
-
 async function isGuestDashboard(page: Page) {
 	return page.getByTestId("guest-banner").isVisible();
 }
@@ -115,6 +102,23 @@ async function ensureOnTasksPage(page: Page) {
 		await page.goto("/tasks");
 	}
 	await expect(taskListLocator(page)).toBeVisible({ timeout: 15_000 });
+}
+
+/** Click the visible focus nav link (sidebar on desktop, bottom nav on mobile). */
+async function clickNavFocus(page: Page) {
+	// Mobile bottom nav is visible at small viewports; desktop sidebar at large.
+	// Wait for the bottom nav container to be visible first.
+	await expect(
+		page.getByTestId("app-bottom-nav").or(page.getByTestId("app-sidebar")),
+	).toBeVisible({ timeout: 10_000 });
+
+	const mobileNav = page.getByTestId("nav-mobile-focus");
+	if (await mobileNav.isVisible().catch(() => false)) {
+		await mobileNav.click();
+	} else {
+		await page.getByTestId("nav-focus").click();
+	}
+	await expect(page).toHaveURL(/\/focus/);
 }
 
 /**
@@ -177,12 +181,7 @@ export async function startFocusedWorkCycle(
 		.catch(() => {});
 
 	// Navigate to /focus via client-side link to preserve React context state
-	await page
-		.getByTestId("nav-focus")
-		.or(page.getByTestId("nav-mobile-focus"))
-		.first()
-		.click();
-	await expect(page).toHaveURL(/\/focus/);
+	await clickNavFocus(page);
 	await waitForTimerPanelIdle(page);
 	await dismissKickoffReadinessIfVisible(page);
 	if (durationSec === 1) {
@@ -257,11 +256,7 @@ export async function markTaskCompleteMidCycle(page: Page, taskTitle: string) {
 	await taskRow.getByRole("button", { name: "Mark complete" }).click();
 
 	// Navigate back to /focus via client-side nav
-	const focusLink = page
-		.getByTestId("nav-focus")
-		.or(page.getByTestId("nav-mobile-focus"))
-		.first();
-	await focusLink.click({ timeout: 10_000 });
+	await clickNavFocus(page);
 	await expect(page.getByTestId("mid-cycle-prompt-overlay")).toBeVisible({
 		timeout: 15_000,
 	});
@@ -293,7 +288,7 @@ export async function advanceClockThroughBreakSec(page: Page, seconds: number) {
 type TaskWorkTypeLabel = "Deep" | "Ops" | "Reactive";
 type TaskWeightLabel = "Light" | "Medium" | "Heavy";
 
-/** Belt helpers use the Custom panel by design — persona chips are not required for belt specs. */
+/** Belt helpers use the add-task modal with Custom panel for attribute control. */
 export async function addTaskWithAttributes(
 	page: Page,
 	title: string,
@@ -303,39 +298,44 @@ export async function addTaskWithAttributes(
 	await ensureOnTasksPage(page);
 	await dismissFirstRunIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
-	const addForm = taskListLocator(page).locator("form");
-	const customButton = addForm.getByTestId("persona-preset-custom");
-	const detailsToggle = addForm.getByRole("button", { name: "+ Details" });
-	if (await customButton.isVisible()) {
-		await dismissKickoffReadinessIfVisible(page);
-		await customButton.click();
-		await expect(addForm.getByTestId("create-task-custom-panel")).toBeVisible();
-	} else if (await detailsToggle.isVisible()) {
-		await dismissFirstRunIfVisible(page);
-		await dismissKickoffReadinessIfVisible(page);
-		await detailsToggle.click();
-	}
-	await dismissKickoffReadinessIfVisible(page);
-	const customPanel = addForm.getByTestId("create-task-custom-panel");
-	await customPanel
-		.getByRole("button", { name: workType, exact: true })
-		.click();
-	await dismissKickoffReadinessIfVisible(page);
-	const urgencyRow = customPanel
+
+	// Open the add-task modal via gear icon
+	await page.getByTestId("open-add-task-modal").click();
+	const modal = page.getByTestId("add-task-modal");
+	await expect(modal).toBeVisible({ timeout: 5_000 });
+
+	// Click Custom to show attribute fields
+	await modal.getByTestId("persona-preset-custom").click();
+
+	// Set work type via SegmentedControl
+	await modal.getByRole("button", { name: workType, exact: true }).click();
+
+	// Set urgency via SegmentedControl
+	const urgencyRow = modal
 		.locator("div")
 		.filter({ hasText: /^Urgency/ })
 		.first();
 	await urgencyRow.getByRole("button", { name: weight }).click();
-	await uncheckDailyStandingDefault(page);
-	await page.getByPlaceholder("Add a new task...").fill(title);
-	const addButton = addForm.getByRole("button", { name: "Add" });
-	await dismissKickoffReadinessIfVisible(page);
-	await addButton.click();
-	await dismissKickoffReadinessIfVisible(page);
+
+	// Check "Daily standing" so the task is created as active (matching pre-refactor behavior)
+	const dailyToggle = modal.getByTestId("daily-standing-toggle");
+	if (!(await dailyToggle.isChecked())) {
+		// The checkbox is sr-only; click via its label
+		await modal.getByText("Daily standing", { exact: true }).click();
+	}
+
+	// Fill title
+	await modal.getByTestId("task-fields-title").fill(title);
+
+	// Submit
+	await modal.getByRole("button", { name: "Add task", exact: true }).click();
+	await expect(modal).toBeHidden({ timeout: 10_000 });
+
+	// Task is created as active (isDailyStanding) — should appear in Active tab
+	await page.getByRole("tab", { name: /Active|Aktywne/i }).click();
 	await expect(
 		page.getByRole("listitem").filter({ hasText: title }).first(),
-	).toBeVisible();
-	await waitForTaskCreateSettled(addButton);
+	).toBeVisible({ timeout: 15_000 });
 }
 
 export async function focusTask(page: Page, taskTitle: string) {
@@ -350,12 +350,7 @@ export async function focusTask(page: Page, taskTitle: string) {
 	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
 	await focusBtn.click();
 	// Navigate to /focus via client-side nav to preserve context
-	await page
-		.getByTestId("nav-focus")
-		.or(page.getByTestId("nav-mobile-focus"))
-		.first()
-		.click();
-	await expect(page).toHaveURL(/\/focus/);
+	await clickNavFocus(page);
 	await waitForTimerPanelIdle(page);
 }
 

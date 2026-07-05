@@ -69,7 +69,11 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 			title: deepTask,
 			rationale: /Fresh session — here's a strong starting point/,
 		});
-		await expect(page.getByTestId("suggested-task-row")).toBeVisible();
+		// suggested-task-row highlight is on /tasks page
+		await page.goto("/tasks");
+		await expect(page.getByTestId("suggested-task-row")).toBeVisible({
+			timeout: 10_000,
+		});
 		await expect(
 			page.getByTestId("suggested-task-row").filter({ hasText: deepTask }),
 		).toBeVisible();

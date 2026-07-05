@@ -23,25 +23,30 @@ test.describe("Guest trial (S-08)", () => {
 
 		const taskTitle = `Guest E2E ${Date.now()}`;
 
-		await page.goto("/tasks");
+		// Verify guest mode on focus page (banner visible at mobile width)
+		await page.goto("/focus");
 		await page.evaluate(() => localStorage.clear());
 		await page.reload();
-		await expect(page.getByTestId("guest-banner")).toBeVisible();
-		await expect(page.getByTestId("task-list")).toBeVisible({
+		await expect(page.getByTestId("guest-banner")).toBeVisible({
 			timeout: 15_000,
 		});
 		await dismissFirstRunIfVisible(page);
 
 		await startFocusedWorkCycle(page, taskTitle, 30);
 
-		await page.reload();
-		// Guest recovery is localStorage-driven; UI oracles are enough (no reliable cycle.getActive on reload).
+		// After reload, verify the timer is running on /focus
+		await page.goto("/focus");
 		await expect(page.getByTestId("guest-banner")).toBeVisible({
 			timeout: 20_000,
 		});
+		await expect(page.getByTestId("timer-panel-running")).toBeVisible({
+			timeout: 15_000,
+		});
+
+		// Verify the task persists on /tasks
+		await page.goto("/tasks");
 		await expect(
 			page.getByRole("listitem").filter({ hasText: taskTitle }).first(),
-		).toBeVisible();
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+		).toBeVisible({ timeout: 15_000 });
 	});
 });

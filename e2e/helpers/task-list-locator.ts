@@ -22,6 +22,7 @@ export async function expectFocusPageReady(page: Page) {
 			.getByTestId("home-workbench-grid")
 			.or(page.getByTestId("timer-panel-idle"))
 			.or(page.getByTestId("timer-panel-running"))
-			.or(page.getByTestId("timer-panel-paused")),
+			.or(page.getByTestId("timer-panel-paused"))
+			.first(),
 	).toBeVisible({ timeout: 15_000 });
 }
