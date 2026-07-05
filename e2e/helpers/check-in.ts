@@ -1,6 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
 import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
+import { isShortBreakPhaseVisible } from "./timer-phase";
 
 export type CheckInEnergyUi = "focused" | "steady" | "fading";
 
@@ -34,10 +35,7 @@ export async function completeCheckIn(
 					const windDownVisible = await page
 						.getByTestId("wind-down-overlay")
 						.isVisible();
-					const shortBreakVisible = await page
-						.getByTestId("timer-phase-label")
-						.filter({ hasText: "Short Break" })
-						.isVisible();
+					const shortBreakVisible = await isShortBreakPhaseVisible(page);
 					const checkInHidden = !(await page
 						.getByTestId("check-in-overlay")
 						.isVisible());

@@ -7,6 +7,7 @@
 import { expect, test } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
+import { continueLaterButton } from "./helpers/i18n-locators";
 import {
 	dismissKickoffReadinessIfVisible,
 	ensureIdleCycle,
@@ -61,7 +62,7 @@ test.describe("Seed exemplar — Risk #7 check-in gate", () => {
 			timeout: 15_000,
 		});
 		await dismissKickoffReadinessIfVisible(page);
-		await page.getByRole("button", { name: "Continue later" }).click();
+		await continueLaterButton(page).click();
 
 		await expectShortBreakPhaseHidden(page);
 		await expect(page.getByTestId("check-in-overlay")).toBeVisible();

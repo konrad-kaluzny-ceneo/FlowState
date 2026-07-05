@@ -2,6 +2,13 @@ import { expect, type Locator, type Page } from "@playwright/test";
 import { splitSecToMinSec } from "../../src/lib/duration-input";
 import { completeCheckIn } from "./check-in";
 import {
+	continueLaterButton,
+	startCycleButton,
+	taskFocusButton,
+	taskFocusedButton,
+	taskMarkCompleteButton,
+} from "./i18n-locators";
+import {
 	dismissBreakAlertsPermissionIfVisible,
 	dismissCycleCompleteIfVisible,
 	dismissKickoffReadinessIfVisible,
@@ -114,6 +121,16 @@ async function ensureOnTasksPage(page: Page) {
 	await expect(taskListLocator(page)).toBeVisible({ timeout: 15_000 });
 }
 
+/** Inline quick-add input (EN + PL placeholders after task-list UI refactor). */
+function quickAddInput(page: Page) {
+	return page.getByPlaceholder(/\+ Add a task|\+ Dodaj zadanie/);
+}
+
+/** Icon submit beside quick-add (aria-label Add / Dodaj). */
+function quickAddButton(page: Page) {
+	return page.getByRole("button", { name: /^(Add|Dodaj)$/, exact: true });
+}
+
 /** Click the visible focus nav link (sidebar on desktop, bottom nav on mobile). */
 async function clickNavFocus(page: Page) {
 	// Both nav containers exist in DOM always (one hidden via CSS breakpoints).
@@ -149,7 +166,7 @@ export async function clickStartCycle(page: Page) {
 	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	const createSettled = waitForCycleCreateSettled(page);
-	await page.getByRole("button", { name: "Start Cycle" }).click();
+	await startCycleButton(page).click();
 	await dismissBreakAlertsPermissionIfVisible(page);
 	await createSettled;
 }
@@ -170,9 +187,9 @@ export async function startFocusedWorkCycle(
 	await dismissFirstRunIfVisible(page);
 	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
-	await page.getByPlaceholder("Add a new task...").fill(taskTitle);
+	await quickAddInput(page).fill(taskTitle);
 	await dismissCycleCompleteIfVisible(page);
-	await page.getByRole("button", { name: "Add", exact: true }).click();
+	await quickAddButton(page).click();
 	// Quick-add creates tasks as "planned" — switch to Planned tab to find it
 	await page.getByRole("tab", { name: /Planned|Planowane/i }).click();
 	const taskRow = page
@@ -180,18 +197,14 @@ export async function startFocusedWorkCycle(
 		.filter({ hasText: taskTitle })
 		.first();
 	await expect(taskRow).toBeVisible({ timeout: 15_000 });
-	await waitForTaskCreateSettled(
-		page.getByRole("button", { name: "Add", exact: true }),
-	);
+	await waitForTaskCreateSettled(quickAddButton(page));
 	await dismissKickoffReadinessIfVisible(page);
 	await dismissTaskSuggestionIfVisible(page);
-	const focusBtn = taskRow.getByRole("button", { name: "Focus" });
+	const focusBtn = taskFocusButton(taskRow);
 	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
 	await focusBtn.click();
-	// Wait for focus to register in the cycle context
-	await expect(focusBtn).toHaveAttribute("aria-label", /Focused|Skupione/i, {
-		timeout: 5_000,
-	});
+	// Wait for focus to register in the cycle context (aria-label flips to focused state).
+	await expect(taskFocusedButton(taskRow)).toBeVisible({ timeout: 5_000 });
 
 	// Navigate to /focus via client-side link to preserve React context state
 	// (focusedTaskId is React state, lost on hard navigation)
@@ -212,11 +225,11 @@ export async function startFocusedWorkCycle(
 
 export async function addTask(page: Page, title: string) {
 	await ensureOnTasksPage(page);
-	const addButton = page.getByRole("button", { name: "Add", exact: true });
+	const addButton = quickAddButton(page);
 	await dismissFirstRunIfVisible(page);
 	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
-	await page.getByPlaceholder("Add a new task...").fill(title);
+	await quickAddInput(page).fill(title);
 	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	await addButton.click();
@@ -267,7 +280,7 @@ export async function markTaskCompleteMidCycle(page: Page, taskTitle: string) {
 		}
 	}
 	await expect(taskRow).toBeVisible({ timeout: 15_000 });
-	await taskRow.getByRole("button", { name: "Mark complete" }).click();
+	await taskMarkCompleteButton(taskRow).click();
 
 	// Navigate back to /focus via client-side nav
 	await clickNavFocus(page);
@@ -372,7 +385,7 @@ export async function focusTask(page: Page, taskTitle: string) {
 		}
 	}
 	await expect(taskRow).toBeVisible({ timeout: 15_000 });
-	const focusBtn = taskRow.getByRole("button", { name: "Focus" });
+	const focusBtn = taskFocusButton(taskRow);
 	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
 	await focusBtn.click();
 	// Navigate to /focus via client-side nav to preserve context
@@ -395,7 +408,7 @@ export async function completeWorkCycleWithCheckIn(
 		timeout: 15_000,
 	});
 	await dismissKickoffReadinessIfVisible(page);
-	await page.getByRole("button", { name: "Continue later" }).click();
+	await continueLaterButton(page).click();
 	await expectShortBreakPhaseHidden(page);
 	await completeCheckIn(page, energy);
 	await dismissWindDownIfVisible(page);

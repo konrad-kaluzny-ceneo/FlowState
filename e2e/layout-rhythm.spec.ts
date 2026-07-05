@@ -14,6 +14,7 @@ import {
 	clearOnboardingKeys,
 	dismissFirstRunIfVisible,
 } from "./helpers/onboarding";
+import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import { expectFocusPageReady } from "./helpers/task-list-locator";
 
 const SECTION_GAP_PX = 24;
@@ -30,6 +31,7 @@ test("focus page keeps sidebar/header clearance, section rhythm, and no overflow
 	};
 	await page.setViewportSize(viewport);
 
+	await resetWorkerSessionViaApi(page);
 	await page.goto("/focus");
 	await clearOnboardingKeys(page);
 	await dismissFirstRunIfVisible(page);
