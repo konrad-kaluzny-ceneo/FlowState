@@ -824,10 +824,10 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Automated
 
-- [ ] 6.1 Type checking passes: `pnpm typecheck`
-- [ ] 6.2 Lint/format passes: `pnpm check`
-- [ ] 6.3 Unit tests pass (dashboard/state/gate dismiss-oracle): `pnpm test`
-- [ ] 6.4 Pomodoro + wedge e2e pass: `pnpm test:e2e`
+- [x] 6.1 Type checking passes: `pnpm typecheck`
+- [x] 6.2 Lint/format passes: `pnpm check`
+- [x] 6.3 Unit tests pass (dashboard/state/gate dismiss-oracle): `pnpm test`
+- [ ] 6.4 Pomodoro + wedge e2e pass: `pnpm test:e2e` (pending CI)
 
 #### Manual
 

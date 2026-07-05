@@ -206,6 +206,57 @@
 	--color-shell-bottom: #252220;
 }
 
+/* S-45 p6: immersive session backdrop — focus-session-bg fades in full-bleed
+   behind Fokus during active WORK; break-restoration during break. A scrim
+   keeps foreground text/ring legible over the photo. Idle Fokus has neither
+   data attribute set, so the backdrop stays hidden (opacity 0). */
+#home-shell-main {
+	position: relative;
+}
+
+#home-shell-main::before {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	background-position: center;
+	background-size: cover;
+	content: "";
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 500ms ease;
+}
+
+#home-shell-main[data-work-focus-shell="true"]::before {
+	background-image:
+		linear-gradient(to bottom, rgb(244 242 239 / 82%), rgb(244 242 239 / 92%)),
+		url("/images/heroes/focus-session-bg.png");
+	opacity: 1;
+}
+
+[data-theme="dark"] #home-shell-main[data-work-focus-shell="true"]::before {
+	background-image:
+		linear-gradient(to bottom, rgb(30 28 26 / 82%), rgb(30 28 26 / 92%)),
+		url("/images/heroes/focus-session-bg-dark.png");
+}
+
+#home-shell-main[data-break-atmosphere="true"]::before {
+	background-image:
+		linear-gradient(to bottom, rgb(238 246 244 / 78%), rgb(238 246 244 / 90%)),
+		url("/images/heroes/break-restoration.png");
+	opacity: 1;
+}
+
+[data-theme="dark"] #home-shell-main[data-break-atmosphere="true"]::before {
+	background-image:
+		linear-gradient(to bottom, rgb(26 40 48 / 78%), rgb(26 40 48 / 90%)),
+		url("/images/heroes/break-restoration-dark.png");
+}
+
+#home-shell-main > .container {
+	position: relative;
+	z-index: 1;
+}
+
 /* S-43: stateful illustration system — Calm Garden tint tokens per variant.
    All values reuse existing semantic --color-* tokens (theme-aware). */
 [data-illustration-variant] {

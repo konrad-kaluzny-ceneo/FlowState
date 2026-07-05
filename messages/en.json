@@ -346,9 +346,28 @@
 		"offlineBanner": "You're offline — retry when you're back online."
 	},
 	"HomeFocusSummary": {
+		"heading": "Your day",
 		"budgetLine": "{used} of {budget} focus hours used · {remaining} left",
+		"sessionsLine": "{count, plural, one {# focus session today} other {# focus sessions today}}",
 		"standingOpen": "{count, plural, one {# daily standing task open} other {# daily standing tasks open}}",
 		"standingDone": "{count, plural, one {# daily standing task done for today} other {# daily standing tasks done for today}}"
+	},
+	"FocusTip": {
+		"heading": "Tip for today",
+		"tip0": "A short walk between sessions resets your focus better than scrolling does.",
+		"tip1": "Pick the task you're dreading most — momentum favors the brave.",
+		"tip2": "Water within reach, phone out of reach.",
+		"tip3": "One clear next step beats a long todo list.",
+		"tip4": "Breaks are part of the work, not a break from it.",
+		"tip5": "Name the outcome you want before you start the timer."
+	},
+	"QuickActions": {
+		"addTask": "Add task",
+		"viewTasks": "Tasks"
+	},
+	"HomeViewToggle": {
+		"fokus": "Fokus",
+		"zadania": "Zadania"
 	},
 	"DayMemory": {
 		"sectionDone": "Done",

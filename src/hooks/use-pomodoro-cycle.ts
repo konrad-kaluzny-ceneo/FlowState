@@ -3684,6 +3684,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		pendingClosureLine,
 		dismissSessionClosure,
 		continueTaskId,
+		completedWorkCycles,
 		showSessionEnergy: sessionEnergyPending && kickoffEligible,
 		showSessionFocus: sessionFocusPending && kickoffEligible,
 		sessionEnergyPending,
