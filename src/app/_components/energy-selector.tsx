@@ -112,12 +112,19 @@ type EnergySelectorProps = {
 	onSelect: (energy: CheckInEnergy) => void;
 	disabled?: boolean;
 	coachLine?: string;
+	/**
+	 * When provided, the matching option is rendered in a persistent "selected"
+	 * state (ring + full opacity). Used by the day-start energy gate's two-step
+	 * flow (pick → confirm); omit for the immediate-select check-in overlay.
+	 */
+	selectedValue?: CheckInEnergy | null;
 };
 
 export function EnergySelector({
 	onSelect,
 	disabled = false,
 	coachLine,
+	selectedValue = null,
 }: EnergySelectorProps) {
 	const t = useTranslations("Energy");
 
@@ -133,23 +140,33 @@ export function EnergySelector({
 			)}
 			<fieldset className="mt-4 border-0 p-0 sm:mt-6">
 				<legend className="sr-only">{t("legendEnergyLevel")}</legend>
-				<div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
-					{ENERGY_OPTION_DEFS.map((option) => (
-						<button
-							className={`flex flex-1 flex-col items-center justify-center gap-1.5 rounded-lg border px-2 py-3 font-semibold text-primary transition disabled:opacity-50 sm:py-2.5 ${option.buttonClass}`}
-							data-testid={option.testId}
-							disabled={disabled}
-							key={option.value}
-							onClick={() => onSelect(option.value)}
-							type="button"
-						>
-							<EnergyOptionIcon
-								className={`h-5 w-5 shrink-0 ${option.iconClass}`}
-								ui={option.ui}
-							/>
-							<span>{t(option.messageKey)}</span>
-						</button>
-					))}
+				<div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+					{ENERGY_OPTION_DEFS.map((option) => {
+						const isSelected = selectedValue === option.value;
+						return (
+							<button
+								aria-pressed={selectedValue != null ? isSelected : undefined}
+								className={`flex flex-1 flex-col items-center justify-center gap-2 rounded-card border px-2 py-4 font-semibold text-primary transition disabled:opacity-50 ${option.buttonClass} ${
+									isSelected
+										? "ring-2 ring-accent-cta ring-offset-1 ring-offset-surface-panel"
+										: selectedValue != null
+											? "opacity-70"
+											: ""
+								}`}
+								data-testid={option.testId}
+								disabled={disabled}
+								key={option.value}
+								onClick={() => onSelect(option.value)}
+								type="button"
+							>
+								<EnergyOptionIcon
+									className={`h-6 w-6 shrink-0 ${option.iconClass}`}
+									ui={option.ui}
+								/>
+								<span>{t(option.messageKey)}</span>
+							</button>
+						);
+					})}
 				</div>
 			</fieldset>
 		</>

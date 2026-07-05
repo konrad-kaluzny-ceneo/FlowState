@@ -17,7 +17,7 @@ export async function loadRemainingFocusMinutes(
 		},
 	});
 
-	if (plan == null) {
+	if (plan == null || plan.focusBudgetMinutes == null) {
 		return null;
 	}
 

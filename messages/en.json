@@ -598,16 +598,11 @@
 		}
 	},
 	"SessionSteering": {
-		"energyHeading": "How's your energy to start?",
-		"energyBody": "We'll use this to suggest your first task.",
-		"energySkip": "Skip",
-		"focusHeading": "What's your focus this session?",
-		"focusBody": "Helps bias your first task suggestion.",
-		"focusLegend": "Focus intention options",
-		"focusCustomAria": "Custom focus intention",
-		"focusCustomPlaceholder": "Or type your own…",
-		"focusCustomSubmit": "Set focus",
-		"focusSkip": "Skip for now"
+		"energyHeading": "How's your energy today?",
+		"energyBody": "We'll tailor suggestions to your mood and energy.",
+		"energyHint": "You can always change it later in your day settings.",
+		"energyContinue": "Continue",
+		"energySkip": "Skip"
 	},
 	"Energy": {
 		"focused": "Focused",

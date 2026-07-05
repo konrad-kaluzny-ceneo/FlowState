@@ -6,7 +6,7 @@ type DayPlanRow = {
 	id: number;
 	userId: string;
 	localDateKey: string;
-	focusBudgetMinutes: number;
+	focusBudgetMinutes: number | null;
 	usedFocusMinutes: number;
 };
 
@@ -119,5 +119,27 @@ describe("incrementUsedFocusMinutes", () => {
 		);
 
 		expect(result).toBeNull();
+	});
+
+	it("no-ops when the day plan has energy but no budget", async () => {
+		dayPlans = [
+			{
+				id: nextId++,
+				userId: "user-a",
+				localDateKey: "2026-06-19",
+				focusBudgetMinutes: null,
+				usedFocusMinutes: 0,
+			},
+		];
+
+		const result = await incrementUsedFocusMinutes(
+			db as never,
+			"user-a",
+			"2026-06-19",
+			25,
+		);
+
+		expect(result).toBeNull();
+		expect(db.dayPlan.update).not.toHaveBeenCalled();
 	});
 });

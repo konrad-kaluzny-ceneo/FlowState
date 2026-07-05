@@ -4,12 +4,15 @@ vi.mock("~/lib/auth/server", () => ({
 	auth: { getSession: vi.fn() },
 }));
 
+type Energy = "FOCUSED" | "STEADY" | "FADING";
+
 type DayPlanRow = {
 	id: number;
 	userId: string;
 	localDateKey: string;
-	focusBudgetMinutes: number;
+	focusBudgetMinutes: number | null;
 	usedFocusMinutes: number;
+	energyLevel: Energy | null;
 	createdAt: Date;
 	updatedAt: Date;
 };
@@ -47,17 +50,23 @@ vi.mock("~/server/db/index", () => ({
 					create: {
 						userId: string;
 						localDateKey: string;
-						focusBudgetMinutes: number;
+						focusBudgetMinutes?: number;
 						usedFocusMinutes: number;
+						energyLevel?: Energy;
 					};
-					update: { focusBudgetMinutes: number };
+					update: { focusBudgetMinutes?: number; energyLevel?: Energy };
 				}) => {
 					const { userId, localDateKey } = args.where.day_plan_user_date_key;
 					const existing = dayPlans.find(
 						(p) => p.userId === userId && p.localDateKey === localDateKey,
 					);
 					if (existing) {
-						existing.focusBudgetMinutes = args.update.focusBudgetMinutes;
+						if (args.update.focusBudgetMinutes !== undefined) {
+							existing.focusBudgetMinutes = args.update.focusBudgetMinutes;
+						}
+						if (args.update.energyLevel !== undefined) {
+							existing.energyLevel = args.update.energyLevel;
+						}
 						existing.updatedAt = new Date();
 						return Promise.resolve(existing);
 					}
@@ -65,8 +74,9 @@ vi.mock("~/server/db/index", () => ({
 						id: nextDayPlanId++,
 						userId: args.create.userId,
 						localDateKey: args.create.localDateKey,
-						focusBudgetMinutes: args.create.focusBudgetMinutes,
+						focusBudgetMinutes: args.create.focusBudgetMinutes ?? null,
 						usedFocusMinutes: args.create.usedFocusMinutes,
+						energyLevel: args.create.energyLevel ?? null,
 						createdAt: new Date(),
 						updatedAt: new Date(),
 					};
@@ -126,7 +136,7 @@ describe("dayPlan router", () => {
 		nextDayPlanId = 1;
 	});
 
-	it("getOrCreate returns null budget when no row exists", async () => {
+	it("getOrCreate returns null budget and null energy when no row exists", async () => {
 		const result = await dayPlanCaller(USER_A).getOrCreate({
 			localDateKey: DATE_KEY,
 		});
@@ -136,6 +146,7 @@ describe("dayPlan router", () => {
 			focusBudgetMinutes: null,
 			usedFocusMinutes: 0,
 			remainingFocusMinutes: null,
+			energyLevel: null,
 		});
 	});
 
@@ -154,6 +165,7 @@ describe("dayPlan router", () => {
 			focusBudgetMinutes: 120,
 			usedFocusMinutes: 0,
 			remainingFocusMinutes: 120,
+			energyLevel: null,
 		});
 	});
 
@@ -173,6 +185,7 @@ describe("dayPlan router", () => {
 			localDateKey: DATE_KEY,
 			focusBudgetMinutes: 120,
 			usedFocusMinutes: 90,
+			energyLevel: null,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		});
@@ -200,5 +213,76 @@ describe("dayPlan router", () => {
 		});
 
 		expect(other.focusBudgetMinutes).toBeNull();
+	});
+
+	it("setEnergy creates an energy-only day plan without a budget", async () => {
+		const caller = dayPlanCaller(USER_A);
+
+		const setResult = await caller.setEnergy({
+			localDateKey: DATE_KEY,
+			energy: "FOCUSED",
+		});
+
+		expect(setResult).toEqual({
+			localDateKey: DATE_KEY,
+			energyLevel: "FOCUSED",
+		});
+
+		const result = await caller.getOrCreate({ localDateKey: DATE_KEY });
+		expect(result).toEqual({
+			localDateKey: DATE_KEY,
+			focusBudgetMinutes: null,
+			usedFocusMinutes: 0,
+			remainingFocusMinutes: null,
+			energyLevel: "FOCUSED",
+		});
+	});
+
+	it("setEnergy overwrites a previously stored energy", async () => {
+		const caller = dayPlanCaller(USER_A);
+
+		await caller.setEnergy({ localDateKey: DATE_KEY, energy: "FOCUSED" });
+		await caller.setEnergy({ localDateKey: DATE_KEY, energy: "FADING" });
+
+		const result = await caller.getOrCreate({ localDateKey: DATE_KEY });
+		expect(result.energyLevel).toBe("FADING");
+	});
+
+	it("setEnergy preserves an existing budget and vice versa", async () => {
+		const caller = dayPlanCaller(USER_A);
+
+		await caller.setBudget({ localDateKey: DATE_KEY, focusBudgetMinutes: 120 });
+		await caller.setEnergy({ localDateKey: DATE_KEY, energy: "STEADY" });
+
+		const result = await caller.getOrCreate({ localDateKey: DATE_KEY });
+		expect(result).toEqual({
+			localDateKey: DATE_KEY,
+			focusBudgetMinutes: 120,
+			usedFocusMinutes: 0,
+			remainingFocusMinutes: 120,
+			energyLevel: "STEADY",
+		});
+	});
+
+	it("setEnergy rejects an invalid energy value", async () => {
+		await expect(
+			dayPlanCaller(USER_A).setEnergy({
+				localDateKey: DATE_KEY,
+				energy: "SUPERCHARGED" as never,
+			}),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+
+	it("setEnergy for one user does not affect another user", async () => {
+		await dayPlanCaller(USER_A).setEnergy({
+			localDateKey: DATE_KEY,
+			energy: "FOCUSED",
+		});
+
+		const other = await dayPlanCaller(USER_B).getOrCreate({
+			localDateKey: DATE_KEY,
+		});
+
+		expect(other.energyLevel).toBeNull();
 	});
 });

@@ -168,14 +168,10 @@ function makePomodoroMock(
 		continueTaskId: null,
 		dismissSessionClosure: vi.fn(),
 		showSessionEnergy: false,
-		showSessionFocus: false,
 		sessionEnergyPending: false,
-		sessionFocusPending: false,
 		sessionSteeringSubmitting: false,
 		completeSessionEnergy: vi.fn(),
 		skipSessionEnergy: vi.fn(),
-		completeSessionFocus: vi.fn(),
-		skipSessionFocus: vi.fn(),
 		kickoffEligible: false,
 		preFocusedTask: null,
 		catchUp: null,
@@ -1434,8 +1430,11 @@ const mockDayPlanWithBudget = {
 	budgetMinutes: 240,
 	remainingMinutes: 120,
 	usedMinutes: 120,
+	energy: null,
 	isSettingBudget: false,
+	isSettingEnergy: false,
 	setBudget: vi.fn(),
+	setEnergy: vi.fn(),
 };
 
 describe("PomodoroDashboardBody rail illustration variant", () => {

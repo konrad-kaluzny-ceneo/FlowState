@@ -1,5 +1,6 @@
 "use client";
 
+import type { EnergyLevel } from "@prisma/generated";
 import { useCallback, useEffect, useState } from "react";
 
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
@@ -54,14 +55,43 @@ export function useDayPlan() {
 		[localDateKey, setBudgetMutation],
 	);
 
+	const setEnergyMutation = api.dayPlan.setEnergy.useMutation({
+		onMutate: async ({ energy }) => {
+			await utils.dayPlan.getOrCreate.cancel({ localDateKey });
+			const previous = utils.dayPlan.getOrCreate.getData({ localDateKey });
+			utils.dayPlan.getOrCreate.setData({ localDateKey }, (current) =>
+				current == null ? current : { ...current, energyLevel: energy },
+			);
+			return { previous };
+		},
+		onError: (_error, _input, context) => {
+			if (context?.previous !== undefined) {
+				utils.dayPlan.getOrCreate.setData({ localDateKey }, context.previous);
+			}
+		},
+		onSettled: () => {
+			void utils.dayPlan.getOrCreate.invalidate({ localDateKey });
+		},
+	});
+
+	const setEnergy = useCallback(
+		async (energy: EnergyLevel) => {
+			await setEnergyMutation.mutateAsync({ localDateKey, energy });
+		},
+		[localDateKey, setEnergyMutation],
+	);
+
 	return {
 		localDateKey,
 		budgetMinutes: query.data?.focusBudgetMinutes ?? null,
 		remainingMinutes: query.data?.remainingFocusMinutes ?? null,
 		usedMinutes: query.data?.usedFocusMinutes ?? 0,
 		hasBudget: query.data?.focusBudgetMinutes != null,
+		energy: query.data?.energyLevel ?? null,
 		isLoading: enabled && query.isLoading,
 		isSettingBudget: setBudgetMutation.isPending,
+		isSettingEnergy: setEnergyMutation.isPending,
 		setBudget,
+		setEnergy,
 	};
 }

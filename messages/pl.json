@@ -598,16 +598,11 @@
 		}
 	},
 	"SessionSteering": {
-		"energyHeading": "Jaka jest Twoja energia na start?",
-		"energyBody": "Użyjemy tego, by podpowiedzieć pierwsze zadanie.",
-		"energySkip": "Pomiń",
-		"focusHeading": "Na czym się skupiasz w tej sesji?",
-		"focusBody": "Pomaga dobrać pierwszą sugestię zadania.",
-		"focusLegend": "Opcje intencji skupienia",
-		"focusCustomAria": "Własna intencja skupienia",
-		"focusCustomPlaceholder": "Albo wpisz własną…",
-		"focusCustomSubmit": "Ustaw skupienie",
-		"focusSkip": "Pomiń na razie"
+		"energyHeading": "Jaką masz dziś energię?",
+		"energyBody": "Dopasujemy sugestie do Twojego nastroju i energii.",
+		"energyHint": "Zawsze możesz to zmienić w ciągu dnia w ustawieniach dnia.",
+		"energyContinue": "Dalej",
+		"energySkip": "Pomiń"
 	},
 	"Energy": {
 		"focused": "Skupiony",

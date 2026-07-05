@@ -27,10 +27,7 @@ import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion
 import { usePomodoroCycleContext } from "~/app/_components/pomodoro-cycle-provider";
 import { QuickActions } from "~/app/_components/quick-actions";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
-import {
-	SessionEnergyCard,
-	SessionFocusCard,
-} from "~/app/_components/session-steering-card";
+import { SessionEnergyCard } from "~/app/_components/session-steering-card";
 import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
@@ -167,15 +164,13 @@ export function PomodoroDashboardBody({
 	// dismissal must mask the raw flags BEFORE they feed deriveHomeSessionState
 	// below — masking only the rendered cards would leave the derived
 	// "steering" session state on screen with nothing to act on (a dead-end).
-	const rawSteeringVisible =
-		pomodoro.showSessionEnergy || pomodoro.showSessionFocus;
+	const rawSteeringVisible = pomodoro.showSessionEnergy;
 	const dayStartGateDismissed = useDayStartGateDismissed(
 		recapDateKey,
 		rawSteeringVisible,
 	);
 	const showSessionEnergy =
 		pomodoro.showSessionEnergy && !dayStartGateDismissed;
-	const showSessionFocus = pomodoro.showSessionFocus && !dayStartGateDismissed;
 
 	const locale = useLocale() as UserLocale;
 	const dataMode =
@@ -275,27 +270,18 @@ export function PomodoroDashboardBody({
 	const handleCompleteEnergy = useCallback(
 		(energy: "FOCUSED" | "STEADY" | "FADING") => {
 			steeringCompletedRef.current = true;
+			// Persist the choice as today's "energy of the day" (DayPlan) so it is
+			// editable in settings; also steer the first kickoff suggestion. The
+			// DayPlan write is best-effort — the kickoff flow must not depend on it.
+			void dayPlan.setEnergy(energy).catch(() => {});
 			pomodoro.completeSessionEnergy(energy);
 		},
-		[pomodoro],
+		[dayPlan, pomodoro],
 	);
 
 	const handleSkipEnergy = useCallback(() => {
 		steeringCompletedRef.current = true;
 		pomodoro.skipSessionEnergy();
-	}, [pomodoro]);
-
-	const handleCompleteFocus = useCallback(
-		(intention: string) => {
-			steeringCompletedRef.current = true;
-			pomodoro.completeSessionFocus(intention);
-		},
-		[pomodoro],
-	);
-
-	const handleSkipFocus = useCallback(() => {
-		steeringCompletedRef.current = true;
-		pomodoro.skipSessionFocus();
 	}, [pomodoro]);
 
 	const dismissPermissionPrompt = useCallback(() => {
@@ -391,8 +377,7 @@ export function PomodoroDashboardBody({
 		pomodoro.focusedTaskId == null &&
 		pomodoro.pendingKickoffSuggestion.status !== "idle" &&
 		!showSuggestionCard &&
-		!showSessionEnergy &&
-		!showSessionFocus;
+		!showSessionEnergy;
 
 	const showKickoffDurationChips =
 		enableSuggestionGate &&
@@ -528,7 +513,6 @@ export function PomodoroDashboardBody({
 				wedgeGateActive,
 				enableSuggestionGate,
 				showSessionEnergy,
-				showSessionFocus,
 				pendingKickoffSuggestionStatus: mapSuggestionGateStatus(
 					pomodoro.pendingKickoffSuggestion.status,
 				),
@@ -552,7 +536,6 @@ export function PomodoroDashboardBody({
 			wedgeGateActive,
 			enableSuggestionGate,
 			showSessionEnergy,
-			showSessionFocus,
 			pomodoro.pendingKickoffSuggestion.status,
 			pomodoro.pendingSuggestion.status,
 			pomodoro.focusedTaskId,
@@ -644,25 +627,12 @@ export function PomodoroDashboardBody({
 				: "primary";
 
 	const steeringCards =
-		enableSuggestionGate &&
-		moduleVisible("steering") &&
-		(showSessionEnergy || showSessionFocus) ? (
-			<>
-				{showSessionEnergy && (
-					<SessionEnergyCard
-						disabled={pomodoro.sessionSteeringSubmitting}
-						onSelect={handleCompleteEnergy}
-						onSkip={handleSkipEnergy}
-					/>
-				)}
-				{showSessionFocus && (
-					<SessionFocusCard
-						isSubmitting={pomodoro.sessionSteeringSubmitting}
-						onComplete={handleCompleteFocus}
-						onSkip={handleSkipFocus}
-					/>
-				)}
-			</>
+		enableSuggestionGate && moduleVisible("steering") && showSessionEnergy ? (
+			<SessionEnergyCard
+				disabled={pomodoro.sessionSteeringSubmitting}
+				onSelect={handleCompleteEnergy}
+				onSkip={handleSkipEnergy}
+			/>
 		) : null;
 
 	const statusLines =

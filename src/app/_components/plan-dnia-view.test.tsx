@@ -15,9 +15,12 @@ function makeDayPlan(overrides: Partial<DayPlan> = {}): DayPlan {
 		remainingMinutes: null,
 		usedMinutes: 0,
 		hasBudget: false,
+		energy: null,
 		isLoading: false,
 		isSettingBudget: false,
+		isSettingEnergy: false,
 		setBudget: vi.fn().mockResolvedValue(undefined),
+		setEnergy: vi.fn().mockResolvedValue(undefined),
 		...overrides,
 	};
 }

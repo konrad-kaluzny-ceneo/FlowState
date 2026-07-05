@@ -192,13 +192,14 @@ model UserPreference {
 }
 
 model DayPlan {
-  id                 Int      @id @default(autoincrement())
-  userId             String   @map("user_id") @db.VarChar(255)
-  localDateKey       String   @map("local_date_key") @db.VarChar(10)
-  focusBudgetMinutes Int      @map("focus_budget_minutes")
-  usedFocusMinutes   Int      @default(0) @map("used_focus_minutes")
-  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id                 Int          @id @default(autoincrement())
+  userId             String       @map("user_id") @db.VarChar(255)
+  localDateKey       String       @map("local_date_key") @db.VarChar(10)
+  focusBudgetMinutes Int?         @map("focus_budget_minutes")
+  usedFocusMinutes   Int          @default(0) @map("used_focus_minutes")
+  energyLevel        EnergyLevel? @map("energy_level")
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique([userId, localDateKey], name: "day_plan_user_date_key")
   @@index([userId], name: "day_plan_user_id_idx")

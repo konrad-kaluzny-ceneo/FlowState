@@ -19,7 +19,9 @@ export async function incrementUsedFocusMinutes(
 		},
 	});
 
-	if (!dayPlan) {
+	// No-op when no day plan exists, or the day plan carries energy only (no
+	// budget set yet) — there is nothing to track focus minutes against.
+	if (!dayPlan || dayPlan.focusBudgetMinutes == null) {
 		return null;
 	}
 
@@ -32,23 +34,25 @@ export async function incrementUsedFocusMinutes(
 		where: { id: dayPlan.id },
 	});
 
-	if (updated == null) {
+	if (updated == null || updated.focusBudgetMinutes == null) {
 		return null;
 	}
 
-	if (updated.usedFocusMinutes > updated.focusBudgetMinutes) {
+	const budget = updated.focusBudgetMinutes;
+
+	if (updated.usedFocusMinutes > budget) {
 		const capped = await db.dayPlan.update({
 			where: { id: dayPlan.id },
-			data: { usedFocusMinutes: updated.focusBudgetMinutes },
+			data: { usedFocusMinutes: budget },
 		});
 		return {
 			usedFocusMinutes: capped.usedFocusMinutes,
-			focusBudgetMinutes: capped.focusBudgetMinutes,
+			focusBudgetMinutes: budget,
 		};
 	}
 
 	return {
 		usedFocusMinutes: updated.usedFocusMinutes,
-		focusBudgetMinutes: updated.focusBudgetMinutes,
+		focusBudgetMinutes: budget,
 	};
 }

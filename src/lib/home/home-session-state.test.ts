@@ -17,7 +17,6 @@ function baseInput(
 		wedgeGateActive: false,
 		enableSuggestionGate: true,
 		showSessionEnergy: false,
-		showSessionFocus: false,
 		pendingKickoffSuggestionStatus: "idle",
 		pendingSuggestionStatus: "idle",
 		focusedTaskId: null,
@@ -52,7 +51,7 @@ describe("deriveHomeSessionState", () => {
 			expect(state).toBe("idle");
 		});
 
-		it("resolves steering when session energy or focus cards are visible", () => {
+		it("resolves steering when the session energy card is visible", () => {
 			const { state } = deriveHomeSessionState(
 				baseInput({ showSessionEnergy: true }),
 			);
@@ -274,7 +273,7 @@ describe("deriveHomeSessionState", () => {
 
 		it("makes steering primary during steering state", () => {
 			const { modules } = deriveHomeSessionState(
-				baseInput({ showSessionFocus: true }),
+				baseInput({ showSessionEnergy: true }),
 			);
 			expect(modules.steering).toBe("primary");
 		});
