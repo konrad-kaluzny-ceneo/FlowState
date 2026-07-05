@@ -1,5 +1,5 @@
 import { expect, type Page } from "@playwright/test";
-
+import { continueLaterButton } from "./i18n-locators";
 import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
 import { expectShortBreakPhaseHidden } from "./timer-phase";
 import {
@@ -49,7 +49,7 @@ export async function submitFadingCheckInExpectingWindDown(page: Page) {
 		timeout: 15_000,
 	});
 	await dismissKickoffReadinessIfVisible(page);
-	await page.getByRole("button", { name: "Continue later" }).click();
+	await continueLaterButton(page).click();
 	await expectShortBreakPhaseHidden(page);
 	await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 	await page.getByTestId("check-in-energy-fading").click();
@@ -60,7 +60,7 @@ export async function completeSteadyWorkCycleAndResumeIdle(page: Page) {
 	await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
 		timeout: 15_000,
 	});
-	await page.getByRole("button", { name: "Continue later" }).click();
+	await continueLaterButton(page).click();
 	await expect(page.getByTestId("check-in-overlay")).toBeVisible({
 		timeout: 10_000,
 	});

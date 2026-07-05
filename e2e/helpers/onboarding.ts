@@ -79,6 +79,18 @@ export async function dismissFirstRunIfVisible(page: Page) {
 	});
 }
 
+export async function dismissAuthOnboardingIfNeeded(page: Page) {
+	await clearOnboardingKeys(page);
+	const authKey = await findAuthOnboardingKey(page);
+	if (authKey != null) {
+		const userId = authKey.replace("flowstate:onboarding:", "");
+		await seedOnboardingDismissed(page, userId);
+	} else {
+		await seedOnboardingDismissed(page);
+	}
+	await dismissFirstRunIfVisible(page);
+}
+
 export async function findAuthOnboardingKey(
 	page: Page,
 ): Promise<string | null> {

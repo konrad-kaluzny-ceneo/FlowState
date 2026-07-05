@@ -1,5 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
+import { taskFocusButton } from "./i18n-locators";
+
 function suggestionNextPostDataIncludes(
 	response: {
 		url: () => string;
@@ -111,7 +113,7 @@ export async function overrideSuggestionByFocusingTask(
 		timeout: 15_000,
 	});
 	const row = page.getByRole("listitem").filter({ hasText: taskTitle }).first();
-	const focusBtn = row.getByRole("button", { name: "Focus" });
+	const focusBtn = taskFocusButton(row);
 	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
 	await focusBtn.click();
 	await expect(page.getByTestId("suggestion-override-ack")).toBeVisible({

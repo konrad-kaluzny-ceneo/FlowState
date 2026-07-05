@@ -23,7 +23,7 @@ import { AddTaskModal } from "~/app/_components/add-task-modal";
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
 import { TaskDetailPanel } from "~/app/_components/task-detail-panel";
 import { Select } from "~/app/_components/ui/select";
-import { Tabs } from "~/app/_components/ui/tabs";
+import { TabPanel, Tabs } from "~/app/_components/ui/tabs";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { formatEndedAgo } from "~/lib/catch-up/format-ended-ago";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
@@ -816,8 +816,8 @@ export function TaskList({
 				</div>
 			</div>
 
-			{activeTab === "active" &&
-				(activeTasks.length === 0 ? (
+			<TabPanel activeValue={activeTab} tabsId="zadania-tabs" value="active">
+				{activeTasks.length === 0 ? (
 					<EmptyActiveTasksGuide
 						mode={mode}
 						onAddTaskClick={() => addTaskInputRef.current?.focus()}
@@ -840,10 +840,11 @@ export function TaskList({
 							</ul>
 						</SortableContext>
 					</DndContext>
-				))}
+				)}
+			</TabPanel>
 
-			{activeTab === "planned" &&
-				(plannedTasks.length === 0 ? (
+			<TabPanel activeValue={activeTab} tabsId="zadania-tabs" value="planned">
+				{plannedTasks.length === 0 ? (
 					<p className="text-sm text-text-secondary">{t("plannedEmpty")}</p>
 				) : (
 					<ul className="space-y-3">
@@ -856,10 +857,11 @@ export function TaskList({
 							/>
 						))}
 					</ul>
-				))}
+				)}
+			</TabPanel>
 
-			{activeTab === "completed" &&
-				(completedTasks.length === 0 ? (
+			<TabPanel activeValue={activeTab} tabsId="zadania-tabs" value="completed">
+				{completedTasks.length === 0 ? (
 					<p className="text-sm text-text-secondary">{t("completedEmpty")}</p>
 				) : (
 					<ul className="space-y-3">
@@ -873,7 +875,8 @@ export function TaskList({
 							/>
 						))}
 					</ul>
-				))}
+				)}
+			</TabPanel>
 
 			{onOpenArchive != null && (
 				<div

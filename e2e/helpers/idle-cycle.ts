@@ -1,6 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
 import { completeCheckIn } from "./check-in";
+import { continueLaterButton } from "./i18n-locators";
 import {
 	completeKickoffSteering,
 	dismissKickoffSteeringIfVisible,
@@ -47,7 +48,7 @@ export async function dismissCycleCompleteIfVisible(page: Page) {
 		return;
 	}
 	await dismissKickoffSteeringIfVisible(page);
-	const continueLater = page.getByRole("button", { name: "Continue later" });
+	const continueLater = continueLaterButton(page);
 	if (await continueLater.isVisible()) {
 		await continueLater.click();
 		if (await page.getByTestId("check-in-overlay").isVisible()) {
