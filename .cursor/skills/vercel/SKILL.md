@@ -40,7 +40,7 @@ CLI is installed globally. Prefer `--yes` on deploy commands to skip prompts.
 
 ## MCP operations
 
-Vercel MCP is configured in `.cursor/mcp.json` (`https://mcp.vercel.com`). The Vercel plugin also exposes tools (e.g. `list_deployments`, `get_deployment`, `get_deployment_build_logs`, `get_runtime_logs`, `deploy_to_vercel`, `get_project`, domain and toolbar helpers).
+Vercel MCP server: **`vercel-flowstate`** (project `.cursor/mcp.json`, `https://mcp.vercel.com`). Account: `konradkaluzny-3520`, team `konrads-projects`. Separate OAuth from the global Vercel plugin — authenticate in **MCP → vercel-flowstate** when working in this repo.
 
 **When to use which**
 

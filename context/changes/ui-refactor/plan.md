@@ -920,15 +920,15 @@ Consolidate and fix all E2E tests that broke or were deferred during Phases 5–
 
 #### Automated
 
-- [x] 10.1 Type checking passes: `pnpm typecheck`
-- [x] 10.2 Lint/format passes: `pnpm check`
-- [x] 10.3 Unit tests pass (hook unchanged; consumers via provider): `pnpm test`
+- [x] 10.1 Type checking passes: `pnpm typecheck` — 5a13526
+- [x] 10.2 Lint/format passes: `pnpm check` — 5a13526
+- [x] 10.3 Unit tests pass (hook unchanged; consumers via provider): `pnpm test` — 5a13526
 
 #### Manual
 
-- [x] 10.5 Timer behaves as before — single instance, no double-tick
-- [x] 10.6 Tab-visibility recovery still re-syncs
-- [x] 10.7 Check-in/wind-down/steering gates unregressed
+- [x] 10.5 Timer behaves as before — single instance, no double-tick — 5a13526
+- [x] 10.6 Tab-visibility recovery still re-syncs — 5a13526
+- [x] 10.7 Check-in/wind-down/steering gates unregressed — 5a13526
 
 ### Phase 11: Navigation Shell + Route Split
 
