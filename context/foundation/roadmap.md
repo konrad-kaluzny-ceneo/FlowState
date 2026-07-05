@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-07-05
 structure: split
-active_slices: [ui-refactor]
+active_slices: []
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -164,17 +164,17 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | F-14 | product-voice-contract | **done** | Stream R foundation; shipped PR [#177](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/177) |
 | S-40 | home-ia-reset | **done** | shipped PR [#181](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/181); pure home IA module + dashboard zones |
 | S-41 | desktop-calm-workbench | **done** | shipped PR [#182](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/182); hard dep S-40; desktop web layout only |
-| S-42 | mindful-day-memory | **no** | S-30 phase 2; formatter only; after F-14; best after S-40/S-41 |
+| S-42 | mindful-day-memory | **done** | Archived 2026-07-02 → `context/archive/2026-06-30-mindful-day-memory/`; PR #184; FLO-90 / #174 |
 | S-43 | stateful-illustration-system | **done** | Shipped 2026-07-03 PR #185; FLO-91 / #175 synced |
-| S-44 | archive-old-tasks | **yes** | task inventory hygiene; soft dep S-40 for archive entry placement |
-| S-45 | ui-refactor | **active** | FLO-95 / #189; implementing — `context/changes/ui-refactor/`; absorbs planning-cycle (#87) |
+| S-44 | archive-old-tasks | **done** | Archived 2026-06-27 → `context/archive/2026-06-27-archive-old-tasks/`; PR #179; FLO-94 / #178 |
+| S-45 | ui-refactor | **done** | FLO-95 / #189; archived `context/archive/2026-07-04-ui-refactor/` (2026-07-05); GitHub #189 closed |
 | F-15 | platform-refactor-batch | **backlog** | FLO-96 / #190; umbrella for F-08–F-13 + observability hygiene; phased after S-45 |
 | S-46 | mcp-server-for-agents | **no** | FLO-97 / #191; after F-15 + S-45; needs research: MCP protocol surface, auth model for agents; create Linear/GitHub before plan |
 | S-47 | delegation-suggestion-in-plan | **no** | FLO-98 / #192; after S-46 (MCP) + S-45 (Plan dnia shipped); scorer extension for delegation signal |
 | S-48 | analytics-trends-plan-vs-execution | **no** | FLO-99 / #193; after S-45 Podsumowanie; needs research: data model for weekly aggregation |
 | S-49 | workspace-setup-advisor | **no** | FLO-100 / #194; after S-45 Ustawienia; content-first (tips authored); no external integration |
 
-**Recommended next:** **S-41** `desktop-calm-workbench` — Stream R desktop layout; hard dep S-40 shipped.
+**Recommended next:** **F-15** `platform-refactor-batch` — timer hub + data-mode refactor batch (FLO-96 / [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190)); `ui-improvement` archived → `context/archive/2026-07-05-ui-improvement/`; PR [#196](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/196) open for merge.
 
 ## Reference appendix (load on demand)
 
@@ -222,6 +222,9 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **ui-improvement (ad-hoc):** UI polish pass and "coming soon" surfacing across Focus, Tasks, Plan, Summary and Settings — Archived 2026-07-05 → `context/archive/2026-07-05-ui-improvement/`. PR [#196](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/196). Lesson: —.
+- **daily-tasks-bug (ad-hoc):** Daily standing tasks complete into Ukończone section — Archived 2026-07-05 → `context/archive/2026-07-04-daily-tasks-bug/`. Lesson: —.
+- **status-vocabulary-unification (ad-hoc):** Status vocabulary unification (PL labels) — Archived 2026-07-05 → `context/archive/2026-07-04-status-vocabulary-unification/`. Lesson: —.
 - **S-45: (epic — phased in plan.md) experience the makiety redesign: 5-section nav (Fokus/Zadania/Plan dnia/Podsumowanie/Ustawienia), green retint, ring timer, minimal task cards + add-task modal, once-per-day steering; **includes former planning-cycle (#87) via Plan dnia** — Archived 2026-07-05 → `context/archive/2026-07-04-ui-refactor/`. Lesson: —.
 - **S-43: S-28 phase 2 — state-bound Calm Garden variants on hero/rail; never on gate controls** — Shipped 2026-07-03. PR [#185](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/185). Issues [FLO-91](https://linear.app/flowstate-10xdev/issue/FLO-91/flowstate-stateful-illustration-system-s-43) / [#175](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/175). Lesson: —.
 - **S-42: user sees calm day memory — Domknięte / Zostaje / Wróć tutaj — instead of a raw timing log; collapsed one-line on home; expanded view has exactly three narrative sections; helps closure and return context** — Archived 2026-07-02 → `context/archive/2026-06-30-mindful-day-memory/`. PR [#184](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/184). Issues [FLO-90](https://linear.app/flowstate-10xdev/issue/FLO-90/flowstate-mindful-day-memory-s-42) / [#174](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/174). Lesson: —.
