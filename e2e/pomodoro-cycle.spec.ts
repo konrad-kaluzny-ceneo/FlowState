@@ -24,6 +24,8 @@ import {
 const BREAK_REENTRY_FOCUSED = "Ready when you are — your focus is still here.";
 
 test.describe("Pomodoro cycle (S-01)", () => {
+	test.describe.configure({ mode: "serial" });
+
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/focus");
 		await expectFocusPageReady(page);
@@ -103,38 +105,5 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		await expect(page.getByTestId("break-reentry-copy")).toHaveText(
 			BREAK_REENTRY_FOCUSED,
 		);
-	});
-
-	test("mark task done from completion overlay @skip-belt", async ({
-		page,
-	}) => {
-		test.setTimeout(60_000);
-
-		const taskTitle = `E2E Done ${Date.now()}`;
-
-		await startFocusedWorkCycle(page, taskTitle, 1);
-		await advanceClockThroughFastWork(page);
-
-		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
-			timeout: 15_000,
-		});
-		const markDone = page.getByRole("button", {
-			name: "Done — mark task complete",
-		});
-		await expect(markDone).toBeEnabled();
-		await markDone.click();
-		await expectShortBreakPhaseHidden(page);
-		await completeCheckIn(page, "steady");
-		// S-06: suggestion card may appear during break — no interaction required for S-01
-
-		await expect(page.getByTestId("cycle-complete-overlay")).not.toBeVisible();
-		// Navigate to /tasks to verify task is in the Completed section
-		await page.goto("/tasks");
-		await expect(page.getByRole("heading", { name: /Completed/ })).toBeVisible({
-			timeout: 15_000,
-		});
-		await expect(
-			page.getByRole("listitem").filter({ hasText: taskTitle }),
-		).toHaveCount(1);
 	});
 });

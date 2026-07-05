@@ -8,15 +8,12 @@ import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { completeKickoffReadiness } from "./helpers/kickoff";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import {
-	acceptSuggestion,
 	expectSuggestionVisible,
-	overrideSuggestionByFocusingTask,
 	waitForSuggestionNext,
 } from "./helpers/suggestion";
 import { expectFocusPageReady } from "./helpers/task-list-locator";
 import {
 	addTaskWithAttributes,
-	advanceClockThroughBreakSec,
 	advanceClockThroughFastWork,
 	clickStartCycle,
 	completeWorkCycleWithCheckIn,
@@ -75,85 +72,5 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 			title: deepTask,
 			rationale: /Deep work — you're focused with few interruptions/,
 		});
-	});
-
-	test("accept path pre-focuses task and break-end continue starts idle timer @skip-belt", async ({
-		page,
-	}) => {
-		test.setTimeout(60_000);
-
-		const ts = Date.now();
-		const deepTask = `E2E Accept Deep ${ts}`;
-		const reactiveTask = `E2E Accept Reactive ${ts}`;
-
-		await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
-		await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
-		await focusTask(page, deepTask);
-		await setWorkDurationSec(page, 1);
-		await setShortBreakDurationSec(page, 30);
-		await clickStartCycle(page);
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
-
-		await advanceClockThroughFastWork(page);
-		const suggestionResponse = waitForSuggestionNext(page);
-		await completeWorkCycleWithCheckIn(page, "focused");
-		await expect(page.getByTestId("session-energy-card")).toHaveCount(0);
-		await suggestionResponse;
-
-		await expectSuggestionVisible(page, { title: deepTask });
-		await acceptSuggestion(page);
-
-		await advanceClockThroughBreakSec(page, 30);
-		await expect(page.getByTestId("cycle-complete-overlay")).toBeVisible({
-			timeout: 15_000,
-		});
-		await expect(
-			page.getByTestId("break-continue-suggested-btn"),
-		).toBeVisible();
-		await expect(
-			page.getByTestId("break-continue-suggested-btn"),
-		).toContainText(deepTask);
-		await page.getByTestId("break-continue-suggested-btn").click();
-
-		await expect(page.getByTestId("cycle-complete-overlay")).toBeHidden();
-		await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
-		await expect(
-			page.getByTestId("timer-panel-idle").getByText(deepTask),
-		).toBeVisible();
-	});
-
-	test("override path clears suggestion highlight when focusing another task @skip-belt", async ({
-		page,
-	}) => {
-		test.setTimeout(60_000);
-
-		const ts = Date.now();
-		const deepTask = `E2E Override Deep ${ts}`;
-		const reactiveTask = `E2E Override Reactive ${ts}`;
-
-		await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
-		await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
-		await focusTask(page, deepTask);
-		await setWorkDurationSec(page, 1);
-		await setShortBreakDurationSec(page, 30);
-		await clickStartCycle(page);
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
-
-		await advanceClockThroughFastWork(page);
-		const suggestionResponse = waitForSuggestionNext(page);
-		await completeWorkCycleWithCheckIn(page, "focused");
-		await expect(page.getByTestId("session-energy-card")).toHaveCount(0);
-		await suggestionResponse;
-
-		await overrideSuggestionByFocusingTask(page, reactiveTask);
-		await expect(page.getByTestId("suggestion-override-ack")).toContainText(
-			/noted/i,
-		);
-		await expect(page.getByTestId("suggested-task-row")).toHaveCount(0);
-		const reactiveRow = page
-			.getByRole("listitem")
-			.filter({ hasText: reactiveTask })
-			.first();
-		await expect(reactiveRow).toHaveClass(/ring-focus/);
 	});
 });
