@@ -306,6 +306,8 @@ Build the standalone Zadania view: minimal chip+effort cards, Aktywne/Planowane/
 
 **Contract**: Build on the Phase-2 modal helper; on submit call the existing `create` mutation (status defaults to `planned`). Keep the inline "Dodaj zadanie / lub naciśnij Enter" quick-add affordance shown in the mockup as a secondary path.
 
+**Deviation (intentional, post-implementation):** the modal-opening control is a gear icon (`Settings2`) button next to the quick-add `+`, not a visible "➕ Dodaj zadanie" label — layout is `[input] [+] [⚙]`. Opening the gear seeds the modal's title field with whatever text is currently in the quick-add input (and clears that input), so a partially-typed quick-add task can be "upgraded" into the full form without retyping the title. Requested and confirmed by the user on 2026-07-05; `addTaskButton` i18n key now holds the gear button's `aria-label` copy instead of visible button text.
+
 #### 4. Detail side panel
 
 **File**: `src/app/_components/task-detail-panel.tsx` (new), reusing `TaskFieldsPanel`
