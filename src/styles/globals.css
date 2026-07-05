@@ -309,6 +309,48 @@
 		url("/images/heroes/day-summary-thumb-dark.png");
 }
 
+/* Phase 3: Focus empty state hero background */
+.focus-empty-hero {
+	position: relative;
+	overflow: hidden;
+	min-height: 18rem;
+	background-image:
+		linear-gradient(to bottom, rgb(244 242 239 / 55%), rgb(244 242 239 / 82%)),
+		url("/images/heroes/onboarding-hero.png");
+	background-position: center;
+	background-size: cover;
+}
+
+[data-theme="dark"] .focus-empty-hero {
+	background-image:
+		linear-gradient(to bottom, rgb(30 28 26 / 55%), rgb(30 28 26 / 82%)),
+		url("/images/heroes/onboarding-hero-dark.png");
+}
+
+.focus-info-banner {
+	background: linear-gradient(
+		90deg,
+		rgb(93 130 101 / 0.08),
+		rgb(93 130 101 / 0.04)
+	);
+}
+
+.focus-ready-hero {
+	background: linear-gradient(
+		180deg,
+		rgb(255 255 255 / 0.96),
+		rgb(250 248 245 / 0.98)
+	);
+}
+
+[data-theme="dark"] .focus-ready-hero {
+	background: linear-gradient(
+		180deg,
+		rgb(42 49 66 / 0.96),
+		rgb(35 41 54 / 0.98)
+	);
+}
+
 /* S-43: stateful illustration system — Calm Garden tint tokens per variant.
    All values reuse existing semantic --color-* tokens (theme-aware). */
 [data-illustration-variant] {

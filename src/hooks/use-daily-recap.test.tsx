@@ -4,17 +4,15 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DailyRecap } from "~/lib/recap/types";
+import { recapRow } from "~/test/recap-fixtures";
 
 let dataMode: "authenticated" | "guest" = "authenticated";
 const recapData: DailyRecap = {
 	last24Hours: [
-		{
+		recapRow({
 			taskId: 1,
 			title: "Auth task",
-			firstStartedAt: new Date("2026-06-20T10:00:00Z"),
-			lastEndedAt: new Date("2026-06-20T10:25:00Z"),
-			focusedMinutes: 25,
-		},
+		}),
 	],
 	todayPlan: [],
 	footprints: {},
@@ -25,13 +23,13 @@ const invalidateTaskList = vi.fn();
 
 const guestRecapBefore: DailyRecap = {
 	last24Hours: [
-		{
+		recapRow({
 			taskId: "guest-task-id",
 			title: "Guest task",
 			firstStartedAt: new Date("2026-06-20T09:00:00Z"),
 			lastEndedAt: new Date("2026-06-20T09:15:00Z"),
 			focusedMinutes: 15,
-		},
+		}),
 	],
 	todayPlan: [],
 	footprints: {},
@@ -39,13 +37,13 @@ const guestRecapBefore: DailyRecap = {
 
 const guestRecapAfter: DailyRecap = {
 	last24Hours: [
-		{
+		recapRow({
 			taskId: "guest-task-id",
 			title: "Guest task",
 			firstStartedAt: new Date("2026-06-20T09:00:00Z"),
 			lastEndedAt: new Date("2026-06-20T09:30:00Z"),
 			focusedMinutes: 30,
-		},
+		}),
 	],
 	todayPlan: [],
 	footprints: {},

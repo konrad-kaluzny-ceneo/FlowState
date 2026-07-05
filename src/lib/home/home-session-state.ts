@@ -30,7 +30,6 @@ export type DeriveHomeSessionStateInput = {
 	wedgeGateActive: boolean;
 	enableSuggestionGate: boolean;
 	showSessionEnergy: boolean;
-	showSessionFocus: boolean;
 	pendingKickoffSuggestionStatus: "idle" | "loading" | "ready" | "error";
 	pendingSuggestionStatus: "idle" | "loading" | "ready" | "error";
 	focusedTaskId: string | number | null;
@@ -87,8 +86,7 @@ function hasKickoffCard(input: DeriveHomeSessionStateInput): boolean {
 		input.cycleState === "idle" &&
 		input.focusedTaskId == null &&
 		input.pendingKickoffSuggestionStatus !== "idle" &&
-		!input.showSessionEnergy &&
-		!input.showSessionFocus
+		!input.showSessionEnergy
 	);
 }
 
@@ -146,10 +144,7 @@ function isReturning(input: DeriveHomeSessionStateInput): boolean {
 }
 
 function isSteering(input: DeriveHomeSessionStateInput): boolean {
-	return (
-		input.enableSuggestionGate &&
-		(input.showSessionEnergy || input.showSessionFocus)
-	);
+	return input.enableSuggestionGate && input.showSessionEnergy;
 }
 
 function resolveSessionState(

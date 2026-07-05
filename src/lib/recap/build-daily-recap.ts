@@ -35,7 +35,15 @@ export async function buildDailyRecap(
 			],
 		},
 		include: {
-			task: { select: { id: true, title: true } },
+			task: {
+				select: {
+					id: true,
+					title: true,
+					workType: true,
+					effortMinutes: true,
+					status: true,
+				},
+			},
 		},
 		orderBy: { startedAt: "asc" },
 	});
@@ -48,7 +56,13 @@ export async function buildDailyRecap(
 			status: "completed",
 			updatedAt: { gte: windowStart },
 		},
-		select: { id: true, title: true, updatedAt: true },
+		select: {
+			id: true,
+			title: true,
+			updatedAt: true,
+			workType: true,
+			effortMinutes: true,
+		},
 	});
 
 	const cycleTaskIds = new Set(
@@ -65,6 +79,9 @@ export async function buildDailyRecap(
 			firstStartedAt: task.updatedAt ?? now,
 			lastEndedAt: task.updatedAt ?? now,
 			focusedMinutes: 0,
+			workType: task.workType,
+			effortMinutes: task.effortMinutes,
+			isCompleted: true,
 			completedWithoutCycle: true,
 		});
 	}
@@ -106,7 +123,13 @@ type CycleWithTask = {
 	kind: string;
 	state: string;
 	configuredDurationSec: number;
-	task: { id: number; title: string } | null;
+	task: {
+		id: number;
+		title: string;
+		workType: RecapTaskRow["workType"];
+		effortMinutes: number | null;
+		status: string;
+	} | null;
 };
 
 function buildLast24HoursRows(cycles: CycleWithTask[]): RecapTaskRow[] {
@@ -122,6 +145,7 @@ function buildLast24HoursRows(cycles: CycleWithTask[]): RecapTaskRow[] {
 			continue;
 		}
 		const existing = byTask.get(cycle.taskId);
+		const isCompleted = cycle.task.status === "completed";
 
 		if (existing == null) {
 			byTask.set(cycle.taskId, {
@@ -130,6 +154,9 @@ function buildLast24HoursRows(cycles: CycleWithTask[]): RecapTaskRow[] {
 				firstStartedAt: cycle.startedAt,
 				lastEndedAt: cycle.endedAt ?? cycle.startedAt,
 				focusedMinutes: minutes,
+				workType: cycle.task.workType,
+				effortMinutes: cycle.task.effortMinutes,
+				isCompleted,
 			});
 			continue;
 		}
@@ -142,6 +169,9 @@ function buildLast24HoursRows(cycles: CycleWithTask[]): RecapTaskRow[] {
 			existing.lastEndedAt = endedAt;
 		}
 		existing.focusedMinutes += minutes;
+		if (isCompleted) {
+			existing.isCompleted = true;
+		}
 	}
 
 	return [...byTask.values()];

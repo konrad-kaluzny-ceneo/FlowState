@@ -28,13 +28,13 @@ describe("language-preference storage", () => {
 
 	it("returns null for guest merge when preference is default or missing", () => {
 		expect(readGuestLanguageForMerge()).toBeNull();
-		writeLanguagePreference({ mode: "guest" }, "en");
+		writeLanguagePreference({ mode: "guest" }, "pl");
 		expect(readGuestLanguageForMerge()).toBeNull();
 	});
 
 	it("returns guest preference for merge when non-default locale is stored", () => {
-		writeLanguagePreference({ mode: "guest" }, "pl");
-		expect(readGuestLanguageForMerge()).toBe("pl");
-		expect(readGuestLanguagePreference()).toBe("pl");
+		writeLanguagePreference({ mode: "guest" }, "en");
+		expect(readGuestLanguageForMerge()).toBe("en");
+		expect(readGuestLanguagePreference()).toBe("en");
 	});
 });

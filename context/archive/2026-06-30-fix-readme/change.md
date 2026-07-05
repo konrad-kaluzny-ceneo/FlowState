@@ -1,10 +1,10 @@
 ---
 change_id: fix-readme
 title: Align README with actual implementation for documentation consistency
-status: implementing
+status: archived
 created: 2026-06-30
-updated: 2026-06-30
-archived_at: null
+updated: 2026-07-05
+archived_at: 2026-07-05T19:46:03Z
 ---
 
 ## Notes

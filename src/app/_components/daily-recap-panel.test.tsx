@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import type { DailyRecap } from "~/lib/recap/types";
+import { recapRow } from "~/test/recap-fixtures";
 
 import { DailyRecapPanel } from "./daily-recap-panel";
 
@@ -9,13 +10,13 @@ const DATE_KEY = "2026-06-20";
 
 const sampleRecap: DailyRecap = {
 	last24Hours: [
-		{
+		recapRow({
 			taskId: 1,
 			title: "Write recap",
 			firstStartedAt: new Date("2026-06-20T10:00:00Z"),
 			lastEndedAt: new Date("2026-06-20T10:25:00Z"),
 			focusedMinutes: 25,
-		},
+		}),
 	],
 	todayPlan: [
 		{

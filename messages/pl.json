@@ -27,7 +27,8 @@
 		"tasks": "Zadania",
 		"plan": "Plan dnia",
 		"summary": "Podsumowanie",
-		"settings": "Ustawienia"
+		"settings": "Ustawienia",
+		"sidebarQuote": "Malutkie kroki każdego dnia prowadzą do wielkich efektów."
 	},
 	"Onboarding": {
 		"firstRun": {
@@ -244,6 +245,10 @@
 		"footprint": "Ostatnie skupienie {ago} · łącznie {minutes} min",
 		"errorDismiss": "Zamknij",
 		"createTitlePlaceholder": "Dodaj nowe zadanie...",
+		"inlineAddPlaceholder": "+ Dodaj zadanie",
+		"inlineAddHint": "lub naciśnij Enter",
+		"footerTipHeading": "Zasada FlowState",
+		"footerTipBody": "Najpierw skupienie, potem organizacja. Jedno zadanie na raz — reszta poczeka.",
 		"createAddAria": "Dodaj",
 		"createEffortLabel": "Wysiłek",
 		"createEffortPlaceholder": "min",
@@ -352,6 +357,12 @@
 	},
 	"HomeFocusSummary": {
 		"heading": "Twój dzień",
+		"tasksLabel": "Zadania",
+		"tasksLine": "{done} / {total}",
+		"sessionsLabel": "Sesje skupienia",
+		"focusTimeLabel": "Czas skupienia",
+		"focusTimeLine": "{minutes} min",
+		"emptyPlan": "Plan na dziś jest pusty. Stwórz go!",
 		"budgetLine": "Wykorzystano {used} z {budget} godzin skupienia · zostało {remaining}",
 		"sessionsLine": "{count, plural, one {# sesja skupienia dzisiaj} few {# sesje skupienia dzisiaj} many {# sesji skupienia dzisiaj} other {# sesji skupienia dzisiaj}}",
 		"standingOpen": "{count, plural, one {# codzienne zadanie stałe aktywne} few {# codzienne zadania stałe aktywne} many {# codziennych zadań stałych aktywnych} other {# codziennego zadania stałego aktywnego}}",
@@ -367,8 +378,42 @@
 		"tip5": "Nazwij efekt, który chcesz osiągnąć, zanim uruchomisz minutnik."
 	},
 	"QuickActions": {
+		"heading": "Szybkie akcje",
 		"addTask": "Dodaj zadanie",
-		"viewTasks": "Zadania"
+		"planDay": "Zaplanuj dzień"
+	},
+	"FocusEmpty": {
+		"heading": "Twój dzień czeka na Ciebie",
+		"subtitle": "Dodaj pierwsze zadanie, zaplanuj swój dzień lub rozpocznij sesję skupienia.",
+		"cta": "Dodaj pierwsze zadanie"
+	},
+	"FocusPage": {
+		"greetingAnonymous": "Dzień dobry! 👋",
+		"greetingNamed": "Dzień dobry, {name} ☀️",
+		"subtitleAnonymous": "Zacznij dzień od planu, który ma znaczenie.",
+		"subtitleNamed": "Skup się na tym, co naprawdę ważne.",
+		"footer": "FlowState jest tutaj, aby pomóc Ci pracować spokojniej i skuteczniej.",
+		"profileAria": "Profil użytkownika {name}"
+	},
+	"FocusInfoBanner": {
+		"empty": "Świadome planowanie to mniej chaosu i więcej spokoju. Zrób pierwszy krok, a FlowState poprowadzi Cię dalej.",
+		"ready": "Małe kroki każdego dnia prowadzą do wielkich efektów."
+	},
+	"FocusGettingStarted": {
+		"heading": "Jak zacząć?",
+		"subtitle": "Wybierz opcję, która najlepiej pasuje do Ciebie.",
+		"addTaskTitle": "Dodaj zadanie",
+		"addTaskBody": "Zapisz wszystko, o czym musisz pamiętać.",
+		"planDayTitle": "Zaplanuj dzień",
+		"planDayBody": "Ustal priorytety i zaplanuj swoje zadania."
+	},
+	"FocusReady": {
+		"heading": "Gotowy na skupienie?",
+		"subtitle": "Wybierz zadanie, aby rozpocząć sesję.",
+		"cta": "+ Wybierz zadanie",
+		"suggestedHeading": "Aktywne i zaplanowane",
+		"viewAll": "Zobacz wszystkie zadania →",
+		"suggestionStarAria": "Zobacz wyjaśnienie automatycznej sugestii"
 	},
 	"HomeViewToggle": {
 		"fokus": "Fokus",
@@ -407,13 +452,22 @@
 		"noDataBody": "Rozpocznij sesję skupienia, aby zobaczyć statystyki dnia.",
 		"bestTimeTitle": "Najlepsza pora dnia",
 		"bestTimeComingSoon": "Wkrótce – wymaga danych z kilku dni.",
-		"dateNavComingSoon": "Nawigacja dat – wkrótce."
+		"dateNavComingSoon": "Nawigacja dat – wkrótce.",
+		"completedListTitle": "Ukończone w ostatnich 24 godzinach",
+		"completedListEmpty": "Brak ukończonych zadań w ostatnich 24 godzinach — to też spokojny dzień.",
+		"footerBannerTitle": "Dobrze, że tu jesteś",
+		"footerBannerBody": "Regularne sesje skupienia budują rytm dnia — jeden cykl naraz."
 	},
 	"PlanDnia": {
 		"title": "Plan dnia",
-		"subtitle": "Twój dzienny budżet godzin skupienia.",
+		"subtitle": "Harmonogram dnia i budżet godzin skupienia.",
 		"loading": "Wczytywanie planu dnia…",
 		"guestEmpty": "Plan dnia jest dostępny po zalogowaniu.",
+		"calendarComingSoon": "Kalendarz wkrótce",
+		"blockFocus": "Skupienie",
+		"blockMeeting": "Spotkanie",
+		"blockBreak": "Przerwa",
+		"blockPersonal": "Osobiste",
 		"budgetHeading": "Budżet skupienia",
 		"budgetLine": "Wykorzystano {used} z {budget} · pozostało {remaining}",
 		"changeBudget": "Zmień budżet",
@@ -598,16 +652,11 @@
 		}
 	},
 	"SessionSteering": {
-		"energyHeading": "Jaka jest Twoja energia na start?",
-		"energyBody": "Użyjemy tego, by podpowiedzieć pierwsze zadanie.",
-		"energySkip": "Pomiń",
-		"focusHeading": "Na czym się skupiasz w tej sesji?",
-		"focusBody": "Pomaga dobrać pierwszą sugestię zadania.",
-		"focusLegend": "Opcje intencji skupienia",
-		"focusCustomAria": "Własna intencja skupienia",
-		"focusCustomPlaceholder": "Albo wpisz własną…",
-		"focusCustomSubmit": "Ustaw skupienie",
-		"focusSkip": "Pomiń na razie"
+		"energyHeading": "Jaką masz dziś energię?",
+		"energyBody": "Dopasujemy sugestie do Twojego nastroju i energii.",
+		"energyHint": "Zawsze możesz to zmienić w ciągu dnia w ustawieniach dnia.",
+		"energyContinue": "Dalej",
+		"energySkip": "Pomiń"
 	},
 	"Energy": {
 		"focused": "Skupiony",
@@ -654,10 +703,26 @@
 	},
 	"Settings": {
 		"title": "Ustawienia",
+		"subtitle": "Dostosuj FlowState do swojego stylu pracy.",
+		"navAriaLabel": "Sekcje ustawień",
 		"sectionGeneral": "Ogólne",
 		"sectionFocusSessions": "Sesje skupienia",
 		"sectionBreaksNotifications": "Przerwy i powiadomienia",
 		"sectionAppearance": "Wygląd",
+		"sectionDayEnergy": "Energia dnia",
+		"sectionIntegrations": "Integracje",
+		"tabGeneralDesc": "Preferencje i konto",
+		"tabFocusDesc": "Ustawienia Pomodoro",
+		"tabBreaksDesc": "Przerwy i alerty",
+		"tabAppearanceDesc": "Motyw i kolory",
+		"tabEnergyDesc": "Twój poziom na dziś",
+		"tabIntegrationsDesc": "Połączenia zewnętrzne",
+		"dayEnergyBody": "Wybierz, jak się dziś czujesz — ta informacja pomaga FlowState dopasować sugestie zadań.",
+		"integrationsBody": "Połącz FlowState z narzędziami, których używasz na co dzień.",
+		"mcpComingSoon": "Integracja MCP wkrótce",
+		"mcpMockTitle": "Agent FlowState",
+		"mcpMockDescription": "Połącz asystenta AI przez Model Context Protocol, aby zarządzać zadaniami głosem.",
+		"mcpMockConnect": "Połącz przez MCP",
 		"languageLabel": "Język",
 		"userNameLabel": "Konto",
 		"signOut": "Wyloguj się",
@@ -666,6 +731,7 @@
 		"workDurationLabel": "Czas pracy",
 		"shortBreakLabel": "Krótka przerwa",
 		"longBreakLabel": "Długa przerwa",
+		"breakAlertsLabel": "Powiadomienia o przerwie",
 		"cycleEndAudioLabel": "Dźwięk końca cyklu",
 		"themeLabel": "Motyw"
 	}

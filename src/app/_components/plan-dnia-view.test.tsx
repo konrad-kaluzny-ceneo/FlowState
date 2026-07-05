@@ -15,9 +15,12 @@ function makeDayPlan(overrides: Partial<DayPlan> = {}): DayPlan {
 		remainingMinutes: null,
 		usedMinutes: 0,
 		hasBudget: false,
+		energy: null,
 		isLoading: false,
 		isSettingBudget: false,
+		isSettingEnergy: false,
 		setBudget: vi.fn().mockResolvedValue(undefined),
+		setEnergy: vi.fn().mockResolvedValue(undefined),
 		...overrides,
 	};
 }
@@ -55,6 +58,18 @@ describe("PlanDniaView", () => {
 		const summary = screen.getByTestId("plan-dnia-summary");
 		expect(summary).toBeTruthy();
 		expect(screen.getByTestId("plan-dnia-change-btn")).toBeTruthy();
+	});
+
+	it("shows the blurred calendar coming-soon preview", () => {
+		renderView(<PlanDniaView dayPlan={makeDayPlan()} />);
+
+		expect(screen.getByTestId("plan-dnia-calendar-preview")).toBeTruthy();
+		expect(screen.getByText("Calendar coming soon")).toBeTruthy();
+		expect(
+			screen
+				.getByTestId("plan-dnia-calendar-preview-mock")
+				.getAttribute("aria-hidden"),
+		).toBe("true");
 	});
 
 	it("lets the user change an already-set budget", async () => {

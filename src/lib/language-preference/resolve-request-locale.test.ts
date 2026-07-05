@@ -33,14 +33,14 @@ describe("resolveRequestLocale", () => {
 		).toBe("pl");
 	});
 
-	it("falls back to English when no cookie or preference exists", () => {
+	it("falls back to Polish when no cookie or preference exists", () => {
 		expect(
 			resolveRequestLocale({
 				cookieLocale: undefined,
 				authenticatedLanguage: null,
 				isAuthenticated: false,
 			}),
-		).toBe("en");
+		).toBe("pl");
 	});
 
 	it("ignores invalid cookie values", () => {

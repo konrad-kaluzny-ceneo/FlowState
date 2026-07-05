@@ -8,7 +8,7 @@ import { fromPrismaUserLocale } from "~/lib/persistence/prisma/enum-mappers";
 /**
  * Request-time locale precedence:
  * explicit switch (cookie + preference, kept in sync) → authed DB preference →
- * cookie (incl. first-visit Accept-Language via proxy) → `en`.
+ * cookie (incl. first-visit Accept-Language via proxy) → `pl`.
  *
  * Authenticated users prefer stored account language over a proxy-set cookie so
  * sign-in on a new device respects account preference. Guests rely on cookie only.

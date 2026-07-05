@@ -1,8 +1,4 @@
-import {
-	DEFAULT_USER_LOCALE,
-	isUserLocale,
-	type UserLocale,
-} from "~/lib/domain/user-locale";
+import { DEFAULT_USER_LOCALE, type UserLocale } from "~/lib/domain/user-locale";
 
 type LanguagePreference = {
 	lang: string;
@@ -36,7 +32,7 @@ function parseAcceptLanguage(header: string): LanguagePreference[] {
 }
 
 /**
- * First-visit default: English unless the browser clearly prefers Polish.
+ * First-visit default: Polish unless the browser clearly prefers English.
  */
 export function detectLocaleFromAcceptLanguage(
 	header: string | null,
@@ -53,12 +49,13 @@ export function detectLocaleFromAcceptLanguage(
 	const polish = preferences.find((entry) => entry.lang === "pl");
 	const english = preferences.find((entry) => entry.lang === "en");
 
-	if (polish && (!english || polish.quality >= english.quality)) {
-		return "pl";
+	if (polish && english) {
+		return polish.quality >= english.quality ? "pl" : "en";
 	}
-
-	const firstSupported = preferences.find((entry) => isUserLocale(entry.lang));
-	if (firstSupported?.lang === "pl") {
+	if (english) {
+		return "en";
+	}
+	if (polish) {
 		return "pl";
 	}
 

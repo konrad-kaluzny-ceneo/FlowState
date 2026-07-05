@@ -1,10 +1,10 @@
 ---
 change_id: roadmap-ux-ui-story-expand
 title: Add UX/UI story chapter to roadmap
-status: planned
+status: archived
 created: 2026-06-26
-updated: 2026-06-26
-archived_at: null
+updated: 2026-07-05
+archived_at: 2026-07-05T19:46:12Z
 ---
 
 ## Notes

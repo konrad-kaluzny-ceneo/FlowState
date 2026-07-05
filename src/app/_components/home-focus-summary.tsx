@@ -1,14 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
 
+import { FocusWidgetCard } from "~/app/_components/focus-widget-card";
 import { formatFocusMinutes } from "~/lib/time/format-focus-minutes";
-
-type StandingTaskFact = {
-	title: string;
-	doneForToday: boolean;
-};
 
 type HomeFocusSummaryProps = {
 	hasBudget: boolean;
@@ -16,8 +11,11 @@ type HomeFocusSummaryProps = {
 	budgetMinutes: number | null;
 	remainingMinutes: number | null;
 	usedMinutes: number;
-	standingTasks: StandingTaskFact[];
 	sessionsCompleted?: number;
+	tasksDone?: number;
+	tasksTotal?: number;
+	/** Always render the widget (calm landing rail). */
+	forceShow?: boolean;
 };
 
 export function HomeFocusSummary({
@@ -26,72 +24,71 @@ export function HomeFocusSummary({
 	budgetMinutes,
 	remainingMinutes,
 	usedMinutes,
-	standingTasks,
 	sessionsCompleted = 0,
+	tasksDone = 0,
+	tasksTotal = 0,
+	forceShow = false,
 }: HomeFocusSummaryProps) {
 	const t = useTranslations("HomeFocusSummary");
-
-	const lines = useMemo(() => {
-		const result: string[] = [];
-
-		if (sessionsCompleted > 0) {
-			result.push(t("sessionsLine", { count: sessionsCompleted }));
-		}
-
-		const openStanding = standingTasks.filter((task) => !task.doneForToday);
-		const doneStanding = standingTasks.filter((task) => task.doneForToday);
-
-		if (openStanding.length > 0) {
-			result.push(t("standingOpen", { count: openStanding.length }));
-		} else if (doneStanding.length > 0) {
-			result.push(t("standingDone", { count: doneStanding.length }));
-		}
-
-		return result;
-	}, [sessionsCompleted, standingTasks, t]);
 
 	const budgetProgressPct =
 		hasBudget && budgetMinutes != null && budgetMinutes > 0
 			? Math.min(100, Math.round((usedMinutes / budgetMinutes) * 100))
 			: null;
 
-	if (isLoading || (lines.length === 0 && budgetProgressPct == null)) {
+	if (!forceShow && isLoading) {
+		return null;
+	}
+
+	if (!forceShow && !hasBudget && sessionsCompleted === 0) {
 		return null;
 	}
 
 	return (
-		<div
-			className="day-summary-thumb w-full rounded-lg border border-border-subtle px-4 py-3"
-			data-testid="home-focus-summary"
-		>
-			<p className="font-medium text-primary text-sm">{t("heading")}</p>
+		<FocusWidgetCard testId="home-focus-summary" title={t("heading")}>
+			<dl className="space-y-2 text-sm">
+				<div className="flex items-center justify-between gap-3">
+					<dt className="text-text-secondary">{t("tasksLabel")}</dt>
+					<dd className="font-medium text-primary">
+						{t("tasksLine", { done: tasksDone, total: tasksTotal })}
+					</dd>
+				</div>
+				<div className="flex items-center justify-between gap-3">
+					<dt className="text-text-secondary">{t("sessionsLabel")}</dt>
+					<dd className="font-medium text-primary">{sessionsCompleted}</dd>
+				</div>
+				<div className="flex items-center justify-between gap-3">
+					<dt className="text-text-secondary">{t("focusTimeLabel")}</dt>
+					<dd className="font-medium text-primary">
+						{t("focusTimeLine", { minutes: usedMinutes })}
+					</dd>
+				</div>
+			</dl>
+
 			{budgetProgressPct != null &&
-				budgetMinutes != null &&
-				remainingMinutes != null && (
-					<div className="mt-2">
-						<p className="text-text-secondary text-xs">
-							{t("budgetLine", {
-								used: formatFocusMinutes(usedMinutes),
-								budget: formatFocusMinutes(budgetMinutes),
-								remaining: formatFocusMinutes(remainingMinutes),
-							})}
-						</p>
+			budgetMinutes != null &&
+			remainingMinutes != null ? (
+				<div className="mt-4">
+					<p className="text-text-secondary text-xs">
+						{t("budgetLine", {
+							used: formatFocusMinutes(usedMinutes),
+							budget: formatFocusMinutes(budgetMinutes),
+							remaining: formatFocusMinutes(remainingMinutes),
+						})}
+					</p>
+					<div
+						aria-hidden="true"
+						className="mt-2 h-2 w-full overflow-hidden rounded-full bg-segment-inactive"
+					>
 						<div
-							aria-hidden="true"
-							className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-segment-inactive"
-						>
-							<div
-								className="h-full rounded-full bg-accent-cta transition-[width]"
-								style={{ width: `${budgetProgressPct}%` }}
-							/>
-						</div>
+							className="h-full rounded-full bg-accent-cta transition-[width]"
+							style={{ width: `${budgetProgressPct}%` }}
+						/>
 					</div>
-				)}
-			{lines.map((line) => (
-				<p className="mt-1 text-sm text-text-secondary" key={line}>
-					{line}
-				</p>
-			))}
-		</div>
+				</div>
+			) : (
+				<p className="mt-4 text-text-dimmed text-xs">{t("emptyPlan")}</p>
+			)}
+		</FocusWidgetCard>
 	);
 }

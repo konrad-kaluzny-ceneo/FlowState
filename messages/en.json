@@ -27,7 +27,8 @@
 		"tasks": "Tasks",
 		"plan": "Day Plan",
 		"summary": "Summary",
-		"settings": "Settings"
+		"settings": "Settings",
+		"sidebarQuote": "Small steps every day lead to big effects."
 	},
 	"Onboarding": {
 		"firstRun": {
@@ -244,6 +245,10 @@
 		"footprint": "Last focused {ago} · {minutes}m total",
 		"errorDismiss": "Dismiss",
 		"createTitlePlaceholder": "Add a new task...",
+		"inlineAddPlaceholder": "+ Add a task",
+		"inlineAddHint": "or press Enter",
+		"footerTipHeading": "The FlowState rule",
+		"footerTipBody": "Focus first, organize later. One task at a time — the rest can wait.",
 		"createAddAria": "Add",
 		"createEffortLabel": "Effort",
 		"createEffortPlaceholder": "min",
@@ -352,6 +357,12 @@
 	},
 	"HomeFocusSummary": {
 		"heading": "Your day",
+		"tasksLabel": "Tasks",
+		"tasksLine": "{done} / {total}",
+		"sessionsLabel": "Focus sessions",
+		"focusTimeLabel": "Focus time",
+		"focusTimeLine": "{minutes} min",
+		"emptyPlan": "Today's plan is empty. Create one!",
 		"budgetLine": "{used} of {budget} focus hours used · {remaining} left",
 		"sessionsLine": "{count, plural, one {# focus session today} other {# focus sessions today}}",
 		"standingOpen": "{count, plural, one {# daily standing task open} other {# daily standing tasks open}}",
@@ -367,8 +378,42 @@
 		"tip5": "Name the outcome you want before you start the timer."
 	},
 	"QuickActions": {
+		"heading": "Quick actions",
 		"addTask": "Add task",
-		"viewTasks": "Tasks"
+		"planDay": "Plan day"
+	},
+	"FocusEmpty": {
+		"heading": "Your day is waiting for you",
+		"subtitle": "Add your first task, plan your day, or start a focus session.",
+		"cta": "Add first task"
+	},
+	"FocusPage": {
+		"greetingAnonymous": "Good morning! 👋",
+		"greetingNamed": "Good morning, {name} ☀️",
+		"subtitleAnonymous": "Start the day with a plan that matters.",
+		"subtitleNamed": "Focus on what really matters.",
+		"footer": "FlowState is here to help you work more calmly and effectively.",
+		"profileAria": "Profile for {name}"
+	},
+	"FocusInfoBanner": {
+		"empty": "Mindful planning means less chaos and more calm. Take the first step and FlowState will guide you.",
+		"ready": "Small steps every day lead to great results."
+	},
+	"FocusGettingStarted": {
+		"heading": "How to start?",
+		"subtitle": "Pick the option that fits you best.",
+		"addTaskTitle": "Add a task",
+		"addTaskBody": "Write down everything you need to remember.",
+		"planDayTitle": "Plan your day",
+		"planDayBody": "Set priorities and schedule your tasks."
+	},
+	"FocusReady": {
+		"heading": "Ready to focus?",
+		"subtitle": "Choose a task to start a session.",
+		"cta": "+ Choose task",
+		"suggestedHeading": "Active and planned",
+		"viewAll": "View all tasks →",
+		"suggestionStarAria": "See why this task was suggested"
 	},
 	"HomeViewToggle": {
 		"fokus": "Fokus",
@@ -407,13 +452,22 @@
 		"noDataBody": "Start a focus session to see your day stats.",
 		"bestTimeTitle": "Best time of day",
 		"bestTimeComingSoon": "Coming soon – needs a few days of data.",
-		"dateNavComingSoon": "Date navigation – coming soon."
+		"dateNavComingSoon": "Date navigation – coming soon.",
+		"completedListTitle": "Completed in the last 24 hours",
+		"completedListEmpty": "No completed tasks in the last 24 hours — that's a calm day too.",
+		"footerBannerTitle": "Good that you showed up",
+		"footerBannerBody": "Regular focus sessions build your day's rhythm — one cycle at a time."
 	},
 	"PlanDnia": {
 		"title": "Day plan",
-		"subtitle": "Your daily focus-hours budget.",
+		"subtitle": "Your day schedule and focus-hours budget.",
 		"loading": "Loading day plan…",
 		"guestEmpty": "Day plan is available after signing in.",
+		"calendarComingSoon": "Calendar coming soon",
+		"blockFocus": "Focus",
+		"blockMeeting": "Meeting",
+		"blockBreak": "Break",
+		"blockPersonal": "Personal",
 		"budgetHeading": "Focus budget",
 		"budgetLine": "Used {used} of {budget} · {remaining} remaining",
 		"changeBudget": "Change budget",
@@ -598,16 +652,11 @@
 		}
 	},
 	"SessionSteering": {
-		"energyHeading": "How's your energy to start?",
-		"energyBody": "We'll use this to suggest your first task.",
-		"energySkip": "Skip",
-		"focusHeading": "What's your focus this session?",
-		"focusBody": "Helps bias your first task suggestion.",
-		"focusLegend": "Focus intention options",
-		"focusCustomAria": "Custom focus intention",
-		"focusCustomPlaceholder": "Or type your own…",
-		"focusCustomSubmit": "Set focus",
-		"focusSkip": "Skip for now"
+		"energyHeading": "How's your energy today?",
+		"energyBody": "We'll tailor suggestions to your mood and energy.",
+		"energyHint": "You can always change it later in your day settings.",
+		"energyContinue": "Continue",
+		"energySkip": "Skip"
 	},
 	"Energy": {
 		"focused": "Focused",
@@ -654,10 +703,26 @@
 	},
 	"Settings": {
 		"title": "Settings",
+		"subtitle": "Tailor FlowState to your way of working.",
+		"navAriaLabel": "Settings sections",
 		"sectionGeneral": "General",
 		"sectionFocusSessions": "Focus sessions",
 		"sectionBreaksNotifications": "Breaks & Notifications",
 		"sectionAppearance": "Appearance",
+		"sectionDayEnergy": "Day energy",
+		"sectionIntegrations": "Integrations",
+		"tabGeneralDesc": "Preferences and account",
+		"tabFocusDesc": "Pomodoro settings",
+		"tabBreaksDesc": "Breaks and alerts",
+		"tabAppearanceDesc": "Theme and colors",
+		"tabEnergyDesc": "How you feel today",
+		"tabIntegrationsDesc": "External connections",
+		"dayEnergyBody": "Choose how you feel today — this helps FlowState tailor task suggestions.",
+		"integrationsBody": "Connect FlowState with the tools you use every day.",
+		"mcpComingSoon": "MCP integration coming soon",
+		"mcpMockTitle": "FlowState Agent",
+		"mcpMockDescription": "Connect an AI assistant via Model Context Protocol to manage tasks by voice.",
+		"mcpMockConnect": "Connect via MCP",
 		"languageLabel": "Language",
 		"userNameLabel": "Account",
 		"signOut": "Sign out",
@@ -666,6 +731,7 @@
 		"workDurationLabel": "Work duration",
 		"shortBreakLabel": "Short break",
 		"longBreakLabel": "Long break",
+		"breakAlertsLabel": "Break notifications",
 		"cycleEndAudioLabel": "Cycle end audio",
 		"themeLabel": "Theme"
 	}

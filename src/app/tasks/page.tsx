@@ -25,7 +25,7 @@ function AuthenticatedTasksPage() {
 
 	if (view === "archive") {
 		return (
-			<div className="flex flex-1 flex-col items-center px-4 py-8">
+			<div className="flex flex-1 flex-col items-center px-4 py-10 sm:px-6">
 				<div className="w-full max-w-2xl">
 					<TaskArchiveView
 						onBack={() => setView("inventory")}
@@ -37,7 +37,7 @@ function AuthenticatedTasksPage() {
 	}
 
 	return (
-		<div className="flex flex-1 flex-col items-center px-4 py-8">
+		<div className="flex flex-1 flex-col items-center px-4 py-10 sm:px-6">
 			<div className="w-full max-w-2xl">
 				<TaskList
 					chromeSubdued={false}
@@ -73,7 +73,7 @@ function GuestTasksPage() {
 
 	if (view === "archive") {
 		return (
-			<div className="flex flex-1 flex-col items-center px-4 py-8">
+			<div className="flex flex-1 flex-col items-center px-4 py-10 sm:px-6">
 				<div className="w-full max-w-2xl">
 					<TaskArchiveView
 						onBack={() => setView("inventory")}
@@ -85,7 +85,7 @@ function GuestTasksPage() {
 	}
 
 	return (
-		<div className="flex flex-1 flex-col items-center px-4 py-8">
+		<div className="flex flex-1 flex-col items-center px-4 py-10 sm:px-6">
 			<div className="w-full max-w-2xl">
 				<TaskList
 					chromeSubdued={false}

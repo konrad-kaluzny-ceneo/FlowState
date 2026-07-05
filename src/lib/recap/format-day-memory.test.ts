@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { DailyRecap } from "~/lib/recap/types";
+import { recapRow } from "~/test/recap-fixtures";
 
 import { formatDayMemory } from "./format-day-memory";
 
@@ -17,13 +18,13 @@ describe("formatDayMemory — sections", () => {
 	it("maps done items from recap.last24Hours", () => {
 		const recap = buildRecap({
 			last24Hours: [
-				{
+				recapRow({
 					taskId: "t1",
 					title: "Write tests",
 					firstStartedAt: new Date("2026-07-02T08:00:00Z"),
 					lastEndedAt: new Date("2026-07-02T09:00:00Z"),
 					focusedMinutes: 45,
-				},
+				}),
 			],
 		});
 
@@ -152,13 +153,13 @@ describe("formatDayMemory — hasContent boundary", () => {
 	it("is true when only done has content", () => {
 		const recap = buildRecap({
 			last24Hours: [
-				{
+				recapRow({
 					taskId: "t1",
 					title: "Write tests",
 					firstStartedAt: new Date("2026-07-02T08:00:00Z"),
 					lastEndedAt: new Date("2026-07-02T09:00:00Z"),
 					focusedMinutes: 45,
-				},
+				}),
 			],
 		});
 
@@ -188,20 +189,20 @@ describe("formatDayMemory — collapsed line composition", () => {
 	it("builds the EN collapsed line within the one-line budget", () => {
 		const recap = buildRecap({
 			last24Hours: [
-				{
+				recapRow({
 					taskId: "t1",
 					title: "Write tests",
 					firstStartedAt: new Date("2026-07-02T08:00:00Z"),
 					lastEndedAt: new Date("2026-07-02T09:00:00Z"),
 					focusedMinutes: 45,
-				},
-				{
+				}),
+				recapRow({
 					taskId: "t2",
 					title: "Ship feature",
 					firstStartedAt: new Date("2026-07-02T09:00:00Z"),
 					lastEndedAt: new Date("2026-07-02T10:00:00Z"),
 					focusedMinutes: 30,
-				},
+				}),
 			],
 			todayPlan: [
 				{
@@ -236,13 +237,13 @@ describe("formatDayMemory — collapsed line composition", () => {
 	it("builds the PL collapsed line from the batch-7 template", () => {
 		const recap = buildRecap({
 			last24Hours: [
-				{
+				recapRow({
 					taskId: "t1",
 					title: "Napisz testy",
 					firstStartedAt: new Date("2026-07-02T08:00:00Z"),
 					lastEndedAt: new Date("2026-07-02T09:00:00Z"),
 					focusedMinutes: 45,
-				},
+				}),
 			],
 			todayPlan: [
 				{
@@ -284,13 +285,13 @@ describe("formatDayMemory — collapsed line composition", () => {
 	it("omits the return-to clause entirely when there is no next task", () => {
 		const recap = buildRecap({
 			last24Hours: [
-				{
+				recapRow({
 					taskId: "t1",
 					title: "Write tests",
 					firstStartedAt: new Date("2026-07-02T08:00:00Z"),
 					lastEndedAt: new Date("2026-07-02T09:00:00Z"),
 					focusedMinutes: 45,
-				},
+				}),
 			],
 		});
 
@@ -307,13 +308,13 @@ describe("formatDayMemory — collapsed line composition", () => {
 	it("omits the return-to clause entirely when there is no next task (PL)", () => {
 		const recap = buildRecap({
 			last24Hours: [
-				{
+				recapRow({
 					taskId: "t1",
 					title: "Napisz testy",
 					firstStartedAt: new Date("2026-07-02T08:00:00Z"),
 					lastEndedAt: new Date("2026-07-02T09:00:00Z"),
 					focusedMinutes: 45,
-				},
+				}),
 			],
 		});
 
@@ -337,13 +338,15 @@ describe("formatDayMemory — PL plural boundaries (1 / 2 / 5)", () => {
 		[5, "5 zadań"],
 	])("renders doneCount=%i as %s inside the PL collapsed line", (count, expected) => {
 		const recap = buildRecap({
-			last24Hours: Array.from({ length: count }, (_, index) => ({
-				taskId: `t${index}`,
-				title: `Task ${index}`,
-				firstStartedAt: new Date("2026-07-02T08:00:00Z"),
-				lastEndedAt: new Date("2026-07-02T09:00:00Z"),
-				focusedMinutes: 10,
-			})),
+			last24Hours: Array.from({ length: count }, (_, index) =>
+				recapRow({
+					taskId: `t${index}`,
+					title: `Task ${index}`,
+					firstStartedAt: new Date("2026-07-02T08:00:00Z"),
+					lastEndedAt: new Date("2026-07-02T09:00:00Z"),
+					focusedMinutes: 10,
+				}),
+			),
 		});
 
 		const result = formatDayMemory({

@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { DailyRecap } from "~/lib/recap/types";
+import { recapRow } from "~/test/recap-fixtures";
 
 import { DayMemoryLine } from "./day-memory-line";
 
@@ -16,13 +17,13 @@ function buildRecap(overrides: Partial<DailyRecap> = {}): DailyRecap {
 
 const sampleRecap: DailyRecap = buildRecap({
 	last24Hours: [
-		{
+		recapRow({
 			taskId: "t1",
 			title: "Write tests",
 			firstStartedAt: new Date("2026-07-02T08:00:00Z"),
 			lastEndedAt: new Date("2026-07-02T09:00:00Z"),
 			focusedMinutes: 45,
-		},
+		}),
 	],
 	todayPlan: [
 		{

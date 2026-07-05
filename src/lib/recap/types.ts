@@ -1,3 +1,5 @@
+import type { WorkType } from "~/lib/domain/work-type";
+
 export type RecapTaskId = string | number;
 
 export type RecapTaskRow = {
@@ -6,6 +8,10 @@ export type RecapTaskRow = {
 	firstStartedAt: Date;
 	lastEndedAt: Date;
 	focusedMinutes: number;
+	workType: WorkType;
+	effortMinutes: number | null;
+	/** True when task status is completed or marked done without a cycle. */
+	isCompleted: boolean;
 	completedWithoutCycle?: boolean;
 };
 

@@ -246,7 +246,7 @@ describe("TaskList", () => {
 	it("carries the quick-add input text into the add-task modal title", () => {
 		renderTaskList(<TaskList {...defaultProps} />);
 
-		fireEvent.change(screen.getByPlaceholderText("Add a new task..."), {
+		fireEvent.change(screen.getByPlaceholderText("+ Add a task"), {
 			target: { value: "Drafted title" },
 		});
 		fireEvent.click(screen.getByTestId("open-add-task-modal"));
@@ -255,15 +255,14 @@ describe("TaskList", () => {
 			(screen.getByTestId("task-fields-title") as HTMLTextAreaElement).value,
 		).toBe("Drafted title");
 		expect(
-			(screen.getByPlaceholderText("Add a new task...") as HTMLInputElement)
-				.value,
+			(screen.getByPlaceholderText("+ Add a task") as HTMLInputElement).value,
 		).toBe("");
 	});
 
 	it("creates a planned task via the quick-add input", async () => {
 		renderTaskList(<TaskList {...defaultProps} />);
 
-		fireEvent.change(screen.getByPlaceholderText("Add a new task..."), {
+		fireEvent.change(screen.getByPlaceholderText("+ Add a task"), {
 			target: { value: "Quick task" },
 		});
 		fireEvent.click(screen.getByRole("button", { name: "Add" }));

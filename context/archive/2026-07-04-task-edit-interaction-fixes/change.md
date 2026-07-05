@@ -1,10 +1,10 @@
 ---
 change_id: task-edit-interaction-fixes
 title: Task edit interaction fixes
-status: impl_reviewed
+status: archived
 created: 2026-07-04
-updated: 2026-07-04
-archived_at: null
+updated: 2026-07-05
+archived_at: 2026-07-05T19:46:53Z
 ---
 
 ## Notes

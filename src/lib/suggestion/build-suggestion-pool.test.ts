@@ -55,7 +55,7 @@ function createDb(tasks: TaskRow[]) {
 				(args: {
 					where: {
 						userId?: string;
-						status?: string | { not: string };
+						status?: string | { not: string } | { in: string[] };
 					};
 				}) => {
 					return Promise.resolve(
@@ -69,7 +69,18 @@ function createDb(tasks: TaskRow[]) {
 							if (typeof args.where.status === "string") {
 								return task.status === args.where.status;
 							}
-							if (args.where.status?.not != null) {
+							if (
+								args.where.status != null &&
+								"in" in args.where.status &&
+								Array.isArray(args.where.status.in)
+							) {
+								return args.where.status.in.includes(task.status);
+							}
+							if (
+								args.where.status != null &&
+								"not" in args.where.status &&
+								args.where.status.not != null
+							) {
 								return task.status !== args.where.status.not;
 							}
 							return true;
@@ -163,7 +174,7 @@ describe("buildSuggestionPool archive exclusion", () => {
 		expect(pool).toHaveLength(0);
 	});
 
-	it("excludes planned tasks from the suggestion pool", async () => {
+	it("includes planned tasks in the suggestion pool", async () => {
 		const tasks = [
 			makeTask({ id: 1, title: "Backlog", status: "planned" }),
 			makeTask({ id: 2, title: "Ready", status: "active" }),
@@ -172,7 +183,7 @@ describe("buildSuggestionPool archive exclusion", () => {
 
 		const pool = await buildSuggestionPool(db, USER_ID, LOCAL_DATE_KEY);
 
-		expect(pool.map((task) => task.id)).toEqual([2]);
+		expect(pool.map((task) => task.id)).toEqual([1, 2]);
 	});
 
 	it("getDoneTodayTaskIds returns completion ids", async () => {

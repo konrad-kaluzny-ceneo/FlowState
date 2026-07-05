@@ -36,6 +36,7 @@ export async function completeKickoffSteering(
 		await page.getByTestId("session-energy-skip-btn").click();
 	} else {
 		await page.getByTestId(ENERGY_TEST_IDS[energy]).click();
+		await page.getByTestId("session-energy-continue-btn").click();
 	}
 	await expect(energyCard).toBeHidden({ timeout: 5_000 });
 

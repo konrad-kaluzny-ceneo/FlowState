@@ -151,9 +151,10 @@ function taskPoolHasKickoffCandidates(
 	return tasks.some(
 		(task) =>
 			task.status !== "archived" &&
-			task.status !== "planned" &&
 			!task.doneForToday &&
-			(task.status === "active" || task.isDailyStanding),
+			(task.status === "active" ||
+				task.status === "planned" ||
+				task.isDailyStanding),
 	);
 }
 
@@ -453,7 +454,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	);
 	const [catchUp, setCatchUp] = useState<CatchUpState>(null);
 	const [sessionEnergyPending, setSessionEnergyPending] = useState(false);
-	const [sessionFocusPending, setSessionFocusPending] = useState(false);
 	const [sessionSteeringSubmitting, setSessionSteeringSubmitting] =
 		useState(false);
 	const [sessionIntention, setSessionIntention] = useState<string | null>(null);
@@ -532,6 +532,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const suggestionCycleIdRef = useRef<number | null>(null);
 	const suggestionFetchGenRef = useRef(0);
 	const kickoffFetchGenRef = useRef(0);
+	const calmLandingKickoffEnsureRequestedRef = useRef(false);
 	const prevKickoffEligibleRef = useRef(false);
 	const lastKickoffEnergyRef = useRef<"FOCUSED" | "STEADY" | "FADING">(
 		"STEADY",
@@ -1098,7 +1099,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					});
 					if (sessionHasWorkCycle(sessionId, "authenticated", sessionCycles)) {
 						setSessionEnergyPending(false);
-						setSessionFocusPending(false);
 					}
 				} else {
 					const stats = getGuestNarrativeStats(String(sessionId));
@@ -1109,7 +1109,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					}
 					if (sessionHasWorkCycle(sessionId, "guest")) {
 						setSessionEnergyPending(false);
-						setSessionFocusPending(false);
 					}
 				}
 			} catch {
@@ -1129,7 +1128,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	useEffect(() => {
 		if (completedWorkCycles > 0) {
 			setSessionEnergyPending(false);
-			setSessionFocusPending(false);
 		}
 	}, [completedWorkCycles]);
 
@@ -1220,12 +1218,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const clearKickoffSuggestion = useCallback(() => {
 		kickoffFetchGenRef.current += 1;
+		calmLandingKickoffEnsureRequestedRef.current = false;
 		setPendingKickoffSuggestion({ status: "idle" });
 		setKickoffSuggestedTaskId(null);
 		setHasPreFocusedKickoff(false);
 		setStagedKickoffDurationSec(null);
 		setSessionEnergyPending(false);
-		setSessionFocusPending(false);
 		setSessionSteeringSubmitting(false);
 	}, []);
 
@@ -1612,60 +1610,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		pendingKickoffSuggestion.status,
 	]);
 
-	const completeSessionFocus = useCallback(
-		(intention: string) => {
-			const trimmed = intention.trim();
-			if (trimmed.length === 0) {
-				return;
-			}
-			clearSteeringAutoSkipTimer();
-			setSessionFocusPending(false);
-			setSessionIntention(trimmed);
-			lastSessionIntentionRef.current = trimmed;
-			if (!sessionEnergyPending && _activeSessionId != null) {
-				setSessionSteeringSubmitting(true);
-				fetchKickoffSuggestion(
-					Number(_activeSessionId),
-					lastKickoffEnergyRef.current,
-					trimmed,
-				);
-			}
-		},
-		[
-			_activeSessionId,
-			clearSteeringAutoSkipTimer,
-			fetchKickoffSuggestion,
-			sessionEnergyPending,
-		],
-	);
-
-	const skipSessionFocus = useCallback(() => {
-		clearSteeringAutoSkipTimer();
-		setSessionFocusPending(false);
-		const hadIntention = lastSessionIntentionRef.current != null;
-		setSessionIntention(null);
-		lastSessionIntentionRef.current = null;
-		if (
-			!sessionEnergyPending &&
-			_activeSessionId != null &&
-			hadIntention &&
-			pendingKickoffSuggestion.status !== "idle"
-		) {
-			setSessionSteeringSubmitting(true);
-			fetchKickoffSuggestion(
-				Number(_activeSessionId),
-				lastKickoffEnergyRef.current,
-				null,
-			);
-		}
-	}, [
-		_activeSessionId,
-		clearSteeringAutoSkipTimer,
-		fetchKickoffSuggestion,
-		pendingKickoffSuggestion.status,
-		sessionEnergyPending,
-	]);
-
 	const prefetchKickoffSteeringDefault = useCallback(() => {
 		if (
 			_activeSessionId == null ||
@@ -1678,6 +1622,64 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		_activeSessionId,
 		fetchKickoffSuggestion,
 		pendingKickoffSuggestion.status,
+	]);
+
+	const ensureCalmLandingKickoffSuggestion = useCallback(() => {
+		if (mode !== "authenticated") {
+			return;
+		}
+		if (state !== "idle" || cycleKind !== null || focusedTaskId !== null) {
+			return;
+		}
+		if (
+			awaitingCheckIn ||
+			awaitingWindDown ||
+			isPostCheckInTransitioning ||
+			pendingClosureLine != null
+		) {
+			return;
+		}
+
+		const kickoffStatus = pendingKickoffSuggestion.status;
+		if (kickoffStatus !== "idle") {
+			return;
+		}
+		if (calmLandingKickoffEnsureRequestedRef.current) {
+			return;
+		}
+		calmLandingKickoffEnsureRequestedRef.current = true;
+
+		void (async () => {
+			try {
+				let sessionId =
+					_activeSessionId != null ? Number(_activeSessionId) : null;
+				if (sessionId == null) {
+					const session = await sessions.getOrCreateActive();
+					setActiveSessionId(session.id);
+					sessionId = Number(session.id);
+				}
+				fetchKickoffSuggestion(
+					sessionId,
+					lastKickoffEnergyRef.current ?? "STEADY",
+					lastSessionIntentionRef.current,
+				);
+			} catch {
+				// Best effort — focus-ready still works with manual task pick.
+			}
+		})();
+	}, [
+		mode,
+		state,
+		cycleKind,
+		focusedTaskId,
+		awaitingCheckIn,
+		awaitingWindDown,
+		isPostCheckInTransitioning,
+		pendingClosureLine,
+		pendingKickoffSuggestion.status,
+		_activeSessionId,
+		sessions,
+		fetchKickoffSuggestion,
 	]);
 
 	const kickoffEligible = computeKickoffEligible({
@@ -1701,14 +1703,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		prevKickoffEligibleRef.current = kickoffEligible;
 
 		if (!kickoffEligible) {
-			if (wasEligible && (sessionEnergyPending || sessionFocusPending)) {
+			if (wasEligible && sessionEnergyPending) {
 				setSessionEnergyPending(false);
-				setSessionFocusPending(false);
 			}
 			return;
 		}
 
-		if (wasEligible || sessionEnergyPending || sessionFocusPending) {
+		if (wasEligible || sessionEnergyPending) {
 			return;
 		}
 
@@ -1725,7 +1726,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				}
 				setActiveSessionId(session.id);
 				setSessionEnergyPending(true);
-				setSessionFocusPending(true);
 			} catch {
 				if (gen !== kickoffFetchGenRef.current) {
 					return;
@@ -1747,7 +1747,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		kickoffEligible,
 		sessions,
 		sessionEnergyPending,
-		sessionFocusPending,
 		pendingKickoffSuggestion.status,
 		tErrors,
 	]);
@@ -3310,7 +3309,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						const session = await sessions.getOrCreateActive();
 						setActiveSessionId(session.id);
 						setSessionEnergyPending(true);
-						setSessionFocusPending(true);
 						setPendingKickoffSuggestion({ status: "idle" });
 						pendingWedgeIntentRef.current = null;
 						setPendingWedgeRecovery(null);
@@ -3491,7 +3489,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setCompletedWorkCycles(0);
 			setActiveSessionId(null);
 			setSessionEnergyPending(false);
-			setSessionFocusPending(false);
 			setSessionIntention(null);
 			setNarrativeTasksCompleted(0);
 			setNarrativeLatestEnergy(null);
@@ -3686,14 +3683,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		continueTaskId,
 		completedWorkCycles,
 		showSessionEnergy: sessionEnergyPending && kickoffEligible,
-		showSessionFocus: sessionFocusPending && kickoffEligible,
 		sessionEnergyPending,
-		sessionFocusPending,
 		sessionSteeringSubmitting,
 		completeSessionEnergy,
 		skipSessionEnergy,
-		completeSessionFocus,
-		skipSessionFocus,
+		ensureCalmLandingKickoffSuggestion,
 		pendingKickoffSuggestion,
 		kickoffSuggestedTaskId,
 		kickoffEligible,

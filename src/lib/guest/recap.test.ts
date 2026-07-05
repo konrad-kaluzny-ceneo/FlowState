@@ -101,7 +101,7 @@ describe("buildGuestDailyRecap", () => {
 		expect(recap.todayPlan.map((row) => row.taskId)).toEqual([TASK_A]);
 	});
 
-	it("excludes planned tasks from today plan", () => {
+	it("includes planned tasks in today plan", () => {
 		const snapshot = createEmptyGuestSnapshot();
 		snapshot.tasks.push(
 			{
@@ -144,6 +144,6 @@ describe("buildGuestDailyRecap", () => {
 
 		const recap = buildGuestDailyRecap(snapshot, DATE_KEY, new Set(), NOW);
 
-		expect(recap.todayPlan.map((row) => row.taskId)).toEqual([TASK_B]);
+		expect(recap.todayPlan.map((row) => row.taskId)).toEqual([TASK_A, TASK_B]);
 	});
 });

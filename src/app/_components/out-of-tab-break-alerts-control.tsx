@@ -13,12 +13,14 @@ type OutOfTabBreakAlertsControlProps = {
 	enabled: boolean;
 	onChange: (enabled: boolean) => void;
 	disabled?: boolean;
+	variant?: "default" | "settings";
 };
 
 export function OutOfTabBreakAlertsControl({
 	enabled,
 	onChange,
 	disabled = false,
+	variant = "default",
 }: OutOfTabBreakAlertsControlProps) {
 	const t = useTranslations("BreakAlerts");
 	const [permission, setPermission] = useState(getNotificationPermission);
@@ -69,15 +71,19 @@ export function OutOfTabBreakAlertsControl({
 		})();
 	};
 
+	const isSettings = variant === "settings";
+
 	return (
 		<fieldset
-			className="border-border-subtle border-t pt-4"
+			className={
+				isSettings ? "border-0 p-0" : "border-border-subtle border-t pt-4"
+			}
 			data-testid="out-of-tab-break-alerts-control"
 		>
 			<StyledCheckbox
 				ariaDescribedBy={permissionHintId}
 				checked={enabled}
-				className="justify-center"
+				className={isSettings ? "justify-start" : "justify-center"}
 				data-testid="out-of-tab-break-alerts-toggle"
 				disabled={disabled}
 				label={t("settingsToggleLabel")}
@@ -85,7 +91,7 @@ export function OutOfTabBreakAlertsControl({
 			/>
 			{permission === "denied" && (
 				<div
-					className="mt-2 text-center text-text-dimmed text-xs"
+					className={`mt-2 text-text-dimmed text-xs${isSettings ? "" : "text-center"}`}
 					id={deniedHintId}
 				>
 					<p>{t("permissionDeniedHint")}</p>
@@ -101,7 +107,7 @@ export function OutOfTabBreakAlertsControl({
 			)}
 			{permission === "default" && enabled && (
 				<p
-					className="mt-2 text-center text-text-dimmed text-xs"
+					className={`mt-2 text-text-dimmed text-xs${isSettings ? "" : "text-center"}`}
 					id={defaultHintId}
 				>
 					{t("permissionDefaultHint")}
