@@ -61,7 +61,7 @@ export function HomeFocusSummary({
 
 	return (
 		<div
-			className="w-full rounded-lg border border-border-subtle bg-surface-panel/50 px-4 py-3"
+			className="day-summary-thumb w-full rounded-lg border border-border-subtle px-4 py-3"
 			data-testid="home-focus-summary"
 		>
 			<p className="font-medium text-primary text-sm">{t("heading")}</p>

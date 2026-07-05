@@ -934,27 +934,27 @@ Consolidate and fix all E2E tests that broke or were deferred during Phases 5–
 
 #### Automated
 
-- [x] 11.1 Type checking passes: `pnpm typecheck`
-- [x] 11.2 Lint/format passes: `pnpm check`
-- [x] 11.3 Unit tests pass: `pnpm test`
-- [x] 11.4 Dependency rules pass: `pnpm depcruise`
+- [x] 11.1 Type checking passes: `pnpm typecheck` — 800867b
+- [x] 11.2 Lint/format passes: `pnpm check` — 800867b
+- [x] 11.3 Unit tests pass: `pnpm test` — 800867b
+- [x] 11.4 Dependency rules pass: `pnpm depcruise` — 800867b
 
 #### Manual
 
-- [x] 11.7 All 5 sections reachable (sidebar + bottom nav); active state correct
-- [x] 11.8 Timer keeps ticking across navigation mid-session
-- [x] 11.9 Deep-linking each route renders inside the shell
-- [x] 11.10 Signed-out guest reaches all 5 routes with no bounce to sign-in
+- [x] 11.7 All 5 sections reachable (sidebar + bottom nav); active state correct — 800867b
+- [x] 11.8 Timer keeps ticking across navigation mid-session — 800867b
+- [x] 11.9 Deep-linking each route renders inside the shell — 800867b
+- [x] 11.10 Signed-out guest reaches all 5 routes with no bounce to sign-in — 800867b
 
 ### Phase 12: Onboarding Hero, Polish & Regression
 
 #### Automated
 
-- [ ] 12.1 Type checking passes: `pnpm typecheck`
-- [ ] 12.2 Lint/format passes: `pnpm check`
-- [ ] 12.3 Full unit suite passes: `pnpm test`
-- [ ] 12.4 Production build succeeds: `pnpm build`
-- [ ] 12.5 Dependency rules pass: `pnpm depcruise`
+- [x] 12.1 Type checking passes: `pnpm typecheck`
+- [x] 12.2 Lint/format passes: `pnpm check`
+- [x] 12.3 Full unit suite passes: `pnpm test`
+- [x] 12.4 Production build succeeds: `pnpm build`
+- [x] 12.5 Dependency rules pass: `pnpm depcruise`
 
 #### Manual
 

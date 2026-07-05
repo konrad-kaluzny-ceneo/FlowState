@@ -257,6 +257,58 @@
 	z-index: 1;
 }
 
+/* S-45 p12: onboarding hero on auth pages (sign-in / sign-up) */
+.auth-hero-bg {
+	position: relative;
+	background-image:
+		linear-gradient(to bottom, rgb(244 242 239 / 78%), rgb(244 242 239 / 88%)),
+		url("/images/heroes/onboarding-hero.png");
+	background-position: center;
+	background-size: cover;
+}
+
+[data-theme="dark"] .auth-hero-bg {
+	background-image:
+		linear-gradient(to bottom, rgb(30 28 26 / 78%), rgb(30 28 26 / 88%)),
+		url("/images/heroes/onboarding-hero-dark.png");
+}
+
+/* S-45 p12: summary-footer band at bottom of Podsumowanie */
+.summary-footer-hero {
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--radius-lg, 0.75rem);
+	background-image:
+		linear-gradient(to bottom, rgb(244 242 239 / 60%), rgb(244 242 239 / 75%)),
+		url("/images/heroes/summary-footer.png");
+	background-position: center;
+	background-size: cover;
+}
+
+[data-theme="dark"] .summary-footer-hero {
+	background-image:
+		linear-gradient(to bottom, rgb(30 28 26 / 60%), rgb(30 28 26 / 75%)),
+		url("/images/heroes/summary-footer-dark.png");
+}
+
+/* S-45 p12: day-summary-thumb on "Twój dzień" card */
+.day-summary-thumb {
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--radius-lg, 0.75rem);
+	background-image:
+		linear-gradient(to bottom, rgb(244 242 239 / 70%), rgb(244 242 239 / 85%)),
+		url("/images/heroes/day-summary-thumb.png");
+	background-position: center;
+	background-size: cover;
+}
+
+[data-theme="dark"] .day-summary-thumb {
+	background-image:
+		linear-gradient(to bottom, rgb(30 28 26 / 70%), rgb(30 28 26 / 85%)),
+		url("/images/heroes/day-summary-thumb-dark.png");
+}
+
 /* S-43: stateful illustration system — Calm Garden tint tokens per variant.
    All values reuse existing semantic --color-* tokens (theme-aware). */
 [data-illustration-variant] {

@@ -496,6 +496,13 @@ export function PodsumowanieView({
 					<DeferredPlaceholder text={t("dateNavComingSoon")} />
 				</div>
 			</div>
+
+			{/* Summary footer hero band */}
+			<div
+				aria-hidden="true"
+				className="summary-footer-hero h-24 w-full sm:h-32"
+				data-testid="podsumowanie-footer-hero"
+			/>
 		</div>
 	);
 }
