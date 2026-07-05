@@ -752,9 +752,9 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Manual
 
-- [ ] 1.5 Primary CTAs / segmented / focus rings render muted green (light)
-- [ ] 1.6 Dark-mode parity, no contrast regressions
-- [ ] 1.7 Airier scale without layout breakage
+- [x] 1.5 Primary CTAs / segmented / focus rings render muted green (light)
+- [x] 1.6 Dark-mode parity, no contrast regressions
+- [x] 1.7 Airier scale without layout breakage
 
 ### Phase 2: Shared UI Primitives
 
