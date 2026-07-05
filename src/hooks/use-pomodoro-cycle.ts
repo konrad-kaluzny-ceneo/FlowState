@@ -151,6 +151,7 @@ function taskPoolHasKickoffCandidates(
 	return tasks.some(
 		(task) =>
 			task.status !== "archived" &&
+			task.status !== "planned" &&
 			!task.doneForToday &&
 			(task.status === "active" || task.isDailyStanding),
 	);
@@ -3683,6 +3684,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		pendingClosureLine,
 		dismissSessionClosure,
 		continueTaskId,
+		completedWorkCycles,
 		showSessionEnergy: sessionEnergyPending && kickoffEligible,
 		showSessionFocus: sessionFocusPending && kickoffEligible,
 		sessionEnergyPending,

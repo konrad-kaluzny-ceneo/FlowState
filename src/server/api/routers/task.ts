@@ -12,12 +12,13 @@ const axisSchema = z.number().int().min(1).max(3);
 const effortMinutesSchema = z.number().int().min(5).max(240).nullable();
 const commitmentHorizonSchemaZod = z.enum(commitmentHorizonSchema);
 const resumeNoteSchema = z.string().max(120).nullable().optional();
+const projectSchema = z.string().max(256).nullable().optional();
 const personaPresetIdSchema = z.string().max(32).nullable().optional();
 const localDateKeySchema = z
 	.string()
 	.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD local date key");
 
-async function nextActiveSortOrder(
+export async function nextActiveSortOrder(
 	db: {
 		task: {
 			aggregate: (args: {
@@ -85,6 +86,7 @@ export const taskRouter = createTRPCRouter({
 				effortMinutes: effortMinutesSchema.optional(),
 				commitmentHorizon: commitmentHorizonSchemaZod.optional(),
 				resumeNote: resumeNoteSchema,
+				project: projectSchema,
 				personaPresetId: personaPresetIdSchema,
 				isDailyStanding: z.boolean().optional(),
 			}),
@@ -100,6 +102,7 @@ export const taskRouter = createTRPCRouter({
 			const sortOrder = await nextActiveSortOrder(ctx.db, ctx.session.user.id);
 			const urgency = input.urgency ?? input.weight ?? 2;
 			const importance = input.importance ?? 2;
+			const isDailyStanding = input.isDailyStanding ?? false;
 
 			const row = await ctx.db.task.create({
 				data: {
@@ -109,12 +112,14 @@ export const taskRouter = createTRPCRouter({
 					importance,
 					urgency,
 					weight: urgency,
+					status: isDailyStanding ? "active" : "planned",
 					effortMinutes: input.effortMinutes ?? null,
 					commitmentHorizon: input.commitmentHorizon ?? "WHEN_POSSIBLE",
 					...(input.workType != null ? { workType: input.workType } : {}),
 					...(input.resumeNote !== undefined
 						? { resumeNote: input.resumeNote }
 						: {}),
+					...(input.project !== undefined ? { project: input.project } : {}),
 					...(input.personaPresetId !== undefined
 						? { personaPresetId: input.personaPresetId }
 						: {}),
@@ -131,7 +136,7 @@ export const taskRouter = createTRPCRouter({
 			z.object({
 				id: z.number(),
 				title: z.string().min(1).max(256).optional(),
-				status: z.enum(["active", "completed"]).optional(),
+				status: z.enum(["active", "completed", "planned"]).optional(),
 				workType: workTypeSchemaZod.optional(),
 				weight: axisSchema.optional(),
 				importance: axisSchema.optional(),
@@ -139,6 +144,7 @@ export const taskRouter = createTRPCRouter({
 				effortMinutes: effortMinutesSchema.optional(),
 				commitmentHorizon: commitmentHorizonSchemaZod.optional(),
 				resumeNote: resumeNoteSchema,
+				project: projectSchema,
 				personaPresetId: personaPresetIdSchema,
 				isDailyStanding: z.boolean().optional(),
 			}),
@@ -177,7 +183,10 @@ export const taskRouter = createTRPCRouter({
 				updateData = { ...updateData, urgency: data.weight };
 			}
 
-			if (data.status === "active" && existing.status === "completed") {
+			if (
+				data.status === "active" &&
+				(existing.status === "completed" || existing.status === "planned")
+			) {
 				updateData = {
 					...updateData,
 					sortOrder: await nextActiveSortOrder(ctx.db, ctx.session.user.id),

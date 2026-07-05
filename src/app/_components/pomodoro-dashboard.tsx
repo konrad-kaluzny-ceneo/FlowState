@@ -16,31 +16,29 @@ import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { DailyRecapPanel } from "~/app/_components/daily-recap-panel";
 import { DayMemoryLine } from "~/app/_components/day-memory-line";
+import { useDayStartGateDismissed } from "~/app/_components/day-start-gate";
 import { EndSessionConfirmOverlay } from "~/app/_components/end-session-confirm-overlay";
 import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
+import { FocusTip } from "~/app/_components/focus-tip";
 import { GuestContextRail } from "~/app/_components/guest-context-rail";
 import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
+import { usePomodoroCycleContext } from "~/app/_components/pomodoro-cycle-provider";
+import { QuickActions } from "~/app/_components/quick-actions";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
 import {
 	SessionEnergyCard,
 	SessionFocusCard,
 } from "~/app/_components/session-steering-card";
 import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
-import { TaskArchiveView } from "~/app/_components/task-archive-view";
-import { TaskList } from "~/app/_components/task-list";
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
 import { WedgeSyncRecovery } from "~/app/_components/wedge-sync-recovery";
 import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
-import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preference";
 import { useDailyRecap } from "~/hooks/use-daily-recap";
 import { useDayPlan } from "~/hooks/use-day-plan";
-import { useE2eExposeCycleRecovery } from "~/hooks/use-e2e-expose-cycle-recovery";
 import { useOnboarding } from "~/hooks/use-onboarding-state";
-import { useOutOfTabBreakAlertsPreference } from "~/hooks/use-out-of-tab-break-alerts-preference";
-import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
 import { useSyncBreakAtmosphere } from "~/hooks/use-sync-break-atmosphere";
 import { useSyncWorkFocusShell } from "~/hooks/use-sync-work-focus-shell";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
@@ -49,7 +47,6 @@ import {
 	readNotificationPromptDismissed,
 	writeNotificationPromptDismissed,
 } from "~/lib/break-out-of-tab-alert/storage";
-import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import {
 	useDomainTasks,
@@ -121,7 +118,7 @@ function HomeLayoutRegion({
 
 export function PomodoroDashboardBody({
 	tasks,
-	refreshTasks,
+	refreshTasks: _refreshTasks,
 	dayPlan,
 	enableCheckInGate = false,
 	enableWindDownGate = false,
@@ -132,8 +129,6 @@ export function PomodoroDashboardBody({
 	shouldShowCheckInCoach: shouldShowCheckInCoachFlag,
 	shouldShowSuggestionCoach: shouldShowSuggestionCoachFlag,
 	workTypeDurationScope,
-	cycleEndAudioMode,
-	setCycleEndAudioMode,
 	onboardingScope = { mode: "guest" },
 	onCheckInCoachSeen,
 	onSuggestionCoachSeen,
@@ -150,44 +145,37 @@ export function PomodoroDashboardBody({
 	shouldShowCheckInCoach?: boolean;
 	shouldShowSuggestionCoach?: boolean;
 	workTypeDurationScope?: OnboardingScope;
-	cycleEndAudioMode: CycleEndAudioMode;
-	setCycleEndAudioMode: (mode: CycleEndAudioMode) => void;
 	onboardingScope?: OnboardingScope;
 	onCheckInCoachSeen?: () => void;
 	onSuggestionCoachSeen?: () => void;
 }) {
-	const {
-		enabled: outOfTabBreakAlertsEnabled,
-		setEnabled: setOutOfTabBreakAlertsEnabled,
-	} = useOutOfTabBreakAlertsPreference(onboardingScope);
-
-	const getCycleEndAudioMode = useCallback(
-		() => cycleEndAudioMode,
-		[cycleEndAudioMode],
-	);
-	const getOutOfTabBreakAlertsEnabled = useCallback(
-		() => outOfTabBreakAlertsEnabled,
-		[outOfTabBreakAlertsEnabled],
-	);
+	const pomodoro = usePomodoroCycleContext();
+	const { outOfTabBreakAlertsEnabled, setOutOfTabBreakAlertsEnabled } =
+		pomodoro;
 	const activeTaskIds = useMemo(
 		() => new Set(tasks.filter((t) => t.status === "active").map((t) => t.id)),
 		[tasks],
 	);
-	const pomodoro = usePomodoroCycle({
-		getCycleEndAudioMode,
-		getOutOfTabBreakAlertsEnabled,
-		activeTaskIds,
-		continueTasks: tasks.map((task) => ({
-			id: task.id,
-			status: task.status,
-		})),
-	});
-	useE2eExposeCycleRecovery();
 	const {
 		recap,
 		isLoading: recapLoading,
 		localDateKey: recapDateKey,
 	} = useDailyRecap();
+
+	// Day-start gate (S-45 p6): energy+goal steering asks once per day, then
+	// stays hidden even if the cycle hook re-arms it for a later session. The
+	// dismissal must mask the raw flags BEFORE they feed deriveHomeSessionState
+	// below — masking only the rendered cards would leave the derived
+	// "steering" session state on screen with nothing to act on (a dead-end).
+	const rawSteeringVisible =
+		pomodoro.showSessionEnergy || pomodoro.showSessionFocus;
+	const dayStartGateDismissed = useDayStartGateDismissed(
+		recapDateKey,
+		rawSteeringVisible,
+	);
+	const showSessionEnergy =
+		pomodoro.showSessionEnergy && !dayStartGateDismissed;
+	const showSessionFocus = pomodoro.showSessionFocus && !dayStartGateDismissed;
 
 	const locale = useLocale() as UserLocale;
 	const dataMode =
@@ -246,9 +234,6 @@ export function PomodoroDashboardBody({
 	const [isEndingSession, setIsEndingSession] = useState(false);
 	const [pendingStartAction, setPendingStartAction] =
 		useState<PendingStartAction | null>(null);
-	const [taskInventoryView, setTaskInventoryView] = useState<
-		"inventory" | "archive"
-	>("inventory");
 
 	const needsPermissionPrompt = useCallback(() => {
 		if (typeof window === "undefined" || shouldDeferFirstRun()) {
@@ -406,14 +391,8 @@ export function PomodoroDashboardBody({
 		pomodoro.focusedTaskId == null &&
 		pomodoro.pendingKickoffSuggestion.status !== "idle" &&
 		!showSuggestionCard &&
-		!pomodoro.showSessionEnergy &&
-		!pomodoro.showSessionFocus;
-
-	const highlightedTaskId = showKickoffCard
-		? pomodoro.kickoffSuggestedTaskId
-		: showSuggestionCard
-			? pomodoro.suggestedTaskId
-			: null;
+		!showSessionEnergy &&
+		!showSessionFocus;
 
 	const showKickoffDurationChips =
 		enableSuggestionGate &&
@@ -548,8 +527,8 @@ export function PomodoroDashboardBody({
 				cycleState: pomodoro.state,
 				wedgeGateActive,
 				enableSuggestionGate,
-				showSessionEnergy: pomodoro.showSessionEnergy,
-				showSessionFocus: pomodoro.showSessionFocus,
+				showSessionEnergy,
+				showSessionFocus,
 				pendingKickoffSuggestionStatus: mapSuggestionGateStatus(
 					pomodoro.pendingKickoffSuggestion.status,
 				),
@@ -560,7 +539,7 @@ export function PomodoroDashboardBody({
 				continueTaskId: pomodoro.continueTaskId,
 				hasPreFocusedKickoff: pomodoro.hasPreFocusedKickoff,
 				workTypeDurationScopeAvailable: workTypeDurationScope != null,
-				taskInventoryView: taskInventoryView === "archive" ? "archive" : "list",
+				taskInventoryView: "list",
 				recapAvailable: !recapLoading,
 				showInFlowSummary,
 				showBreakTransitionLine,
@@ -572,15 +551,14 @@ export function PomodoroDashboardBody({
 			pomodoro.state,
 			wedgeGateActive,
 			enableSuggestionGate,
-			pomodoro.showSessionEnergy,
-			pomodoro.showSessionFocus,
+			showSessionEnergy,
+			showSessionFocus,
 			pomodoro.pendingKickoffSuggestion.status,
 			pomodoro.pendingSuggestion.status,
 			pomodoro.focusedTaskId,
 			pomodoro.continueTaskId,
 			pomodoro.hasPreFocusedKickoff,
 			workTypeDurationScope,
-			taskInventoryView,
 			recapLoading,
 			showInFlowSummary,
 			showBreakTransitionLine,
@@ -668,16 +646,16 @@ export function PomodoroDashboardBody({
 	const steeringCards =
 		enableSuggestionGate &&
 		moduleVisible("steering") &&
-		(pomodoro.showSessionEnergy || pomodoro.showSessionFocus) ? (
+		(showSessionEnergy || showSessionFocus) ? (
 			<>
-				{pomodoro.showSessionEnergy && (
+				{showSessionEnergy && (
 					<SessionEnergyCard
 						disabled={pomodoro.sessionSteeringSubmitting}
 						onSelect={handleCompleteEnergy}
 						onSkip={handleSkipEnergy}
 					/>
 				)}
-				{pomodoro.showSessionFocus && (
+				{showSessionFocus && (
 					<SessionFocusCard
 						isSubmitting={pomodoro.sessionSteeringSubmitting}
 						onComplete={handleCompleteFocus}
@@ -736,11 +714,12 @@ export function PomodoroDashboardBody({
 
 	const timerPanel = timerShown ? (
 		<TimerPanel
-			cycleEndAudioMode={cycleEndAudioMode}
+			configuredDurationSec={
+				pomodoro.activeCycle?.configuredDurationSec ?? null
+			}
 			cycleKind={pomodoro.cycleKind}
 			focusedTask={pomodoro.focusedTask}
 			isStarting={false}
-			onCycleEndAudioModeChange={setCycleEndAudioMode}
 			onInterrupt={pomodoro.interrupt}
 			onOutOfTabBreakAlertsChange={setOutOfTabBreakAlertsEnabled}
 			onPause={pomodoro.pause}
@@ -834,41 +813,6 @@ export function PomodoroDashboardBody({
 			) : null
 		) : null;
 
-	const taskInventory =
-		moduleVisible("inventory") && taskInventoryView === "inventory" ? (
-			<TaskList
-				chromeSubdued={breakAtmosphereActive}
-				continueTaskId={pomodoro.continueTaskId}
-				cycleKind={pomodoro.cycleKind}
-				cycleState={pomodoro.state}
-				focusedTaskId={pomodoro.focusedTaskId}
-				focusShellActive={workFocusShellActive}
-				footprints={recap.footprints}
-				highlightedTaskId={highlightedTaskId}
-				onFocusTask={(taskId, task) => {
-					pomodoro.selectTask(taskId, task);
-				}}
-				onMidCycleMarkComplete={(taskId, task) => {
-					pomodoro.onMidCycleMarkComplete(taskId, task);
-				}}
-				onOpenArchive={() => setTaskInventoryView("archive")}
-				onRefresh={refreshTasks}
-				suggestionLoading={
-					pomodoro.pendingSuggestion.status === "loading" ||
-					pomodoro.pendingKickoffSuggestion.status === "loading"
-				}
-				tasks={tasks}
-			/>
-		) : null;
-
-	const taskArchive =
-		moduleVisible("archive") && taskInventoryView === "archive" ? (
-			<TaskArchiveView
-				onBack={() => setTaskInventoryView("inventory")}
-				onTasksChanged={refreshTasks}
-			/>
-		) : null;
-
 	const standingTaskFacts = useMemo(
 		() =>
 			tasks
@@ -915,6 +859,7 @@ export function PomodoroDashboardBody({
 					hasBudget={dayPlan.hasBudget}
 					isLoading={dayPlan.isLoading}
 					remainingMinutes={dayPlan.remainingMinutes}
+					sessionsCompleted={pomodoro.completedWorkCycles}
 					standingTasks={standingTaskFacts}
 					usedMinutes={dayPlan.usedMinutes}
 				/>
@@ -929,6 +874,14 @@ export function PomodoroDashboardBody({
 			<GuestContextRail />
 		);
 
+	// Calm Fokus extras (S-45 p6): tip + quick actions accompany the ring
+	// timer during idle/active_work only — steering/break/returning stay
+	// focused on their own beat.
+	const showCalmExtras =
+		homeIa.state === "idle" || homeIa.state === "active_work";
+	const focusTipElement = showCalmExtras ? <FocusTip /> : null;
+	const quickActionsElement = showCalmExtras ? <QuickActions /> : null;
+
 	// Empty regions render nothing so they contribute no gap. Each boolean
 	// mirrors its region's child gates verbatim — keep them in sync when a
 	// child is added or its condition changes.
@@ -939,8 +892,7 @@ export function PomodoroDashboardBody({
 			(kickoffDurationChips != null ||
 				breakSuggestionCard != null ||
 				kickoffSuggestionCard != null)) ||
-		timerZone === "primary" ||
-		(moduleInZone("archive", "primary") && taskArchive != null);
+		timerZone === "primary";
 
 	const secondaryRegionHasContent =
 		statusLines != null ||
@@ -949,8 +901,8 @@ export function PomodoroDashboardBody({
 		pomodoro.overrideAcknowledgement != null ||
 		dayPlan != null ||
 		recapPanel != null ||
-		(moduleInZone("inventory", "secondary") && taskInventory != null) ||
-		(moduleInZone("archive", "secondary") && taskArchive != null);
+		focusTipElement != null ||
+		quickActionsElement != null;
 
 	return (
 		<div className="flex w-full max-w-lg flex-col items-center gap-8 lg:max-w-7xl">
@@ -1002,7 +954,6 @@ export function PomodoroDashboardBody({
 							{timerZone === "primary" && timerPanel}
 							{moduleInZone("nextFocus", "primary") && breakSuggestionCard}
 							{moduleInZone("nextFocus", "primary") && kickoffSuggestionCard}
-							{moduleInZone("archive", "primary") && taskArchive}
 						</HomeLayoutRegion>
 					)}
 
@@ -1027,8 +978,8 @@ export function PomodoroDashboardBody({
 							{recapPanel != null && (
 								<div className="w-full lg:hidden">{recapPanel}</div>
 							)}
-							{moduleInZone("inventory", "secondary") && taskInventory}
-							{moduleInZone("archive", "secondary") && taskArchive}
+							{focusTipElement}
+							{quickActionsElement}
 						</HomeLayoutRegion>
 					)}
 				</div>
@@ -1208,12 +1159,8 @@ function AuthenticatedPomodoroDashboard() {
 	const workTypeDurationScope =
 		onboardingScope.mode === "authenticated" ? onboardingScope : undefined;
 
-	const { mode: cycleEndAudioMode, setMode: setCycleEndAudioMode } =
-		useCycleEndAudioPreference(onboardingScope);
-
 	return (
 		<PomodoroDashboardBody
-			cycleEndAudioMode={cycleEndAudioMode}
 			dayPlan={dayPlan}
 			enableCheckInGate
 			enableSuggestionGate
@@ -1223,7 +1170,6 @@ function AuthenticatedPomodoroDashboard() {
 			onCheckInCoachSeen={markCheckInCoachSeen}
 			onSuggestionCoachSeen={markSuggestionCoachSeen}
 			refreshTasks={refreshTasks}
-			setCycleEndAudioMode={setCycleEndAudioMode}
 			shouldShowCheckInCoach={shouldShowCheckInCoach}
 			shouldShowSuggestionCoach={shouldShowSuggestionCoach}
 			tasks={domainTasks}
@@ -1235,15 +1181,11 @@ function AuthenticatedPomodoroDashboard() {
 function GuestPomodoroDashboard() {
 	const { tasks, refresh } = useGuestDomainTasks();
 	const guestScope = useMemo(() => ({ mode: "guest" as const }), []);
-	const { mode: cycleEndAudioMode, setMode: setCycleEndAudioMode } =
-		useCycleEndAudioPreference(guestScope);
 
 	return (
 		<PomodoroDashboardBody
-			cycleEndAudioMode={cycleEndAudioMode}
 			onboardingScope={guestScope}
 			refreshTasks={refresh}
-			setCycleEndAudioMode={setCycleEndAudioMode}
 			tasks={tasks}
 		/>
 	);

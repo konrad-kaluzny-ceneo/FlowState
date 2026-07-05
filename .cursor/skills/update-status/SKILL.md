@@ -76,7 +76,19 @@ If still mismatched: refresh UIs; confirm the GitHub link on the Linear issue; p
 | Read/update Linear | MCP `get_issue`, `save_issue`, `list_issues` |
 | Roadmap edit | `context/foundation/roadmap.md` |
 
-Linear MCP server: `project-0-FlowState-linear` (Cursor). Use project filter `FlowState MVP` when listing.
+Linear MCP server: `linear-flowstate` (project `.cursor/mcp.json`). Workspace: `flowstate-10xdev`, team `FLO`, project `FlowState MVP`. Use project filter `FlowState MVP` when listing.
+
+### Linear MCP setup (FlowState workspace)
+
+The global Linear **plugin** may be authenticated to another workspace (e.g. Sandra `SAN-*`). FlowState issues live in **`flowstate-10xdev`** (`FLO-*`). Use the project server `linear-flowstate` — separate OAuth from the plugin.
+
+1. `Ctrl+Shift+J` → **MCP** → find **`linear-flowstate`** (project).
+2. Click **Needs authentication** (or **Connect**). If the browser does not open: **Output** → **MCP: linear-flowstate** → copy the auth URL manually.
+3. Sign in with the Linear account that has access to **flowstate-10xdev** (not the Sandra-only account).
+4. Verify: `list_teams` → team `FLO`; `get_issue` id=`FLO-6` → success.
+5. In FlowState sessions, prefer **`linear-flowstate`** over the global Linear plugin so agents hit `FLO-*`, not `SAN-*`.
+
+To re-auth: disable `linear-flowstate`, delete `%USERPROFILE%\.mcp-auth`, re-enable, connect again.
 
 ## Rules
 

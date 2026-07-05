@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import type { KeyboardEvent, ReactNode } from "react";
 
 import { StyledCheckbox } from "~/app/_components/styled-checkbox";
+import { SegmentedControl } from "~/app/_components/ui/segmented-control";
 import type { CommitmentHorizon } from "~/lib/data-mode/types";
 import { WORK_TYPE_CONFIG } from "~/lib/design/work-type-config";
 
@@ -15,46 +16,6 @@ const HORIZON_VALUES: CommitmentHorizon[] = [
 
 const TITLE_FIELD_CLASS =
 	"w-full rounded-lg border border-border-subtle bg-surface-card px-4 py-2 text-primary placeholder:text-text-dimmed focus:border-text-secondary focus:outline-none";
-
-type SegmentedControlProps<T extends string | number> = {
-	options: { value: T; label: string }[];
-	value: T;
-	onChange: (value: T) => void;
-	colorMap?: Record<string, string>;
-};
-
-function SegmentedControl<T extends string | number>({
-	options,
-	value,
-	onChange,
-	colorMap,
-}: SegmentedControlProps<T>) {
-	return (
-		<div className="flex flex-wrap gap-1">
-			{options.map((opt) => {
-				const isActive = opt.value === value;
-				const activeColor =
-					colorMap?.[String(opt.value)] ?? "bg-accent-cta text-on-cta";
-				return (
-					<button
-						aria-pressed={isActive}
-						className={`rounded-md px-2 py-1 font-medium text-xs transition ${
-							isActive
-								? activeColor
-								: "bg-surface-panel text-text-secondary hover:bg-surface-card-muted"
-						}`}
-						key={String(opt.value)}
-						onClick={() => onChange(opt.value)}
-						onMouseDown={(event) => event.preventDefault()}
-						type="button"
-					>
-						{opt.label}
-					</button>
-				);
-			})}
-		</div>
-	);
-}
 
 type EisenhowerAttributeFieldsProps = {
 	urgency: 1 | 2 | 3;
@@ -189,6 +150,10 @@ export type TaskFieldsPanelProps = {
 	showAttributeFields?: boolean;
 	personaPresetPicker?: ReactNode;
 	presetEffortField?: ReactNode;
+	project?: string;
+	onProjectChange?: (value: string) => void;
+	projectFieldId?: string;
+	projectSuggestions?: string[];
 };
 
 export function TaskFieldsPanel({
@@ -216,6 +181,10 @@ export function TaskFieldsPanel({
 	showAttributeFields = mode === "edit",
 	personaPresetPicker,
 	presetEffortField,
+	project,
+	onProjectChange,
+	projectFieldId,
+	projectSuggestions,
 }: TaskFieldsPanelProps) {
 	const t = useTranslations("Tasks");
 	const showWorkType = mode === "edit" || showAttributeFields;
@@ -267,6 +236,36 @@ export function TaskFieldsPanel({
 				onChange={onIsDailyStandingChange}
 			/>
 			{mode === "create" && presetEffortField}
+			{onProjectChange != null && (
+				<div className="flex flex-wrap items-center gap-2">
+					<span className="w-16 shrink-0 text-text-secondary text-xs">
+						{t("fieldProject")}
+					</span>
+					<input
+						className="min-w-[8rem] flex-1 rounded-md bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
+						data-testid="task-project-input"
+						id={projectFieldId}
+						list={
+							projectFieldId != null
+								? `${projectFieldId}-suggestions`
+								: undefined
+						}
+						onChange={(event) => onProjectChange(event.target.value)}
+						placeholder={t("projectPlaceholder")}
+						type="text"
+						value={project ?? ""}
+					/>
+					{projectFieldId != null &&
+						projectSuggestions != null &&
+						projectSuggestions.length > 0 && (
+							<datalist id={`${projectFieldId}-suggestions`}>
+								{projectSuggestions.map((suggestion) => (
+									<option key={suggestion} value={suggestion} />
+								))}
+							</datalist>
+						)}
+				</div>
+			)}
 			{showWorkType && (
 				<div
 					className={

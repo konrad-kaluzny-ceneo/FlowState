@@ -1,35 +1,19 @@
-import { HomeShell } from "~/app/_components/home-shell";
-import { auth } from "~/lib/auth/server";
-import { formatLocalDateKey } from "~/lib/time/local-date-key";
-import { api, HydrateClient } from "~/trpc/server";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export default async function Home({
+	searchParams,
+}: {
+	searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+	const params = await searchParams;
+	const verifier = params.neon_auth_session_verifier;
 
-export default async function Home() {
-	let isAuthenticated = false;
-	let user: { id: string; email?: string | null } | undefined;
-
-	try {
-		const { data } = await auth.getSession();
-		user = data?.user;
-		isAuthenticated = Boolean(user?.id && user.email);
-	} catch {
-		isAuthenticated = false;
-		user = undefined;
+	if (verifier) {
+		// Preserve the OAuth verifier param so OAuthSessionVerifier can exchange it
+		redirect(
+			`/focus?neon_auth_session_verifier=${encodeURIComponent(String(verifier))}`,
+		);
 	}
 
-	if (isAuthenticated) {
-		const localDateKey = formatLocalDateKey();
-		await Promise.all([
-			api.task.list.prefetch(),
-			api.cycle.getActive.prefetch(),
-			api.recap.getDaily.prefetch({ localDateKey }),
-		]);
-	}
-
-	return (
-		<HydrateClient>
-			<HomeShell isAuthenticated={isAuthenticated} userId={user?.id ?? null} />
-		</HydrateClient>
-	);
+	redirect("/focus");
 }

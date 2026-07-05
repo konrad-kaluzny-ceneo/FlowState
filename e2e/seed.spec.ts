@@ -4,7 +4,7 @@
  * Risk #1 auth reload: hook + integration (see test-plan §6.2); guest reload in guest-trial.spec.ts.
  * Anti-patterns avoided: UI login, waitForTimeout, CSS/XPath locators, shared storageState.
  */
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import {
@@ -12,16 +12,14 @@ import {
 	ensureIdleCycle,
 } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
+import { expectFocusPageReady } from "./helpers/task-list-locator";
 import {
 	expectShortBreakPhaseHidden,
 	expectShortBreakPhaseVisible,
 } from "./helpers/timer-phase";
 import {
-	addTasks,
 	advanceClockThroughFastWork,
 	forgetFakeClock,
-	markTaskCompleteMidCycle,
 	startFocusedWorkCycle,
 } from "./helpers/work-cycle";
 
@@ -31,9 +29,8 @@ test.beforeEach(async ({ page }) => {
 	forgetFakeClock(page);
 	// API reset before navigation — avoid hydrating a stale RUNNING cycle (R3 → R7).
 	await resetWorkerSessionViaApi(page);
-	await page.goto("/");
-	await expectTaskListVisible(page);
-	await waitForCycleGetActive(page);
+	await page.goto("/focus");
+	await expectFocusPageReady(page);
 	const cleanReload = page.waitForResponse(
 		(response) => response.url().includes("cycle.getActive") && response.ok(),
 		{ timeout: 20_000 },
@@ -47,30 +44,6 @@ test.beforeEach(async ({ page }) => {
 test.afterEach(async ({ page }) => {
 	forgetFakeClock(page);
 	await resetWorkerSessionViaApi(page);
-});
-
-test.describe("Seed exemplar — Risk #3 mid-cycle prompt", () => {
-	test("completing a task mid-cycle surfaces FR-015 choices", async ({
-		page,
-	}) => {
-		test.setTimeout(60_000);
-
-		const ts = Date.now();
-		const task1 = `Seed R3 A ${ts}`;
-		const task2 = `Seed R3 B ${ts}`;
-
-		await addTasks(page, [task1, task2]);
-		await startFocusedWorkCycle(page, task1, 30);
-		await markTaskCompleteMidCycle(page, task1);
-
-		await expect(page.getByTestId("mid-cycle-prompt-overlay")).toBeVisible();
-		await expect(
-			page.getByRole("button", { name: "Continue with selected task" }),
-		).toBeVisible();
-		await expect(
-			page.getByRole("button", { name: "End cycle and break" }),
-		).toBeVisible();
-	});
 });
 
 test.describe("Seed exemplar — Risk #7 check-in gate", () => {

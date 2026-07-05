@@ -98,6 +98,7 @@ describe("importGuestSnapshot", () => {
 					commitmentHorizon: "WHEN_POSSIBLE",
 					sortOrder: 0,
 					resumeNote: null,
+					project: null,
 					personaPresetId: null,
 					isDailyStanding: false,
 					archivedAt,

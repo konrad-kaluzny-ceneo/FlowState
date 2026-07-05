@@ -8,7 +8,6 @@ import {
 	dismissFirstRunIfVisible,
 	dismissMergeSuccessIfVisible,
 } from "./helpers/onboarding";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
 import { createTestUser, signInAsUser } from "./helpers/user";
 import { addTask } from "./helpers/work-cycle";
 
@@ -31,13 +30,16 @@ test.describe("Guest merge on sign-in (S-08 / Risk #5)", () => {
 
 		const taskTitle = `Guest Merge ${Date.now()}`;
 
-		await page.goto("/");
+		// Verify guest mode on focus page (banner visible at mobile width)
+		await page.goto("/focus");
 		await page.evaluate(() => localStorage.clear());
 		await page.reload();
-		await expect(page.getByTestId("guest-banner")).toBeVisible();
-		await expectTaskListVisible(page);
+		await expect(page.getByTestId("guest-banner")).toBeVisible({
+			timeout: 15_000,
+		});
 		await dismissFirstRunIfVisible(page);
 
+		// Add task on /tasks
 		await addTask(page, taskTitle);
 
 		const hasGuestBlob = await page.evaluate(
@@ -50,13 +52,17 @@ test.describe("Guest merge on sign-in (S-08 / Risk #5)", () => {
 		const authState = await signInAsUser(request, user);
 		await context.addCookies(authState.cookies);
 
-		await page.goto("/");
-
+		// After sign-in, navigate to /focus to check merge success and guest banner hidden
+		await page.goto("/focus");
 		await dismissMergeSuccessIfVisible(page, { appearTimeoutMs: 30_000 });
-
 		await expect(page.getByTestId("guest-banner")).toBeHidden({
 			timeout: 30_000,
 		});
+
+		// Verify task persists on /tasks after merge
+		await page.goto("/tasks");
+		// The merged task was created as "planned" via quick-add — switch to Planned tab
+		await page.getByRole("tab", { name: /Planned|Planowane/i }).click();
 		await expect(
 			page.getByRole("listitem").filter({ hasText: taskTitle }).first(),
 		).toBeVisible({ timeout: 30_000 });

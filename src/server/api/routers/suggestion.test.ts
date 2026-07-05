@@ -885,6 +885,52 @@ describe("suggestion router", () => {
 		});
 	});
 
+	it("kickoff next excludes daily-standing task marked done for today", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		taskDayCompletions = [
+			{ userId: USER_ID, taskId: 2, localDateKey: LOCAL_DATE_KEY },
+		];
+		tasks = [
+			{
+				id: 1,
+				title: "Active task",
+				status: "active",
+				userId: USER_ID,
+				workType: "REACTIVE",
+				sortOrder: 0,
+				createdAt: new Date("2026-01-01"),
+				...taskDefaults(2),
+			},
+			{
+				id: 2,
+				title: "Standing done today",
+				status: "active",
+				userId: USER_ID,
+				workType: "OPERATIONAL",
+				sortOrder: 1,
+				createdAt: new Date("2026-01-02"),
+				weight: 2,
+				importance: 2,
+				urgency: 2,
+				effortMinutes: 15,
+				commitmentHorizon: "WHEN_POSSIBLE",
+				isDailyStanding: true,
+			},
+		];
+
+		const result = await caller().next({
+			context: "kickoff",
+			sessionId: 1,
+			localHour: 10,
+			localDateKey: LOCAL_DATE_KEY,
+			energy: "STEADY",
+		});
+
+		expect(result).toMatchObject({ taskId: 1, title: "Active task" });
+	});
+
 	it("post-check-in next prefers lower sortOrder when scores tie", async () => {
 		sessions = [
 			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },

@@ -395,6 +395,47 @@ describe("task query edge branches", () => {
 	});
 });
 
+describe("default-status fork", () => {
+	beforeEach(() => {
+		allTasks = [];
+		taskDayCompletions = [];
+		vi.clearAllMocks();
+	});
+
+	it("creates a normal task as planned", async () => {
+		await taskCaller().create({ title: "Backlog item" });
+		expect(capturedData?.status).toBe("planned");
+	});
+
+	it("creates a daily-standing task as active", async () => {
+		await taskCaller().create({
+			title: "Daily standing item",
+			isDailyStanding: true,
+		});
+		expect(capturedData?.status).toBe("active");
+	});
+});
+
+describe("planned -> active promotion", () => {
+	beforeEach(() => {
+		allTasks = [];
+		taskDayCompletions = [];
+		vi.clearAllMocks();
+	});
+
+	it("assigns a fresh active sortOrder when promoting a planned task", async () => {
+		allTasks = [
+			makeTaskRow({ id: 1, title: "Active", status: "active", sortOrder: 0 }),
+			makeTaskRow({ id: 2, title: "Planned", status: "planned", sortOrder: 0 }),
+		];
+
+		await taskCaller().update({ id: 2, status: "active" });
+
+		expect(allTasks.find((t) => t.id === 2)?.status).toBe("active");
+		expect(allTasks.find((t) => t.id === 2)?.sortOrder).toBe(1);
+	});
+});
+
 describe("stale task archive sweep", () => {
 	const now = new Date();
 	const cutoff = getStaleArchiveCutoff(now);

@@ -2,18 +2,17 @@
  * Risk: S-17 / FR-040 — session closure overlay on explicit session end
  * Modeled on: e2e/pomodoro-cycle.spec.ts
  */
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
+import { expectFocusPageReady } from "./helpers/task-list-locator";
 import { startFocusedWorkCycle } from "./helpers/work-cycle";
 
 test.describe("Session closure (S-17)", () => {
 	test.beforeEach(async ({ page }) => {
-		await page.goto("/");
-		await expectTaskListVisible(page);
-		await waitForCycleGetActive(page);
+		await page.goto("/focus");
+		await expectFocusPageReady(page);
 		await resetWorkerSessionViaApi(page);
 		const cleanReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),

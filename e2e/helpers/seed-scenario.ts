@@ -10,7 +10,7 @@ import { MIN_WORK_DURATION_SEC } from "../../src/lib/duration-bounds";
 import { STALE_TASK_ARCHIVE_DAYS } from "../../src/lib/task/stale-task-archive";
 import { rehydrateFatigueSeedState } from "./cycle-recovery";
 import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
-import { expectTaskListVisible } from "./task-list-locator";
+import { expectFocusPageReady } from "./task-list-locator";
 import { forgetFakeClock, resetFakeClock } from "./work-cycle";
 
 const FATIGUE_COMPLETED_WORK_CYCLES = 3;
@@ -269,7 +269,7 @@ export async function seedWindDownFatigueScenario(
 	);
 	await page.reload();
 	await getActiveAfterReload;
-	await expectTaskListVisible(page);
+	await expectFocusPageReady(page);
 	await dismissKickoffReadinessIfVisible(page);
 	await rehydrateFatigueSeedState(page, session.id);
 	await resetFakeClock(page);

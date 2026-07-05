@@ -27,6 +27,7 @@ type CreateTaskInput = {
 	effortMinutes?: number | null;
 	commitmentHorizon?: CommitmentHorizon;
 	resumeNote?: string | null;
+	project?: string | null;
 	personaPresetId?: string | null;
 	isDailyStanding?: boolean;
 };
@@ -34,7 +35,7 @@ type CreateTaskInput = {
 type UpdateTaskInput = {
 	id: number;
 	title?: string;
-	status?: "active" | "completed";
+	status?: "active" | "completed" | "planned";
 	workType?: WorkType;
 	weight?: 1 | 2 | 3;
 	importance?: 1 | 2 | 3;
@@ -42,6 +43,7 @@ type UpdateTaskInput = {
 	effortMinutes?: number | null;
 	commitmentHorizon?: CommitmentHorizon;
 	resumeNote?: string | null;
+	project?: string | null;
 	personaPresetId?: string | null;
 	isDailyStanding?: boolean;
 };

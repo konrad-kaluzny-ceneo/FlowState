@@ -22,7 +22,12 @@
 		"signOutError": "Sign-out failed. Please try again."
 	},
 	"Navbar": {
-		"brand": "FlowState"
+		"brand": "FlowState",
+		"focus": "Focus",
+		"tasks": "Tasks",
+		"plan": "Day Plan",
+		"summary": "Summary",
+		"settings": "Settings"
 	},
 	"Onboarding": {
 		"firstRun": {
@@ -244,8 +249,31 @@
 		"createEffortPlaceholder": "min",
 		"createClearEffort": "Clear",
 		"sectionActive": "Active ({count})",
+		"sectionPlanned": "Planned ({count})",
 		"sectionCompleted": "Completed ({count})",
 		"revertAria": "Revert to active",
+		"tabsAriaLabel": "Task sections",
+		"filterAllTypes": "All types",
+		"filterTypeAria": "Filter by type",
+		"sortAria": "Sort",
+		"sortManual": "Manual",
+		"sortPriority": "Priority",
+		"sortEffort": "Shortest effort",
+		"addTaskButton": "Open detailed add-task form",
+		"addTaskModalTitle": "Add task",
+		"addTaskModalCancel": "Cancel",
+		"addTaskModalSubmit": "Add task",
+		"fieldProject": "Project",
+		"projectPlaceholder": "Project name",
+		"detailTitle": "Task details",
+		"detailClose": "Close",
+		"startWorkingOn": "Start working on this task",
+		"statusActive": "Active",
+		"statusPlanned": "Planned",
+		"statusCompleted": "Completed",
+		"statusArchived": "Archived",
+		"plannedEmpty": "No planned tasks yet",
+		"completedEmpty": "No completed tasks yet",
 		"workType": {
 			"DEEP_WORK": "Deep",
 			"OPERATIONAL": "Ops",
@@ -323,9 +351,79 @@
 		"offlineBanner": "You're offline — retry when you're back online."
 	},
 	"HomeFocusSummary": {
+		"heading": "Your day",
 		"budgetLine": "{used} of {budget} focus hours used · {remaining} left",
+		"sessionsLine": "{count, plural, one {# focus session today} other {# focus sessions today}}",
 		"standingOpen": "{count, plural, one {# daily standing task open} other {# daily standing tasks open}}",
 		"standingDone": "{count, plural, one {# daily standing task done for today} other {# daily standing tasks done for today}}"
+	},
+	"FocusTip": {
+		"heading": "Tip for today",
+		"tip0": "A short walk between sessions resets your focus better than scrolling does.",
+		"tip1": "Pick the task you're dreading most — momentum favors the brave.",
+		"tip2": "Water within reach, phone out of reach.",
+		"tip3": "One clear next step beats a long todo list.",
+		"tip4": "Breaks are part of the work, not a break from it.",
+		"tip5": "Name the outcome you want before you start the timer."
+	},
+	"QuickActions": {
+		"addTask": "Add task",
+		"viewTasks": "Tasks"
+	},
+	"HomeViewToggle": {
+		"fokus": "Fokus",
+		"zadania": "Zadania",
+		"plan": "Day plan",
+		"podsumowanie": "Summary",
+		"ustawienia": "Settings"
+	},
+	"Podsumowanie": {
+		"title": "Day summary",
+		"subtitle": "Your focus activity from the last 24 hours.",
+		"loading": "Loading stats…",
+		"guestEmpty": "Summary is available after signing in.",
+		"kpiTasksDone": "Tasks done",
+		"kpiFocusTime": "Focus time",
+		"kpiSessions": "Focus sessions",
+		"kpiAvgSession": "Avg session length",
+		"kpiMinutes": "{minutes} min",
+		"kpiUnit": "{value}",
+		"hourlyChartTitle": "Focus by hour",
+		"hourlyChartAria": "Focus by hour bar chart",
+		"hourAxisLabel": "Hour",
+		"minutesAxisLabel": "Minutes",
+		"sessionTypeTitle": "Session types",
+		"sessionTypeAria": "Session type donut chart",
+		"taskBreakdownTitle": "Task progress",
+		"taskBreakdownAria": "Task progress donut chart",
+		"workTypeDeep": "Deep work",
+		"workTypeOperational": "Operational",
+		"workTypeReactive": "Reactive",
+		"workTypeUncategorized": "Uncategorized",
+		"taskDone": "Done",
+		"taskPartial": "In progress",
+		"taskUndone": "Active",
+		"noDataTitle": "No focus data yet",
+		"noDataBody": "Start a focus session to see your day stats.",
+		"bestTimeTitle": "Best time of day",
+		"bestTimeComingSoon": "Coming soon – needs a few days of data.",
+		"dateNavComingSoon": "Date navigation – coming soon."
+	},
+	"PlanDnia": {
+		"title": "Day plan",
+		"subtitle": "Your daily focus-hours budget.",
+		"loading": "Loading day plan…",
+		"guestEmpty": "Day plan is available after signing in.",
+		"budgetHeading": "Focus budget",
+		"budgetLine": "Used {used} of {budget} · {remaining} remaining",
+		"changeBudget": "Change budget",
+		"presetLabel": "{hours}h",
+		"customAria": "Custom focus minutes",
+		"customPlaceholder": "Custom",
+		"set": "Set",
+		"cancel": "Cancel",
+		"saveError": "Could not save focus hours. Try again.",
+		"validationError": "Enter a value between 15 and 720 minutes."
 	},
 	"DayMemory": {
 		"sectionDone": "Done",
@@ -553,5 +651,22 @@
 		"minUnit": "min",
 		"secUnit": "sec",
 		"validationError": "Must be within {bounds}"
+	},
+	"Settings": {
+		"title": "Settings",
+		"sectionGeneral": "General",
+		"sectionFocusSessions": "Focus sessions",
+		"sectionBreaksNotifications": "Breaks & Notifications",
+		"sectionAppearance": "Appearance",
+		"languageLabel": "Language",
+		"userNameLabel": "Account",
+		"signOut": "Sign out",
+		"signingOut": "Signing out…",
+		"signOutError": "Sign-out failed. Please try again.",
+		"workDurationLabel": "Work duration",
+		"shortBreakLabel": "Short break",
+		"longBreakLabel": "Long break",
+		"cycleEndAudioLabel": "Cycle end audio",
+		"themeLabel": "Theme"
 	}
 }

@@ -15,14 +15,17 @@ colors:
   text-dimmed: "#9B96A8"
   text-section: "#3D3848"
   scrim: "#F8F6F3B8"
-  accent-cta: "#736D62"
-  accent-cta-hover: "#635E54"
+  accent-cta: "#5D8265"
+  accent-cta-hover: "#4E6F56"
   on-cta: "#FFFFFF"
   accent-break: "#3D8F82"
   accent-success: "#3A8F65"
   accent-suggestion: "#D4A017CC"
-  focus-ring: "#8A8478"
-  segment-active: "#736D62"
+  danger: "#DC2626"
+  danger-hover: "#EF4444"
+  on-danger: "#FFFFFF"
+  focus-ring: "#5D8265"
+  segment-active: "#5D8265"
   segment-inactive: "#E8E5DF"
   card-border: "#E0DDD6"
   card-shadow: "#2D2A3514"
@@ -62,7 +65,7 @@ typography:
     letterSpacing: "normal"
   timer:
     fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
-    fontSize: "3.75rem"
+    fontSize: "4.5rem"
     fontWeight: 600
     lineHeight: 1
     letterSpacing: "normal"
@@ -71,6 +74,9 @@ rounded:
   md: "0.5rem"
   lg: "0.75rem"
   xl: "0.75rem"
+  chip: "0.5rem"
+  control: "0.75rem"
+  card: "1.25rem"
 spacing:
   overlay-padding: "2rem"
   row-padding-x: "1rem"
@@ -106,7 +112,9 @@ components:
 
 ## Overview
 
-FlowState is a calm, **light-default** Pomodoro app for interrupt-driven knowledge workers. The visual system prioritizes **focus clarity** over decoration: a linen-to-cool-stone shell gradient, solid white task cards with soft elevation, muted cool-stone beige primary actions, and semantic accents for break (teal), success (green), and suggestion highlight (amber). A **calm dark** variant on `#1E2433` uses desaturated pastels for low-light sessions.
+FlowState is a calm, **light-default** Pomodoro app for interrupt-driven knowledge workers. The visual system prioritizes **focus clarity** over decoration: a linen-to-cool-stone shell gradient, solid white task cards with soft elevation, a **muted sage-green** primary action (the redesign accent — colour leads attention, it doesn't decorate), and semantic accents for break (teal), success (green), and suggestion highlight (amber). A **calm dark** variant on `#1E2433` uses desaturated pastels for low-light sessions.
+
+Radius and type follow an **airier scale** (`rounded.card` / `rounded.control` / `rounded.chip`; larger timer/display type) so surfaces breathe, per the redesign mockups.
 
 Craft targets are wedge surfaces only — home shell, task list hierarchy, and cycle transition overlays. Implementation uses Tailwind CSS v4 with semantic tokens in `src/styles/globals.css` `@theme { }`; calm dark overrides the same `--color-*` variables under `[data-theme="dark"]` on `<html>`.
 
@@ -150,15 +158,16 @@ A blocking inline script in `layout.tsx` `<head>` sets `data-theme` before first
 
 | Token | Value | Usage |
 | --- | --- | --- |
-| `accent-cta` | `#736D62` | Primary buttons |
-| `accent-cta-hover` | `#635E54` | Primary hover |
+| `accent-cta` | `#5D8265` | Primary buttons (muted sage green) |
+| `accent-cta-hover` | `#4E6F56` | Primary hover |
 | `on-cta` | `#FFFFFF` | Text on filled CTAs |
 | `accent-break` | `#3D8F82` | Break timer, break complete |
 | `accent-success` | `#3A8F65` | Mark done, completion |
 | `accent-suggestion` | `amber` ring | Suggested task row highlight |
-| `focus-ring` | `#8A8478` | Selected task focus ring |
+| `danger` / `danger-hover` | `#DC2626` / `#EF4444` | Destructive/interrupt only |
+| `focus-ring` | `#5D8265` | Selected task focus ring (sage green) |
 
-**CTA contrast:** Cool-stone CTA requires explicit `text-on-cta` — never `text-primary` on filled buttons.
+**CTA contrast:** The sage-green CTA requires explicit `text-on-cta` — never `text-primary` on filled buttons. `accent-break` (teal) and `accent-success` (green) stay distinct from the sage primary so break/success semantics don't collide.
 
 ### Calm dark
 
@@ -168,11 +177,12 @@ A blocking inline script in `layout.tsx` `<head>` sets `data-theme` before first
 | `surface-card` | `#2A3142` | Elevated from shell |
 | `surface-card-muted` | `#232936` | Completed rows |
 | `text-primary` | `#F5F3F0` | Light ink |
-| `accent-cta` | `#9A9489` | Desaturated cool stone |
+| `accent-cta` | `#638A6C` | Desaturated sage green |
 | `accent-break` | `#4A9A8E` | Desaturated teal |
 | `accent-success` | `#4A9468` | Desaturated green |
+| `danger` | `#E5534B` | Interrupt on dark |
 | `scrim` | `rgba(30,36,51,0.78)` | Subdued backdrop |
-| `focus-ring` | `#B0AAA0` | Visible on dark cards |
+| `focus-ring` | `#8FB397` | Sage ring, visible on dark cards |
 
 Work-type and energy badge tokens retokenize per theme — dark-designed washes fail contrast on light `#FFFFFF` cards.
 
@@ -245,9 +255,9 @@ Active chip: `bg-segment-active text-on-cta`. Inactive: `bg-segment-inactive tex
 
 ### Primary / secondary CTA
 
-- **Primary:** `bg-accent-cta hover:bg-accent-cta-hover text-on-cta font-semibold rounded-lg px-6 py-3`
-- **Secondary:** `border border-border-subtle bg-surface-card hover:bg-surface-card-muted text-primary font-semibold rounded-lg px-6 py-3`
-- **Destructive/interrupt:** `bg-red-600 hover:bg-red-500 text-on-cta` (timer interrupt only)
+- **Primary:** `bg-accent-cta hover:bg-accent-cta-hover text-on-cta font-semibold rounded-control px-6 py-3`
+- **Secondary:** `border border-border-subtle bg-surface-card hover:bg-surface-card-muted text-primary font-semibold rounded-control px-6 py-3`
+- **Destructive/interrupt:** `bg-danger hover:bg-danger-hover text-on-danger` (timer interrupt only)
 
 ### Motion spec
 

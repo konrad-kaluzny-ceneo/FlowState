@@ -23,7 +23,7 @@ export function defaultEisenhowerFields(weight: 1 | 2 | 3 = 2): {
 	};
 }
 
-export type DomainTaskStatus = "active" | "completed" | "archived";
+export type DomainTaskStatus = "active" | "completed" | "archived" | "planned";
 
 export type DomainTask = {
 	id: DomainTaskId;
@@ -41,6 +41,7 @@ export type DomainTask = {
 	commitmentHorizon: CommitmentHorizon;
 	sortOrder: number;
 	resumeNote: string | null;
+	project: string | null;
 	personaPresetId: string | null;
 	isDailyStanding: boolean;
 	doneForToday?: boolean;
@@ -94,16 +95,18 @@ export interface TaskRepository {
 			workType?: WorkType;
 			weight?: 1 | 2 | 3;
 			resumeNote?: string | null;
+			project?: string | null;
 		} & EisenhowerTaskInput,
 	): Promise<DomainTask>;
 	update(
 		input: {
 			id: DomainTaskId;
 			title?: string;
-			status?: "active" | "completed";
+			status?: "active" | "completed" | "planned";
 			workType?: WorkType;
 			weight?: 1 | 2 | 3;
 			resumeNote?: string | null;
+			project?: string | null;
 		} & EisenhowerTaskInput,
 	): Promise<void>;
 	delete(input: { id: DomainTaskId }): Promise<void>;

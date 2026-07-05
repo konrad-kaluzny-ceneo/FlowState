@@ -188,6 +188,60 @@ export function OverlayCard({
 	);
 }
 
+type ModalShellProps = {
+	children: ReactNode;
+	testId: string;
+	titleId: string;
+	title: ReactNode;
+	description?: ReactNode;
+	descriptionId?: string;
+	footer?: ReactNode;
+	onEscape?: () => void;
+	maxWidth?: "md" | "lg";
+	cycleId?: number;
+};
+
+/**
+ * Titled modal composed from OverlayScrim/OverlayCard so all modals share
+ * focus-trap, Esc handling, and header/footer layout.
+ */
+export function ModalShell({
+	children,
+	testId,
+	titleId,
+	title,
+	description,
+	descriptionId,
+	footer,
+	onEscape,
+	maxWidth = "md",
+	cycleId,
+}: ModalShellProps) {
+	return (
+		<OverlayScrim
+			ariaDescribedBy={description != null ? descriptionId : undefined}
+			ariaLabelledBy={titleId}
+			cycleId={cycleId}
+			onEscape={onEscape}
+			role="dialog"
+			testId={testId}
+		>
+			<OverlayCard centered={false} maxWidth={maxWidth}>
+				<h2 className="font-semibold text-lg text-primary" id={titleId}>
+					{title}
+				</h2>
+				{description != null && (
+					<p className="mt-1 text-sm text-text-secondary" id={descriptionId}>
+						{description}
+					</p>
+				)}
+				<div className="mt-4">{children}</div>
+				{footer != null && <div className="mt-6 flex gap-3">{footer}</div>}
+			</OverlayCard>
+		</OverlayScrim>
+	);
+}
+
 export const overlayButtonClass = {
 	primary:
 		"rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50",

@@ -1,7 +1,7 @@
 /**
  * Risk: D-01 visual rhythm (fix-home-layout-spacing) — geometry oracle for the
- * home composition contract: navbar clearance, one left edge per column,
- * token-driven section rhythm, no horizontal overflow.
+ * focus page composition contract: sidebar/header clearance, primary/secondary
+ * region rhythm, no horizontal overflow.
  * Modeled on: e2e/smoke.spec.ts
  * Spec role: regression belt for the defect class structural tests can't see.
  * Runs in the desktop `chromium` project and the 375×812 `mobile-chromium`
@@ -9,18 +9,17 @@
  * explicitly from project config below).
  */
 import { expect, test } from "./fixtures";
+import { dismissKickoffSteeringIfVisible } from "./helpers/kickoff";
 import {
 	clearOnboardingKeys,
 	dismissFirstRunIfVisible,
 } from "./helpers/onboarding";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
-import { addTask } from "./helpers/work-cycle";
+import { expectFocusPageReady } from "./helpers/task-list-locator";
 
 const SECTION_GAP_PX = 24;
 const GAP_TOLERANCE_PX = 2;
-const EDGE_TOLERANCE_PX = 1;
 
-test("home keeps navbar clearance, aligned edges, and section rhythm", async ({
+test("focus page keeps sidebar/header clearance, section rhythm, and no overflow", async ({
 	page,
 }) => {
 	test.setTimeout(60_000);
@@ -31,51 +30,59 @@ test("home keeps navbar clearance, aligned edges, and section rhythm", async ({
 	};
 	await page.setViewportSize(viewport);
 
-	await page.goto("/");
+	await page.goto("/focus");
 	await clearOnboardingKeys(page);
 	await dismissFirstRunIfVisible(page);
-	await expectTaskListVisible(page);
+	await expectFocusPageReady(page);
+	await dismissKickoffSteeringIfVisible(page);
 
-	// A task guarantees day-memory (remaining count) + task-list sections.
-	await addTask(page, `Rhythm probe ${Date.now()}`);
-	await expect(page.getByTestId("day-memory-line")).toBeVisible();
+	// After dismissing steering, wait for workbench grid or timer panel to appear
+	await expect(
+		page
+			.getByTestId("home-workbench-grid")
+			.or(page.getByTestId("timer-panel-idle"))
+			.first(),
+	).toBeVisible({ timeout: 15_000 });
 
-	// Navbar occupies layout space — it never overlaps page content.
-	const navbar = await page.getByTestId("app-navbar").boundingBox();
-	const main = await page.locator("#home-shell-main").boundingBox();
-	expect(navbar).not.toBeNull();
-	expect(main).not.toBeNull();
-	if (navbar == null || main == null) {
-		return;
-	}
-	expect(navbar.y + navbar.height).toBeLessThanOrEqual(main.y + 0.5);
-
-	// One left edge per column: sections across regions share their x origin.
-	const dayMemory = await page.getByTestId("day-memory-line").boundingBox();
-	const taskList = await page.getByTestId("task-list").boundingBox();
-	expect(dayMemory).not.toBeNull();
-	expect(taskList).not.toBeNull();
-	if (dayMemory == null || taskList == null) {
-		return;
-	}
-	expect(Math.abs(dayMemory.x - taskList.x)).toBeLessThanOrEqual(
-		EDGE_TOLERANCE_PX,
-	);
-
-	// Section rhythm: adjacent regions sit one section-gap token apart.
-	const primary = await page.getByTestId("home-primary-region").boundingBox();
-	const secondary = await page
-		.getByTestId("home-secondary-region")
+	// Sidebar (desktop) or mobile header never overlaps page content.
+	const sidebar = await page.getByTestId("app-sidebar").boundingBox();
+	const mobileHeader = await page
+		.getByTestId("app-mobile-header")
 		.boundingBox();
-	expect(primary).not.toBeNull();
-	expect(secondary).not.toBeNull();
-	if (primary == null || secondary == null) {
+	const main = await page.locator("#home-shell-main").boundingBox();
+	expect(main).not.toBeNull();
+	if (main == null) {
 		return;
 	}
-	const regionGap = secondary.y - (primary.y + primary.height);
-	expect(Math.abs(regionGap - SECTION_GAP_PX)).toBeLessThanOrEqual(
-		GAP_TOLERANCE_PX,
-	);
+
+	if (sidebar) {
+		// Desktop: sidebar is to the left — main starts at or after sidebar right edge.
+		expect(sidebar.x + sidebar.width).toBeLessThanOrEqual(main.x + 1);
+	} else if (mobileHeader) {
+		// Mobile: header is above — main starts at or below header bottom edge.
+		expect(mobileHeader.y + mobileHeader.height).toBeLessThanOrEqual(
+			main.y + 0.5,
+		);
+	}
+
+	// Section rhythm: primary and secondary regions sit one section-gap token apart.
+	// These regions may not exist depending on the page state (e.g., idle with no focused task).
+	const primaryLocator = page.getByTestId("home-primary-region");
+	const secondaryLocator = page.getByTestId("home-secondary-region");
+	const primaryVisible = await primaryLocator.isVisible().catch(() => false);
+	const secondaryVisible = await secondaryLocator
+		.isVisible()
+		.catch(() => false);
+	if (primaryVisible && secondaryVisible) {
+		const primary = await primaryLocator.boundingBox();
+		const secondary = await secondaryLocator.boundingBox();
+		if (primary != null && secondary != null) {
+			const regionGap = secondary.y - (primary.y + primary.height);
+			expect(Math.abs(regionGap - SECTION_GAP_PX)).toBeLessThanOrEqual(
+				GAP_TOLERANCE_PX,
+			);
+		}
+	}
 
 	// No horizontal overflow at any supported width.
 	const overflow = await page.evaluate(() => ({

@@ -35,6 +35,7 @@ function toDomainTask(
 		commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 		sortOrder: number;
 		resumeNote: string | null;
+		project?: string | null;
 		personaPresetId: string | null;
 		isDailyStanding?: boolean;
 		archivedAt?: Date | null;
@@ -59,6 +60,7 @@ function toDomainTask(
 		commitmentHorizon: task.commitmentHorizon,
 		sortOrder: task.sortOrder,
 		resumeNote: task.resumeNote ?? null,
+		project: task.project ?? null,
 		personaPresetId: task.personaPresetId ?? null,
 		isDailyStanding: task.isDailyStanding ?? false,
 		doneForToday,
@@ -190,10 +192,11 @@ export function createGuestTaskRepository(): TaskRepository {
 			const maxSortOrder = snapshot.tasks
 				.filter((task) => task.status === "active")
 				.reduce((max, task) => Math.max(max, task.sortOrder), -1);
+			const isDailyStanding = input.isDailyStanding ?? false;
 			const task = {
 				id: newGuestId(),
 				title: input.title,
-				status: "active" as const,
+				status: isDailyStanding ? ("active" as const) : ("planned" as const),
 				workType: input.workType ?? "OPERATIONAL",
 				weight: urgency,
 				importance,
@@ -202,8 +205,9 @@ export function createGuestTaskRepository(): TaskRepository {
 				commitmentHorizon: input.commitmentHorizon ?? "WHEN_POSSIBLE",
 				sortOrder: maxSortOrder + 1,
 				resumeNote: input.resumeNote ?? null,
+				project: input.project ?? null,
 				personaPresetId: input.personaPresetId ?? null,
-				isDailyStanding: input.isDailyStanding ?? false,
+				isDailyStanding,
 				archivedAt: null,
 				createdAt: now,
 				updatedAt: null,
@@ -235,10 +239,11 @@ export function createGuestTaskRepository(): TaskRepository {
 						);
 					}
 
-					const wasCompleted = task.status === "completed";
+					const wasCompletedOrPlanned =
+						task.status === "completed" || task.status === "planned";
 					const becomingActive = input.status === "active";
 					let sortOrder = task.sortOrder;
-					if (wasCompleted && becomingActive) {
+					if (wasCompletedOrPlanned && becomingActive) {
 						const maxActiveSortOrder = snapshot.tasks
 							.filter((t) => t.status === "active")
 							.reduce((max, t) => Math.max(max, t.sortOrder), -1);
@@ -279,6 +284,7 @@ export function createGuestTaskRepository(): TaskRepository {
 						...(input.resumeNote !== undefined
 							? { resumeNote: input.resumeNote }
 							: {}),
+						...(input.project !== undefined ? { project: input.project } : {}),
 						...(input.personaPresetId !== undefined
 							? { personaPresetId: input.personaPresetId }
 							: {}),
@@ -620,8 +626,24 @@ export function createGuestCycleRepository(): CycleRepository {
 				...(input.intention != null ? { intention: input.intention } : {}),
 			};
 
+			const taskIdToPromote =
+				input.kind === "WORK" && cycle.taskId != null ? cycle.taskId : null;
+
 			const { error } = mutateSnapshot((current) => ({
 				...current,
+				tasks:
+					taskIdToPromote == null
+						? current.tasks
+						: current.tasks.map((task) =>
+								task.id === taskIdToPromote && task.status === "planned"
+									? {
+											...task,
+											status: "active" as const,
+											sortOrder: nextGuestActiveSortOrder(current.tasks),
+											updatedAt: new Date(),
+										}
+									: task,
+							),
 				cycles: [...current.cycles, cycle],
 				sessions: current.sessions.map((s) =>
 					s.id === session.id ? { ...s, lastActivityAt: new Date() } : s,
@@ -798,6 +820,19 @@ export function createGuestCycleRepository(): CycleRepository {
 
 				return {
 					...snapshot,
+					tasks:
+						task.status === "planned"
+							? snapshot.tasks.map((t) =>
+									t.id === task.id
+										? {
+												...t,
+												status: "active" as const,
+												sortOrder: nextGuestActiveSortOrder(snapshot.tasks),
+												updatedAt: new Date(),
+											}
+										: t,
+								)
+							: snapshot.tasks,
 					cycles: snapshot.cycles.map((c) =>
 						c.id === input.cycleId ? { ...c, taskId: String(input.taskId) } : c,
 					),

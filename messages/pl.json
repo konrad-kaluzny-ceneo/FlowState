@@ -22,7 +22,12 @@
 		"signOutError": "Wylogowanie nie powiodło się. Spróbuj ponownie."
 	},
 	"Navbar": {
-		"brand": "FlowState"
+		"brand": "FlowState",
+		"focus": "Fokus",
+		"tasks": "Zadania",
+		"plan": "Plan dnia",
+		"summary": "Podsumowanie",
+		"settings": "Ustawienia"
 	},
 	"Onboarding": {
 		"firstRun": {
@@ -244,8 +249,31 @@
 		"createEffortPlaceholder": "min",
 		"createClearEffort": "Wyczyść",
 		"sectionActive": "Aktywne ({count})",
+		"sectionPlanned": "Planowane ({count})",
 		"sectionCompleted": "Ukończone ({count})",
 		"revertAria": "Przywróć do aktywnych",
+		"tabsAriaLabel": "Sekcje zadań",
+		"filterAllTypes": "Wszystkie typy",
+		"filterTypeAria": "Filtruj wg typu",
+		"sortAria": "Sortuj",
+		"sortManual": "Ręcznie",
+		"sortPriority": "Priorytet",
+		"sortEffort": "Najkrótszy wysiłek",
+		"addTaskButton": "Otwórz pełny formularz zadania",
+		"addTaskModalTitle": "Dodaj zadanie",
+		"addTaskModalCancel": "Anuluj",
+		"addTaskModalSubmit": "Dodaj zadanie",
+		"fieldProject": "Projekt",
+		"projectPlaceholder": "Nazwa projektu",
+		"detailTitle": "Szczegóły zadania",
+		"detailClose": "Zamknij",
+		"startWorkingOn": "Rozpocznij pracę nad tym zadaniem",
+		"statusActive": "Aktywne",
+		"statusPlanned": "Planowane",
+		"statusCompleted": "Ukończone",
+		"statusArchived": "Zarchiwizowane",
+		"plannedEmpty": "Brak zaplanowanych zadań",
+		"completedEmpty": "Brak ukończonych zadań",
 		"workType": {
 			"DEEP_WORK": "Głębokie",
 			"OPERATIONAL": "Operacyjne",
@@ -323,9 +351,79 @@
 		"offlineBanner": "Jesteś offline — spróbuj ponownie, gdy wrócisz online."
 	},
 	"HomeFocusSummary": {
+		"heading": "Twój dzień",
 		"budgetLine": "Wykorzystano {used} z {budget} godzin skupienia · zostało {remaining}",
+		"sessionsLine": "{count, plural, one {# sesja skupienia dzisiaj} few {# sesje skupienia dzisiaj} many {# sesji skupienia dzisiaj} other {# sesji skupienia dzisiaj}}",
 		"standingOpen": "{count, plural, one {# codzienne zadanie stałe aktywne} few {# codzienne zadania stałe aktywne} many {# codziennych zadań stałych aktywnych} other {# codziennego zadania stałego aktywnego}}",
 		"standingDone": "{count, plural, one {# codzienne zadanie stałe ukończone na dziś} few {# codzienne zadania stałe ukończone na dziś} many {# codziennych zadań stałych ukończonych na dziś} other {# codziennego zadania stałego ukończonego na dziś}}"
+	},
+	"FocusTip": {
+		"heading": "Wskazówka na dziś",
+		"tip0": "Krótki spacer między sesjami resetuje skupienie lepiej niż scrollowanie.",
+		"tip1": "Zacznij od zadania, którego najbardziej unikasz — odwaga daje rozpęd.",
+		"tip2": "Woda w zasięgu ręki, telefon poza zasięgiem.",
+		"tip3": "Jeden jasny następny krok jest lepszy niż długa lista zadań.",
+		"tip4": "Przerwy są częścią pracy, a nie odpoczynkiem od niej.",
+		"tip5": "Nazwij efekt, który chcesz osiągnąć, zanim uruchomisz minutnik."
+	},
+	"QuickActions": {
+		"addTask": "Dodaj zadanie",
+		"viewTasks": "Zadania"
+	},
+	"HomeViewToggle": {
+		"fokus": "Fokus",
+		"zadania": "Zadania",
+		"plan": "Plan dnia",
+		"podsumowanie": "Podsumowanie",
+		"ustawienia": "Ustawienia"
+	},
+	"Podsumowanie": {
+		"title": "Podsumowanie dnia",
+		"subtitle": "Twoja aktywność skupienia z ostatnich 24 godzin.",
+		"loading": "Wczytywanie statystyk…",
+		"guestEmpty": "Podsumowanie jest dostępne po zalogowaniu.",
+		"kpiTasksDone": "Wykonane zadania",
+		"kpiFocusTime": "Czas skupienia",
+		"kpiSessions": "Sesje skupienia",
+		"kpiAvgSession": "Średnia długość sesji",
+		"kpiMinutes": "{minutes} min",
+		"kpiUnit": "{value}",
+		"hourlyChartTitle": "Skupienie wg godziny",
+		"hourlyChartAria": "Wykres skupienia wg godziny",
+		"hourAxisLabel": "Godzina",
+		"minutesAxisLabel": "Minuty",
+		"sessionTypeTitle": "Typy sesji",
+		"sessionTypeAria": "Wykres typów sesji skupienia",
+		"taskBreakdownTitle": "Postęp zadań",
+		"taskBreakdownAria": "Wykres postępu zadań",
+		"workTypeDeep": "Głęboka praca",
+		"workTypeOperational": "Operacyjne",
+		"workTypeReactive": "Reaktywne",
+		"workTypeUncategorized": "Bez kategorii",
+		"taskDone": "Ukończone",
+		"taskPartial": "W trakcie",
+		"taskUndone": "Aktywne",
+		"noDataTitle": "Brak danych skupienia",
+		"noDataBody": "Rozpocznij sesję skupienia, aby zobaczyć statystyki dnia.",
+		"bestTimeTitle": "Najlepsza pora dnia",
+		"bestTimeComingSoon": "Wkrótce – wymaga danych z kilku dni.",
+		"dateNavComingSoon": "Nawigacja dat – wkrótce."
+	},
+	"PlanDnia": {
+		"title": "Plan dnia",
+		"subtitle": "Twój dzienny budżet godzin skupienia.",
+		"loading": "Wczytywanie planu dnia…",
+		"guestEmpty": "Plan dnia jest dostępny po zalogowaniu.",
+		"budgetHeading": "Budżet skupienia",
+		"budgetLine": "Wykorzystano {used} z {budget} · pozostało {remaining}",
+		"changeBudget": "Zmień budżet",
+		"presetLabel": "{hours}h",
+		"customAria": "Własne minuty skupienia",
+		"customPlaceholder": "Własne",
+		"set": "Ustaw",
+		"cancel": "Anuluj",
+		"saveError": "Nie udało się zapisać godzin skupienia. Spróbuj ponownie.",
+		"validationError": "Podaj wartość od 15 do 720 minut."
 	},
 	"DayMemory": {
 		"sectionDone": "Ukończone",
@@ -553,5 +651,22 @@
 		"minUnit": "min",
 		"secUnit": "sek",
 		"validationError": "Musi mieścić się w {bounds}"
+	},
+	"Settings": {
+		"title": "Ustawienia",
+		"sectionGeneral": "Ogólne",
+		"sectionFocusSessions": "Sesje skupienia",
+		"sectionBreaksNotifications": "Przerwy i powiadomienia",
+		"sectionAppearance": "Wygląd",
+		"languageLabel": "Język",
+		"userNameLabel": "Konto",
+		"signOut": "Wyloguj się",
+		"signingOut": "Wylogowywanie…",
+		"signOutError": "Wylogowanie nie powiodło się. Spróbuj ponownie.",
+		"workDurationLabel": "Czas pracy",
+		"shortBreakLabel": "Krótka przerwa",
+		"longBreakLabel": "Długa przerwa",
+		"cycleEndAudioLabel": "Dźwięk końca cyklu",
+		"themeLabel": "Motyw"
 	}
 }

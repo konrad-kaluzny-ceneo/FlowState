@@ -3,7 +3,7 @@ project: "FlowState"
 version: 3
 status: draft
 created: 2026-06-13
-updated: 2026-06-27
+updated: 2026-07-05
 context_type: brownfield
 product_type: web-app
 target_scale:
@@ -43,6 +43,18 @@ active_change_threads:
       delivery_weeks: 2
       hard_deadline: null
       after_hours_only: false
+  - id: ui-refactor
+    shaped: 2026-07-04
+    prd_added: 2026-07-04
+    status: draft
+    version: 1
+    timeline_budget:
+      delivery_weeks: 0
+      hard_deadline: null
+      after_hours_only: true
+    amends_non_goals:
+      - "No full analytics dashboard (§Non-Goals) — carved out for the Podsumowanie view"
+      - "Settings live on hub, not a separate page in v1 (§revisit-user-choices) — carved out for the Ustawienia page"
 ---
 
 ## Current System Overview
@@ -175,7 +187,7 @@ Value: zwiększenie przejrzystości aplikacji przez zmniejszenie liczby wyświet
 - **Guest scope:** Guest trial remains narrower — no full wedge stack, shortened narrative only.
 - **Task archive:** Auto-archive applies only to stale active tasks; mark-done completion semantics unchanged. Archived tasks are excluded from the wedge suggestion pool until restored or permanently removed.
 - **Data:** No breaking schema changes without migration path; guest blob merge policy unchanged (suffix on title collision).
-- **Integrations:** None external — in-app only.
+- **Integrations:** MCP server planned (read/write session and task state for AI agents); no inbound notification aggregation.
 - **Preserved SLAs from PRD v2:** 200ms acknowledgement for user actions; 90-day session history retention; mainstream desktop browser support (two latest major versions of Chrome, Firefox, Safari, Edge).
 - **Scoring coefficients:** Remain tunable by implementer after ship — not locked in PRD v3.
 
@@ -202,10 +214,11 @@ No access control changes — current model preserved. Login required for accoun
 - No mobile app or native push notifications — browser-only; in-tab signals only.
 - No team or social features — no shared tasks, manager view, or collaboration.
 - No AI/ML-powered scoring — deterministic formula only.
-- No external tool import/export integrations.
-- No full analytics dashboard — no charts, trends, or weekly reports. Daily recap is a light narrative footprint only.
+- No notification hub — FlowState does not aggregate or proxy notifications from external tools. The workflow enforces ignoring distractions and focusing on the single most important task. *(Amended 2026-07-05: former "No external tool import/export integrations" removed — MCP server integration planned on roadmap; the app will expose an MCP endpoint for AI agents to interact with session/task state. The app still does NOT become a notification aggregator.)*
+- No full analytics dashboard — no charts, trends, or weekly reports. Daily recap is a light narrative footprint only. *(Amended 2026-07-04 by change thread `ui-refactor`: a dedicated **Podsumowanie** view with per-day KPI cards and charts is now in scope for the redesign; the collapsible in-flow daily recap footprint remains light and separate. See "Change thread PRD: UI redesign".)*
 - No full recurring rule engine — daily standing tasks use boolean flag and local-day reset, not RRULE.
 - No fixed delivery deadline for PRD v3 scope — continuous after-hours iteration; roadmap slices sequence work.
+- No physical distraction blocking (OS-level DND, site blockers, screen locks) — FlowState reduces distractions by coaching a better workflow, not by forcefully restricting the user's environment.
 
 ## Open Questions
 
@@ -730,3 +743,98 @@ No access control changes — current model preserved. Authenticated users and g
 1. **Rollout order after notifications** — check-in vs wedge dismissals vs audio mode: which choice type next? Owner: user. Block: no for MVP ship; resolve in `/10x-plan` or follow-on shape append.
 2. **Implementation sequencing vs break-alerts-out-of-tab** — build revisit UI before, with, or after break-alerts permission prompt lands? Owner: maintainer. Block: no — break-alerts shipped (PR #138); revisit UI is the remaining work. Resolve sequencing in `/10x-plan`.
 3. **Exact label copy for three notification states** (enabled / disabled / not configured) — Owner: user + design. Block: no; resolve in `/10x-plan`.
+
+---
+
+## Change thread PRD: UI redesign (ui-refactor)
+
+**Thread version:** 1
+**Status:** draft
+**Created:** 2026-07-04
+**Context type:** brownfield (delta on PRD v3 above)
+**Shape source:** `context/foundation/makiety/` (redesign.md, branding.md, 8 mockups) + `context/changes/ui-refactor/research.md`
+**Change folder:** `context/changes/ui-refactor/`
+
+> **Note on PRD v3 Non-Goals (two carve-outs):** This thread introduces a multi-view, sidebar/bottom-nav "wellbeing app" shell per `redesign.md:254-262`. Two v3 non-goals are **explicitly relaxed for this thread only**:
+> 1. **Analytics dashboard** — v3 §Non-Goals forbade "charts, trends, or weekly reports." A dedicated **Podsumowanie** view with per-day KPI cards + charts (bar/donut/best-time) is now in scope. The light in-flow daily recap footprint (`prd.md:145`, `:206`) remains a separate, unchanged, dismissible surface.
+> 2. **Separate settings page** — the `revisit-user-choices` thread and v3 assumed settings live on the hub "not a separate settings page in v1" (`prd.md:650`, `:723`). An **Ustawienia** page that **relocates existing controls** (theme/lang, session durations, break/notification prefs, audio mode) is now in scope. **No net-new settings** are added — Synchronizacja, Prywatność, backup/restore, delete-all-data from the mockup are **out of scope**.
+>
+> All other v3 non-goals stand (no native mobile push, no team/social, no AI scoring, no external integrations, no RRULE engine).
+
+### Current System Overview
+
+**Baseline:** PRD v3 FlowState is a deliberately single-screen SPA — one content route (`/`) composed by a cycle-phase state machine (`deriveHomeSessionState`). No navigation shell exists; the top `AppNavbar` carries only a brand + preference controls. Tasks live inline on the home screen; the timer is a numeric mono card; energy + session-goal steering cards inject into the home column per session. The design foundation is mature: Tailwind-v4 CSS-first tokens, a full light/dark/system theme engine (shipped toggle), a botanical SVG illustration system, and a reusable modal primitive (`overlay-shell.tsx`). See `research.md` for the full map.
+
+**Relevant today:** The current accent is taupe/stone `#736d62`, not the mockup's muted green (green is only a break/success semantic today). Tasks, day-budget, recap, and preferences all have working backends — the gap is presentation and navigation, not data (except the two promoted task fields below).
+
+### Problem Statement & Motivation
+
+**Pain:** The current single screen asks for many decisions at once (energy, goal, task add/type, active/completed lists, budget, recap) — contradicting the product's "one screen = one decision" principle (`redesign.md:23-40`). The interface reads like a task manager, not a calm wellbeing tool.
+
+**Insight:** Separate **doing** (Fokus) from **organizing** (Zadania / Plan dnia) and **reflecting** (Podsumowanie); show energy/goal once per day then hide them; simplify task cards to `name + type • estimate`; make the timer the visual heart.
+
+### Scope of Change
+
+#### New capabilities
+
+- [new] **Navigation shell** — desktop left sidebar + mobile bottom bar with 5 sections: **Fokus / Zadania / Plan dnia / Podsumowanie / Ustawienia** (`redesign.md:254-262`). **Multi-route App Router**; cycle/session state lifts into a shared layout so the timer persists across sections (see Resolved Decisions).
+- [new] **Fokus (home) redesign** — large circular timer ring as the focal element; "Aktualne zadanie" card; "Twój dzień" progress panel (zadania X/N, sesje, czas skupienia, progress bar); "Wskazówka na dziś" tip; "Szybkie akcje"; calm "Gotowy na skupienie?" empty state with recents.
+- [new] **Once-per-day steering** — energy (Skupiony/Stabilny/Słabnący) and session goal shown once at day start then hidden (reuse the `FocusBudgetPrompt` once-per-day dismiss pattern), instead of per-session inline cards.
+- [new] **Zadania page** — dedicated view with Aktywne / **Planowane** / Ukończone tabs; minimal task cards (`name + type • estimate`, other attributes behind detail); **add-task modal** (built on `overlay-shell.tsx`); task **detail side panel** over existing fields.
+- [new] **Task field: `project`** — a project/grouping field per task (create modal + detail panel). Net-new model + backend + UI.
+- [new] **Task status: `planned`** — a new value in `DomainTaskStatus` (active → **planned** ↔ active → completed → archived) backing the Planowane tab. Net-new lifecycle.
+- [new] **Plan dnia view** — presents the **existing focus-hours capacity budget** (`useDayPlan` / `FocusBudgetPrompt` / `HomeFocusSummary`) restyled to the mockup. **No timeline, no time-blocks, no week view** — budget-only (PRD-compliant).
+- [new] **Podsumowanie view** — per-day KPI cards (wykonane zadania, czas skupienia, sesje, śr. długość sesji) + charts (focus-over-day bar, time-distribution donut, task donut) + optional day reflection. *(Non-goal carve-out #1.)*
+- [new] **Ustawienia page** — relocates existing controls into a tabbed settings surface. *(Non-goal carve-out #2.)*
+- [new] **Accent retint** — muted green replaces taupe as the single primary accent (token edit in `globals.css` + `DESIGN.md`); larger radius + airier type scale.
+
+#### Modified behavior
+
+- [modified] Timer presentation — numeric mono card → circular ring, **bundled into the restyle tier**; because it touches the most-tested component, the phase carries timer/cycle test coverage + cadence guard.
+- [modified] Cycle state ownership — `usePomodoroCycle` lifts from the home dashboard to a shared App Router layout provider so the timer survives cross-section navigation. Logic preserved; ownership relocated.
+- [modified] Task card density — collapse multi-badge rows (type/urgency/importance/ASAP/daily/persona) to a single chip + effort; detail carries the rest.
+- [modified] Task creation — inline always-on form → modal.
+- [modified] Settings location — inline (navbar/timer) → dedicated page (relocation only).
+
+#### Preserved behavior
+
+- [preserved] Pomodoro cycle engine, wedge/transition conductor, pause/resume, check-in, suggestions, catch-up overlays, ±2s cadence guardrail — untouched by presentation changes.
+- [preserved] Light/dark/system theme engine + illustration system + guest/auth data-mode split.
+- [preserved] Deterministic scorer, override freedom, calm tone (`branding.md`).
+- [preserved] The light in-flow daily recap footprint remains separate from the new Podsumowanie view.
+
+#### Out of scope (hallucinated in mockups — no data model; explicitly deferred)
+
+- Task **subtasks (Podzadania)**, **Opis (description)**, general **Notatki** — not built (only the existing ≤120-char `resumeNote` remains).
+- Plan dnia **timeline / time-blocks / week view** — budget-only this thread.
+- Task **list/grid toggle**, **type filter**, **sort dropdown** — optional pure-UI, not committed.
+- Settings **Synchronizacja / Prywatność / backup-restore / delete-all-data** — not built.
+
+### Constraints & Compatibility
+
+- **Backward compatibility:** Existing task, day-plan, recap, and preference storage/backends continue to work; the redesign is presentation + navigation plus two additive task fields (`project`, `planned` status) with a migration.
+- **Data migration:** Adding `project` (nullable) and the `planned` status value requires a Prisma migration; existing tasks default to no project and unchanged status.
+- **Design-system stance:** No shadcn/Radix/`cn()` (`DESIGN.md:291`); new primitives (Tabs, Select/Dropdown, Sidebar, extracted Button/Segmented) are hand-rolled. Charting uses **visx** (`@visx/*`, D3 primitives) — the one sanctioned new dependency family, chosen because it is unstyled and CSS-variable-themeable.
+- **Blast radius:** High — introduces app-wide **multi-route** navigation, **lifts `usePomodoroCycle` to a shared layout**, and touches the home dashboard, timer (ring), and task list. Cycle logic is preserved but its mount point moves — the layout-lift phase must re-verify cycle persistence, pause cap, and ±2s cadence across route navigation. Wedge/overlay changes (once-per-day steering gate, add-task modal) carry a dismiss-oracle per gate (lessons L-"wedge"); each new interactive surface needs its own perceived-latency guard (L-04).
+
+### 🚦 Graphics entry gates — CLEARED (2026-07-04, assets delivered)
+
+All hero assets are supplied and committed to **`public/images/heroes/`** with light + `-dark` variants (PNG): `focus-session-bg`, `break-restoration`, `onboarding-hero`, `day-summary-thumb`, `summary-footer`. The previously-blocking gates (Fokus session background, break visual, onboarding hero) are **satisfied**. Botanical leaf/sprig marks remain theme-aware SVG (`CalmGardenSprig`, `HomeHeroSprig`). Remaining follow-up: optional PNG→WebP; add a readability scrim over text-bearing heroes. See `research.md` → "Graphics entry gates — DELIVERED".
+
+### Non-Goals (this thread)
+
+- **Avoid:** timeline/schedule Plan dnia, subtasks/description/notes, and net-new settings — all deferred (see Out of scope).
+- **Avoid:** touching the Pomodoro cycle/wedge state machine logic — this is a presentation + navigation refactor (plus two additive task fields).
+- **Avoid:** native mobile app — responsive web only (desktop sidebar / mobile bottom bar).
+- **Avoid:** reintroducing task-manager density — the redesign's north star is "one screen = one decision."
+
+### Resolved Decisions (2026-07-04)
+
+1. **Navigation architecture — DECIDED:** **Multi-route App Router**, with cycle/session state **lifted into a shared layout provider**. App Router layouts do not unmount when navigating between their child routes, so the running Pomodoro timer persists across Fokus/Zadania/Plan dnia/Podsumowanie/Ustawienia. Real URLs + deep-linking. Requires lifting `usePomodoroCycle` out of the home dashboard to the layout level (the one structural refactor of the cycle wiring — logic preserved, ownership relocated).
+2. **Timer ring — DECIDED:** **In scope, bundled into the restyle tier** (not deferred). Because this changes the most-tested component, the ring phase must carry timer/cycle test coverage and a cadence guard.
+3. **Charting library — DECIDED:** **visx** (`@visx/*`, D3 primitives) — low-level, unstyled, CSS-variable-themeable; fits the no-shadcn/Radix stance. Adds one dependency family.
+4. **Graphics — DECIDED + DELIVERED (2026-07-04):** All hero assets supplied by the user (light + dark variants for all 5 heroes) in `public/images/heroes/` as **PNG**. Entry gates cleared; only an optional PNG→WebP conversion remains. Dark variants exist → swap via `data-theme`.
+
+### Open Questions
+
+1. **Phasing order** — final phase decomposition and sequencing owned by `/10x-plan` (research proposes: token restyle **+ ring** → Fokus recompose → nav-shell/layout-lift + Zadania → Podsumowanie/Ustawienia). Graphics no longer gate sequencing (assets delivered).

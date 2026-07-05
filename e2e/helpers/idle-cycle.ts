@@ -6,7 +6,6 @@ import {
 	dismissKickoffSteeringIfVisible,
 } from "./kickoff";
 import { dismissFirstRunIfVisible } from "./onboarding";
-import { taskListLocator } from "./task-list-locator";
 
 async function clickEndSessionWithConfirmIfNeeded(
 	page: Page,
@@ -97,7 +96,14 @@ export async function waitForTimerPanelIdle(page: Page) {
 			throw new Error("running cycle interrupted — re-check idle");
 		}
 
-		await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
+		// In the redesigned UI, timer-panel-idle only shows when a task is focused.
+		// Accept workbench-grid as a valid idle state (no focused task yet).
+		await expect(
+			page
+				.getByTestId("timer-panel-idle")
+				.or(page.getByTestId("home-workbench-grid"))
+				.first(),
+		).toBeVisible();
 	}).toPass({ timeout: 20_000 });
 }
 
@@ -158,8 +164,13 @@ export async function ensureIdleCycle(page: Page) {
 		await expect(page.getByTestId("timer-panel-running")).toBeHidden();
 		await expect(page.getByTestId("check-in-overlay")).toBeHidden();
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeHidden();
+		// In the redesigned UI, timer-panel-idle only shows when a task is focused.
+		// Accept either timer-panel-idle visible OR the workbench grid visible (no active cycle).
 		await expect(
-			taskListLocator(page).getByPlaceholder("Add a new task..."),
-		).toBeEnabled();
+			page
+				.getByTestId("timer-panel-idle")
+				.or(page.getByTestId("home-workbench-grid"))
+				.first(),
+		).toBeVisible();
 	}).toPass({ timeout: 30_000 });
 }

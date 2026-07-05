@@ -1,0 +1,20 @@
+{
+	"name": "Lint on Edit",
+	"version": "1.0.0",
+	"description": "Run Biome lint+format fix on any edited source file (mirrors .cursor/hooks.json afterFileEdit lint)",
+	"when": {
+		"type": "fileEdited",
+		"patterns": [
+			"src/**/*.ts",
+			"src/**/*.tsx",
+			"src/**/*.js",
+			"src/**/*.jsx",
+			"src/**/*.mjs",
+			"src/**/*.cjs"
+		]
+	},
+	"then": {
+		"type": "runCommand",
+		"command": "node scripts/agent-hooks/lint.mjs"
+	}
+}

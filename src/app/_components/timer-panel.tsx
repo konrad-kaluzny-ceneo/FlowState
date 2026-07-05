@@ -9,29 +9,18 @@ import type {
 	FocusedTask,
 	PomodoroCycleState,
 } from "~/hooks/use-pomodoro-cycle";
-import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 import {
-	getLongBreakPresets,
-	getMaxBreakDurationSec,
 	getMaxWorkDurationSec,
-	getMinBreakDurationSec,
 	getMinWorkDurationSec,
-	getShortBreakPresets,
 	getWorkDurationPresets,
 } from "~/lib/duration-bounds";
 import { isDurationSecInRange } from "~/lib/duration-input";
-import {
-	getLastDuration,
-	getLongBreakDuration,
-	getShortBreakDuration,
-	setLongBreakDuration,
-	setShortBreakDuration,
-} from "~/lib/duration-storage";
+import { getLastDuration } from "~/lib/duration-storage";
 import { formatRemainingMs } from "~/lib/format-remaining";
 
-import { CycleAudioPreferenceControl } from "./cycle-audio-preference-control";
 import { DurationPicker } from "./duration-picker";
 import { OutOfTabBreakAlertsControl } from "./out-of-tab-break-alerts-control";
+import { ProgressRing } from "./ui/progress-ring";
 
 function OutOfTabBreakAlertsSection({
 	enabled,
@@ -53,10 +42,9 @@ type TimerPanelProps = {
 	onInterrupt: () => Promise<void>;
 	isStarting?: boolean;
 	cycleKind?: CycleKind | null;
+	configuredDurationSec?: number | null;
 	preferredWorkDurationSec?: number | null;
 	onWorkDurationManualChange?: () => void;
-	cycleEndAudioMode?: CycleEndAudioMode;
-	onCycleEndAudioModeChange?: (mode: CycleEndAudioMode) => void;
 	outOfTabBreakAlertsEnabled?: boolean;
 	onOutOfTabBreakAlertsChange?: (enabled: boolean) => void;
 };
@@ -71,10 +59,9 @@ export function TimerPanel({
 	onInterrupt,
 	isStarting = false,
 	cycleKind = null,
+	configuredDurationSec = null,
 	preferredWorkDurationSec = null,
 	onWorkDurationManualChange,
-	cycleEndAudioMode = "normal",
-	onCycleEndAudioModeChange,
 	outOfTabBreakAlertsEnabled = true,
 	onOutOfTabBreakAlertsChange,
 }: TimerPanelProps) {
@@ -82,14 +69,7 @@ export function TimerPanel({
 	const [workDurationSec, setWorkDurationSec] = useState(
 		() => preferredWorkDurationSec ?? getLastDuration(),
 	);
-	const [shortBreakSec, setShortBreakSec] = useState(() =>
-		getShortBreakDuration(),
-	);
-	const [longBreakSec, setLongBreakSec] = useState(() =>
-		getLongBreakDuration(),
-	);
 	const [workPickerInvalid, setWorkPickerInvalid] = useState(false);
-	const [showBreakSettings, setShowBreakSettings] = useState(false);
 
 	useEffect(() => {
 		if (preferredWorkDurationSec != null) {
@@ -99,8 +79,6 @@ export function TimerPanel({
 
 	const workMinSec = getMinWorkDurationSec();
 	const workMaxSec = getMaxWorkDurationSec();
-	const breakMinSec = getMinBreakDurationSec();
-	const breakMaxSec = getMaxBreakDurationSec();
 
 	if (
 		focusedTask == null &&
@@ -120,11 +98,17 @@ export function TimerPanel({
 		const breakLabel =
 			cycleKind === "LONG_BREAK" ? t("breakLong") : t("breakShort");
 		const isPaused = state === "paused";
+		const configuredDurationMs =
+			configuredDurationSec != null ? configuredDurationSec * 1000 : null;
+		const ringProgress =
+			configuredDurationMs != null && configuredDurationMs > 0
+				? (configuredDurationMs - remainingMs) / configuredDurationMs
+				: 0;
 
 		return (
 			<section
 				aria-label={isBreak ? t("sectionBreakAria") : t("sectionFocusAria")}
-				className={`w-full rounded-xl border p-6 text-center shadow-sm ${
+				className={`w-full rounded-card border p-6 text-center shadow-sm ${
 					isBreak
 						? "border-border-break bg-surface-break"
 						: "border-card-border bg-surface-card"
@@ -148,18 +132,27 @@ export function TimerPanel({
 						{focusedTask?.title ?? t("focusedTaskFallback")}
 					</p>
 				)}
-				<p
-					className={`mt-4 font-mono font-semibold text-6xl tabular-nums tracking-tight ${
-						isBreak ? "text-accent-break" : "text-primary"
-					}`}
-					data-testid="timer-countdown"
-				>
-					{formatRemainingMs(remainingMs)}
-				</p>
+				<div className="mt-4 flex justify-center">
+					<ProgressRing
+						progress={ringProgress}
+						progressClassName={
+							isBreak ? "stroke-accent-break" : "stroke-accent-cta"
+						}
+					>
+						<p
+							className={`font-mono font-semibold text-timer tabular-nums tracking-tight ${
+								isBreak ? "text-accent-break" : "text-primary"
+							}`}
+							data-testid="timer-countdown"
+						>
+							{formatRemainingMs(remainingMs)}
+						</p>
+					</ProgressRing>
+				</div>
 				{isPaused ? (
 					<button
 						aria-label={isBreak ? t("resumeBreakAria") : t("resumeAria")}
-						className="mt-6 flex w-full items-center justify-center rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+						className="mt-6 flex w-full items-center justify-center rounded-control bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 						data-testid="timer-resume"
 						onClick={() => void onResume()}
 						type="button"
@@ -170,7 +163,7 @@ export function TimerPanel({
 					<div className="mt-6 flex flex-col gap-3">
 						<button
 							aria-label={isBreak ? t("pauseBreakAria") : t("pauseAria")}
-							className="flex w-full items-center justify-center rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+							className="flex w-full items-center justify-center rounded-control bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 							data-testid="timer-pause"
 							onClick={() => void onPause()}
 							type="button"
@@ -179,7 +172,7 @@ export function TimerPanel({
 						</button>
 						<button
 							aria-label={isBreak ? t("endBreakEarlyAria") : t("interruptAria")}
-							className="flex w-full items-center justify-center rounded-lg bg-red-600 px-4 py-2 font-semibold text-on-cta transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+							className="flex w-full items-center justify-center rounded-control bg-danger px-4 py-2 font-semibold text-on-danger transition hover:bg-danger-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 							data-testid="timer-interrupt"
 							onClick={() => void onInterrupt()}
 							type="button"
@@ -214,7 +207,7 @@ export function TimerPanel({
 	return (
 		<section
 			aria-label={t("sectionReadyAria")}
-			className="w-full rounded-xl border border-card-border bg-surface-card p-6 shadow-sm"
+			className="w-full rounded-card border border-card-border bg-surface-card p-6 shadow-sm"
 			data-testid="timer-panel-idle"
 		>
 			<p className="text-center font-semibold text-sm text-text-section">
@@ -243,7 +236,7 @@ export function TimerPanel({
 
 			<button
 				aria-label={startLabel}
-				className="mt-6 w-full rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50"
+				className="mt-6 w-full rounded-control bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50"
 				data-testid="timer-start-cycle"
 				disabled={isStarting || workPickerInvalid || !workValid}
 				onClick={() => void onStart(workDurationSec)}
@@ -253,73 +246,6 @@ export function TimerPanel({
 					{isStarting ? t("starting") : t("startLabel")}
 				</span>
 			</button>
-
-			{onCycleEndAudioModeChange != null && (
-				<CycleAudioPreferenceControl
-					mode={cycleEndAudioMode}
-					onChange={onCycleEndAudioModeChange}
-				/>
-			)}
-
-			{onOutOfTabBreakAlertsChange != null && (
-				<OutOfTabBreakAlertsSection
-					enabled={outOfTabBreakAlertsEnabled}
-					onChange={onOutOfTabBreakAlertsChange}
-				/>
-			)}
-
-			<div className="mt-4 border-border-subtle border-t pt-4">
-				<button
-					className="w-full text-center text-sm text-text-dimmed transition hover:text-text-secondary"
-					data-testid="break-settings-toggle"
-					onClick={() => setShowBreakSettings(!showBreakSettings)}
-					type="button"
-				>
-					{showBreakSettings ? t("breakSettingsHide") : t("breakSettingsShow")}
-				</button>
-
-				{showBreakSettings && (
-					<div
-						className="mt-3 flex flex-col gap-4"
-						data-testid="break-settings-panel"
-					>
-						<div>
-							<p className="mb-2 text-center text-sm text-text-secondary">
-								{t("breakSettingsShort")}
-							</p>
-							<DurationPicker
-								boundsLabel={t("boundsBreak")}
-								maxSec={breakMaxSec}
-								minSec={breakMinSec}
-								onChangeSec={(sec) => {
-									setShortBreakSec(sec);
-									setShortBreakDuration(sec);
-								}}
-								presets={getShortBreakPresets()}
-								testIdPrefix="short-break-duration"
-								valueSec={shortBreakSec}
-							/>
-						</div>
-						<div>
-							<p className="mb-2 text-center text-sm text-text-secondary">
-								{t("breakSettingsLong")}
-							</p>
-							<DurationPicker
-								boundsLabel={t("boundsBreak")}
-								maxSec={breakMaxSec}
-								minSec={breakMinSec}
-								onChangeSec={(sec) => {
-									setLongBreakSec(sec);
-									setLongBreakDuration(sec);
-								}}
-								presets={getLongBreakPresets()}
-								testIdPrefix="long-break-duration"
-								valueSec={longBreakSec}
-							/>
-						</div>
-					</div>
-				)}
-			</div>
 		</section>
 	);
 }

@@ -79,11 +79,12 @@ function buildOptimisticCreateRow(
 		.filter((task) => task.status === "active")
 		.reduce((max, task) => Math.max(max, task.sortOrder), -1);
 	const urgency = (input.urgency ?? input.weight ?? 2) as 1 | 2 | 3;
+	const isDailyStanding = input.isDailyStanding ?? false;
 	return {
 		id: tempId,
 		title: input.title,
 		userId,
-		status: "active",
+		status: isDailyStanding ? "active" : "planned",
 		workType: input.workType ?? "OPERATIONAL",
 		weight: urgency,
 		importance: (input.importance ?? 2) as 1 | 2 | 3,
@@ -92,8 +93,9 @@ function buildOptimisticCreateRow(
 		commitmentHorizon: input.commitmentHorizon ?? "WHEN_POSSIBLE",
 		sortOrder: maxSortOrder + 1,
 		resumeNote: input.resumeNote ?? null,
+		project: input.project ?? null,
 		personaPresetId: input.personaPresetId ?? null,
-		isDailyStanding: input.isDailyStanding ?? false,
+		isDailyStanding,
 		doneForToday: false,
 		archivedAt: null,
 		createdAt: now,
@@ -505,6 +507,7 @@ export function useTaskMutations() {
 					urgency: input.urgency as 1 | 2 | 3 | undefined,
 					effortMinutes: input.effortMinutes,
 					commitmentHorizon: input.commitmentHorizon,
+					project: input.project,
 					personaPresetId: input.personaPresetId ?? null,
 					isDailyStanding: input.isDailyStanding,
 				});
@@ -529,6 +532,7 @@ export function useTaskMutations() {
 					effortMinutes: input.effortMinutes,
 					commitmentHorizon: input.commitmentHorizon,
 					resumeNote: input.resumeNote,
+					project: input.project,
 					isDailyStanding: input.isDailyStanding,
 				});
 			}

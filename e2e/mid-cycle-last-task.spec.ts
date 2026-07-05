@@ -3,12 +3,12 @@
  * Modeled on: e2e/seed.spec.ts
  * Spec role: risk proof
  */
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { completeKickoffReadiness } from "./helpers/kickoff";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
+import { expectFocusPageReady } from "./helpers/task-list-locator";
 import {
 	expectShortBreakPhaseHidden,
 	expectShortBreakPhaseVisible,
@@ -20,9 +20,8 @@ import {
 
 test.describe("Mid-cycle last task (Risk #3)", () => {
 	test.beforeEach(async ({ page }) => {
-		await page.goto("/");
-		await expectTaskListVisible(page);
-		await waitForCycleGetActive(page);
+		await page.goto("/focus");
+		await expectFocusPageReady(page);
 		await resetWorkerSessionViaApi(page);
 		const cleanReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),

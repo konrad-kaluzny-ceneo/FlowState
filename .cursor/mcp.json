@@ -6,7 +6,7 @@
 			"disabled": false,
 			"autoApprove": ["resolve-library-id", "query-docs"]
 		},
-		"vercel": {
+		"vercel-flowstate": {
 			"url": "https://mcp.vercel.com",
 			"autoApprove": [
 				"list_deployments",
@@ -15,9 +15,8 @@
 				"get_runtime_logs"
 			]
 		},
-		"linear": {
-			"command": "npx",
-			"args": ["-y", "mcp-remote", "https://mcp.linear.app/mcp"],
+		"linear-flowstate": {
+			"url": "https://mcp.linear.app/mcp",
 			"autoApprove": [
 				"list_issue_labels",
 				"list_issue_statuses",

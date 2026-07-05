@@ -9,6 +9,18 @@
 	   (zone-level seams keep gap-8). */
 	--spacing-section: 1.5rem;
 
+	/* Radius scale — airier, rounded surfaces per the redesign mockups.
+	   Semantic names so cards/controls/chips share one source of truth. */
+	--radius-card: 1.25rem;
+	--radius-control: 0.75rem;
+	--radius-chip: 0.5rem;
+
+	/* Type scale — larger display/timer for a breathing hierarchy. */
+	--text-display: 2.25rem;
+	--text-display--line-height: 1.1;
+	--text-timer: 4.5rem;
+	--text-timer--line-height: 1;
+
 	/* Shell & surfaces — light-default (cool stone) */
 	--color-shell-top: #faf8f5;
 	--color-shell-bottom: #edeae4;
@@ -31,19 +43,24 @@
 
 	/* Scrim & focus */
 	--color-scrim: rgb(248 246 243 / 0.72);
-	--color-focus-ring: #8a8478;
+	--color-focus-ring: #5d8265;
 	--color-focus: var(--color-focus-ring);
 
-	/* Semantic accents */
-	--color-accent-cta: #736d62;
-	--color-accent-cta-hover: #635e54;
+	/* Semantic accents — primary is the redesign's muted sage green. */
+	--color-accent-cta: #5d8265;
+	--color-accent-cta-hover: #4e6f56;
 	--color-on-cta: #ffffff;
 	--color-accent-break: #3d8f82;
 	--color-accent-success: #3a8f65;
 	--color-accent-suggestion: rgb(212 160 23 / 0.8);
 
+	/* Danger — destructive/interrupt (tokenizes the timer interrupt button) */
+	--color-danger: #dc2626;
+	--color-danger-hover: #ef4444;
+	--color-on-danger: #ffffff;
+
 	/* Segmented controls */
-	--color-segment-active: #736d62;
+	--color-segment-active: #5d8265;
 	--color-segment-inactive: #e8e5df;
 
 	/* Energy identity */
@@ -87,17 +104,21 @@
 	--color-text-section: rgb(245 243 240 / 0.85);
 
 	--color-scrim: rgb(30 36 51 / 0.78);
-	--color-focus-ring: #b0aaa0;
+	--color-focus-ring: #8fb397;
 	--color-focus: var(--color-focus-ring);
 
-	--color-accent-cta: #9a9489;
-	--color-accent-cta-hover: #aaa49a;
+	--color-accent-cta: #638a6c;
+	--color-accent-cta-hover: #72997a;
 	--color-on-cta: #ffffff;
 	--color-accent-break: #4a9a8e;
 	--color-accent-success: #4a9468;
 	--color-accent-suggestion: rgb(212 175 55 / 0.75);
 
-	--color-segment-active: #9a9489;
+	--color-danger: #e5534b;
+	--color-danger-hover: #f06a62;
+	--color-on-danger: #ffffff;
+
+	--color-segment-active: #638a6c;
 	--color-segment-inactive: rgb(255 255 255 / 0.08);
 
 	--color-energy-focused: #818cf8;
@@ -183,6 +204,109 @@
 [data-theme="dark"] #home-shell-main[data-work-focus-shell="true"] {
 	--color-shell-top: #1e1c1a;
 	--color-shell-bottom: #252220;
+}
+
+/* S-45 p6: immersive session backdrop — focus-session-bg fades in full-bleed
+   behind Fokus during active WORK; break-restoration during break. A scrim
+   keeps foreground text/ring legible over the photo. Idle Fokus has neither
+   data attribute set, so the backdrop stays hidden (opacity 0). */
+#home-shell-main {
+	position: relative;
+}
+
+#home-shell-main::before {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	background-position: center;
+	background-size: cover;
+	content: "";
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 500ms ease;
+}
+
+#home-shell-main[data-work-focus-shell="true"]::before {
+	background-image:
+		linear-gradient(to bottom, rgb(244 242 239 / 82%), rgb(244 242 239 / 92%)),
+		url("/images/heroes/focus-session-bg.png");
+	opacity: 1;
+}
+
+[data-theme="dark"] #home-shell-main[data-work-focus-shell="true"]::before {
+	background-image:
+		linear-gradient(to bottom, rgb(30 28 26 / 82%), rgb(30 28 26 / 92%)),
+		url("/images/heroes/focus-session-bg-dark.png");
+}
+
+#home-shell-main[data-break-atmosphere="true"]::before {
+	background-image:
+		linear-gradient(to bottom, rgb(238 246 244 / 78%), rgb(238 246 244 / 90%)),
+		url("/images/heroes/break-restoration.png");
+	opacity: 1;
+}
+
+[data-theme="dark"] #home-shell-main[data-break-atmosphere="true"]::before {
+	background-image:
+		linear-gradient(to bottom, rgb(26 40 48 / 78%), rgb(26 40 48 / 90%)),
+		url("/images/heroes/break-restoration-dark.png");
+}
+
+#home-shell-main > .container {
+	position: relative;
+	z-index: 1;
+}
+
+/* S-45 p12: onboarding hero on auth pages (sign-in / sign-up) */
+.auth-hero-bg {
+	position: relative;
+	background-image:
+		linear-gradient(to bottom, rgb(244 242 239 / 78%), rgb(244 242 239 / 88%)),
+		url("/images/heroes/onboarding-hero.png");
+	background-position: center;
+	background-size: cover;
+}
+
+[data-theme="dark"] .auth-hero-bg {
+	background-image:
+		linear-gradient(to bottom, rgb(30 28 26 / 78%), rgb(30 28 26 / 88%)),
+		url("/images/heroes/onboarding-hero-dark.png");
+}
+
+/* S-45 p12: summary-footer band at bottom of Podsumowanie */
+.summary-footer-hero {
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--radius-lg, 0.75rem);
+	background-image:
+		linear-gradient(to bottom, rgb(244 242 239 / 60%), rgb(244 242 239 / 75%)),
+		url("/images/heroes/summary-footer.png");
+	background-position: center;
+	background-size: cover;
+}
+
+[data-theme="dark"] .summary-footer-hero {
+	background-image:
+		linear-gradient(to bottom, rgb(30 28 26 / 60%), rgb(30 28 26 / 75%)),
+		url("/images/heroes/summary-footer-dark.png");
+}
+
+/* S-45 p12: day-summary-thumb on "Twój dzień" card */
+.day-summary-thumb {
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--radius-lg, 0.75rem);
+	background-image:
+		linear-gradient(to bottom, rgb(244 242 239 / 70%), rgb(244 242 239 / 85%)),
+		url("/images/heroes/day-summary-thumb.png");
+	background-position: center;
+	background-size: cover;
+}
+
+[data-theme="dark"] .day-summary-thumb {
+	background-image:
+		linear-gradient(to bottom, rgb(30 28 26 / 70%), rgb(30 28 26 / 85%)),
+		url("/images/heroes/day-summary-thumb-dark.png");
 }
 
 /* S-43: stateful illustration system — Calm Garden tint tokens per variant.
