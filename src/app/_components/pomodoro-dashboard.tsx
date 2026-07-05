@@ -10,6 +10,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { flushSync } from "react-dom";
 
 import { AddTaskModal } from "~/app/_components/add-task-modal";
 import { BreakAlertsPermissionPrompt } from "~/app/_components/break-alerts-permission-prompt";
@@ -21,6 +22,9 @@ import { useDayStartGateDismissed } from "~/app/_components/day-start-gate";
 import { EndSessionConfirmOverlay } from "~/app/_components/end-session-confirm-overlay";
 import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
 import { FocusEmptyState } from "~/app/_components/focus-empty-state";
+import { FocusGettingStarted } from "~/app/_components/focus-getting-started";
+import { FocusInfoBanner } from "~/app/_components/focus-info-banner";
+import { FocusReadyState } from "~/app/_components/focus-ready-state";
 import { FocusTip } from "~/app/_components/focus-tip";
 import { GuestContextRail } from "~/app/_components/guest-context-rail";
 import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
@@ -149,6 +153,8 @@ export function PomodoroDashboardBody({
 	onSuggestionCoachSeen?: () => void;
 }) {
 	const pomodoro = usePomodoroCycleContext();
+	const pomodoroRef = useRef(pomodoro);
+	pomodoroRef.current = pomodoro;
 	const { outOfTabBreakAlertsEnabled, setOutOfTabBreakAlertsEnabled } =
 		pomodoro;
 	const activeTaskIds = useMemo(
@@ -265,9 +271,9 @@ export function PomodoroDashboardBody({
 				return;
 			}
 
-			await pomodoro.start(durationSec);
+			await pomodoroRef.current.start(durationSec);
 		},
-		[needsPermissionPrompt, pomodoro],
+		[needsPermissionPrompt],
 	);
 
 	const handleCompleteEnergy = useCallback(
@@ -611,13 +617,74 @@ export function PomodoroDashboardBody({
 	const dayMemoryVisible =
 		homeIa.state !== "active_work" && !recapLoading && dayMemoryHasContent;
 
+	const showCalmLanding =
+		homeIa.state === "idle" ||
+		homeIa.state === "returning" ||
+		homeIa.state === "active_work" ||
+		homeIa.state === "steering";
+	const hasFocusableTasks = tasks.some(
+		(task) => task.status === "active" || task.status === "planned",
+	);
+	const hasActiveOrFocusedTask =
+		pomodoro.focusedTaskId != null ||
+		pomodoro.focusedTask != null ||
+		hasFocusableTasks;
+	const showFocusEmptyState =
+		showCalmLanding && !hasActiveOrFocusedTask && !showSessionEnergy;
+	const showFocusReadyState =
+		showCalmLanding &&
+		hasFocusableTasks &&
+		pomodoro.state === "idle" &&
+		!showSessionEnergy;
+	const suppressKickoffForCalmLanding =
+		showFocusEmptyState || showFocusReadyState;
+	const effectiveShowKickoffCard =
+		showKickoffCard && !suppressKickoffForCalmLanding;
+	const dayMemoryOnCalmLanding = dayMemoryVisible && !showCalmLanding;
+
+	const calmKickoffTask = useMemo(() => {
+		if (pomodoro.focusedTask != null) {
+			return pomodoro.focusedTask;
+		}
+		if (
+			!showCalmLanding ||
+			pomodoro.state !== "idle" ||
+			showSessionEnergy ||
+			pomodoro.pendingKickoffSuggestion.status !== "ready"
+		) {
+			return null;
+		}
+		const { taskId, title } = pomodoro.pendingKickoffSuggestion.data;
+		return { id: taskId, title };
+	}, [
+		pomodoro.focusedTask,
+		pomodoro.state,
+		pomodoro.pendingKickoffSuggestion,
+		showCalmLanding,
+		showSessionEnergy,
+	]);
+
+	const showCalmKickoffTimer =
+		showCalmLanding &&
+		pomodoro.state === "idle" &&
+		!showSessionEnergy &&
+		calmKickoffTask != null;
+
+	const todayPlanStats = useMemo(() => {
+		const plan = recap?.todayPlan ?? [];
+		const total = plan.length;
+		const done = plan.filter((row) => row.doneForToday).length;
+		return { total, done };
+	}, [recap?.todayPlan]);
+
 	const nextFocusUiActive =
-		showKickoffCard || showKickoffDurationChips || showSuggestionCard;
+		effectiveShowKickoffCard || showKickoffDurationChips || showSuggestionCard;
 
 	const timerShown =
-		showTimer &&
+		(showTimer || showCalmKickoffTimer) &&
 		(moduleVisible("timer") ||
 			pomodoro.state === "completed" ||
+			showCalmKickoffTimer ||
 			((pomodoro.focusedTaskId != null || pomodoro.focusedTask != null) &&
 				!nextFocusUiActive));
 
@@ -685,19 +752,49 @@ export function PomodoroDashboardBody({
 			/>
 		) : null;
 
+	const handleCalmKickoffStart = useCallback(
+		async (durationSec: number) => {
+			if (
+				pomodoroRef.current.focusedTaskId == null &&
+				calmKickoffTask != null
+			) {
+				flushSync(() => {
+					const cycle = pomodoroRef.current;
+					if (
+						cycle.pendingKickoffSuggestion.status === "ready" &&
+						String(cycle.pendingKickoffSuggestion.data.taskId) ===
+							String(calmKickoffTask.id)
+					) {
+						cycle.acceptKickoffSuggestion();
+					} else {
+						cycle.selectTask(calmKickoffTask.id, calmKickoffTask);
+					}
+				});
+			}
+			await handleStartWithPermission(durationSec);
+		},
+		[calmKickoffTask, handleStartWithPermission],
+	);
+
 	const timerPanel = timerShown ? (
 		<TimerPanel
 			configuredDurationSec={
 				pomodoro.activeCycle?.configuredDurationSec ?? null
 			}
 			cycleKind={pomodoro.cycleKind}
-			focusedTask={pomodoro.focusedTask}
+			focusedTask={
+				showCalmKickoffTimer ? calmKickoffTask : pomodoro.focusedTask
+			}
 			isStarting={false}
 			onInterrupt={pomodoro.interrupt}
 			onOutOfTabBreakAlertsChange={setOutOfTabBreakAlertsEnabled}
 			onPause={pomodoro.pause}
 			onResume={pomodoro.resume}
-			onStart={handleStartWithPermission}
+			onStart={
+				showCalmKickoffTimer
+					? handleCalmKickoffStart
+					: handleStartWithPermission
+			}
 			onWorkDurationManualChange={pomodoro.clearStagedKickoffDuration}
 			outOfTabBreakAlertsEnabled={outOfTabBreakAlertsEnabled}
 			preferredWorkDurationSec={pomodoro.stagedKickoffDurationSec}
@@ -750,7 +847,7 @@ export function PomodoroDashboardBody({
 		) : null;
 
 	const kickoffSuggestionCard =
-		moduleVisible("nextFocus") && showKickoffCard ? (
+		moduleVisible("nextFocus") && effectiveShowKickoffCard ? (
 			pomodoro.pendingKickoffSuggestion.status === "loading" ? (
 				<TaskSuggestionCard status="loading" />
 			) : pomodoro.pendingKickoffSuggestion.status === "ready" ? (
@@ -786,17 +883,6 @@ export function PomodoroDashboardBody({
 			) : null
 		) : null;
 
-	const standingTaskFacts = useMemo(
-		() =>
-			tasks
-				.filter((task) => task.isDailyStanding)
-				.map((task) => ({
-					title: task.title,
-					doneForToday: task.doneForToday === true,
-				})),
-		[tasks],
-	);
-
 	const recapPanel =
 		dataMode === "authenticated" && moduleVisible("recap") ? (
 			<DailyRecapPanel
@@ -817,7 +903,44 @@ export function PomodoroDashboardBody({
 			/>
 		) : null;
 
-	const authenticatedContextRail = (
+	const calmFocusSummary =
+		dayPlan != null ? (
+			<HomeFocusSummary
+				budgetMinutes={dayPlan.budgetMinutes}
+				forceShow={showCalmLanding}
+				hasBudget={dayPlan.hasBudget}
+				isLoading={dayPlan.isLoading}
+				remainingMinutes={dayPlan.remainingMinutes}
+				sessionsCompleted={pomodoro.completedWorkCycles}
+				tasksDone={todayPlanStats.done}
+				tasksTotal={todayPlanStats.total}
+				usedMinutes={dayPlan.usedMinutes}
+			/>
+		) : showCalmLanding ? (
+			<HomeFocusSummary
+				budgetMinutes={null}
+				forceShow
+				hasBudget={false}
+				isLoading={false}
+				remainingMinutes={null}
+				sessionsCompleted={pomodoro.completedWorkCycles}
+				tasksDone={todayPlanStats.done}
+				tasksTotal={todayPlanStats.total}
+				usedMinutes={0}
+			/>
+		) : null;
+
+	const calmWidgetsRail = showCalmLanding ? (
+		<div className="flex w-full flex-col gap-4">
+			{calmFocusSummary}
+			<FocusTip />
+			<QuickActions onAddTask={() => setShowAddModal(true)} />
+		</div>
+	) : null;
+
+	const authenticatedContextRail = showCalmLanding ? (
+		calmWidgetsRail
+	) : (
 		<>
 			<div className="w-full" data-testid="home-rail-illustration">
 				<HomeHeroSprig
@@ -833,7 +956,8 @@ export function PomodoroDashboardBody({
 					isLoading={dayPlan.isLoading}
 					remainingMinutes={dayPlan.remainingMinutes}
 					sessionsCompleted={pomodoro.completedWorkCycles}
-					standingTasks={standingTaskFacts}
+					tasksDone={todayPlanStats.done}
+					tasksTotal={todayPlanStats.total}
 					usedMinutes={dayPlan.usedMinutes}
 				/>
 			) : null}
@@ -843,35 +967,49 @@ export function PomodoroDashboardBody({
 	const contextRailContent =
 		dataMode === "authenticated" ? (
 			authenticatedContextRail
+		) : showCalmLanding ? (
+			calmWidgetsRail
 		) : (
 			<GuestContextRail />
 		);
 
-	// Calm Fokus extras (S-45 p6): tip + quick actions accompany the ring
-	// timer during idle/active_work only — steering/break/returning stay
-	// focused on their own beat.
-	const showCalmExtras =
-		homeIa.state === "idle" || homeIa.state === "active_work";
-	const focusTipElement = showCalmExtras ? <FocusTip /> : null;
-	const quickActionsElement = showCalmExtras ? (
-		<QuickActions onAddTask={() => setShowAddModal(true)} />
-	) : null;
-
-	// Phase 3: Focus empty state — shown when no focused/active task and idle
-	const hasActiveOrFocusedTask =
-		pomodoro.focusedTaskId != null || tasks.some((t) => t.status === "active");
-	const showFocusEmptyState =
-		showCalmExtras && !hasActiveOrFocusedTask && !showSessionEnergy;
 	const focusEmptyStateElement = showFocusEmptyState ? (
 		<FocusEmptyState onAddTask={() => setShowAddModal(true)} />
 	) : null;
 
-	// Empty regions render nothing so they contribute no gap. Each boolean
+	const focusReadyStateElement = showFocusReadyState ? (
+		<FocusReadyState
+			onAddTask={() => setShowAddModal(true)}
+			onSelectTask={(task) => {
+				pomodoro.selectTask(task.id, {
+					id: task.id,
+					title: task.title,
+				});
+			}}
+			tasks={tasks}
+		/>
+	) : null;
+
+	const calmLandingHero =
+		focusEmptyStateElement != null ? (
+			<>
+				{focusEmptyStateElement}
+				<FocusInfoBanner variant="empty" />
+				<FocusGettingStarted onAddTask={() => setShowAddModal(true)} />
+			</>
+		) : focusReadyStateElement != null ? (
+			<>
+				{focusReadyStateElement}
+				<FocusInfoBanner variant="ready" />
+			</>
+		) : null;
+
+	// Empty regions render nothing so they contribute no gap.
 	// mirrors its region's child gates verbatim — keep them in sync when a
 	// child is added or its condition changes.
 	const primaryRegionHasContent =
-		dayMemoryVisible ||
-		focusEmptyStateElement != null ||
+		dayMemoryOnCalmLanding ||
+		calmLandingHero != null ||
 		(moduleInZone("steering", "primary") && steeringCards != null) ||
 		(moduleInZone("nextFocus", "primary") &&
 			(kickoffDurationChips != null ||
@@ -884,13 +1022,11 @@ export function PomodoroDashboardBody({
 		timerZone === "secondary" ||
 		(moduleInZone("steering", "secondary") && steeringCards != null) ||
 		pomodoro.overrideAcknowledgement != null ||
-		dayPlan != null ||
-		recapPanel != null ||
-		focusTipElement != null ||
-		quickActionsElement != null;
+		(!showCalmLanding && dayPlan != null) ||
+		(!showCalmLanding && recapPanel != null);
 
 	return (
-		<div className="flex w-full max-w-lg flex-col items-center gap-8 lg:max-w-7xl">
+		<div className="flex w-full flex-col gap-6">
 			{pomodoro.pendingWedgeRecovery != null ? (
 				<WedgeSyncRecovery
 					isRetrying={pomodoro.isWedgeSyncRetrying || pomodoro.isConfirming}
@@ -920,13 +1056,13 @@ export function PomodoroDashboardBody({
 			)}
 
 			<div
-				className="flex w-full flex-col items-center gap-8 lg:grid lg:w-full lg:grid-cols-[minmax(0,62fr)_minmax(0,38fr)] lg:items-start lg:gap-8"
+				className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:items-start lg:gap-8"
 				data-testid="home-workbench-grid"
 			>
-				<div className="flex w-full flex-col items-center gap-section">
+				<div className="order-1 flex flex-col gap-section">
 					{primaryRegionHasContent && (
 						<HomeLayoutRegion testId="home-primary-region">
-							{dayMemoryVisible && (
+							{dayMemoryOnCalmLanding && (
 								<DayMemoryLine
 									continueTaskId={pomodoro.continueTaskId}
 									isLoading={recapLoading}
@@ -934,7 +1070,7 @@ export function PomodoroDashboardBody({
 									tasks={tasks}
 								/>
 							)}
-							{focusEmptyStateElement}
+							{calmLandingHero}
 							{moduleInZone("steering", "primary") && steeringCards}
 							{moduleInZone("nextFocus", "primary") && kickoffDurationChips}
 							{timerZone === "primary" && timerPanel}
@@ -958,21 +1094,24 @@ export function PomodoroDashboardBody({
 									{pomodoro.overrideAcknowledgement}
 								</p>
 							)}
-							{dayPlan != null && (
+							{!showCalmLanding && dayPlan != null && (
 								<div className="w-full lg:hidden">{focusBudgetPrompt}</div>
 							)}
-							{recapPanel != null && (
+							{!showCalmLanding && recapPanel != null && (
 								<div className="w-full lg:hidden">{recapPanel}</div>
 							)}
-							{focusTipElement}
-							{quickActionsElement}
 						</HomeLayoutRegion>
 					)}
 				</div>
 
-				<HomeLayoutRegion className="hidden lg:flex" testId="home-context-rail">
-					{contextRailContent}
-				</HomeLayoutRegion>
+				{(showCalmLanding || contextRailContent != null) && (
+					<HomeLayoutRegion
+						className="order-2 max-lg:order-3 lg:max-w-none"
+						testId="home-context-rail"
+					>
+						{contextRailContent}
+					</HomeLayoutRegion>
+				)}
 			</div>
 
 			{pomodoro.midCyclePendingTask != null && (

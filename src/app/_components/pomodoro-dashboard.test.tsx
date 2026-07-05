@@ -119,23 +119,23 @@ vi.mock("~/lib/break-out-of-tab-alert/storage", async (importOriginal) => {
 	};
 });
 
-const tasks: DomainTask[] = [
-	{
-		id: "task-1",
-		title: "Focus task",
-		status: "active",
-		userId: "user-1",
-		createdAt: new Date(),
-		updatedAt: null,
-		workType: "OPERATIONAL",
-		weight: 2,
-		...defaultEisenhowerFields(2),
-		sortOrder: 0,
-		resumeNote: null,
-		project: null,
-		archivedAt: null,
-	},
-];
+const taskFixture: DomainTask = {
+	id: "task-1",
+	title: "Focus task",
+	status: "active",
+	userId: "user-1",
+	createdAt: new Date(),
+	updatedAt: null,
+	workType: "OPERATIONAL",
+	weight: 2,
+	...defaultEisenhowerFields(2),
+	sortOrder: 0,
+	resumeNote: null,
+	project: null,
+	archivedAt: null,
+};
+
+const tasks: DomainTask[] = [taskFixture];
 
 function makePomodoroMock(
 	overrides: Record<string, unknown> = {},
@@ -365,7 +365,7 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.getByTestId("wind-down-overlay")).toBeTruthy();
 	});
 
-	it("shows kickoff suggestion card when suggestion gate is enabled", () => {
+	it("shows focus-ready and kickoff timer together when suggestion is ready", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
 				state: "idle",
@@ -393,7 +393,10 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 			/>,
 		);
 
-		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
+		expect(screen.getByTestId("focus-ready-state")).toBeTruthy();
+		expect(screen.getByTestId("timer-panel-idle")).toBeTruthy();
+		expect(screen.getByText("Suggested task")).toBeTruthy();
+		expect(screen.queryByTestId("suggestion-accept-btn")).toBeNull();
 	});
 
 	it("shows in-flow summary on idle break when narrative line is present", () => {
@@ -466,24 +469,15 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.queryByTestId("session-inflow-summary")).toBeNull();
 	});
 
-	it("shows in-flow summary alongside kickoff suggestion card", () => {
+	it("shows in-flow summary with focus-ready and kickoff timer mid-session", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
 				hasActiveSession: true,
 				state: "idle",
-				focusedTaskId: null,
+				focusedTaskId: "task-1",
+				focusedTask: { id: "task-1", title: "Focus task" },
 				inFlowSummaryLine: "2 cycles · feeling steady",
-				pendingKickoffSuggestion: {
-					status: "ready",
-					data: {
-						taskId: "task-1",
-						title: "Suggested task",
-						workType: "OPERATIONAL",
-						weight: 2,
-						rationale: "Best next task",
-						breakdown: null,
-					},
-				},
+				pendingKickoffSuggestion: { status: "empty" },
 			}),
 		);
 
@@ -496,7 +490,9 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 			/>,
 		);
 
-		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
+		expect(screen.getByTestId("focus-ready-state")).toBeTruthy();
+		expect(screen.getByTestId("timer-panel-idle")).toBeTruthy();
+		expect(screen.getByTestId("session-inflow-summary")).toBeTruthy();
 		expect(screen.getByTestId("session-inflow-summary").textContent).toBe(
 			"2 cycles · feeling steady",
 		);
@@ -963,6 +959,8 @@ describe("PomodoroDashboardBody wedge sync recovery", () => {
 
 const FILLED_PRIMARY_CTA_IDS = [
 	"suggestion-accept-btn",
+	"focus-ready-choose-task",
+	"focus-empty-add-task",
 	"timer-start-cycle",
 	"timer-pause",
 	"timer-resume",
@@ -1024,12 +1022,12 @@ describe("PomodoroDashboardBody home IA layout", () => {
 		vi.clearAllMocks();
 	});
 
-	it("idle kickoff shows exactly one filled primary CTA and demotes inventory controls", () => {
+	it("idle calm landing shows exactly one filled primary CTA on focus-ready", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
 				state: "idle",
 				focusedTaskId: null,
-				pendingKickoffSuggestion: kickoffSuggestionReady,
+				pendingKickoffSuggestion: { status: "idle" },
 			}),
 		);
 
@@ -1043,12 +1041,12 @@ describe("PomodoroDashboardBody home IA layout", () => {
 		);
 
 		expect(countEnabledPrimaryCtas()).toBe(1);
-		expectInsideRegion("home-primary-region", "suggestion-accept-btn");
+		expectInsideRegion("home-primary-region", "focus-ready-choose-task");
 		expectOutsidePrimaryRegion("task-archive-entry");
 		expect(screen.queryByTestId("task-list-stub")).toBeNull();
 	});
 
-	it("returning state shows one filled primary CTA with inventory outside primary", () => {
+	it("returning state shows focus-ready with kickoff timer for ready suggestion", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
 				state: "idle",
@@ -1068,19 +1066,76 @@ describe("PomodoroDashboardBody home IA layout", () => {
 			/>,
 		);
 
-		expect(countEnabledPrimaryCtas()).toBe(1);
-		expectInsideRegion("home-primary-region", "suggestion-accept-btn");
+		expect(screen.getByTestId("focus-ready-state")).toBeTruthy();
+		expect(screen.getByTestId("timer-panel-idle")).toBeTruthy();
+		expect(screen.queryByTestId("suggestion-accept-btn")).toBeNull();
 		expectOutsidePrimaryRegion("task-archive-entry");
 	});
 
-	it("idle focused task shows timer start as the sole primary CTA", () => {
+	it("returning state with empty kickoff shows focus-ready without suggestion card", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				hasActiveSession: true,
+				state: "idle",
+				cycleKind: null,
+				focusedTaskId: null,
+				continueTaskId: "task-1",
+				inFlowSummaryLine: "2 cycles · feeling steady",
+				pendingKickoffSuggestion: { status: "empty" },
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("focus-ready-state")).toBeTruthy();
+		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
+		expect(screen.queryByTestId("timer-panel-idle")).toBeNull();
+		expect(screen.getByTestId("session-inflow-summary")).toBeTruthy();
+	});
+
+	it("mid-session idle with focused task shows focus-ready and kickoff timer", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				hasActiveSession: true,
+				state: "idle",
+				focusedTaskId: "task-1",
+				focusedTask: { id: "task-1", title: "Dokończyć projekt" },
+				pendingKickoffSuggestion: { status: "empty" },
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("timer-panel-idle")).toBeTruthy();
+		expect(screen.getByText("Dokończyć projekt")).toBeTruthy();
+		expect(screen.getByTestId("timer-start-cycle")).toBeTruthy();
+		expect(screen.getByTestId("focus-ready-state")).toBeTruthy();
+		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
+	});
+
+	it("idle focused task shows timer start alongside focus-ready", () => {
 		renderBody({
 			state: "idle",
 			focusedTask: { id: 1, title: "Focus task" },
 		});
 
-		expect(countEnabledPrimaryCtas()).toBe(1);
+		expect(countEnabledPrimaryCtas()).toBe(2);
 		expectInsideRegion("home-primary-region", "timer-start-cycle");
+		expectInsideRegion("home-primary-region", "focus-ready-choose-task");
 		expectOutsidePrimaryRegion("task-archive-entry");
 	});
 
@@ -1197,11 +1252,14 @@ describe("PomodoroDashboardBody day-memory line", () => {
 		vi.clearAllMocks();
 	});
 
-	it("shows day-memory line inside home-primary-region when recap has content", () => {
+	it("shows day-memory line during break when recap has content", () => {
 		useDailyRecapMock.mockReturnValue(nonEmptyDailyRecap);
 
 		renderBody({
-			state: "idle",
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "SHORT_BREAK",
+			activeCycle: { id: 42 },
 			focusedTask: { id: 1, title: "Focus task" },
 		});
 
@@ -1233,7 +1291,7 @@ describe("PomodoroDashboardBody day-memory line", () => {
 		expect(screen.queryByTestId("day-memory-line")).toBeNull();
 	});
 
-	it("shows day-memory line again once active work ends and idle state returns", () => {
+	it("keeps day-memory line hidden on calm landing idle even after work ends", () => {
 		useDailyRecapMock.mockReturnValue(nonEmptyDailyRecap);
 
 		const { rerender } = render(
@@ -1264,7 +1322,7 @@ describe("PomodoroDashboardBody day-memory line", () => {
 			<PomodoroDashboardBody refreshTasks={async () => {}} tasks={tasks} />,
 		);
 
-		expectInsideRegion("home-primary-region", "day-memory-line");
+		expect(screen.queryByTestId("day-memory-line")).toBeNull();
 	});
 });
 
@@ -1280,11 +1338,11 @@ describe("PomodoroDashboardBody desktop workbench frame", () => {
 		});
 
 		const root = container.firstElementChild;
-		expect(root?.className).toContain("max-w-lg");
-		expect(root?.className).toContain("lg:max-w-7xl");
+		expect(root?.className).toContain("flex");
+		expect(root?.className).toContain("w-full");
 	});
 
-	it("applies desktop workbench grid with 62/38 decision-rail split", () => {
+	it("applies desktop workbench grid with main column and widget rail", () => {
 		renderBody({
 			state: "idle",
 			focusedTask: { id: 1, title: "Focus task" },
@@ -1293,7 +1351,7 @@ describe("PomodoroDashboardBody desktop workbench frame", () => {
 		const grid = screen.getByTestId("home-workbench-grid");
 		expect(grid.className).toContain("lg:grid");
 		expect(grid.className).toContain(
-			"lg:grid-cols-[minmax(0,62fr)_minmax(0,38fr)]",
+			"lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]",
 		);
 	});
 
@@ -1304,8 +1362,7 @@ describe("PomodoroDashboardBody desktop workbench frame", () => {
 		});
 
 		const rail = screen.getByTestId("home-context-rail");
-		expect(rail.className).toContain("hidden");
-		expect(rail.className).toContain("lg:flex");
+		expect(rail.className).toContain("order-2");
 	});
 
 	it("does not render the retired inventory zone placeholder", () => {
@@ -1323,16 +1380,12 @@ describe("PomodoroDashboardBody desktop workbench frame", () => {
 			focusedTask: { id: 1, title: "Focus task" },
 		});
 
-		for (const testId of [
-			"home-primary-region",
-			"home-secondary-region",
-			"home-context-rail",
-		]) {
-			const region = screen.getByTestId(testId);
-			expect(region.className).toContain("max-w-lg");
-			expect(region.className).toContain("lg:max-w-none");
-			expect(region.className).toContain("gap-section");
-		}
+		const primary = screen.getByTestId("home-primary-region");
+		expect(primary.className).toContain("w-full");
+		expect(primary.className).toContain("gap-section");
+
+		const rail = screen.getByTestId("home-context-rail");
+		expect(rail.className).toContain("w-full");
 	});
 
 	it("never renders an empty layout region", () => {
@@ -1358,13 +1411,13 @@ describe("PomodoroDashboardBody desktop workbench frame", () => {
 	});
 });
 
-const AUTH_RAIL_BLOCK_IDS = [
-	"home-rail-illustration",
-	"daily-recap-panel",
+const CALM_RAIL_BLOCK_IDS = [
 	"home-focus-summary",
+	"focus-tip",
+	"quick-actions",
 ] as const;
 
-const GUEST_RAIL_BLOCK_IDS = [
+const _GUEST_RAIL_BLOCK_IDS = [
 	"guest-rail-value-prop",
 	"guest-rail-activation-hint",
 	"guest-rail-guidance",
@@ -1412,30 +1465,7 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 			.querySelector("[data-illustration-variant]");
 	}
 
-	it("renders the idle variant in the rail slot at rest", () => {
-		renderAuthenticatedBody({ state: "idle" });
-
-		expect(
-			railVariantElement()?.getAttribute("data-illustration-variant"),
-		).toBe("idle");
-	});
-
-	it("renders the work variant with energy tint during a running work cycle", () => {
-		renderAuthenticatedBody({
-			hasActiveSession: true,
-			state: "running",
-			cycleKind: "WORK",
-			activeCycle: { id: 42 },
-			focusedTask: { id: 1, title: "Focus task" },
-			narrativeLatestEnergy: "FOCUSED",
-		});
-
-		const element = railVariantElement();
-		expect(element?.getAttribute("data-illustration-variant")).toBe("work");
-		expect(element?.getAttribute("data-illustration-energy")).toBe("FOCUSED");
-	});
-
-	it("renders the break variant without energy tint during a running break", () => {
+	it("renders the break variant in the rail slot during a running break", () => {
 		renderAuthenticatedBody({
 			hasActiveSession: true,
 			state: "running",
@@ -1449,7 +1479,13 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 		expect(element?.getAttribute("data-illustration-energy")).toBeNull();
 	});
 
-	it("renders the energy_choice variant while inline session steering is open", () => {
+	it("hides rail illustration during calm landing idle", () => {
+		renderAuthenticatedBody({ state: "idle" });
+
+		expect(screen.queryByTestId("home-rail-illustration")).toBeNull();
+	});
+
+	it("shows session energy steering instead of rail illustration during calm landing", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
 				state: "idle",
@@ -1467,12 +1503,11 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 			/>,
 		);
 
-		expect(
-			railVariantElement()?.getAttribute("data-illustration-variant"),
-		).toBe("energy_choice");
+		expect(screen.getByTestId("session-energy-card")).toBeTruthy();
+		expect(screen.queryByTestId("home-rail-illustration")).toBeNull();
 	});
 
-	it("shows the closure variant after the session closure gate dismisses, then clears on the next state change", () => {
+	it("dismisses session closure overlay and keeps calm landing without rail illustration", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
 				pendingClosureLine: "Session complete — 1 cycle. Take a breath.",
@@ -1501,30 +1536,7 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 		);
 
 		expect(screen.queryByTestId("session-closure-overlay")).toBeNull();
-		expect(
-			railVariantElement()?.getAttribute("data-illustration-variant"),
-		).toBe("closure");
-
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				hasActiveSession: true,
-				state: "running",
-				cycleKind: "WORK",
-				activeCycle: { id: 42 },
-				focusedTask: { id: 1, title: "Focus task" },
-			}),
-		);
-		rerender(
-			<PomodoroDashboardBody
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(
-			railVariantElement()?.getAttribute("data-illustration-variant"),
-		).toBe("work");
+		expect(screen.queryByTestId("home-rail-illustration")).toBeNull();
 	});
 
 	it("does not show the closure variant when the gate is suppressed without dismissal", () => {
@@ -1565,9 +1577,8 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 		);
 
 		expect(screen.queryByTestId("session-closure-overlay")).toBeNull();
-		expect(
-			railVariantElement()?.getAttribute("data-illustration-variant"),
-		).toBe("work");
+		expect(screen.queryByTestId("home-rail-illustration")).toBeNull();
+		expect(screen.getByTestId("timer-pause")).toBeTruthy();
 	});
 });
 
@@ -1576,7 +1587,7 @@ describe("PomodoroDashboardBody context rail content", () => {
 		vi.clearAllMocks();
 	});
 
-	it("authenticated rail has at most three accepted blocks with illustration, recap, and focus summary when budget is set", () => {
+	it("authenticated calm rail shows day summary, tip, and quick actions during idle landing", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
 				state: "idle",
@@ -1594,33 +1605,30 @@ describe("PomodoroDashboardBody context rail content", () => {
 			/>,
 		);
 
-		const blocks = getAcceptedRailBlocks(AUTH_RAIL_BLOCK_IDS);
-		expect(blocks.length).toBeLessThanOrEqual(3);
-		expect(blocks).toContain("home-rail-illustration");
-		expect(blocks).toContain("daily-recap-panel");
+		const blocks = getAcceptedRailBlocks(CALM_RAIL_BLOCK_IDS);
+		expect(blocks).toHaveLength(3);
 		expect(blocks).toContain("home-focus-summary");
+		expect(blocks).toContain("focus-tip");
+		expect(blocks).toContain("quick-actions");
 		expect(screen.queryByTestId("focus-budget-prompt")).toBeNull();
-		expect(countEnabledPrimaryCtas()).toBeLessThanOrEqual(1);
 	});
 
-	it("guest rail has at most three accepted blocks with sign-in value, activation hint, and calm guidance", () => {
+	it("guest calm rail shows tip and quick actions during idle landing", () => {
 		renderBody({
 			state: "idle",
 			focusedTask: { id: 1, title: "Focus task" },
 		});
 
 		const rail = screen.getByTestId("home-context-rail");
-		const blocks = getAcceptedRailBlocks(GUEST_RAIL_BLOCK_IDS);
-		expect(blocks.length).toBeLessThanOrEqual(3);
-		expect(blocks).toContain("guest-rail-value-prop");
-		expect(blocks).toContain("guest-rail-activation-hint");
-		expect(blocks).toContain("guest-rail-guidance");
+		const blocks = getAcceptedRailBlocks(CALM_RAIL_BLOCK_IDS);
+		expect(blocks.length).toBeGreaterThanOrEqual(2);
+		expect(blocks).toContain("focus-tip");
+		expect(blocks).toContain("quick-actions");
 		expect(within(rail).queryByTestId("daily-recap-panel")).toBeNull();
 		expect(within(rail).queryByTestId("focus-budget-prompt")).toBeNull();
-		expect(within(rail).queryByTestId("home-focus-summary")).toBeNull();
 	});
 
-	it("guest rail excludes persisted-data panels from the document tree", () => {
+	it("guest calm landing excludes persisted-data panels from the document tree", () => {
 		renderBody({
 			state: "idle",
 			focusedTask: { id: 1, title: "Focus task" },
@@ -1628,7 +1636,7 @@ describe("PomodoroDashboardBody context rail content", () => {
 
 		expect(screen.queryByTestId("daily-recap-panel")).toBeNull();
 		expect(screen.queryByTestId("focus-budget-prompt")).toBeNull();
-		expect(screen.queryByTestId("home-focus-summary")).toBeNull();
+		expect(screen.getByTestId("focus-tip")).toBeTruthy();
 	});
 
 	it("rail content does not add filled primary CTAs to the decision region", () => {
@@ -1636,7 +1644,7 @@ describe("PomodoroDashboardBody context rail content", () => {
 			makePomodoroMock({
 				state: "idle",
 				focusedTaskId: null,
-				pendingKickoffSuggestion: kickoffSuggestionReady,
+				pendingKickoffSuggestion: { status: "idle" },
 			}),
 		);
 
@@ -1650,11 +1658,11 @@ describe("PomodoroDashboardBody context rail content", () => {
 			/>,
 		);
 
-		expect(getAcceptedRailBlocks(AUTH_RAIL_BLOCK_IDS).length).toBeGreaterThan(
+		expect(getAcceptedRailBlocks(CALM_RAIL_BLOCK_IDS).length).toBeGreaterThan(
 			0,
 		);
 		expect(countEnabledPrimaryCtas()).toBe(1);
-		expectInsideRegion("home-primary-region", "suggestion-accept-btn");
+		expectInsideRegion("home-primary-region", "focus-ready-choose-task");
 	});
 });
 
@@ -1690,6 +1698,36 @@ describe("PomodoroDashboardBody focus empty state and quick actions", () => {
 		expect(screen.getByTestId("focus-empty-state")).toBeTruthy();
 		expect(screen.getByTestId("quick-actions")).toBeTruthy();
 		expect(screen.queryByTestId("quick-action-view-tasks")).toBeNull();
+	});
+
+	it("shows focus-ready state when only planned tasks exist", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTaskId: null,
+				focusedTask: null,
+				showSessionEnergy: false,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				tasks={[
+					{
+						...taskFixture,
+						id: "planned-1",
+						title: "Planned task",
+						status: "planned",
+					},
+				]}
+			/>,
+		);
+
+		expect(screen.getByTestId("focus-ready-state")).toBeTruthy();
+		expect(screen.queryByTestId("focus-empty-state")).toBeNull();
+		expect(screen.getByTestId("focus-ready-task-planned-1")).toBeTruthy();
 	});
 
 	it("hides focus empty state when a task is focused", () => {

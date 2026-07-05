@@ -76,6 +76,14 @@ vi.mock("~/hooks/use-online-status", () => ({
 	useOnlineStatus: () => onlineState.isOnline,
 }));
 
+vi.mock("~/app/_components/focus-page-header", () => ({
+	FocusPageHeader: () => <div data-testid="focus-page-header" />,
+}));
+
+vi.mock("~/app/_components/focus-page-footer", () => ({
+	FocusPageFooter: () => <div data-testid="focus-page-footer" />,
+}));
+
 describe("HomeShell", () => {
 	beforeEach(() => {
 		onlineState.isOnline = true;

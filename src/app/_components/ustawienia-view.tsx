@@ -1,5 +1,18 @@
 "use client";
 
+import {
+	Bell,
+	Check,
+	type LucideIcon,
+	Monitor,
+	Moon,
+	Palette,
+	Plug,
+	Settings2,
+	Sun,
+	Timer,
+	Zap,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
@@ -8,6 +21,10 @@ import { DurationPicker } from "~/app/_components/duration-picker";
 import { EnergySelector } from "~/app/_components/energy-selector";
 import { LanguageSwitch } from "~/app/_components/language-switch";
 import { OutOfTabBreakAlertsControl } from "~/app/_components/out-of-tab-break-alerts-control";
+import {
+	SettingsPanel,
+	SettingsRow,
+} from "~/app/_components/settings-primitives";
 import { ComingSoonPreview } from "~/app/_components/ui/coming-soon-preview";
 import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preference";
 import { useDayEnergy } from "~/hooks/use-day-energy";
@@ -64,6 +81,7 @@ type TabDef = {
 		| "tabAppearanceDesc"
 		| "tabEnergyDesc"
 		| "tabIntegrationsDesc";
+	icon: LucideIcon;
 	authOnly?: boolean;
 };
 
@@ -72,32 +90,38 @@ const TAB_DEFS: TabDef[] = [
 		id: "general",
 		labelKey: "sectionGeneral",
 		descKey: "tabGeneralDesc",
+		icon: Settings2,
 	},
 	{
 		id: "focus",
 		labelKey: "sectionFocusSessions",
 		descKey: "tabFocusDesc",
+		icon: Timer,
 	},
 	{
 		id: "breaks",
 		labelKey: "sectionBreaksNotifications",
 		descKey: "tabBreaksDesc",
+		icon: Bell,
 	},
 	{
 		id: "appearance",
 		labelKey: "sectionAppearance",
 		descKey: "tabAppearanceDesc",
+		icon: Palette,
 	},
 	{
 		id: "energy",
 		labelKey: "sectionDayEnergy",
 		descKey: "tabEnergyDesc",
+		icon: Zap,
 		authOnly: true,
 	},
 	{
 		id: "integrations",
 		labelKey: "sectionIntegrations",
 		descKey: "tabIntegrationsDesc",
+		icon: Plug,
 	},
 ];
 
@@ -170,28 +194,33 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 
 	return (
 		<div
-			className="mx-auto w-full max-w-5xl px-4 py-8"
+			className="mx-auto w-full max-w-5xl px-4 py-8 lg:px-8 lg:py-10"
 			data-testid="ustawienia-view"
 		>
-			<header className="mb-8">
-				<h1 className="font-semibold text-2xl text-primary">{t("title")}</h1>
-				<p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
+			<header className="mb-8 lg:mb-10">
+				<h1 className="font-semibold text-2xl text-primary text-wrap-balance lg:text-3xl">
+					{t("title")}
+				</h1>
+				<p className="mt-1.5 text-sm text-text-secondary lg:text-base">
+					{t("subtitle")}
+				</p>
 			</header>
 
-			<div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
+			<div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
 				<nav
 					aria-label={t("navAriaLabel")}
-					className="flex shrink-0 flex-row gap-1 overflow-x-auto lg:w-56 lg:flex-col lg:gap-0.5"
+					className="flex shrink-0 flex-row gap-1 overflow-x-auto pb-1 lg:w-60 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0"
 					data-testid="settings-nav"
 				>
 					{visibleTabs.map((tab) => {
 						const isActive = tab.id === resolvedTab;
+						const Icon = tab.icon;
 						return (
 							<button
 								aria-current={isActive ? "page" : undefined}
-								className={`rounded-card px-4 py-3 text-left transition ${
+								className={`flex min-w-[9.5rem] shrink-0 items-start gap-3 rounded-card px-4 py-3 text-left transition-colors duration-150 lg:w-full lg:min-w-0 ${
 									isActive
-										? "bg-segment-active/15 shadow-sm"
+										? "bg-segment-active/12 shadow-sm"
 										: "hover:bg-surface-card-muted"
 								}`}
 								data-testid={`settings-tab-${tab.id}`}
@@ -199,15 +228,24 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 								onClick={() => setActiveTab(tab.id)}
 								type="button"
 							>
-								<span
-									className={`block font-semibold text-sm ${
-										isActive ? "text-primary" : "text-text-secondary"
+								<Icon
+									aria-hidden="true"
+									className={`mt-0.5 h-4 w-4 shrink-0 ${
+										isActive ? "text-accent-cta" : "text-text-dimmed"
 									}`}
-								>
-									{t(tab.labelKey)}
-								</span>
-								<span className="mt-0.5 block text-text-dimmed text-xs">
-									{t(tab.descKey)}
+									strokeWidth={1.75}
+								/>
+								<span className="min-w-0">
+									<span
+										className={`block font-semibold text-sm ${
+											isActive ? "text-primary" : "text-text-secondary"
+										}`}
+									>
+										{t(tab.labelKey)}
+									</span>
+									<span className="mt-0.5 block text-text-dimmed text-xs leading-snug">
+										{t(tab.descKey)}
+									</span>
 								</span>
 							</button>
 						);
@@ -219,39 +257,30 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 					data-testid={`settings-panel-${resolvedTab}`}
 				>
 					{resolvedTab === "general" && (
-						<section
-							aria-labelledby="settings-general-heading"
-							className="space-y-4 rounded-card border border-card-border bg-surface-card p-6 shadow-sm"
+						<SettingsPanel
+							testId="settings-general-section"
+							title={t("sectionGeneral")}
+							titleId="settings-general-heading"
 						>
-							<h2
-								className="font-semibold text-lg text-primary"
-								id="settings-general-heading"
-							>
-								{t("sectionGeneral")}
-							</h2>
-
-							<div className="flex items-center justify-between">
-								<span className="text-sm text-text-secondary">
-									{t("languageLabel")}
-								</span>
+							<SettingsRow label={t("languageLabel")}>
 								<LanguageSwitch
 									disabled={langPending}
 									locale={locale}
 									onChange={setLocale}
+									variant="settings"
 								/>
-							</div>
+							</SettingsRow>
 
 							{isAuthenticated && (
-								<div className="flex items-center justify-between">
-									<span className="text-sm text-text-secondary">
-										{t("userNameLabel")}
-									</span>
-									<div className="flex items-center gap-3">
+								<SettingsRow label={t("userNameLabel")}>
+									<div className="flex flex-wrap items-center justify-end gap-3">
 										{userName != null && (
-											<span className="text-primary text-sm">{userName}</span>
+											<span className="font-medium text-primary text-sm">
+												{userName}
+											</span>
 										)}
 										<button
-											className="rounded-control border border-border-subtle bg-surface-card px-3 py-1.5 font-medium text-primary text-sm transition-colors hover:bg-surface-card-muted disabled:opacity-50"
+											className="rounded-control border border-border-subtle bg-surface-card px-4 py-2 font-medium text-primary text-sm transition-colors hover:bg-surface-card-muted disabled:opacity-50"
 											data-testid="settings-sign-out"
 											disabled={isSigningOut}
 											onClick={handleSignOut}
@@ -260,32 +289,23 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 											{isSigningOut ? t("signingOut") : t("signOut")}
 										</button>
 									</div>
-								</div>
+								</SettingsRow>
 							)}
 							{signOutError && (
-								<p className="text-red-400 text-sm" role="alert">
+								<p className="pt-2 text-red-400 text-sm" role="alert">
 									{signOutError}
 								</p>
 							)}
-						</section>
+						</SettingsPanel>
 					)}
 
 					{resolvedTab === "focus" && (
-						<section
-							aria-labelledby="settings-focus-heading"
-							className="space-y-4 rounded-card border border-card-border bg-surface-card p-6 shadow-sm"
+						<SettingsPanel
+							testId="settings-focus-section"
+							title={t("sectionFocusSessions")}
+							titleId="settings-focus-heading"
 						>
-							<h2
-								className="font-semibold text-lg text-primary"
-								id="settings-focus-heading"
-							>
-								{t("sectionFocusSessions")}
-							</h2>
-
-							<div className="space-y-2">
-								<p className="text-sm text-text-secondary">
-									{t("workDurationLabel")}
-								</p>
+							<SettingsRow label={t("workDurationLabel")}>
 								<DurationPicker
 									boundsLabel={tTimer("boundsWork")}
 									maxSec={workMaxSec}
@@ -297,13 +317,11 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 									presets={getWorkDurationPresets()}
 									testIdPrefix="settings-work-duration"
 									valueSec={workDurationSec}
+									variant="settings"
 								/>
-							</div>
+							</SettingsRow>
 
-							<div className="space-y-2">
-								<p className="text-sm text-text-secondary">
-									{t("shortBreakLabel")}
-								</p>
+							<SettingsRow label={t("shortBreakLabel")}>
 								<DurationPicker
 									boundsLabel={tTimer("boundsBreak")}
 									maxSec={breakMaxSec}
@@ -315,13 +333,11 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 									presets={getShortBreakPresets()}
 									testIdPrefix="settings-short-break-duration"
 									valueSec={shortBreakSec}
+									variant="settings"
 								/>
-							</div>
+							</SettingsRow>
 
-							<div className="space-y-2">
-								<p className="text-sm text-text-secondary">
-									{t("longBreakLabel")}
-								</p>
+							<SettingsRow label={t("longBreakLabel")}>
 								<DurationPicker
 									boundsLabel={tTimer("boundsBreak")}
 									maxSec={breakMaxSec}
@@ -333,84 +349,67 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 									presets={getLongBreakPresets()}
 									testIdPrefix="settings-long-break-duration"
 									valueSec={longBreakSec}
+									variant="settings"
 								/>
-							</div>
-						</section>
+							</SettingsRow>
+						</SettingsPanel>
 					)}
 
 					{resolvedTab === "breaks" && (
-						<section
-							aria-labelledby="settings-breaks-heading"
-							className="space-y-4 rounded-card border border-card-border bg-surface-card p-6 shadow-sm"
+						<SettingsPanel
+							testId="settings-breaks-section"
+							title={t("sectionBreaksNotifications")}
+							titleId="settings-breaks-heading"
 						>
-							<h2
-								className="font-semibold text-lg text-primary"
-								id="settings-breaks-heading"
-							>
-								{t("sectionBreaksNotifications")}
-							</h2>
+							<SettingsRow label={t("breakAlertsLabel")}>
+								<OutOfTabBreakAlertsControl
+									enabled={breakAlertsEnabled}
+									onChange={setBreakAlertsEnabled}
+									variant="settings"
+								/>
+							</SettingsRow>
 
-							<OutOfTabBreakAlertsControl
-								enabled={breakAlertsEnabled}
-								onChange={setBreakAlertsEnabled}
-							/>
-
-							<div className="pt-2">
-								<p className="mb-2 text-center text-sm text-text-secondary">
-									{t("cycleEndAudioLabel")}
-								</p>
+							<SettingsRow label={t("cycleEndAudioLabel")}>
 								<CycleAudioPreferenceControl
 									mode={audioMode}
 									onChange={setAudioMode}
+									variant="settings"
 								/>
-							</div>
-						</section>
+							</SettingsRow>
+						</SettingsPanel>
 					)}
 
 					{resolvedTab === "appearance" && (
-						<section
-							aria-labelledby="settings-appearance-heading"
-							className="space-y-4 rounded-card border border-card-border bg-surface-card p-6 shadow-sm"
+						<SettingsPanel
+							testId="settings-appearance-section"
+							title={t("sectionAppearance")}
+							titleId="settings-appearance-heading"
 						>
-							<h2
-								className="font-semibold text-lg text-primary"
-								id="settings-appearance-heading"
-							>
-								{t("sectionAppearance")}
-							</h2>
-
-							<div className="flex items-center justify-between">
-								<span className="text-sm text-text-secondary">
-									{t("themeLabel")}
-								</span>
-								<ThemeToggle preference={preference} setTheme={setTheme} />
-							</div>
-						</section>
+							<SettingsRow label={t("themeLabel")}>
+								<ThemeSelector preference={preference} setTheme={setTheme} />
+							</SettingsRow>
+						</SettingsPanel>
 					)}
 
 					{resolvedTab === "energy" && isAuthenticated && (
-						<section
-							aria-labelledby="settings-energy-heading"
-							className="space-y-4 rounded-card border border-card-border bg-surface-card p-6 shadow-sm"
-							data-testid="settings-day-energy-section"
+						<SettingsPanel
+							testId="settings-day-energy-section"
+							title={t("sectionDayEnergy")}
+							titleId="settings-energy-heading"
 						>
-							<h2
-								className="font-semibold text-lg text-primary"
-								id="settings-energy-heading"
+							<SettingsRow
+								description={t("dayEnergyBody")}
+								label={t("sectionDayEnergy")}
 							>
-								{t("sectionDayEnergy")}
-							</h2>
-							<p className="text-sm text-text-secondary">
-								{t("dayEnergyBody")}
-							</p>
-							<EnergySelector
-								disabled={isSavingEnergy || isLoadingEnergy}
-								onSelect={(value) => {
-									void setEnergy(value);
-								}}
-								selectedValue={energy}
-							/>
-						</section>
+								<EnergySelector
+									disabled={isSavingEnergy || isLoadingEnergy}
+									onSelect={(value) => {
+										void setEnergy(value);
+									}}
+									selectedValue={energy}
+								/>
+							</SettingsRow>
+						</SettingsPanel>
 					)}
 
 					{resolvedTab === "integrations" && (
@@ -419,15 +418,17 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 							className="space-y-4"
 							data-testid="settings-integrations-section"
 						>
-							<h2
-								className="font-semibold text-lg text-primary"
-								id="settings-integrations-heading"
-							>
-								{t("sectionIntegrations")}
-							</h2>
-							<p className="text-sm text-text-secondary">
-								{t("integrationsBody")}
-							</p>
+							<div>
+								<h2
+									className="font-semibold text-lg text-primary"
+									id="settings-integrations-heading"
+								>
+									{t("sectionIntegrations")}
+								</h2>
+								<p className="mt-1.5 text-sm text-text-secondary">
+									{t("integrationsBody")}
+								</p>
+							</div>
 							<ComingSoonPreview
 								label={t("mcpComingSoon")}
 								testId="settings-mcp-preview"
@@ -463,23 +464,48 @@ function McpIntegrationMock() {
 	);
 }
 
-function ThemeToggle({
+type ThemeOption = "light" | "dark" | "system";
+
+function ThemeSelector({
 	preference,
 	setTheme,
 }: {
 	preference: string;
-	setTheme: (p: "light" | "dark" | "system") => void;
+	setTheme: (p: ThemeOption) => void;
 }) {
 	const t = useTranslations("Preferences.theme");
-	const options = [
-		{ value: "light" as const, labelKey: "light" as const },
-		{ value: "dark" as const, labelKey: "dark" as const },
-		{ value: "system" as const, labelKey: "system" as const },
+
+	const options: {
+		value: ThemeOption;
+		labelKey: "light" | "dark" | "system";
+		Icon: LucideIcon;
+		previewClass: string;
+	}[] = [
+		{
+			value: "light",
+			labelKey: "light",
+			Icon: Sun,
+			previewClass:
+				"bg-gradient-to-b from-shell-top to-shell-bottom border border-border-subtle",
+		},
+		{
+			value: "dark",
+			labelKey: "dark",
+			Icon: Moon,
+			previewClass: "bg-gradient-to-b from-[#1e2433] to-[#252b3d]",
+		},
+		{
+			value: "system",
+			labelKey: "system",
+			Icon: Monitor,
+			previewClass:
+				"bg-gradient-to-r from-shell-top via-shell-top to-[#252b3d]",
+		},
 	];
 
 	return (
 		<fieldset
-			className="flex items-center gap-1 rounded-md border border-border-subtle bg-surface-card p-0.5"
+			className="grid grid-cols-3 gap-3"
 			data-testid="settings-theme-toggle"
 		>
 			<legend className="sr-only">{t("legend")}</legend>
@@ -487,10 +513,10 @@ function ThemeToggle({
 				const isSelected = preference === option.value;
 				return (
 					<label
-						className={`cursor-pointer rounded px-2 py-1 font-medium text-xs transition-colors ${
+						className={`group relative cursor-pointer overflow-hidden rounded-card border-2 transition-colors duration-150 ${
 							isSelected
-								? "bg-segment-active text-on-cta"
-								: "text-text-secondary hover:bg-surface-card-muted hover:text-primary"
+								? "border-accent-cta shadow-sm"
+								: "border-border-subtle hover:border-accent-cta/40"
 						}`}
 						key={option.value}
 					>
@@ -502,7 +528,32 @@ function ThemeToggle({
 							type="radio"
 							value={option.value}
 						/>
-						{t(option.labelKey)}
+						<div
+							aria-hidden="true"
+							className={`aspect-[4/3] ${option.previewClass}`}
+						/>
+						<div className="flex items-center justify-center gap-1.5 border-border-subtle border-t bg-surface-card px-2 py-2">
+							<option.Icon
+								aria-hidden="true"
+								className="h-3.5 w-3.5 text-text-dimmed"
+								strokeWidth={1.75}
+							/>
+							<span className="font-medium text-primary text-xs">
+								{t(option.labelKey)}
+							</span>
+						</div>
+						{isSelected && (
+							<span
+								aria-hidden="true"
+								className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent-cta text-on-cta"
+							>
+								<Check
+									aria-hidden="true"
+									className="h-3 w-3"
+									strokeWidth={2.5}
+								/>
+							</span>
+						)}
 					</label>
 				);
 			})}

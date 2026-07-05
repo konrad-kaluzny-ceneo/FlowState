@@ -15,8 +15,6 @@ import type { ReactNode } from "react";
 
 import { CalmGardenSprig } from "~/lib/design/illustrations/calm-garden-sprig";
 import type { OnboardingScope } from "~/lib/onboarding/types";
-import { GuestHeaderControls } from "./guest-header-controls";
-import { UserMenu } from "./user-menu";
 
 type NavItem = {
 	href: string;
@@ -45,7 +43,7 @@ function isActive(pathname: string, href: string): boolean {
 	return pathname.startsWith(href);
 }
 
-export function AppShell({ children, scope, userName }: AppShellProps) {
+export function AppShell({ children }: AppShellProps) {
 	const t = useTranslations("Navbar");
 	const pathname = usePathname();
 
@@ -80,10 +78,10 @@ export function AppShell({ children, scope, userName }: AppShellProps) {
 						const Icon = item.icon;
 						return (
 							<Link
-								className={`flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-sm transition-colors ${
+								className={`flex items-center gap-3 rounded-control px-3 py-2.5 font-medium text-sm transition-colors ${
 									active
-										? "bg-primary/10 text-primary"
-										: "text-text-secondary hover:bg-surface-hover hover:text-primary"
+										? "border-accent-cta border-l-[3px] bg-accent-cta/10 pl-[calc(0.75rem-3px)] text-accent-cta"
+										: "text-text-secondary hover:bg-surface-card-muted hover:text-primary"
 								}`}
 								data-testid={`nav-${item.labelKey}`}
 								href={item.href}
@@ -96,12 +94,11 @@ export function AppShell({ children, scope, userName }: AppShellProps) {
 					})}
 				</nav>
 
-				<div className="border-border-subtle border-t px-3 py-3">
-					{userName ? (
-						<UserMenu scope={scope} userName={userName} />
-					) : (
-						<GuestHeaderControls scope={scope} />
-					)}
+				<div className="mx-3 mb-3 rounded-card border border-card-border bg-surface-card-muted/80 p-4">
+					<CalmGardenSprig className="mb-3 h-8 w-8 opacity-80" variant="idle" />
+					<p className="text-pretty text-text-secondary text-xs leading-relaxed">
+						{t("sidebarQuote")}
+					</p>
 				</div>
 			</aside>
 
@@ -117,13 +114,6 @@ export function AppShell({ children, scope, userName }: AppShellProps) {
 					<CalmGardenSprig className="h-6 w-6" variant="idle" />
 					{t("brand")}
 				</Link>
-				<div className="flex items-center gap-3">
-					{userName ? (
-						<UserMenu scope={scope} userName={userName} />
-					) : (
-						<GuestHeaderControls scope={scope} />
-					)}
-				</div>
 			</header>
 
 			{/* Main content */}

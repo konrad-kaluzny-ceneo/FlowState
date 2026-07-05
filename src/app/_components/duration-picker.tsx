@@ -18,6 +18,7 @@ type DurationPickerProps = {
 	maxSec: number;
 	boundsLabel: string;
 	onValidationChange?: (invalid: boolean) => void;
+	variant?: "default" | "settings";
 };
 
 function parseFieldValue(value: string): number | null {
@@ -31,6 +32,24 @@ function parseFieldValue(value: string): number | null {
 	return parsed;
 }
 
+const PRESET_BUTTON_BASE =
+	"rounded-control px-4 py-2 font-medium text-sm transition-colors duration-150";
+
+function presetButtonClass(isActive: boolean): string {
+	return isActive
+		? `${PRESET_BUTTON_BASE} bg-segment-active text-on-cta`
+		: `${PRESET_BUTTON_BASE} bg-segment-inactive text-text-secondary hover:bg-surface-card-muted hover:text-primary`;
+}
+
+const INPUT_BASE =
+	"w-14 rounded-control border bg-surface-card px-2 py-1.5 text-center text-primary text-sm tabular-nums";
+
+function inputClass(showError: boolean): string {
+	return showError
+		? `${INPUT_BASE} border-red-400 outline-1 outline-red-400/50`
+		: `${INPUT_BASE} border-border-subtle focus:border-accent-cta focus:outline-none focus:ring-2 focus:ring-focus/30`;
+}
+
 export function DurationPicker({
 	testIdPrefix,
 	presets,
@@ -40,6 +59,7 @@ export function DurationPicker({
 	maxSec,
 	boundsLabel,
 	onValidationChange,
+	variant = "default",
 }: DurationPickerProps) {
 	const t = useTranslations("DurationPicker");
 	const initial = splitSecToMinSec(valueSec);
@@ -85,19 +105,19 @@ export function DurationPicker({
 		}
 	};
 
+	const isSettings = variant === "settings";
+	const presetAlign = isSettings ? "justify-start" : "justify-center";
+	const customAlign = isSettings ? "items-start" : "items-center";
+
 	return (
 		<div>
-			<div className="flex flex-wrap justify-center gap-2">
+			<div className={`flex flex-wrap gap-2 ${presetAlign}`}>
 				{presets.map((preset) => {
 					const isActive = valueSec === preset.sec;
 					return (
 						<button
 							aria-pressed={isActive}
-							className={`rounded-lg px-3 py-2 text-sm transition ${
-								isActive
-									? "bg-segment-active text-on-cta"
-									: "bg-segment-inactive text-text-secondary hover:bg-surface-panel"
-							}`}
+							className={presetButtonClass(isActive)}
 							key={preset.sec}
 							onClick={() => {
 								setTouched(false);
@@ -111,40 +131,34 @@ export function DurationPicker({
 				})}
 			</div>
 
-			<div className="mt-4 flex flex-col items-center gap-1">
-				<span className="text-sm text-text-secondary">
+			<div className={`mt-3 flex flex-col gap-1.5 ${customAlign}`}>
+				<span className="text-text-dimmed text-xs">
 					{t("customLabel", { bounds: boundsLabel })}
 				</span>
 				<div className="flex items-center gap-2 text-sm text-text-secondary">
 					<input
-						className={`w-14 rounded border bg-surface-panel px-2 py-1 text-center text-primary ${
-							showError
-								? "border-red-400 outline-1 outline-red-400/50"
-								: "border-border-subtle"
-						}`}
+						className={inputClass(showError)}
 						data-testid={`${testIdPrefix}-min`}
 						min={0}
 						onChange={(e) => handleFieldChange(e.target.value, secondsStr)}
 						type="number"
 						value={minutesStr}
 					/>
-					<span className="text-text-dimmed">{t("minUnit")}</span>
+					<span className="text-text-dimmed text-xs">{t("minUnit")}</span>
 					<input
-						className={`w-14 rounded border bg-surface-panel px-2 py-1 text-center text-primary ${
-							showError
-								? "border-red-400 outline-1 outline-red-400/50"
-								: "border-border-subtle"
-						}`}
+						className={inputClass(showError)}
 						data-testid={`${testIdPrefix}-sec`}
 						min={0}
 						onChange={(e) => handleFieldChange(minutesStr, e.target.value)}
 						type="number"
 						value={secondsStr}
 					/>
-					<span className="text-text-dimmed">{t("secUnit")}</span>
+					<span className="text-text-dimmed text-xs">{t("secUnit")}</span>
 				</div>
 				{showError && (
-					<p className="text-center text-red-600 text-xs">
+					<p
+						className={`text-red-600 text-xs ${isSettings ? "" : "text-center"}`}
+					>
 						{t("validationError", { bounds: boundsLabel })}
 					</p>
 				)}

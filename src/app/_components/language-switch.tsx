@@ -9,18 +9,23 @@ type LanguageSwitchProps = {
 	locale: UserLocale;
 	onChange: (locale: UserLocale) => void;
 	disabled?: boolean;
+	variant?: "default" | "settings";
 };
 
 export function LanguageSwitch({
 	locale,
 	onChange,
 	disabled = false,
+	variant = "default",
 }: LanguageSwitchProps) {
 	const t = useTranslations("Preferences.language");
+	const isSettings = variant === "settings";
 
 	return (
 		<fieldset
-			className="flex items-center gap-1 rounded-md border border-border-subtle bg-surface-card p-0.5"
+			className={`flex items-center gap-1 rounded-control border border-border-subtle bg-surface-card p-1 ${
+				isSettings ? "justify-end" : ""
+			}`}
 			data-testid="language-switch"
 		>
 			<legend className="sr-only">{t("legend")}</legend>
@@ -28,7 +33,7 @@ export function LanguageSwitch({
 				const isSelected = locale === option;
 				return (
 					<label
-						className={`cursor-pointer rounded px-2 py-1 font-medium text-xs transition-colors ${
+						className={`cursor-pointer rounded-[calc(var(--radius-control)-2px)] px-3 py-1.5 font-medium text-sm transition-colors duration-150 ${
 							isSelected
 								? "bg-segment-active text-on-cta"
 								: "text-text-secondary hover:bg-surface-card-muted hover:text-primary"

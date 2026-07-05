@@ -27,7 +27,8 @@
 		"tasks": "Zadania",
 		"plan": "Plan dnia",
 		"summary": "Podsumowanie",
-		"settings": "Ustawienia"
+		"settings": "Ustawienia",
+		"sidebarQuote": "Malutkie kroki każdego dnia prowadzą do wielkich efektów."
 	},
 	"Onboarding": {
 		"firstRun": {
@@ -356,6 +357,12 @@
 	},
 	"HomeFocusSummary": {
 		"heading": "Twój dzień",
+		"tasksLabel": "Zadania",
+		"tasksLine": "{done} / {total}",
+		"sessionsLabel": "Sesje skupienia",
+		"focusTimeLabel": "Czas skupienia",
+		"focusTimeLine": "{minutes} min",
+		"emptyPlan": "Plan na dziś jest pusty. Stwórz go!",
 		"budgetLine": "Wykorzystano {used} z {budget} godzin skupienia · zostało {remaining}",
 		"sessionsLine": "{count, plural, one {# sesja skupienia dzisiaj} few {# sesje skupienia dzisiaj} many {# sesji skupienia dzisiaj} other {# sesji skupienia dzisiaj}}",
 		"standingOpen": "{count, plural, one {# codzienne zadanie stałe aktywne} few {# codzienne zadania stałe aktywne} many {# codziennych zadań stałych aktywnych} other {# codziennego zadania stałego aktywnego}}",
@@ -371,13 +378,42 @@
 		"tip5": "Nazwij efekt, który chcesz osiągnąć, zanim uruchomisz minutnik."
 	},
 	"QuickActions": {
+		"heading": "Szybkie akcje",
 		"addTask": "Dodaj zadanie",
-		"planDay": "Plan dnia"
+		"planDay": "Zaplanuj dzień",
+		"startBreak": "Rozpocznij przerwę"
 	},
 	"FocusEmpty": {
 		"heading": "Twój dzień czeka na Ciebie",
-		"subtitle": "Dodaj swoje pierwsze zadanie, aby rozpocząć sesję skupienia.",
+		"subtitle": "Dodaj pierwsze zadanie, zaplanuj swój dzień lub rozpocznij sesję skupienia.",
 		"cta": "Dodaj pierwsze zadanie"
+	},
+	"FocusPage": {
+		"greetingAnonymous": "Dzień dobry! 👋",
+		"greetingNamed": "Dzień dobry, {name} ☀️",
+		"subtitleAnonymous": "Zacznij dzień od planu, który ma znaczenie.",
+		"subtitleNamed": "Skup się na tym, co naprawdę ważne.",
+		"footer": "FlowState jest tutaj, aby pomóc Ci pracować spokojniej i skuteczniej.",
+		"profileAria": "Profil użytkownika {name}"
+	},
+	"FocusInfoBanner": {
+		"empty": "Świadome planowanie to mniej chaosu i więcej spokoju. Zrób pierwszy krok, a FlowState poprowadzi Cię dalej.",
+		"ready": "Małe kroki każdego dnia prowadzą do wielkich efektów."
+	},
+	"FocusGettingStarted": {
+		"heading": "Jak zacząć?",
+		"subtitle": "Wybierz opcję, która najlepiej pasuje do Ciebie.",
+		"addTaskTitle": "Dodaj zadanie",
+		"addTaskBody": "Zapisz wszystko, o czym musisz pamiętać.",
+		"planDayTitle": "Zaplanuj dzień",
+		"planDayBody": "Ustal priorytety i zaplanuj swoje zadania."
+	},
+	"FocusReady": {
+		"heading": "Gotowy na skupienie?",
+		"subtitle": "Wybierz zadanie, aby rozpocząć sesję.",
+		"cta": "+ Wybierz zadanie",
+		"suggestedHeading": "Aktywne i zaplanowane",
+		"viewAll": "Zobacz wszystkie zadania →"
 	},
 	"HomeViewToggle": {
 		"fokus": "Fokus",
@@ -695,6 +731,7 @@
 		"workDurationLabel": "Czas pracy",
 		"shortBreakLabel": "Krótka przerwa",
 		"longBreakLabel": "Długa przerwa",
+		"breakAlertsLabel": "Powiadomienia o przerwie",
 		"cycleEndAudioLabel": "Dźwięk końca cyklu",
 		"themeLabel": "Motyw"
 	}

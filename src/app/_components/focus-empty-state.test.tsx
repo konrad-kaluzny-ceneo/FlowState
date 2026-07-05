@@ -10,7 +10,9 @@ describe("FocusEmptyState", () => {
 		expect(screen.getByTestId("focus-empty-state")).toBeTruthy();
 		expect(screen.getByText("Your day is waiting for you")).toBeTruthy();
 		expect(
-			screen.getByText("Add your first task to start a focus session."),
+			screen.getByText(
+				"Add your first task, plan your day, or start a focus session.",
+			),
 		).toBeTruthy();
 		expect(screen.getByTestId("focus-empty-add-task")).toBeTruthy();
 	});

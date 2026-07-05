@@ -14,12 +14,14 @@ type CycleAudioPreferenceControlProps = {
 	mode: CycleEndAudioMode;
 	onChange: (mode: CycleEndAudioMode) => void;
 	disabled?: boolean;
+	variant?: "default" | "settings";
 };
 
 export function CycleAudioPreferenceControl({
 	mode,
 	onChange,
 	disabled = false,
+	variant = "default",
 }: CycleAudioPreferenceControlProps) {
 	const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -48,24 +50,32 @@ export function CycleAudioPreferenceControl({
 		[disabled, onChange],
 	);
 
+	const isSettings = variant === "settings";
+
 	return (
 		<fieldset
-			className="mt-4 border-border-subtle border-t pt-4"
+			className={
+				isSettings ? "border-0 p-0" : "mt-4 border-border-subtle border-t pt-4"
+			}
 			data-testid="cycle-audio-preference"
 		>
-			<legend className="mb-2 w-full text-center text-sm text-text-secondary">
-				Cycle end audio
-			</legend>
-			<div className="flex justify-center gap-1">
+			{!isSettings && (
+				<legend className="mb-2 w-full text-center text-sm text-text-secondary">
+					Cycle end audio
+				</legend>
+			)}
+			<div
+				className={`flex gap-1 ${isSettings ? "flex-wrap justify-start" : "justify-center"}`}
+			>
 				{OPTIONS.map((opt, index) => {
 					const isActive = opt.value === mode;
 					return (
 						<button
 							aria-pressed={isActive}
-							className={`rounded-md px-3 py-1.5 font-medium text-sm transition ${
+							className={`rounded-control px-4 py-2 font-medium text-sm transition-colors duration-150 ${
 								isActive
 									? "bg-segment-active text-on-cta"
-									: "bg-segment-inactive text-text-secondary hover:bg-surface-panel"
+									: "bg-segment-inactive text-text-secondary hover:bg-surface-card-muted hover:text-primary"
 							} disabled:cursor-not-allowed disabled:opacity-50`}
 							data-testid={`cycle-audio-preference-${opt.value}`}
 							disabled={disabled}
