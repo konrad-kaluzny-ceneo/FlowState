@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 import type { CheckInEnergyUi } from "./check-in";
+import { dismissFirstRunIfVisible } from "./onboarding";
 
 const ENERGY_TEST_IDS: Record<CheckInEnergyUi, string> = {
 	focused: "check-in-energy-focused",
@@ -118,6 +119,37 @@ export async function expectKickoffVisible(
 		rationale?: RegExp | string;
 	},
 ) {
+	await dismissFirstRunIfVisible(page);
+
+	const kickoffHeader = page.getByTestId("focus-ready-kickoff");
+	if (await kickoffHeader.isVisible().catch(() => false)) {
+		if (options?.title != null) {
+			await expect(kickoffHeader).toContainText(options.title);
+		}
+	}
+
+	if (
+		!(await page
+			.getByTestId("task-suggestion-card")
+			.isVisible()
+			.catch(() => false))
+	) {
+		const star = page
+			.getByTestId("focus-ready-kickoff-suggestion-star")
+			.or(page.getByTestId(/^focus-ready-suggestion-star-/))
+			.first();
+		if (await star.isVisible().catch(() => false)) {
+			await star.click();
+		} else {
+			await page
+				.getByRole("button", {
+					name: /Why this|See why|wyjaśnienie automatycznej sugestii/i,
+				})
+				.first()
+				.click();
+		}
+	}
+
 	await expect(page.getByTestId("task-suggestion-card")).toBeVisible({
 		timeout: 20_000,
 	});

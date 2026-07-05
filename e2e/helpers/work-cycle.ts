@@ -315,6 +315,27 @@ export async function advanceClockThroughBreakSec(page: Page, seconds: number) {
 type TaskWorkTypeLabel = "Deep" | "Ops" | "Reactive";
 type TaskWeightLabel = "Light" | "Medium" | "Heavy";
 
+const WORK_TYPE_BUTTON: Record<TaskWorkTypeLabel, RegExp> = {
+	Deep: /^(Deep|Głębokie)$/,
+	Ops: /^(Ops|Operacyjne)$/,
+	Reactive: /^(Reactive|Reaktywne)$/,
+};
+
+const WEIGHT_BUTTON: Record<TaskWeightLabel, RegExp> = {
+	Light: /^(Light|Niska)$/,
+	Medium: /^(Medium|Średnia)$/,
+	Heavy: /^(Heavy|Wysoka)$/,
+};
+
+async function setEisenhowerAxis(
+	modal: import("@playwright/test").Locator,
+	fieldLabel: RegExp,
+	level: TaskWeightLabel,
+) {
+	const row = modal.locator("div").filter({ hasText: fieldLabel }).first();
+	await row.getByRole("button", { name: WEIGHT_BUTTON[level] }).click();
+}
+
 /** Belt helpers use the add-task modal with Custom panel for attribute control. */
 export async function addTaskWithAttributes(
 	page: Page,
@@ -335,27 +356,25 @@ export async function addTaskWithAttributes(
 	await modal.getByTestId("persona-preset-custom").click();
 
 	// Set work type via SegmentedControl
-	await modal.getByRole("button", { name: workType, exact: true }).click();
+	await modal.getByRole("button", { name: WORK_TYPE_BUTTON[workType] }).click();
 
-	// Set urgency via SegmentedControl
-	const urgencyRow = modal
-		.locator("div")
-		.filter({ hasText: /^Urgency/ })
-		.first();
-	await urgencyRow.getByRole("button", { name: weight }).click();
+	// Set urgency + importance via Eisenhower axes (post F-05 UI)
+	await setEisenhowerAxis(modal, /^(Urgency|Pilność)/, weight);
+	await setEisenhowerAxis(modal, /^(Importance|Ważność)/, weight);
 
 	// Check "Daily standing" so the task is created as active (matching pre-refactor behavior)
 	const dailyToggle = modal.getByTestId("daily-standing-toggle");
 	if (!(await dailyToggle.isChecked())) {
-		// The checkbox is sr-only; click via its label
-		await modal.getByText("Daily standing", { exact: true }).click();
+		await modal.locator('label[for="daily-standing-add-modal"]').click();
 	}
 
 	// Fill title
 	await modal.getByTestId("task-fields-title").fill(title);
 
 	// Submit
-	await modal.getByRole("button", { name: "Add task", exact: true }).click();
+	await modal
+		.getByRole("button", { name: /^(Add task|Dodaj zadanie)$/ })
+		.click();
 	await expect(modal).toBeHidden({ timeout: 10_000 });
 
 	// Task is created as active (isDailyStanding) — should appear in Active tab
@@ -410,6 +429,7 @@ export async function completeWorkCycleWithCheckIn(
 	await dismissKickoffReadinessIfVisible(page);
 	await continueLaterButton(page).click();
 	await expectShortBreakPhaseHidden(page);
+	await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 	await completeCheckIn(page, energy);
 	await dismissWindDownIfVisible(page);
 }
