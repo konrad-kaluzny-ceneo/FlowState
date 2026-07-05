@@ -96,7 +96,14 @@ export async function waitForTimerPanelIdle(page: Page) {
 			throw new Error("running cycle interrupted — re-check idle");
 		}
 
-		await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
+		// In the redesigned UI, timer-panel-idle only shows when a task is focused.
+		// Accept workbench-grid as a valid idle state (no focused task yet).
+		await expect(
+			page
+				.getByTestId("timer-panel-idle")
+				.or(page.getByTestId("home-workbench-grid"))
+				.first(),
+		).toBeVisible();
 	}).toPass({ timeout: 20_000 });
 }
 
@@ -162,7 +169,8 @@ export async function ensureIdleCycle(page: Page) {
 		await expect(
 			page
 				.getByTestId("timer-panel-idle")
-				.or(page.getByTestId("home-workbench-grid")),
+				.or(page.getByTestId("home-workbench-grid"))
+				.first(),
 		).toBeVisible();
 	}).toPass({ timeout: 30_000 });
 }

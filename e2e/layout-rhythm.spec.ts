@@ -9,6 +9,7 @@
  * explicitly from project config below).
  */
 import { expect, test } from "./fixtures";
+import { dismissKickoffSteeringIfVisible } from "./helpers/kickoff";
 import {
 	clearOnboardingKeys,
 	dismissFirstRunIfVisible,
@@ -33,6 +34,15 @@ test("focus page keeps sidebar/header clearance, section rhythm, and no overflow
 	await clearOnboardingKeys(page);
 	await dismissFirstRunIfVisible(page);
 	await expectFocusPageReady(page);
+	await dismissKickoffSteeringIfVisible(page);
+
+	// After dismissing steering, wait for workbench grid or timer panel to appear
+	await expect(
+		page
+			.getByTestId("home-workbench-grid")
+			.or(page.getByTestId("timer-panel-idle"))
+			.first(),
+	).toBeVisible({ timeout: 15_000 });
 
 	// Sidebar (desktop) or mobile header never overlaps page content.
 	const sidebar = await page.getByTestId("app-sidebar").boundingBox();
@@ -56,15 +66,22 @@ test("focus page keeps sidebar/header clearance, section rhythm, and no overflow
 	}
 
 	// Section rhythm: primary and secondary regions sit one section-gap token apart.
-	const primary = await page.getByTestId("home-primary-region").boundingBox();
-	const secondary = await page
-		.getByTestId("home-secondary-region")
-		.boundingBox();
-	if (primary != null && secondary != null) {
-		const regionGap = secondary.y - (primary.y + primary.height);
-		expect(Math.abs(regionGap - SECTION_GAP_PX)).toBeLessThanOrEqual(
-			GAP_TOLERANCE_PX,
-		);
+	// These regions may not exist depending on the page state (e.g., idle with no focused task).
+	const primaryLocator = page.getByTestId("home-primary-region");
+	const secondaryLocator = page.getByTestId("home-secondary-region");
+	const primaryVisible = await primaryLocator.isVisible().catch(() => false);
+	const secondaryVisible = await secondaryLocator
+		.isVisible()
+		.catch(() => false);
+	if (primaryVisible && secondaryVisible) {
+		const primary = await primaryLocator.boundingBox();
+		const secondary = await secondaryLocator.boundingBox();
+		if (primary != null && secondary != null) {
+			const regionGap = secondary.y - (primary.y + primary.height);
+			expect(Math.abs(regionGap - SECTION_GAP_PX)).toBeLessThanOrEqual(
+				GAP_TOLERANCE_PX,
+			);
+		}
 	}
 
 	// No horizontal overflow at any supported width.

@@ -61,6 +61,8 @@ test.describe("Guest merge on sign-in (S-08 / Risk #5)", () => {
 
 		// Verify task persists on /tasks after merge
 		await page.goto("/tasks");
+		// The merged task was created as "planned" via quick-add — switch to Planned tab
+		await page.getByRole("tab", { name: /Planned|Planowane/i }).click();
 		await expect(
 			page.getByRole("listitem").filter({ hasText: taskTitle }).first(),
 		).toBeVisible({ timeout: 30_000 });

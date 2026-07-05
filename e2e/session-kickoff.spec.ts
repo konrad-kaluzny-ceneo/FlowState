@@ -69,8 +69,16 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 			title: deepTask,
 			rationale: /Fresh session — here's a strong starting point/,
 		});
-		// suggested-task-row highlight is on /tasks page
-		await page.goto("/tasks");
+		// suggested-task-row highlight is on /tasks page — use client-side nav
+		// to preserve React context (kickoff suggestion state)
+		const navLink = page
+			.getByTestId("nav-tasks")
+			.or(page.getByTestId("nav-mobile-tasks"))
+			.first();
+		await navLink.click({ timeout: 10_000 });
+		await expect(page.getByTestId("task-list")).toBeVisible({
+			timeout: 15_000,
+		});
 		await expect(page.getByTestId("suggested-task-row")).toBeVisible({
 			timeout: 10_000,
 		});

@@ -57,7 +57,17 @@ async function waitForTaskCreateSettled(addButton: Locator) {
 }
 
 async function isGuestDashboard(page: Page) {
-	return page.getByTestId("guest-banner").isVisible();
+	// Guest mode: no auth session cookie present. Check for the session cookie
+	// that Neon Auth / next-auth sets.
+	const cookies = await page.context().cookies();
+	const hasSessionCookie = cookies.some(
+		(c) =>
+			c.name === "__Secure-authjs.session-token" ||
+			c.name === "authjs.session-token" ||
+			c.name === "__Secure-next-auth.session-token" ||
+			c.name === "next-auth.session-token",
+	);
+	return !hasSessionCookie;
 }
 
 function isCycleCreatePost(response: {
@@ -106,19 +116,24 @@ async function ensureOnTasksPage(page: Page) {
 
 /** Click the visible focus nav link (sidebar on desktop, bottom nav on mobile). */
 async function clickNavFocus(page: Page) {
-	// Mobile bottom nav is visible at small viewports; desktop sidebar at large.
-	// Wait for the bottom nav container to be visible first.
-	await expect(
-		page.getByTestId("app-bottom-nav").or(page.getByTestId("app-sidebar")),
-	).toBeVisible({ timeout: 10_000 });
-
+	// Both nav containers exist in DOM always (one hidden via CSS breakpoints).
+	// Try mobile first (most tests run at mobile viewport), fall back to desktop.
 	const mobileNav = page.getByTestId("nav-mobile-focus");
+	const desktopNav = page.getByTestId("nav-focus");
+
+	// Wait for at least one nav to be attached (page hydrated)
+	await expect(mobileNav.or(desktopNav).first()).toBeAttached({
+		timeout: 10_000,
+	});
+
+	// Use JS-level click via evaluate to bypass the Next.js dev overlay
+	// (nextjs-portal) which intercepts pointer events in guest mode.
 	if (await mobileNav.isVisible().catch(() => false)) {
-		await mobileNav.click();
+		await mobileNav.evaluate((el) => (el as HTMLAnchorElement).click());
 	} else {
-		await page.getByTestId("nav-focus").click();
+		await desktopNav.evaluate((el) => (el as HTMLAnchorElement).click());
 	}
-	await expect(page).toHaveURL(/\/focus/);
+	await expect(page).toHaveURL(/\/focus/, { timeout: 10_000 });
 }
 
 /**
@@ -181,6 +196,7 @@ export async function startFocusedWorkCycle(
 		.catch(() => {});
 
 	// Navigate to /focus via client-side link to preserve React context state
+	// (focusedTaskId is React state, lost on hard navigation)
 	await clickNavFocus(page);
 	await waitForTimerPanelIdle(page);
 	await dismissKickoffReadinessIfVisible(page);
@@ -345,6 +361,18 @@ export async function focusTask(page: Page, taskTitle: string) {
 		.getByRole("listitem")
 		.filter({ hasText: taskTitle })
 		.first();
+
+	// Task could be on Active or Planned tab — try Active first, then Planned
+	const activeTab = page.getByRole("tab", { name: /Active|Aktywne/i });
+	const plannedTab = page.getByRole("tab", { name: /Planned|Planowane/i });
+	if (await activeTab.isVisible().catch(() => false)) {
+		await activeTab.click();
+	}
+	if (!(await taskRow.isVisible().catch(() => false))) {
+		if (await plannedTab.isVisible().catch(() => false)) {
+			await plannedTab.click();
+		}
+	}
 	await expect(taskRow).toBeVisible({ timeout: 15_000 });
 	const focusBtn = taskRow.getByRole("button", { name: "Focus" });
 	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });

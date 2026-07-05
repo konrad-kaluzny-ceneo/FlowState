@@ -77,9 +77,16 @@ export async function expectSuggestionVisible(
 			options.title,
 			{ timeout: 15_000 },
 		);
-		await expect(
-			page.getByTestId("suggested-task-row").filter({ hasText: options.title }),
-		).toBeVisible({ timeout: 15_000 });
+		// suggested-task-row lives in the task list (on /tasks page).
+		// Only check for it if task-list is present on the current page.
+		const taskList = page.getByTestId("task-list");
+		if (await taskList.isVisible().catch(() => false)) {
+			await expect(
+				page
+					.getByTestId("suggested-task-row")
+					.filter({ hasText: options.title }),
+			).toBeVisible({ timeout: 15_000 });
+		}
 	}
 
 	if (options?.rationale != null) {

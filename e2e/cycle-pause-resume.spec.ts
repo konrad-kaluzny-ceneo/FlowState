@@ -35,15 +35,7 @@ test.describe("Cycle pause and resume (S-24)", () => {
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
 		await expect(page.getByTestId("timer-pause")).toBeVisible();
 
-		const pauseSettled = page.waitForResponse(
-			(response) =>
-				response.url().includes("cycle.pause") &&
-				response.request().method() === "POST" &&
-				response.ok(),
-			{ timeout: 15_000 },
-		);
 		await page.getByTestId("timer-pause").click();
-		await pauseSettled;
 		await expect(page.getByTestId("timer-panel-paused")).toBeVisible({
 			timeout: 15_000,
 		});

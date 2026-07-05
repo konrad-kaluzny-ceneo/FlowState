@@ -15,7 +15,7 @@ export async function goToTasksPage(page: Page) {
 	await expectTaskListVisible(page);
 }
 
-/** Wait for the focus page to be ready (workbench grid or timer panel mounted). */
+/** Wait for the focus page to be ready (workbench grid, timer panel, or steering card mounted). */
 export async function expectFocusPageReady(page: Page) {
 	await expect(
 		page
@@ -23,6 +23,7 @@ export async function expectFocusPageReady(page: Page) {
 			.or(page.getByTestId("timer-panel-idle"))
 			.or(page.getByTestId("timer-panel-running"))
 			.or(page.getByTestId("timer-panel-paused"))
+			.or(page.getByTestId("session-energy-card"))
 			.first(),
 	).toBeVisible({ timeout: 15_000 });
 }
