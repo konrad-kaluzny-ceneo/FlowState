@@ -3,6 +3,8 @@
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
+import { formatFocusMinutes } from "~/lib/time/format-focus-minutes";
+
 type StandingTaskFact = {
 	title: string;
 	doneForToday: boolean;
@@ -17,18 +19,6 @@ type HomeFocusSummaryProps = {
 	standingTasks: StandingTaskFact[];
 	sessionsCompleted?: number;
 };
-
-function formatFocusMinutes(minutes: number): string {
-	const hours = Math.floor(minutes / 60);
-	const mins = minutes % 60;
-	if (hours > 0 && mins > 0) {
-		return `${hours}h ${mins}m`;
-	}
-	if (hours > 0) {
-		return `${hours}h`;
-	}
-	return `${mins}m`;
-}
 
 export function HomeFocusSummary({
 	hasBudget,

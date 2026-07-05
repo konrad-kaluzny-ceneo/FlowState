@@ -367,7 +367,24 @@
 	},
 	"HomeViewToggle": {
 		"fokus": "Fokus",
-		"zadania": "Zadania"
+		"zadania": "Zadania",
+		"plan": "Plan dnia"
+	},
+	"PlanDnia": {
+		"title": "Plan dnia",
+		"subtitle": "Twój dzienny budżet godzin skupienia.",
+		"loading": "Wczytywanie planu dnia…",
+		"guestEmpty": "Plan dnia jest dostępny po zalogowaniu.",
+		"budgetHeading": "Budżet skupienia",
+		"budgetLine": "Wykorzystano {used} z {budget} · pozostało {remaining}",
+		"changeBudget": "Zmień budżet",
+		"presetLabel": "{hours}h",
+		"customAria": "Własne minuty skupienia",
+		"customPlaceholder": "Własne",
+		"set": "Ustaw",
+		"cancel": "Anuluj",
+		"saveError": "Nie udało się zapisać godzin skupienia. Spróbuj ponownie.",
+		"validationError": "Podaj wartość od 15 do 720 minut."
 	},
 	"DayMemory": {
 		"sectionDone": "Ukończone",

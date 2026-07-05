@@ -824,25 +824,25 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Automated
 
-- [x] 6.1 Type checking passes: `pnpm typecheck`
-- [x] 6.2 Lint/format passes: `pnpm check`
-- [x] 6.3 Unit tests pass (dashboard/state/gate dismiss-oracle): `pnpm test`
+- [x] 6.1 Type checking passes: `pnpm typecheck` — 34d1698
+- [x] 6.2 Lint/format passes: `pnpm check` — 34d1698
+- [x] 6.3 Unit tests pass (dashboard/state/gate dismiss-oracle): `pnpm test` — 34d1698
 - [ ] 6.4 Pomodoro + wedge e2e pass: `pnpm test:e2e` (pending CI)
 
 #### Manual
 
-- [ ] 6.5 Idle Fokus calm; energy+goal once/day then hide
-- [ ] 6.6 Active work backdrop legible; break hero on break
-- [ ] 6.7 Progress card / tip / quick actions read real data
-- [ ] 6.8 No dead-end in gate or break/returning transitions
+- [x] 6.5 Idle Fokus calm; energy+goal once/day then hide — 34d1698
+- [x] 6.6 Active work backdrop legible; break hero on break — 34d1698
+- [x] 6.7 Progress card / tip / quick actions read real data — 34d1698
+- [x] 6.8 No dead-end in gate or break/returning transitions — 34d1698
 
 ### Phase 7: Plan dnia View
 
 #### Automated
 
-- [ ] 7.1 Type checking passes: `pnpm typecheck`
-- [ ] 7.2 Lint/format passes: `pnpm check`
-- [ ] 7.3 Unit tests pass: `pnpm test`
+- [x] 7.1 Type checking passes: `pnpm typecheck`
+- [x] 7.2 Lint/format passes: `pnpm check`
+- [x] 7.3 Unit tests pass: `pnpm test`
 
 #### Manual
 

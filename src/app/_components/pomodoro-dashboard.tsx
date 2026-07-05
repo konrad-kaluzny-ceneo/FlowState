@@ -24,6 +24,7 @@ import { GuestContextRail } from "~/app/_components/guest-context-rail";
 import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
+import { PlanDniaView } from "~/app/_components/plan-dnia-view";
 import { QuickActions } from "~/app/_components/quick-actions";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
 import {
@@ -268,10 +269,13 @@ export function PomodoroDashboardBody({
 	const [taskInventoryView, setTaskInventoryView] = useState<
 		"inventory" | "archive"
 	>("inventory");
-	// Temporary Fokus/Zadania switcher (S-45 p6) — replaced by the nav shell +
-	// real routes in Phase 11. Kept view-local (not module-priority-gated) so
-	// task management stays reachable once Fokus drops its inline list.
-	const [homeView, setHomeView] = useState<"fokus" | "zadania">("fokus");
+	// Temporary Fokus/Zadania/Plan switcher (S-45 p6/p7) — replaced by the nav
+	// shell + real routes in Phase 11. Kept view-local (not module-priority-gated)
+	// so task management and day planning stay reachable once Fokus drops its
+	// inline list.
+	const [homeView, setHomeView] = useState<"fokus" | "zadania" | "plan">(
+		"fokus",
+	);
 	const tHomeViewToggle = useTranslations("HomeViewToggle");
 
 	const needsPermissionPrompt = useCallback(() => {
@@ -1024,8 +1028,8 @@ export function PomodoroDashboardBody({
 				)
 			)}
 
-			{/* Temporary Fokus/Zadania switcher (S-45 p6) — replaced by the nav
-			    shell + real routes in Phase 11. */}
+			{/* Temporary Fokus/Zadania/Plan switcher (S-45 p6/p7) — replaced by the
+			    nav shell + real routes in Phase 11. */}
 			<div
 				className="flex w-full justify-center"
 				data-testid="home-view-toggle"
@@ -1035,6 +1039,7 @@ export function PomodoroDashboardBody({
 					options={[
 						{ value: "fokus", label: tHomeViewToggle("fokus") },
 						{ value: "zadania", label: tHomeViewToggle("zadania") },
+						{ value: "plan", label: tHomeViewToggle("plan") },
 					]}
 					value={homeView}
 				/>
@@ -1048,6 +1053,13 @@ export function PomodoroDashboardBody({
 					{taskInventoryView === "archive"
 						? zadaniaTaskArchive
 						: zadaniaTaskList}
+				</div>
+			) : homeView === "plan" ? (
+				<div
+					className="flex w-full max-w-lg flex-col items-center gap-section lg:max-w-none"
+					data-testid="home-plan-view"
+				>
+					<PlanDniaView dayPlan={dayPlan} />
 				</div>
 			) : (
 				<div

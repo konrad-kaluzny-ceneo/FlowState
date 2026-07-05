@@ -367,7 +367,24 @@
 	},
 	"HomeViewToggle": {
 		"fokus": "Fokus",
-		"zadania": "Zadania"
+		"zadania": "Zadania",
+		"plan": "Day plan"
+	},
+	"PlanDnia": {
+		"title": "Day plan",
+		"subtitle": "Your daily focus-hours budget.",
+		"loading": "Loading day plan…",
+		"guestEmpty": "Day plan is available after signing in.",
+		"budgetHeading": "Focus budget",
+		"budgetLine": "Used {used} of {budget} · {remaining} remaining",
+		"changeBudget": "Change budget",
+		"presetLabel": "{hours}h",
+		"customAria": "Custom focus minutes",
+		"customPlaceholder": "Custom",
+		"set": "Set",
+		"cancel": "Cancel",
+		"saveError": "Could not save focus hours. Try again.",
+		"validationError": "Enter a value between 15 and 720 minutes."
 	},
 	"DayMemory": {
 		"sectionDone": "Done",
