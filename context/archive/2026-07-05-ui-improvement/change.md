@@ -1,10 +1,10 @@
 ---
 change_id: ui-improvement
 title: UI polish pass and "coming soon" surfacing across Focus, Tasks, Plan, Summary and Settings
-status: implemented
+status: archived
 created: 2026-07-05
 updated: 2026-07-05
-archived_at: null
+archived_at: 2026-07-05T19:50:00Z
 ---
 
 ## Notes
