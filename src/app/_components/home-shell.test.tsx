@@ -70,10 +70,6 @@ vi.mock("~/hooks/use-test-id-visible", () => ({
 	useTestIdVisible: () => false,
 }));
 
-vi.mock("~/lib/data-mode/data-mode-context", () => ({
-	DataModeProvider: ({ children }: { children: React.ReactNode }) => children,
-}));
-
 const onlineState = vi.hoisted(() => ({ isOnline: true }));
 
 vi.mock("~/hooks/use-online-status", () => ({

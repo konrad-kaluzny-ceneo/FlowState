@@ -21,12 +21,8 @@ const authenticatedOnboardingScope: OnboardingScope = {
 
 const usePomodoroCycleMock = vi.fn();
 
-vi.mock("~/hooks/use-pomodoro-cycle", () => ({
-	usePomodoroCycle: (...args: unknown[]) => usePomodoroCycleMock(...args),
-}));
-
-vi.mock("~/hooks/use-e2e-expose-cycle-recovery", () => ({
-	useE2eExposeCycleRecovery: () => {},
+vi.mock("~/app/_components/pomodoro-cycle-provider", () => ({
+	usePomodoroCycleContext: () => usePomodoroCycleMock(),
 }));
 
 const useDailyRecapMock = vi.fn();
@@ -213,6 +209,8 @@ function makePomodoroMock(
 		onMidCycleContinueWithTask: vi.fn(),
 		onMidCycleEndCycleAndBreak: vi.fn(),
 		endSession: vi.fn(),
+		outOfTabBreakAlertsEnabled: true,
+		setOutOfTabBreakAlertsEnabled: vi.fn(),
 		...overrides,
 	};
 }
@@ -222,9 +220,7 @@ function renderBody(overrides: Record<string, unknown> = {}) {
 
 	return render(
 		<PomodoroDashboardBody
-			cycleEndAudioMode="muted"
 			refreshTasks={async () => {}}
-			setCycleEndAudioMode={vi.fn()}
 			tasks={tasks}
 			{...{
 				enableCheckInGate: false,
@@ -259,10 +255,8 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableCheckInGate
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -281,10 +275,8 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableCheckInGate
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -315,11 +307,9 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		const { rerender } = render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -336,11 +326,9 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		rerender(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -366,10 +354,8 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableWindDownGate
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -398,11 +384,9 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -437,10 +421,8 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableCheckInGate
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -471,11 +453,9 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -507,11 +487,9 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -532,11 +510,9 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -556,11 +532,9 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -582,10 +556,8 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableCheckInGate
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -633,11 +605,9 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -669,11 +639,9 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -694,10 +662,8 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableCheckInGate
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -742,11 +708,9 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -959,11 +923,9 @@ describe("PomodoroDashboardBody break-alerts permission deferral", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1125,11 +1087,9 @@ describe("PomodoroDashboardBody home IA layout", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1153,11 +1113,9 @@ describe("PomodoroDashboardBody home IA layout", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1206,11 +1164,9 @@ describe("PomodoroDashboardBody home IA layout", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1248,11 +1204,9 @@ describe("PomodoroDashboardBody home IA layout", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1389,12 +1343,7 @@ describe("PomodoroDashboardBody day-memory line", () => {
 		useDailyRecapMock.mockReturnValue(nonEmptyDailyRecap);
 
 		const { rerender } = render(
-			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
-				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
-				tasks={tasks}
-			/>,
+			<PomodoroDashboardBody refreshTasks={async () => {}} tasks={tasks} />,
 		);
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
@@ -1406,12 +1355,7 @@ describe("PomodoroDashboardBody day-memory line", () => {
 			}),
 		);
 		rerender(
-			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
-				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
-				tasks={tasks}
-			/>,
+			<PomodoroDashboardBody refreshTasks={async () => {}} tasks={tasks} />,
 		);
 
 		expect(screen.queryByTestId("day-memory-line")).toBeNull();
@@ -1423,12 +1367,7 @@ describe("PomodoroDashboardBody day-memory line", () => {
 			}),
 		);
 		rerender(
-			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
-				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
-				tasks={tasks}
-			/>,
+			<PomodoroDashboardBody refreshTasks={async () => {}} tasks={tasks} />,
 		);
 
 		expectInsideRegion("home-primary-region", "day-memory-line");
@@ -1563,10 +1502,8 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 
 		return render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1626,11 +1563,9 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1649,10 +1584,8 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 
 		const { rerender } = render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1664,10 +1597,8 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 		);
 		rerender(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1688,10 +1619,8 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 		);
 		rerender(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1710,10 +1639,8 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 
 		const { rerender } = render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1734,10 +1661,8 @@ describe("PomodoroDashboardBody rail illustration variant", () => {
 		);
 		rerender(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1764,12 +1689,10 @@ describe("PomodoroDashboardBody context rail content", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				dayPlan={mockDayPlanWithBudget}
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);
@@ -1822,12 +1745,10 @@ describe("PomodoroDashboardBody context rail content", () => {
 
 		render(
 			<PomodoroDashboardBody
-				cycleEndAudioMode="muted"
 				dayPlan={mockDayPlanWithBudget}
 				enableSuggestionGate
 				onboardingScope={authenticatedOnboardingScope}
 				refreshTasks={async () => {}}
-				setCycleEndAudioMode={vi.fn()}
 				tasks={tasks}
 			/>,
 		);

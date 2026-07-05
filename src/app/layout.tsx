@@ -6,10 +6,12 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 
 import { auth } from "~/lib/auth/server";
+import { DataModeProvider } from "~/lib/data-mode/data-mode-context";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import { TRPCReactProvider } from "~/trpc/react";
 import { AppNavbar } from "./_components/app-navbar";
 import { OAuthSessionVerifier } from "./_components/oauth-session-verifier";
+import { PomodoroCycleProvider } from "./_components/pomodoro-cycle-provider";
 import { ThemeProvider } from "./_components/theme-provider";
 import { ThemeScript } from "./_components/theme-script";
 
@@ -41,7 +43,7 @@ export default async function RootLayout({
 	try {
 		const result = await auth.getSession();
 		const user = result.data?.user;
-		if (user?.id) {
+		if (user?.id && user.email) {
 			userId = user.id;
 		}
 		if (user?.name) {
@@ -74,7 +76,11 @@ export default async function RootLayout({
 						<ThemeProvider>
 							<OAuthSessionVerifier />
 							<AppNavbar scope={scope} userName={userName} />
-							{children}
+							<DataModeProvider mode={scope.mode}>
+								<PomodoroCycleProvider scope={scope}>
+									{children}
+								</PomodoroCycleProvider>
+							</DataModeProvider>
 						</ThemeProvider>
 					</TRPCReactProvider>
 				</NextIntlClientProvider>

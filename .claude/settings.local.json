@@ -1,0 +1,5 @@
+{
+	"permissions": {
+		"allow": ["Skill(10x-implement)", "Skill(10x-implement:*)"]
+	}
+}

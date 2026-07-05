@@ -26,6 +26,7 @@ import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
 import { PlanDniaView } from "~/app/_components/plan-dnia-view";
 import { PodsumowanieView } from "~/app/_components/podsumowanie-view";
+import { usePomodoroCycleContext } from "~/app/_components/pomodoro-cycle-provider";
 import { QuickActions } from "~/app/_components/quick-actions";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
 import {
@@ -41,14 +42,10 @@ import { SegmentedControl } from "~/app/_components/ui/segmented-control";
 import { UstawieniaView } from "~/app/_components/ustawienia-view";
 import { WedgeSyncRecovery } from "~/app/_components/wedge-sync-recovery";
 import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
-import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preference";
 import { useDailyRecap } from "~/hooks/use-daily-recap";
 import { useDayPlan } from "~/hooks/use-day-plan";
 import { useDayStats } from "~/hooks/use-day-stats";
-import { useE2eExposeCycleRecovery } from "~/hooks/use-e2e-expose-cycle-recovery";
 import { useOnboarding } from "~/hooks/use-onboarding-state";
-import { useOutOfTabBreakAlertsPreference } from "~/hooks/use-out-of-tab-break-alerts-preference";
-import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
 import { useSyncBreakAtmosphere } from "~/hooks/use-sync-break-atmosphere";
 import { useSyncWorkFocusShell } from "~/hooks/use-sync-work-focus-shell";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
@@ -57,7 +54,6 @@ import {
 	readNotificationPromptDismissed,
 	writeNotificationPromptDismissed,
 } from "~/lib/break-out-of-tab-alert/storage";
-import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import {
 	useDomainTasks,
@@ -140,8 +136,6 @@ export function PomodoroDashboardBody({
 	shouldShowCheckInCoach: shouldShowCheckInCoachFlag,
 	shouldShowSuggestionCoach: shouldShowSuggestionCoachFlag,
 	workTypeDurationScope,
-	cycleEndAudioMode,
-	setCycleEndAudioMode: _setCycleEndAudioMode,
 	onboardingScope = { mode: "guest" },
 	onCheckInCoachSeen,
 	onSuggestionCoachSeen,
@@ -158,39 +152,17 @@ export function PomodoroDashboardBody({
 	shouldShowCheckInCoach?: boolean;
 	shouldShowSuggestionCoach?: boolean;
 	workTypeDurationScope?: OnboardingScope;
-	cycleEndAudioMode: CycleEndAudioMode;
-	setCycleEndAudioMode: (mode: CycleEndAudioMode) => void;
 	onboardingScope?: OnboardingScope;
 	onCheckInCoachSeen?: () => void;
 	onSuggestionCoachSeen?: () => void;
 }) {
-	const {
-		enabled: outOfTabBreakAlertsEnabled,
-		setEnabled: setOutOfTabBreakAlertsEnabled,
-	} = useOutOfTabBreakAlertsPreference(onboardingScope);
-
-	const getCycleEndAudioMode = useCallback(
-		() => cycleEndAudioMode,
-		[cycleEndAudioMode],
-	);
-	const getOutOfTabBreakAlertsEnabled = useCallback(
-		() => outOfTabBreakAlertsEnabled,
-		[outOfTabBreakAlertsEnabled],
-	);
+	const pomodoro = usePomodoroCycleContext();
+	const { outOfTabBreakAlertsEnabled, setOutOfTabBreakAlertsEnabled } =
+		pomodoro;
 	const activeTaskIds = useMemo(
 		() => new Set(tasks.filter((t) => t.status === "active").map((t) => t.id)),
 		[tasks],
 	);
-	const pomodoro = usePomodoroCycle({
-		getCycleEndAudioMode,
-		getOutOfTabBreakAlertsEnabled,
-		activeTaskIds,
-		continueTasks: tasks.map((task) => ({
-			id: task.id,
-			status: task.status,
-		})),
-	});
-	useE2eExposeCycleRecovery();
 	const {
 		recap,
 		isLoading: recapLoading,
@@ -1313,12 +1285,8 @@ function AuthenticatedPomodoroDashboard() {
 	const workTypeDurationScope =
 		onboardingScope.mode === "authenticated" ? onboardingScope : undefined;
 
-	const { mode: cycleEndAudioMode, setMode: setCycleEndAudioMode } =
-		useCycleEndAudioPreference(onboardingScope);
-
 	return (
 		<PomodoroDashboardBody
-			cycleEndAudioMode={cycleEndAudioMode}
 			dayPlan={dayPlan}
 			enableCheckInGate
 			enableSuggestionGate
@@ -1328,7 +1296,6 @@ function AuthenticatedPomodoroDashboard() {
 			onCheckInCoachSeen={markCheckInCoachSeen}
 			onSuggestionCoachSeen={markSuggestionCoachSeen}
 			refreshTasks={refreshTasks}
-			setCycleEndAudioMode={setCycleEndAudioMode}
 			shouldShowCheckInCoach={shouldShowCheckInCoach}
 			shouldShowSuggestionCoach={shouldShowSuggestionCoach}
 			tasks={domainTasks}
@@ -1340,15 +1307,11 @@ function AuthenticatedPomodoroDashboard() {
 function GuestPomodoroDashboard() {
 	const { tasks, refresh } = useGuestDomainTasks();
 	const guestScope = useMemo(() => ({ mode: "guest" as const }), []);
-	const { mode: cycleEndAudioMode, setMode: setCycleEndAudioMode } =
-		useCycleEndAudioPreference(guestScope);
 
 	return (
 		<PomodoroDashboardBody
-			cycleEndAudioMode={cycleEndAudioMode}
 			onboardingScope={guestScope}
 			refreshTasks={refresh}
-			setCycleEndAudioMode={setCycleEndAudioMode}
 			tasks={tasks}
 		/>
 	);

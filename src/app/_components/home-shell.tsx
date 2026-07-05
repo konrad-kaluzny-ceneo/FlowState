@@ -17,7 +17,6 @@ import {
 } from "~/hooks/use-onboarding-state";
 import { useOnlineStatus } from "~/hooks/use-online-status";
 import { useTestIdVisible } from "~/hooks/use-test-id-visible";
-import { DataModeProvider } from "~/lib/data-mode/data-mode-context";
 import { HomeIllustrationVariantProvider } from "~/lib/design/home-illustration-variant";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 
@@ -76,7 +75,7 @@ function HomeShellContent({
 	const cycleCompleteVisible = useTestIdVisible("cycle-complete-overlay");
 
 	return (
-		<DataModeProvider mode={mode}>
+		<>
 			{isAuthenticated && userId != null && (
 				<GuestImportOnMount userId={userId} />
 			)}
@@ -99,7 +98,7 @@ function HomeShellContent({
 					<PomodoroDashboard />
 				</div>
 			</main>
-		</DataModeProvider>
+		</>
 	);
 }
 
