@@ -45,9 +45,15 @@ beforeEach(() => {
 	useDailyRecapMock.mockReturnValue(defaultDailyRecap);
 });
 
+const { createTaskMock } = vi.hoisted(() => ({
+	createTaskMock: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("~/hooks/use-task-mutations", () => ({
 	useTaskMutations: () => ({
 		markDoneForToday: vi.fn().mockResolvedValue(undefined),
+		createTask: createTaskMock,
+		isCreating: false,
 	}),
 }));
 
@@ -1649,5 +1655,65 @@ describe("PomodoroDashboardBody context rail content", () => {
 		);
 		expect(countEnabledPrimaryCtas()).toBe(1);
 		expectInsideRegion("home-primary-region", "suggestion-accept-btn");
+	});
+});
+
+describe("PomodoroDashboardBody focus empty state and quick actions", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		createTaskMock.mockResolvedValue(undefined);
+	});
+
+	function renderIdleWithoutTasks(overrides: Record<string, unknown> = {}) {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTaskId: null,
+				focusedTask: null,
+				showSessionEnergy: false,
+				...overrides,
+			}),
+		);
+
+		return render(
+			<PomodoroDashboardBody
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				tasks={[]}
+			/>,
+		);
+	}
+
+	it("shows focus empty state when idle with no active or focused tasks", () => {
+		renderIdleWithoutTasks();
+
+		expect(screen.getByTestId("focus-empty-state")).toBeTruthy();
+		expect(screen.getByTestId("quick-actions")).toBeTruthy();
+		expect(screen.queryByTestId("quick-action-view-tasks")).toBeNull();
+	});
+
+	it("hides focus empty state when a task is focused", () => {
+		renderIdleWithoutTasks({
+			focusedTask: { id: 1, title: "Focus task" },
+			focusedTaskId: 1,
+		});
+
+		expect(screen.queryByTestId("focus-empty-state")).toBeNull();
+	});
+
+	it("opens add-task modal from focus empty CTA", () => {
+		renderIdleWithoutTasks();
+
+		fireEvent.click(screen.getByTestId("focus-empty-add-task"));
+
+		expect(screen.getByTestId("add-task-modal")).toBeTruthy();
+	});
+
+	it("opens add-task modal from quick action add task", () => {
+		renderIdleWithoutTasks();
+
+		fireEvent.click(screen.getByTestId("quick-action-add-task"));
+
+		expect(screen.getByTestId("add-task-modal")).toBeTruthy();
 	});
 });

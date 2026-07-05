@@ -51,6 +51,9 @@ export function buildGuestDailyRecap(
 			firstStartedAt: task.updatedAt,
 			lastEndedAt: task.updatedAt,
 			focusedMinutes: 0,
+			workType: task.workType,
+			effortMinutes: task.effortMinutes ?? null,
+			isCompleted: true,
 			completedWithoutCycle: true,
 		});
 	}
@@ -120,6 +123,9 @@ function buildGuestLast24HoursRows(
 				firstStartedAt: cycle.startedAt,
 				lastEndedAt: cycle.endedAt ?? cycle.startedAt,
 				focusedMinutes: minutes,
+				workType: task.workType,
+				effortMinutes: task.effortMinutes ?? null,
+				isCompleted: task.status === "completed",
 			});
 			continue;
 		}
@@ -132,6 +138,9 @@ function buildGuestLast24HoursRows(
 			existing.lastEndedAt = endedAt;
 		}
 		existing.focusedMinutes += minutes;
+		if (task.status === "completed") {
+			existing.isCompleted = true;
+		}
 	}
 
 	return [...byTask.values()];

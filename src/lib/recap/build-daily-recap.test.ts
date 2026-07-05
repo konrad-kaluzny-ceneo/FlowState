@@ -11,7 +11,13 @@ type CycleRow = {
 	configuredDurationSec: number;
 	startedAt: Date;
 	endedAt: Date | null;
-	task: { id: number; title: string } | null;
+	task: {
+		id: number;
+		title: string;
+		workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+		effortMinutes: number | null;
+		status: string;
+	} | null;
 };
 
 type TaskRow = {
@@ -21,6 +27,7 @@ type TaskRow = {
 	status: string;
 	isDailyStanding: boolean;
 	effortMinutes: number | null;
+	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	sortOrder: number;
 	createdAt: Date;
 	updatedAt: Date | null;
@@ -144,9 +151,10 @@ describe("buildDailyRecap", () => {
 			id: 1,
 			userId: USER,
 			title: "Write recap",
-			status: "active",
+			status: "completed",
 			isDailyStanding: false,
 			effortMinutes: 25,
+			workType: "DEEP_WORK",
 			sortOrder: 0,
 			createdAt: NOW,
 			updatedAt: NOW,
@@ -162,7 +170,13 @@ describe("buildDailyRecap", () => {
 				configuredDurationSec: 1500,
 				startedAt: new Date("2026-06-20T10:00:00Z"),
 				endedAt: new Date("2026-06-20T10:15:00Z"),
-				task: { id: 1, title: "Write recap" },
+				task: {
+					id: 1,
+					title: "Write recap",
+					workType: "DEEP_WORK",
+					effortMinutes: 25,
+					status: "completed",
+				},
 			},
 			{
 				id: 11,
@@ -173,7 +187,13 @@ describe("buildDailyRecap", () => {
 				configuredDurationSec: 1500,
 				startedAt: new Date("2026-06-20T11:00:00Z"),
 				endedAt: new Date("2026-06-20T11:10:00Z"),
-				task: { id: 1, title: "Write recap" },
+				task: {
+					id: 1,
+					title: "Write recap",
+					workType: "DEEP_WORK",
+					effortMinutes: 25,
+					status: "completed",
+				},
 			},
 		);
 
@@ -189,6 +209,9 @@ describe("buildDailyRecap", () => {
 			taskId: 1,
 			title: "Write recap",
 			focusedMinutes: 25,
+			workType: "DEEP_WORK",
+			effortMinutes: 25,
+			isCompleted: true,
 		});
 		expect(recap.footprints["1"]).toEqual({
 			lastFocusedAt: new Date("2026-06-20T11:10:00Z"),
@@ -204,6 +227,7 @@ describe("buildDailyRecap", () => {
 			status: "completed",
 			isDailyStanding: false,
 			effortMinutes: null,
+			workType: "OPERATIONAL",
 			sortOrder: 0,
 			createdAt: NOW,
 			updatedAt: new Date("2026-06-20T11:30:00Z"),
@@ -220,6 +244,9 @@ describe("buildDailyRecap", () => {
 		expect(recap.last24Hours[0]).toMatchObject({
 			taskId: 2,
 			focusedMinutes: 0,
+			workType: "OPERATIONAL",
+			effortMinutes: null,
+			isCompleted: true,
 			completedWithoutCycle: true,
 		});
 	});
@@ -233,6 +260,7 @@ describe("buildDailyRecap", () => {
 				status: "active",
 				isDailyStanding: false,
 				effortMinutes: 30,
+				workType: "DEEP_WORK",
 				sortOrder: 0,
 				createdAt: NOW,
 				updatedAt: NOW,
@@ -244,6 +272,7 @@ describe("buildDailyRecap", () => {
 				status: "active",
 				isDailyStanding: true,
 				effortMinutes: 15,
+				workType: "OPERATIONAL",
 				sortOrder: 1,
 				createdAt: NOW,
 				updatedAt: NOW,
@@ -258,5 +287,52 @@ describe("buildDailyRecap", () => {
 		);
 
 		expect(recap.todayPlan.map((row) => row.taskId)).toEqual([3, 4]);
+	});
+
+	it("marks cycle rollup rows incomplete when task is still active", async () => {
+		tasks.push({
+			id: 5,
+			userId: USER,
+			title: "In progress",
+			status: "active",
+			isDailyStanding: false,
+			effortMinutes: 20,
+			workType: "REACTIVE",
+			sortOrder: 0,
+			createdAt: NOW,
+			updatedAt: NOW,
+		});
+
+		cycles.push({
+			id: 20,
+			userId: USER,
+			taskId: 5,
+			kind: "WORK",
+			state: "COMPLETED",
+			configuredDurationSec: 1500,
+			startedAt: new Date("2026-06-20T09:00:00Z"),
+			endedAt: new Date("2026-06-20T09:25:00Z"),
+			task: {
+				id: 5,
+				title: "In progress",
+				workType: "REACTIVE",
+				effortMinutes: 20,
+				status: "active",
+			},
+		});
+
+		const recap = await buildDailyRecap(
+			createMockDb() as never,
+			USER,
+			DATE_KEY,
+			NOW,
+		);
+
+		expect(recap.last24Hours[0]).toMatchObject({
+			taskId: 5,
+			isCompleted: false,
+			workType: "REACTIVE",
+			effortMinutes: 20,
+		});
 	});
 });

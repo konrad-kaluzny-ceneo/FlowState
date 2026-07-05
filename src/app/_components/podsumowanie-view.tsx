@@ -1,8 +1,17 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
+import { ComingSoonPreview } from "~/app/_components/ui/coming-soon-preview";
+import {
+	getWorkTypeLabel,
+	WORK_TYPE_CONFIG,
+	type WorkTypeKey,
+} from "~/lib/design/work-type-config";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import type { DayStats, HourBucket } from "~/lib/recap/aggregate-day-stats";
+import { filterCompletedRecapRows } from "~/lib/recap/filter-completed-recap-rows";
+import type { RecapTaskRow } from "~/lib/recap/types";
 
 // ─── KPI card ─────────────────────────────────────────────────────────────────
 
@@ -15,7 +24,7 @@ type KpiCardProps = {
 
 function KpiCard({ label, value, progress }: KpiCardProps) {
 	return (
-		<div className="flex flex-col gap-1 rounded-xl border border-border-subtle bg-surface-panel px-4 py-3">
+		<div className="flex flex-col gap-1 rounded-card border border-card-border bg-surface-card px-4 py-3 shadow-sm">
 			<span className="text-text-secondary text-xs">{label}</span>
 			<span className="font-semibold text-primary text-xl tabular-nums">
 				{value}
@@ -212,13 +221,93 @@ function LegendRow({ colorClass, label, value, total, unit }: LegendRowProps) {
 	);
 }
 
-// ─── Deferred placeholder ─────────────────────────────────────────────────────
+// ─── Completed task row ───────────────────────────────────────────────────────
 
-function DeferredPlaceholder({ text }: { text: string }) {
+type CompletedTaskRowProps = {
+	row: RecapTaskRow;
+	locale: UserLocale;
+	tPodsumowanie: ReturnType<typeof useTranslations<"Podsumowanie">>;
+	tTasks: ReturnType<typeof useTranslations<"Tasks">>;
+};
+
+function CompletedTaskRow({
+	row,
+	locale,
+	tPodsumowanie,
+	tTasks,
+}: CompletedTaskRowProps) {
+	const config = WORK_TYPE_CONFIG[row.workType as WorkTypeKey];
+	const timeLabel =
+		row.effortMinutes != null
+			? tTasks("effortMinutes", { minutes: row.effortMinutes })
+			: tPodsumowanie("kpiMinutes", { minutes: row.focusedMinutes });
+
 	return (
-		<div className="flex items-center justify-center rounded-lg border border-border-subtle border-dashed px-4 py-6">
-			<p className="text-center text-text-dimmed text-xs">{text}</p>
-		</div>
+		<li
+			className="rounded-card border border-card-border bg-surface-card px-4 py-3 shadow-sm"
+			data-testid={`podsumowanie-completed-row-${row.taskId}`}
+		>
+			<p className="font-medium text-primary text-sm">{row.title}</p>
+			<div className="mt-2 flex flex-wrap items-center gap-1.5">
+				<span
+					className={`rounded-full px-2.5 py-1 font-semibold text-xs ring-1 ${config.bg} ${config.text} ${config.badgeRing}`}
+					data-testid="completed-task-type-badge"
+				>
+					{getWorkTypeLabel(row.workType as WorkTypeKey, locale)}
+				</span>
+				<span
+					className="rounded-full border border-border-subtle bg-surface-panel px-2.5 py-1 font-medium text-text-secondary text-xs"
+					data-testid="completed-task-time-badge"
+				>
+					{timeLabel}
+				</span>
+			</div>
+		</li>
+	);
+}
+
+type CompletedTasksSectionProps = {
+	rows: RecapTaskRow[];
+	locale: UserLocale;
+	tPodsumowanie: ReturnType<typeof useTranslations<"Podsumowanie">>;
+	tTasks: ReturnType<typeof useTranslations<"Tasks">>;
+};
+
+function CompletedTasksSection({
+	rows,
+	locale,
+	tPodsumowanie,
+	tTasks,
+}: CompletedTasksSectionProps) {
+	return (
+		<section
+			className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
+			data-testid="podsumowanie-completed-list"
+		>
+			<h3 className="mb-3 font-medium text-primary text-sm">
+				{tPodsumowanie("completedListTitle")}
+			</h3>
+			{rows.length === 0 ? (
+				<p
+					className="text-center text-sm text-text-secondary"
+					data-testid="podsumowanie-completed-empty"
+				>
+					{tPodsumowanie("completedListEmpty")}
+				</p>
+			) : (
+				<ul className="space-y-2">
+					{rows.map((row) => (
+						<CompletedTaskRow
+							key={String(row.taskId)}
+							locale={locale}
+							row={row}
+							tPodsumowanie={tPodsumowanie}
+							tTasks={tTasks}
+						/>
+					))}
+				</ul>
+			)}
+		</section>
 	);
 }
 
@@ -235,20 +324,24 @@ const WORK_TYPE_LABEL_KEY: Record<string, string> = {
 
 export type PodsumowanieViewProps = {
 	stats: DayStats | null;
+	last24Hours?: RecapTaskRow[];
 	isLoading?: boolean;
 	isGuest?: boolean;
 };
 
 export function PodsumowanieView({
 	stats,
+	last24Hours = [],
 	isLoading = false,
 	isGuest = false,
 }: PodsumowanieViewProps) {
 	const t = useTranslations("Podsumowanie");
+	const tTasks = useTranslations("Tasks");
+	const locale = useLocale() as UserLocale;
+	const completedTasks = filterCompletedRecapRows(last24Hours);
 
 	const workTypeLabel = (wt: string) => {
 		const key = WORK_TYPE_LABEL_KEY[wt] ?? "workTypeUncategorized";
-		// Cast to any since translation keys are dynamic here
 		return t(key as Parameters<typeof t>[0]);
 	};
 
@@ -265,7 +358,7 @@ export function PodsumowanieView({
 					<p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
 				</div>
 				<div
-					className="rounded-lg border border-border-subtle bg-surface-panel px-4 py-3"
+					className="rounded-card border border-card-border bg-surface-card px-4 py-3 shadow-sm"
 					data-testid="podsumowanie-guest-empty"
 				>
 					<p className="text-sm text-text-secondary">{t("guestEmpty")}</p>
@@ -340,7 +433,7 @@ export function PodsumowanieView({
 			{/* No data state */}
 			{!hasAnyData ? (
 				<div
-					className="rounded-xl border border-border-subtle bg-surface-panel px-6 py-8 text-center"
+					className="rounded-card border border-card-border bg-surface-card px-6 py-8 text-center shadow-sm"
 					data-testid="podsumowanie-no-data"
 				>
 					<p className="font-medium text-primary">{t("noDataTitle")}</p>
@@ -378,7 +471,7 @@ export function PodsumowanieView({
 
 					{/* Hourly bar chart */}
 					<div
-						className="rounded-xl border border-border-subtle bg-surface-panel px-4 py-4"
+						className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
 						data-testid="podsumowanie-hourly-chart"
 					>
 						<p className="mb-3 font-medium text-primary text-sm">
@@ -397,7 +490,7 @@ export function PodsumowanieView({
 					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						{/* Session-type donut */}
 						<div
-							className="rounded-xl border border-border-subtle bg-surface-panel px-4 py-4"
+							className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
 							data-testid="podsumowanie-session-type-donut"
 						>
 							<p className="mb-3 font-medium text-primary text-sm">
@@ -432,7 +525,7 @@ export function PodsumowanieView({
 
 						{/* Tasks donut */}
 						<div
-							className="rounded-xl border border-border-subtle bg-surface-panel px-4 py-4"
+							className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
 							data-testid="podsumowanie-task-donut"
 						>
 							<p className="mb-3 font-medium text-primary text-sm">
@@ -481,30 +574,61 @@ export function PodsumowanieView({
 				</>
 			)}
 
+			<CompletedTasksSection
+				locale={locale}
+				rows={completedTasks}
+				tPodsumowanie={t}
+				tTasks={tTasks}
+			/>
+
 			{/* Deferred widgets */}
 			<div
 				className="grid grid-cols-1 gap-3 sm:grid-cols-2"
 				data-testid="podsumowanie-deferred"
 			>
-				<div className="rounded-xl border border-border-subtle bg-surface-panel px-4 py-4">
-					<p className="mb-2 font-medium text-primary text-sm">
+				<div className="space-y-2">
+					<p className="font-medium text-primary text-sm">
 						{t("bestTimeTitle")}
 					</p>
-					<DeferredPlaceholder text={t("bestTimeComingSoon")} />
+					<ComingSoonPreview
+						label={t("bestTimeComingSoon")}
+						testId="podsumowanie-best-time-preview"
+					>
+						<div className="space-y-2 p-4">
+							<div className="h-3 w-3/4 rounded bg-segment-inactive" />
+							<div className="h-20 rounded bg-accent-cta/20" />
+							<div className="h-3 w-1/2 rounded bg-segment-inactive" />
+						</div>
+					</ComingSoonPreview>
 				</div>
-				<div className="flex items-center justify-center rounded-xl border border-border-subtle bg-surface-panel px-4 py-4">
-					<DeferredPlaceholder text={t("dateNavComingSoon")} />
+				<div className="flex items-end">
+					<ComingSoonPreview
+						label={t("dateNavComingSoon")}
+						testId="podsumowanie-date-nav-preview"
+					>
+						<div className="flex items-center justify-between gap-2 p-4">
+							<div className="h-8 w-8 rounded-full bg-segment-inactive" />
+							<div className="h-4 w-24 rounded bg-segment-inactive" />
+							<div className="h-8 w-8 rounded-full bg-segment-inactive" />
+						</div>
+					</ComingSoonPreview>
 				</div>
 			</div>
 
 			{/* Summary footer hero band */}
 			<div
-				aria-hidden="true"
-				className="summary-footer-hero h-24 w-full sm:h-32"
+				className="summary-footer-hero flex min-h-24 w-full items-center px-6 py-6 sm:min-h-32"
 				data-testid="podsumowanie-footer-hero"
-			/>
+			>
+				<div className="max-w-md">
+					<p className="font-semibold text-primary text-sm sm:text-base">
+						{t("footerBannerTitle")}
+					</p>
+					<p className="mt-1 text-sm text-text-secondary">
+						{t("footerBannerBody")}
+					</p>
+				</div>
+			</div>
 		</div>
 	);
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────

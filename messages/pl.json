@@ -416,7 +416,11 @@
 		"noDataBody": "Rozpocznij sesję skupienia, aby zobaczyć statystyki dnia.",
 		"bestTimeTitle": "Najlepsza pora dnia",
 		"bestTimeComingSoon": "Wkrótce – wymaga danych z kilku dni.",
-		"dateNavComingSoon": "Nawigacja dat – wkrótce."
+		"dateNavComingSoon": "Nawigacja dat – wkrótce.",
+		"completedListTitle": "Ukończone w ostatnich 24 godzinach",
+		"completedListEmpty": "Brak ukończonych zadań w ostatnich 24 godzinach — to też spokojny dzień.",
+		"footerBannerTitle": "Dobrze, że tu jesteś",
+		"footerBannerBody": "Regularne sesje skupienia budują rytm dnia — jeden cykl naraz."
 	},
 	"PlanDnia": {
 		"title": "Plan dnia",

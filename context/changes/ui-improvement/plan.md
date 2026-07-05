@@ -520,10 +520,10 @@ Przebudować Ustawienia do dwukolumnowego układu tabów (tylko działające sek
 
 #### Automated
 
-- [ ] 3.1 Typecheck przechodzi
-- [ ] 3.2 Lint przechodzi
-- [ ] 3.3 Testy komponentu (pusty stan otwiera modal; quick actions bez „Zadania")
-- [ ] 3.4 Naprawione czerwone E2E dot. `quick-action-view-tasks`
+- [x] 3.1 Typecheck przechodzi
+- [x] 3.2 Lint przechodzi
+- [x] 3.3 Testy komponentu (pusty stan otwiera modal; quick actions bez „Zadania")
+- [x] 3.4 Naprawione czerwone E2E dot. `quick-action-view-tasks`
 
 #### Manual
 

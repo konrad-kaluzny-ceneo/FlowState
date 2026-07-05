@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { PodsumowanieView } from "~/app/_components/podsumowanie-view";
 import type { DayStats } from "~/lib/recap/aggregate-day-stats";
+import type { RecapTaskRow } from "~/lib/recap/types";
 
 // next-intl is globally mocked by src/test/setup.ts; no wrapper needed.
 
@@ -35,6 +36,28 @@ const statsWithData: DayStats = {
 		{ workType: "OPERATIONAL", focusMinutes: 25, sessionCount: 1 },
 	],
 	taskCompletionStat: { done: 1, partial: 1, undone: 3 },
+};
+
+const completedRow: RecapTaskRow = {
+	taskId: 1,
+	title: "Ship feature",
+	firstStartedAt: new Date("2026-06-20T10:00:00Z"),
+	lastEndedAt: new Date("2026-06-20T10:25:00Z"),
+	focusedMinutes: 25,
+	workType: "DEEP_WORK",
+	effortMinutes: 30,
+	isCompleted: true,
+};
+
+const inProgressRow: RecapTaskRow = {
+	taskId: 2,
+	title: "Review inbox",
+	firstStartedAt: new Date("2026-06-20T11:00:00Z"),
+	lastEndedAt: new Date("2026-06-20T11:15:00Z"),
+	focusedMinutes: 15,
+	workType: "OPERATIONAL",
+	effortMinutes: 20,
+	isCompleted: false,
 };
 
 describe("PodsumowanieView", () => {
@@ -76,5 +99,35 @@ describe("PodsumowanieView", () => {
 	it("always renders deferred placeholders", () => {
 		render(<PodsumowanieView stats={statsWithData} />);
 		expect(screen.getByTestId("podsumowanie-deferred")).toBeTruthy();
+		expect(screen.getByTestId("podsumowanie-best-time-preview")).toBeTruthy();
+		expect(screen.getByTestId("podsumowanie-date-nav-preview")).toBeTruthy();
+	});
+
+	it("renders motivational footer banner", () => {
+		render(<PodsumowanieView stats={statsWithData} />);
+		const hero = screen.getByTestId("podsumowanie-footer-hero");
+		expect(hero.textContent).toContain("Good that you showed up");
+		expect(hero.getAttribute("aria-hidden")).toBeNull();
+	});
+
+	it("renders completed tasks list with type and time badges", () => {
+		render(
+			<PodsumowanieView
+				last24Hours={[completedRow, inProgressRow]}
+				stats={statsWithData}
+			/>,
+		);
+		expect(screen.getByTestId("podsumowanie-completed-list")).toBeTruthy();
+		expect(screen.getByTestId("podsumowanie-completed-row-1")).toBeTruthy();
+		expect(screen.queryByTestId("podsumowanie-completed-row-2")).toBeNull();
+		expect(screen.getAllByTestId("completed-task-type-badge")).toHaveLength(1);
+		expect(screen.getAllByTestId("completed-task-time-badge")).toHaveLength(1);
+	});
+
+	it("renders calm empty state when no completed tasks in recap", () => {
+		render(
+			<PodsumowanieView last24Hours={[inProgressRow]} stats={statsWithData} />,
+		);
+		expect(screen.getByTestId("podsumowanie-completed-empty")).toBeTruthy();
 	});
 });

@@ -416,7 +416,11 @@
 		"noDataBody": "Start a focus session to see your day stats.",
 		"bestTimeTitle": "Best time of day",
 		"bestTimeComingSoon": "Coming soon – needs a few days of data.",
-		"dateNavComingSoon": "Date navigation – coming soon."
+		"dateNavComingSoon": "Date navigation – coming soon.",
+		"completedListTitle": "Completed in the last 24 hours",
+		"completedListEmpty": "No completed tasks in the last 24 hours — that's a calm day too.",
+		"footerBannerTitle": "Good that you showed up",
+		"footerBannerBody": "Regular focus sessions build your day's rhythm — one cycle at a time."
 	},
 	"PlanDnia": {
 		"title": "Day plan",
