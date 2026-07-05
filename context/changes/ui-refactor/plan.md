@@ -846,23 +846,23 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Manual
 
-- [ ] 7.4 Budget shown and adjustable
-- [ ] 7.5 No timeline/schedule elements (PRD-compliant)
+- [x] 7.4 Budget shown and adjustable
+- [x] 7.5 No timeline/schedule elements (PRD-compliant)
 
 ### Phase 8: Podsumowanie Dashboard
 
 #### Automated
 
-- [ ] 8.1 Type checking passes: `pnpm typecheck`
-- [ ] 8.2 Lint/format passes: `pnpm check`
-- [ ] 8.3 Unit tests pass (aggregation + view): `pnpm test`
-- [ ] 8.4 Production build succeeds (visx): `pnpm build`
+- [x] 8.1 Type checking passes: `pnpm typecheck`
+- [x] 8.2 Lint/format passes: `pnpm check`
+- [x] 8.3 Unit tests pass (aggregation + view): `pnpm test`
+- [x] 8.4 Production build succeeds (visx): `pnpm build`
 
 #### Manual
 
-- [ ] 8.5 KPI cards match a manual session run
-- [ ] 8.6 Per-hour bars + session-type donut reflect real cycles/types
-- [ ] 8.7 Deferred widgets show clear placeholders
+- [x] 8.5 KPI cards match a manual session run
+- [x] 8.6 Per-hour bars + session-type donut reflect real cycles/types
+- [x] 8.7 Deferred widgets show clear placeholders
 
 ### Phase 9: Ustawienia Page
 

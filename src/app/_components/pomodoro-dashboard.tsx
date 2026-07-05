@@ -25,6 +25,7 @@ import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
 import { PlanDniaView } from "~/app/_components/plan-dnia-view";
+import { PodsumowanieView } from "~/app/_components/podsumowanie-view";
 import { QuickActions } from "~/app/_components/quick-actions";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
 import {
@@ -42,6 +43,7 @@ import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
 import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preference";
 import { useDailyRecap } from "~/hooks/use-daily-recap";
 import { useDayPlan } from "~/hooks/use-day-plan";
+import { useDayStats } from "~/hooks/use-day-stats";
 import { useE2eExposeCycleRecovery } from "~/hooks/use-e2e-expose-cycle-recovery";
 import { useOnboarding } from "~/hooks/use-onboarding-state";
 import { useOutOfTabBreakAlertsPreference } from "~/hooks/use-out-of-tab-break-alerts-preference";
@@ -273,10 +275,11 @@ export function PomodoroDashboardBody({
 	// shell + real routes in Phase 11. Kept view-local (not module-priority-gated)
 	// so task management and day planning stay reachable once Fokus drops its
 	// inline list.
-	const [homeView, setHomeView] = useState<"fokus" | "zadania" | "plan">(
-		"fokus",
-	);
+	const [homeView, setHomeView] = useState<
+		"fokus" | "zadania" | "plan" | "podsumowanie"
+	>("fokus");
 	const tHomeViewToggle = useTranslations("HomeViewToggle");
+	const dayStats = useDayStats();
 
 	const needsPermissionPrompt = useCallback(() => {
 		if (typeof window === "undefined" || shouldDeferFirstRun()) {
@@ -1040,6 +1043,7 @@ export function PomodoroDashboardBody({
 						{ value: "fokus", label: tHomeViewToggle("fokus") },
 						{ value: "zadania", label: tHomeViewToggle("zadania") },
 						{ value: "plan", label: tHomeViewToggle("plan") },
+						{ value: "podsumowanie", label: tHomeViewToggle("podsumowanie") },
 					]}
 					value={homeView}
 				/>
@@ -1060,6 +1064,17 @@ export function PomodoroDashboardBody({
 					data-testid="home-plan-view"
 				>
 					<PlanDniaView dayPlan={dayPlan} />
+				</div>
+			) : homeView === "podsumowanie" ? (
+				<div
+					className="flex w-full flex-col items-center gap-section"
+					data-testid="home-podsumowanie-view"
+				>
+					<PodsumowanieView
+						isGuest={dayStats.isGuest}
+						isLoading={dayStats.isLoading}
+						stats={dayStats.stats}
+					/>
 				</div>
 			) : (
 				<div

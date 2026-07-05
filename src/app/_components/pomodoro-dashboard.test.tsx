@@ -35,6 +35,10 @@ vi.mock("~/hooks/use-daily-recap", () => ({
 	useDailyRecap: (...args: unknown[]) => useDailyRecapMock(...args),
 }));
 
+vi.mock("~/hooks/use-day-stats", () => ({
+	useDayStats: () => ({ stats: null, isLoading: false, isGuest: true }),
+}));
+
 const defaultDailyRecap = {
 	recap: { last24Hours: [], todayPlan: [], footprints: {} },
 	isLoading: false,
