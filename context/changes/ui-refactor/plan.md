@@ -868,16 +868,16 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Automated
 
-- [x] 9.1 Type checking passes: `pnpm typecheck`
-- [x] 9.2 Lint/format passes: `pnpm check`
-- [x] 9.3 Unit tests pass: `pnpm test`
+- [x] 9.1 Type checking passes: `pnpm typecheck` — cfd6d54
+- [x] 9.2 Lint/format passes: `pnpm check` — cfd6d54
+- [x] 9.3 Unit tests pass: `pnpm test` — cfd6d54
 - [ ] 9.4 Accessibility e2e passes: `pnpm test:e2e:a11y`
 
 #### Manual
 
-- [ ] 9.5 Every relocated control works from Settings and persists
-- [ ] 9.6 No duplicate/broken control in header or timer
-- [ ] 9.7 Sign-out works from new home
+- [x] 9.5 Every relocated control works from Settings and persists — cfd6d54
+- [x] 9.6 No duplicate/broken control in header or timer — cfd6d54
+- [x] 9.7 Sign-out works from new home — cfd6d54
 
 ### Phase 10: Cycle-State Lift to Layout Provider
 
