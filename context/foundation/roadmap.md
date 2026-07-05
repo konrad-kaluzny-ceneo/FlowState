@@ -95,7 +95,12 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-42 | mindful-day-memory | [FLO-90](https://linear.app/flowstate-10xdev/issue/FLO-90/flowstate-mindful-day-memory-s-42) | [#174](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/174) | S-30 phase 2 — Domknięte/Zostaje/Wróć tutaj narrative; formatter only | S-30, S-18; soft F-14 | **US-03** craft | done |
 | S-43 | stateful-illustration-system | [FLO-91](https://linear.app/flowstate-10xdev/issue/FLO-91/flowstate-stateful-illustration-system-s-43) | [#175](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/175) | S-28 phase 2 — state-bound Calm Garden on hero/rail; not on gates | S-28, F-06, F-07, S-39 | Secondary | done |
 | S-44 | archive-old-tasks | [FLO-94](https://linear.app/flowstate-10xdev/issue/FLO-94/flowstate-stale-task-archive-view-bulk-delete-s-44) | [#178](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/178) | review stale tasks in archive view; multi-select + permanent delete | S-09, S-13 | **US-05** | done |
-| S-45 | ui-refactor | [FLO-95](https://linear.app/flowstate-10xdev/issue/FLO-95/flowstate-ui-redesign-makiety-alignment-s-45) | [#189](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/189) | (epic — phased in plan.md) experience the makiety redesign: 5-section nav (Fokus/Zadania/Plan dnia/Podsumowanie/Ustawienia), green retint, ring timer, minimal task cards + add-task modal, once-per-day steering | S-40, S-41, S-43, F-06 | **ui-refactor PRD thread** (2 amendments) | implementing |
+| S-45 | ui-refactor | [FLO-95](https://linear.app/flowstate-10xdev/issue/FLO-95/flowstate-ui-redesign-makiety-alignment-s-45) | [#189](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/189) | (epic — phased in plan.md) experience the makiety redesign: 5-section nav (Fokus/Zadania/Plan dnia/Podsumowanie/Ustawienia), green retint, ring timer, minimal task cards + add-task modal, once-per-day steering; **includes former planning-cycle (#87) via Plan dnia** | S-40, S-41, S-43, F-06 | **ui-refactor PRD thread** (2 amendments) | implementing |
+| F-15 | platform-refactor-batch | [FLO-96](https://linear.app/flowstate-10xdev/issue/FLO-96) | [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190) | (foundation epic) timer hub + data-mode refactor batch: ACL verify, hook extracts, change-impact, sign-in schema, guest merge, health probe, auth smoke, Sentry wedge | F-07; after or parallel S-45 | guardrails | backlog |
+| S-46 | mcp-server-for-agents | [FLO-97](https://linear.app/flowstate-10xdev/issue/FLO-97/flowstate-mcp-server-for-ai-agents-s-46) | [#191](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/191) | expose MCP server so AI agents (Cursor, Claude, Copilot) can read/write tasks + session state; enables agent-driven task delegation proposals | F-15, S-45 | PRD v3 amended Non-Goals | backlog |
+| S-47 | delegation-suggestion-in-plan | [FLO-98](https://linear.app/flowstate-10xdev/issue/FLO-98/delegation-suggestion-in-plan-dnia-s-47) | [#192](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/192) | in Plan dnia view, scorer proposes tasks suitable for delegation (to AI agent or human) with one-line rationale; user accepts/skips | S-45 (Plan dnia), S-46 | new | backlog |
+| S-48 | analytics-trends-plan-vs-execution | [FLO-99](https://linear.app/flowstate-10xdev/issue/FLO-99/analytics-weeklymonthly-trends-plan-vs-execution-s-48) | [#193](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/193) | weekly/monthly trends in Podsumowanie; plan-vs-execution comparison; context-switch pattern analytics | S-45 (Podsumowanie) | follow-up ui-refactor | backlog |
+| S-49 | workspace-setup-advisor | [FLO-100](https://linear.app/flowstate-10xdev/issue/FLO-100/workspace-setup-advisor-environment-config-tips-s-49) | [#194](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/194) | advisory tips for configuring work environment (Cursor/Claude agent settings, Slack/Teams DND, notification batching) surfaced in Ustawienia or onboarding; no physical blocking — coaching only | S-45 (Ustawienia), F-14 | new | backlog |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -123,6 +128,9 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | R | UX/UI story chapter | **F-14** → **S-40** → **S-41** → **S-42** → **S-43** | UX/UI craft after quality hardening; expand batch 7; S-43 may parallel S-41 once rail slot exists |
 | S | Task inventory hygiene | **S-44** | Stale-task archive + bulk delete; parallel S-40 for nav placement |
 | T | UI redesign (makiety) | **S-45** (phased in plan.md) | Builds on Stream R craft (S-40/S-41/S-43) + F-06 tokens; nav shell + 5 sections + green retint; 2 PRD amendments (Podsumowanie charts, Ustawienia page); graphics entry-gated |
+| U | Agent integration | F-15 → **S-46** → **S-47** | MCP server for AI agents; delegation proposals in Plan dnia |
+| V | Analytics depth | S-45 → **S-48** | Weekly/monthly trends, plan vs execution, context-switch patterns |
+| W | Workspace coaching | S-45 + F-14 → **S-49** | Advisory tips for Cursor/Claude/Teams/Slack config; coaching, not blocking |
 
 ## Backlog Handoff
 
@@ -159,7 +167,12 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-42 | mindful-day-memory | **no** | S-30 phase 2; formatter only; after F-14; best after S-40/S-41 |
 | S-43 | stateful-illustration-system | **done** | Shipped 2026-07-03 PR #185; FLO-91 / #175 synced |
 | S-44 | archive-old-tasks | **yes** | task inventory hygiene; soft dep S-40 for archive entry placement |
-| S-45 | ui-refactor | **active** | FLO-95 / #189; implementing — `context/changes/ui-refactor/` |
+| S-45 | ui-refactor | **active** | FLO-95 / #189; implementing — `context/changes/ui-refactor/`; absorbs planning-cycle (#87) |
+| F-15 | platform-refactor-batch | **backlog** | FLO-96 / #190; umbrella for F-08–F-13 + observability hygiene; phased after S-45 |
+| S-46 | mcp-server-for-agents | **no** | FLO-97 / #191; after F-15 + S-45; needs research: MCP protocol surface, auth model for agents; create Linear/GitHub before plan |
+| S-47 | delegation-suggestion-in-plan | **no** | FLO-98 / #192; after S-46 (MCP) + S-45 (Plan dnia shipped); scorer extension for delegation signal |
+| S-48 | analytics-trends-plan-vs-execution | **no** | FLO-99 / #193; after S-45 Podsumowanie; needs research: data model for weekly aggregation |
+| S-49 | workspace-setup-advisor | **no** | FLO-100 / #194; after S-45 Ustawienia; content-first (tips authored); no external integration |
 
 **Recommended next:** **S-41** `desktop-calm-workbench` — Stream R desktop layout; hard dep S-40 shipped.
 

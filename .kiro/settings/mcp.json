@@ -35,26 +35,17 @@
 				"web_search_advanced_exa"
 			]
 		},
-		"linear": {
-			"command": "npx",
-			"args": ["-y", "mcp-remote", "https://mcp.linear.app/mcp"],
+		"linear-flowstate": {
+			"url": "https://mcp.linear.app/mcp",
 			"autoApprove": [
 				"list_issue_labels",
 				"list_issue_statuses",
 				"save_project",
 				"create_issue_label",
-				"create_issue_label",
-				"create_issue_label",
-				"save_issue",
 				"save_issue",
 				"list_issues",
 				"get_issue",
-				"get_issue",
-				"get_issue",
 				"search_documentation",
-				"save_milestone",
-				"save_milestone",
-				"save_milestone",
 				"save_milestone",
 				"save_document",
 				"list_cycles",

@@ -934,17 +934,17 @@ Consolidate and fix all E2E tests that broke or were deferred during Phases 5–
 
 #### Automated
 
-- [ ] 11.1 Type checking passes: `pnpm typecheck`
-- [ ] 11.2 Lint/format passes: `pnpm check`
-- [ ] 11.3 Unit tests pass: `pnpm test`
-- [ ] 11.4 Dependency rules pass: `pnpm depcruise`
+- [x] 11.1 Type checking passes: `pnpm typecheck`
+- [x] 11.2 Lint/format passes: `pnpm check`
+- [x] 11.3 Unit tests pass: `pnpm test`
+- [x] 11.4 Dependency rules pass: `pnpm depcruise`
 
 #### Manual
 
-- [ ] 11.7 All 5 sections reachable (sidebar + bottom nav); active state correct
-- [ ] 11.8 Timer keeps ticking across navigation mid-session
-- [ ] 11.9 Deep-linking each route renders inside the shell
-- [ ] 11.10 Signed-out guest reaches all 5 routes with no bounce to sign-in
+- [x] 11.7 All 5 sections reachable (sidebar + bottom nav); active state correct
+- [x] 11.8 Timer keeps ticking across navigation mid-session
+- [x] 11.9 Deep-linking each route renders inside the shell
+- [x] 11.10 Signed-out guest reaches all 5 routes with no bounce to sign-in
 
 ### Phase 12: Onboarding Hero, Polish & Regression
 

@@ -22,7 +22,12 @@
 		"signOutError": "Wylogowanie nie powiodło się. Spróbuj ponownie."
 	},
 	"Navbar": {
-		"brand": "FlowState"
+		"brand": "FlowState",
+		"focus": "Fokus",
+		"tasks": "Zadania",
+		"plan": "Plan dnia",
+		"summary": "Podsumowanie",
+		"settings": "Ustawienia"
 	},
 	"Onboarding": {
 		"firstRun": {

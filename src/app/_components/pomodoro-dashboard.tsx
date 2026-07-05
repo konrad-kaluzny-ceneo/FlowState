@@ -24,8 +24,6 @@ import { GuestContextRail } from "~/app/_components/guest-context-rail";
 import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
-import { PlanDniaView } from "~/app/_components/plan-dnia-view";
-import { PodsumowanieView } from "~/app/_components/podsumowanie-view";
 import { usePomodoroCycleContext } from "~/app/_components/pomodoro-cycle-provider";
 import { QuickActions } from "~/app/_components/quick-actions";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
@@ -34,17 +32,12 @@ import {
 	SessionFocusCard,
 } from "~/app/_components/session-steering-card";
 import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
-import { TaskArchiveView } from "~/app/_components/task-archive-view";
-import { TaskList } from "~/app/_components/task-list";
 import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
-import { SegmentedControl } from "~/app/_components/ui/segmented-control";
-import { UstawieniaView } from "~/app/_components/ustawienia-view";
 import { WedgeSyncRecovery } from "~/app/_components/wedge-sync-recovery";
 import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
 import { useDailyRecap } from "~/hooks/use-daily-recap";
 import { useDayPlan } from "~/hooks/use-day-plan";
-import { useDayStats } from "~/hooks/use-day-stats";
 import { useOnboarding } from "~/hooks/use-onboarding-state";
 import { useSyncBreakAtmosphere } from "~/hooks/use-sync-break-atmosphere";
 import { useSyncWorkFocusShell } from "~/hooks/use-sync-work-focus-shell";
@@ -125,7 +118,7 @@ function HomeLayoutRegion({
 
 export function PomodoroDashboardBody({
 	tasks,
-	refreshTasks,
+	refreshTasks: _refreshTasks,
 	dayPlan,
 	enableCheckInGate = false,
 	enableWindDownGate = false,
@@ -241,18 +234,6 @@ export function PomodoroDashboardBody({
 	const [isEndingSession, setIsEndingSession] = useState(false);
 	const [pendingStartAction, setPendingStartAction] =
 		useState<PendingStartAction | null>(null);
-	const [taskInventoryView, setTaskInventoryView] = useState<
-		"inventory" | "archive"
-	>("inventory");
-	// Temporary Fokus/Zadania/Plan switcher (S-45 p6/p7) — replaced by the nav
-	// shell + real routes in Phase 11. Kept view-local (not module-priority-gated)
-	// so task management and day planning stay reachable once Fokus drops its
-	// inline list.
-	const [homeView, setHomeView] = useState<
-		"fokus" | "zadania" | "plan" | "podsumowanie" | "ustawienia"
-	>("fokus");
-	const tHomeViewToggle = useTranslations("HomeViewToggle");
-	const dayStats = useDayStats();
 
 	const needsPermissionPrompt = useCallback(() => {
 		if (typeof window === "undefined" || shouldDeferFirstRun()) {
@@ -413,12 +394,6 @@ export function PomodoroDashboardBody({
 		!showSessionEnergy &&
 		!showSessionFocus;
 
-	const highlightedTaskId = showKickoffCard
-		? pomodoro.kickoffSuggestedTaskId
-		: showSuggestionCard
-			? pomodoro.suggestedTaskId
-			: null;
-
 	const showKickoffDurationChips =
 		enableSuggestionGate &&
 		!cyclePaused &&
@@ -564,7 +539,7 @@ export function PomodoroDashboardBody({
 				continueTaskId: pomodoro.continueTaskId,
 				hasPreFocusedKickoff: pomodoro.hasPreFocusedKickoff,
 				workTypeDurationScopeAvailable: workTypeDurationScope != null,
-				taskInventoryView: taskInventoryView === "archive" ? "archive" : "list",
+				taskInventoryView: "list",
 				recapAvailable: !recapLoading,
 				showInFlowSummary,
 				showBreakTransitionLine,
@@ -584,7 +559,6 @@ export function PomodoroDashboardBody({
 			pomodoro.continueTaskId,
 			pomodoro.hasPreFocusedKickoff,
 			workTypeDurationScope,
-			taskInventoryView,
 			recapLoading,
 			showInFlowSummary,
 			showBreakTransitionLine,
@@ -839,43 +813,6 @@ export function PomodoroDashboardBody({
 			) : null
 		) : null;
 
-	// Zadania (task management) is a standalone view (see `homeView` below) —
-	// no longer part of Fokus's module-priority layout (S-45 p6).
-	const zadaniaTaskList =
-		taskInventoryView === "inventory" ? (
-			<TaskList
-				chromeSubdued={breakAtmosphereActive}
-				continueTaskId={pomodoro.continueTaskId}
-				cycleKind={pomodoro.cycleKind}
-				cycleState={pomodoro.state}
-				focusedTaskId={pomodoro.focusedTaskId}
-				focusShellActive={workFocusShellActive}
-				footprints={recap.footprints}
-				highlightedTaskId={highlightedTaskId}
-				onFocusTask={(taskId, task) => {
-					pomodoro.selectTask(taskId, task);
-				}}
-				onMidCycleMarkComplete={(taskId, task) => {
-					pomodoro.onMidCycleMarkComplete(taskId, task);
-				}}
-				onOpenArchive={() => setTaskInventoryView("archive")}
-				onRefresh={refreshTasks}
-				suggestionLoading={
-					pomodoro.pendingSuggestion.status === "loading" ||
-					pomodoro.pendingKickoffSuggestion.status === "loading"
-				}
-				tasks={tasks}
-			/>
-		) : null;
-
-	const zadaniaTaskArchive =
-		taskInventoryView === "archive" ? (
-			<TaskArchiveView
-				onBack={() => setTaskInventoryView("inventory")}
-				onTasksChanged={refreshTasks}
-			/>
-		) : null;
-
 	const standingTaskFacts = useMemo(
 		() =>
 			tasks
@@ -943,12 +880,7 @@ export function PomodoroDashboardBody({
 	const showCalmExtras =
 		homeIa.state === "idle" || homeIa.state === "active_work";
 	const focusTipElement = showCalmExtras ? <FocusTip /> : null;
-	const quickActionsElement = showCalmExtras ? (
-		<QuickActions
-			onAddTask={() => setHomeView("zadania")}
-			onViewTasks={() => setHomeView("zadania")}
-		/>
-	) : null;
+	const quickActionsElement = showCalmExtras ? <QuickActions /> : null;
 
 	// Empty regions render nothing so they contribute no gap. Each boolean
 	// mirrors its region's child gates verbatim — keep them in sync when a
@@ -1002,118 +934,60 @@ export function PomodoroDashboardBody({
 				)
 			)}
 
-			{/* Temporary Fokus/Zadania/Plan switcher (S-45 p6/p7) — replaced by the
-			    nav shell + real routes in Phase 11. */}
 			<div
-				className="flex w-full justify-center"
-				data-testid="home-view-toggle"
+				className="flex w-full flex-col items-center gap-8 lg:grid lg:w-full lg:grid-cols-[minmax(0,62fr)_minmax(0,38fr)] lg:items-start lg:gap-8"
+				data-testid="home-workbench-grid"
 			>
-				<SegmentedControl
-					onChange={setHomeView}
-					options={[
-						{ value: "fokus", label: tHomeViewToggle("fokus") },
-						{ value: "zadania", label: tHomeViewToggle("zadania") },
-						{ value: "plan", label: tHomeViewToggle("plan") },
-						{ value: "podsumowanie", label: tHomeViewToggle("podsumowanie") },
-						{ value: "ustawienia", label: tHomeViewToggle("ustawienia") },
-					]}
-					value={homeView}
-				/>
+				<div className="flex w-full flex-col items-center gap-section">
+					{primaryRegionHasContent && (
+						<HomeLayoutRegion testId="home-primary-region">
+							{dayMemoryVisible && (
+								<DayMemoryLine
+									continueTaskId={pomodoro.continueTaskId}
+									isLoading={recapLoading}
+									recap={recap}
+									tasks={tasks}
+								/>
+							)}
+							{moduleInZone("steering", "primary") && steeringCards}
+							{moduleInZone("nextFocus", "primary") && kickoffDurationChips}
+							{timerZone === "primary" && timerPanel}
+							{moduleInZone("nextFocus", "primary") && breakSuggestionCard}
+							{moduleInZone("nextFocus", "primary") && kickoffSuggestionCard}
+						</HomeLayoutRegion>
+					)}
+
+					{secondaryRegionHasContent && (
+						<HomeLayoutRegion testId="home-secondary-region">
+							{statusLines}
+							{timerZone === "secondary" && timerPanel}
+							{moduleInZone("steering", "secondary") && steeringCards}
+							{pomodoro.overrideAcknowledgement != null && (
+								<p
+									aria-atomic="true"
+									aria-live="polite"
+									className="w-full rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
+									data-testid="suggestion-override-ack"
+								>
+									{pomodoro.overrideAcknowledgement}
+								</p>
+							)}
+							{dayPlan != null && (
+								<div className="w-full lg:hidden">{focusBudgetPrompt}</div>
+							)}
+							{recapPanel != null && (
+								<div className="w-full lg:hidden">{recapPanel}</div>
+							)}
+							{focusTipElement}
+							{quickActionsElement}
+						</HomeLayoutRegion>
+					)}
+				</div>
+
+				<HomeLayoutRegion className="hidden lg:flex" testId="home-context-rail">
+					{contextRailContent}
+				</HomeLayoutRegion>
 			</div>
-
-			{homeView === "zadania" ? (
-				<div
-					className="flex w-full max-w-lg flex-col items-center gap-section lg:max-w-none"
-					data-testid="home-zadania-view"
-				>
-					{taskInventoryView === "archive"
-						? zadaniaTaskArchive
-						: zadaniaTaskList}
-				</div>
-			) : homeView === "plan" ? (
-				<div
-					className="flex w-full max-w-lg flex-col items-center gap-section lg:max-w-none"
-					data-testid="home-plan-view"
-				>
-					<PlanDniaView dayPlan={dayPlan} />
-				</div>
-			) : homeView === "podsumowanie" ? (
-				<div
-					className="flex w-full flex-col items-center gap-section"
-					data-testid="home-podsumowanie-view"
-				>
-					<PodsumowanieView
-						isGuest={dayStats.isGuest}
-						isLoading={dayStats.isLoading}
-						stats={dayStats.stats}
-					/>
-				</div>
-			) : homeView === "ustawienia" ? (
-				<div
-					className="flex w-full flex-col items-center gap-section"
-					data-testid="home-ustawienia-view"
-				>
-					<UstawieniaView scope={onboardingScope} userName={null} />
-				</div>
-			) : (
-				<div
-					className="flex w-full flex-col items-center gap-8 lg:grid lg:w-full lg:grid-cols-[minmax(0,62fr)_minmax(0,38fr)] lg:items-start lg:gap-8"
-					data-testid="home-workbench-grid"
-				>
-					<div className="flex w-full flex-col items-center gap-section">
-						{primaryRegionHasContent && (
-							<HomeLayoutRegion testId="home-primary-region">
-								{dayMemoryVisible && (
-									<DayMemoryLine
-										continueTaskId={pomodoro.continueTaskId}
-										isLoading={recapLoading}
-										recap={recap}
-										tasks={tasks}
-									/>
-								)}
-								{moduleInZone("steering", "primary") && steeringCards}
-								{moduleInZone("nextFocus", "primary") && kickoffDurationChips}
-								{timerZone === "primary" && timerPanel}
-								{moduleInZone("nextFocus", "primary") && breakSuggestionCard}
-								{moduleInZone("nextFocus", "primary") && kickoffSuggestionCard}
-							</HomeLayoutRegion>
-						)}
-
-						{secondaryRegionHasContent && (
-							<HomeLayoutRegion testId="home-secondary-region">
-								{statusLines}
-								{timerZone === "secondary" && timerPanel}
-								{moduleInZone("steering", "secondary") && steeringCards}
-								{pomodoro.overrideAcknowledgement != null && (
-									<p
-										aria-atomic="true"
-										aria-live="polite"
-										className="w-full rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
-										data-testid="suggestion-override-ack"
-									>
-										{pomodoro.overrideAcknowledgement}
-									</p>
-								)}
-								{dayPlan != null && (
-									<div className="w-full lg:hidden">{focusBudgetPrompt}</div>
-								)}
-								{recapPanel != null && (
-									<div className="w-full lg:hidden">{recapPanel}</div>
-								)}
-								{focusTipElement}
-								{quickActionsElement}
-							</HomeLayoutRegion>
-						)}
-					</div>
-
-					<HomeLayoutRegion
-						className="hidden lg:flex"
-						testId="home-context-rail"
-					>
-						{contextRailContent}
-					</HomeLayoutRegion>
-				</div>
-			)}
 
 			{pomodoro.midCyclePendingTask != null && (
 				<MidCycleCompletionPrompt

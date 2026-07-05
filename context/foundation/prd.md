@@ -3,7 +3,7 @@ project: "FlowState"
 version: 3
 status: draft
 created: 2026-06-13
-updated: 2026-07-04
+updated: 2026-07-05
 context_type: brownfield
 product_type: web-app
 target_scale:
@@ -187,7 +187,7 @@ Value: zwiększenie przejrzystości aplikacji przez zmniejszenie liczby wyświet
 - **Guest scope:** Guest trial remains narrower — no full wedge stack, shortened narrative only.
 - **Task archive:** Auto-archive applies only to stale active tasks; mark-done completion semantics unchanged. Archived tasks are excluded from the wedge suggestion pool until restored or permanently removed.
 - **Data:** No breaking schema changes without migration path; guest blob merge policy unchanged (suffix on title collision).
-- **Integrations:** None external — in-app only.
+- **Integrations:** MCP server planned (read/write session and task state for AI agents); no inbound notification aggregation.
 - **Preserved SLAs from PRD v2:** 200ms acknowledgement for user actions; 90-day session history retention; mainstream desktop browser support (two latest major versions of Chrome, Firefox, Safari, Edge).
 - **Scoring coefficients:** Remain tunable by implementer after ship — not locked in PRD v3.
 
@@ -214,10 +214,11 @@ No access control changes — current model preserved. Login required for accoun
 - No mobile app or native push notifications — browser-only; in-tab signals only.
 - No team or social features — no shared tasks, manager view, or collaboration.
 - No AI/ML-powered scoring — deterministic formula only.
-- No external tool import/export integrations.
+- No notification hub — FlowState does not aggregate or proxy notifications from external tools. The workflow enforces ignoring distractions and focusing on the single most important task. *(Amended 2026-07-05: former "No external tool import/export integrations" removed — MCP server integration planned on roadmap; the app will expose an MCP endpoint for AI agents to interact with session/task state. The app still does NOT become a notification aggregator.)*
 - No full analytics dashboard — no charts, trends, or weekly reports. Daily recap is a light narrative footprint only. *(Amended 2026-07-04 by change thread `ui-refactor`: a dedicated **Podsumowanie** view with per-day KPI cards and charts is now in scope for the redesign; the collapsible in-flow daily recap footprint remains light and separate. See "Change thread PRD: UI redesign".)*
 - No full recurring rule engine — daily standing tasks use boolean flag and local-day reset, not RRULE.
 - No fixed delivery deadline for PRD v3 scope — continuous after-hours iteration; roadmap slices sequence work.
+- No physical distraction blocking (OS-level DND, site blockers, screen locks) — FlowState reduces distractions by coaching a better workflow, not by forcefully restricting the user's environment.
 
 ## Open Questions
 

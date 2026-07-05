@@ -9,7 +9,8 @@ import { auth } from "~/lib/auth/server";
 import { DataModeProvider } from "~/lib/data-mode/data-mode-context";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import { TRPCReactProvider } from "~/trpc/react";
-import { AppNavbar } from "./_components/app-navbar";
+import { AppShell } from "./_components/app-shell";
+import { AppUserProvider } from "./_components/app-user-context";
 import { OAuthSessionVerifier } from "./_components/oauth-session-verifier";
 import { PomodoroCycleProvider } from "./_components/pomodoro-cycle-provider";
 import { ThemeProvider } from "./_components/theme-provider";
@@ -75,11 +76,14 @@ export default async function RootLayout({
 					<TRPCReactProvider>
 						<ThemeProvider>
 							<OAuthSessionVerifier />
-							<AppNavbar scope={scope} userName={userName} />
 							<DataModeProvider mode={scope.mode}>
-								<PomodoroCycleProvider scope={scope}>
-									{children}
-								</PomodoroCycleProvider>
+								<AppUserProvider scope={scope} userName={userName}>
+									<PomodoroCycleProvider scope={scope}>
+										<AppShell scope={scope} userName={userName}>
+											{children}
+										</AppShell>
+									</PomodoroCycleProvider>
+								</AppUserProvider>
 							</DataModeProvider>
 						</ThemeProvider>
 					</TRPCReactProvider>

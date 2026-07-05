@@ -113,13 +113,40 @@ describe("guest public path (S-08)", () => {
 		expect(isGuestPublicPath("/")).toBe(true);
 	});
 
+	it("allows unauthenticated access to all app routes", () => {
+		expect(isGuestPublicPath("/focus")).toBe(true);
+		expect(isGuestPublicPath("/tasks")).toBe(true);
+		expect(isGuestPublicPath("/plan")).toBe(true);
+		expect(isGuestPublicPath("/summary")).toBe(true);
+		expect(isGuestPublicPath("/settings")).toBe(true);
+	});
+
 	it("does not treat other paths as guest-public", () => {
-		expect(isGuestPublicPath("/settings")).toBe(false);
 		expect(isGuestPublicPath("/auth/sign-in")).toBe(false);
+		expect(isGuestPublicPath("/dashboard")).toBe(false);
+		expect(isGuestPublicPath("/profile")).toBe(false);
 	});
 
 	it("bypasses auth middleware on guest home without OAuth verifier", () => {
 		expect(shouldBypassAuthMiddleware("/", new URLSearchParams())).toBe(true);
+	});
+
+	it("bypasses auth middleware on guest-public routes without OAuth verifier", () => {
+		expect(shouldBypassAuthMiddleware("/focus", new URLSearchParams())).toBe(
+			true,
+		);
+		expect(shouldBypassAuthMiddleware("/tasks", new URLSearchParams())).toBe(
+			true,
+		);
+		expect(shouldBypassAuthMiddleware("/plan", new URLSearchParams())).toBe(
+			true,
+		);
+		expect(shouldBypassAuthMiddleware("/summary", new URLSearchParams())).toBe(
+			true,
+		);
+		expect(shouldBypassAuthMiddleware("/settings", new URLSearchParams())).toBe(
+			true,
+		);
 	});
 
 	it("runs auth middleware on guest home when OAuth verifier is present", () => {
@@ -127,5 +154,13 @@ describe("guest public path (S-08)", () => {
 			[NEON_AUTH_SESSION_VERIFIER_PARAM]: "abc123",
 		});
 		expect(shouldBypassAuthMiddleware("/", params)).toBe(false);
+	});
+
+	it("runs auth middleware on guest-public routes when OAuth verifier is present", () => {
+		const params = new URLSearchParams({
+			[NEON_AUTH_SESSION_VERIFIER_PARAM]: "abc123",
+		});
+		expect(shouldBypassAuthMiddleware("/focus", params)).toBe(false);
+		expect(shouldBypassAuthMiddleware("/tasks", params)).toBe(false);
 	});
 });

@@ -1216,60 +1216,6 @@ describe("PomodoroDashboardBody home IA layout", () => {
 		expect(screen.queryByTestId("cycle-intention-prompt")).toBeNull();
 		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
 	});
-
-	it("archive view opens from the Zadania view and hides the task list while active", () => {
-		renderBody({
-			state: "idle",
-			focusedTask: { id: 1, title: "Focus task" },
-		});
-
-		fireEvent.click(screen.getByTestId("quick-action-view-tasks"));
-		fireEvent.click(screen.getByTestId("task-archive-entry"));
-
-		const zadaniaView = screen.getByTestId("home-zadania-view");
-		expect(within(zadaniaView).getByTestId("task-archive-view")).toBeTruthy();
-		expect(within(zadaniaView).getByTestId("task-archive-back")).toBeTruthy();
-		expect(screen.queryByTestId("task-list-stub")).toBeNull();
-	});
-});
-
-describe("PomodoroDashboardBody Fokus/Zadania view switcher", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-	});
-
-	it("defaults to Fokus and hides the task list", () => {
-		renderBody({ state: "idle", focusedTask: { id: 1, title: "Focus task" } });
-
-		expect(screen.getByTestId("home-workbench-grid")).toBeTruthy();
-		expect(screen.queryByTestId("home-zadania-view")).toBeNull();
-		expect(screen.queryByTestId("task-list-stub")).toBeNull();
-	});
-
-	it("switches to Zadania via the toggle and shows the task list instead of Fokus", () => {
-		renderBody({ state: "idle", focusedTask: { id: 1, title: "Focus task" } });
-
-		fireEvent.click(screen.getByRole("button", { name: "Zadania" }));
-
-		expect(screen.getByTestId("home-zadania-view")).toBeTruthy();
-		expect(
-			within(screen.getByTestId("home-zadania-view")).getByTestId(
-				"task-list-stub",
-			),
-		).toBeTruthy();
-		expect(screen.queryByTestId("home-workbench-grid")).toBeNull();
-	});
-
-	it("switches to Zadania via the quick action and back to Fokus via the toggle", () => {
-		renderBody({ state: "idle", focusedTask: { id: 1, title: "Focus task" } });
-
-		fireEvent.click(screen.getByTestId("quick-action-view-tasks"));
-		expect(screen.getByTestId("home-zadania-view")).toBeTruthy();
-
-		fireEvent.click(screen.getByRole("button", { name: "Fokus" }));
-		expect(screen.getByTestId("home-workbench-grid")).toBeTruthy();
-		expect(screen.queryByTestId("home-zadania-view")).toBeNull();
-	});
 });
 
 const nonEmptyDailyRecap = {

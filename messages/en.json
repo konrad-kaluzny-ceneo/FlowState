@@ -22,7 +22,12 @@
 		"signOutError": "Sign-out failed. Please try again."
 	},
 	"Navbar": {
-		"brand": "FlowState"
+		"brand": "FlowState",
+		"focus": "Focus",
+		"tasks": "Tasks",
+		"plan": "Day Plan",
+		"summary": "Summary",
+		"settings": "Settings"
 	},
 	"Onboarding": {
 		"firstRun": {
