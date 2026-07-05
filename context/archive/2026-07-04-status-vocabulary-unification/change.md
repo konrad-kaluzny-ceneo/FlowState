@@ -1,10 +1,10 @@
 ---
 change_id: status-vocabulary-unification
 title: Status vocabulary unification
-status: implemented
+status: archived
 created: 2026-07-04
-updated: 2026-07-04
-archived_at: null
+updated: 2026-07-05
+archived_at: 2026-07-05T19:50:00Z
 ---
 
 ## Notes
