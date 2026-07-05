@@ -3,7 +3,6 @@
 import {
 	createContext,
 	type ReactNode,
-	Suspense,
 	useCallback,
 	useContext,
 	useMemo,
@@ -14,11 +13,9 @@ import { useE2eExposeCycleRecovery } from "~/hooks/use-e2e-expose-cycle-recovery
 import { useOutOfTabBreakAlertsPreference } from "~/hooks/use-out-of-tab-break-alerts-preference";
 import { usePomodoroCycle } from "~/hooks/use-pomodoro-cycle";
 import type { DomainTask } from "~/lib/data-mode/types";
-import {
-	useAuthenticatedDomainTasks,
-	useGuestDomainTasks,
-} from "~/lib/data-mode/use-domain-tasks";
+import { useGuestDomainTasks } from "~/lib/data-mode/use-domain-tasks";
 import type { OnboardingScope } from "~/lib/onboarding/types";
+import { api } from "~/trpc/react";
 
 type PomodoroCycleContextValue = ReturnType<typeof usePomodoroCycle> & {
 	outOfTabBreakAlertsEnabled: boolean;
@@ -58,7 +55,12 @@ function useCycleProviderValue(
 		[outOfTabBreakAlertsEnabled],
 	);
 	const activeTaskIds = useMemo(
-		() => new Set(tasks.filter((t) => t.status === "active").map((t) => t.id)),
+		() =>
+			new Set(
+				tasks
+					.filter((t) => t.status === "active" || t.status === "planned")
+					.map((t) => t.id),
+			),
 		[tasks],
 	);
 	const continueTasks = useMemo(
@@ -108,7 +110,9 @@ function AuthenticatedPomodoroCycleProvider({
 	scope: OnboardingScope;
 	children: ReactNode;
 }) {
-	const { tasks } = useAuthenticatedDomainTasks();
+	// Layout-level provider: useQuery (not suspense) so SSR reads hydrated
+	// task.list from the root layout prefetch instead of HTTP-fetching auth.
+	const { data: tasks = [] } = api.task.list.useQuery();
 	const value = useCycleProviderValue(scope, tasks);
 
 	return (
@@ -139,16 +143,8 @@ export function PomodoroCycleProvider({
 	}
 
 	return (
-		<Suspense
-			fallback={
-				<p className="text-sm text-text-dimmed" data-testid="dashboard-loading">
-					Loading tasks…
-				</p>
-			}
-		>
-			<AuthenticatedPomodoroCycleProvider scope={scope}>
-				{children}
-			</AuthenticatedPomodoroCycleProvider>
-		</Suspense>
+		<AuthenticatedPomodoroCycleProvider scope={scope}>
+			{children}
+		</AuthenticatedPomodoroCycleProvider>
 	);
 }

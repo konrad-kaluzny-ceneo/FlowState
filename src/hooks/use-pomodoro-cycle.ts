@@ -151,9 +151,10 @@ function taskPoolHasKickoffCandidates(
 	return tasks.some(
 		(task) =>
 			task.status !== "archived" &&
-			task.status !== "planned" &&
 			!task.doneForToday &&
-			(task.status === "active" || task.isDailyStanding),
+			(task.status === "active" ||
+				task.status === "planned" ||
+				task.isDailyStanding),
 	);
 }
 
@@ -531,6 +532,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const suggestionCycleIdRef = useRef<number | null>(null);
 	const suggestionFetchGenRef = useRef(0);
 	const kickoffFetchGenRef = useRef(0);
+	const calmLandingKickoffEnsureRequestedRef = useRef(false);
 	const prevKickoffEligibleRef = useRef(false);
 	const lastKickoffEnergyRef = useRef<"FOCUSED" | "STEADY" | "FADING">(
 		"STEADY",
@@ -1216,6 +1218,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const clearKickoffSuggestion = useCallback(() => {
 		kickoffFetchGenRef.current += 1;
+		calmLandingKickoffEnsureRequestedRef.current = false;
 		setPendingKickoffSuggestion({ status: "idle" });
 		setKickoffSuggestedTaskId(null);
 		setHasPreFocusedKickoff(false);
@@ -1619,6 +1622,64 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		_activeSessionId,
 		fetchKickoffSuggestion,
 		pendingKickoffSuggestion.status,
+	]);
+
+	const ensureCalmLandingKickoffSuggestion = useCallback(() => {
+		if (mode !== "authenticated") {
+			return;
+		}
+		if (state !== "idle" || cycleKind !== null || focusedTaskId !== null) {
+			return;
+		}
+		if (
+			awaitingCheckIn ||
+			awaitingWindDown ||
+			isPostCheckInTransitioning ||
+			pendingClosureLine != null
+		) {
+			return;
+		}
+
+		const kickoffStatus = pendingKickoffSuggestion.status;
+		if (kickoffStatus !== "idle") {
+			return;
+		}
+		if (calmLandingKickoffEnsureRequestedRef.current) {
+			return;
+		}
+		calmLandingKickoffEnsureRequestedRef.current = true;
+
+		void (async () => {
+			try {
+				let sessionId =
+					_activeSessionId != null ? Number(_activeSessionId) : null;
+				if (sessionId == null) {
+					const session = await sessions.getOrCreateActive();
+					setActiveSessionId(session.id);
+					sessionId = Number(session.id);
+				}
+				fetchKickoffSuggestion(
+					sessionId,
+					lastKickoffEnergyRef.current ?? "STEADY",
+					lastSessionIntentionRef.current,
+				);
+			} catch {
+				// Best effort — focus-ready still works with manual task pick.
+			}
+		})();
+	}, [
+		mode,
+		state,
+		cycleKind,
+		focusedTaskId,
+		awaitingCheckIn,
+		awaitingWindDown,
+		isPostCheckInTransitioning,
+		pendingClosureLine,
+		pendingKickoffSuggestion.status,
+		_activeSessionId,
+		sessions,
+		fetchKickoffSuggestion,
 	]);
 
 	const kickoffEligible = computeKickoffEligible({
@@ -3626,6 +3687,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		sessionSteeringSubmitting,
 		completeSessionEnergy,
 		skipSessionEnergy,
+		ensureCalmLandingKickoffSuggestion,
 		pendingKickoffSuggestion,
 		kickoffSuggestedTaskId,
 		kickoffEligible,

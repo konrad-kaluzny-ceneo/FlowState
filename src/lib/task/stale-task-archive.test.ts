@@ -126,11 +126,11 @@ describe("taskPoolHasKickoffCandidates", () => {
 		).toBe(false);
 	});
 
-	it("excludes planned tasks even when marked daily-standing", () => {
+	it("includes planned tasks when not done for today", () => {
 		expect(
 			taskPoolHasKickoffCandidates([
-				{ status: "planned", isDailyStanding: true },
+				{ status: "planned", isDailyStanding: false },
 			]),
-		).toBe(false);
+		).toBe(true);
 	});
 });

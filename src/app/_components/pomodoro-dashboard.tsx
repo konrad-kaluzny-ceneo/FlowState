@@ -35,7 +35,10 @@ import { QuickActions } from "~/app/_components/quick-actions";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
 import { SessionEnergyCard } from "~/app/_components/session-steering-card";
 import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
-import { TaskSuggestionCard } from "~/app/_components/task-suggestion-card";
+import {
+	TaskSuggestionCard,
+	type TaskSuggestionData,
+} from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
 import { WedgeSyncRecovery } from "~/app/_components/wedge-sync-recovery";
 import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
@@ -158,7 +161,12 @@ export function PomodoroDashboardBody({
 	const { outOfTabBreakAlertsEnabled, setOutOfTabBreakAlertsEnabled } =
 		pomodoro;
 	const activeTaskIds = useMemo(
-		() => new Set(tasks.filter((t) => t.status === "active").map((t) => t.id)),
+		() =>
+			new Set(
+				tasks
+					.filter((t) => t.status === "active" || t.status === "planned")
+					.map((t) => t.id),
+			),
 		[tasks],
 	);
 	const {
@@ -636,6 +644,37 @@ export function PomodoroDashboardBody({
 		hasFocusableTasks &&
 		pomodoro.state === "idle" &&
 		!showSessionEnergy;
+
+	const calmLandingSuggestionRequestedRef = useRef(false);
+
+	useEffect(() => {
+		if (!showFocusReadyState) {
+			calmLandingSuggestionRequestedRef.current = false;
+			return;
+		}
+		if (!enableSuggestionGate) {
+			return;
+		}
+		if (pomodoro.focusedTaskId != null || pomodoro.focusedTask != null) {
+			return;
+		}
+		if (pomodoro.pendingKickoffSuggestion.status !== "idle") {
+			return;
+		}
+		if (calmLandingSuggestionRequestedRef.current) {
+			return;
+		}
+		calmLandingSuggestionRequestedRef.current = true;
+		pomodoro.ensureCalmLandingKickoffSuggestion();
+	}, [
+		enableSuggestionGate,
+		showFocusReadyState,
+		pomodoro.focusedTaskId,
+		pomodoro.focusedTask,
+		pomodoro.ensureCalmLandingKickoffSuggestion,
+		pomodoro.pendingKickoffSuggestion.status,
+	]);
+
 	const suppressKickoffForCalmLanding =
 		showFocusEmptyState || showFocusReadyState;
 	const effectiveShowKickoffCard =
@@ -669,6 +708,32 @@ export function PomodoroDashboardBody({
 		pomodoro.state === "idle" &&
 		!showSessionEnergy &&
 		calmKickoffTask != null;
+	const embedKickoffInFocusReady = showFocusReadyState && showCalmKickoffTimer;
+
+	const calmKickoffSuggestionCardData =
+		useMemo((): TaskSuggestionData | null => {
+			if (pomodoro.pendingKickoffSuggestion.status !== "ready") {
+				return null;
+			}
+			const { data } = pomodoro.pendingKickoffSuggestion;
+			return {
+				taskId: Number(data.taskId),
+				title: data.title,
+				workType: data.workType,
+				weight: data.weight,
+				urgency: data.urgency,
+				importance: data.importance,
+				commitmentHorizon: data.commitmentHorizon,
+				rationale: data.rationale,
+				breakdown: data.breakdown,
+				resumeNote: data.resumeNote,
+			};
+		}, [pomodoro.pendingKickoffSuggestion]);
+
+	const calmKickoffSuggestedTaskId =
+		pomodoro.pendingKickoffSuggestion.status === "ready"
+			? pomodoro.pendingKickoffSuggestion.data.taskId
+			: null;
 
 	const todayPlanStats = useMemo(() => {
 		const plan = recap?.todayPlan ?? [];
@@ -681,6 +746,7 @@ export function PomodoroDashboardBody({
 		effectiveShowKickoffCard || showKickoffDurationChips || showSuggestionCard;
 
 	const timerShown =
+		!embedKickoffInFocusReady &&
 		(showTimer || showCalmKickoffTimer) &&
 		(moduleVisible("timer") ||
 			pomodoro.state === "completed" ||
@@ -979,6 +1045,9 @@ export function PomodoroDashboardBody({
 
 	const focusReadyStateElement = showFocusReadyState ? (
 		<FocusReadyState
+			autoSuggestedTaskId={calmKickoffSuggestedTaskId}
+			isStartingKickoff={false}
+			kickoffTask={embedKickoffInFocusReady ? calmKickoffTask : null}
 			onAddTask={() => setShowAddModal(true)}
 			onSelectTask={(task) => {
 				pomodoro.selectTask(task.id, {
@@ -986,6 +1055,31 @@ export function PomodoroDashboardBody({
 					title: task.title,
 				});
 			}}
+			onStartKickoff={
+				embedKickoffInFocusReady ? handleCalmKickoffStart : undefined
+			}
+			onWorkDurationManualChange={pomodoro.clearStagedKickoffDuration}
+			preferredWorkDurationSec={pomodoro.stagedKickoffDurationSec}
+			suggestionPopup={
+				calmKickoffSuggestionCardData != null
+					? {
+							coachLine: effectiveSuggestionCoachLine,
+							isAccepting: pomodoro.isAcceptingKickoffSuggestion,
+							onAccept: () => {
+								onSuggestionCoachSeen?.();
+								const suggestedId = calmKickoffSuggestedTaskId;
+								if (suggestedId == null) {
+									return;
+								}
+								pomodoro.selectTask(suggestedId, {
+									id: suggestedId,
+									title: calmKickoffSuggestionCardData.title,
+								});
+							},
+							suggestion: calmKickoffSuggestionCardData,
+						}
+					: null
+			}
 			tasks={tasks}
 		/>
 	) : null;

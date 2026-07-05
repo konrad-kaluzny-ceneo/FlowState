@@ -178,6 +178,7 @@ function makePomodoroMock(
 		sessionSteeringSubmitting: false,
 		completeSessionEnergy: vi.fn(),
 		skipSessionEnergy: vi.fn(),
+		ensureCalmLandingKickoffSuggestion: vi.fn(),
 		kickoffEligible: false,
 		preFocusedTask: null,
 		catchUp: null,
@@ -238,13 +239,15 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		vi.clearAllMocks();
 	});
 
-	it("shows idle timer panel when a task is focused", () => {
+	it("shows embedded kickoff when a task is focused on calm landing", () => {
 		renderBody({
 			focusedTask: { id: 1, title: "Focus task" },
 			state: "idle",
 		});
 
-		expect(screen.getByTestId("timer-panel-idle")).toBeTruthy();
+		const focusReady = screen.getByTestId("focus-ready-state");
+		expect(within(focusReady).getByTestId("focus-ready-kickoff")).toBeTruthy();
+		expect(screen.queryByTestId("timer-panel-idle")).toBeNull();
 	});
 
 	it("shows check-in overlay when awaiting check-in gate is open", () => {
@@ -365,6 +368,54 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.getByTestId("wind-down-overlay")).toBeTruthy();
 	});
 
+	it("requests calm landing kickoff suggestion once when focus-ready has idle kickoff", () => {
+		const ensureCalmLandingKickoffSuggestion = vi.fn();
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				cycleKind: null,
+				focusedTaskId: null,
+				ensureCalmLandingKickoffSuggestion,
+				pendingKickoffSuggestion: { status: "idle" },
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(ensureCalmLandingKickoffSuggestion).toHaveBeenCalledTimes(1);
+	});
+
+	it("does not re-request calm landing kickoff when suggestion is empty", () => {
+		const ensureCalmLandingKickoffSuggestion = vi.fn();
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				cycleKind: null,
+				focusedTaskId: null,
+				ensureCalmLandingKickoffSuggestion,
+				pendingKickoffSuggestion: { status: "empty" },
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(ensureCalmLandingKickoffSuggestion).not.toHaveBeenCalled();
+	});
+
 	it("shows focus-ready and kickoff timer together when suggestion is ready", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
@@ -394,9 +445,43 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		);
 
 		expect(screen.getByTestId("focus-ready-state")).toBeTruthy();
-		expect(screen.getByTestId("timer-panel-idle")).toBeTruthy();
-		expect(screen.getByText("Suggested task")).toBeTruthy();
+		const focusReady = screen.getByTestId("focus-ready-state");
+		expect(within(focusReady).getByTestId("focus-ready-kickoff")).toBeTruthy();
+		expect(within(focusReady).getByText("Suggested task")).toBeTruthy();
+		expect(
+			within(focusReady).getByTestId("focus-ready-kickoff-suggestion-star"),
+		).toBeTruthy();
+		expect(
+			within(focusReady).getByTestId("focus-ready-suggestion-star-task-1"),
+		).toBeTruthy();
+		expect(screen.queryByTestId("timer-panel-idle")).toBeNull();
 		expect(screen.queryByTestId("suggestion-accept-btn")).toBeNull();
+	});
+
+	it("opens kickoff suggestion popup from focus-ready star", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTaskId: null,
+				pendingKickoffSuggestion: kickoffSuggestionReady,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				tasks={tasks}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("focus-ready-suggestion-star-task-1"));
+
+		const popup = screen.getByTestId("focus-suggestion-popup");
+		expect(within(popup).getByTestId("task-suggestion-card")).toBeTruthy();
+		expect(within(popup).getByTestId("suggestion-task-title")).toBeTruthy();
+		expect(within(popup).getByTestId("suggestion-accept-btn")).toBeTruthy();
 	});
 
 	it("shows in-flow summary on idle break when narrative line is present", () => {
@@ -491,7 +576,9 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		);
 
 		expect(screen.getByTestId("focus-ready-state")).toBeTruthy();
-		expect(screen.getByTestId("timer-panel-idle")).toBeTruthy();
+		const focusReady = screen.getByTestId("focus-ready-state");
+		expect(within(focusReady).getByTestId("focus-ready-kickoff")).toBeTruthy();
+		expect(screen.queryByTestId("timer-panel-idle")).toBeNull();
 		expect(screen.getByTestId("session-inflow-summary")).toBeTruthy();
 		expect(screen.getByTestId("session-inflow-summary").textContent).toBe(
 			"2 cycles · feeling steady",
@@ -1067,7 +1154,9 @@ describe("PomodoroDashboardBody home IA layout", () => {
 		);
 
 		expect(screen.getByTestId("focus-ready-state")).toBeTruthy();
-		expect(screen.getByTestId("timer-panel-idle")).toBeTruthy();
+		const focusReady = screen.getByTestId("focus-ready-state");
+		expect(within(focusReady).getByTestId("focus-ready-kickoff")).toBeTruthy();
+		expect(screen.queryByTestId("timer-panel-idle")).toBeNull();
 		expect(screen.queryByTestId("suggestion-accept-btn")).toBeNull();
 		expectOutsidePrimaryRegion("task-archive-entry");
 	});
@@ -1120,22 +1209,25 @@ describe("PomodoroDashboardBody home IA layout", () => {
 			/>,
 		);
 
-		expect(screen.getByTestId("timer-panel-idle")).toBeTruthy();
-		expect(screen.getByText("Dokończyć projekt")).toBeTruthy();
-		expect(screen.getByTestId("timer-start-cycle")).toBeTruthy();
-		expect(screen.getByTestId("focus-ready-state")).toBeTruthy();
+		const focusReady = screen.getByTestId("focus-ready-state");
+		expect(within(focusReady).getByTestId("focus-ready-kickoff")).toBeTruthy();
+		expect(within(focusReady).getByText("Dokończyć projekt")).toBeTruthy();
+		expect(within(focusReady).getByTestId("timer-start-cycle")).toBeTruthy();
+		expect(screen.queryByTestId("timer-panel-idle")).toBeNull();
 		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
 	});
 
-	it("idle focused task shows timer start alongside focus-ready", () => {
+	it("idle focused task shows embedded kickoff alongside focus-ready list", () => {
 		renderBody({
 			state: "idle",
 			focusedTask: { id: 1, title: "Focus task" },
 		});
 
-		expect(countEnabledPrimaryCtas()).toBe(2);
-		expectInsideRegion("home-primary-region", "timer-start-cycle");
-		expectInsideRegion("home-primary-region", "focus-ready-choose-task");
+		expect(countEnabledPrimaryCtas()).toBe(1);
+		const focusReady = screen.getByTestId("focus-ready-state");
+		expect(within(focusReady).getByTestId("timer-start-cycle")).toBeTruthy();
+		expect(within(focusReady).getByTestId("focus-ready-kickoff")).toBeTruthy();
+		expect(screen.queryByTestId("focus-ready-choose-task")).toBeNull();
 		expectOutsidePrimaryRegion("task-archive-entry");
 	});
 

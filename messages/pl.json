@@ -380,8 +380,7 @@
 	"QuickActions": {
 		"heading": "Szybkie akcje",
 		"addTask": "Dodaj zadanie",
-		"planDay": "Zaplanuj dzień",
-		"startBreak": "Rozpocznij przerwę"
+		"planDay": "Zaplanuj dzień"
 	},
 	"FocusEmpty": {
 		"heading": "Twój dzień czeka na Ciebie",
@@ -413,7 +412,8 @@
 		"subtitle": "Wybierz zadanie, aby rozpocząć sesję.",
 		"cta": "+ Wybierz zadanie",
 		"suggestedHeading": "Aktywne i zaplanowane",
-		"viewAll": "Zobacz wszystkie zadania →"
+		"viewAll": "Zobacz wszystkie zadania →",
+		"suggestionStarAria": "Zobacz wyjaśnienie automatycznej sugestii"
 	},
 	"HomeViewToggle": {
 		"fokus": "Fokus",

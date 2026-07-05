@@ -380,8 +380,7 @@
 	"QuickActions": {
 		"heading": "Quick actions",
 		"addTask": "Add task",
-		"planDay": "Plan day",
-		"startBreak": "Start a break"
+		"planDay": "Plan day"
 	},
 	"FocusEmpty": {
 		"heading": "Your day is waiting for you",
@@ -413,7 +412,8 @@
 		"subtitle": "Choose a task to start a session.",
 		"cta": "+ Choose task",
 		"suggestedHeading": "Active and planned",
-		"viewAll": "View all tasks →"
+		"viewAll": "View all tasks →",
+		"suggestionStarAria": "See why this task was suggested"
 	},
 	"HomeViewToggle": {
 		"fokus": "Fokus",

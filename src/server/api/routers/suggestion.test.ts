@@ -209,7 +209,7 @@ vi.mock("~/server/db/index", () => ({
 				(args: {
 					where: {
 						userId?: string;
-						status?: string | { not: string };
+						status?: string | { not: string; in?: string[] };
 						OR?: Array<{ status?: string; isDailyStanding?: boolean }>;
 					};
 					orderBy?:
@@ -224,6 +224,10 @@ vi.mock("~/server/db/index", () => ({
 						if (statusFilter != null) {
 							if (typeof statusFilter === "string") {
 								if (t.status !== statusFilter) {
+									return false;
+								}
+							} else if (Array.isArray(statusFilter.in)) {
+								if (!statusFilter.in.includes(t.status)) {
 									return false;
 								}
 							} else if (t.status === statusFilter.not) {

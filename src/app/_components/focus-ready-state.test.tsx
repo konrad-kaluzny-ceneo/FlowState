@@ -77,4 +77,19 @@ describe("selectFocusReadyTasks", () => {
 
 		expect(selectFocusReadyTasks(tasks)).toHaveLength(3);
 	});
+
+	it("pins auto-suggested task into the shortlist when it would otherwise be omitted", () => {
+		const tasks = Array.from({ length: 4 }, (_, index) =>
+			makeTask({
+				id: index + 1,
+				title: `Task ${index + 1}`,
+				status: "active",
+				sortOrder: index,
+			}),
+		);
+
+		const selected = selectFocusReadyTasks(tasks, 4);
+
+		expect(selected.map((task) => task.id)).toEqual([4, 1, 2]);
+	});
 });

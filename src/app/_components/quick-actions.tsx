@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, ChevronRight, Coffee, Plus, Zap } from "lucide-react";
+import { Calendar, ChevronRight, Plus, Zap } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
@@ -32,13 +32,6 @@ export function QuickActions({
 			href: "/plan",
 			testId: "quick-action-plan-day",
 		},
-		{
-			key: "startBreak",
-			label: t("startBreak"),
-			icon: Coffee,
-			href: "/focus",
-			testId: "quick-action-start-break",
-		},
 	] as const;
 
 	const list = (
@@ -63,15 +56,7 @@ export function QuickActions({
 
 				return (
 					<li key={item.key}>
-						{"href" in item && item.href != null ? (
-							<Link
-								className={rowClass}
-								data-testid={item.testId}
-								href={item.href}
-							>
-								{content}
-							</Link>
-						) : (
+						{"onClick" in item ? (
 							<button
 								className={rowClass}
 								data-testid={item.testId}
@@ -80,6 +65,14 @@ export function QuickActions({
 							>
 								{content}
 							</button>
+						) : (
+							<Link
+								className={rowClass}
+								data-testid={item.testId}
+								href={item.href}
+							>
+								{content}
+							</Link>
 						)}
 					</li>
 				);

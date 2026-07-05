@@ -36,6 +36,8 @@ export async function getDoneTodayTaskIds(
 	return new Set(completions.map((row) => row.taskId));
 }
 
+const SUGGESTION_POOL_STATUSES = ["active", "planned"] as const;
+
 export async function buildSuggestionPool(
 	db: DbClient,
 	userId: string,
@@ -48,7 +50,7 @@ export async function buildSuggestionPool(
 	const tasks = await db.task.findMany({
 		where: {
 			userId,
-			status: "active",
+			status: { in: [...SUGGESTION_POOL_STATUSES] },
 		},
 		orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
 	});

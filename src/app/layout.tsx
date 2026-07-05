@@ -9,6 +9,7 @@ import { auth } from "~/lib/auth/server";
 import { DataModeProvider } from "~/lib/data-mode/data-mode-context";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import { TRPCReactProvider } from "~/trpc/react";
+import { api, HydrateClient } from "~/trpc/server";
 import { AppShell } from "./_components/app-shell";
 import { AppUserProvider } from "./_components/app-user-context";
 import { OAuthSessionVerifier } from "./_components/oauth-session-verifier";
@@ -57,6 +58,10 @@ export default async function RootLayout({
 		userId = null;
 	}
 
+	if (userId) {
+		await api.task.list.prefetch();
+	}
+
 	const scope: OnboardingScope = userId
 		? { mode: "authenticated", userId }
 		: { mode: "guest" };
@@ -74,18 +79,20 @@ export default async function RootLayout({
 			<body className="flex min-h-screen flex-col">
 				<NextIntlClientProvider locale={locale} messages={messages}>
 					<TRPCReactProvider>
-						<ThemeProvider>
-							<OAuthSessionVerifier />
-							<DataModeProvider mode={scope.mode}>
-								<AppUserProvider scope={scope} userName={userName}>
-									<PomodoroCycleProvider scope={scope}>
-										<AppShell scope={scope} userName={userName}>
-											{children}
-										</AppShell>
-									</PomodoroCycleProvider>
-								</AppUserProvider>
-							</DataModeProvider>
-						</ThemeProvider>
+						<HydrateClient>
+							<ThemeProvider>
+								<OAuthSessionVerifier />
+								<DataModeProvider mode={scope.mode}>
+									<AppUserProvider scope={scope} userName={userName}>
+										<PomodoroCycleProvider scope={scope}>
+											<AppShell scope={scope} userName={userName}>
+												{children}
+											</AppShell>
+										</PomodoroCycleProvider>
+									</AppUserProvider>
+								</DataModeProvider>
+							</ThemeProvider>
+						</HydrateClient>
 					</TRPCReactProvider>
 				</NextIntlClientProvider>
 			</body>
