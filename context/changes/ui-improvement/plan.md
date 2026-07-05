@@ -504,10 +504,10 @@ Przebudować Ustawienia do dwukolumnowego układu tabów (tylko działające sek
 
 #### Automated
 
-- [ ] 2.1 Typecheck przechodzi
-- [ ] 2.2 Lint przechodzi
-- [ ] 2.3 Testy hooka/komponentu (oracle domknięcia bramki, brak referencji celu sesji)
-- [ ] 2.4 Naprawione czerwone specy E2E steering/transition (per-spec)
+- [x] 2.1 Typecheck przechodzi
+- [x] 2.2 Lint przechodzi
+- [x] 2.3 Testy hooka/komponentu (oracle domknięcia bramki, brak referencji celu sesji)
+- [x] 2.4 Naprawione czerwone specy E2E steering/transition (per-spec)
 
 #### Manual
 
