@@ -789,26 +789,26 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Automated
 
-- [x] 4.1 Migration applies cleanly: `pnpm db:migrate`
-- [x] 4.2 Type checking passes: `pnpm typecheck`
-- [x] 4.3 Lint/format passes: `pnpm check`
-- [x] 4.4 Unit + router tests pass: `pnpm test`
+- [x] 4.1 Migration applies cleanly: `pnpm db:migrate` — 81149b6
+- [x] 4.2 Type checking passes: `pnpm typecheck` — 81149b6
+- [x] 4.3 Lint/format passes: `pnpm check` — 81149b6
+- [x] 4.4 Unit + router tests pass: `pnpm test` — 81149b6
 
 #### Manual
 
-- [x] 4.5 Normal create → `planned`; daily-standing → `active`
-- [x] 4.6 Focusing a planned task promotes it to `active`
-- [x] 4.7 Planned tasks excluded from focus suggestions
-- [x] 4.8 Existing tasks unaffected post-migration
-- [x] 4.9 Planned task round-trips the mapper (no throw) and guest snapshot with a planned task loads (not dropped)
+- [x] 4.5 Normal create → `planned`; daily-standing → `active` — 81149b6
+- [x] 4.6 Focusing a planned task promotes it to `active` — 81149b6
+- [x] 4.7 Planned tasks excluded from focus suggestions — 81149b6
+- [x] 4.8 Existing tasks unaffected post-migration — 81149b6
+- [x] 4.9 Planned task round-trips the mapper (no throw) and guest snapshot with a planned task loads (not dropped) — 81149b6
 
 ### Phase 5: Zadania View
 
 #### Automated
 
-- [ ] 5.1 Type checking passes: `pnpm typecheck`
-- [ ] 5.2 Lint/format passes: `pnpm check`
-- [ ] 5.3 Unit tests pass (list/fields/modal/detail): `pnpm test`
+- [x] 5.1 Type checking passes: `pnpm typecheck`
+- [x] 5.2 Lint/format passes: `pnpm check`
+- [x] 5.3 Unit tests pass (list/fields/modal/detail): `pnpm test`
 - [ ] 5.4 Accessibility e2e passes: `pnpm test:e2e:a11y`
 
 #### Manual

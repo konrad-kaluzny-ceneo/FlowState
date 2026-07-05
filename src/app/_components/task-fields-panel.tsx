@@ -150,6 +150,10 @@ export type TaskFieldsPanelProps = {
 	showAttributeFields?: boolean;
 	personaPresetPicker?: ReactNode;
 	presetEffortField?: ReactNode;
+	project?: string;
+	onProjectChange?: (value: string) => void;
+	projectFieldId?: string;
+	projectSuggestions?: string[];
 };
 
 export function TaskFieldsPanel({
@@ -177,6 +181,10 @@ export function TaskFieldsPanel({
 	showAttributeFields = mode === "edit",
 	personaPresetPicker,
 	presetEffortField,
+	project,
+	onProjectChange,
+	projectFieldId,
+	projectSuggestions,
 }: TaskFieldsPanelProps) {
 	const t = useTranslations("Tasks");
 	const showWorkType = mode === "edit" || showAttributeFields;
@@ -228,6 +236,36 @@ export function TaskFieldsPanel({
 				onChange={onIsDailyStandingChange}
 			/>
 			{mode === "create" && presetEffortField}
+			{onProjectChange != null && (
+				<div className="flex flex-wrap items-center gap-2">
+					<span className="w-16 shrink-0 text-text-secondary text-xs">
+						{t("fieldProject")}
+					</span>
+					<input
+						className="min-w-[8rem] flex-1 rounded-md bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
+						data-testid="task-project-input"
+						id={projectFieldId}
+						list={
+							projectFieldId != null
+								? `${projectFieldId}-suggestions`
+								: undefined
+						}
+						onChange={(event) => onProjectChange(event.target.value)}
+						placeholder={t("projectPlaceholder")}
+						type="text"
+						value={project ?? ""}
+					/>
+					{projectFieldId != null &&
+						projectSuggestions != null &&
+						projectSuggestions.length > 0 && (
+							<datalist id={`${projectFieldId}-suggestions`}>
+								{projectSuggestions.map((suggestion) => (
+									<option key={suggestion} value={suggestion} />
+								))}
+							</datalist>
+						)}
+				</div>
+			)}
 			{showWorkType && (
 				<div
 					className={
