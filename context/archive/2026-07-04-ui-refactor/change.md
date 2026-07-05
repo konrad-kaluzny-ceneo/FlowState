@@ -1,10 +1,10 @@
 ---
 change_id: ui-refactor
 title: Align app UI with the redesign mockups in context/foundation/makiety
-status: implementing
+status: archived
 created: 2026-07-04
 updated: 2026-07-05
-archived_at: null
+archived_at: 2026-07-05T19:46:00Z
 ---
 
 ## Notes
