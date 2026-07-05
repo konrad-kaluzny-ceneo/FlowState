@@ -806,10 +806,10 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Automated
 
-- [x] 5.1 Type checking passes: `pnpm typecheck`
-- [x] 5.2 Lint/format passes: `pnpm check`
-- [x] 5.3 Unit tests pass (list/fields/modal/detail): `pnpm test`
-- [ ] 5.4 Accessibility e2e passes: `pnpm test:e2e:a11y`
+- [x] 5.1 Type checking passes: `pnpm typecheck` — 57a7116
+- [x] 5.2 Lint/format passes: `pnpm check` — 57a7116
+- [x] 5.3 Unit tests pass (list/fields/modal/detail): `pnpm test` — 57a7116
+- [ ] 5.4 Accessibility e2e passes: `pnpm test:e2e:a11y` (pending CI)
 
 #### Manual
 

@@ -243,6 +243,23 @@ describe("TaskList", () => {
 		expect(screen.queryByTestId("add-task-modal")).toBeNull();
 	});
 
+	it("carries the quick-add input text into the add-task modal title", () => {
+		renderTaskList(<TaskList {...defaultProps} />);
+
+		fireEvent.change(screen.getByPlaceholderText("Add a new task..."), {
+			target: { value: "Drafted title" },
+		});
+		fireEvent.click(screen.getByTestId("open-add-task-modal"));
+
+		expect(
+			(screen.getByTestId("task-fields-title") as HTMLTextAreaElement).value,
+		).toBe("Drafted title");
+		expect(
+			(screen.getByPlaceholderText("Add a new task...") as HTMLInputElement)
+				.value,
+		).toBe("");
+	});
+
 	it("creates a planned task via the quick-add input", async () => {
 		renderTaskList(<TaskList {...defaultProps} />);
 

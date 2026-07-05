@@ -15,7 +15,7 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Plus, Target } from "lucide-react";
+import { Plus, Settings2, Target } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 
@@ -550,6 +550,7 @@ export function TaskList({
 	const [typeFilter, setTypeFilter] = useState<TypeFilterValue>("all");
 	const [sortKey, setSortKey] = useState<SortValue>("manual");
 	const [showAddModal, setShowAddModal] = useState(false);
+	const [addModalInitialTitle, setAddModalInitialTitle] = useState("");
 	const [detailTaskId, setDetailTaskId] = useState<DomainTaskId | null>(null);
 	const [completingTaskId, setCompletingTaskId] = useState<DomainTaskId | null>(
 		null,
@@ -762,12 +763,17 @@ export function TaskList({
 					</button>
 				</form>
 				<button
-					className="shrink-0 rounded-lg bg-accent-cta px-4 py-2 font-semibold text-on-cta transition hover:bg-accent-cta-hover"
+					aria-label={t("addTaskButton")}
+					className="shrink-0 rounded-lg bg-surface-panel p-2 text-text-section transition hover:bg-surface-card-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 					data-testid="open-add-task-modal"
-					onClick={() => setShowAddModal(true)}
+					onClick={() => {
+						setAddModalInitialTitle(quickTitle);
+						setQuickTitle("");
+						setShowAddModal(true);
+					}}
 					type="button"
 				>
-					{t("addTaskButton")}
+					<Settings2 aria-hidden="true" className="h-5 w-5" />
 				</button>
 			</div>
 
@@ -872,6 +878,7 @@ export function TaskList({
 
 			{showAddModal && (
 				<AddTaskModal
+					initialTitle={addModalInitialTitle}
 					isCreating={isCreating}
 					onClose={() => setShowAddModal(false)}
 					onCreate={async (input) => {

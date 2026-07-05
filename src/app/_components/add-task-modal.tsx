@@ -34,6 +34,7 @@ type AddTaskModalProps = {
 	onCreate: (input: AddTaskModalCreateInput) => Promise<void> | void;
 	isCreating?: boolean;
 	projectSuggestions?: string[];
+	initialTitle?: string;
 };
 
 function parseEffortMinutes(value: string): number | null {
@@ -53,9 +54,10 @@ export function AddTaskModal({
 	onCreate,
 	isCreating = false,
 	projectSuggestions = [],
+	initialTitle = "",
 }: AddTaskModalProps) {
 	const t = useTranslations("Tasks");
-	const [title, setTitle] = useState("");
+	const [title, setTitle] = useState(initialTitle);
 	const [selectedPresetId, setSelectedPresetId] = useState<
 		PersonaPresetId | "custom" | null
 	>(null);

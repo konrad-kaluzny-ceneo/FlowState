@@ -254,7 +254,7 @@
 		"sortManual": "Manual",
 		"sortPriority": "Priority",
 		"sortEffort": "Shortest effort",
-		"addTaskButton": "+ Add task",
+		"addTaskButton": "Open detailed add-task form",
 		"addTaskModalTitle": "Add task",
 		"addTaskModalCancel": "Cancel",
 		"addTaskModalSubmit": "Add task",
