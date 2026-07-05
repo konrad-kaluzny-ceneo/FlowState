@@ -549,9 +549,9 @@ Przebudować Ustawienia do dwukolumnowego układu tabów (tylko działające sek
 
 #### Automated
 
-- [ ] 5.1 Typecheck przechodzi
-- [ ] 5.2 Lint przechodzi
-- [ ] 5.3 Testy komponentu (ComingSoonPreview etykieta + aria-hidden; plan renderuje podgląd)
+- [x] 5.1 Typecheck przechodzi
+- [x] 5.2 Lint przechodzi
+- [x] 5.3 Testy komponentu (ComingSoonPreview etykieta + aria-hidden; plan renderuje podgląd)
 
 #### Manual
 

@@ -11,10 +11,7 @@ import {
 	useState,
 } from "react";
 
-import {
-	AddTaskModal,
-	type AddTaskModalCreateInput,
-} from "~/app/_components/add-task-modal";
+import { AddTaskModal } from "~/app/_components/add-task-modal";
 import { BreakAlertsPermissionPrompt } from "~/app/_components/break-alerts-permission-prompt";
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
@@ -1118,6 +1115,16 @@ export function PomodoroDashboardBody({
 						{tDashboard("endSession")}
 					</button>
 				</div>
+			)}
+
+			{showAddModal && (
+				<AddTaskModal
+					isCreating={isCreating}
+					onClose={() => setShowAddModal(false)}
+					onCreate={async (input) => {
+						await createTask(input);
+					}}
+				/>
 			)}
 		</div>
 	);

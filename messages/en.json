@@ -372,7 +372,12 @@
 	},
 	"QuickActions": {
 		"addTask": "Add task",
-		"viewTasks": "Tasks"
+		"planDay": "Day plan"
+	},
+	"FocusEmpty": {
+		"heading": "Your day is waiting for you",
+		"subtitle": "Add your first task to start a focus session.",
+		"cta": "Add first task"
 	},
 	"HomeViewToggle": {
 		"fokus": "Fokus",
@@ -415,9 +420,14 @@
 	},
 	"PlanDnia": {
 		"title": "Day plan",
-		"subtitle": "Your daily focus-hours budget.",
+		"subtitle": "Your day schedule and focus-hours budget.",
 		"loading": "Loading day plan…",
 		"guestEmpty": "Day plan is available after signing in.",
+		"calendarComingSoon": "Calendar coming soon",
+		"blockFocus": "Focus",
+		"blockMeeting": "Meeting",
+		"blockBreak": "Break",
+		"blockPersonal": "Personal",
 		"budgetHeading": "Focus budget",
 		"budgetLine": "Used {used} of {budget} · {remaining} remaining",
 		"changeBudget": "Change budget",

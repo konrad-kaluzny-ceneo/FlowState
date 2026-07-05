@@ -372,7 +372,12 @@
 	},
 	"QuickActions": {
 		"addTask": "Dodaj zadanie",
-		"viewTasks": "Zadania"
+		"planDay": "Plan dnia"
+	},
+	"FocusEmpty": {
+		"heading": "Twój dzień czeka na Ciebie",
+		"subtitle": "Dodaj swoje pierwsze zadanie, aby rozpocząć sesję skupienia.",
+		"cta": "Dodaj pierwsze zadanie"
 	},
 	"HomeViewToggle": {
 		"fokus": "Fokus",
@@ -415,9 +420,14 @@
 	},
 	"PlanDnia": {
 		"title": "Plan dnia",
-		"subtitle": "Twój dzienny budżet godzin skupienia.",
+		"subtitle": "Harmonogram dnia i budżet godzin skupienia.",
 		"loading": "Wczytywanie planu dnia…",
 		"guestEmpty": "Plan dnia jest dostępny po zalogowaniu.",
+		"calendarComingSoon": "Kalendarz wkrótce",
+		"blockFocus": "Skupienie",
+		"blockMeeting": "Spotkanie",
+		"blockBreak": "Przerwa",
+		"blockPersonal": "Osobiste",
 		"budgetHeading": "Budżet skupienia",
 		"budgetLine": "Wykorzystano {used} z {budget} · pozostało {remaining}",
 		"changeBudget": "Zmień budżet",
