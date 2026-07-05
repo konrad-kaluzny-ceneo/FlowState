@@ -88,3 +88,24 @@ Never reverse this order.
 - **Problem**: The full e2e belt takes 2–3 minutes per run. Running it after every change wastes time and produces walls of output where individual failure context is lost. The agent ends up re-running tests it already diagnosed because the output was truncated.
 - **Rule**: Always run a single spec file (`pnpm exec playwright test e2e/<name>.spec.ts`) or a `--grep` filter during iteration. Capture the full error output on failure — never discard it. Run the belt only as the final gate when you're confident all specs should pass.
 - **Applies to**: implement, impl-review
+
+---
+
+## L-06: E2E tests that exceed 15 seconds belong in integration/hook layer
+
+**Trigger:** Adding or reviewing Playwright e2e specs.
+
+**Rule:** If an e2e test consistently takes >15s, it exercises too many async steps (cycle start → clock advance → overlay → check-in → suggestion fetch → assertion). Demote the signal to a Vitest hook/integration test where the same logic runs in <100ms without browser orchestration overhead. Reserve e2e belt for fast (<15s) happy-path proofs that need real DOM.
+
+**What went wrong (2026-07-05 ui-refactor):** 6 belt tests (pomodoro-cycle, task-suggestion, session-kickoff, seed mid-cycle, mindful-wind-down fatigue/end-session) ran 17–25s, introduced timing flakiness due to fake-clock/parallel-worker interactions, and broke after any layout restructure (task-list moved from /focus to /tasks).
+
+**Correct approach:** Each removed e2e already had Vitest hook coverage: `use-pomodoro-cycle.test.tsx` (check-in gate, mid-cycle, suggestion fetch, kickoff eligibility, wind-down trigger), `suggestion.test.ts` (router-level scoring/exclusion), `transition-conductor.test.ts` (gate mutex), `wind-down-nudge.test.ts` (trigger logic), `pomodoro-dashboard.test.tsx` (overlay visibility matrix). These tests run in ~2s total and catch the same regressions.
+
+**Anti-patterns to avoid:**
+1. E2e testing pure state-machine logic (cycle transitions, gate priority) — use `renderHook` instead.
+2. E2e testing tRPC response shape (suggestion rationale, scoring) — use `createCaller` integration.
+3. E2e testing overlay show/hide matrix — use component render with mocked hook returns.
+4. Multi-cycle flows requiring 3+ clock advances — flaky by design in parallel workers.
+5. Tests depending on `waitForResponse` matching tRPC batch stream URLs — fragile and timing-sensitive.
+
+- **Applies to**: e2e, testing, implement

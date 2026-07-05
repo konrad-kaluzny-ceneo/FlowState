@@ -7,7 +7,6 @@
 import { expect, test } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
-import { createTaskViaApi } from "./helpers/daily-plan";
 import {
 	dismissKickoffReadinessIfVisible,
 	ensureIdleCycle,
@@ -21,7 +20,6 @@ import {
 import {
 	advanceClockThroughFastWork,
 	forgetFakeClock,
-	markTaskCompleteMidCycle,
 	startFocusedWorkCycle,
 } from "./helpers/work-cycle";
 
@@ -46,34 +44,6 @@ test.beforeEach(async ({ page }) => {
 test.afterEach(async ({ page }) => {
 	forgetFakeClock(page);
 	await resetWorkerSessionViaApi(page);
-});
-
-test.describe("Seed exemplar — Risk #3 mid-cycle prompt", () => {
-	test("completing a task mid-cycle surfaces FR-015 choices", async ({
-		page,
-	}) => {
-		test.setTimeout(60_000);
-
-		const ts = Date.now();
-		const task1 = `Seed R3 A ${ts}`;
-		const task2 = `Seed R3 B ${ts}`;
-
-		// task2 must be active for "Continue with selected task" to appear
-		await createTaskViaApi(page, {
-			title: task2,
-			isDailyStanding: true,
-		});
-		await startFocusedWorkCycle(page, task1, 30);
-		await markTaskCompleteMidCycle(page, task1);
-
-		await expect(page.getByTestId("mid-cycle-prompt-overlay")).toBeVisible();
-		await expect(
-			page.getByRole("button", { name: "Continue with selected task" }),
-		).toBeVisible();
-		await expect(
-			page.getByRole("button", { name: "End cycle and break" }),
-		).toBeVisible();
-	});
 });
 
 test.describe("Seed exemplar — Risk #7 check-in gate", () => {
