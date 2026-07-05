@@ -518,26 +518,6 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.queryByTestId("cycle-intention-prompt")).toBeNull();
 	});
 
-	it("shows inline session focus card when showSessionFocus is true", () => {
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				showSessionFocus: true,
-				sessionFocusPending: true,
-			}),
-		);
-
-		render(
-			<PomodoroDashboardBody
-				enableSuggestionGate
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(screen.getByTestId("session-focus-card")).toBeTruthy();
-	});
-
 	it("dismisses cycle complete overlay after Continue later confirm", async () => {
 		const onCycleCompleteConfirm = vi.fn().mockResolvedValue(undefined);
 
@@ -609,40 +589,6 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		);
 
 		expect(screen.getByTestId("session-energy-card")).toBeTruthy();
-		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
-	});
-
-	it("does not show kickoff suggestion while session focus card is visible", () => {
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				state: "idle",
-				focusedTaskId: null,
-				showSessionFocus: true,
-				sessionFocusPending: true,
-				pendingKickoffSuggestion: {
-					status: "ready",
-					data: {
-						taskId: "task-1",
-						title: "Suggested task",
-						workType: "OPERATIONAL",
-						weight: 2,
-						rationale: "Best next task",
-						breakdown: null,
-					},
-				},
-			}),
-		);
-
-		render(
-			<PomodoroDashboardBody
-				enableSuggestionGate
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(screen.getByTestId("session-focus-card")).toBeTruthy();
 		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
 	});
 

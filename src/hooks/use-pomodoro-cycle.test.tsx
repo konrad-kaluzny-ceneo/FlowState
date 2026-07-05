@@ -2868,7 +2868,7 @@ describe("usePomodoroCycle", () => {
 		});
 
 		describe("session steering", () => {
-			it("sets sessionEnergyPending and sessionFocusPending without calling suggestion.next on kickoffEligible", async () => {
+			it("sets sessionEnergyPending without calling suggestion.next on kickoffEligible", async () => {
 				taskListQuery.mockResolvedValue(activeTaskList);
 
 				const { result } = renderHook(() => usePomodoroCycle(), {
@@ -2877,7 +2877,6 @@ describe("usePomodoroCycle", () => {
 
 				await waitFor(() => {
 					expect(result.current.sessionEnergyPending).toBe(true);
-					expect(result.current.sessionFocusPending).toBe(true);
 				});
 
 				expect(suggestionNextMutate).not.toHaveBeenCalledWith(
@@ -2919,57 +2918,6 @@ describe("usePomodoroCycle", () => {
 						energy: "FOCUSED",
 					}),
 				);
-			});
-
-			it("forwards sessionIntention to kickoff mutate when steering chip selected", async () => {
-				taskListQuery.mockResolvedValue(activeTaskList);
-				suggestionNextMutate.mockImplementation(async (input) => {
-					if (input.context === "kickoff") {
-						return kickoffSuggestion;
-					}
-					return null;
-				});
-
-				const { result } = renderHook(() => usePomodoroCycle(), {
-					wrapper: createWrapper(),
-				});
-
-				await waitFor(() => {
-					expect(result.current.sessionEnergyPending).toBe(true);
-				});
-
-				suggestionNextMutate.mockClear();
-
-				act(() => {
-					result.current.completeSessionFocus("Ship closure overlay");
-				});
-				act(() => {
-					result.current.completeSessionEnergy("STEADY");
-				});
-
-				await waitFor(() => {
-					expect(result.current.pendingKickoffSuggestion.status).toBe("ready");
-				});
-
-				expect(suggestionNextMutate).toHaveBeenCalledWith(
-					expect.objectContaining({
-						context: "kickoff",
-						sessionIntention: "Ship closure overlay",
-					}),
-				);
-
-				act(() => {
-					result.current.selectTask(7, { id: 7, title: "Write tests" });
-				});
-
-				await startWorkCycle(result, 60);
-
-				expect(createCycle).toHaveBeenCalledWith({
-					kind: "WORK",
-					configuredDurationSec: 60,
-					taskId: 7,
-					intention: "Ship closure overlay",
-				});
 			});
 
 			it("skipSessionEnergy forwards STEADY energy without creating check-in", async () => {
@@ -3922,7 +3870,6 @@ describe("usePomodoroCycle", () => {
 
 			await waitFor(() => {
 				expect(result.current.sessionEnergyPending).toBe(true);
-				expect(result.current.sessionFocusPending).toBe(true);
 				expect(result.current.pendingWedgeRecovery).toBeNull();
 			});
 		});

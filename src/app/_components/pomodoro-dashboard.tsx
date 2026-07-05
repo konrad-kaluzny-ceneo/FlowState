@@ -273,7 +273,7 @@ export function PomodoroDashboardBody({
 			// Persist the choice as today's "energy of the day" (DayPlan) so it is
 			// editable in settings; also steer the first kickoff suggestion. The
 			// DayPlan write is best-effort — the kickoff flow must not depend on it.
-			void dayPlan.setEnergy(energy).catch(() => {});
+			void dayPlan?.setEnergy(energy).catch(() => {});
 			pomodoro.completeSessionEnergy(energy);
 		},
 		[dayPlan, pomodoro],

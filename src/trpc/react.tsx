@@ -24,6 +24,24 @@ const getQueryClient = () => {
 
 export const api = createTRPCReact<AppRouter>();
 
+async function getTRPCClientHeaders(): Promise<Headers> {
+	const headers = new Headers();
+	headers.set("x-trpc-source", "nextjs-react");
+
+	// Client components that suspense-fetch during SSR call /api/trpc over HTTP.
+	// Forward the incoming request cookies so protectedProcedure sees the session.
+	if (typeof window === "undefined") {
+		const { headers: nextHeaders } = await import("next/headers");
+		const incoming = await nextHeaders();
+		const cookie = incoming.get("cookie");
+		if (cookie) {
+			headers.set("cookie", cookie);
+		}
+	}
+
+	return headers;
+}
+
 /**
  * Inference helper for inputs.
  *
@@ -53,11 +71,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 				httpBatchStreamLink({
 					transformer: SuperJSON,
 					url: `${getBaseUrl()}/api/trpc`,
-					headers: () => {
-						const headers = new Headers();
-						headers.set("x-trpc-source", "nextjs-react");
-						return headers;
-					},
+					headers: getTRPCClientHeaders,
 				}),
 			],
 		}),
