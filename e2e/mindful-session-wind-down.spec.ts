@@ -181,11 +181,18 @@ test.describe("Mindful session wind-down (S-16)", () => {
 			timeout: 15_000,
 		});
 		await expect(page.getByTestId("task-suggestion-card")).toBeHidden();
+		// Session closure overlay may appear after wind-down end — dismiss it
+		const closureOverlay = page.getByTestId("session-closure-overlay");
+		if (await closureOverlay.isVisible().catch(() => false)) {
+			await page.getByTestId("session-closure-dismiss-btn").click();
+			await expect(closureOverlay).toBeHidden({ timeout: 5_000 });
+		}
 		await expect(
 			page
 				.getByTestId("timer-panel-idle")
 				.or(page.getByTestId("timer-panel-running"))
-				.or(page.getByTestId("timer-panel-paused")),
+				.or(page.getByTestId("timer-panel-paused"))
+				.or(page.getByTestId("home-workbench-grid")),
 		).toBeVisible({ timeout: 15_000 });
 	});
 

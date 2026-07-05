@@ -9,7 +9,13 @@ import { completeKickoffSteering } from "./helpers/kickoff";
 import { dismissFirstRunIfVisible } from "./helpers/onboarding";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 import { expectFocusPageReady } from "./helpers/task-list-locator";
-import { addTask, startFocusedWorkCycle } from "./helpers/work-cycle";
+import {
+	addTask,
+	clickStartCycle,
+	focusTask,
+	forgetFakeClock,
+	setWorkDurationSec,
+} from "./helpers/work-cycle";
 
 test.describe("Session return continue row (S-17)", () => {
 	test.beforeEach(async ({ page }) => {
@@ -35,8 +41,9 @@ test.describe("Session return continue row (S-17)", () => {
 		const taskTitle = `E2E Continue ${Date.now()}`;
 
 		await addTask(page, taskTitle);
-
-		await startFocusedWorkCycle(page, taskTitle, 1);
+		await focusTask(page, taskTitle);
+		await setWorkDurationSec(page, 300);
+		await clickStartCycle(page);
 		await expect(page.getByTestId("timer-panel-running")).toBeVisible({
 			timeout: 15_000,
 		});
@@ -52,6 +59,7 @@ test.describe("Session return continue row (S-17)", () => {
 		await page.getByTestId("session-closure-dismiss-btn").click();
 		await expect(page.getByTestId("session-closure-overlay")).toBeHidden();
 
+		forgetFakeClock(page);
 		const lastEndedReady = page.waitForResponse(
 			(response) =>
 				response.url().includes("session.getLastEnded") && response.ok(),

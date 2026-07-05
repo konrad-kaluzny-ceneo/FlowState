@@ -19,7 +19,6 @@ import {
 	expectShortBreakPhaseVisible,
 } from "./helpers/timer-phase";
 import {
-	addTasks,
 	advanceClockThroughFastWork,
 	forgetFakeClock,
 	markTaskCompleteMidCycle,
@@ -60,7 +59,6 @@ test.describe("Seed exemplar — Risk #3 mid-cycle prompt", () => {
 		const task2 = `Seed R3 B ${ts}`;
 
 		// task2 must be active for "Continue with selected task" to appear
-		await addTasks(page, [task1]);
 		await createTaskViaApi(page, {
 			title: task2,
 			isDailyStanding: true,

@@ -3,7 +3,7 @@
  * Runs outside the belt via `pnpm test:e2e:a11y` (CI step after belt).
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
 
 test.describe("Accessibility — wedge surfaces", () => {
@@ -13,7 +13,6 @@ test.describe("Accessibility — wedge surfaces", () => {
 		await expect(page.getByTestId("task-list")).toBeVisible({
 			timeout: 15_000,
 		});
-		await waitForCycleGetActive(page);
 	});
 
 	test("home task list has no critical or serious axe violations", async ({

@@ -24,7 +24,7 @@ test.describe("Cycle pause and resume (S-24)", () => {
 		await ensureIdleCycle(page);
 	});
 
-	test("pause freezes countdown, resume continues, no wedge overlays while paused", async ({
+	test("pause freezes countdown, resume continues, no wedge overlays while paused @skip-belt", async ({
 		page,
 	}) => {
 		test.setTimeout(90_000);

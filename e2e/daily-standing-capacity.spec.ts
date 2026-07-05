@@ -10,6 +10,7 @@ import {
 	markStandingComplete,
 	seedCapacitySuggestionScenario,
 } from "./helpers/daily-plan";
+import { ensureIdleCycle } from "./helpers/idle-cycle";
 import {
 	completeKickoffReadiness,
 	dismissKickoffSteeringIfVisible,
@@ -51,9 +52,7 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 		await resetCycleRecoveryAfterReload(page);
 		await resetFakeClock(page);
 		await dismissFirstRunIfVisible(page);
-		if (await page.getByTestId("session-energy-card").isVisible()) {
-			await dismissKickoffSteeringIfVisible(page);
-		}
+		await ensureIdleCycle(page);
 	});
 
 	test("post-check-in suggests capacity-fit standing task with rationale", async ({

@@ -189,11 +189,9 @@ export async function startFocusedWorkCycle(
 	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
 	await focusBtn.click();
 	// Wait for focus to register in the cycle context
-	await expect(focusBtn)
-		.toHaveAttribute("aria-label", /Focused|Skupione/i, {
-			timeout: 5_000,
-		})
-		.catch(() => {});
+	await expect(focusBtn).toHaveAttribute("aria-label", /Focused|Skupione/i, {
+		timeout: 5_000,
+	});
 
 	// Navigate to /focus via client-side link to preserve React context state
 	// (focusedTaskId is React state, lost on hard navigation)
