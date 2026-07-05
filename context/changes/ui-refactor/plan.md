@@ -760,15 +760,15 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `pnpm typecheck`
-- [ ] 2.2 Lint/format passes: `pnpm check`
-- [ ] 2.3 Unit tests pass (incl. new primitive tests): `pnpm test`
-- [ ] 2.4 Accessibility e2e passes: `pnpm test:e2e:a11y`
+- [x] 2.1 Type checking passes: `pnpm typecheck`
+- [x] 2.2 Lint/format passes: `pnpm check`
+- [x] 2.3 Unit tests pass (incl. new primitive tests): `pnpm test`
+- [x] 2.4 Accessibility e2e passes: `pnpm test:e2e:a11y`
 
 #### Manual
 
-- [ ] 2.5 Tabs + Select fully keyboard-operable and labelled
-- [ ] 2.6 Refactored work-type control behaves identically
+- [x] 2.5 Tabs + Select fully keyboard-operable and labelled
+- [x] 2.6 Refactored work-type control behaves identically
 
 ### Phase 3: Ring Timer
 
