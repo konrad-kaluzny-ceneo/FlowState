@@ -70,11 +70,11 @@ describe("AppNavbar", () => {
 		expect(navbar.className).toContain("w-full");
 	});
 
-	it("shows preference controls without account actions for guests", () => {
+	it("shows no preference controls for guests (moved to Settings)", () => {
 		renderNavbar(null);
 
-		expect(screen.getByTestId("language-switch")).toBeTruthy();
-		expect(screen.getByTestId("theme-toggle")).toBeTruthy();
+		expect(screen.queryByTestId("language-switch")).toBeNull();
+		expect(screen.queryByTestId("theme-toggle")).toBeNull();
 		expect(screen.queryByRole("button", { name: "Sign out" })).toBeNull();
 	});
 
@@ -83,6 +83,6 @@ describe("AppNavbar", () => {
 
 		expect(screen.getByText("Konrad")).toBeTruthy();
 		expect(screen.getByRole("button", { name: "Sign out" })).toBeTruthy();
-		expect(screen.getByTestId("language-switch")).toBeTruthy();
+		expect(screen.queryByTestId("language-switch")).toBeNull();
 	});
 });

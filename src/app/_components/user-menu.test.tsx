@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { THEME_STORAGE_KEY } from "~/lib/design/theme";
 import messages from "../../../messages/en.json";
 
 import { ThemeProvider } from "./theme-provider";
@@ -11,43 +10,19 @@ const { signOut } = vi.hoisted(() => ({
 	signOut: vi.fn(),
 }));
 
-const setLocale = vi.hoisted(() => vi.fn());
-
 vi.mock("~/lib/auth/client", () => ({
 	authClient: {
 		signOut,
 	},
 }));
 
-vi.mock("~/hooks/use-language-preference", () => ({
-	useLanguagePreference: () => ({
-		locale: "en",
-		setLocale,
-		isPending: false,
-		persistError: null,
-		isHydrated: true,
-	}),
-}));
-
-function mockMatchMedia(matchesDark = false) {
-	const listeners = new Set<(event: MediaQueryListEvent) => void>();
-	const media = {
-		matches: matchesDark,
+function mockMatchMedia() {
+	window.matchMedia = vi.fn().mockReturnValue({
+		matches: false,
 		media: "(prefers-color-scheme: dark)",
-		addEventListener: vi.fn(
-			(_event: string, listener: (event: MediaQueryListEvent) => void) => {
-				listeners.add(listener);
-			},
-		),
-		removeEventListener: vi.fn(
-			(_event: string, listener: (event: MediaQueryListEvent) => void) => {
-				listeners.delete(listener);
-			},
-		),
-	};
-
-	window.matchMedia = vi.fn().mockReturnValue(media);
-	return { media, listeners };
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
+	});
 }
 
 function renderUserMenu(userName = "Konrad") {
@@ -70,7 +45,7 @@ describe("UserMenu", () => {
 		vi.clearAllMocks();
 		localStorage.clear();
 		document.documentElement.dataset.theme = "light";
-		mockMatchMedia(false);
+		mockMatchMedia();
 	});
 
 	afterEach(() => {
@@ -104,52 +79,10 @@ describe("UserMenu", () => {
 		expect(locationSpy.href).toBe("/auth/sign-in");
 	});
 
-	it("persists dark theme preference to localStorage and document", () => {
+	it("no longer renders theme or language controls (moved to Settings)", () => {
 		renderUserMenu();
 
-		fireEvent.click(screen.getByRole("radio", { name: "Dark" }));
-
-		expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
-		expect(document.documentElement.dataset.theme).toBe("dark");
-		expect(
-			(screen.getByRole("radio", { name: "Dark" }) as HTMLInputElement).checked,
-		).toBe(true);
-	});
-
-	it("updates theme preference when system is selected", () => {
-		renderUserMenu();
-
-		fireEvent.click(screen.getByRole("radio", { name: "System" }));
-
-		expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("system");
-		expect(["light", "dark"]).toContain(document.documentElement.dataset.theme);
-		expect(
-			(screen.getByRole("radio", { name: "System" }) as HTMLInputElement)
-				.checked,
-		).toBe(true);
-	});
-
-	it("follows OS preference changes while system mode is active", () => {
-		const { media, listeners } = mockMatchMedia(false);
-		renderUserMenu();
-
-		fireEvent.click(screen.getByRole("radio", { name: "System" }));
-		expect(document.documentElement.dataset.theme).toBe("light");
-
-		media.matches = true;
-		for (const listener of listeners) {
-			listener({ matches: true } as MediaQueryListEvent);
-		}
-
-		expect(document.documentElement.dataset.theme).toBe("dark");
-	});
-
-	it("renders language switch and calls setLocale when Polish is selected", () => {
-		renderUserMenu();
-
-		expect(screen.getByTestId("language-switch")).toBeTruthy();
-		fireEvent.click(screen.getByRole("radio", { name: "PL" }));
-
-		expect(setLocale).toHaveBeenCalledWith("pl");
+		expect(screen.queryByTestId("language-switch")).toBeNull();
+		expect(screen.queryByTestId("theme-toggle")).toBeNull();
 	});
 });

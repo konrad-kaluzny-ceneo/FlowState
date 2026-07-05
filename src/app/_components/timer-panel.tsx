@@ -9,27 +9,15 @@ import type {
 	FocusedTask,
 	PomodoroCycleState,
 } from "~/hooks/use-pomodoro-cycle";
-import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 import {
-	getLongBreakPresets,
-	getMaxBreakDurationSec,
 	getMaxWorkDurationSec,
-	getMinBreakDurationSec,
 	getMinWorkDurationSec,
-	getShortBreakPresets,
 	getWorkDurationPresets,
 } from "~/lib/duration-bounds";
 import { isDurationSecInRange } from "~/lib/duration-input";
-import {
-	getLastDuration,
-	getLongBreakDuration,
-	getShortBreakDuration,
-	setLongBreakDuration,
-	setShortBreakDuration,
-} from "~/lib/duration-storage";
+import { getLastDuration } from "~/lib/duration-storage";
 import { formatRemainingMs } from "~/lib/format-remaining";
 
-import { CycleAudioPreferenceControl } from "./cycle-audio-preference-control";
 import { DurationPicker } from "./duration-picker";
 import { OutOfTabBreakAlertsControl } from "./out-of-tab-break-alerts-control";
 import { ProgressRing } from "./ui/progress-ring";
@@ -57,8 +45,6 @@ type TimerPanelProps = {
 	configuredDurationSec?: number | null;
 	preferredWorkDurationSec?: number | null;
 	onWorkDurationManualChange?: () => void;
-	cycleEndAudioMode?: CycleEndAudioMode;
-	onCycleEndAudioModeChange?: (mode: CycleEndAudioMode) => void;
 	outOfTabBreakAlertsEnabled?: boolean;
 	onOutOfTabBreakAlertsChange?: (enabled: boolean) => void;
 };
@@ -76,8 +62,6 @@ export function TimerPanel({
 	configuredDurationSec = null,
 	preferredWorkDurationSec = null,
 	onWorkDurationManualChange,
-	cycleEndAudioMode = "normal",
-	onCycleEndAudioModeChange,
 	outOfTabBreakAlertsEnabled = true,
 	onOutOfTabBreakAlertsChange,
 }: TimerPanelProps) {
@@ -85,14 +69,7 @@ export function TimerPanel({
 	const [workDurationSec, setWorkDurationSec] = useState(
 		() => preferredWorkDurationSec ?? getLastDuration(),
 	);
-	const [shortBreakSec, setShortBreakSec] = useState(() =>
-		getShortBreakDuration(),
-	);
-	const [longBreakSec, setLongBreakSec] = useState(() =>
-		getLongBreakDuration(),
-	);
 	const [workPickerInvalid, setWorkPickerInvalid] = useState(false);
-	const [showBreakSettings, setShowBreakSettings] = useState(false);
 
 	useEffect(() => {
 		if (preferredWorkDurationSec != null) {
@@ -102,8 +79,6 @@ export function TimerPanel({
 
 	const workMinSec = getMinWorkDurationSec();
 	const workMaxSec = getMaxWorkDurationSec();
-	const breakMinSec = getMinBreakDurationSec();
-	const breakMaxSec = getMaxBreakDurationSec();
 
 	if (
 		focusedTask == null &&
@@ -271,73 +246,6 @@ export function TimerPanel({
 					{isStarting ? t("starting") : t("startLabel")}
 				</span>
 			</button>
-
-			{onCycleEndAudioModeChange != null && (
-				<CycleAudioPreferenceControl
-					mode={cycleEndAudioMode}
-					onChange={onCycleEndAudioModeChange}
-				/>
-			)}
-
-			{onOutOfTabBreakAlertsChange != null && (
-				<OutOfTabBreakAlertsSection
-					enabled={outOfTabBreakAlertsEnabled}
-					onChange={onOutOfTabBreakAlertsChange}
-				/>
-			)}
-
-			<div className="mt-4 border-border-subtle border-t pt-4">
-				<button
-					className="w-full text-center text-sm text-text-dimmed transition hover:text-text-secondary"
-					data-testid="break-settings-toggle"
-					onClick={() => setShowBreakSettings(!showBreakSettings)}
-					type="button"
-				>
-					{showBreakSettings ? t("breakSettingsHide") : t("breakSettingsShow")}
-				</button>
-
-				{showBreakSettings && (
-					<div
-						className="mt-3 flex flex-col gap-4"
-						data-testid="break-settings-panel"
-					>
-						<div>
-							<p className="mb-2 text-center text-sm text-text-secondary">
-								{t("breakSettingsShort")}
-							</p>
-							<DurationPicker
-								boundsLabel={t("boundsBreak")}
-								maxSec={breakMaxSec}
-								minSec={breakMinSec}
-								onChangeSec={(sec) => {
-									setShortBreakSec(sec);
-									setShortBreakDuration(sec);
-								}}
-								presets={getShortBreakPresets()}
-								testIdPrefix="short-break-duration"
-								valueSec={shortBreakSec}
-							/>
-						</div>
-						<div>
-							<p className="mb-2 text-center text-sm text-text-secondary">
-								{t("breakSettingsLong")}
-							</p>
-							<DurationPicker
-								boundsLabel={t("boundsBreak")}
-								maxSec={breakMaxSec}
-								minSec={breakMinSec}
-								onChangeSec={(sec) => {
-									setLongBreakSec(sec);
-									setLongBreakDuration(sec);
-								}}
-								presets={getLongBreakPresets()}
-								testIdPrefix="long-break-duration"
-								valueSec={longBreakSec}
-							/>
-						</div>
-					</div>
-				)}
-			</div>
 		</section>
 	);
 }

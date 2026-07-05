@@ -369,7 +369,8 @@
 		"fokus": "Fokus",
 		"zadania": "Zadania",
 		"plan": "Plan dnia",
-		"podsumowanie": "Podsumowanie"
+		"podsumowanie": "Podsumowanie",
+		"ustawienia": "Ustawienia"
 	},
 	"Podsumowanie": {
 		"title": "Podsumowanie dnia",
@@ -645,5 +646,22 @@
 		"minUnit": "min",
 		"secUnit": "sek",
 		"validationError": "Musi mieścić się w {bounds}"
+	},
+	"Settings": {
+		"title": "Ustawienia",
+		"sectionGeneral": "Ogólne",
+		"sectionFocusSessions": "Sesje skupienia",
+		"sectionBreaksNotifications": "Przerwy i powiadomienia",
+		"sectionAppearance": "Wygląd",
+		"languageLabel": "Język",
+		"userNameLabel": "Konto",
+		"signOut": "Wyloguj się",
+		"signingOut": "Wylogowywanie…",
+		"signOutError": "Wylogowanie nie powiodło się. Spróbuj ponownie.",
+		"workDurationLabel": "Czas pracy",
+		"shortBreakLabel": "Krótka przerwa",
+		"longBreakLabel": "Długa przerwa",
+		"cycleEndAudioLabel": "Dźwięk końca cyklu",
+		"themeLabel": "Motyw"
 	}
 }

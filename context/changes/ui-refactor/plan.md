@@ -853,24 +853,24 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Automated
 
-- [x] 8.1 Type checking passes: `pnpm typecheck`
-- [x] 8.2 Lint/format passes: `pnpm check`
-- [x] 8.3 Unit tests pass (aggregation + view): `pnpm test`
-- [x] 8.4 Production build succeeds (visx): `pnpm build`
+- [x] 8.1 Type checking passes: `pnpm typecheck` — 815d164
+- [x] 8.2 Lint/format passes: `pnpm check` — 815d164
+- [x] 8.3 Unit tests pass (aggregation + view): `pnpm test` — 815d164
+- [x] 8.4 Production build succeeds (visx): `pnpm build` — 815d164
 
 #### Manual
 
-- [x] 8.5 KPI cards match a manual session run
-- [x] 8.6 Per-hour bars + session-type donut reflect real cycles/types
-- [x] 8.7 Deferred widgets show clear placeholders
+- [x] 8.5 KPI cards match a manual session run — 815d164
+- [x] 8.6 Per-hour bars + session-type donut reflect real cycles/types — 815d164
+- [x] 8.7 Deferred widgets show clear placeholders — 815d164
 
 ### Phase 9: Ustawienia Page
 
 #### Automated
 
-- [ ] 9.1 Type checking passes: `pnpm typecheck`
-- [ ] 9.2 Lint/format passes: `pnpm check`
-- [ ] 9.3 Unit tests pass: `pnpm test`
+- [x] 9.1 Type checking passes: `pnpm typecheck`
+- [x] 9.2 Lint/format passes: `pnpm check`
+- [x] 9.3 Unit tests pass: `pnpm test`
 - [ ] 9.4 Accessibility e2e passes: `pnpm test:e2e:a11y`
 
 #### Manual

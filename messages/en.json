@@ -369,7 +369,8 @@
 		"fokus": "Fokus",
 		"zadania": "Zadania",
 		"plan": "Day plan",
-		"podsumowanie": "Summary"
+		"podsumowanie": "Summary",
+		"ustawienia": "Settings"
 	},
 	"Podsumowanie": {
 		"title": "Day summary",
@@ -645,5 +646,22 @@
 		"minUnit": "min",
 		"secUnit": "sec",
 		"validationError": "Must be within {bounds}"
+	},
+	"Settings": {
+		"title": "Settings",
+		"sectionGeneral": "General",
+		"sectionFocusSessions": "Focus sessions",
+		"sectionBreaksNotifications": "Breaks & Notifications",
+		"sectionAppearance": "Appearance",
+		"languageLabel": "Language",
+		"userNameLabel": "Account",
+		"signOut": "Sign out",
+		"signingOut": "Signing out…",
+		"signOutError": "Sign-out failed. Please try again.",
+		"workDurationLabel": "Work duration",
+		"shortBreakLabel": "Short break",
+		"longBreakLabel": "Long break",
+		"cycleEndAudioLabel": "Cycle end audio",
+		"themeLabel": "Theme"
 	}
 }
