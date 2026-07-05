@@ -535,9 +535,9 @@ Przebudować Ustawienia do dwukolumnowego układu tabów (tylko działające sek
 
 #### Automated
 
-- [ ] 4.1 Typecheck przechodzi
-- [ ] 4.2 Lint przechodzi
-- [ ] 4.3 Istniejące testy task-list zielone
+- [x] 4.1 Typecheck przechodzi
+- [x] 4.2 Lint przechodzi
+- [x] 4.3 Istniejące testy task-list zielone
 
 #### Manual
 

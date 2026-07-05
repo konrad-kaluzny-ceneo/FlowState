@@ -11,6 +11,10 @@ import {
 	useState,
 } from "react";
 
+import {
+	AddTaskModal,
+	type AddTaskModalCreateInput,
+} from "~/app/_components/add-task-modal";
 import { BreakAlertsPermissionPrompt } from "~/app/_components/break-alerts-permission-prompt";
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
@@ -19,6 +23,7 @@ import { DayMemoryLine } from "~/app/_components/day-memory-line";
 import { useDayStartGateDismissed } from "~/app/_components/day-start-gate";
 import { EndSessionConfirmOverlay } from "~/app/_components/end-session-confirm-overlay";
 import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
+import { FocusEmptyState } from "~/app/_components/focus-empty-state";
 import { FocusTip } from "~/app/_components/focus-tip";
 import { GuestContextRail } from "~/app/_components/guest-context-rail";
 import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
@@ -222,6 +227,7 @@ export function PomodoroDashboardBody({
 
 	const steeringCompletedRef = useRef(false);
 	const [permissionPromptVisible, setPermissionPromptVisible] = useState(false);
+	const [showAddModal, setShowAddModal] = useState(false);
 	const [endSessionConfirmOpen, setEndSessionConfirmOpen] = useState(false);
 	const [endSessionConfirmVariant, setEndSessionConfirmVariant] = useState<
 		"immediate" | "after-pause"
@@ -339,7 +345,7 @@ export function PomodoroDashboardBody({
 		focusedActiveTask?.isDailyStanding === true &&
 		focusedActiveTask.doneForToday !== true;
 
-	const { markDoneForToday } = useTaskMutations();
+	const { markDoneForToday, createTask, isCreating } = useTaskMutations();
 
 	const midCycleOtherActiveTasks = useMemo(() => {
 		if (pomodoro.midCyclePendingTask == null) {
@@ -850,13 +856,25 @@ export function PomodoroDashboardBody({
 	const showCalmExtras =
 		homeIa.state === "idle" || homeIa.state === "active_work";
 	const focusTipElement = showCalmExtras ? <FocusTip /> : null;
-	const quickActionsElement = showCalmExtras ? <QuickActions /> : null;
+	const quickActionsElement = showCalmExtras ? (
+		<QuickActions onAddTask={() => setShowAddModal(true)} />
+	) : null;
+
+	// Phase 3: Focus empty state — shown when no focused/active task and idle
+	const hasActiveOrFocusedTask =
+		pomodoro.focusedTaskId != null || tasks.some((t) => t.status === "active");
+	const showFocusEmptyState =
+		showCalmExtras && !hasActiveOrFocusedTask && !showSessionEnergy;
+	const focusEmptyStateElement = showFocusEmptyState ? (
+		<FocusEmptyState onAddTask={() => setShowAddModal(true)} />
+	) : null;
 
 	// Empty regions render nothing so they contribute no gap. Each boolean
 	// mirrors its region's child gates verbatim — keep them in sync when a
 	// child is added or its condition changes.
 	const primaryRegionHasContent =
 		dayMemoryVisible ||
+		focusEmptyStateElement != null ||
 		(moduleInZone("steering", "primary") && steeringCards != null) ||
 		(moduleInZone("nextFocus", "primary") &&
 			(kickoffDurationChips != null ||
@@ -919,6 +937,7 @@ export function PomodoroDashboardBody({
 									tasks={tasks}
 								/>
 							)}
+							{focusEmptyStateElement}
 							{moduleInZone("steering", "primary") && steeringCards}
 							{moduleInZone("nextFocus", "primary") && kickoffDurationChips}
 							{timerZone === "primary" && timerPanel}

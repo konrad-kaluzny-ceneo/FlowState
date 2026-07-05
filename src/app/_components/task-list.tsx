@@ -28,6 +28,7 @@ import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { formatEndedAgo } from "~/lib/catch-up/format-ended-ago";
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import type { DomainTask, DomainTaskId } from "~/lib/data-mode/types";
+import { CalmGardenSprig } from "~/lib/design/illustrations/calm-garden-sprig";
 import {
 	getWorkTypeLabel,
 	WORK_TYPE_CONFIG,
@@ -56,16 +57,16 @@ function TaskBadges({
 	const config = WORK_TYPE_CONFIG[workType];
 	const dimClass = dimmed ? "opacity-60" : "";
 	return (
-		<span className={`flex items-center gap-1 ${dimClass}`}>
+		<span className={`flex flex-wrap items-center gap-1.5 ${dimClass}`}>
 			<span
-				className={`rounded-full px-2 py-0.5 font-medium text-xs ${config.bg} ${config.text}`}
+				className={`rounded-full px-2.5 py-1 font-semibold text-xs ring-1 ${config.bg} ${config.text} ${config.badgeRing}`}
 				data-testid="task-type-badge"
 			>
 				{getWorkTypeLabel(workType, locale)}
 			</span>
 			{effortMinutes != null && (
 				<span
-					className="rounded-full bg-surface-panel px-2 py-0.5 font-medium text-text-secondary text-xs"
+					className="rounded-full border border-border-subtle bg-surface-panel px-2.5 py-1 font-medium text-text-secondary text-xs"
 					data-testid="task-effort-badge"
 				>
 					{t("effortMinutes", { minutes: effortMinutes })}
@@ -136,7 +137,7 @@ function TaskCompleteButton({
 	return (
 		<button
 			aria-label={t("markCompleteAria")}
-			className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
+			className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
 			data-testid="task-complete-button"
 			disabled={markCompleteLocked || isMutating}
 			onClick={() => {
@@ -214,6 +215,9 @@ function TaskRowFooter({
 	);
 }
 
+const taskRowCardClass =
+	"flex max-w-full flex-col gap-2.5 overflow-hidden rounded-card border border-card-border bg-surface-card px-5 py-4 shadow-sm";
+
 function SortableTaskRow({
 	task,
 	dragDisabled,
@@ -261,7 +265,7 @@ function SortableTaskRow({
 
 	return (
 		<li
-			className={`flex max-w-full flex-col gap-2 overflow-hidden rounded-control border border-transparent bg-surface-card px-4 py-3 ${
+			className={`${taskRowCardClass} ${
 				focusedTaskId === task.id ? "ring-2 ring-focus" : ""
 			} ${isHighlightedRow ? "ring-2 ring-accent-suggestion" : ""} ${
 				isDragging ? "z-10 opacity-80" : ""
@@ -301,7 +305,7 @@ function SortableTaskRow({
 				/>
 				<button
 					aria-disabled={cycleLocked}
-					className={`min-w-0 flex-1 basis-0 cursor-pointer overflow-hidden whitespace-pre-wrap break-all text-left ${
+					className={`min-w-0 flex-1 basis-0 cursor-pointer overflow-hidden whitespace-pre-wrap break-all text-left font-medium text-base leading-snug ${
 						cycleLocked ? "cursor-default" : ""
 					} ${task.doneForToday ? "text-text-dimmed" : "text-primary"}`}
 					onClick={() => {
@@ -380,8 +384,8 @@ function StaticTaskRow({
 
 	return (
 		<li
-			className={`flex max-w-full flex-col gap-2 overflow-hidden rounded-control border border-transparent px-4 py-3 ${
-				dimmed ? "bg-surface-card-muted" : "bg-surface-card"
+			className={`${taskRowCardClass} ${
+				dimmed ? "bg-surface-card-muted/80" : ""
 			} ${focusedTaskId === task.id ? "ring-2 ring-focus" : ""} ${
 				isContinueRow ? "ring-2 ring-accent-suggestion" : ""
 			} ${completingTaskId === task.id ? "animate-task-complete" : ""}`}
@@ -391,7 +395,7 @@ function StaticTaskRow({
 				{dimmed ? (
 					<button
 						aria-label={t("revertAria")}
-						className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-accent-success bg-accent-success/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
+						className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-accent-success bg-accent-success/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
 						disabled={cycleLocked || isMutating}
 						onClick={() => {
 							void onUpdateTask({ id: task.id, status: "active" });
@@ -411,7 +415,7 @@ function StaticTaskRow({
 					/>
 				)}
 				<button
-					className={`min-w-0 flex-1 basis-0 cursor-pointer overflow-hidden whitespace-pre-wrap break-all text-left ${
+					className={`min-w-0 flex-1 basis-0 cursor-pointer overflow-hidden whitespace-pre-wrap break-all text-left font-medium text-base leading-snug ${
 						dimmed ? "text-text-dimmed" : "text-primary"
 					}`}
 					onClick={() => onOpenDetail(task)}
@@ -725,11 +729,11 @@ export function TaskList({
 			)}
 
 			<div
-				className={`flex flex-wrap items-center gap-2${focusChromeSubduedClass ? ` ${focusChromeSubduedClass}` : ""}`}
+				className={`rounded-card border border-card-border bg-surface-card shadow-sm${focusChromeSubduedClass ? ` ${focusChromeSubduedClass}` : ""}`}
 				data-focus-chrome-subdued={focusShellActive ? "true" : undefined}
 			>
 				<form
-					className="flex flex-1 gap-2"
+					className="flex flex-wrap items-center gap-2 px-4 py-3 sm:flex-nowrap"
 					onSubmit={(e) => {
 						e.preventDefault();
 						if (!quickTitle.trim()) {
@@ -744,40 +748,51 @@ export function TaskList({
 						})();
 					}}
 				>
-					<input
-						className="w-full flex-1 rounded-lg border border-border-subtle bg-surface-card px-4 py-2 text-primary placeholder:text-text-dimmed focus:border-text-secondary focus:outline-none"
-						onChange={(e) => setQuickTitle(e.target.value)}
-						placeholder={t("createTitlePlaceholder")}
-						ref={addTaskInputRef}
-						type="text"
-						value={quickTitle}
+					<Plus
+						aria-hidden="true"
+						className="hidden h-5 w-5 shrink-0 text-text-dimmed sm:block"
 					/>
-					<button
-						aria-busy={isCreating}
-						aria-label={t("createAddAria")}
-						className="rounded-lg bg-accent-cta p-2 font-medium text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
-						disabled={isCreating || !quickTitle.trim()}
-						type="submit"
-					>
-						<Plus aria-hidden="true" className="h-5 w-5" />
-					</button>
+					<div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
+						<input
+							className="w-full min-w-0 flex-1 border-0 bg-transparent py-1 text-primary placeholder:text-text-dimmed focus:outline-none"
+							onChange={(e) => setQuickTitle(e.target.value)}
+							placeholder={t("inlineAddPlaceholder")}
+							ref={addTaskInputRef}
+							type="text"
+							value={quickTitle}
+						/>
+						<span className="text-text-dimmed text-xs">
+							{t("inlineAddHint")}
+						</span>
+					</div>
+					<div className="flex shrink-0 items-center gap-1">
+						<button
+							aria-busy={isCreating}
+							aria-label={t("createAddAria")}
+							className="rounded-control bg-accent-cta p-2 font-medium text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
+							disabled={isCreating || !quickTitle.trim()}
+							type="submit"
+						>
+							<Plus aria-hidden="true" className="h-5 w-5" />
+						</button>
+						<button
+							aria-label={t("addTaskButton")}
+							className="rounded-control bg-surface-panel p-2 text-text-section transition hover:bg-surface-card-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+							data-testid="open-add-task-modal"
+							onClick={() => {
+								setAddModalInitialTitle(quickTitle);
+								setQuickTitle("");
+								setShowAddModal(true);
+							}}
+							type="button"
+						>
+							<Settings2 aria-hidden="true" className="h-5 w-5" />
+						</button>
+					</div>
 				</form>
-				<button
-					aria-label={t("addTaskButton")}
-					className="shrink-0 rounded-lg bg-surface-panel p-2 text-text-section transition hover:bg-surface-card-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-					data-testid="open-add-task-modal"
-					onClick={() => {
-						setAddModalInitialTitle(quickTitle);
-						setQuickTitle("");
-						setShowAddModal(true);
-					}}
-					type="button"
-				>
-					<Settings2 aria-hidden="true" className="h-5 w-5" />
-				</button>
 			</div>
 
-			<div className="flex flex-wrap items-center justify-between gap-2">
+			<div className="flex flex-wrap items-center justify-between gap-3 border-border-subtle border-b pb-4">
 				<Tabs
 					aria-label={t("tabsAriaLabel")}
 					id="zadania-tabs"
@@ -813,7 +828,7 @@ export function TaskList({
 							items={activeTasks.map((task) => String(task.id))}
 							strategy={verticalListSortingStrategy}
 						>
-							<ul className="space-y-2">
+							<ul className="space-y-3">
 								{activeTasks.map((task) => (
 									<SortableTaskRow
 										{...rowSharedProps}
@@ -831,7 +846,7 @@ export function TaskList({
 				(plannedTasks.length === 0 ? (
 					<p className="text-sm text-text-secondary">{t("plannedEmpty")}</p>
 				) : (
-					<ul className="space-y-2">
+					<ul className="space-y-3">
 						{plannedTasks.map((task) => (
 							<StaticTaskRow
 								{...rowSharedProps}
@@ -847,7 +862,7 @@ export function TaskList({
 				(completedTasks.length === 0 ? (
 					<p className="text-sm text-text-secondary">{t("completedEmpty")}</p>
 				) : (
-					<ul className="space-y-2">
+					<ul className="space-y-3">
 						{completedTasks.map((task) => (
 							<StaticTaskRow
 								{...rowSharedProps}
@@ -875,6 +890,24 @@ export function TaskList({
 					</button>
 				</div>
 			)}
+
+			<aside
+				className="flex items-start gap-3 rounded-card border border-card-border bg-surface-panel/70 px-5 py-4 shadow-sm"
+				data-testid="tasks-footer-tip"
+			>
+				<CalmGardenSprig
+					className="h-10 w-10 shrink-0 text-accent-break"
+					variant="idle"
+				/>
+				<div>
+					<p className="font-semibold text-sm text-text-section">
+						{t("footerTipHeading")}
+					</p>
+					<p className="mt-1 text-sm text-text-secondary leading-relaxed">
+						{t("footerTipBody")}
+					</p>
+				</div>
+			</aside>
 
 			{showAddModal && (
 				<AddTaskModal
