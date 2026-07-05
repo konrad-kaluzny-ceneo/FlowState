@@ -5,7 +5,7 @@
  */
 import type { Page } from "@playwright/test";
 
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import {
 	rehydrateFatigueSeedState,
@@ -77,7 +77,6 @@ test.describe("Mindful session wind-down (S-16)", () => {
 		forgetFakeClock(page);
 		await page.goto("/focus");
 		await expectFocusPageReady(page);
-		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		forgetFakeClock(page);
 		const cleanReload = page.waitForResponse(

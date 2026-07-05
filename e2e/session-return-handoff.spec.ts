@@ -2,7 +2,7 @@
  * Risk: S-17 / FR-040 — continue row + kickoff after ended session (no top banner)
  * Modeled on: e2e/session-closure.spec.ts
  */
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 import { completeKickoffSteering } from "./helpers/kickoff";
@@ -15,7 +15,6 @@ test.describe("Session return continue row (S-17)", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/focus");
 		await expectFocusPageReady(page);
-		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		const cleanReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),

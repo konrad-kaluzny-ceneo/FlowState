@@ -1,5 +1,5 @@
 import { expect, type Page } from "@playwright/test";
-import { expectTaskListVisible } from "./task-list-locator";
+import { expectFocusPageReady } from "./task-list-locator";
 
 declare global {
 	interface Window {
@@ -25,7 +25,7 @@ export async function resetCycleRecoveryGuard(page: Page) {
 
 /** After reload on idle dashboard — reset guard only (no countCompletedWork fetch). */
 export async function resetCycleRecoveryAfterReload(page: Page) {
-	await expectTaskListVisible(page);
+	await expectFocusPageReady(page);
 	await resetCycleRecoveryGuard(page);
 }
 

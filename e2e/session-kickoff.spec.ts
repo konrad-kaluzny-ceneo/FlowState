@@ -3,7 +3,7 @@
  * Modeled on: e2e/task-suggestion.spec.ts, e2e/seed.spec.ts
  * Spec role: risk proof (kickoff card, accept, override ack, duration chip tap-to-apply)
  */
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import type { CheckInEnergyUi } from "./helpers/check-in";
 import {
 	acceptKickoffSuggestion,
@@ -27,18 +27,15 @@ async function prepareSessionStartKickoff(
 	readinessEnergy: CheckInEnergyUi | "skip" = "skip",
 ) {
 	await resetWorkerSessionViaApi(page);
-	const cleanReload = page.waitForResponse(
-		(response) => response.url().includes("cycle.getActive") && response.ok(),
-		{ timeout: 20_000 },
-	);
-	await page.reload();
-	await cleanReload;
+	await page.goto("/tasks");
 	await expectTaskListVisible(page);
 	await dismissFirstRunIfVisible(page);
 
 	await addTaskWithAttributes(page, deepTask, "Deep", "Heavy");
 	await addTaskWithAttributes(page, reactiveTask, "Reactive", "Light");
 
+	// Navigate to /focus where kickoff suggestion appears
+	await page.goto("/focus");
 	const getActiveAfterReload = page.waitForResponse(
 		(response) => response.url().includes("cycle.getActive") && response.ok(),
 		{ timeout: 20_000 },
@@ -55,7 +52,6 @@ test.describe("Session kickoff suggestion (S-15)", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/focus");
 		await expectFocusPageReady(page);
-		await waitForCycleGetActive(page);
 	});
 
 	test("shows kickoff card with rationale and highlighted row on session-start idle", async ({

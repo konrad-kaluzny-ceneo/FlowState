@@ -3,7 +3,7 @@
  * Modeled on: e2e/seed.spec.ts, e2e/daily-standing-capacity.spec.ts
  * Spec role: recap panel visibility, dismiss, footprint on focused row
  */
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 import { dismissKickoffSteeringIfVisible } from "./helpers/kickoff";
@@ -30,7 +30,6 @@ test.describe("Daily work timing recap (S-30)", () => {
 		await resetWorkerSessionViaApi(page);
 		await page.goto("/focus");
 		await expectFocusPageReady(page);
-		await waitForCycleGetActive(page);
 		const cleanReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),
 			{ timeout: 20_000 },

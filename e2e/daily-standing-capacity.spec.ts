@@ -3,7 +3,7 @@
  * Modeled on: e2e/task-suggestion.spec.ts, e2e/session-kickoff.spec.ts
  * Spec role: risk proof (capacity rationale, standing pool exclusion, standing UX)
  */
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import {
 	createTaskViaApi,
@@ -40,7 +40,6 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/focus");
 		await expectFocusPageReady(page);
-		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		forgetFakeClock(page);
 		const cleanReload = page.waitForResponse(

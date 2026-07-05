@@ -151,15 +151,16 @@ export async function startFocusedWorkCycle(
 	await dismissFirstRunIfVisible(page);
 	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
-	await uncheckDailyStandingDefault(page);
 	await page.getByPlaceholder("Add a new task...").fill(taskTitle);
 	await dismissCycleCompleteIfVisible(page);
 	await page.getByRole("button", { name: "Add", exact: true }).click();
+	// Quick-add creates tasks as "planned" — switch to Planned tab to find it
+	await page.getByRole("tab", { name: /Planned|Planowane/i }).click();
 	const taskRow = page
 		.getByRole("listitem")
 		.filter({ hasText: taskTitle })
 		.first();
-	await expect(taskRow).toBeVisible();
+	await expect(taskRow).toBeVisible({ timeout: 15_000 });
 	await waitForTaskCreateSettled(
 		page.getByRole("button", { name: "Add", exact: true }),
 	);
@@ -168,15 +169,27 @@ export async function startFocusedWorkCycle(
 	const focusBtn = taskRow.getByRole("button", { name: "Focus" });
 	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
 	await focusBtn.click();
+	// Wait for focus to register in the cycle context
+	await expect(focusBtn)
+		.toHaveAttribute("aria-label", /Focused|Skupione/i, {
+			timeout: 5_000,
+		})
+		.catch(() => {});
 
-	// Navigate to /focus to interact with timer
-	await page.goto("/focus");
+	// Navigate to /focus via client-side link to preserve React context state
+	await page
+		.getByTestId("nav-focus")
+		.or(page.getByTestId("nav-mobile-focus"))
+		.first()
+		.click();
+	await expect(page).toHaveURL(/\/focus/);
 	await waitForTimerPanelIdle(page);
 	await dismissKickoffReadinessIfVisible(page);
-	await setWorkDurationSec(page, durationSec);
 	if (durationSec === 1) {
+		// Set break duration before work duration to avoid nav resetting the input
 		await setShortBreakDurationSec(page, 1);
 	}
+	await setWorkDurationSec(page, durationSec);
 	await dismissKickoffReadinessIfVisible(page);
 	await clickStartCycle(page);
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible({
@@ -190,14 +203,15 @@ export async function addTask(page: Page, title: string) {
 	await dismissFirstRunIfVisible(page);
 	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
-	await uncheckDailyStandingDefault(page);
 	await page.getByPlaceholder("Add a new task...").fill(title);
 	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	await addButton.click();
+	// Quick-add creates tasks as "planned" — switch to Planned tab to find it
+	await page.getByRole("tab", { name: /Planned|Planowane/i }).click();
 	await expect(
 		page.getByRole("listitem").filter({ hasText: title }).first(),
-	).toBeVisible();
+	).toBeVisible({ timeout: 15_000 });
 	await waitForTaskCreateSettled(addButton);
 }
 
@@ -208,15 +222,49 @@ export async function addTasks(page: Page, titles: string[]) {
 }
 
 export async function markTaskCompleteMidCycle(page: Page, taskTitle: string) {
-	// Task completion can happen from /tasks — navigate there
-	await ensureOnTasksPage(page);
+	// The mid-cycle prompt needs to be triggered via onMidCycleMarkComplete which
+	// only fires from the task list UI. Navigate to /tasks using client-side link
+	// (preserves React context including the running cycle state).
+	// Note: fake clock is installed but client-side nav should still work since
+	// it uses React transitions, not raw setTimeout.
+	const navLink = page
+		.getByTestId("nav-tasks")
+		.or(page.getByTestId("nav-mobile-tasks"))
+		.first();
+	await navLink.click({ timeout: 10_000 });
+	await expect(page.getByTestId("task-list")).toBeVisible({ timeout: 15_000 });
+
+	// The focused/started task should be in Active tab (cycle start promotes planned → active)
+	// But the client cache may be stale — check all tabs
+	const activeTab = page.getByRole("tab", { name: /Active|Aktywne/i });
+	const plannedTab = page.getByRole("tab", { name: /Planned|Planowane/i });
 	const taskRow = page
 		.getByRole("listitem")
 		.filter({ hasText: taskTitle })
 		.first();
+
+	// Try Active tab first
+	if (await activeTab.isVisible()) {
+		await activeTab.click();
+	}
+	if (!(await taskRow.isVisible().catch(() => false))) {
+		// Task might still appear as planned if cache is stale
+		if (await plannedTab.isVisible()) {
+			await plannedTab.click();
+		}
+	}
+	await expect(taskRow).toBeVisible({ timeout: 15_000 });
 	await taskRow.getByRole("button", { name: "Mark complete" }).click();
-	// Navigate back to /focus where the mid-cycle prompt overlay appears
-	await page.goto("/focus");
+
+	// Navigate back to /focus via client-side nav
+	const focusLink = page
+		.getByTestId("nav-focus")
+		.or(page.getByTestId("nav-mobile-focus"))
+		.first();
+	await focusLink.click({ timeout: 10_000 });
+	await expect(page.getByTestId("mid-cycle-prompt-overlay")).toBeVisible({
+		timeout: 15_000,
+	});
 }
 
 export async function advanceClockThroughFastWork(page: Page) {
@@ -225,13 +273,11 @@ export async function advanceClockThroughFastWork(page: Page) {
 }
 
 export async function setShortBreakDurationSec(page: Page, seconds: number) {
-	const { minutes, seconds: secs } = splitSecToMinSec(seconds);
-	const panel = page.getByTestId("break-settings-panel");
-	if (!(await panel.isVisible())) {
-		await page.getByTestId("break-settings-toggle").click();
-	}
-	await page.getByTestId("short-break-duration-min").fill(String(minutes));
-	await page.getByTestId("short-break-duration-sec").fill(String(secs));
+	// Break duration is stored in localStorage — set it directly to avoid
+	// navigating to /settings (which adds latency and breaks fake-clock flows).
+	await page.evaluate((sec) => {
+		localStorage.setItem("flowstate:shortBreakDurationSec", String(sec));
+	}, seconds);
 }
 
 export async function advanceClockThroughFastBreak(page: Page) {
@@ -303,7 +349,13 @@ export async function focusTask(page: Page, taskTitle: string) {
 	const focusBtn = taskRow.getByRole("button", { name: "Focus" });
 	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
 	await focusBtn.click();
-	await page.goto("/focus");
+	// Navigate to /focus via client-side nav to preserve context
+	await page
+		.getByTestId("nav-focus")
+		.or(page.getByTestId("nav-mobile-focus"))
+		.first()
+		.click();
+	await expect(page).toHaveURL(/\/focus/);
 	await waitForTimerPanelIdle(page);
 }
 

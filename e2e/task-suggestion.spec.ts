@@ -3,7 +3,7 @@
  * Modeled on: e2e/seed.spec.ts
  * Spec role: risk proof (suggestion wedge — accept + override)
  */
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { completeKickoffReadiness } from "./helpers/kickoff";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
@@ -33,7 +33,6 @@ test.describe("Adaptive task suggestion (S-06)", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/focus");
 		await expectFocusPageReady(page);
-		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		forgetFakeClock(page);
 		const cleanReload = page.waitForResponse(

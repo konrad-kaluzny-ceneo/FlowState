@@ -4,9 +4,10 @@
  * Risk #1 auth reload: hook + integration (see test-plan §6.2); guest reload in guest-trial.spec.ts.
  * Anti-patterns avoided: UI login, waitForTimeout, CSS/XPath locators, shared storageState.
  */
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
+import { createTaskViaApi } from "./helpers/daily-plan";
 import {
 	dismissKickoffReadinessIfVisible,
 	ensureIdleCycle,
@@ -33,7 +34,6 @@ test.beforeEach(async ({ page }) => {
 	await resetWorkerSessionViaApi(page);
 	await page.goto("/focus");
 	await expectFocusPageReady(page);
-	await waitForCycleGetActive(page);
 	const cleanReload = page.waitForResponse(
 		(response) => response.url().includes("cycle.getActive") && response.ok(),
 		{ timeout: 20_000 },
@@ -59,7 +59,12 @@ test.describe("Seed exemplar — Risk #3 mid-cycle prompt", () => {
 		const task1 = `Seed R3 A ${ts}`;
 		const task2 = `Seed R3 B ${ts}`;
 
-		await addTasks(page, [task1, task2]);
+		// task2 must be active for "Continue with selected task" to appear
+		await addTasks(page, [task1]);
+		await createTaskViaApi(page, {
+			title: task2,
+			isDailyStanding: true,
+		});
 		await startFocusedWorkCycle(page, task1, 30);
 		await markTaskCompleteMidCycle(page, task1);
 

@@ -15,12 +15,11 @@ test("authenticated user sees app shell with task list", async ({ page }) => {
 	await clearOnboardingKeys(page);
 	await dismissFirstRunIfVisible(page);
 
-	// App shell carries the brand in the sidebar (desktop) or mobile header
+	// App shell carries the brand link
 	await expect(
-		page.getByTestId("app-sidebar").or(page.getByTestId("app-mobile-header")),
+		page.getByRole("link", { name: "FlowState" }).first(),
 	).toBeVisible();
-	await expect(page.getByRole("link", { name: "FlowState" })).toBeVisible();
 
-	// Focus page is ready (timer panel mounted)
+	// Focus page is ready (workbench grid mounted)
 	await expectFocusPageReady(page);
 });

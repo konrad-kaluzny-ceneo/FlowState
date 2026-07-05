@@ -4,7 +4,7 @@
  * Spec role: risk proof (S-01 regression + check-in step)
  */
 
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { completeCheckIn } from "./helpers/check-in";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import {
@@ -27,7 +27,6 @@ test.describe("Pomodoro cycle (S-01)", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/focus");
 		await expectFocusPageReady(page);
-		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		const cleanReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),

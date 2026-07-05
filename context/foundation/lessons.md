@@ -78,3 +78,13 @@ Never reverse this order.
 - **Problem**: Without valid credentials the agent cannot log in to verify server-side session/cycle behavior; hardcoding passwords in lessons, plans, or code leaks secrets and goes stale when credentials rotate.
 - **Rule**: For logged-in manual checks, read `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` from the project `.env` at runtime. In durable docs (lessons, plans, frames) refer only to those variable names — never paste actual credential values.
 - **Applies to**: implement, impl-review
+
+
+---
+
+## Run E2E tests one spec at a time, never the full belt during iteration
+
+- **Context**: Any implementation or stabilization work that touches Playwright specs or app code that affects E2E flows.
+- **Problem**: The full e2e belt takes 2–3 minutes per run. Running it after every change wastes time and produces walls of output where individual failure context is lost. The agent ends up re-running tests it already diagnosed because the output was truncated.
+- **Rule**: Always run a single spec file (`pnpm exec playwright test e2e/<name>.spec.ts`) or a `--grep` filter during iteration. Capture the full error output on failure — never discard it. Run the belt only as the final gate when you're confident all specs should pass.
+- **Applies to**: implement, impl-review

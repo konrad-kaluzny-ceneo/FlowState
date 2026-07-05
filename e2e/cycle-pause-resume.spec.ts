@@ -2,7 +2,7 @@
  * Risk: test-plan §2 #10 — pause/resume preserves remaining time; wedge gates suppressed while PAUSED (S-24 / US-04)
  * Modeled on: e2e/seed.spec.ts, e2e/pomodoro-cycle.spec.ts
  */
-import { expect, test, waitForCycleGetActive } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
@@ -14,7 +14,6 @@ test.describe("Cycle pause and resume (S-24)", () => {
 		await resetWorkerSessionViaApi(page);
 		await page.goto("/focus");
 		await expectFocusPageReady(page);
-		await waitForCycleGetActive(page);
 		const cleanReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),
 			{ timeout: 20_000 },

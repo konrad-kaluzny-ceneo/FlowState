@@ -157,6 +157,12 @@ export async function ensureIdleCycle(page: Page) {
 		await expect(page.getByTestId("timer-panel-running")).toBeHidden();
 		await expect(page.getByTestId("check-in-overlay")).toBeHidden();
 		await expect(page.getByTestId("cycle-complete-overlay")).toBeHidden();
-		await expect(page.getByTestId("timer-panel-idle")).toBeVisible();
+		// In the redesigned UI, timer-panel-idle only shows when a task is focused.
+		// Accept either timer-panel-idle visible OR the workbench grid visible (no active cycle).
+		await expect(
+			page
+				.getByTestId("timer-panel-idle")
+				.or(page.getByTestId("home-workbench-grid")),
+		).toBeVisible();
 	}).toPass({ timeout: 30_000 });
 }
