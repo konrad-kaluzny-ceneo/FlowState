@@ -1,0 +1,13 @@
+{
+	"name": "Related Tests on Edit",
+	"version": "1.0.0",
+	"description": "Run Vitest related tests for risk-area files after edit (mirrors .cursor/hooks.json afterFileEdit related-tests)",
+	"when": {
+		"type": "fileEdited",
+		"patterns": ["src/**/*.ts", "src/**/*.tsx"]
+	},
+	"then": {
+		"type": "runCommand",
+		"command": "node scripts/agent-hooks/related-tests.mjs"
+	}
+}

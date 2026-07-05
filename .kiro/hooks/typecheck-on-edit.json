@@ -1,0 +1,20 @@
+{
+	"name": "Typecheck on Edit",
+	"version": "1.0.0",
+	"description": "Run TypeScript typecheck after any TS/JS file is edited (mirrors .cursor/hooks.json afterFileEdit typecheck)",
+	"when": {
+		"type": "fileEdited",
+		"patterns": [
+			"src/**/*.ts",
+			"src/**/*.tsx",
+			"src/**/*.js",
+			"src/**/*.jsx",
+			"src/**/*.mts",
+			"src/**/*.cts"
+		]
+	},
+	"then": {
+		"type": "runCommand",
+		"command": "node scripts/agent-hooks/typecheck.mjs"
+	}
+}
