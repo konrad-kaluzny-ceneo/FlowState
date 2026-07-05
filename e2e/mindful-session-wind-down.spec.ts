@@ -18,7 +18,7 @@ import {
 	seedWindDownFatigueScenario,
 } from "./helpers/seed-scenario";
 import { waitForSuggestionNext } from "./helpers/suggestion";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
+import { expectFocusPageReady } from "./helpers/task-list-locator";
 import {
 	expectShortBreakPhaseHidden,
 	expectShortBreakPhaseVisible,
@@ -75,8 +75,8 @@ test.describe("Mindful session wind-down (S-16)", () => {
 
 	test.beforeEach(async ({ page }) => {
 		forgetFakeClock(page);
-		await page.goto("/");
-		await expectTaskListVisible(page);
+		await page.goto("/focus");
+		await expectFocusPageReady(page);
 		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		forgetFakeClock(page);
@@ -182,8 +182,12 @@ test.describe("Mindful session wind-down (S-16)", () => {
 			timeout: 15_000,
 		});
 		await expect(page.getByTestId("task-suggestion-card")).toBeHidden();
-		await expect(page.getByPlaceholder("Add a new task...")).toBeEnabled();
-		await expectTaskListVisible(page);
+		await expect(
+			page
+				.getByTestId("timer-panel-idle")
+				.or(page.getByTestId("timer-panel-running"))
+				.or(page.getByTestId("timer-panel-paused")),
+		).toBeVisible({ timeout: 15_000 });
 	});
 
 	test("keep going suppresses wind-down until next check-in @skip-belt", async ({

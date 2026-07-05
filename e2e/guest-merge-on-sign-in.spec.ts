@@ -8,7 +8,6 @@ import {
 	dismissFirstRunIfVisible,
 	dismissMergeSuccessIfVisible,
 } from "./helpers/onboarding";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
 import { createTestUser, signInAsUser } from "./helpers/user";
 import { addTask } from "./helpers/work-cycle";
 
@@ -31,11 +30,13 @@ test.describe("Guest merge on sign-in (S-08 / Risk #5)", () => {
 
 		const taskTitle = `Guest Merge ${Date.now()}`;
 
-		await page.goto("/");
+		await page.goto("/tasks");
 		await page.evaluate(() => localStorage.clear());
 		await page.reload();
 		await expect(page.getByTestId("guest-banner")).toBeVisible();
-		await expectTaskListVisible(page);
+		await expect(page.getByTestId("task-list")).toBeVisible({
+			timeout: 15_000,
+		});
 		await dismissFirstRunIfVisible(page);
 
 		await addTask(page, taskTitle);
@@ -50,7 +51,7 @@ test.describe("Guest merge on sign-in (S-08 / Risk #5)", () => {
 		const authState = await signInAsUser(request, user);
 		await context.addCookies(authState.cookies);
 
-		await page.goto("/");
+		await page.goto("/tasks");
 
 		await dismissMergeSuccessIfVisible(page, { appearTimeoutMs: 30_000 });
 

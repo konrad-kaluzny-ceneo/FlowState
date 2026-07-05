@@ -49,6 +49,11 @@ export function AppShell({ children, scope, userName }: AppShellProps) {
 	const t = useTranslations("Navbar");
 	const pathname = usePathname();
 
+	// Auth pages render without the navigation shell
+	if (pathname.startsWith("/auth")) {
+		return <div className="flex min-h-screen flex-col">{children}</div>;
+	}
+
 	return (
 		<div className="flex min-h-screen flex-col lg:flex-row">
 			{/* Desktop sidebar */}

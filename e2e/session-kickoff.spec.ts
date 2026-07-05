@@ -14,7 +14,10 @@ import {
 } from "./helpers/kickoff";
 import { dismissFirstRunIfVisible } from "./helpers/onboarding";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
+import {
+	expectFocusPageReady,
+	expectTaskListVisible,
+} from "./helpers/task-list-locator";
 import { addTaskWithAttributes } from "./helpers/work-cycle";
 
 async function prepareSessionStartKickoff(
@@ -50,8 +53,8 @@ async function prepareSessionStartKickoff(
 
 test.describe("Session kickoff suggestion (S-15)", () => {
 	test.beforeEach(async ({ page }) => {
-		await page.goto("/");
-		await expectTaskListVisible(page);
+		await page.goto("/focus");
+		await expectFocusPageReady(page);
 		await waitForCycleGetActive(page);
 	});
 

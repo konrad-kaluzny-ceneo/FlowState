@@ -5,13 +5,14 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
 
 test.describe("Accessibility — wedge surfaces", () => {
 	test.beforeEach(async ({ page }) => {
 		await resetWorkerSessionViaApi(page);
-		await page.goto("/");
-		await expectTaskListVisible(page);
+		await page.goto("/tasks");
+		await expect(page.getByTestId("task-list")).toBeVisible({
+			timeout: 15_000,
+		});
 		await waitForCycleGetActive(page);
 	});
 

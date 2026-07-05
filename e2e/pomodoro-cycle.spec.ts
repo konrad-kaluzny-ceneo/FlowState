@@ -1,4 +1,3 @@
-import { expectTaskListVisible } from "./helpers/task-list-locator";
 /**
  * Risk: S-01 / #7 — pomodoro cycle completion overlay, check-in gate, task done flow
  * Modeled on: e2e/seed.spec.ts
@@ -13,6 +12,7 @@ import {
 	ensureIdleCycle,
 } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
+import { expectFocusPageReady } from "./helpers/task-list-locator";
 import { expectShortBreakPhaseHidden } from "./helpers/timer-phase";
 import {
 	advanceClockThroughFastBreak,
@@ -25,8 +25,8 @@ const BREAK_REENTRY_FOCUSED = "Ready when you are — your focus is still here."
 
 test.describe("Pomodoro cycle (S-01)", () => {
 	test.beforeEach(async ({ page }) => {
-		await page.goto("/");
-		await expectTaskListVisible(page);
+		await page.goto("/focus");
+		await expectFocusPageReady(page);
 		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		const cleanReload = page.waitForResponse(
@@ -61,6 +61,8 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		// S-06: suggestion card may appear during break — no interaction required for S-01
 
 		await expect(page.getByTestId("cycle-complete-overlay")).not.toBeVisible();
+		// Task list is now on /tasks — verify the task is still there
+		await page.goto("/tasks");
 		const taskRow = page.getByRole("listitem").filter({ hasText: taskTitle });
 		await expect(
 			page.getByRole("listitem").filter({ hasText: taskTitle }),
@@ -118,6 +120,8 @@ test.describe("Pomodoro cycle (S-01)", () => {
 		// S-06: suggestion card may appear during break — no interaction required for S-01
 
 		await expect(page.getByTestId("cycle-complete-overlay")).not.toBeVisible();
+		// Navigate to /tasks to verify task is in the Completed section
+		await page.goto("/tasks");
 		await expect(page.getByRole("heading", { name: /Completed/ })).toBeVisible({
 			timeout: 15_000,
 		});

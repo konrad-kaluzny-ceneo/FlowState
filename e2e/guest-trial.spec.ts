@@ -5,7 +5,6 @@
  */
 import { expect, test } from "@playwright/test";
 import { dismissFirstRunIfVisible } from "./helpers/onboarding";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
 import { startFocusedWorkCycle } from "./helpers/work-cycle";
 
 test.describe("Guest trial (S-08)", () => {
@@ -24,11 +23,13 @@ test.describe("Guest trial (S-08)", () => {
 
 		const taskTitle = `Guest E2E ${Date.now()}`;
 
-		await page.goto("/");
+		await page.goto("/tasks");
 		await page.evaluate(() => localStorage.clear());
 		await page.reload();
 		await expect(page.getByTestId("guest-banner")).toBeVisible();
-		await expectTaskListVisible(page);
+		await expect(page.getByTestId("task-list")).toBeVisible({
+			timeout: 15_000,
+		});
 		await dismissFirstRunIfVisible(page);
 
 		await startFocusedWorkCycle(page, taskTitle, 30);

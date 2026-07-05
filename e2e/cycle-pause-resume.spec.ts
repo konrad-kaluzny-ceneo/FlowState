@@ -6,14 +6,14 @@ import { expect, test, waitForCycleGetActive } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
+import { expectFocusPageReady } from "./helpers/task-list-locator";
 import { startFocusedWorkCycle } from "./helpers/work-cycle";
 
 test.describe("Cycle pause and resume (S-24)", () => {
 	test.beforeEach(async ({ page }) => {
 		await resetWorkerSessionViaApi(page);
-		await page.goto("/");
-		await expectTaskListVisible(page);
+		await page.goto("/focus");
+		await expectFocusPageReady(page);
 		await waitForCycleGetActive(page);
 		const cleanReload = page.waitForResponse(
 			(response) => response.url().includes("cycle.getActive") && response.ok(),

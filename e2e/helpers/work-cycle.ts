@@ -109,6 +109,14 @@ export async function waitForCycleCreateSettled(page: Page) {
 	throw new Error("cycle.create did not return ok within timeout");
 }
 
+/** Navigate to /tasks if not already there. */
+async function ensureOnTasksPage(page: Page) {
+	if (!page.url().includes("/tasks")) {
+		await page.goto("/tasks");
+	}
+	await expect(taskListLocator(page)).toBeVisible({ timeout: 15_000 });
+}
+
 /**
  * Click Start Cycle and await server create on authenticated dashboards.
  *
@@ -138,6 +146,8 @@ export async function startFocusedWorkCycle(
 	taskTitle: string,
 	durationSec: number,
 ) {
+	// Navigate to /tasks to add and focus the task
+	await ensureOnTasksPage(page);
 	await dismissFirstRunIfVisible(page);
 	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
@@ -158,6 +168,9 @@ export async function startFocusedWorkCycle(
 	const focusBtn = taskRow.getByRole("button", { name: "Focus" });
 	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
 	await focusBtn.click();
+
+	// Navigate to /focus to interact with timer
+	await page.goto("/focus");
 	await waitForTimerPanelIdle(page);
 	await dismissKickoffReadinessIfVisible(page);
 	await setWorkDurationSec(page, durationSec);
@@ -172,6 +185,7 @@ export async function startFocusedWorkCycle(
 }
 
 export async function addTask(page: Page, title: string) {
+	await ensureOnTasksPage(page);
 	const addButton = page.getByRole("button", { name: "Add", exact: true });
 	await dismissFirstRunIfVisible(page);
 	await dismissCycleCompleteIfVisible(page);
@@ -194,12 +208,15 @@ export async function addTasks(page: Page, titles: string[]) {
 }
 
 export async function markTaskCompleteMidCycle(page: Page, taskTitle: string) {
-	await expect(page.getByTestId("timer-panel-running")).toBeVisible();
+	// Task completion can happen from /tasks — navigate there
+	await ensureOnTasksPage(page);
 	const taskRow = page
 		.getByRole("listitem")
 		.filter({ hasText: taskTitle })
 		.first();
 	await taskRow.getByRole("button", { name: "Mark complete" }).click();
+	// Navigate back to /focus where the mid-cycle prompt overlay appears
+	await page.goto("/focus");
 }
 
 export async function advanceClockThroughFastWork(page: Page) {
@@ -237,6 +254,7 @@ export async function addTaskWithAttributes(
 	workType: TaskWorkTypeLabel,
 	weight: TaskWeightLabel,
 ) {
+	await ensureOnTasksPage(page);
 	await dismissFirstRunIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
 	const addForm = taskListLocator(page).locator("form");
@@ -275,6 +293,7 @@ export async function addTaskWithAttributes(
 }
 
 export async function focusTask(page: Page, taskTitle: string) {
+	await ensureOnTasksPage(page);
 	await dismissKickoffReadinessIfVisible(page);
 	const taskRow = page
 		.getByRole("listitem")
@@ -284,6 +303,7 @@ export async function focusTask(page: Page, taskTitle: string) {
 	const focusBtn = taskRow.getByRole("button", { name: "Focus" });
 	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
 	await focusBtn.click();
+	await page.goto("/focus");
 	await waitForTimerPanelIdle(page);
 }
 

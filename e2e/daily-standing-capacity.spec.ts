@@ -22,7 +22,7 @@ import {
 	expectSuggestionVisible,
 	waitForSuggestionNext,
 } from "./helpers/suggestion";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
+import { expectFocusPageReady } from "./helpers/task-list-locator";
 import {
 	advanceClockThroughFastWork,
 	clickStartCycle,
@@ -38,8 +38,8 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 	test.describe.configure({ mode: "serial" });
 
 	test.beforeEach(async ({ page }) => {
-		await page.goto("/");
-		await expectTaskListVisible(page);
+		await page.goto("/focus");
+		await expectFocusPageReady(page);
 		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		forgetFakeClock(page);
@@ -177,8 +177,10 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 			isDailyStanding: true,
 		});
 
-		await page.reload();
-		await expectTaskListVisible(page);
+		await page.goto("/tasks");
+		await expect(page.getByTestId("task-list")).toBeVisible({
+			timeout: 15_000,
+		});
 		await dismissFirstRunIfVisible(page);
 		await dismissKickoffSteeringIfVisible(page);
 

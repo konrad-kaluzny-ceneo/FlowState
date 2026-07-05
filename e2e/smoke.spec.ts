@@ -8,18 +8,19 @@ import {
 	clearOnboardingKeys,
 	dismissFirstRunIfVisible,
 } from "./helpers/onboarding";
-import { expectTaskListVisible } from "./helpers/task-list-locator";
+import { expectFocusPageReady } from "./helpers/task-list-locator";
 
 test("authenticated user sees app shell with task list", async ({ page }) => {
 	await page.goto("/");
 	await clearOnboardingKeys(page);
 	await dismissFirstRunIfVisible(page);
 
-	// Navbar carries the brand (hero removed by D-07)
+	// App shell carries the brand in the sidebar (desktop) or mobile header
 	await expect(
-		page.getByTestId("app-navbar").getByRole("link", { name: "FlowState" }),
+		page.getByTestId("app-sidebar").or(page.getByTestId("app-mobile-header")),
 	).toBeVisible();
+	await expect(page.getByRole("link", { name: "FlowState" })).toBeVisible();
 
-	// Task list container rendered (proves TaskList component loaded)
-	await expectTaskListVisible(page);
+	// Focus page is ready (timer panel mounted)
+	await expectFocusPageReady(page);
 });

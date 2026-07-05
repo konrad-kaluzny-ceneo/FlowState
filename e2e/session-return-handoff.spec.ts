@@ -8,16 +8,13 @@ import { ensureIdleCycle } from "./helpers/idle-cycle";
 import { completeKickoffSteering } from "./helpers/kickoff";
 import { dismissFirstRunIfVisible } from "./helpers/onboarding";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
-import {
-	expectTaskListVisible,
-	taskListLocator,
-} from "./helpers/task-list-locator";
+import { expectFocusPageReady } from "./helpers/task-list-locator";
 import { addTask, startFocusedWorkCycle } from "./helpers/work-cycle";
 
 test.describe("Session return continue row (S-17)", () => {
 	test.beforeEach(async ({ page }) => {
-		await page.goto("/");
-		await expectTaskListVisible(page);
+		await page.goto("/focus");
+		await expectFocusPageReady(page);
 		await waitForCycleGetActive(page);
 		await resetWorkerSessionViaApi(page);
 		const cleanReload = page.waitForResponse(
@@ -63,9 +60,7 @@ test.describe("Session return continue row (S-17)", () => {
 		);
 		await page.reload();
 		await lastEndedReady;
-		await expect(taskListLocator(page)).toBeVisible({
-			timeout: 20_000,
-		});
+		await expectFocusPageReady(page);
 		await dismissFirstRunIfVisible(page);
 
 		await expect(page.getByTestId("return-handoff-banner")).toHaveCount(0);
@@ -73,6 +68,11 @@ test.describe("Session return continue row (S-17)", () => {
 			timeout: 15_000,
 		});
 
+		// Check the continue-here row on the tasks page
+		await page.goto("/tasks");
+		await expect(page.getByTestId("task-list")).toBeVisible({
+			timeout: 15_000,
+		});
 		const taskRow = page
 			.getByRole("listitem")
 			.filter({ hasText: taskTitle })
@@ -81,6 +81,8 @@ test.describe("Session return continue row (S-17)", () => {
 			timeout: 15_000,
 		});
 
+		// Navigate back to focus for kickoff suggestion check
+		await page.goto("/focus");
 		await completeKickoffSteering(page, "skip");
 
 		await expect(page.getByTestId("task-suggestion-card")).toBeVisible({

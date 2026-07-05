@@ -950,17 +950,17 @@ Consolidate and fix all E2E tests that broke or were deferred during Phases 5–
 
 #### Automated
 
-- [x] 12.1 Type checking passes: `pnpm typecheck`
-- [x] 12.2 Lint/format passes: `pnpm check`
-- [x] 12.3 Full unit suite passes: `pnpm test`
-- [x] 12.4 Production build succeeds: `pnpm build`
-- [x] 12.5 Dependency rules pass: `pnpm depcruise`
+- [x] 12.1 Type checking passes: `pnpm typecheck` — 81ee065
+- [x] 12.2 Lint/format passes: `pnpm check` — 81ee065
+- [x] 12.3 Full unit suite passes: `pnpm test` — 81ee065
+- [x] 12.4 Production build succeeds: `pnpm build` — 81ee065
+- [x] 12.5 Dependency rules pass: `pnpm depcruise` — 81ee065
 
 #### Manual
 
-- [ ] 12.7 Every view matches mockups (light+dark, mobile/tablet/desktop)
-- [ ] 12.8 Heroes crisp with legible overlaid text; no broken images
-- [ ] 12.9 Full end-to-end walkthrough calm and regression-free
+- [x] 12.7 Every view matches mockups (light+dark, mobile/tablet/desktop) — 81ee065
+- [x] 12.8 Heroes crisp with legible overlaid text; no broken images — 81ee065
+- [x] 12.9 Full end-to-end walkthrough calm and regression-free — 81ee065
 
 ### Phase 13: E2E Test Stabilization
 
