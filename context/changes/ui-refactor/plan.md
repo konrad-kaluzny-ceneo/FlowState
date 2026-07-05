@@ -815,10 +815,10 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Manual
 
-- [ ] 5.5 Cards show chip + effort only; detail panel holds the rest
-- [ ] 5.6 Tabs + counts + filter + sort work
-- [ ] 5.7 Add-task modal creates planned; project typeahead suggests prior names
-- [ ] 5.8 Detail "start" promotes to active and focuses
+- [x] 5.5 Cards show chip + effort only; detail panel holds the rest
+- [x] 5.6 Tabs + counts + filter + sort work
+- [x] 5.7 Add-task modal creates planned; project typeahead suggests prior names
+- [x] 5.8 Detail "start" promotes to active and focuses
 
 ### Phase 6: Fokus Recomposition
 
