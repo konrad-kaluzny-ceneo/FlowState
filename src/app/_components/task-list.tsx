@@ -340,7 +340,7 @@ function SortableActiveTaskRow({
 		<li
 			className={`flex max-w-full flex-col gap-2 ${
 				editingId === task.id ? "overflow-visible" : "overflow-hidden"
-			} rounded-lg border border-transparent bg-surface-card px-4 py-3 ${
+			} rounded-control border border-transparent bg-surface-card px-4 py-3 ${
 				focusedTaskId === task.id ? "ring-2 ring-focus" : ""
 			} ${
 				isHighlightedRow ? "ring-2 ring-accent-suggestion" : ""
@@ -1091,7 +1091,7 @@ export function TaskList({
 							<li
 								className={`flex max-w-full flex-col gap-2 ${
 									editingId === task.id ? "overflow-visible" : "overflow-hidden"
-								} rounded-lg border border-transparent bg-surface-card-muted px-4 py-3`}
+								} rounded-control border border-transparent bg-surface-card-muted px-4 py-3`}
 								key={String(task.id)}
 							>
 								<div className="flex w-full min-w-0 items-start gap-2">

@@ -745,10 +745,10 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 
 #### Automated
 
-- [ ] 1.1 Type checking passes: `pnpm typecheck`
-- [ ] 1.2 Lint/format passes: `pnpm check`
-- [ ] 1.3 Unit tests pass: `pnpm test`
-- [ ] 1.4 Production build succeeds: `pnpm build`
+- [x] 1.1 Type checking passes: `pnpm typecheck`
+- [x] 1.2 Lint/format passes: `pnpm check`
+- [x] 1.3 Unit tests pass: `pnpm test`
+- [x] 1.4 Production build succeeds: `pnpm build`
 
 #### Manual
 

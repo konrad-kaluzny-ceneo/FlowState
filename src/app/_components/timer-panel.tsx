@@ -124,7 +124,7 @@ export function TimerPanel({
 		return (
 			<section
 				aria-label={isBreak ? t("sectionBreakAria") : t("sectionFocusAria")}
-				className={`w-full rounded-xl border p-6 text-center shadow-sm ${
+				className={`w-full rounded-card border p-6 text-center shadow-sm ${
 					isBreak
 						? "border-border-break bg-surface-break"
 						: "border-card-border bg-surface-card"
@@ -149,7 +149,7 @@ export function TimerPanel({
 					</p>
 				)}
 				<p
-					className={`mt-4 font-mono font-semibold text-6xl tabular-nums tracking-tight ${
+					className={`mt-4 font-mono font-semibold text-timer tabular-nums tracking-tight ${
 						isBreak ? "text-accent-break" : "text-primary"
 					}`}
 					data-testid="timer-countdown"
@@ -159,7 +159,7 @@ export function TimerPanel({
 				{isPaused ? (
 					<button
 						aria-label={isBreak ? t("resumeBreakAria") : t("resumeAria")}
-						className="mt-6 flex w-full items-center justify-center rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+						className="mt-6 flex w-full items-center justify-center rounded-control bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 						data-testid="timer-resume"
 						onClick={() => void onResume()}
 						type="button"
@@ -170,7 +170,7 @@ export function TimerPanel({
 					<div className="mt-6 flex flex-col gap-3">
 						<button
 							aria-label={isBreak ? t("pauseBreakAria") : t("pauseAria")}
-							className="flex w-full items-center justify-center rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+							className="flex w-full items-center justify-center rounded-control bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 							data-testid="timer-pause"
 							onClick={() => void onPause()}
 							type="button"
@@ -179,7 +179,7 @@ export function TimerPanel({
 						</button>
 						<button
 							aria-label={isBreak ? t("endBreakEarlyAria") : t("interruptAria")}
-							className="flex w-full items-center justify-center rounded-lg bg-red-600 px-4 py-2 font-semibold text-on-cta transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+							className="flex w-full items-center justify-center rounded-control bg-danger px-4 py-2 font-semibold text-on-danger transition hover:bg-danger-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 							data-testid="timer-interrupt"
 							onClick={() => void onInterrupt()}
 							type="button"
@@ -214,7 +214,7 @@ export function TimerPanel({
 	return (
 		<section
 			aria-label={t("sectionReadyAria")}
-			className="w-full rounded-xl border border-card-border bg-surface-card p-6 shadow-sm"
+			className="w-full rounded-card border border-card-border bg-surface-card p-6 shadow-sm"
 			data-testid="timer-panel-idle"
 		>
 			<p className="text-center font-semibold text-sm text-text-section">
@@ -243,7 +243,7 @@ export function TimerPanel({
 
 			<button
 				aria-label={startLabel}
-				className="mt-6 w-full rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50"
+				className="mt-6 w-full rounded-control bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50"
 				data-testid="timer-start-cycle"
 				disabled={isStarting || workPickerInvalid || !workValid}
 				onClick={() => void onStart(workDurationSec)}

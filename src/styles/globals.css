@@ -9,6 +9,18 @@
 	   (zone-level seams keep gap-8). */
 	--spacing-section: 1.5rem;
 
+	/* Radius scale — airier, rounded surfaces per the redesign mockups.
+	   Semantic names so cards/controls/chips share one source of truth. */
+	--radius-card: 1.25rem;
+	--radius-control: 0.75rem;
+	--radius-chip: 0.5rem;
+
+	/* Type scale — larger display/timer for a breathing hierarchy. */
+	--text-display: 2.25rem;
+	--text-display--line-height: 1.1;
+	--text-timer: 4.5rem;
+	--text-timer--line-height: 1;
+
 	/* Shell & surfaces — light-default (cool stone) */
 	--color-shell-top: #faf8f5;
 	--color-shell-bottom: #edeae4;
@@ -31,19 +43,24 @@
 
 	/* Scrim & focus */
 	--color-scrim: rgb(248 246 243 / 0.72);
-	--color-focus-ring: #8a8478;
+	--color-focus-ring: #5d8265;
 	--color-focus: var(--color-focus-ring);
 
-	/* Semantic accents */
-	--color-accent-cta: #736d62;
-	--color-accent-cta-hover: #635e54;
+	/* Semantic accents — primary is the redesign's muted sage green. */
+	--color-accent-cta: #5d8265;
+	--color-accent-cta-hover: #4e6f56;
 	--color-on-cta: #ffffff;
 	--color-accent-break: #3d8f82;
 	--color-accent-success: #3a8f65;
 	--color-accent-suggestion: rgb(212 160 23 / 0.8);
 
+	/* Danger — destructive/interrupt (tokenizes the timer interrupt button) */
+	--color-danger: #dc2626;
+	--color-danger-hover: #ef4444;
+	--color-on-danger: #ffffff;
+
 	/* Segmented controls */
-	--color-segment-active: #736d62;
+	--color-segment-active: #5d8265;
 	--color-segment-inactive: #e8e5df;
 
 	/* Energy identity */
@@ -87,17 +104,21 @@
 	--color-text-section: rgb(245 243 240 / 0.85);
 
 	--color-scrim: rgb(30 36 51 / 0.78);
-	--color-focus-ring: #b0aaa0;
+	--color-focus-ring: #8fb397;
 	--color-focus: var(--color-focus-ring);
 
-	--color-accent-cta: #9a9489;
-	--color-accent-cta-hover: #aaa49a;
+	--color-accent-cta: #638a6c;
+	--color-accent-cta-hover: #72997a;
 	--color-on-cta: #ffffff;
 	--color-accent-break: #4a9a8e;
 	--color-accent-success: #4a9468;
 	--color-accent-suggestion: rgb(212 175 55 / 0.75);
 
-	--color-segment-active: #9a9489;
+	--color-danger: #e5534b;
+	--color-danger-hover: #f06a62;
+	--color-on-danger: #ffffff;
+
+	--color-segment-active: #638a6c;
 	--color-segment-inactive: rgb(255 255 255 / 0.08);
 
 	--color-energy-focused: #818cf8;
