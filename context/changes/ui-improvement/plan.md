@@ -511,10 +511,10 @@ Przebudować Ustawienia do dwukolumnowego układu tabów (tylko działające sek
 
 #### Manual
 
-- [ ] 2.5 Brak śladu „celu sesji" w przepływie
-- [ ] 2.6 Bramka energii wg makiety, znika po wyborze, nie wraca tego dnia
-- [ ] 2.7 Wybór energii zapisuje DayPlan.energyLevel
-- [ ] 2.8 Brak regresji przejść cyklu
+- [x] 2.5 Brak śladu „celu sesji" w przepływie
+- [x] 2.6 Bramka energii wg makiety, znika po wyborze, nie wraca tego dnia
+- [x] 2.7 Wybór energii zapisuje DayPlan.energyLevel
+- [x] 2.8 Brak regresji przejść cyklu
 
 ### Phase 3: Fokus — pusty stan + Szybkie akcje
 
@@ -527,9 +527,9 @@ Przebudować Ustawienia do dwukolumnowego układu tabów (tylko działające sek
 
 #### Manual
 
-- [ ] 3.5 Fokus bez zadań wygląda jak makieta (hero, CTA, „Twój dzień", „Wskazówka")
-- [ ] 3.6 „Dodaj zadanie" otwiera modal i tworzy zadanie
-- [ ] 3.7 Brak przycisku „Zadania" na stronie głównej
+- [x] 3.5 Fokus bez zadań wygląda jak makieta (hero, CTA, „Twój dzień", „Wskazówka")
+- [x] 3.6 „Dodaj zadanie" otwiera modal i tworzy zadanie
+- [x] 3.7 Brak przycisku „Zadania" na stronie głównej
 
 ### Phase 4: Widok Zadania — restyling
 
@@ -541,9 +541,9 @@ Przebudować Ustawienia do dwukolumnowego układu tabów (tylko działające sek
 
 #### Manual
 
-- [ ] 4.4 Widok Zadania wygląda jak makieta
-- [ ] 4.5 Wszystkie akcje działają jak wcześniej (complete/drag/focus/delete/modal)
-- [ ] 4.6 Brak regresji tabów/filtrów/sortowania
+- [x] 4.4 Widok Zadania wygląda jak makieta
+- [x] 4.5 Wszystkie akcje działają jak wcześniej (complete/drag/focus/delete/modal)
+- [x] 4.6 Brak regresji tabów/filtrów/sortowania
 
 ### Phase 5: Plan dnia — kalendarz „wkrótce" + ComingSoonPreview
 
@@ -555,33 +555,33 @@ Przebudować Ustawienia do dwukolumnowego układu tabów (tylko działające sek
 
 #### Manual
 
-- [ ] 5.4 Plan dnia pokazuje rozmyty „Kalendarz wkrótce"
-- [ ] 5.5 Budżet skupienia nadal działa i wygląda spójnie
+- [x] 5.4 Plan dnia pokazuje rozmyty „Kalendarz wkrótce"
+- [x] 5.5 Budżet skupienia nadal działa i wygląda spójnie
 
 ### Phase 6: Podsumowanie — tekst motywujący + lista dziś ukończonych
 
 #### Automated
 
-- [ ] 6.1 Typecheck przechodzi
-- [ ] 6.2 Lint przechodzi
-- [ ] 6.3 Testy (RecapTaskRow z workType+effort; filtr ukończonych w 24h; render banera i listy)
+- [x] 6.1 Typecheck przechodzi
+- [x] 6.2 Lint przechodzi
+- [x] 6.3 Testy (RecapTaskRow z workType+effort; filtr ukończonych w 24h; render banera i listy)
 
 #### Manual
 
-- [ ] 6.4 Baner motywujący (spokojny ton) widoczny
-- [ ] 6.5 Lista ukończonych w 24h z typem i czasem; pusty stan estetyczny
+- [x] 6.4 Baner motywujący (spokojny ton) widoczny
+- [x] 6.5 Lista ukończonych w 24h z typem i czasem; pusty stan estetyczny
 
 ### Phase 7: Ustawienia — redesign + Integracje (MCP wkrótce) + energia dnia
 
 #### Automated
 
-- [ ] 7.1 Typecheck przechodzi
-- [ ] 7.2 Lint przechodzi
-- [ ] 7.3 Testy (render tabów; energia prefill+zapis; Integracje podgląd „wkrótce")
+- [x] 7.1 Typecheck przechodzi
+- [x] 7.2 Lint przechodzi
+- [x] 7.3 Testy (render tabów; energia prefill+zapis; Integracje podgląd „wkrótce")
 
 #### Manual
 
-- [ ] 7.4 Ustawienia wyglądają jak makieta (dwie kolumny, tylko działające sekcje)
-- [ ] 7.5 Energia dnia zapisuje się i jest spójna z bramką day-start
-- [ ] 7.6 Tab Integracje pokazuje rozmyty MCP „wkrótce"
-- [ ] 7.7 Końcowy sweep — spójna estetyka wg makiet na wszystkich widokach
+- [x] 7.4 Ustawienia wyglądają jak makieta (dwie kolumny, tylko działające sekcje)
+- [x] 7.5 Energia dnia zapisuje się i jest spójna z bramką day-start
+- [x] 7.6 Tab Integracje pokazuje rozmyty MCP „wkrótce"
+- [x] 7.7 Końcowy sweep — spójna estetyka wg makiet na wszystkich widokach
