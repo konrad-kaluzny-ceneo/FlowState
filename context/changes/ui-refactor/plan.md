@@ -4,7 +4,7 @@
 
 Transform FlowState from a deliberately single-screen SPA (one `/` route, a cycle-phase state machine composing modules on the home dashboard) into the mockups' **5-section, multi-view wellbeing app**: Fokus / Zadania / Plan dnia / Podsumowanie / Ustawienia, reached via a sidebar (desktop) + bottom nav (mobile), with a large **ring timer**, minimal task cards, an analytics dashboard, a settings page, and a **muted-green accent**.
 
-This lands as **one big PR** across **12 internal phases**. Sequencing is **restyle-first, shell-last**: cheap high-payoff token/aesthetic work first; each view built as a self-contained component (temporarily reachable on home); the pivotal **cycle-state lift** (Phase 10) and **nav shell + routes** (Phase 11) land last, wiring finished views together. The app stays runnable and green at every phase boundary.
+This lands as **one big PR** across **13 internal phases**. Sequencing is **restyle-first, shell-last**: cheap high-payoff token/aesthetic work first; each view built as a self-contained component (temporarily reachable on home); the pivotal **cycle-state lift** (Phase 10) and **nav shell + routes** (Phase 11) land last, wiring finished views together. The app stays runnable and green at every phase boundary.
 
 ## Current State Analysis
 
@@ -683,7 +683,47 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 - Heroes render crisply with legible overlaid text; no broken images.
 - End-to-end walkthrough (add task → plan → focus session → break → summary → settings) is calm and regression-free.
 
-**Implementation Note**: After automated verification passes, pause for final manual confirmation. This is the last phase — the PR is ready for review.
+**Implementation Note**: After automated verification passes, pause for manual confirmation. Phase 13 (E2E stabilization) follows to fix any broken Playwright specs.
+
+---
+
+## Phase 13: E2E Test Stabilization
+
+### Overview
+
+Consolidate and fix all E2E tests that broke or were deferred during Phases 5–12. The UI redesign changed selectors, flows, and navigation — this phase stabilizes the Playwright suite so the CI merge gate passes clean.
+
+### Changes Required:
+
+#### 1. Fix broken E2E selectors and flows
+
+**File**: `e2e/*.spec.ts`
+
+**Intent**: Update test selectors, assertions, and flows to match the redesigned UI (new nav structure, relocated controls, changed testids).
+
+**Contract**: All existing E2E specs pass against the redesigned app. No spec is deleted — only updated to match the new UI. New specs added where the redesign introduced untested flows (nav switching, settings page, task tabs).
+
+#### 2. Accessibility E2E pass
+
+**File**: `e2e/accessibility.spec.ts`
+
+**Intent**: Ensure axe-core accessibility scan passes for all views post-redesign.
+
+**Contract**: `pnpm test:e2e:a11y` passes. Fix any a11y violations introduced by the new components (missing labels, contrast, focus order).
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Accessibility e2e passes: `pnpm test:e2e:a11y`
+- Pomodoro + wedge e2e pass: `pnpm test:e2e`
+- Full e2e belt passes: `pnpm test:e2e:belt`
+
+#### Manual Verification:
+
+- CI pipeline green on PR merge gate.
+
+**Implementation Note**: This phase lands last so all UI changes are stable before updating E2E selectors.
 
 ---
 
@@ -811,7 +851,6 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 - [x] 5.1 Type checking passes: `pnpm typecheck` — 57a7116
 - [x] 5.2 Lint/format passes: `pnpm check` — 57a7116
 - [x] 5.3 Unit tests pass (list/fields/modal/detail): `pnpm test` — 57a7116
-- [ ] 5.4 Accessibility e2e passes: `pnpm test:e2e:a11y` (pending CI)
 
 #### Manual
 
@@ -827,7 +866,6 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 - [x] 6.1 Type checking passes: `pnpm typecheck` — 34d1698
 - [x] 6.2 Lint/format passes: `pnpm check` — 34d1698
 - [x] 6.3 Unit tests pass (dashboard/state/gate dismiss-oracle): `pnpm test` — 34d1698
-- [ ] 6.4 Pomodoro + wedge e2e pass: `pnpm test:e2e` (pending CI)
 
 #### Manual
 
@@ -871,7 +909,6 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 - [x] 9.1 Type checking passes: `pnpm typecheck` — cfd6d54
 - [x] 9.2 Lint/format passes: `pnpm check` — cfd6d54
 - [x] 9.3 Unit tests pass: `pnpm test` — cfd6d54
-- [ ] 9.4 Accessibility e2e passes: `pnpm test:e2e:a11y`
 
 #### Manual
 
@@ -886,7 +923,6 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 - [ ] 10.1 Type checking passes: `pnpm typecheck`
 - [ ] 10.2 Lint/format passes: `pnpm check`
 - [ ] 10.3 Unit tests pass (hook unchanged; consumers via provider): `pnpm test`
-- [ ] 10.4 Pomodoro e2e passes: `pnpm test:e2e`
 
 #### Manual
 
@@ -902,8 +938,6 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 - [ ] 11.2 Lint/format passes: `pnpm check`
 - [ ] 11.3 Unit tests pass: `pnpm test`
 - [ ] 11.4 Dependency rules pass: `pnpm depcruise`
-- [ ] 11.5 E2e nav + cross-route ticking pass: `pnpm test:e2e`
-- [ ] 11.6 Accessibility e2e passes: `pnpm test:e2e:a11y`
 
 #### Manual
 
@@ -919,12 +953,24 @@ Wire the remaining heroes, run a full responsive/dark/a11y sweep across every vi
 - [ ] 12.1 Type checking passes: `pnpm typecheck`
 - [ ] 12.2 Lint/format passes: `pnpm check`
 - [ ] 12.3 Full unit suite passes: `pnpm test`
-- [ ] 12.4 Full e2e + a11y pass: `pnpm test:e2e` and `pnpm test:e2e:a11y`
-- [ ] 12.5 Production build succeeds: `pnpm build`
-- [ ] 12.6 Dependency rules pass: `pnpm depcruise`
+- [ ] 12.4 Production build succeeds: `pnpm build`
+- [ ] 12.5 Dependency rules pass: `pnpm depcruise`
 
 #### Manual
 
 - [ ] 12.7 Every view matches mockups (light+dark, mobile/tablet/desktop)
 - [ ] 12.8 Heroes crisp with legible overlaid text; no broken images
 - [ ] 12.9 Full end-to-end walkthrough calm and regression-free
+
+### Phase 13: E2E Test Stabilization
+
+#### Automated
+
+- [ ] 13.1 Accessibility e2e passes: `pnpm test:e2e:a11y`
+- [ ] 13.2 Pomodoro + wedge e2e pass: `pnpm test:e2e`
+- [ ] 13.3 E2e nav + cross-route ticking pass: `pnpm test:e2e`
+- [ ] 13.4 Full e2e belt passes: `pnpm test:e2e:belt`
+
+#### Manual
+
+- [ ] 13.5 CI pipeline green on PR merge gate
