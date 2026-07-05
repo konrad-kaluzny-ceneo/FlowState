@@ -575,9 +575,9 @@ Przebudować Ustawienia do dwukolumnowego układu tabów (tylko działające sek
 
 #### Automated
 
-- [x] 7.1 Typecheck przechodzi
-- [x] 7.2 Lint przechodzi
-- [x] 7.3 Testy (render tabów; energia prefill+zapis; Integracje podgląd „wkrótce")
+- [x] 7.1 Typecheck przechodzi — bbd88e4
+- [x] 7.2 Lint przechodzi — bbd88e4
+- [x] 7.3 Testy (render tabów; energia prefill+zapis; Integracje podgląd „wkrótce") — bbd88e4
 
 #### Manual
 
