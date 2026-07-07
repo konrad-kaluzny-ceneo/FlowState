@@ -3078,6 +3078,40 @@ describe("usePomodoroCycle", () => {
 				chosenTaskId: 9,
 			});
 		});
+
+		it("records a KICKOFF accept decision when the star suggestion is accepted", async () => {
+			// Phase 3 (fix-suggestion-on-break-view): the FocusReady star popup's
+			// onAccept routes through acceptKickoffSuggestion so accepting the
+			// suggested task records a KICKOFF decision with chosen === suggested
+			// (server derives accepted=true). This preserves the scorer's learning
+			// signal after the break-suggestion panel was removed.
+			taskListQuery.mockResolvedValue(kickoffActiveTaskList);
+			suggestionNextMutate.mockImplementation(async (input) => {
+				if (input.context === "kickoff") {
+					return kickoffSuggestionResult;
+				}
+				return null;
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await completeSessionEnergyGate(result);
+
+			act(() => {
+				result.current.acceptKickoffSuggestion();
+			});
+
+			await waitFor(() => {
+				expect(recordDecisionMutate).toHaveBeenCalledWith({
+					context: "kickoff",
+					sessionId: 1,
+					suggestedTaskId: 9,
+					chosenTaskId: 9,
+				});
+			});
+		});
 	});
 
 	describe("stale suggestion invalidation", () => {

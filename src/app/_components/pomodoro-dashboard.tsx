@@ -922,14 +922,11 @@ export function PomodoroDashboardBody({
 							isAccepting: pomodoro.isAcceptingKickoffSuggestion,
 							onAccept: () => {
 								onSuggestionCoachSeen?.();
-								const suggestedId = calmKickoffSuggestedTaskId;
-								if (suggestedId == null) {
-									return;
-								}
-								pomodoro.selectTask(suggestedId, {
-									id: suggestedId,
-									title: calmKickoffSuggestionCardData.title,
-								});
+								// Route star accept through acceptKickoffSuggestion so it
+								// records a KICKOFF accept decision (raw selectTask records
+								// only overrides). Same pre-focus target; matches the START
+								// path in handleCalmKickoffStart.
+								pomodoro.acceptKickoffSuggestion();
 							},
 							suggestion: calmKickoffSuggestionCardData,
 						}

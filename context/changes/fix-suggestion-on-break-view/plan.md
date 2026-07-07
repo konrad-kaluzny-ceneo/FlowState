@@ -367,27 +367,27 @@ scorer keeps reading them. No data migration.
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `pnpm typecheck`
-- [x] 2.2 Linting passes: `pnpm lint`
-- [x] 2.3 Affected unit tests pass: `pnpm test derive-gate transition-conductor home-session-state use-pomodoro-cycle`
-- [x] 2.4 No stale references: `rg "pendingSuggestion|acceptSuggestion|SUGGESTION_ACCEPT|suggestionCardOnBreak" src` clean
+- [x] 2.1 Type checking passes: `pnpm typecheck` — 0b8ba83
+- [x] 2.2 Linting passes: `pnpm lint` — 0b8ba83
+- [x] 2.3 Affected unit tests pass: `pnpm test derive-gate transition-conductor home-session-state use-pomodoro-cycle` — 0b8ba83
+- [x] 2.4 No stale references: `rg "pendingSuggestion|acceptSuggestion|SUGGESTION_ACCEPT|suggestionCardOnBreak" src` clean — 0b8ba83
 
 #### Manual
 
-- [x] 2.5 Full session runs; break shows atmosphere only; no console errors
-- [x] 2.6 No `post_check_in` `suggestion.next` call at break start (network tab)
+- [x] 2.5 Full session runs; break shows atmosphere only; no console errors — 0b8ba83
+- [x] 2.6 No `post_check_in` `suggestion.next` call at break start (network tab) — 0b8ba83
 
 ### Phase 3: Preserve the learning signal at the star
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `pnpm typecheck`
-- [ ] 3.2 `pnpm test use-pomodoro-cycle pomodoro-dashboard` pass (incl. star-accept records KICKOFF decision)
+- [x] 3.1 Type checking passes: `pnpm typecheck`
+- [x] 3.2 `pnpm test use-pomodoro-cycle pomodoro-dashboard` pass (incl. star-accept records KICKOFF decision)
 
 #### Manual
 
-- [ ] 3.3 Star accept → KICKOFF `accepted=true` row
-- [ ] 3.4 Star override → KICKOFF `accepted=false` row + next suggestion reflects lastOverrideWorkType
+- [x] 3.3 Star accept → KICKOFF `accepted=true` row
+- [x] 3.4 Star override → KICKOFF `accepted=false` row + next suggestion reflects lastOverrideWorkType
 
 ### Phase 4: Tests
 

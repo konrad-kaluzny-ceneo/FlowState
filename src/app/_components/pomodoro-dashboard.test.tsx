@@ -425,6 +425,38 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(within(popup).getByTestId("suggestion-accept-btn")).toBeTruthy();
 	});
 
+	it("records a KICKOFF decision when accepting via the focus-ready star popup", () => {
+		const acceptKickoffSuggestion = vi.fn();
+		const selectTask = vi.fn();
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTaskId: null,
+				pendingKickoffSuggestion: kickoffSuggestionReady,
+				acceptKickoffSuggestion,
+				selectTask,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				tasks={tasks}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("focus-ready-suggestion-star-task-1"));
+		const popup = screen.getByTestId("focus-suggestion-popup");
+		fireEvent.click(within(popup).getByTestId("suggestion-accept-btn"));
+
+		// acceptKickoffSuggestion records a KICKOFF accept decision + pre-focuses;
+		// the old raw selectTask path recorded nothing on accept.
+		expect(acceptKickoffSuggestion).toHaveBeenCalledTimes(1);
+		expect(selectTask).not.toHaveBeenCalled();
+	});
+
 	it("shows in-flow summary on idle break when narrative line is present", () => {
 		renderBody({
 			hasActiveSession: true,
