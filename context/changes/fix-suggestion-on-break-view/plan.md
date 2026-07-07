@@ -23,8 +23,7 @@ deliberate design change (product decision, not a bug) per
   already suppressed and either `FocusReadyState` (star) or `FocusEmptyState` shows;
   a ready `pendingKickoffSuggestion` is guaranteed to be an active/planned task and is
   pinned into the shown list, so the star always renders
-  ([home-session-state.ts:150-166](../../../src/lib/home/home-session-state.ts),
-  [focus-ready-state.tsx:88-105](../../../src/app/_components/focus-ready-state.tsx)).
+  ([focus-ready-state.tsx:88-105](../../../src/app/_components/focus-ready-state.tsx)).
 - The break panel is fed by `pendingSuggestion` (context `post_check_in`), a
   DIFFERENT state from the star's `pendingKickoffSuggestion`. The star / post-break
   handoff runs through the independent `ensureCalmLandingKickoffSuggestion` /
@@ -84,6 +83,13 @@ are split for review clarity and verification checkpoints.
   already recorded at the star. Accept telemetry is only used by `priorSuggestionCount`
   (persona-clause-first gate) — capturing it (Phase 3) fully honors the "save information
   for future calculation" requirement without reintroducing the break beat.
+- **Star coach-line dependency:** `suggestionPersonaLabel` (derived from the removed
+  `pendingSuggestion`) feeds `effectiveSuggestionCoachLine`, which is passed as `coachLine`
+  into the *kept* star popup ([pomodoro-dashboard.tsx:1066](../../../src/app/_components/pomodoro-dashboard.tsx)),
+  not only into the two removed cards. In current code this value is very likely already
+  null whenever the star/kickoff path is active (since `pendingSuggestion` is idle then),
+  but Phase 1 must explicitly verify the star's coach-line copy is unchanged after removal
+  rather than assume it — don't just delete `suggestionPersonaLabel` and move on.
 
 ## Phase 1: Remove both panels + gating (UI layer)
 
@@ -140,23 +146,25 @@ break-suggestion state, actions, and gates from the hook and gate modules.
 
 #### 1. Hook — remove break-suggestion state + actions + fetch
 
-**File**: `src/hooks/use-pomodoro-cycle.ts`
+**Files**: `src/hooks/use-pomodoro-cycle.ts`, `src/hooks/use-pomodoro-cycle.test.tsx`
 
 **Intent**: Remove the `post_check_in` suggestion end-to-end: stop fetching it, and delete
 the state and the actions that only the break panel drove.
 
-**Contract**: Remove `pendingSuggestion` state, `suggestionCycleId`/`postCheckInReadyTaskId`, `fetchPostCheckInSuggestion` / `fetchSuggestion` / `retrySuggestion` / `clearSuggestion` (post-check-in), `acceptSuggestion` ([:1873-1891](../../../src/hooks/use-pomodoro-cycle.ts)), `recordSuggestionDecision` ([:1263-1277](../../../src/hooks/use-pomodoro-cycle.ts)), the break-override branch of `selectTask` ([:1823-1832](../../../src/hooks/use-pomodoro-cycle.ts)), the break path of `dismissPreFocus` ([:1776-1811](../../../src/hooks/use-pomodoro-cycle.ts)), and the stale-task invalidation effect for the break suggestion ([:1506-1548](../../../src/hooks/use-pomodoro-cycle.ts)). At the check-in→break transition (`continueAfterCheckIn` [:2688](../../../src/hooks/use-pomodoro-cycle.ts) and the optimistic/guest/recovery paths [:2722, :2856, :2987, :3281](../../../src/hooks/use-pomodoro-cycle.ts)) drop the `suggestion_fetch` step so no `post_check_in` fetch fires. Remove `pendingSuggestion`/`acceptSuggestion`/`retrySuggestion`/`overrideAcknowledgement`(break)/`showSuggestionCatchUp` from the hook's returned context. Keep ALL `pendingKickoffSuggestion` / `recordKickoffDecision` machinery.
+**Contract**: Remove `pendingSuggestion` state, `suggestionCycleId`/`postCheckInReadyTaskId`, `fetchPostCheckInSuggestion` / `fetchSuggestion` / `retrySuggestion` / `clearSuggestion` (post-check-in), `acceptSuggestion` ([:1873-1891](../../../src/hooks/use-pomodoro-cycle.ts)), `recordSuggestionDecision` ([:1258-1277](../../../src/hooks/use-pomodoro-cycle.ts)), the break-override branch of `selectTask` ([:1823-1832](../../../src/hooks/use-pomodoro-cycle.ts)), the break path of `dismissPreFocus` ([:1776-1811](../../../src/hooks/use-pomodoro-cycle.ts)), and the break-suggestion half of the combined stale-task invalidation effect ([:1469-1559](../../../src/hooks/use-pomodoro-cycle.ts) — the effect also handles the kickoff stale-task case at `:1485-1504`, which must be kept). At the check-in→break transition (`continueAfterCheckIn` [:2688](../../../src/hooks/use-pomodoro-cycle.ts) and the optimistic/guest/recovery paths [:2722, :2856, :2987, :3281](../../../src/hooks/use-pomodoro-cycle.ts)) drop the `suggestion_fetch` step so no `post_check_in` fetch fires. Remove `pendingSuggestion`/`acceptSuggestion`/`retrySuggestion`/`overrideAcknowledgement`(break)/`showSuggestionCatchUp` from the hook's returned context. Keep ALL `pendingKickoffSuggestion` / `recordKickoffDecision` machinery.
 
 **Contract note**: `overrideAcknowledgement` is shared — the KICKOFF override branch ([:1840-1844](../../../src/hooks/use-pomodoro-cycle.ts)) still calls `showOverrideAck`, so keep `overrideAcknowledgement` state and its dashboard render ([:1181-1190](../../../src/app/_components/pomodoro-dashboard.tsx)); only the break-override caller is removed.
 
+**Test file note**: `use-pomodoro-cycle.test.tsx` has ~29 references to `pendingSuggestion`/`acceptSuggestion`/`post_check_in` break-suggestion state (verified via review pass) — these must be removed/reworked in this same phase, not deferred to Phase 4, because Phase 2's own success criteria (`pnpm test … use-pomodoro-cycle`) cannot pass while the test still exercises deleted hook surface.
+
 #### 2. Gates — drop SUGGESTION_ACCEPT and break-suggestion inputs
 
-**Files**: `src/lib/catch-up/derive-gate.ts`, `src/lib/wedge/transition-conductor.ts`, `src/lib/home/home-session-state.ts`
+**Files**: `src/lib/catch-up/derive-gate.ts`, `src/lib/catch-up/types.ts`, `src/lib/catch-up/copy.ts`, `src/lib/wedge/transition-conductor.ts`, `src/lib/home/home-session-state.ts`
 
-**Intent**: Remove the now-unreachable `SUGGESTION_ACCEPT` catch-up gate and the
+**Intent**: Remove the now-unreachable `SUGGESTION_ACCEPT` catch-up gate — including its type and copy — and the
 `pendingSuggestionStatus`/`hasBreakSuggestion` inputs that only the break suggestion set.
 
-**Contract**: In `derive-gate.ts` remove the `SUGGESTION_ACCEPT` gate branch ([:40](../../../src/lib/catch-up/derive-gate.ts)). In `transition-conductor.ts` remove `pendingSuggestionStatus` from `KickoffEligibilityInput` / `computeKickoffEligible` ([:45, :147](../../../src/lib/wedge/transition-conductor.ts)). In `home-session-state.ts` remove `pendingSuggestionStatus` / `hasBreakSuggestion` ([:93-100](../../../src/lib/home/home-session-state.ts)). Update all call sites and the corresponding unit tests.
+**Contract**: In `derive-gate.ts` remove the `SUGGESTION_ACCEPT` gate branch ([:37-43](../../../src/lib/catch-up/derive-gate.ts)). In `types.ts` remove the `"SUGGESTION_ACCEPT"` member from the `CatchUpGate` union ([:5](../../../src/lib/catch-up/types.ts)). In `copy.ts` remove the `case "SUGGESTION_ACCEPT":` switch branch ([:62](../../../src/lib/catch-up/copy.ts)). In `transition-conductor.ts` remove `pendingSuggestionStatus` from `KickoffEligibilityInput` / `computeKickoffEligible` ([:45, :147](../../../src/lib/wedge/transition-conductor.ts)) — leave `postBreakIdleFlag` ([:49, :150](../../../src/lib/wedge/transition-conductor.ts)) untouched, it is the existing (unrelated) post-break idle kickoff path. In `home-session-state.ts` remove `pendingSuggestionStatus` / `hasBreakSuggestion` ([:93-100](../../../src/lib/home/home-session-state.ts)), including the second `hasBreakSuggestion` read inside `deriveBreakModules` ([:276](../../../src/lib/home/home-session-state.ts)). The dashboard's `catchUp?.gate === "SUGGESTION_ACCEPT"` check ([pomodoro-dashboard.tsx:502](../../../src/app/_components/pomodoro-dashboard.tsx)) falls away as part of Phase 1's `showSuggestionCatchUp` removal — no separate action needed here. Update all call sites and the corresponding unit tests: `derive-gate.test.ts`, `copy.test.ts` (check for `SUGGESTION_ACCEPT` fixtures), and `src/app/_components/tab-return-catchup.test.tsx` (remove/rework the `makeCatchUp("SUGGESTION_ACCEPT")` case at [:66](../../../src/app/_components/tab-return-catchup.test.tsx)).
 
 ### Success Criteria:
 
@@ -281,6 +289,14 @@ surface.
 
 **Contract**: Add a short lesson: "Next-task suggestion surfaces only via the FocusReady star (+ its popup) — never as a standalone panel on break or idle; accept/override are recorded as KICKOFF `SuggestionDecision`s." Include trigger + rule + applies-to, matching the file's format.
 
+#### 3. Test-plan doc
+
+**File**: `context/foundation/test-plan.md`
+
+**Intent**: Update stale test references left over from the removed break-panel tests, so the doc doesn't point at deleted test names.
+
+**Contract**: Update the references at [:395, :398, :417, :427](../../../context/foundation/test-plan.md) — these currently name `task-suggestion-card.test.tsx` and a `use-pomodoro-cycle.test.tsx` case literally titled "hides stale post-check-in suggestion…", which Phase 2/4 remove or rename. Point them at the star-surface tests instead (or drop the row if no longer applicable).
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -291,6 +307,7 @@ surface.
 
 - `user-flow.md` contains no remaining description of a suggestion panel or a break-running suggestion card.
 - `lessons.md` has the new single-surface rule.
+- `test-plan.md` no longer references deleted/renamed test names.
 
 ---
 
@@ -393,3 +410,4 @@ scorer keeps reading them. No data migration.
 
 - [ ] 5.2 `user-flow.md` has no suggestion-panel / break-card descriptions
 - [ ] 5.3 `lessons.md` has the single-surface rule
+- [ ] 5.4 `test-plan.md` no longer references deleted/renamed test names

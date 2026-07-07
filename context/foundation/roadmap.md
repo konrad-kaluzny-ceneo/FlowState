@@ -3,7 +3,7 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-07-05
+updated: 2026-07-07
 structure: split
 active_slices: []
 prd_version: 3
@@ -174,7 +174,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-48 | analytics-trends-plan-vs-execution | **no** | FLO-99 / #193; after S-45 Podsumowanie; needs research: data model for weekly aggregation |
 | S-49 | workspace-setup-advisor | **no** | FLO-100 / #194; after S-45 Ustawienia; content-first (tips authored); no external integration |
 
-**Recommended next:** **F-15** `platform-refactor-batch` — timer hub + data-mode refactor batch (FLO-96 / [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190)); `ui-improvement` archived → `context/archive/2026-07-05-ui-improvement/`; PR [#196](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/196) open for merge.
+**Recommended next:** **F-15** `platform-refactor-batch` — timer hub + data-mode refactor batch (FLO-96 / [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190)); `ui-improvement` archived → `context/archive/2026-07-05-ui-improvement/`; PR [#196](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/196) merged 2026-07-05.
 
 ## Reference appendix (load on demand)
 
