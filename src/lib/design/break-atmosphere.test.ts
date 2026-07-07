@@ -6,7 +6,6 @@ const base = {
 	cycleKind: "SHORT_BREAK" as const,
 	state: "running" as const,
 	wedgeGateActive: false,
-	suggestionCardOnBreak: false,
 };
 
 describe("shouldShowBreakAtmosphere", () => {
@@ -34,12 +33,6 @@ describe("shouldShowBreakAtmosphere", () => {
 		expect(shouldShowBreakAtmosphere({ ...base, wedgeGateActive: true })).toBe(
 			false,
 		);
-	});
-
-	it("is false when suggestion card on break", () => {
-		expect(
-			shouldShowBreakAtmosphere({ ...base, suggestionCardOnBreak: true }),
-		).toBe(false);
 	});
 
 	it("is false when idle on break kind", () => {

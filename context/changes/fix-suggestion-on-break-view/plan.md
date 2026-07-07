@@ -354,14 +354,14 @@ scorer keeps reading them. No data migration.
 
 #### Automated
 
-- [ ] 1.1 Type checking passes: `pnpm typecheck`
-- [ ] 1.2 Linting passes: `pnpm lint`
-- [ ] 1.3 break-atmosphere unit tests pass: `pnpm test break-atmosphere`
+- [x] 1.1 Type checking passes: `pnpm typecheck`
+- [x] 1.2 Linting passes: `pnpm lint`
+- [x] 1.3 break-atmosphere unit tests pass: `pnpm test break-atmosphere`
 
 #### Manual
 
-- [ ] 1.4 Running break shows atmosphere, no "Sugerowane następne zadanie" card
-- [ ] 1.5 Idle with tasks shows "Gotów skupić się na" star; no standalone kickoff card
+- [x] 1.4 Running break shows atmosphere, no "Sugerowane następne zadanie" card
+- [x] 1.5 Idle with tasks shows "Gotów skupić się na" star; no standalone kickoff card
 
 ### Phase 2: Stop the fetch + full-prune dead machinery
 

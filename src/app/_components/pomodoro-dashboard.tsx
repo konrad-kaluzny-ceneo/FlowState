@@ -35,10 +35,7 @@ import { QuickActions } from "~/app/_components/quick-actions";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
 import { SessionEnergyCard } from "~/app/_components/session-steering-card";
 import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
-import {
-	TaskSuggestionCard,
-	type TaskSuggestionData,
-} from "~/app/_components/task-suggestion-card";
+import type { TaskSuggestionData } from "~/app/_components/task-suggestion-card";
 import { TimerPanel } from "~/app/_components/timer-panel";
 import { WedgeSyncRecovery } from "~/app/_components/wedge-sync-recovery";
 import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
@@ -80,10 +77,6 @@ import {
 import type { OnboardingScope, OnboardingState } from "~/lib/onboarding/types";
 import { formatDayMemory } from "~/lib/recap/format-day-memory";
 import { getBreakReentryLine } from "~/lib/session/transition-copy";
-import {
-	getPersonaPresetLabel,
-	resolveTaskPersonaBadge,
-} from "~/lib/task/persona-presets";
 import { resolveWedgeBeat } from "~/lib/wedge/transition-conductor";
 
 type DayPlanView = ReturnType<typeof useDayPlan>;
@@ -192,28 +185,6 @@ export function PomodoroDashboardBody({
 	const dataMode =
 		onboardingScope.mode === "authenticated" ? "authenticated" : "guest";
 	const tDashboard = useTranslations("Session.dashboard");
-	const suggestionPersonaLabel = useMemo(() => {
-		const pending = pomodoro.pendingSuggestion;
-		if (pending.status !== "ready") {
-			return null;
-		}
-		const task = tasks.find((t) => t.id === pending.data.taskId);
-		if (task == null || task.personaPresetId === "custom") {
-			return null;
-		}
-		const badge = resolveTaskPersonaBadge({
-			personaPresetId: task.personaPresetId,
-			workType: task.workType,
-			urgency: task.urgency,
-			importance: task.importance,
-			commitmentHorizon: task.commitmentHorizon,
-			effortMinutes: task.effortMinutes,
-		});
-		if (badge.mode !== "persona" || badge.presetId == null) {
-			return null;
-		}
-		return getPersonaPresetLabel(badge.presetId, locale) ?? null;
-	}, [pomodoro.pendingSuggestion, tasks, locale]);
 
 	const effectiveCheckInCoachLine =
 		onboardingState != null && shouldShowCheckInCoachFlag != null
@@ -229,7 +200,7 @@ export function PomodoroDashboardBody({
 			? resolveSuggestionCoachLine(
 					onboardingState,
 					shouldShowSuggestionCoachFlag,
-					suggestionPersonaLabel,
+					null,
 					locale,
 				)
 			: suggestionCoachLine;
@@ -380,22 +351,6 @@ export function PomodoroDashboardBody({
 
 	const cyclePaused = pomodoro.state === "paused";
 
-	const showSuggestionCard =
-		enableSuggestionGate &&
-		!cyclePaused &&
-		!pomodoro.awaitingWindDown &&
-		isBreakRunning &&
-		pomodoro.pendingSuggestion.status !== "idle";
-
-	const showKickoffCard =
-		enableSuggestionGate &&
-		!cyclePaused &&
-		pomodoro.state === "idle" &&
-		pomodoro.focusedTaskId == null &&
-		pomodoro.pendingKickoffSuggestion.status !== "idle" &&
-		!showSuggestionCard &&
-		!showSessionEnergy;
-
 	const showKickoffDurationChips =
 		enableSuggestionGate &&
 		!cyclePaused &&
@@ -469,7 +424,6 @@ export function PomodoroDashboardBody({
 		cycleKind: pomodoro.cycleKind,
 		state: pomodoro.state,
 		wedgeGateActive,
-		suggestionCardOnBreak: showSuggestionCard,
 	});
 	useSyncBreakAtmosphere(breakAtmosphereActive);
 
@@ -496,24 +450,14 @@ export function PomodoroDashboardBody({
 		pomodoro.awaitingCheckIn &&
 		pomodoro.activeCycle != null;
 
-	const showSuggestionCatchUp =
-		!cyclePaused &&
-		enableSuggestionGate &&
-		catchUp?.gate === "SUGGESTION_ACCEPT" &&
-		pomodoro.pendingSuggestion.status === "ready";
-
 	const showInFlowSummary =
-		!cyclePaused &&
-		pomodoro.inFlowSummaryLine != null &&
-		!wedgeGateActive &&
-		!showSuggestionCard;
+		!cyclePaused && pomodoro.inFlowSummaryLine != null && !wedgeGateActive;
 
 	const showBreakTransitionLine =
 		!cyclePaused &&
 		isBreakRunning &&
 		pomodoro.breakTransitionLine != null &&
 		!wedgeGateActive &&
-		!showSuggestionCard &&
 		!showInFlowSummary;
 
 	const breakReentryCopy =
@@ -533,9 +477,10 @@ export function PomodoroDashboardBody({
 				pendingKickoffSuggestionStatus: mapSuggestionGateStatus(
 					pomodoro.pendingKickoffSuggestion.status,
 				),
-				pendingSuggestionStatus: mapSuggestionGateStatus(
-					pomodoro.pendingSuggestion.status,
-				),
+				// Break suggestion machinery removed (fix-suggestion-on-break-view);
+				// always reads as "no break suggestion" until Phase 2 deletes this
+				// field from DeriveHomeSessionStateInput entirely.
+				pendingSuggestionStatus: "idle",
 				focusedTaskId: pomodoro.focusedTaskId,
 				continueTaskId: pomodoro.continueTaskId,
 				hasPreFocusedKickoff: pomodoro.hasPreFocusedKickoff,
@@ -554,7 +499,6 @@ export function PomodoroDashboardBody({
 			enableSuggestionGate,
 			showSessionEnergy,
 			pomodoro.pendingKickoffSuggestion.status,
-			pomodoro.pendingSuggestion.status,
 			pomodoro.focusedTaskId,
 			pomodoro.continueTaskId,
 			pomodoro.hasPreFocusedKickoff,
@@ -675,10 +619,6 @@ export function PomodoroDashboardBody({
 		pomodoro.pendingKickoffSuggestion.status,
 	]);
 
-	const suppressKickoffForCalmLanding =
-		showFocusEmptyState || showFocusReadyState;
-	const effectiveShowKickoffCard =
-		showKickoffCard && !suppressKickoffForCalmLanding;
 	const dayMemoryOnCalmLanding = dayMemoryVisible && !showCalmLanding;
 
 	const calmKickoffTask = useMemo(() => {
@@ -742,8 +682,7 @@ export function PomodoroDashboardBody({
 		return { total, done };
 	}, [recap?.todayPlan]);
 
-	const nextFocusUiActive =
-		effectiveShowKickoffCard || showKickoffDurationChips || showSuggestionCard;
+	const nextFocusUiActive = showKickoffDurationChips;
 
 	const timerShown =
 		!embedKickoffInFocusReady &&
@@ -868,86 +807,6 @@ export function PomodoroDashboardBody({
 			state={pomodoro.state}
 		/>
 	) : null;
-
-	const breakSuggestionCard =
-		moduleVisible("nextFocus") && showSuggestionCard ? (
-			pomodoro.pendingSuggestion.status === "loading" ? (
-				<TaskSuggestionCard status="loading" />
-			) : pomodoro.pendingSuggestion.status === "ready" ? (
-				<div className="w-full">
-					{showSuggestionCatchUp && catchUp != null && (
-						<TabReturnCatchUp
-							catchUp={catchUp}
-							cycleKind={pomodoro.cycleKind}
-							taskTitle={pomodoro.focusedTask?.title}
-						/>
-					)}
-					<TaskSuggestionCard
-						coachLine={effectiveSuggestionCoachLine}
-						onAccept={() => {
-							pomodoro.dismissCatchUp();
-							onSuggestionCoachSeen?.();
-							void pomodoro.acceptSuggestion();
-						}}
-						status="ready"
-						suggestion={{
-							taskId: Number(pomodoro.pendingSuggestion.data.taskId),
-							title: pomodoro.pendingSuggestion.data.title,
-							workType: pomodoro.pendingSuggestion.data.workType,
-							weight: pomodoro.pendingSuggestion.data.weight,
-							urgency: pomodoro.pendingSuggestion.data.urgency,
-							importance: pomodoro.pendingSuggestion.data.importance,
-							commitmentHorizon:
-								pomodoro.pendingSuggestion.data.commitmentHorizon,
-							rationale: pomodoro.pendingSuggestion.data.rationale,
-							breakdown: pomodoro.pendingSuggestion.data.breakdown,
-							resumeNote: pomodoro.pendingSuggestion.data.resumeNote,
-						}}
-					/>
-				</div>
-			) : pomodoro.pendingSuggestion.status === "empty" ? (
-				<TaskSuggestionCard status="empty" />
-			) : pomodoro.pendingSuggestion.status === "error" ? (
-				<TaskSuggestionCard onRetry={pomodoro.retrySuggestion} status="error" />
-			) : null
-		) : null;
-
-	const kickoffSuggestionCard =
-		moduleVisible("nextFocus") && effectiveShowKickoffCard ? (
-			pomodoro.pendingKickoffSuggestion.status === "loading" ? (
-				<TaskSuggestionCard status="loading" />
-			) : pomodoro.pendingKickoffSuggestion.status === "ready" ? (
-				<TaskSuggestionCard
-					coachLine={effectiveSuggestionCoachLine}
-					isAccepting={pomodoro.isAcceptingKickoffSuggestion}
-					onAccept={() => {
-						onSuggestionCoachSeen?.();
-						void pomodoro.acceptKickoffSuggestion();
-					}}
-					status="ready"
-					suggestion={{
-						taskId: Number(pomodoro.pendingKickoffSuggestion.data.taskId),
-						title: pomodoro.pendingKickoffSuggestion.data.title,
-						workType: pomodoro.pendingKickoffSuggestion.data.workType,
-						weight: pomodoro.pendingKickoffSuggestion.data.weight,
-						urgency: pomodoro.pendingKickoffSuggestion.data.urgency,
-						importance: pomodoro.pendingKickoffSuggestion.data.importance,
-						commitmentHorizon:
-							pomodoro.pendingKickoffSuggestion.data.commitmentHorizon,
-						rationale: pomodoro.pendingKickoffSuggestion.data.rationale,
-						breakdown: pomodoro.pendingKickoffSuggestion.data.breakdown,
-						resumeNote: pomodoro.pendingKickoffSuggestion.data.resumeNote,
-					}}
-				/>
-			) : pomodoro.pendingKickoffSuggestion.status === "empty" ? (
-				<TaskSuggestionCard status="empty" />
-			) : pomodoro.pendingKickoffSuggestion.status === "error" ? (
-				<TaskSuggestionCard
-					onRetry={pomodoro.retryKickoffSuggestion}
-					status="error"
-				/>
-			) : null
-		) : null;
 
 	const recapPanel =
 		dataMode === "authenticated" && moduleVisible("recap") ? (
@@ -1105,10 +964,7 @@ export function PomodoroDashboardBody({
 		dayMemoryOnCalmLanding ||
 		calmLandingHero != null ||
 		(moduleInZone("steering", "primary") && steeringCards != null) ||
-		(moduleInZone("nextFocus", "primary") &&
-			(kickoffDurationChips != null ||
-				breakSuggestionCard != null ||
-				kickoffSuggestionCard != null)) ||
+		(moduleInZone("nextFocus", "primary") && kickoffDurationChips != null) ||
 		timerZone === "primary";
 
 	const secondaryRegionHasContent =
@@ -1168,8 +1024,6 @@ export function PomodoroDashboardBody({
 							{moduleInZone("steering", "primary") && steeringCards}
 							{moduleInZone("nextFocus", "primary") && kickoffDurationChips}
 							{timerZone === "primary" && timerPanel}
-							{moduleInZone("nextFocus", "primary") && breakSuggestionCard}
-							{moduleInZone("nextFocus", "primary") && kickoffSuggestionCard}
 						</HomeLayoutRegion>
 					)}
 

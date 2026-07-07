@@ -289,58 +289,6 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.queryByTestId("check-in-overlay")).toBeNull();
 	});
 
-	it("hides break suggestion card when paused and shows after resume", () => {
-		const suggestionReady = {
-			status: "ready" as const,
-			data: {
-				taskId: "task-1",
-				title: "Suggested task",
-				workType: "OPERATIONAL" as const,
-				weight: 2 as const,
-				rationale: "Best next task",
-				breakdown: null,
-			},
-		};
-
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				state: "paused",
-				cycleKind: "SHORT_BREAK",
-				pendingSuggestion: suggestionReady,
-			}),
-		);
-
-		const { rerender } = render(
-			<PomodoroDashboardBody
-				enableSuggestionGate
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
-
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				state: "running",
-				cycleKind: "SHORT_BREAK",
-				pendingSuggestion: suggestionReady,
-			}),
-		);
-
-		rerender(
-			<PomodoroDashboardBody
-				enableSuggestionGate
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
-	});
-
 	it("shows mid-cycle prompt when a task completion is pending", () => {
 		renderBody({
 			midCyclePendingTask: { id: 1, title: "Completed task" },
@@ -520,40 +468,6 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.queryByTestId("session-inflow-summary")).toBeNull();
 	});
 
-	it("hides in-flow summary when post-check-in suggestion card is visible", () => {
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				hasActiveSession: true,
-				state: "running",
-				cycleKind: "SHORT_BREAK",
-				inFlowSummaryLine: "2 cycles · feeling steady",
-				pendingSuggestion: {
-					status: "ready",
-					data: {
-						taskId: "task-1",
-						title: "Suggested task",
-						workType: "OPERATIONAL",
-						weight: 2,
-						rationale: "Best next task",
-						breakdown: null,
-					},
-				},
-			}),
-		);
-
-		render(
-			<PomodoroDashboardBody
-				enableSuggestionGate
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
-		expect(screen.queryByTestId("session-inflow-summary")).toBeNull();
-	});
-
 	it("shows in-flow summary with focus-ready and kickoff timer mid-session", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({
@@ -714,40 +628,6 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.getByTestId("break-transition-line").textContent).toBe(
 			BREAK_START_SHORT,
 		);
-	});
-
-	it("hides break transition line when post-check-in suggestion card is visible", () => {
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				hasActiveSession: true,
-				state: "running",
-				cycleKind: "SHORT_BREAK",
-				breakTransitionLine: BREAK_START_SHORT,
-				pendingSuggestion: {
-					status: "ready",
-					data: {
-						taskId: "task-1",
-						title: "Suggested task",
-						workType: "OPERATIONAL",
-						weight: 2,
-						rationale: "Best next task",
-						breakdown: null,
-					},
-				},
-			}),
-		);
-
-		render(
-			<PomodoroDashboardBody
-				enableSuggestionGate
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
-		expect(screen.queryByTestId("break-transition-line")).toBeNull();
 	});
 
 	it("hides break transition line when in-flow summary is visible", () => {
@@ -1092,18 +972,6 @@ const kickoffSuggestionReady = {
 	},
 };
 
-const breakSuggestionReady = {
-	status: "ready" as const,
-	data: {
-		taskId: "task-1",
-		title: "Suggested task",
-		workType: "OPERATIONAL" as const,
-		weight: 2 as const,
-		rationale: "Best next task",
-		breakdown: null,
-	},
-};
-
 describe("PomodoroDashboardBody home IA layout", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -1242,33 +1110,6 @@ describe("PomodoroDashboardBody home IA layout", () => {
 
 		expectInsideRegion("home-primary-region", "timer-pause");
 		expect(screen.queryByTestId("daily-recap-panel")).toBeNull();
-		expect(screen.queryByTestId("task-list-stub")).toBeNull();
-	});
-
-	it("break with suggestion keeps next-focus primary and timer secondary", () => {
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				hasActiveSession: true,
-				state: "running",
-				cycleKind: "SHORT_BREAK",
-				activeCycle: { id: 42 },
-				focusedTask: { id: 1, title: "Focus task" },
-				pendingSuggestion: breakSuggestionReady,
-			}),
-		);
-
-		render(
-			<PomodoroDashboardBody
-				enableSuggestionGate
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(countEnabledPrimaryCtas()).toBe(1);
-		expectInsideRegion("home-primary-region", "suggestion-accept-btn");
-		expectInsideRegion("home-secondary-region", "timer-pause");
 		expect(screen.queryByTestId("task-list-stub")).toBeNull();
 	});
 

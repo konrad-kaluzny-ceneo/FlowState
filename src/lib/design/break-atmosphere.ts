@@ -2,16 +2,14 @@ export type BreakAtmosphereInput = {
 	cycleKind: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null;
 	state: "idle" | "running" | "paused" | "completed";
 	wedgeGateActive: boolean;
-	suggestionCardOnBreak: boolean;
 };
 
 export function shouldShowBreakAtmosphere({
 	cycleKind,
 	state,
 	wedgeGateActive,
-	suggestionCardOnBreak,
 }: BreakAtmosphereInput): boolean {
-	if (wedgeGateActive || suggestionCardOnBreak) {
+	if (wedgeGateActive) {
 		return false;
 	}
 	const isBreakKind = cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
