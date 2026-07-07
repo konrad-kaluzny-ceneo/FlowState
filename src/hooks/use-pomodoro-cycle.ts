@@ -272,7 +272,6 @@ export type WedgeSyncPhase =
 	| "check_in"
 	| "complete_work"
 	| "start_break"
-	| "suggestion_fetch"
 	| "kickoff_session"
 	| "kickoff_suggestion";
 
@@ -414,19 +413,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		boolean | null
 	>(null);
 	const [isConfirming, setIsConfirming] = useState(false);
-	const [pendingSuggestion, setPendingSuggestion] = useState<PendingSuggestion>(
-		{
-			status: "idle",
-		},
-	);
-	const [suggestionCycleId, setSuggestionCycleId] = useState<number | null>(
-		null,
-	);
-	const [suggestedTaskId, setSuggestedTaskId] = useState<DomainTaskId | null>(
-		null,
-	);
 	const [preFocusedTask, setPreFocusedTask] = useState<FocusedTask>(null);
-	const [hasPreFocusedSuggestion, setHasPreFocusedSuggestion] = useState(false);
 	const [hasPreFocusedKickoff, setHasPreFocusedKickoff] = useState(false);
 	const [stagedKickoffDurationSec, setStagedKickoffDurationSec] = useState<
 		number | null
@@ -469,7 +456,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const lastSessionIntentionRef = useRef<string | null>(null);
 
 	const createCheckIn = api.checkIn.create.useMutation();
-	const suggestionNextPostCheckIn = api.suggestion.next.useMutation();
 	const suggestionNextKickoff = api.suggestion.next.useMutation();
 	const recordDecisionMutation = api.suggestion.recordDecision.useMutation();
 
@@ -518,7 +504,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const cycleKindRef = useRef(cycleKind);
 	const awaitingCheckInRef = useRef(awaitingCheckIn);
 	const isPostCheckInTransitioningRef = useRef(isPostCheckInTransitioning);
-	const pendingSuggestionRef = useRef(pendingSuggestion);
 	const endTimeRef = useRef<number | null>(null);
 	const workerRef = useRef<Worker | null>(null);
 	const fallbackIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
@@ -529,8 +514,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const pendingIncrementInterruptionRef = useRef(false);
 	const pendingWindDownMarkTaskDoneRef = useRef<boolean | null>(null);
 	const pendingWindDownWorkCycleIdRef = useRef<number | null>(null);
-	const suggestionCycleIdRef = useRef<number | null>(null);
-	const suggestionFetchGenRef = useRef(0);
 	const kickoffFetchGenRef = useRef(0);
 	const calmLandingKickoffEnsureRequestedRef = useRef(false);
 	const prevKickoffEligibleRef = useRef(false);
@@ -579,10 +562,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	useEffect(() => {
 		isPostCheckInTransitioningRef.current = isPostCheckInTransitioning;
 	}, [isPostCheckInTransitioning]);
-
-	useEffect(() => {
-		pendingSuggestionRef.current = pendingSuggestion;
-	}, [pendingSuggestion]);
 
 	const invalidateServerCycle = useCallback(async () => {
 		if (mode === "authenticated") {
@@ -670,7 +649,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				cycleKind: cycleKindSnapshot,
 				awaitingCheckIn:
 					awaitingCheckInRef.current || isPostCheckInTransitioningRef.current,
-				pendingSuggestionStatus: pendingSuggestionRef.current.status,
 			});
 			if (gate == null) {
 				return;
@@ -1236,16 +1214,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		setPostBreakIdleFlag(false);
 	}, []);
 
-	const clearSuggestion = useCallback(() => {
-		suggestionFetchGenRef.current += 1;
-		suggestionCycleIdRef.current = null;
-		setPendingSuggestion({ status: "idle" });
-		setSuggestionCycleId(null);
-		setSuggestedTaskId(null);
-		setHasPreFocusedSuggestion(false);
-		clearOverrideAck();
-	}, [clearOverrideAck]);
-
 	const preFocusTask = useCallback(
 		(taskId: DomainTaskId, task?: FocusedTask) => {
 			setPreFocusedTask(task ?? { id: taskId, title: "" });
@@ -1253,27 +1221,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setFocusedTask(task ?? null);
 		},
 		[],
-	);
-
-	const recordSuggestionDecision = useCallback(
-		async (suggestedId: DomainTaskId, chosenId: DomainTaskId) => {
-			if (suggestionCycleId == null) {
-				return;
-			}
-			try {
-				await retryOnce(() =>
-					recordDecisionMutation.mutateAsync({
-						context: "post_check_in",
-						cycleId: suggestionCycleId,
-						suggestedTaskId: Number(suggestedId),
-						chosenTaskId: Number(chosenId),
-					}),
-				);
-			} catch {
-				setError(tErrors("suggestionDecisionSaveFailed"));
-			}
-		},
-		[suggestionCycleId, recordDecisionMutation, tErrors],
 	);
 
 	const recordKickoffDecision = useCallback(
@@ -1295,88 +1242,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			}
 		},
 		[_activeSessionId, recordDecisionMutation, tErrors],
-	);
-
-	const fetchPostCheckInSuggestion = useCallback(
-		async (cycleId: number, gen: number) => {
-			const result = await suggestionNextPostCheckIn.mutateAsync({
-				context: "post_check_in",
-				cycleId,
-				localHour: new Date().getHours(),
-				localDateKey: formatLocalDateKey(),
-			});
-			if (suggestionFetchGenRef.current !== gen) {
-				return;
-			}
-			if (suggestionCycleIdRef.current !== cycleId) {
-				return;
-			}
-			if (result == null) {
-				setPendingSuggestion({ status: "empty" });
-				setSuggestedTaskId(null);
-			} else {
-				const activeIds = activeTaskIdsRef.current;
-				if (activeIds != null && !activeIds.has(result.taskId)) {
-					setPendingSuggestion({ status: "empty" });
-					setSuggestedTaskId(null);
-					return;
-				}
-				setPendingSuggestion({
-					status: "ready",
-					data: {
-						cycleId:
-							"cycleId" in result && typeof result.cycleId === "number"
-								? result.cycleId
-								: cycleId,
-						taskId: result.taskId,
-						title: result.title,
-						workType: result.workType,
-						weight: result.weight,
-						urgency: (result.urgency ?? result.weight) as 1 | 2 | 3,
-						importance: (result.importance ?? 2) as 1 | 2 | 3,
-						commitmentHorizon: result.commitmentHorizon ?? "WHEN_POSSIBLE",
-						rationaleKey: result.rationaleKey,
-						rationale: result.rationale,
-						breakdown: result.breakdown,
-						resumeNote: result.resumeNote ?? null,
-					},
-				});
-				setSuggestedTaskId(result.taskId);
-			}
-		},
-		[suggestionNextPostCheckIn],
-	);
-
-	const fetchSuggestion = useCallback(
-		(cycleId: number) => {
-			clearKickoffSuggestion();
-			clearKickoffIdleFlags();
-			const gen = ++suggestionFetchGenRef.current;
-			suggestionCycleIdRef.current = cycleId;
-			setPendingSuggestion({ status: "loading" });
-			setSuggestionCycleId(cycleId);
-			setSuggestedTaskId(null);
-			setHasPreFocusedSuggestion(false);
-
-			void (async () => {
-				const endSuggestionFetch = beginSuggestionFetch();
-				try {
-					await fetchPostCheckInSuggestion(cycleId, gen);
-				} catch {
-					if (suggestionFetchGenRef.current !== gen) {
-						return;
-					}
-					if (suggestionCycleIdRef.current !== cycleId) {
-						return;
-					}
-					setPendingSuggestion({ status: "error" });
-					setSuggestedTaskId(null);
-				} finally {
-					endSuggestionFetch();
-				}
-			})();
-		},
-		[clearKickoffSuggestion, clearKickoffIdleFlags, fetchPostCheckInSuggestion],
 	);
 
 	const fetchKickoffSuggestion = useCallback(
@@ -1462,8 +1327,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		pendingKickoffSuggestion.status === "ready"
 			? pendingKickoffSuggestion.data.taskId
 			: null;
-	const postCheckInReadyTaskId =
-		pendingSuggestion.status === "ready" ? pendingSuggestion.data.taskId : null;
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: membership from ref; ready task ids listed explicitly
 	useEffect(() => {
@@ -1502,60 +1365,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				);
 			}
 		}
-
-		if (
-			pendingSuggestion.status === "ready" &&
-			!activeIds.has(pendingSuggestion.data.taskId)
-		) {
-			const { taskId } = pendingSuggestion.data;
-			clearPreFocusForMissingTask(taskId);
-			setHasPreFocusedSuggestion(false);
-			setSuggestedTaskId(null);
-
-			if (activeIds.size === 0) {
-				suggestionFetchGenRef.current += 1;
-				setPendingSuggestion({ status: "empty" });
-				return;
-			}
-
-			const cycleId = suggestionCycleIdRef.current;
-			if (cycleId == null) {
-				suggestionFetchGenRef.current += 1;
-				setPendingSuggestion({ status: "empty" });
-				return;
-			}
-
-			const gen = ++suggestionFetchGenRef.current;
-			setPendingSuggestion({ status: "loading" });
-
-			void (async () => {
-				const endSuggestionFetch = beginSuggestionFetch();
-				try {
-					await fetchPostCheckInSuggestion(cycleId, gen);
-				} catch {
-					if (suggestionFetchGenRef.current !== gen) {
-						return;
-					}
-					if (suggestionCycleIdRef.current !== cycleId) {
-						return;
-					}
-					setPendingSuggestion({ status: "error" });
-					setSuggestedTaskId(null);
-				} finally {
-					endSuggestionFetch();
-				}
-			})();
-		}
 	}, [
 		options?.activeTaskIds,
 		pendingKickoffSuggestion.status,
-		pendingSuggestion.status,
 		kickoffReadyTaskId,
-		postCheckInReadyTaskId,
 		preFocusedTask,
 		_activeSessionId,
 		fetchKickoffSuggestion,
-		fetchPostCheckInSuggestion,
 	]);
 
 	const clearSteeringAutoSkipTimer = useCallback(() => {
@@ -1690,7 +1506,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		awaitingCheckIn,
 		awaitingWindDown,
 		isPostCheckInTransitioning,
-		pendingSuggestionStatus: pendingSuggestion.status,
 		pendingClosureLine,
 		hasActiveTasks,
 		sessionStartIdleFlag,
@@ -1775,16 +1590,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const dismissPreFocus = useCallback(() => {
 		if (
-			hasPreFocusedSuggestion &&
-			pendingSuggestion.status === "ready" &&
-			preFocusedTask != null
-		) {
-			void recordSuggestionDecision(
-				pendingSuggestion.data.taskId,
-				preFocusedTask.id,
-			);
-		}
-		if (
 			hasPreFocusedKickoff &&
 			pendingKickoffSuggestion.status === "ready" &&
 			preFocusedTask != null
@@ -1795,18 +1600,14 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			);
 		}
 		setPreFocusedTask(null);
-		setHasPreFocusedSuggestion(false);
 		setHasPreFocusedKickoff(false);
 		setStagedKickoffDurationSec(null);
 		setFocusedTaskId(null);
 		setFocusedTask(null);
 	}, [
-		hasPreFocusedSuggestion,
 		hasPreFocusedKickoff,
-		pendingSuggestion,
 		pendingKickoffSuggestion,
 		preFocusedTask,
-		recordSuggestionDecision,
 		recordKickoffDecision,
 	]);
 
@@ -1819,17 +1620,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			}
 
 			setError(null);
-
-			if (
-				breakRunning &&
-				pendingSuggestion.status === "ready" &&
-				taskId !== pendingSuggestion.data.taskId
-			) {
-				void recordSuggestionDecision(pendingSuggestion.data.taskId, taskId);
-				showOverrideAck();
-				setSuggestedTaskId(null);
-				setHasPreFocusedSuggestion(false);
-			}
 
 			if (
 				!breakRunning &&
@@ -1846,10 +1636,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				setHasPreFocusedKickoff(false);
 			}
 
-			if (breakRunning && pendingSuggestion.status === "loading") {
-				return;
-			}
-
 			if (!breakRunning && pendingKickoffSuggestion.status === "loading") {
 				return;
 			}
@@ -1860,35 +1646,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		[
 			state,
 			cycleKind,
-			pendingSuggestion,
 			pendingKickoffSuggestion,
-			recordSuggestionDecision,
 			recordKickoffDecision,
 			preFocusTask,
 			showOverrideAck,
 			clearKickoffIdleFlags,
 		],
 	);
-
-	const acceptSuggestion = useCallback(() => {
-		if (pendingSuggestion.status !== "ready") {
-			return;
-		}
-
-		const { data } = pendingSuggestion;
-		const activeIds = activeTaskIdsRef.current;
-		if (activeIds != null && !activeIds.has(data.taskId)) {
-			return;
-		}
-
-		setError(null);
-		preFocusTask(data.taskId, {
-			id: data.taskId,
-			title: data.title,
-		});
-		setHasPreFocusedSuggestion(true);
-		void recordSuggestionDecision(data.taskId, data.taskId);
-	}, [pendingSuggestion, preFocusTask, recordSuggestionDecision]);
 
 	const acceptKickoffSuggestion = useCallback(() => {
 		if (pendingKickoffSuggestion.status !== "ready") {
@@ -1944,7 +1708,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setCatchUp(null);
 			stopCycleEndTabPulse();
 			tabWasHiddenWhileRunningRef.current = false;
-			clearSuggestion();
 			clearKickoffSuggestion();
 			clearKickoffIdleFlags();
 			setPreFocusedTask(null);
@@ -2115,7 +1878,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			startWorker,
 			stopWorker,
 			invalidateServerCycle,
-			clearSuggestion,
 			clearKickoffSuggestion,
 			clearKickoffIdleFlags,
 			completedWorkCycles,
@@ -2179,7 +1941,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		setError(null);
 		stopWorker();
 		endTimeRef.current = null;
-		clearSuggestion();
 
 		const interruptSnapshot =
 			mode === "authenticated"
@@ -2243,7 +2004,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		startWorker,
 		state,
 		stopWorker,
-		clearSuggestion,
 		tErrors,
 	]);
 
@@ -2609,7 +2369,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				setActiveCycle(null);
 				setCycleKind(null);
 				setPreFocusedTask(null);
-				setHasPreFocusedSuggestion(false);
 
 				if (keptFocus != null) {
 					setFocusedTaskId(keptFocus.id);
@@ -2619,8 +2378,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					setFocusedTask(null);
 					setPostBreakIdleFlag(true);
 				}
-
-				clearSuggestion();
 
 				await Promise.all([
 					invalidateServerCycle(),
@@ -2638,7 +2395,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			stopWorker,
 			utils.task.list,
 			preFocusedTask,
-			clearSuggestion,
 			clearBreakTransitionLine,
 			tErrors,
 		],
@@ -2699,16 +2455,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			if (options?.energy != null) {
 				setNarrativeLatestEnergy(options.energy);
 			}
-			const gen = ++suggestionFetchGenRef.current;
-			suggestionCycleIdRef.current = workCycleId;
-			setPendingSuggestion({ status: "loading" });
-			setSuggestionCycleId(workCycleId);
-			setSuggestedTaskId(null);
-			setHasPreFocusedSuggestion(false);
 
 			if (mode !== "authenticated") {
 				setIsPostCheckInTransitioning(true);
-				const endSuggestionFetch = beginSuggestionFetch();
 				try {
 					await confirmComplete(markTaskDone);
 					const breakStarted =
@@ -2719,19 +2468,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						setAwaitingCheckIn(false);
 						setPendingMarkTaskDone(null);
 					}
-					await fetchPostCheckInSuggestion(workCycleId, gen);
-				} catch {
-					if (suggestionFetchGenRef.current !== gen) {
-						return;
-					}
-					if (suggestionCycleIdRef.current !== workCycleId) {
-						return;
-					}
-					setPendingSuggestion({ status: "error" });
-					setSuggestedTaskId(null);
 				} finally {
 					setIsPostCheckInTransitioning(false);
-					endSuggestionFetch();
 				}
 				return;
 			}
@@ -2852,21 +2590,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						void refreshNarrativeStats(_activeSessionId);
 					}
 
-					failurePhase = "suggestion_fetch";
-					await fetchPostCheckInSuggestion(workCycleId, gen);
 					pendingWedgeIntentRef.current = null;
 					setPendingWedgeRecovery(null);
 				} catch {
-					if (suggestionFetchGenRef.current !== gen) {
-						return;
-					}
-					if (suggestionCycleIdRef.current !== workCycleId) {
-						return;
-					}
 					if (energy == null) {
 						rollbackOptimisticCheckInTransition(snapshot);
-						setPendingSuggestion({ status: "error" });
-						setSuggestedTaskId(null);
 						setError(failureMessage);
 						return;
 					}
@@ -2885,22 +2613,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						phase: failurePhase,
 						energy,
 					});
-					setPendingSuggestion({ status: "error" });
-					setSuggestedTaskId(null);
 					setError(failureMessage);
 
-					if (
-						failurePhase === "suggestion_fetch" ||
-						failurePhase === "start_break"
-					) {
-						if (failurePhase === "suggestion_fetch") {
-							setError(tErrors("suggestionLoadBreakRunning"));
-							setPendingWedgeRecovery({
-								message: tErrors("suggestionLoadBreakRunning"),
-								phase: failurePhase,
-								energy,
-							});
-						}
+					if (failurePhase === "start_break") {
 						return;
 					}
 
@@ -2916,7 +2631,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		[
 			mode,
 			confirmComplete,
-			fetchPostCheckInSuggestion,
 			clearKickoffSuggestion,
 			clearKickoffIdleFlags,
 			captureWedgeTransitionSnapshot,
@@ -2947,9 +2661,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			) {
 				throw new Error("Missing break metadata for wedge retry");
 			}
-			const workCycleId = intent.workCycleId;
-			const gen = suggestionFetchGenRef.current;
-			const endSuggestionFetch = beginSuggestionFetch();
 			const failureMessage = tErrors("breakStartFailed");
 			try {
 				const createCall = cycles.create({
@@ -2984,33 +2695,21 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					...(intent.markTaskDone ? [utils.task.list.invalidate()] : []),
 				]);
 
-				await fetchPostCheckInSuggestion(workCycleId, gen);
 				pendingWedgeIntentRef.current = null;
 				setPendingWedgeRecovery(null);
 				setError(null);
 			} catch {
-				if (suggestionFetchGenRef.current !== gen) {
-					return;
-				}
-				if (suggestionCycleIdRef.current !== workCycleId) {
-					return;
-				}
 				pendingWedgeIntentRef.current = { ...intent, phase: "start_break" };
 				setPendingWedgeRecovery({
 					message: failureMessage,
 					phase: "start_break",
 					energy: intent.energy,
 				});
-				setPendingSuggestion({ status: "error" });
-				setSuggestedTaskId(null);
 				setError(failureMessage);
-			} finally {
-				endSuggestionFetch();
 			}
 		},
 		[
 			cycles,
-			fetchPostCheckInSuggestion,
 			invalidateDailyRecap,
 			invalidateDayPlan,
 			invalidateServerCycle,
@@ -3269,40 +2968,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						setCatchUp(null);
 					}
 					break;
-				case "suggestion_fetch": {
-					if (intent.workCycleId == null) {
-						break;
-					}
-					const gen = suggestionFetchGenRef.current;
-					const failureMessage = tErrors("suggestionLoadFailed");
-					const endSuggestionFetch = beginSuggestionFetch();
-					setPendingSuggestion({ status: "loading" });
-					try {
-						await fetchPostCheckInSuggestion(intent.workCycleId, gen);
-						pendingWedgeIntentRef.current = null;
-						setPendingWedgeRecovery(null);
-						setError(null);
-						setCatchUp(null);
-					} catch {
-						if (suggestionFetchGenRef.current !== gen) {
-							return;
-						}
-						if (suggestionCycleIdRef.current !== intent.workCycleId) {
-							return;
-						}
-						pendingWedgeIntentRef.current = intent;
-						setPendingWedgeRecovery({
-							message: failureMessage,
-							phase: "suggestion_fetch",
-							energy: intent.energy,
-						});
-						setPendingSuggestion({ status: "error" });
-						setSuggestedTaskId(null);
-					} finally {
-						endSuggestionFetch();
-					}
-					break;
-				}
 				case "kickoff_session": {
 					const failureMessage = tErrors("sessionStartFailed");
 					try {
@@ -3347,7 +3012,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		_activeSessionId,
 		continueAfterCheckIn,
 		fetchKickoffSuggestion,
-		fetchPostCheckInSuggestion,
 		retryBreakCreateAfterCheckIn,
 		sessions,
 		submitCheckIn,
@@ -3497,7 +3161,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setWindDownRationale(null);
 			pendingWindDownMarkTaskDoneRef.current = null;
 			pendingWindDownWorkCycleIdRef.current = null;
-			clearSuggestion();
 			clearKickoffSuggestion();
 			clearKickoffIdleFlags();
 			clearBreakTransitionLine();
@@ -3521,7 +3184,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			focusedTaskId,
 			invalidateServerCycle,
 			utils.task.list,
-			clearSuggestion,
 			clearKickoffSuggestion,
 			clearKickoffIdleFlags,
 			clearPauseCapTimer,
@@ -3600,15 +3262,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		tabWasHiddenWhileRunningRef.current = false;
 	}, []);
 
-	const isBreakRunning =
-		state === "running" &&
-		(cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK");
-
-	const cyclePaused = state === "paused";
-
-	const showSuggestionBeat =
-		!cyclePaused && isBreakRunning && pendingSuggestion.status !== "idle";
-
 	const inFlowSummaryLine = useMemo(() => {
 		if (!hasActiveSession || state !== "idle") {
 			return null;
@@ -3617,12 +3270,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			return null;
 		}
 		if (midCyclePendingTask != null) {
-			return null;
-		}
-		if (showSuggestionBeat) {
-			return null;
-		}
-		if (pendingSuggestion.status === "loading") {
 			return null;
 		}
 
@@ -3639,8 +3286,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		awaitingWindDown,
 		isPostCheckInTransitioning,
 		midCyclePendingTask,
-		showSuggestionBeat,
-		pendingSuggestion.status,
 		completedWorkCycles,
 		narrativeTasksCompleted,
 		narrativeLatestEnergy,
@@ -3665,11 +3310,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		windDownRationale,
 		isConfirming,
 		isWedgeSyncRetrying,
-		pendingSuggestion,
-		suggestionCycleId,
-		suggestedTaskId,
 		preFocusedTask,
-		hasPreFocusedSuggestion,
 		hasPreFocusedKickoff,
 		stagedKickoffDurationSec,
 		isAcceptingKickoffSuggestion,
@@ -3695,11 +3336,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		dismissCatchUp,
 		selectTask,
 		clearTask,
-		acceptSuggestion,
 		acceptKickoffSuggestion,
 		selectKickoffDuration,
 		clearStagedKickoffDuration,
-		clearSuggestion,
 		clearKickoffSuggestion,
 		dismissPreFocus,
 		retryKickoffSuggestion: () => {
@@ -3717,15 +3356,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					lastKickoffEnergyRef.current,
 					lastSessionIntentionRef.current,
 				);
-			}
-		},
-		retrySuggestion: () => {
-			if (pendingWedgeIntentRef.current?.phase === "suggestion_fetch") {
-				void retryWedgeSync();
-				return;
-			}
-			if (suggestionCycleId != null) {
-				fetchSuggestion(suggestionCycleId);
 			}
 		},
 		retryWedgeSync,

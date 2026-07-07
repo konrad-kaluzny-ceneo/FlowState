@@ -477,10 +477,6 @@ export function PomodoroDashboardBody({
 				pendingKickoffSuggestionStatus: mapSuggestionGateStatus(
 					pomodoro.pendingKickoffSuggestion.status,
 				),
-				// Break suggestion machinery removed (fix-suggestion-on-break-view);
-				// always reads as "no break suggestion" until Phase 2 deletes this
-				// field from DeriveHomeSessionStateInput entirely.
-				pendingSuggestionStatus: "idle",
 				focusedTaskId: pomodoro.focusedTaskId,
 				continueTaskId: pomodoro.continueTaskId,
 				hasPreFocusedKickoff: pomodoro.hasPreFocusedKickoff,

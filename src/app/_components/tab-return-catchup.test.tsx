@@ -61,10 +61,4 @@ describe("TabReturnCatchUp", () => {
 
 		expect(screen.getByText(/energy check-in/i)).toBeTruthy();
 	});
-
-	it("renders suggestion next-action copy", () => {
-		render(<TabReturnCatchUp catchUp={makeCatchUp("SUGGESTION_ACCEPT")} />);
-
-		expect(screen.getByText(/suggested next task/i)).toBeTruthy();
-	});
 });

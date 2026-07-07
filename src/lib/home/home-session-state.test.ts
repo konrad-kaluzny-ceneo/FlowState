@@ -18,7 +18,6 @@ function baseInput(
 		enableSuggestionGate: true,
 		showSessionEnergy: false,
 		pendingKickoffSuggestionStatus: "idle",
-		pendingSuggestionStatus: "idle",
 		focusedTaskId: null,
 		continueTaskId: null,
 		hasPreFocusedKickoff: false,
@@ -247,24 +246,23 @@ describe("deriveHomeSessionState", () => {
 			expect(modules.nextFocus).toBe("primary");
 		});
 
-		it("makes break suggestion primary while inventory stays secondary", () => {
+		it("makes timer primary on a running break and never a suggestion card", () => {
 			const { modules } = deriveHomeSessionState(
 				baseInput({
 					cycleKind: "SHORT_BREAK",
 					cycleState: "running",
-					pendingSuggestionStatus: "ready",
 				}),
 			);
-			expect(modules.nextFocus).toBe("primary");
+			expect(modules.timer).toBe("primary");
+			expect(modules.nextFocus).toBe("hidden");
 			expect(modules.inventory).toBe("secondary");
 		});
 
-		it("makes timer primary on break without suggestion card", () => {
+		it("makes timer primary on a paused break without suggestion card", () => {
 			const { modules } = deriveHomeSessionState(
 				baseInput({
 					cycleKind: "LONG_BREAK",
 					cycleState: "paused",
-					pendingSuggestionStatus: "idle",
 				}),
 			);
 			expect(modules.timer).toBe("primary");

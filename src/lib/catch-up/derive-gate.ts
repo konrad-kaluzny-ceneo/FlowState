@@ -4,7 +4,6 @@ export type CatchUpGateSnapshot = {
 	state: "idle" | "running" | "paused" | "completed";
 	cycleKind: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null;
 	awaitingCheckIn: boolean;
-	pendingSuggestionStatus: "idle" | "loading" | "ready" | "empty" | "error";
 	cyclePaused?: boolean;
 };
 
@@ -32,14 +31,6 @@ export function deriveCatchUpGate(
 		if (isBreakKind(snapshot.cycleKind)) {
 			return "BREAK_CONFIRM";
 		}
-	}
-
-	if (
-		snapshot.state === "running" &&
-		isBreakKind(snapshot.cycleKind) &&
-		snapshot.pendingSuggestionStatus === "ready"
-	) {
-		return "SUGGESTION_ACCEPT";
 	}
 
 	return null;

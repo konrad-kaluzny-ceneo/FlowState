@@ -9,7 +9,6 @@ describe("deriveCatchUpGate", () => {
 				state: "completed",
 				cycleKind: "WORK",
 				awaitingCheckIn: true,
-				pendingSuggestionStatus: "idle",
 			}),
 		).toBe("CHECK_IN");
 	});
@@ -20,7 +19,6 @@ describe("deriveCatchUpGate", () => {
 				state: "completed",
 				cycleKind: "WORK",
 				awaitingCheckIn: false,
-				pendingSuggestionStatus: "idle",
 			}),
 		).toBe("WORK_CONFIRM");
 	});
@@ -31,7 +29,6 @@ describe("deriveCatchUpGate", () => {
 				state: "completed",
 				cycleKind: "SHORT_BREAK",
 				awaitingCheckIn: false,
-				pendingSuggestionStatus: "idle",
 			}),
 		).toBe("BREAK_CONFIRM");
 	});
@@ -42,20 +39,18 @@ describe("deriveCatchUpGate", () => {
 				state: "completed",
 				cycleKind: "LONG_BREAK",
 				awaitingCheckIn: false,
-				pendingSuggestionStatus: "idle",
 			}),
 		).toBe("BREAK_CONFIRM");
 	});
 
-	it("returns SUGGESTION_ACCEPT when break running with ready suggestion", () => {
+	it("returns null when break is running (no suggestion gate)", () => {
 		expect(
 			deriveCatchUpGate({
 				state: "running",
 				cycleKind: "SHORT_BREAK",
 				awaitingCheckIn: false,
-				pendingSuggestionStatus: "ready",
 			}),
-		).toBe("SUGGESTION_ACCEPT");
+		).toBeNull();
 	});
 
 	it("returns null when no gate applies", () => {
@@ -64,7 +59,6 @@ describe("deriveCatchUpGate", () => {
 				state: "running",
 				cycleKind: "WORK",
 				awaitingCheckIn: false,
-				pendingSuggestionStatus: "idle",
 			}),
 		).toBeNull();
 	});
@@ -75,7 +69,6 @@ describe("deriveCatchUpGate", () => {
 				state: "paused",
 				cycleKind: "SHORT_BREAK",
 				awaitingCheckIn: true,
-				pendingSuggestionStatus: "ready",
 			}),
 		).toBeNull();
 		expect(
@@ -83,7 +76,6 @@ describe("deriveCatchUpGate", () => {
 				state: "running",
 				cycleKind: "SHORT_BREAK",
 				awaitingCheckIn: false,
-				pendingSuggestionStatus: "ready",
 				cyclePaused: true,
 			}),
 		).toBeNull();

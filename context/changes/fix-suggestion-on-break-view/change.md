@@ -28,3 +28,4 @@ in the plan itself:
 
 All fixes applied directly to `plan.md`. No open design questions — plan is ready for
 `/10x-implement`.
+

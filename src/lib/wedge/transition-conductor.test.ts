@@ -212,7 +212,6 @@ describe("computeKickoffEligible", () => {
 		awaitingCheckIn: false,
 		awaitingWindDown: false,
 		isPostCheckInTransitioning: false,
-		pendingSuggestionStatus: "idle",
 		pendingClosureLine: null,
 		hasActiveTasks: true,
 		sessionStartIdleFlag: true,

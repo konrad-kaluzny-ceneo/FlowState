@@ -47,9 +47,7 @@ function AuthenticatedTasksPage() {
 					focusedTaskId={pomodoro.focusedTaskId}
 					focusShellActive={false}
 					footprints={recap.footprints}
-					highlightedTaskId={
-						pomodoro.suggestedTaskId ?? pomodoro.kickoffSuggestedTaskId ?? null
-					}
+					highlightedTaskId={pomodoro.kickoffSuggestedTaskId ?? null}
 					onFocusTask={(taskId, task) => {
 						pomodoro.selectTask(taskId, task);
 					}}
@@ -94,9 +92,7 @@ function GuestTasksPage() {
 					cycleState={pomodoro.state}
 					focusedTaskId={pomodoro.focusedTaskId}
 					focusShellActive={false}
-					highlightedTaskId={
-						pomodoro.suggestedTaskId ?? pomodoro.kickoffSuggestedTaskId ?? null
-					}
+					highlightedTaskId={pomodoro.kickoffSuggestedTaskId ?? null}
 					onFocusTask={(taskId, task) => {
 						pomodoro.selectTask(taskId, task);
 					}}

@@ -59,10 +59,5 @@ export function getCatchUpCopy(
 				headline: t("checkInHeadline"),
 				subcopy: t("checkInSubcopy"),
 			};
-		case "SUGGESTION_ACCEPT":
-			return {
-				headline: t("suggestionHeadline"),
-				subcopy: t("suggestionSubcopy"),
-			};
 	}
 }

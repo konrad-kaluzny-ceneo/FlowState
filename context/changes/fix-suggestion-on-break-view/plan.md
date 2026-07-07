@@ -354,28 +354,28 @@ scorer keeps reading them. No data migration.
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `pnpm typecheck`
-- [x] 1.2 Linting passes: `pnpm lint`
-- [x] 1.3 break-atmosphere unit tests pass: `pnpm test break-atmosphere`
+- [x] 1.1 Type checking passes: `pnpm typecheck` — 089719b
+- [x] 1.2 Linting passes: `pnpm lint` — 089719b
+- [x] 1.3 break-atmosphere unit tests pass: `pnpm test break-atmosphere` — 089719b
 
 #### Manual
 
-- [x] 1.4 Running break shows atmosphere, no "Sugerowane następne zadanie" card
-- [x] 1.5 Idle with tasks shows "Gotów skupić się na" star; no standalone kickoff card
+- [x] 1.4 Running break shows atmosphere, no "Sugerowane następne zadanie" card — 089719b
+- [x] 1.5 Idle with tasks shows "Gotów skupić się na" star; no standalone kickoff card — 089719b
 
 ### Phase 2: Stop the fetch + full-prune dead machinery
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `pnpm typecheck`
-- [ ] 2.2 Linting passes: `pnpm lint`
-- [ ] 2.3 Affected unit tests pass: `pnpm test derive-gate transition-conductor home-session-state use-pomodoro-cycle`
-- [ ] 2.4 No stale references: `rg "pendingSuggestion|acceptSuggestion|SUGGESTION_ACCEPT|suggestionCardOnBreak" src` clean
+- [x] 2.1 Type checking passes: `pnpm typecheck`
+- [x] 2.2 Linting passes: `pnpm lint`
+- [x] 2.3 Affected unit tests pass: `pnpm test derive-gate transition-conductor home-session-state use-pomodoro-cycle`
+- [x] 2.4 No stale references: `rg "pendingSuggestion|acceptSuggestion|SUGGESTION_ACCEPT|suggestionCardOnBreak" src` clean
 
 #### Manual
 
-- [ ] 2.5 Full session runs; break shows atmosphere only; no console errors
-- [ ] 2.6 No `post_check_in` `suggestion.next` call at break start (network tab)
+- [x] 2.5 Full session runs; break shows atmosphere only; no console errors
+- [x] 2.6 No `post_check_in` `suggestion.next` call at break start (network tab)
 
 ### Phase 3: Preserve the learning signal at the star
 
