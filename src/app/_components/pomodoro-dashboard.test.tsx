@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
 import { defaultEisenhowerFields } from "~/lib/data-mode/types";
+import { HOME_SHELL_MAIN_ID } from "~/lib/design/break-atmosphere";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import { BREAK_START_SHORT } from "~/lib/session/transition-copy";
 
@@ -1150,6 +1151,25 @@ describe("PomodoroDashboardBody home IA layout", () => {
 		expect(countEnabledPrimaryCtas()).toBe(1);
 		expectInsideRegion("home-primary-region", "timer-pause");
 		expect(screen.queryByTestId("task-list-stub")).toBeNull();
+	});
+
+	it("running break shows atmosphere only, no suggestion card", () => {
+		const main = document.createElement("main");
+		main.id = HOME_SHELL_MAIN_ID;
+		document.body.appendChild(main);
+
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "SHORT_BREAK",
+			activeCycle: { id: 42 },
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		expect(main.getAttribute("data-break-atmosphere")).toBe("true");
+		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
+
+		document.body.removeChild(main);
 	});
 
 	it("steering keeps inline session energy primary without overlay gates", () => {

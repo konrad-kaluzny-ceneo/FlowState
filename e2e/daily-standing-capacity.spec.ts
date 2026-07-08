@@ -7,24 +7,15 @@ import { expect, test } from "./fixtures";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { seedCapacitySuggestionScenario } from "./helpers/daily-plan";
 import { ensureIdleCycle } from "./helpers/idle-cycle";
-import { dismissKickoffSteeringIfVisible } from "./helpers/kickoff";
+import {
+	dismissKickoffSteeringIfVisible,
+	expectKickoffVisible,
+	waitForKickoffSuggestionResponse,
+} from "./helpers/kickoff";
 import { dismissFirstRunIfVisible } from "./helpers/onboarding";
 import { resetWorkerSessionViaApi } from "./helpers/seed-scenario";
-import {
-	expectSuggestionVisible,
-	waitForSuggestionNext,
-} from "./helpers/suggestion";
 import { expectFocusPageReady } from "./helpers/task-list-locator";
-import {
-	advanceClockThroughFastWork,
-	clickStartCycle,
-	completeWorkCycleWithCheckIn,
-	focusTask,
-	forgetFakeClock,
-	resetFakeClock,
-	setShortBreakDurationSec,
-	setWorkDurationSec,
-} from "./helpers/work-cycle";
+import { forgetFakeClock, resetFakeClock } from "./helpers/work-cycle";
 
 test.describe("Daily standing + focus capacity (S-27)", () => {
 	test.describe.configure({ mode: "serial" });
@@ -46,10 +37,10 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 		await ensureIdleCycle(page);
 	});
 
-	test("post-check-in suggests capacity-fit standing task with rationale @skip-belt", async ({
+	test("kickoff star suggests capacity-fit standing task with rationale @skip-belt", async ({
 		page,
 	}) => {
-		test.setTimeout(60_000);
+		test.setTimeout(30_000);
 
 		const ts = Date.now();
 		const standingTitle = `E2E Standing ${ts}`;
@@ -68,20 +59,12 @@ test.describe("Daily standing + focus capacity (S-27)", () => {
 		await page.reload();
 		await taskListReload;
 		await dismissFirstRunIfVisible(page);
+
+		const suggestionResponse = waitForKickoffSuggestionResponse(page);
 		await dismissKickoffSteeringIfVisible(page);
-
-		await focusTask(page, longTitle);
-		await setWorkDurationSec(page, 1);
-		await setShortBreakDurationSec(page, 30);
-		await clickStartCycle(page);
-		await expect(page.getByTestId("timer-panel-running")).toBeVisible();
-
-		await advanceClockThroughFastWork(page);
-		const suggestionResponse = waitForSuggestionNext(page);
-		await completeWorkCycleWithCheckIn(page, "fading");
 		await suggestionResponse;
 
-		await expectSuggestionVisible(page, {
+		await expectKickoffVisible(page, {
 			title: standingTitle,
 		});
 

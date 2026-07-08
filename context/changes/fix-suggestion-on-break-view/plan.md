@@ -381,20 +381,20 @@ scorer keeps reading them. No data migration.
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `pnpm typecheck`
-- [x] 3.2 `pnpm test use-pomodoro-cycle pomodoro-dashboard` pass (incl. star-accept records KICKOFF decision)
+- [x] 3.1 Type checking passes: `pnpm typecheck` — 699f606
+- [x] 3.2 `pnpm test use-pomodoro-cycle pomodoro-dashboard` pass (incl. star-accept records KICKOFF decision) — 699f606
 
 #### Manual
 
-- [x] 3.3 Star accept → KICKOFF `accepted=true` row
-- [x] 3.4 Star override → KICKOFF `accepted=false` row + next suggestion reflects lastOverrideWorkType
+- [x] 3.3 Star accept → KICKOFF `accepted=true` row — 699f606
+- [x] 3.4 Star override → KICKOFF `accepted=false` row + next suggestion reflects lastOverrideWorkType — 699f606
 
 ### Phase 4: Tests
 
 #### Automated
 
-- [ ] 4.1 Unit suite passes: `pnpm test`
-- [ ] 4.2 Targeted e2e specs pass (one at a time): `pnpm exec playwright test e2e/daily-standing-capacity.spec.ts`
+- [x] 4.1 Unit suite passes: `pnpm test`
+- [x] 4.2 Targeted e2e specs pass (one at a time): `pnpm exec playwright test e2e/daily-standing-capacity.spec.ts`
 
 #### Manual
 

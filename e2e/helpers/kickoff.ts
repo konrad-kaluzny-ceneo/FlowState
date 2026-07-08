@@ -100,16 +100,20 @@ export async function waitForKickoffSuggestion(
 	page: Page,
 	options?: { steeringCompleted?: boolean },
 ) {
+	const star = page
+		.getByTestId("focus-ready-kickoff-suggestion-star")
+		.or(page.getByTestId(/^focus-ready-suggestion-star-/))
+		.first();
+
 	if (options?.steeringCompleted === true) {
-		await expect(page.getByTestId("task-suggestion-card")).toBeVisible({
-			timeout: 20_000,
-		});
+		await expect(star).toBeVisible({ timeout: 20_000 });
 		return;
 	}
 
 	const responsePromise = waitForKickoffSuggestionResponse(page);
 	await completeKickoffSteering(page, "skip");
 	await responsePromise;
+	await expect(star).toBeVisible({ timeout: 20_000 });
 }
 
 export async function expectKickoffVisible(
@@ -128,26 +132,19 @@ export async function expectKickoffVisible(
 		}
 	}
 
-	if (
-		!(await page
-			.getByTestId("task-suggestion-card")
-			.isVisible()
-			.catch(() => false))
-	) {
-		const star = page
-			.getByTestId("focus-ready-kickoff-suggestion-star")
-			.or(page.getByTestId(/^focus-ready-suggestion-star-/))
-			.first();
-		if (await star.isVisible().catch(() => false)) {
-			await star.click();
-		} else {
-			await page
-				.getByRole("button", {
-					name: /Why this|See why|wyjaśnienie automatycznej sugestii/i,
-				})
-				.first()
-				.click();
-		}
+	const star = page
+		.getByTestId("focus-ready-kickoff-suggestion-star")
+		.or(page.getByTestId(/^focus-ready-suggestion-star-/))
+		.first();
+	if (await star.isVisible().catch(() => false)) {
+		await star.click();
+	} else {
+		await page
+			.getByRole("button", {
+				name: /Why this|See why|wyjaśnienie automatycznej sugestii/i,
+			})
+			.first()
+			.click();
 	}
 
 	await expect(page.getByTestId("task-suggestion-card")).toBeVisible({
