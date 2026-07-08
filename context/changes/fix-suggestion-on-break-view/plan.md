@@ -393,8 +393,8 @@ scorer keeps reading them. No data migration.
 
 #### Automated
 
-- [x] 4.1 Unit suite passes: `pnpm test`
-- [x] 4.2 Targeted e2e specs pass (one at a time): `pnpm exec playwright test e2e/daily-standing-capacity.spec.ts`
+- [x] 4.1 Unit suite passes: `pnpm test` — cbc40c6
+- [x] 4.2 Targeted e2e specs pass (one at a time): `pnpm exec playwright test e2e/daily-standing-capacity.spec.ts` — cbc40c6
 
 #### Manual
 

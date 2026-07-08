@@ -188,28 +188,6 @@ export type PomodoroCycleState = "idle" | "running" | "paused" | "completed";
 
 export type CycleKind = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 
-export type SuggestionResult = {
-	cycleId: number;
-	taskId: number;
-	title: string;
-	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
-	weight: 1 | 2 | 3;
-	urgency: 1 | 2 | 3;
-	importance: 1 | 2 | 3;
-	commitmentHorizon: "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
-	rationaleKey: string;
-	rationale: string;
-	breakdown: RationaleBreakdown;
-	resumeNote: string | null;
-};
-
-export type PendingSuggestion =
-	| { status: "idle" }
-	| { status: "loading" }
-	| { status: "ready"; data: SuggestionResult }
-	| { status: "empty" }
-	| { status: "error" };
-
 export type KickoffSuggestionResult = {
 	sessionId: number;
 	taskId: number;
