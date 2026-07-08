@@ -404,10 +404,10 @@ scorer keeps reading them. No data migration.
 
 #### Automated
 
-- [x] 5.1 Lint passes (or n/a): `pnpm check` (Biome)
+- [x] 5.1 Lint passes (or n/a): `pnpm check` (Biome) — b718230
 
 #### Manual
 
-- [x] 5.2 `user-flow.md` has no suggestion-panel / break-card descriptions
-- [x] 5.3 `lessons.md` has the single-surface rule (L-07)
-- [x] 5.4 `test-plan.md` no longer references deleted/renamed test names
+- [x] 5.2 `user-flow.md` has no suggestion-panel / break-card descriptions — b718230
+- [x] 5.3 `lessons.md` has the single-surface rule (L-07) — b718230
+- [x] 5.4 `test-plan.md` no longer references deleted/renamed test names — b718230

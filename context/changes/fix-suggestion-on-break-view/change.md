@@ -1,7 +1,7 @@
 ---
 change_id: fix-suggestion-on-break-view
 title: Next-task suggestion only as the star in "Gotów skupić się na" — remove the standalone panel
-status: impl_reviewed
+status: implemented
 created: 2026-07-06
 updated: 2026-07-08
 archived_at: null
