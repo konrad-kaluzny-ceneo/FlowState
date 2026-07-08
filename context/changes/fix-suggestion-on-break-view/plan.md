@@ -398,16 +398,16 @@ scorer keeps reading them. No data migration.
 
 #### Manual
 
-- [ ] 4.3 Full e2e belt green as final gate
+- [x] 4.3 Full e2e belt green as final gate — confirmed via PR #198 CI `e2e` check (pass)
 
 ### Phase 5: Docs
 
 #### Automated
 
-- [ ] 5.1 Lint passes (or n/a): `pnpm lint`
+- [x] 5.1 Lint passes (or n/a): `pnpm check` (Biome)
 
 #### Manual
 
-- [ ] 5.2 `user-flow.md` has no suggestion-panel / break-card descriptions
-- [ ] 5.3 `lessons.md` has the single-surface rule
-- [ ] 5.4 `test-plan.md` no longer references deleted/renamed test names
+- [x] 5.2 `user-flow.md` has no suggestion-panel / break-card descriptions
+- [x] 5.3 `lessons.md` has the single-surface rule (L-07)
+- [x] 5.4 `test-plan.md` no longer references deleted/renamed test names
