@@ -42,7 +42,6 @@ export type KickoffEligibilityInput = {
 	awaitingCheckIn: boolean;
 	awaitingWindDown: boolean;
 	isPostCheckInTransitioning: boolean;
-	pendingSuggestionStatus: string;
 	pendingClosureLine: string | null;
 	hasActiveTasks: boolean;
 	sessionStartIdleFlag: boolean;
@@ -144,7 +143,6 @@ export function computeKickoffEligible(
 		!input.awaitingCheckIn &&
 		!input.awaitingWindDown &&
 		!input.isPostCheckInTransitioning &&
-		input.pendingSuggestionStatus === "idle" &&
 		input.pendingClosureLine == null &&
 		input.hasActiveTasks &&
 		(input.sessionStartIdleFlag || input.postBreakIdleFlag)

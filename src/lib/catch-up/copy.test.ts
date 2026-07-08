@@ -32,10 +32,4 @@ describe("getCatchUpCopy", () => {
 		expect(copy.headline).toMatch(/work/i);
 		expect(copy.subcopy).toMatch(/check-in|energy/i);
 	});
-
-	it("names suggestion accept as next action", () => {
-		const copy = getCatchUpCopy("SUGGESTION_ACCEPT", { endedAgo });
-
-		expect(copy.subcopy).toMatch(/suggestion|task/i);
-	});
 });

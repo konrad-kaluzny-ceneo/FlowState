@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DomainTask } from "~/lib/data-mode/types";
 import { defaultEisenhowerFields } from "~/lib/data-mode/types";
+import { HOME_SHELL_MAIN_ID } from "~/lib/design/break-atmosphere";
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import { BREAK_START_SHORT } from "~/lib/session/transition-copy";
 
@@ -158,11 +159,9 @@ function makePomodoroMock(
 		windDownRationale: null,
 		isConfirming: false,
 		isWedgeSyncRetrying: false,
-		pendingSuggestion: { status: "idle" },
 		pendingKickoffSuggestion: { status: "idle" },
 		kickoffSuggestedTaskId: null,
 		hasPreFocusedKickoff: false,
-		hasPreFocusedSuggestion: false,
 		stagedKickoffDurationSec: null,
 		isAcceptingKickoffSuggestion: false,
 		overrideAcknowledgement: null,
@@ -182,21 +181,16 @@ function makePomodoroMock(
 		kickoffEligible: false,
 		preFocusedTask: null,
 		catchUp: null,
-		suggestionCycleId: null,
-		suggestedTaskId: null,
 		clearError: vi.fn(),
 		dismissCatchUp: vi.fn(),
 		selectTask: vi.fn(),
 		clearTask: vi.fn(),
-		acceptSuggestion: vi.fn(),
 		acceptKickoffSuggestion: vi.fn(),
 		selectKickoffDuration: vi.fn(),
 		clearStagedKickoffDuration: vi.fn(),
-		clearSuggestion: vi.fn(),
 		clearKickoffSuggestion: vi.fn(),
 		dismissPreFocus: vi.fn(),
 		retryKickoffSuggestion: vi.fn(),
-		retrySuggestion: vi.fn(),
 		retryWedgeSync: vi.fn(),
 		dismissPendingWedgeRecovery: vi.fn(),
 		start: vi.fn(),
@@ -287,58 +281,6 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		);
 
 		expect(screen.queryByTestId("check-in-overlay")).toBeNull();
-	});
-
-	it("hides break suggestion card when paused and shows after resume", () => {
-		const suggestionReady = {
-			status: "ready" as const,
-			data: {
-				taskId: "task-1",
-				title: "Suggested task",
-				workType: "OPERATIONAL" as const,
-				weight: 2 as const,
-				rationale: "Best next task",
-				breakdown: null,
-			},
-		};
-
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				state: "paused",
-				cycleKind: "SHORT_BREAK",
-				pendingSuggestion: suggestionReady,
-			}),
-		);
-
-		const { rerender } = render(
-			<PomodoroDashboardBody
-				enableSuggestionGate
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
-
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				state: "running",
-				cycleKind: "SHORT_BREAK",
-				pendingSuggestion: suggestionReady,
-			}),
-		);
-
-		rerender(
-			<PomodoroDashboardBody
-				enableSuggestionGate
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
 	});
 
 	it("shows mid-cycle prompt when a task completion is pending", () => {
@@ -484,6 +426,38 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(within(popup).getByTestId("suggestion-accept-btn")).toBeTruthy();
 	});
 
+	it("records a KICKOFF decision when accepting via the focus-ready star popup", () => {
+		const acceptKickoffSuggestion = vi.fn();
+		const selectTask = vi.fn();
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				focusedTaskId: null,
+				pendingKickoffSuggestion: kickoffSuggestionReady,
+				acceptKickoffSuggestion,
+				selectTask,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				tasks={tasks}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("focus-ready-suggestion-star-task-1"));
+		const popup = screen.getByTestId("focus-suggestion-popup");
+		fireEvent.click(within(popup).getByTestId("suggestion-accept-btn"));
+
+		// acceptKickoffSuggestion records a KICKOFF accept decision + pre-focuses;
+		// the old raw selectTask path recorded nothing on accept.
+		expect(acceptKickoffSuggestion).toHaveBeenCalledTimes(1);
+		expect(selectTask).not.toHaveBeenCalled();
+	});
+
 	it("shows in-flow summary on idle break when narrative line is present", () => {
 		renderBody({
 			hasActiveSession: true,
@@ -517,40 +491,6 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 			/>,
 		);
 
-		expect(screen.queryByTestId("session-inflow-summary")).toBeNull();
-	});
-
-	it("hides in-flow summary when post-check-in suggestion card is visible", () => {
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				hasActiveSession: true,
-				state: "running",
-				cycleKind: "SHORT_BREAK",
-				inFlowSummaryLine: "2 cycles · feeling steady",
-				pendingSuggestion: {
-					status: "ready",
-					data: {
-						taskId: "task-1",
-						title: "Suggested task",
-						workType: "OPERATIONAL",
-						weight: 2,
-						rationale: "Best next task",
-						breakdown: null,
-					},
-				},
-			}),
-		);
-
-		render(
-			<PomodoroDashboardBody
-				enableSuggestionGate
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
 		expect(screen.queryByTestId("session-inflow-summary")).toBeNull();
 	});
 
@@ -714,40 +654,6 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.getByTestId("break-transition-line").textContent).toBe(
 			BREAK_START_SHORT,
 		);
-	});
-
-	it("hides break transition line when post-check-in suggestion card is visible", () => {
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				hasActiveSession: true,
-				state: "running",
-				cycleKind: "SHORT_BREAK",
-				breakTransitionLine: BREAK_START_SHORT,
-				pendingSuggestion: {
-					status: "ready",
-					data: {
-						taskId: "task-1",
-						title: "Suggested task",
-						workType: "OPERATIONAL",
-						weight: 2,
-						rationale: "Best next task",
-						breakdown: null,
-					},
-				},
-			}),
-		);
-
-		render(
-			<PomodoroDashboardBody
-				enableSuggestionGate
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(screen.getByTestId("task-suggestion-card")).toBeTruthy();
-		expect(screen.queryByTestId("break-transition-line")).toBeNull();
 	});
 
 	it("hides break transition line when in-flow summary is visible", () => {
@@ -1092,18 +998,6 @@ const kickoffSuggestionReady = {
 	},
 };
 
-const breakSuggestionReady = {
-	status: "ready" as const,
-	data: {
-		taskId: "task-1",
-		title: "Suggested task",
-		workType: "OPERATIONAL" as const,
-		weight: 2 as const,
-		rationale: "Best next task",
-		breakdown: null,
-	},
-};
-
 describe("PomodoroDashboardBody home IA layout", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -1245,33 +1139,6 @@ describe("PomodoroDashboardBody home IA layout", () => {
 		expect(screen.queryByTestId("task-list-stub")).toBeNull();
 	});
 
-	it("break with suggestion keeps next-focus primary and timer secondary", () => {
-		usePomodoroCycleMock.mockReturnValue(
-			makePomodoroMock({
-				hasActiveSession: true,
-				state: "running",
-				cycleKind: "SHORT_BREAK",
-				activeCycle: { id: 42 },
-				focusedTask: { id: 1, title: "Focus task" },
-				pendingSuggestion: breakSuggestionReady,
-			}),
-		);
-
-		render(
-			<PomodoroDashboardBody
-				enableSuggestionGate
-				onboardingScope={authenticatedOnboardingScope}
-				refreshTasks={async () => {}}
-				tasks={tasks}
-			/>,
-		);
-
-		expect(countEnabledPrimaryCtas()).toBe(1);
-		expectInsideRegion("home-primary-region", "suggestion-accept-btn");
-		expectInsideRegion("home-secondary-region", "timer-pause");
-		expect(screen.queryByTestId("task-list-stub")).toBeNull();
-	});
-
 	it("break without suggestion keeps timer primary with secondary inventory", () => {
 		renderBody({
 			hasActiveSession: true,
@@ -1284,6 +1151,25 @@ describe("PomodoroDashboardBody home IA layout", () => {
 		expect(countEnabledPrimaryCtas()).toBe(1);
 		expectInsideRegion("home-primary-region", "timer-pause");
 		expect(screen.queryByTestId("task-list-stub")).toBeNull();
+	});
+
+	it("running break shows atmosphere only, no suggestion card", () => {
+		const main = document.createElement("main");
+		main.id = HOME_SHELL_MAIN_ID;
+		document.body.appendChild(main);
+
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			cycleKind: "SHORT_BREAK",
+			activeCycle: { id: 42 },
+			focusedTask: { id: 1, title: "Focus task" },
+		});
+
+		expect(main.getAttribute("data-break-atmosphere")).toBe("true");
+		expect(screen.queryByTestId("task-suggestion-card")).toBeNull();
+
+		document.body.removeChild(main);
 	});
 
 	it("steering keeps inline session energy primary without overlay gates", () => {

@@ -31,8 +31,6 @@ export function WedgeSyncRecovery({
 				return t("savedCompleteWork");
 			case "start_break":
 				return t("savedStartBreak");
-			case "suggestion_fetch":
-				return t("savedSuggestionFetch");
 			case "kickoff_session":
 				return t("savedKickoffSession");
 			case "kickoff_suggestion":

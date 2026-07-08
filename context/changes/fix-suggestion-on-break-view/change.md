@@ -1,9 +1,9 @@
 ---
 change_id: fix-suggestion-on-break-view
 title: Next-task suggestion only as the star in "Gotów skupić się na" — remove the standalone panel
-status: planned
+status: implemented
 created: 2026-07-06
-updated: 2026-07-07
+updated: 2026-07-08
 archived_at: null
 ---
 
@@ -28,3 +28,4 @@ in the plan itself:
 
 All fixes applied directly to `plan.md`. No open design questions — plan is ready for
 `/10x-implement`.
+

@@ -67,25 +67,10 @@ export async function dismissCycleCompleteIfVisible(page: Page) {
 	await page.getByTestId("break-continue-btn").click();
 }
 
-export async function dismissTaskSuggestionIfVisible(page: Page) {
-	const card = page.getByTestId("task-suggestion-card");
-	if (!(await card.isVisible().catch(() => false))) {
-		return;
-	}
-	const acceptBtn = card.getByTestId("suggestion-accept-btn");
-	if (!(await acceptBtn.isVisible().catch(() => false))) {
-		return;
-	}
-	await expect(acceptBtn).toBeEnabled({ timeout: 10_000 });
-	await acceptBtn.click();
-	await expect(card).toBeHidden({ timeout: 10_000 });
-}
-
 /** Dismiss blocking overlays until the idle timer shell is mounted. */
 export async function waitForTimerPanelIdle(page: Page) {
 	await expect(async () => {
 		await dismissKickoffSteeringIfVisible(page);
-		await dismissTaskSuggestionIfVisible(page);
 
 		if (await page.getByTestId("timer-panel-running").isVisible()) {
 			const interruptLabel = (await page
@@ -117,11 +102,6 @@ export async function ensureIdleCycle(page: Page) {
 			throw new Error("kickoff steering dismissed — re-check idle");
 		}
 
-		if (await page.getByTestId("task-suggestion-card").isVisible()) {
-			await dismissTaskSuggestionIfVisible(page);
-			throw new Error("task suggestion dismissed — re-check idle");
-		}
-
 		if (await page.getByTestId("wind-down-overlay").isVisible()) {
 			await page.getByTestId("wind-down-keep-going-btn").click();
 			throw new Error("wind-down dismissed — re-check idle");
@@ -132,7 +112,6 @@ export async function ensureIdleCycle(page: Page) {
 			if (await page.getByTestId("wind-down-overlay").isVisible()) {
 				await page.getByTestId("wind-down-keep-going-btn").click();
 			}
-			await dismissTaskSuggestionIfVisible(page);
 			await dismissKickoffSteeringIfVisible(page);
 			throw new Error("check-in completed — re-check idle");
 		}

@@ -109,3 +109,17 @@ Never reverse this order.
 5. Tests depending on `waitForResponse` matching tRPC batch stream URLs — fragile and timing-sensitive.
 
 - **Applies to**: e2e, testing, implement
+
+---
+
+## L-07: Next-task suggestion surfaces only via the FocusReady star
+
+**Trigger:** Any change touching next-task suggestion UI, the break view, or the idle kickoff flow.
+
+**Rule:** The next-task suggestion surfaces only via the `FocusReady` star (+ its popup) in "Gotów skupić się na" — never as a standalone panel on break or idle. Accept/override at the star are both recorded as `KICKOFF` `SuggestionDecision`s (accept via `acceptKickoffSuggestion`, override via the `selectTask` kickoff branch). A running break shows only the calm break atmosphere — no suggestion card, no `post_check_in` fetch.
+
+**What went wrong:** A standalone `TaskSuggestionCard` panel rendered during a running break (fed by a separate `post_check_in` pipeline) and a second standalone panel rendered during idle kickoff — both duplicating the star's job and confusing users about where "the suggestion" actually lives.
+
+**Correct approach:** Route all suggestion UI through `FocusReadyState`'s star + popup (`pendingKickoffSuggestion` pipeline). Do not add a second suggestion surface for break or idle states, even for a narrow use case — extend the star's popup instead.
+
+- **Applies to**: suggestion, break-view, kickoff, wedge

@@ -354,60 +354,60 @@ scorer keeps reading them. No data migration.
 
 #### Automated
 
-- [ ] 1.1 Type checking passes: `pnpm typecheck`
-- [ ] 1.2 Linting passes: `pnpm lint`
-- [ ] 1.3 break-atmosphere unit tests pass: `pnpm test break-atmosphere`
+- [x] 1.1 Type checking passes: `pnpm typecheck` — 089719b
+- [x] 1.2 Linting passes: `pnpm lint` — 089719b
+- [x] 1.3 break-atmosphere unit tests pass: `pnpm test break-atmosphere` — 089719b
 
 #### Manual
 
-- [ ] 1.4 Running break shows atmosphere, no "Sugerowane następne zadanie" card
-- [ ] 1.5 Idle with tasks shows "Gotów skupić się na" star; no standalone kickoff card
+- [x] 1.4 Running break shows atmosphere, no "Sugerowane następne zadanie" card — 089719b
+- [x] 1.5 Idle with tasks shows "Gotów skupić się na" star; no standalone kickoff card — 089719b
 
 ### Phase 2: Stop the fetch + full-prune dead machinery
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `pnpm typecheck`
-- [ ] 2.2 Linting passes: `pnpm lint`
-- [ ] 2.3 Affected unit tests pass: `pnpm test derive-gate transition-conductor home-session-state use-pomodoro-cycle`
-- [ ] 2.4 No stale references: `rg "pendingSuggestion|acceptSuggestion|SUGGESTION_ACCEPT|suggestionCardOnBreak" src` clean
+- [x] 2.1 Type checking passes: `pnpm typecheck` — 0b8ba83
+- [x] 2.2 Linting passes: `pnpm lint` — 0b8ba83
+- [x] 2.3 Affected unit tests pass: `pnpm test derive-gate transition-conductor home-session-state use-pomodoro-cycle` — 0b8ba83
+- [x] 2.4 No stale references: `rg "pendingSuggestion|acceptSuggestion|SUGGESTION_ACCEPT|suggestionCardOnBreak" src` clean — 0b8ba83
 
 #### Manual
 
-- [ ] 2.5 Full session runs; break shows atmosphere only; no console errors
-- [ ] 2.6 No `post_check_in` `suggestion.next` call at break start (network tab)
+- [x] 2.5 Full session runs; break shows atmosphere only; no console errors — 0b8ba83
+- [x] 2.6 No `post_check_in` `suggestion.next` call at break start (network tab) — 0b8ba83
 
 ### Phase 3: Preserve the learning signal at the star
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `pnpm typecheck`
-- [ ] 3.2 `pnpm test use-pomodoro-cycle pomodoro-dashboard` pass (incl. star-accept records KICKOFF decision)
+- [x] 3.1 Type checking passes: `pnpm typecheck` — 699f606
+- [x] 3.2 `pnpm test use-pomodoro-cycle pomodoro-dashboard` pass (incl. star-accept records KICKOFF decision) — 699f606
 
 #### Manual
 
-- [ ] 3.3 Star accept → KICKOFF `accepted=true` row
-- [ ] 3.4 Star override → KICKOFF `accepted=false` row + next suggestion reflects lastOverrideWorkType
+- [x] 3.3 Star accept → KICKOFF `accepted=true` row — 699f606
+- [x] 3.4 Star override → KICKOFF `accepted=false` row + next suggestion reflects lastOverrideWorkType — 699f606
 
 ### Phase 4: Tests
 
 #### Automated
 
-- [ ] 4.1 Unit suite passes: `pnpm test`
-- [ ] 4.2 Targeted e2e specs pass (one at a time): `pnpm exec playwright test e2e/daily-standing-capacity.spec.ts`
+- [x] 4.1 Unit suite passes: `pnpm test` — cbc40c6
+- [x] 4.2 Targeted e2e specs pass (one at a time): `pnpm exec playwright test e2e/daily-standing-capacity.spec.ts` — cbc40c6
 
 #### Manual
 
-- [ ] 4.3 Full e2e belt green as final gate
+- [x] 4.3 Full e2e belt green as final gate — confirmed via PR #198 CI `e2e` check (pass)
 
 ### Phase 5: Docs
 
 #### Automated
 
-- [ ] 5.1 Lint passes (or n/a): `pnpm lint`
+- [x] 5.1 Lint passes (or n/a): `pnpm check` (Biome) — b718230
 
 #### Manual
 
-- [ ] 5.2 `user-flow.md` has no suggestion-panel / break-card descriptions
-- [ ] 5.3 `lessons.md` has the single-surface rule
-- [ ] 5.4 `test-plan.md` no longer references deleted/renamed test names
+- [x] 5.2 `user-flow.md` has no suggestion-panel / break-card descriptions — b718230
+- [x] 5.3 `lessons.md` has the single-surface rule (L-07) — b718230
+- [x] 5.4 `test-plan.md` no longer references deleted/renamed test names — b718230

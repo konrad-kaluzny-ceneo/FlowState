@@ -12,7 +12,6 @@ import {
 	dismissBreakAlertsPermissionIfVisible,
 	dismissCycleCompleteIfVisible,
 	dismissKickoffReadinessIfVisible,
-	dismissTaskSuggestionIfVisible,
 	waitForTimerPanelIdle,
 } from "./idle-cycle";
 import { dismissFirstRunIfVisible } from "./onboarding";
@@ -199,7 +198,6 @@ export async function startFocusedWorkCycle(
 	await expect(taskRow).toBeVisible({ timeout: 15_000 });
 	await waitForTaskCreateSettled(quickAddButton(page));
 	await dismissKickoffReadinessIfVisible(page);
-	await dismissTaskSuggestionIfVisible(page);
 	const focusBtn = taskFocusButton(taskRow);
 	await expect(focusBtn).toBeEnabled({ timeout: 15_000 });
 	await focusBtn.click();

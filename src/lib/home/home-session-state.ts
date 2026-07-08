@@ -31,7 +31,6 @@ export type DeriveHomeSessionStateInput = {
 	enableSuggestionGate: boolean;
 	showSessionEnergy: boolean;
 	pendingKickoffSuggestionStatus: "idle" | "loading" | "ready" | "error";
-	pendingSuggestionStatus: "idle" | "loading" | "ready" | "error";
 	focusedTaskId: string | number | null;
 	continueTaskId: string | number | null;
 	hasPreFocusedKickoff: boolean;
@@ -75,10 +74,6 @@ function isBreakCycleKind(
 	return cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
 }
 
-function isBreakRunning(input: DeriveHomeSessionStateInput): boolean {
-	return input.cycleState === "running" && isBreakCycleKind(input.cycleKind);
-}
-
 function hasKickoffCard(input: DeriveHomeSessionStateInput): boolean {
 	return (
 		input.enableSuggestionGate &&
@@ -87,15 +82,6 @@ function hasKickoffCard(input: DeriveHomeSessionStateInput): boolean {
 		input.focusedTaskId == null &&
 		input.pendingKickoffSuggestionStatus !== "idle" &&
 		!input.showSessionEnergy
-	);
-}
-
-function hasBreakSuggestion(input: DeriveHomeSessionStateInput): boolean {
-	return (
-		input.enableSuggestionGate &&
-		input.cycleState !== "paused" &&
-		isBreakRunning(input) &&
-		input.pendingSuggestionStatus !== "idle"
 	);
 }
 
@@ -112,11 +98,7 @@ function hasKickoffDurationChips(input: DeriveHomeSessionStateInput): boolean {
 }
 
 function hasNextFocusAffordance(input: DeriveHomeSessionStateInput): boolean {
-	return (
-		hasKickoffCard(input) ||
-		hasBreakSuggestion(input) ||
-		hasKickoffDurationChips(input)
-	);
+	return hasKickoffCard(input) || hasKickoffDurationChips(input);
 }
 
 function isActiveWork(input: DeriveHomeSessionStateInput): boolean {
@@ -272,13 +254,7 @@ function deriveBreakModules(
 	const modules = hiddenModules();
 	modules.purposeHeader = "secondary";
 	modules.returnBanner = "hidden";
-
-	if (hasBreakSuggestion(input)) {
-		modules.nextFocus = "primary";
-		modules.timer = "secondary";
-	} else {
-		modules.timer = "primary";
-	}
+	modules.timer = "primary";
 
 	if (input.showInFlowSummary || input.showBreakTransitionLine) {
 		modules.statusLine = "secondary";
