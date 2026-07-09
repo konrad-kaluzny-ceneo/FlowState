@@ -106,12 +106,6 @@ type TrpcClient = {
 		resume: {
 			mutate: (input: { cycleId: number }) => Promise<DomainActiveCycle>;
 		};
-		rebindTask: {
-			mutate: (input: {
-				cycleId: number;
-				taskId: number;
-			}) => Promise<DomainActiveCycle>;
-		};
 	};
 	session: {
 		getOrCreateActive: { mutate: () => Promise<ServerSessionRow> };
@@ -209,11 +203,6 @@ export function createServerCycleRepository(
 			});
 			return cycle;
 		},
-		rebindTask: (input) =>
-			client.cycle.rebindTask.mutate({
-				cycleId: toNumericId(input.cycleId),
-				taskId: toNumericId(input.taskId),
-			}),
 	};
 }
 

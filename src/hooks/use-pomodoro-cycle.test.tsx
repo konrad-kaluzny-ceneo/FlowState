@@ -19,7 +19,6 @@ const completeCycle = vi.fn();
 const interruptCycle = vi.fn();
 const pauseCycle = vi.fn();
 const resumeCycle = vi.fn();
-const rebindTask = vi.fn();
 const updateTask = vi.fn();
 const getActiveCycle = vi.fn();
 const invalidateGetActive = vi.fn();
@@ -108,7 +107,6 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 			interrupt: interruptCycle,
 			pause: pauseCycle,
 			resume: resumeCycle,
-			rebindTask,
 		},
 		tasks: {
 			update: updateTask,
@@ -456,18 +454,6 @@ describe("usePomodoroCycle", () => {
 		});
 		taskListQuery.mockResolvedValue([]);
 		getLastEndedQuery.mockResolvedValue(null);
-		rebindTask.mockImplementation(async (input) => ({
-			id: 99,
-			sessionId: 1,
-			userId: "user-1",
-			taskId: input.taskId,
-			kind: "WORK",
-			state: "RUNNING",
-			configuredDurationSec: 120,
-			startedAt: new Date(),
-			endedAt: null,
-			task: { id: input.taskId, title: "Next task" },
-		}));
 	});
 
 	it("starts idle and transitions to running on start()", async () => {

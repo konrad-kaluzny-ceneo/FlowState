@@ -1194,204 +1194,62 @@ describe("cycle router lifecycle", () => {
 		});
 	});
 
-	describe("rebindTask", () => {
-		it("swaps taskId on a running WORK cycle", async () => {
-			sessions = [
-				{
-					id: 1,
-					userId: USER_ID,
-					state: "ACTIVE",
-					archivedAt: null,
-					lastActivityAt: new Date(),
-					interruptionCount: 0,
-				},
-			];
-			tasks = [
-				{ id: 10, title: "First", status: "active", userId: USER_ID },
-				{ id: 11, title: "Second", status: "active", userId: USER_ID },
-			];
-			cycles = [
-				{
-					id: 1,
-					sessionId: 1,
-					userId: USER_ID,
-					taskId: 10,
-					kind: "WORK",
-					state: "RUNNING",
-					configuredDurationSec: 1500,
-					startedAt: new Date("2026-06-06T10:00:00Z"),
-					endedAt: null,
-				},
-			];
+	it("increments interruptionCount when complete with incrementInterruption flag", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+		];
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
 
-			const result = await caller().rebindTask({ cycleId: 1, taskId: 11 });
-			expect(result.taskId).toBe(11);
-			expect(result.task).toMatchObject({ id: 11, title: "Second" });
-			expect(result.startedAt).toEqual(new Date("2026-06-06T10:00:00Z"));
-			expect(result.configuredDurationSec).toBe(1500);
-			expect(cycles[0]?.taskId).toBe(11);
-		});
+		await caller().complete({ cycleId: 1, incrementInterruption: true });
+		expect(sessions[0]?.interruptionCount).toBe(1);
+	});
 
-		it("promotes a planned task to active on rebind", async () => {
-			sessions = [
-				{
-					id: 1,
-					userId: USER_ID,
-					state: "ACTIVE",
-					archivedAt: null,
-					lastActivityAt: new Date(),
-					interruptionCount: 0,
-				},
-			];
-			tasks = [
-				{ id: 10, title: "First", status: "active", userId: USER_ID },
-				{
-					id: 11,
-					title: "Second",
-					status: "planned",
-					userId: USER_ID,
-					sortOrder: 0,
-				},
-			];
-			cycles = [
-				{
-					id: 1,
-					sessionId: 1,
-					userId: USER_ID,
-					taskId: 10,
-					kind: "WORK",
-					state: "RUNNING",
-					configuredDurationSec: 1500,
-					startedAt: new Date(),
-					endedAt: null,
-				},
-			];
+	it("does not increment interruptionCount on normal complete", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+		];
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
 
-			await caller().rebindTask({ cycleId: 1, taskId: 11 });
-			expect(tasks.find((t) => t.id === 11)?.status).toBe("active");
-		});
-
-		it("increments session interruptionCount on rebind", async () => {
-			sessions = [
-				{
-					id: 1,
-					userId: USER_ID,
-					state: "ACTIVE",
-					archivedAt: null,
-					lastActivityAt: new Date(),
-					interruptionCount: 0,
-				},
-			];
-			tasks = [
-				{ id: 10, title: "First", status: "active", userId: USER_ID },
-				{ id: 11, title: "Second", status: "active", userId: USER_ID },
-			];
-			cycles = [
-				{
-					id: 1,
-					sessionId: 1,
-					userId: USER_ID,
-					taskId: 10,
-					kind: "WORK",
-					state: "RUNNING",
-					configuredDurationSec: 1500,
-					startedAt: new Date(),
-					endedAt: null,
-				},
-			];
-
-			await caller().rebindTask({ cycleId: 1, taskId: 11 });
-			expect(sessions[0]?.interruptionCount).toBe(1);
-		});
-
-		it("increments interruptionCount when complete with incrementInterruption flag", async () => {
-			sessions = [
-				{
-					id: 1,
-					userId: USER_ID,
-					state: "ACTIVE",
-					archivedAt: null,
-					lastActivityAt: new Date(),
-					interruptionCount: 0,
-				},
-			];
-			cycles = [
-				{
-					id: 1,
-					sessionId: 1,
-					userId: USER_ID,
-					taskId: null,
-					kind: "WORK",
-					state: "RUNNING",
-					configuredDurationSec: 1500,
-					startedAt: new Date(),
-					endedAt: null,
-				},
-			];
-
-			await caller().complete({ cycleId: 1, incrementInterruption: true });
-			expect(sessions[0]?.interruptionCount).toBe(1);
-		});
-
-		it("does not increment interruptionCount on normal complete", async () => {
-			sessions = [
-				{
-					id: 1,
-					userId: USER_ID,
-					state: "ACTIVE",
-					archivedAt: null,
-					lastActivityAt: new Date(),
-					interruptionCount: 0,
-				},
-			];
-			cycles = [
-				{
-					id: 1,
-					sessionId: 1,
-					userId: USER_ID,
-					taskId: null,
-					kind: "WORK",
-					state: "RUNNING",
-					configuredDurationSec: 1500,
-					startedAt: new Date(),
-					endedAt: null,
-				},
-			];
-
-			await caller().complete({ cycleId: 1 });
-			expect(sessions[0]?.interruptionCount).toBe(0);
-		});
-
-		it("throws NOT_FOUND for another user's cycle", async () => {
-			sessions = [
-				{
-					id: 1,
-					userId: VICTIM_ID,
-					state: "ACTIVE",
-					archivedAt: null,
-					lastActivityAt: new Date(),
-					interruptionCount: 0,
-				},
-			];
-			tasks = [{ id: 10, title: "Mine", status: "active", userId: USER_ID }];
-			cycles = [
-				{
-					id: 1,
-					sessionId: 1,
-					userId: VICTIM_ID,
-					taskId: null,
-					kind: "WORK",
-					state: "RUNNING",
-					configuredDurationSec: 1500,
-					startedAt: new Date(),
-					endedAt: null,
-				},
-			];
-
-			await expect(
-				callerAs(ATTACKER_ID).rebindTask({ cycleId: 1, taskId: 10 }),
-			).rejects.toMatchObject({ code: "NOT_FOUND" });
-		});
+		await caller().complete({ cycleId: 1 });
+		expect(sessions[0]?.interruptionCount).toBe(0);
 	});
 
 	describe("cross-user IDOR isolation", () => {

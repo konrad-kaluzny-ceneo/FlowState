@@ -495,27 +495,27 @@ on it.
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `pnpm typecheck`
-- [x] 2.2 Lint/format passes: `pnpm check`
-- [x] 2.3 Hook tests pass (focused vs non-focused split)
-- [x] 2.4 Dashboard tests pass
-- [x] 2.5 Focus-time test passes (early-completed WORK cycle records focusMinutes > 0 + increments used minutes)
-- [x] 2.6 No references remain to the removed prompt/branch (`grep` clean)
+- [x] 2.1 Type checking passes: `pnpm typecheck` — e276447
+- [x] 2.2 Lint/format passes: `pnpm check` — e276447
+- [x] 2.3 Hook tests pass (focused vs non-focused split) — e276447
+- [x] 2.4 Dashboard tests pass — e276447
+- [x] 2.5 Focus-time test passes (early-completed WORK cycle records focusMinutes > 0 + increments used minutes) — e276447
+- [x] 2.6 No references remain to the removed prompt/branch (`grep` clean) — e276447
 
 #### Manual
 
-- [ ] 2.7 Focused completion marks done + enters break flow (no next-task selection)
-- [ ] 2.8 Non-focused completion marks done; timer and focused task unchanged
-- [ ] 2.9 Day recap Focus-time / used-minutes reflect partial time after early completion (not zero)
+- [x] 2.7 Focused completion marks done + enters break flow (no next-task selection) — e276447
+- [x] 2.8 Non-focused completion marks done; timer and focused task unchanged — e276447
+- [x] 2.9 Day recap Focus-time / used-minutes reflect partial time after early completion (not zero) — e276447
 
 ### Phase 3: Full removal of `cycles.rebindTask`
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `pnpm typecheck`
-- [ ] 3.2 Lint/format passes: `pnpm check`
-- [ ] 3.3 Full unit/integration suite passes: `pnpm test`
-- [ ] 3.4 No references remain: `grep -r "rebindTask" src` clean
+- [x] 3.1 Type checking passes: `pnpm typecheck`
+- [x] 3.2 Lint/format passes: `pnpm check`
+- [x] 3.3 Full unit/integration suite passes: `pnpm test`
+- [x] 3.4 No references remain: `grep -r "rebindTask" src` clean
 
 ### Phase 4: Completion triggers — `/focus` circle + `/tasks`→`/focus` redirect
 

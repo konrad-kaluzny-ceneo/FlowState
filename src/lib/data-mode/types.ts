@@ -144,10 +144,6 @@ export interface CycleRepository {
 		remainingDurationSec: number;
 	}): Promise<DomainActiveCycle>;
 	resume(input: { cycleId: DomainTaskId }): Promise<DomainActiveCycle>;
-	rebindTask(input: {
-		cycleId: DomainTaskId;
-		taskId: DomainTaskId;
-	}): Promise<DomainActiveCycle>;
 }
 
 export interface SessionRepository {

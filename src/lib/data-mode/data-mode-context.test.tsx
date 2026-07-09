@@ -24,7 +24,6 @@ vi.mock("~/trpc/react", () => ({
 					interrupt: { mutate: mockMutate },
 					pause: { mutate: mockMutate },
 					resume: { mutate: mockMutate },
-					rebindTask: { mutate: mockMutate },
 				},
 				session: {
 					getOrCreateActive: { mutate: mockMutate },
