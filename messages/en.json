@@ -668,6 +668,15 @@
 		"heading": "How's your energy?",
 		"description": "Select one before your break starts."
 	},
+	"BreakChoice": {
+		"heading": "Choose your break",
+		"description": "Take a moment to reset before the next cycle.",
+		"shortLabel": "Short break",
+		"shortLabelSuggested": "Short break — suggested",
+		"longLabel": "Long break",
+		"longLabelSuggested": "Long break — suggested",
+		"suggestedAria": "Suggested by cadence"
+	},
 	"FocusBudget": {
 		"title": "Today's focus hours",
 		"body": "Set a daily budget so suggestions fit what you have left.",

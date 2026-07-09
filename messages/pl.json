@@ -668,6 +668,15 @@
 		"heading": "Jaka jest Twoja energia?",
 		"description": "Wybierz jedną przed rozpoczęciem przerwy."
 	},
+	"BreakChoice": {
+		"heading": "Wybierz przerwę",
+		"description": "Zrób sobie chwilę resetu przed kolejnym cyklem.",
+		"shortLabel": "Krótka przerwa",
+		"shortLabelSuggested": "Krótka przerwa — sugerowana",
+		"longLabel": "Długa przerwa",
+		"longLabelSuggested": "Długa przerwa — sugerowana",
+		"suggestedAria": "Sugerowana przez rytm"
+	},
 	"FocusBudget": {
 		"title": "Dzisiejsze godziny skupienia",
 		"body": "Ustaw dzienny budżet, by sugestie pasowały do tego, co Ci zostało.",

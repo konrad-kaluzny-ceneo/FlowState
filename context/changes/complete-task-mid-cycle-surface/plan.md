@@ -479,11 +479,11 @@ on it.
 
 #### Automated
 
-- [ ] 1.1 Type checking passes: `pnpm typecheck`
-- [ ] 1.2 Lint/format passes: `pnpm check`
-- [ ] 1.3 Conductor unit tests pass (new `break_choice` priority cases)
-- [ ] 1.4 Hook tests pass (gate opens before break; override resets cadence)
-- [ ] 1.5 Overlay component test passes
+- [x] 1.1 Type checking passes: `pnpm typecheck`
+- [x] 1.2 Lint/format passes: `pnpm check`
+- [x] 1.3 Conductor unit tests pass (new `break_choice` priority cases)
+- [x] 1.4 Hook tests pass (gate opens before break; override resets cadence)
+- [x] 1.5 Overlay component test passes
 
 #### Manual
 

@@ -14,6 +14,7 @@ import { flushSync } from "react-dom";
 
 import { AddTaskModal } from "~/app/_components/add-task-modal";
 import { BreakAlertsPermissionPrompt } from "~/app/_components/break-alerts-permission-prompt";
+import { BreakChoiceOverlay } from "~/app/_components/break-choice-overlay";
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { DailyRecapPanel } from "~/app/_components/daily-recap-panel";
@@ -375,6 +376,7 @@ export function PomodoroDashboardBody({
 				enableSuggestionGate,
 				pendingClosureLine: pomodoro.pendingClosureLine,
 				awaitingCheckIn: pomodoro.awaitingCheckIn,
+				awaitingBreakChoice: pomodoro.awaitingBreakChoice,
 				awaitingWindDown: pomodoro.awaitingWindDown,
 				windDownRationale: pomodoro.windDownRationale,
 				isPostCheckInTransitioning: pomodoro.isPostCheckInTransitioning,
@@ -388,6 +390,7 @@ export function PomodoroDashboardBody({
 			enableSuggestionGate,
 			pomodoro.pendingClosureLine,
 			pomodoro.awaitingCheckIn,
+			pomodoro.awaitingBreakChoice,
 			pomodoro.awaitingWindDown,
 			pomodoro.windDownRationale,
 			pomodoro.isPostCheckInTransitioning,
@@ -1159,6 +1162,14 @@ export function PomodoroDashboardBody({
 					onEndSession={() => void pomodoro.onWindDownEndSession()}
 					onKeepGoing={() => void pomodoro.onWindDownKeepGoing()}
 					rationale={pomodoro.windDownRationale}
+				/>
+			)}
+
+			{wedgeBeat.showBreakChoice && (
+				<BreakChoiceOverlay
+					isSubmitting={pomodoro.isConfirming}
+					onChoose={(kind) => void pomodoro.onChooseBreak(kind)}
+					suggestedKind={pomodoro.suggestedBreakKind}
 				/>
 			)}
 

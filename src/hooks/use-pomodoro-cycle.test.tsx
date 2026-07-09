@@ -225,12 +225,14 @@ function assertNoCycleCompleteFlash(result: PomodoroCycleHookResult) {
 	const {
 		awaitingCheckIn,
 		awaitingWindDown,
+		awaitingBreakChoice,
 		isPostCheckInTransitioning,
 		state,
 	} = result.current;
 	if (
 		!awaitingCheckIn &&
 		!awaitingWindDown &&
+		!awaitingBreakChoice &&
 		!isPostCheckInTransitioning &&
 		state === "completed"
 	) {
@@ -1124,12 +1126,20 @@ describe("usePomodoroCycle", () => {
 			await result.current.confirmComplete(true);
 		});
 
+		// After confirmComplete, break-choice gate opens
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
+
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
 		expect(completeCycle).toHaveBeenCalledWith({
 			cycleId: 11,
 			markTaskDone: true,
 			localDateKey: "2026-06-19",
 		});
-		// After work cycle complete, break auto-starts
+		// After choosing break, break starts
 		expect(result.current.state).toBe("running");
 		expect(result.current.cycleKind).toBe("SHORT_BREAK");
 	});
@@ -1174,6 +1184,14 @@ describe("usePomodoroCycle", () => {
 
 			await act(async () => {
 				await result.current.confirmComplete(false);
+			});
+
+			// Break-choice gate opens
+			expect(result.current.awaitingBreakChoice).toBe(true);
+
+			const breakKind = result.current.suggestedBreakKind;
+			await act(async () => {
+				await result.current.onChooseBreak(breakKind);
 			});
 
 			// Now in break state â€” complete the break
@@ -1261,6 +1279,15 @@ describe("usePomodoroCycle", () => {
 
 		await act(async () => {
 			await result.current.confirmComplete(false);
+		});
+
+		// Break-choice gate opens
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
+
+		// Choosing break triggers the failed createCycle
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
 		});
 
 		expect(result.current.state).toBe("idle");
@@ -1678,6 +1705,14 @@ describe("usePomodoroCycle", () => {
 			localDateKey: "2026-06-19",
 		});
 		expect(result.current.awaitingCheckIn).toBe(false);
+		// After check-in, break-choice gate opens
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
+
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
 		expect(result.current.state).toBe("running");
 		expect(result.current.cycleKind).toBe("SHORT_BREAK");
 		expect(result.current.breakTransitionLine).toBe(BREAK_START_SHORT);
@@ -1730,6 +1765,10 @@ describe("usePomodoroCycle", () => {
 				await result.current.submitCheckIn("FOCUSED");
 			});
 
+			await act(async () => {
+				await result.current.onChooseBreak("SHORT_BREAK");
+			});
+
 			expect(result.current.breakTransitionLine).toBe(BREAK_START_SHORT);
 
 			act(() => {
@@ -1770,6 +1809,10 @@ describe("usePomodoroCycle", () => {
 			try {
 				await act(async () => {
 					await result.current.submitCheckIn("FOCUSED");
+				});
+
+				await act(async () => {
+					await result.current.onChooseBreak("SHORT_BREAK");
 				});
 
 				expect(result.current.breakTransitionLine).toBe(BREAK_START_SHORT);
@@ -1813,6 +1856,10 @@ describe("usePomodoroCycle", () => {
 
 			await act(async () => {
 				await result.current.submitCheckIn("FOCUSED");
+			});
+
+			await act(async () => {
+				await result.current.onChooseBreak("SHORT_BREAK");
 			});
 
 			expect(result.current.breakTransitionLine).toBe(BREAK_START_SHORT);
@@ -1868,14 +1915,23 @@ describe("usePomodoroCycle", () => {
 		await waitFor(() => {
 			assertNoCycleCompleteFlash(result);
 			expect(result.current.awaitingCheckIn).toBe(false);
-			expect(result.current.state).toBe("running");
-			expect(result.current.cycleKind).toBe("SHORT_BREAK");
+			expect(result.current.awaitingBreakChoice).toBe(true);
+			expect(result.current.state).toBe("completed");
 		});
 
 		releaseCompleteCycle();
 
 		await act(async () => {
 			await submitPromise;
+		});
+
+		assertNoCycleCompleteFlash(result);
+		expect(result.current.awaitingCheckIn).toBe(false);
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
+
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
 		});
 
 		assertNoCycleCompleteFlash(result);
@@ -1929,14 +1985,22 @@ describe("usePomodoroCycle", () => {
 
 		await waitFor(() => {
 			assertNoCycleCompleteFlash(result);
-			expect(result.current.state).toBe("running");
-			expect(result.current.cycleKind).toBe("SHORT_BREAK");
+			expect(result.current.awaitingBreakChoice).toBe(true);
+			expect(result.current.state).toBe("completed");
 		});
 
 		releaseCompleteCycle();
 
 		await act(async () => {
 			await keepGoingPromise;
+		});
+
+		assertNoCycleCompleteFlash(result);
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
+
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
 		});
 
 		assertNoCycleCompleteFlash(result);
@@ -2005,12 +2069,15 @@ describe("usePomodoroCycle", () => {
 		});
 
 		assertNoCycleCompleteFlash(result);
-		expect(result.current.awaitingCheckIn).toBe(true);
+		// After complete_work failure, stays at break choice gate with recovery available
+		expect(result.current.awaitingBreakChoice).toBe(true);
 		expect(result.current.isPostCheckInTransitioning).toBe(false);
+		expect(result.current.pendingWedgeRecovery?.phase).toBe("complete_work");
 		expect(completeCycle).toHaveBeenCalledTimes(2);
 
+		// Retry via retryWedgeSync
 		await act(async () => {
-			await result.current.submitCheckIn("FOCUSED");
+			await result.current.retryWedgeSync();
 		});
 
 		expect(completeCycle).toHaveBeenCalledTimes(3);
@@ -2020,7 +2087,8 @@ describe("usePomodoroCycle", () => {
 			localDateKey: "2026-06-19",
 		});
 		expect(result.current.awaitingCheckIn).toBe(false);
-		expect(result.current.state).toBe("running");
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
 	});
 
 	it("break cycle-end skips check-in gate", async () => {
@@ -2155,6 +2223,14 @@ describe("usePomodoroCycle", () => {
 			localDateKey: "2026-06-19",
 		});
 		expect(result.current.awaitingCheckIn).toBe(false);
+		// Break-choice gate opens after check-in
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
+
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
 		expect(result.current.state).toBe("running");
 		expect(result.current.cycleKind).toBe("SHORT_BREAK");
 	});
@@ -2785,8 +2861,8 @@ describe("usePomodoroCycle", () => {
 			await waitFor(() => {
 				assertNoCycleCompleteFlash(result);
 				expect(result.current.awaitingCheckIn).toBe(false);
-				expect(result.current.state).toBe("running");
-				expect(result.current.cycleKind).toBe("SHORT_BREAK");
+				expect(result.current.awaitingBreakChoice).toBe(true);
+				expect(result.current.state).toBe("completed");
 			});
 
 			await act(async () => {
@@ -2855,8 +2931,11 @@ describe("usePomodoroCycle", () => {
 			});
 
 			await waitFor(() => {
-				expect(result.current.awaitingCheckIn).toBe(true);
+				expect(result.current.awaitingBreakChoice).toBe(true);
 				expect(result.current.error).toMatch(/Break could not start/i);
+				expect(result.current.pendingWedgeRecovery?.phase).toBe(
+					"complete_work",
+				);
 			});
 		});
 	});
@@ -2913,8 +2992,16 @@ describe("usePomodoroCycle", () => {
 					energy: "FOCUSED",
 				});
 				expect(result.current.awaitingCheckIn).toBe(false);
-				expect(result.current.state).toBe("running");
+				expect(result.current.awaitingBreakChoice).toBe(true);
+				expect(result.current.state).toBe("completed");
 			});
+
+			await act(async () => {
+				await result.current.onChooseBreak("SHORT_BREAK");
+			});
+
+			expect(result.current.state).toBe("running");
+			expect(result.current.cycleKind).toBe("SHORT_BREAK");
 		});
 
 		const kickoffActiveTaskList = [
@@ -3655,6 +3742,10 @@ describe("usePomodoroCycle break out-of-tab alerts", () => {
 			await result.current.submitCheckIn("FOCUSED");
 		});
 
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
 		expect(maybeAlertBreakStartMock).toHaveBeenCalled();
 	});
 
@@ -4099,25 +4190,28 @@ describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () =
 
 		await driveWorkCycleToCheckIn(result);
 
-		let submitPromise!: Promise<void>;
-		act(() => {
-			submitPromise = result.current.submitCheckIn("FOCUSED");
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
 		});
 
-		await waitFor(() => {
-			expect(result.current.cycleKind).toBe("SHORT_BREAK");
-		});
+		// After submitCheckIn, break-choice gate opens
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
 
-		const breakDurationSec = getShortBreakDuration();
-		const optimisticEndMs = fakeWorkers[fakeWorkers.length - 1]?.endTime ?? 0;
-		optimisticBreakStartMs = optimisticEndMs - breakDurationSec * 1000;
-		expect(optimisticEndMs).toBeGreaterThan(0);
+		// Record approximate time the break will be created
+		optimisticBreakStartMs = Date.now();
+
+		// Release the blocked createCycle before calling onChooseBreak
+		releaseBreakCreate();
 
 		await act(async () => {
-			releaseBreakCreate();
-			await submitPromise;
+			await result.current.onChooseBreak("SHORT_BREAK");
 		});
 
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+
+		const breakDurationSec = getShortBreakDuration();
+		// The server returns startedAt with serverDriftMs added, so endTime uses server timing
 		const serverBreakEndMs =
 			optimisticBreakStartMs + serverDriftMs + breakDurationSec * 1000;
 		expect(fakeWorkers[fakeWorkers.length - 1]?.endTime).toBe(serverBreakEndMs);

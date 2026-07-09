@@ -13,6 +13,7 @@ const baseInput: WedgeConductorInput = {
 	enableSuggestionGate: true,
 	pendingClosureLine: null,
 	awaitingCheckIn: false,
+	awaitingBreakChoice: false,
 	awaitingWindDown: false,
 	windDownRationale: null,
 	isPostCheckInTransitioning: false,
@@ -101,6 +102,7 @@ describe("resolveWedgeBeat", () => {
 			awaitingWindDown: true,
 			windDownRationale: "You've been at it for a while.",
 			awaitingCheckIn: true,
+			awaitingBreakChoice: true,
 			activeCycle: { id: 1 },
 			state: "completed",
 		});
@@ -109,7 +111,58 @@ describe("resolveWedgeBeat", () => {
 		expect(result.showSessionClosure).toBe(false);
 		expect(result.showWindDown).toBe(false);
 		expect(result.showCheckIn).toBe(false);
+		expect(result.showBreakChoice).toBe(false);
 		expect(result.showCycleComplete).toBe(false);
+	});
+
+	it("shows break_choice when awaitingBreakChoice and no higher gate active", () => {
+		const result = resolveWedgeBeat({
+			...baseInput,
+			awaitingBreakChoice: true,
+			state: "completed",
+		});
+
+		expect(result.activeGate).toBe("break_choice");
+		expect(result.showBreakChoice).toBe(true);
+		expect(result.showCycleComplete).toBe(false);
+	});
+
+	it("prefers check_in over break_choice", () => {
+		const result = resolveWedgeBeat({
+			...baseInput,
+			awaitingCheckIn: true,
+			awaitingBreakChoice: true,
+			activeCycle: { id: 1 },
+			state: "completed",
+		});
+
+		expect(result.activeGate).toBe("check_in");
+		expect(result.showCheckIn).toBe(true);
+		expect(result.showBreakChoice).toBe(false);
+	});
+
+	it("prefers break_choice over cycle_complete", () => {
+		const result = resolveWedgeBeat({
+			...baseInput,
+			awaitingBreakChoice: true,
+			state: "completed",
+		});
+
+		expect(result.activeGate).toBe("break_choice");
+		expect(result.showBreakChoice).toBe(true);
+		expect(result.showCycleComplete).toBe(false);
+	});
+
+	it("suppresses break_choice when cycle is paused", () => {
+		const result = resolveWedgeBeat({
+			...baseInput,
+			cyclePaused: true,
+			awaitingBreakChoice: true,
+			state: "completed",
+		});
+
+		expect(result.activeGate).toBe("none");
+		expect(result.showBreakChoice).toBe(false);
 	});
 });
 
@@ -119,6 +172,7 @@ describe("resolveWedgeBeat mutual-exclusion matrix (Risk #8)", () => {
 			result.showSessionClosure,
 			result.showWindDown,
 			result.showCheckIn,
+			result.showBreakChoice,
 			result.showCycleComplete,
 		].filter(Boolean).length;
 	}

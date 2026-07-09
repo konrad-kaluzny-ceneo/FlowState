@@ -9,6 +9,7 @@ export type WedgeGate =
 	| "session_closure"
 	| "wind_down"
 	| "check_in"
+	| "break_choice"
 	| "cycle_complete"
 	| "none";
 
@@ -18,6 +19,7 @@ export type WedgeConductorInput = {
 	enableSuggestionGate: boolean;
 	pendingClosureLine: string | null;
 	awaitingCheckIn: boolean;
+	awaitingBreakChoice: boolean;
 	awaitingWindDown: boolean;
 	windDownRationale: string | null;
 	isPostCheckInTransitioning: boolean;
@@ -31,6 +33,7 @@ export type WedgeConductorOutput = {
 	showSessionClosure: boolean;
 	showWindDown: boolean;
 	showCheckIn: boolean;
+	showBreakChoice: boolean;
 	showCycleComplete: boolean;
 };
 
@@ -53,6 +56,7 @@ const GATE_PRIORITY: WedgeGate[] = [
 	"session_closure",
 	"wind_down",
 	"check_in",
+	"break_choice",
 	"cycle_complete",
 ];
 
@@ -64,6 +68,7 @@ function gateCandidates(
 			session_closure: false,
 			wind_down: false,
 			check_in: false,
+			break_choice: false,
 			cycle_complete: false,
 		};
 	}
@@ -86,17 +91,25 @@ function gateCandidates(
 		!showSessionClosure &&
 		!showWindDown;
 
+	const showBreakChoice =
+		input.awaitingBreakChoice &&
+		!showSessionClosure &&
+		!showWindDown &&
+		!showCheckIn;
+
 	const showCycleComplete =
 		input.state === "completed" &&
 		!showSessionClosure &&
 		!showWindDown &&
 		!showCheckIn &&
+		!showBreakChoice &&
 		!input.isPostCheckInTransitioning;
 
 	return {
 		session_closure: showSessionClosure,
 		wind_down: showWindDown,
 		check_in: showCheckIn,
+		break_choice: showBreakChoice,
 		cycle_complete: showCycleComplete,
 	};
 }
@@ -117,6 +130,7 @@ export function resolveWedgeBeat(
 	const showSessionClosure = activeGate === "session_closure";
 	const showWindDown = activeGate === "wind_down";
 	const showCheckIn = activeGate === "check_in";
+	const showBreakChoice = activeGate === "break_choice";
 	const showCycleComplete = activeGate === "cycle_complete";
 
 	return {
@@ -124,6 +138,7 @@ export function resolveWedgeBeat(
 		showSessionClosure,
 		showWindDown,
 		showCheckIn,
+		showBreakChoice,
 		showCycleComplete,
 	};
 }
