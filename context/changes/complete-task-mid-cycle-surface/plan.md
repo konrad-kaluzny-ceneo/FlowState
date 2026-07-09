@@ -512,10 +512,10 @@ on it.
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `pnpm typecheck`
-- [x] 3.2 Lint/format passes: `pnpm check`
-- [x] 3.3 Full unit/integration suite passes: `pnpm test`
-- [x] 3.4 No references remain: `grep -r "rebindTask" src` clean
+- [x] 3.1 Type checking passes: `pnpm typecheck` — ebb5c77
+- [x] 3.2 Lint/format passes: `pnpm check` — ebb5c77
+- [x] 3.3 Full unit/integration suite passes: `pnpm test` — ebb5c77
+- [x] 3.4 No references remain: `grep -r "rebindTask" src` clean — ebb5c77
 
 ### Phase 4: Completion triggers — `/focus` circle + `/tasks`→`/focus` redirect
 
