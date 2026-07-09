@@ -151,10 +151,11 @@ function makePomodoroMock(
 		hasActiveSession: false,
 		error: null,
 		pendingWedgeRecovery: null,
-		midCyclePendingTask: null,
 		isMidCycleSubmitting: false,
 		awaitingCheckIn: false,
 		isPostCheckInTransitioning: false,
+		awaitingBreakChoice: false,
+		suggestedBreakKind: "SHORT_BREAK" as const,
 		awaitingWindDown: false,
 		windDownRationale: null,
 		isConfirming: false,
@@ -203,8 +204,8 @@ function makePomodoroMock(
 		onWindDownKeepGoing: vi.fn(),
 		onWindDownEndSession: vi.fn(),
 		onMidCycleMarkComplete: vi.fn(),
-		onMidCycleContinueWithTask: vi.fn(),
-		onMidCycleEndCycleAndBreak: vi.fn(),
+		onCompleteFocusedTask: vi.fn(),
+		onChooseBreak: vi.fn(),
 		endSession: vi.fn(),
 		outOfTabBreakAlertsEnabled: true,
 		setOutOfTabBreakAlertsEnabled: vi.fn(),
@@ -281,14 +282,6 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		);
 
 		expect(screen.queryByTestId("check-in-overlay")).toBeNull();
-	});
-
-	it("shows mid-cycle prompt when a task completion is pending", () => {
-		renderBody({
-			midCyclePendingTask: { id: 1, title: "Completed task" },
-		});
-
-		expect(screen.getByTestId("mid-cycle-prompt-overlay")).toBeTruthy();
 	});
 
 	it("shows wind-down overlay when wind-down gate is enabled", () => {

@@ -294,7 +294,9 @@ function SortableTaskRow({
 					⋮⋮
 				</button>
 				<TaskCompleteButton
-					canMidCycleMarkComplete={canMidCycleMarkComplete}
+					canMidCycleMarkComplete={
+						canMidCycleMarkComplete && task.id === focusedTaskId
+					}
 					isMutating={isMutating}
 					markCompleteLocked={markCompleteLocked}
 					onBeginComplete={onBeginComplete}
@@ -404,7 +406,9 @@ function StaticTaskRow({
 					/>
 				) : (
 					<TaskCompleteButton
-						canMidCycleMarkComplete={canMidCycleMarkComplete}
+						canMidCycleMarkComplete={
+							canMidCycleMarkComplete && task.id === focusedTaskId
+						}
 						isMutating={isMutating}
 						markCompleteLocked={markCompleteLocked}
 						onBeginComplete={onBeginComplete}

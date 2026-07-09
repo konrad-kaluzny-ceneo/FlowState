@@ -30,7 +30,6 @@ import { FocusTip } from "~/app/_components/focus-tip";
 import { GuestContextRail } from "~/app/_components/guest-context-rail";
 import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
-import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
 import { usePomodoroCycleContext } from "~/app/_components/pomodoro-cycle-provider";
 import { QuickActions } from "~/app/_components/quick-actions";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
@@ -329,15 +328,6 @@ export function PomodoroDashboardBody({
 		focusedActiveTask.doneForToday !== true;
 
 	const { markDoneForToday, createTask, isCreating } = useTaskMutations();
-
-	const midCycleOtherActiveTasks = useMemo(() => {
-		if (pomodoro.midCyclePendingTask == null) {
-			return [];
-		}
-		return tasks.filter(
-			(t) => t.status === "active" && t.id !== pomodoro.midCyclePendingTask?.id,
-		);
-	}, [tasks, pomodoro.midCyclePendingTask]);
 
 	const showTimer =
 		pomodoro.focusedTask != null ||
@@ -1057,23 +1047,6 @@ export function PomodoroDashboardBody({
 					</HomeLayoutRegion>
 				)}
 			</div>
-
-			{pomodoro.midCyclePendingTask != null && (
-				<MidCycleCompletionPrompt
-					isSubmitting={pomodoro.isMidCycleSubmitting}
-					onContinueWithTask={async (taskId, resumeNote) => {
-						const nextTask = tasks.find((t) => t.id === taskId);
-						await pomodoro.onMidCycleContinueWithTask(
-							taskId,
-							nextTask ?? null,
-							resumeNote,
-						);
-					}}
-					onEndCycleAndBreak={pomodoro.onMidCycleEndCycleAndBreak}
-					otherActiveTasks={midCycleOtherActiveTasks}
-					pendingTask={pomodoro.midCyclePendingTask}
-				/>
-			)}
 
 			{showCycleCompleteCatchUp && catchUp != null && (
 				<div className="fixed inset-x-0 top-4 z-[55] flex justify-center px-4">

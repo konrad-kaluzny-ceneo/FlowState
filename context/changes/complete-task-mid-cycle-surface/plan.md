@@ -479,28 +479,28 @@ on it.
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `pnpm typecheck`
-- [x] 1.2 Lint/format passes: `pnpm check`
-- [x] 1.3 Conductor unit tests pass (new `break_choice` priority cases)
-- [x] 1.4 Hook tests pass (gate opens before break; override resets cadence)
-- [x] 1.5 Overlay component test passes
+- [x] 1.1 Type checking passes: `pnpm typecheck` — 64f4e18
+- [x] 1.2 Lint/format passes: `pnpm check` — 64f4e18
+- [x] 1.3 Conductor unit tests pass (new `break_choice` priority cases) — 64f4e18
+- [x] 1.4 Hook tests pass (gate opens before break; override resets cadence) — 64f4e18
+- [x] 1.5 Overlay component test passes — 64f4e18
 
 #### Manual
 
-- [ ] 1.6 Chooser shows with ★ on cadence-suggested option, pre-selected
-- [ ] 1.7 Choosing Long resets the cadence
-- [ ] 1.8 Chooser is dismiss-safe: selecting an option closes it and the break starts
+- [x] 1.6 Chooser shows with ★ on cadence-suggested option, pre-selected — 64f4e18
+- [x] 1.7 Choosing Long resets the cadence — 64f4e18
+- [x] 1.8 Chooser is dismiss-safe: selecting an option closes it and the break starts — 64f4e18
 
 ### Phase 2: Focused-task completion → mandatory break; remove continue-with-another-task
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `pnpm typecheck`
-- [ ] 2.2 Lint/format passes: `pnpm check`
-- [ ] 2.3 Hook tests pass (focused vs non-focused split)
-- [ ] 2.4 Dashboard tests pass
-- [ ] 2.5 Focus-time test passes (early-completed WORK cycle records focusMinutes > 0 + increments used minutes)
-- [ ] 2.6 No references remain to the removed prompt/branch (`grep` clean)
+- [x] 2.1 Type checking passes: `pnpm typecheck`
+- [x] 2.2 Lint/format passes: `pnpm check`
+- [x] 2.3 Hook tests pass (focused vs non-focused split)
+- [x] 2.4 Dashboard tests pass
+- [x] 2.5 Focus-time test passes (early-completed WORK cycle records focusMinutes > 0 + increments used minutes)
+- [x] 2.6 No references remain to the removed prompt/branch (`grep` clean)
 
 #### Manual
 
