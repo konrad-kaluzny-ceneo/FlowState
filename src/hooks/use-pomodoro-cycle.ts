@@ -220,21 +220,6 @@ function allocateOptimisticCycleId(): number {
 	return nextOptimisticCycleId;
 }
 
-function computeBreakAfterWork(completedWorkCycles: number): {
-	newCount: number;
-	breakKind: "SHORT_BREAK" | "LONG_BREAK";
-	breakDurationSec: number;
-} {
-	const newCount = completedWorkCycles + 1;
-	const breakKind: "SHORT_BREAK" | "LONG_BREAK" =
-		newCount % 4 === 0 ? "LONG_BREAK" : "SHORT_BREAK";
-	const breakDurationSec =
-		breakKind === "LONG_BREAK"
-			? getLongBreakDuration()
-			: getShortBreakDuration();
-	return { newCount, breakKind, breakDurationSec };
-}
-
 type WedgeTransitionSnapshot = {
 	awaitingCheckIn: boolean;
 	pendingMarkTaskDone: boolean | null;
@@ -412,6 +397,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const [isPostCheckInTransitioning, setIsPostCheckInTransitioning] =
 		useState(false);
 	const [awaitingBreakChoice, setAwaitingBreakChoice] = useState(false);
+	const [breakChoicePending, setBreakChoicePending] = useState(false);
 	const [suggestedBreakKind, setSuggestedBreakKind] = useState<
 		"SHORT_BREAK" | "LONG_BREAK"
 	>("SHORT_BREAK");
@@ -969,16 +955,44 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						sessionId: Number(active.sessionId),
 					});
 					setCompletedWorkCycles(count);
+
+					// Derive cyclesSinceLastLong from session cycle history
+					const sessionCycles = await utils.client.cycle.list.query({
+						sessionId: Number(active.sessionId),
+					});
+					// Cycles are ordered desc by startedAt — reverse for chronological
+					const chronological = [...sessionCycles].reverse();
+					let sinceLastLong = 0;
+					for (const c of chronological) {
+						if (c.kind === "LONG_BREAK" && c.state === "COMPLETED") {
+							sinceLastLong = 0;
+						} else if (c.kind === "WORK" && c.state === "COMPLETED") {
+							sinceLastLong++;
+						}
+					}
+					setCyclesSinceLastLong(sinceLastLong);
 				} else {
 					const { loadSnapshot } = await import("~/lib/guest/store");
 					const snapshot = loadSnapshot();
-					const count = snapshot.cycles.filter(
-						(c) =>
-							c.sessionId === active.sessionId &&
-							c.kind === "WORK" &&
-							c.state === "COMPLETED",
+					const sessionCycles = snapshot.cycles.filter(
+						(c) => c.sessionId === active.sessionId,
+					);
+					const count = sessionCycles.filter(
+						(c) => c.kind === "WORK" && c.state === "COMPLETED",
 					).length;
 					setCompletedWorkCycles(count);
+
+					// Derive cyclesSinceLastLong from guest session history
+					// Guest cycles are stored in insertion order (chronological)
+					let sinceLastLong = 0;
+					for (const c of sessionCycles) {
+						if (c.kind === "LONG_BREAK" && c.state === "COMPLETED") {
+							sinceLastLong = 0;
+						} else if (c.kind === "WORK" && c.state === "COMPLETED") {
+							sinceLastLong++;
+						}
+					}
+					setCyclesSinceLastLong(sinceLastLong);
 				}
 			} catch {
 				// Best effort — counter stays at 0, worst case is wrong break type
@@ -2468,22 +2482,21 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			const snapshot = captureWedgeTransitionSnapshot();
 			setIsPostCheckInTransitioning(true);
 
-			const { newCount, breakKind: suggestion } =
-				computeBreakAfterWork(completedWorkCycles);
-
 			stopWorker();
 			endTimeRef.current = null;
-			setCompletedWorkCycles(newCount);
 			setState("completed");
 			stateRef.current = "completed";
 			setAwaitingCheckIn(false);
 			setPendingMarkTaskDone(markTaskDone);
 			setIsPostCheckInTransitioning(false);
 
-			// Compute cadence suggestion for the chooser gate
+			// Compute cadence suggestion from cyclesSinceLastLong alone —
+			// completedWorkCycles is incremented only in startBreakAfterWorkComplete
+			// (single owner, no double-increment risk).
 			const cadenceSuggestion: "SHORT_BREAK" | "LONG_BREAK" =
-				cyclesSinceLastLong + 1 >= 4 ? "LONG_BREAK" : suggestion;
+				cyclesSinceLastLong + 1 >= 4 ? "LONG_BREAK" : "SHORT_BREAK";
 			setSuggestedBreakKind(cadenceSuggestion);
+			setBreakChoicePending(true);
 			setAwaitingBreakChoice(true);
 
 			const endSuggestionFetch = beginSuggestionFetch();
@@ -2528,6 +2541,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					pendingIncrementInterruptionRef.current = false;
 
 					// Break creation deferred to onChooseBreak — gate is open.
+					setBreakChoicePending(false);
 					pendingWedgeIntentRef.current = null;
 					setPendingWedgeRecovery(null);
 
@@ -2544,6 +2558,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				} catch {
 					if (energy == null) {
 						rollbackOptimisticCheckInTransition(snapshot);
+						setBreakChoicePending(false);
 						setAwaitingBreakChoice(false);
 						setError(failureMessage);
 						return;
@@ -2567,6 +2582,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						energy,
 					});
 					setError(failureMessage);
+					setBreakChoicePending(false);
 
 					if (failurePhase === "check_in") {
 						rollbackOptimisticCheckInTransition(snapshot);
@@ -2584,7 +2600,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			clearKickoffSuggestion,
 			clearKickoffIdleFlags,
 			captureWedgeTransitionSnapshot,
-			completedWorkCycles,
 			cyclesSinceLastLong,
 			_activeSessionId,
 			stopWorker,
@@ -2602,25 +2617,28 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const onChooseBreak = useCallback(
 		async (kind: "SHORT_BREAK" | "LONG_BREAK") => {
+			if (breakChoicePending) return;
 			setAwaitingBreakChoice(false);
 			const markTaskDone = pendingMarkTaskDone ?? false;
 			setPendingMarkTaskDone(null);
 			try {
 				await startBreakAfterWorkComplete(markTaskDone, kind);
 			} catch {
+				// Preserve the mandatory-break contract: re-open the gate with the
+				// chosen kind as suggestion so the user can retry. Do NOT wipe cycle
+				// state — the work cycle is already completed server-side.
 				setError(tErrors("breakStartFailed"));
-				setState("idle");
-				stateRef.current = "idle";
-				setRemainingMs(0);
-				setActiveCycle(null);
-				activeCycleRef.current = null;
-				setCycleKind(null);
-				cycleKindRef.current = null;
-				setFocusedTaskId(null);
-				setFocusedTask(null);
+				setPendingMarkTaskDone(markTaskDone);
+				setSuggestedBreakKind(kind);
+				setAwaitingBreakChoice(true);
 			}
 		},
-		[pendingMarkTaskDone, startBreakAfterWorkComplete, tErrors],
+		[
+			breakChoicePending,
+			pendingMarkTaskDone,
+			startBreakAfterWorkComplete,
+			tErrors,
+		],
 	);
 
 	const retryBreakCreateAfterCheckIn = useCallback(
@@ -3218,6 +3236,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		awaitingCheckIn,
 		isPostCheckInTransitioning,
 		awaitingBreakChoice,
+		breakChoicePending,
 		suggestedBreakKind,
 		awaitingWindDown,
 		windDownRationale,

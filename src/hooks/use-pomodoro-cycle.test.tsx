@@ -30,6 +30,8 @@ const suggestionNextMutate = vi.fn();
 const recordDecisionMutate = vi.fn();
 const taskListQuery = vi.fn();
 const getLastEndedQuery = vi.fn();
+const cycleListQuery = vi.fn();
+const countCompletedWorkQuery = vi.fn();
 
 let activeCycleData: DomainActiveCycle | null = null;
 
@@ -132,14 +134,14 @@ vi.mock("~/trpc/react", () => ({
 			recap: { getDaily: { invalidate: invalidateRecap } },
 			client: {
 				cycle: {
-					countCompletedWork: { query: vi.fn().mockResolvedValue(0) },
+					countCompletedWork: { query: countCompletedWorkQuery },
 					countTasksCompletedInSession: {
 						query: vi.fn().mockResolvedValue(0),
 					},
 					getLatestCheckInEnergy: {
 						query: vi.fn().mockResolvedValue(null),
 					},
-					list: { query: vi.fn().mockResolvedValue([]) },
+					list: { query: cycleListQuery },
 				},
 				task: { list: { query: taskListQuery } },
 				session: {
@@ -454,6 +456,8 @@ describe("usePomodoroCycle", () => {
 		});
 		taskListQuery.mockResolvedValue([]);
 		getLastEndedQuery.mockResolvedValue(null);
+		cycleListQuery.mockResolvedValue([]);
+		countCompletedWorkQuery.mockResolvedValue(0);
 	});
 
 	it("starts idle and transitions to running on start()", async () => {
@@ -1238,7 +1242,7 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.cycleKind).toBeNull();
 	});
 
-	it("break creation failure after work complete shows error and resets to idle", async () => {
+	it("break creation failure after work complete re-opens break-choice gate for retry", async () => {
 		activeCycleData = makeActiveCycle({
 			id: 30,
 			configuredDurationSec: 300,
@@ -1276,8 +1280,13 @@ describe("usePomodoroCycle", () => {
 			await result.current.onChooseBreak("SHORT_BREAK");
 		});
 
-		expect(result.current.state).toBe("idle");
+		// State stays completed (not idle) — break-choice gate re-opens for retry
+		expect(result.current.state).toBe("completed");
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.suggestedBreakKind).toBe("SHORT_BREAK");
 		expect(result.current.error).toMatch(/Break could not start/);
+		// Focused task preserved — not wiped
+		expect(result.current.focusedTaskId).toBe(4);
 	});
 
 	it("shows completed when recovered cycle already expired", async () => {
@@ -2276,19 +2285,27 @@ describe("usePomodoroCycle", () => {
 		const remainingBefore = result.current.remainingMs;
 		const focusedTaskBefore = result.current.focusedTask;
 
-		// Calling onCompleteFocusedTask when another (non-focused) task is done
-		// should be a no-op — in practice, the task-list doesn't call it for non-
-		// focused tasks (canMidCycleMarkComplete restricted to focusedTaskId).
-		// Verify the hook guards work: state, timer, and focused task are unchanged.
+		// Simulate completing a non-focused task (id=99) through the repository —
+		// this is what the task-list component does for non-focused rows: it calls
+		// tasks.update directly, bypassing onCompleteFocusedTask entirely.
+		await act(async () => {
+			await updateTask({ id: 99, status: "completed" });
+		});
+
+		// The task-update mutation was called for the non-focused task
+		expect(updateTask).toHaveBeenCalledWith({ id: 99, status: "completed" });
+
+		// Cycle state, timer, focused task, and gates are completely unaffected
 		expect(result.current.state).toBe("running");
 		expect(result.current.remainingMs).toBe(remainingBefore);
 		expect(result.current.focusedTask).toBe(focusedTaskBefore);
 		expect(result.current.focusedTaskId).toBe(4);
 		expect(result.current.awaitingCheckIn).toBe(false);
 		expect(result.current.awaitingBreakChoice).toBe(false);
-		// The cycle is still active and running — non-focused completion (handled
-		// by normal task update, not the hook) never touches the cycle
 		expect(result.current.cycleKind).toBe("WORK");
+		// The cycle was not completed or interrupted
+		expect(completeCycle).not.toHaveBeenCalled();
+		expect(interruptCycle).not.toHaveBeenCalled();
 	});
 
 	it("early-completed WORK cycle records focusMinutes > 0 (focus-time accounting)", async () => {
@@ -4430,5 +4447,156 @@ describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () =
 		expect(result.current.awaitingCheckIn).toBe(true);
 		expect(completeCycle).not.toHaveBeenCalled();
 		expect(createCheckInMutate).not.toHaveBeenCalled();
+	});
+
+	it("rehydrates cyclesSinceLastLong from session history on recovery", async () => {
+		// Session has 2 completed WORK cycles after the last LONG_BREAK
+		const sessionId = 5;
+		activeCycleData = makeActiveCycle({
+			id: 80,
+			sessionId,
+			configuredDurationSec: 1500,
+			taskId: 4,
+			task: { id: 4, title: "Current task" },
+		});
+
+		// Session history (ordered desc by startedAt — as returned by server)
+		countCompletedWorkQuery.mockResolvedValue(5);
+		cycleListQuery.mockResolvedValue([
+			// Most recent first (desc order)
+			{
+				id: 79,
+				kind: "WORK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T12:00:00Z"),
+			},
+			{
+				id: 78,
+				kind: "SHORT_BREAK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T11:45:00Z"),
+			},
+			{
+				id: 77,
+				kind: "WORK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T11:20:00Z"),
+			},
+			{
+				id: 76,
+				kind: "LONG_BREAK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T11:00:00Z"),
+			},
+			{
+				id: 75,
+				kind: "WORK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T10:35:00Z"),
+			},
+			{
+				id: 74,
+				kind: "SHORT_BREAK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T10:30:00Z"),
+			},
+			{
+				id: 73,
+				kind: "WORK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T10:05:00Z"),
+			},
+			{
+				id: 72,
+				kind: "SHORT_BREAK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T10:00:00Z"),
+			},
+			{
+				id: 71,
+				kind: "WORK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T09:35:00Z"),
+			},
+		]);
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		// After LONG_BREAK at id=76, there are 2 completed WORK cycles (id=77, 79)
+		// so cyclesSinceLastLong should be 2, meaning the suggestion is SHORT_BREAK
+		// (Long is suggested when cyclesSinceLastLong + 1 >= 4)
+		expect(result.current.suggestedBreakKind).toBe("SHORT_BREAK");
+
+		// Complete the focused task to trigger the check-in → break-choice path
+		await act(async () => {
+			await result.current.onCompleteFocusedTask();
+		});
+
+		expect(result.current.awaitingCheckIn).toBe(true);
+
+		await act(async () => {
+			await result.current.submitCheckIn("STEADY");
+		});
+
+		// Cadence suggestion should reflect 2+1=3 (still < 4 → SHORT)
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.suggestedBreakKind).toBe("SHORT_BREAK");
+	});
+
+	it("completedWorkCycles increments exactly once after continueAfterCheckIn → onChooseBreak", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 90,
+			configuredDurationSec: 1500,
+			taskId: 4,
+			task: { id: 4, title: "Focused task" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		const initialCount = result.current.completedWorkCycles;
+
+		// Complete focused task → check-in → break choice
+		await act(async () => {
+			await result.current.onCompleteFocusedTask();
+		});
+
+		expect(result.current.awaitingCheckIn).toBe(true);
+
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		// After continueAfterCheckIn, completedWorkCycles should NOT be incremented yet
+		expect(result.current.completedWorkCycles).toBe(initialCount);
+		expect(result.current.awaitingBreakChoice).toBe(true);
+
+		// onChooseBreak → startBreakAfterWorkComplete is the single owner of the increment
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
+		// Now it should have incremented exactly once
+		expect(result.current.completedWorkCycles).toBe(initialCount + 1);
 	});
 });

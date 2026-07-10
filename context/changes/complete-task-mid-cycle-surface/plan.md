@@ -661,10 +661,10 @@ exactly once.
 
 #### Automated
 
-- [ ] 5.1 Type checking passes: `pnpm typecheck`
-- [ ] 5.2 Lint/format passes: `pnpm check`
-- [ ] 5.3 Hook tests pass (cadence, retry, non-focused)
-- [ ] 5.4 E2E belt passes
+- [x] 5.1 Type checking passes: `pnpm typecheck`
+- [x] 5.2 Lint/format passes: `pnpm check`
+- [x] 5.3 Hook tests pass (cadence, retry, non-focused)
+- [x] 5.4 E2E belt passes
 
 #### Manual
 

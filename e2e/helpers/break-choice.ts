@@ -5,11 +5,10 @@ export type BreakChoiceKind = "short" | "long";
 /**
  * Dismiss the break-choice overlay by choosing a break kind.
  *
- * After the check-in completes, the break-choice gate opens while the server
- * asynchronously completes the work cycle (fire-and-forget in continueAfterCheckIn).
- * We poll-wait for the overlay to appear AND check that any pending network
- * requests for cycle.complete have settled before clicking, avoiding the
- * "A cycle is already running" race.
+ * The break-choice gate opens while the server asynchronously completes the
+ * work cycle. The confirm button is disabled (breakChoicePending) until
+ * `cycles.complete` resolves. We wait for the button to become enabled —
+ * a deterministic signal that the server round-trip finished — then click.
  */
 export async function chooseBreakKind(
 	page: Page,
@@ -19,13 +18,11 @@ export async function chooseBreakKind(
 	await expect(overlay).toBeVisible({ timeout: 15_000 });
 	const testId = kind === "short" ? "break-choice-short" : "break-choice-long";
 	const btn = page.getByTestId(testId);
-	await expect(btn).toBeEnabled();
 
-	// Wait briefly for the server-side work-cycle completion that runs in the
-	// background after the break-choice gate opens. The `cycles.complete` tRPC
-	// mutation typically resolves within a few hundred ms; 2s is generous.
-	// We poll the button enabled-state as a stable alternative to waitForTimeout.
-	await page.waitForTimeout(2000);
+	// The button starts disabled while cycles.complete is in-flight. Wait for it
+	// to become enabled — this is the deterministic signal that the server
+	// confirmed work-cycle completion and break creation is safe.
+	await expect(btn).toBeEnabled({ timeout: 10_000 });
 
 	await btn.click();
 	await expect(overlay).toBeHidden({ timeout: 10_000 });

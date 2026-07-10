@@ -1149,7 +1149,7 @@ export function PomodoroDashboardBody({
 
 			{wedgeBeat.showBreakChoice && (
 				<BreakChoiceOverlay
-					isSubmitting={pomodoro.isConfirming}
+					isSubmitting={pomodoro.breakChoicePending || pomodoro.isConfirming}
 					onChoose={(kind) => void pomodoro.onChooseBreak(kind)}
 					suggestedKind={pomodoro.suggestedBreakKind}
 				/>
