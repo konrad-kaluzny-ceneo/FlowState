@@ -521,12 +521,12 @@ on it.
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `pnpm typecheck`
-- [ ] 4.2 Lint/format passes: `pnpm check`
-- [ ] 4.3 Component tests pass (focus circle triggers handler)
-- [ ] 4.4 Belt e2e passes: `pnpm test:e2e:belt`
+- [x] 4.1 Type checking passes: `pnpm typecheck`
+- [x] 4.2 Lint/format passes: `pnpm check`
+- [x] 4.3 Component tests pass (focus circle triggers handler)
+- [x] 4.4 Belt e2e passes: `pnpm test:e2e:belt`
 
 #### Manual
 
-- [ ] 4.5 `/focus` completion circle ends the cycle into the break flow
-- [ ] 4.6 `/tasks` focused completion redirects to `/focus` and gates play; non-focused stays put
+- [x] 4.5 `/focus` completion circle ends the cycle into the break flow
+- [x] 4.6 `/tasks` focused completion redirects to `/focus` and gates play; non-focused stays put
