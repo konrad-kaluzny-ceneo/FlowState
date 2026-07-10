@@ -8,6 +8,8 @@
 
 Two coupled changes: (A) FlowState gets a persistent idle "Start break" affordance so a user who ends up outside the work→break rhythm can rest and slide back in; and (B) **all** breaks keep counting into overtime past their configured duration and end only on an explicit accept — a break must never punish the user (no interruption penalty, no cadence corruption). Most of A's machinery already exists; B is a global break-end behavior change.
 
+**Break-end semantics:** A break ends **only** by explicit user accept (the "End break" action). The existing 4-hour session inactivity timeout is the sole server-side backstop — when it fires, the break transitions to a `completed`/`ended` state without penalty (no interruption count, no cadence change). The client recovers from a timed-out break by entering the normal post-break idle/kickoff UI (no error, no "ended N ago" overlay). This exemption is explicit: the timeout is not an "end" in the user-facing sense, just a server-side cleanup.
+
 ## Starting Point
 
 Breaks today start only right after a work cycle completes, and freeze at `0:00` waiting for a "Continue" click. The break run/complete/session/kickoff machinery already tolerates a break with no preceding work cycle, and `cycles.create` touches no penalty counter — so A is thin. B is the real work: three parallel `remaining <= 0` expiry sites stop the timer, and `state === "completed"` is overloaded.

@@ -13,15 +13,15 @@ B lands first (phases 1–2); A rides on the resulting semantics (phase 3); serv
 
 From [research.md](context/changes/adhoc-rest-time/research.md) and [frame.md](context/changes/adhoc-rest-time/frame.md):
 
-- **Break creation is client-gated, not server-gated.** `cycle.create` accepts `SHORT_BREAK`/`LONG_BREAK` with no preceding-work requirement in both data modes ([cycle.ts:80](src/server/api/routers/cycle.ts:80)); the only client entry points are post-work-complete (`startBreakAfterWorkComplete` [use-pomodoro-cycle.ts:2418](src/hooks/use-pomodoro-cycle.ts:2418)) and the check-in `start_break` phase.
-- **Breaks freeze at 0:00.** Three parallel `remaining <= 0` expiry sites stop the timer and force `state = "completed"`: the worker ([timer-worker-logic.ts:14](src/workers/timer-worker-logic.ts:14) + [timer-worker.ts:28](src/workers/timer-worker.ts:28)), the main-thread fallback ([use-pomodoro-cycle.ts:772](src/hooks/use-pomodoro-cycle.ts:772)), and tab-return recompute ([:830](src/hooks/use-pomodoro-cycle.ts:830)). `handleCycleExpired` ([:688](src/hooks/use-pomodoro-cycle.ts:688)) is the transition to `completed`.
-- **An explicit accept step already exists** — `CycleCompleteOverlay`'s "Continue" button ([cycle-complete-overlay.tsx:98](src/app/_components/cycle-complete-overlay.tsx:98)) → `confirmComplete` ([:2548](src/hooks/use-pomodoro-cycle.ts:2548)), break `else` branch → `postBreakIdleFlag`/kickoff ([:2603](src/hooks/use-pomodoro-cycle.ts:2603)). What is missing is overtime counting.
-- **`formatRemainingMs` clamps with `Math.max(0, …)`** ([format-remaining.ts:2](src/lib/format-remaining.ts:2)) — structurally cannot represent overtime; `timer-panel.tsx` renders it ([:148](src/app/_components/timer-panel.tsx:148)) and computes progress ([:105](src/app/_components/timer-panel.tsx:105)).
-- **Catch-up gate assumes breaks end at configured time.** `setCatchUpFromExpiry` hard-codes `state:"completed"` ([:669](src/hooks/use-pomodoro-cycle.ts:669)); `deriveCatchUpGate` returns `BREAK_CONFIRM` for a completed break ([derive-gate.ts:32](src/lib/catch-up/derive-gate.ts:32)).
-- **Recap/stats are overtime-safe.** `computeCycleFocusedMinutes` and both recap paths filter `kind === "WORK"`; the server stamps `endedAt = new Date()` at accept time ([cycle.ts:204](src/server/api/routers/cycle.ts:204)).
+- **Break creation is client-gated, not server-gated.** `cycle.create` accepts `SHORT_BREAK`/`LONG_BREAK` with no preceding-work requirement in both data modes ([cycle.ts:80](src/server/api/routers/cycle.ts)); the only client entry points are post-work-complete (`startBreakAfterWorkComplete` [use-pomodoro-cycle.ts:2418](src/hooks/use-pomodoro-cycle.ts)) and the check-in `start_break` phase.
+- **Breaks freeze at 0:00.** Three parallel `remaining <= 0` expiry sites stop the timer and force `state = "completed"`: the worker ([timer-worker-logic.ts:14](src/workers/timer-worker-logic.ts) + [timer-worker.ts:28](src/workers/timer-worker.ts)), the main-thread fallback ([use-pomodoro-cycle.ts:772](src/hooks/use-pomodoro-cycle.ts)), and tab-return recompute ([:830](src/hooks/use-pomodoro-cycle.ts)). `handleCycleExpired` ([:688](src/hooks/use-pomodoro-cycle.ts)) is the transition to `completed`.
+- **An explicit accept step already exists** — `CycleCompleteOverlay`'s "Continue" button ([cycle-complete-overlay.tsx:98](src/app/_components/cycle-complete-overlay.tsx)) → `confirmComplete` ([:2548](src/hooks/use-pomodoro-cycle.ts)), break `else` branch → `postBreakIdleFlag`/kickoff ([:2603](src/hooks/use-pomodoro-cycle.ts)). What is missing is overtime counting.
+- **`formatRemainingMs` clamps with `Math.max(0, …)`** ([format-remaining.ts:2](src/lib/format-remaining.ts)) — structurally cannot represent overtime; `timer-panel.tsx` renders it ([:148](src/app/_components/timer-panel.tsx)) and computes progress ([:105](src/app/_components/timer-panel.tsx)).
+- **Catch-up gate assumes breaks end at configured time.** `setCatchUpFromExpiry` hard-codes `state:"completed"` ([:669](src/hooks/use-pomodoro-cycle.ts)); `deriveCatchUpGate` returns `BREAK_CONFIRM` for a completed break ([derive-gate.ts:32](src/lib/catch-up/derive-gate.ts)).
+- **Recap/stats are overtime-safe.** `computeCycleFocusedMinutes` and both recap paths filter `kind === "WORK"`; the server stamps `endedAt = new Date()` at accept time ([cycle.ts:204](src/server/api/routers/cycle.ts)).
 - **`startBreakAfterWorkComplete` is the template for A**, minus the `setCompletedWorkCycles(newCount)` increment (the punishing step). The optimistic/wedge machinery is **not** needed — a single `cycles.create` uses the plain-await path.
-- **Duration config**: `getShort/getLongBreakDuration` (localStorage) + `getShort/getLongBreakPresets` + `MAX_BREAK_DURATION_SEC = 1800` ([duration-bounds.ts:43](src/lib/duration-bounds.ts:43)). Reusable `DurationPicker` ([duration-picker.tsx:53](src/app/_components/duration-picker.tsx:53)). Server `cycle.create` validates duration with `minWorkCycleSec`/max 90 min for **all** kinds — not kind-aware ([cycle.ts:85](src/server/api/routers/cycle.ts:85)).
-- **UI mount**: `QuickActions` ([quick-actions.tsx:14](src/app/_components/quick-actions.tsx:14)) in the calm rail ([pomodoro-dashboard.tsx:999](src/app/_components/pomodoro-dashboard.tsx:999)), gated by `showCalmLanding` — a persistent, any-idle-state home.
+- **Duration config**: `getShort/getLongBreakDuration` (localStorage) + `getShort/getLongBreakPresets` + `MAX_BREAK_DURATION_SEC = 1800` ([duration-bounds.ts:43](src/lib/duration-bounds.ts)). Reusable `DurationPicker` ([duration-picker.tsx:53](src/app/_components/duration-picker.tsx)). Server `cycle.create` validates duration with `minWorkCycleSec`/max 90 min for **all** kinds — not kind-aware ([cycle.ts:85](src/server/api/routers/cycle.ts)).
+- **UI mount**: `QuickActions` ([quick-actions.tsx:14](src/app/_components/quick-actions.tsx)) in the calm rail ([pomodoro-dashboard.tsx:999](src/app/_components/pomodoro-dashboard.tsx)), gated by `showCalmLanding` — a persistent, any-idle-state home.
 
 ## Desired End State
 
@@ -54,7 +54,7 @@ Phase 1 makes the timer/state machine *capable* of overtime (logic only, hook-te
 
 ## Critical Implementation Details
 
-- **Timing & lifecycle**: The worker, the main-thread fallback, and `recalculateFromEndTime` each independently decide expiry at `remaining <= 0`. For breaks, all three must switch from "stop + complete" to "continue counting elapsed". They must change together or a hidden-tab return / worker-fallback swap will freeze overtime in one path only. `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` forces the fallback path in E2E ([use-pomodoro-cycle.ts:164](src/hooks/use-pomodoro-cycle.ts:164)) — it must keep working.
+- **Timing & lifecycle**: The worker, the main-thread fallback, and `recalculateFromEndTime` each independently decide expiry at `remaining <= 0`. For breaks, all three must switch from "stop + complete" to "continue counting elapsed". They must change together or a hidden-tab return / worker-fallback swap will freeze overtime in one path only. `NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1` forces the fallback path in E2E ([use-pomodoro-cycle.ts:164](src/hooks/use-pomodoro-cycle.ts)) — it must keep working.
 - **State sequencing**: For a break, `handleCycleExpired` must NOT `setState("completed")` and must NOT null `endTimeRef` — overtime is derived as `Date.now() - endTimeRef`. Work cycles keep the existing `completed` transition. Distinguish by `cycleKindRef.current`.
 - **User experience spec**: Overtime is inline and calm — no overlay auto-pops for breaks. The alarm/tab-pulse at configured end still fires once, but the break screen persists with a count-up and an "End break" button.
 
@@ -74,7 +74,7 @@ Teach the timer worker, the main-thread fallback, and the `use-pomodoro-cycle` s
 
 **Intent**: Stop treating `remaining <= 0` as terminal; emit an overtime signal carrying elapsed-past-end so the worker keeps ticking. Completion becomes user-driven (inbound `stop`), not time-driven.
 
-**Contract**: Extend `TimerWorkerOutbound` with an `{ type: "overtime"; elapsed: number }` variant (or fold into `tick` as a signed `remaining`). `getTimerTickResult(endTime, now)` returns overtime (`now - endTime`) instead of `{ type: "complete" }` when `now >= endTime`. The `complete` variant is retained for the WORK path (see wiring in change #3) or gated by a mode flag passed to the worker.
+**Contract**: Extend `TimerWorkerOutbound` with an `{ type: "overtime"; elapsed: number }` variant (or fold into `tick` as a signed `remaining`). Extend `TimerWorkerInbound` start message with a `mode: "work" | "break"` field so the worker knows whether to emit `complete` (WORK) or `overtime` (BREAK) when `now >= endTime`. `getTimerTickResult(endTime, now, mode)` returns overtime (`now - endTime`) for breaks and `{ type: "complete" }` for work. Add tests covering both modes in `timer-worker-logic.test.ts`.
 
 #### 2. Timer worker lifecycle — don't stop on overtime
 
@@ -82,7 +82,7 @@ Teach the timer worker, the main-thread fallback, and the `use-pomodoro-cycle` s
 
 **Intent**: Keep the interval alive through overtime; only clear it on an explicit inbound `stop`.
 
-**Contract**: `tick()` no longer calls `stopTimer()` for the overtime case; the interval survives until an inbound `stop` message ([timer-worker.ts:52](src/workers/timer-worker.ts:52)).
+**Contract**: `tick()` no longer calls `stopTimer()` for the overtime case; the interval survives until an inbound `stop` message ([timer-worker.ts:52](src/workers/timer-worker.ts)).
 
 #### 3. Hook — break expiry becomes overtime, not completion
 
@@ -91,11 +91,12 @@ Teach the timer worker, the main-thread fallback, and the `use-pomodoro-cycle` s
 **Intent**: For break cycles, expiry must not transition to `completed` or null `endTimeRef`; instead keep running and track overtime. WORK cycles keep the existing behavior. Apply consistently across all three expiry sites and the worker message handler.
 
 **Contract**: 
-- `handleCycleExpired` ([:688](src/hooks/use-pomodoro-cycle.ts:688)): branch on `cycleKindRef.current`. For breaks — keep `state = "running"`, keep `endTimeRef`, fire the end alarm/tab-pulse once, do **not** set catch-up, begin overtime accrual. For WORK — unchanged (`completed` + existing catch-up/pulse).
-- `startFallbackTimer` tick ([:767-778](src/hooks/use-pomodoro-cycle.ts:767)): for breaks, past `endTime` keep ticking and surface elapsed instead of calling `handleCycleExpired` terminally.
-- `recalculateFromEndTime` ([:819-836](src/hooks/use-pomodoro-cycle.ts:819)): for breaks, resume overtime counting instead of firing `handleCycleExpired`.
-- `attachWorkerHandlers` ([:746-760](src/hooks/use-pomodoro-cycle.ts:746)): handle the new `overtime` message → surface elapsed.
+- `handleCycleExpired` ([:688](src/hooks/use-pomodoro-cycle.ts)): branch on `cycleKindRef.current`. For breaks — keep `state = "running"`, keep `endTimeRef`, fire the end alarm/tab-pulse once, do **not** set catch-up, begin overtime accrual. For WORK — unchanged (`completed` + existing catch-up/pulse).
+- `startFallbackTimer` tick ([:767-778](src/hooks/use-pomodoro-cycle.ts)): for breaks, past `endTime` keep ticking and surface elapsed instead of calling `handleCycleExpired` terminally.
+- `recalculateFromEndTime` ([:819-836](src/hooks/use-pomodoro-cycle.ts)): for breaks, resume overtime counting instead of firing `handleCycleExpired`.
+- `attachWorkerHandlers` ([:746-760](src/hooks/use-pomodoro-cycle.ts)): handle the new `overtime` message → surface elapsed.
 - Represent overtime via a signed `remainingMs` (negative = overtime) or a dedicated `overtimeMs` state; `endTimeRef` stays non-null for breaks in overtime.
+- **Idempotency guard**: Add a per-cycle `breakOvertimeEnteredRef` (reset when a new cycle starts). The end alarm and tab pulse execute only once — when the break first crosses the deadline. Subsequent observations (from `startFallbackTimer`, `recalculateFromEndTime`, `attachWorkerHandlers`, and recovery) only update the elapsed overtime value and preserve `endTimeRef` without repeating side effects. This prevents double-alarm on tab-return or worker↔fallback swaps.
 
 #### 4. Hook — recovery resumes overtime
 
@@ -103,7 +104,7 @@ Teach the timer worker, the main-thread fallback, and the `use-pomodoro-cycle` s
 
 **Intent**: When recovering an active break whose `endTime` is already past, resume it in overtime instead of forcing `completed` + catch-up.
 
-**Contract**: `resumeFromActiveCycle` ([:863-878](src/hooks/use-pomodoro-cycle.ts:863)): for `isBreakKind(cycle.kind)` with `endTime <= Date.now()`, enter running-overtime; keep the WORK branch as-is.
+**Contract**: `resumeFromActiveCycle` ([:863-878](src/hooks/use-pomodoro-cycle.ts)): for `isBreakKind(cycle.kind)` with `endTime <= Date.now()`, enter running-overtime; keep the WORK branch as-is.
 
 #### 5. Hook — pause freezes overtime
 
@@ -154,7 +155,7 @@ Make overtime visible and endable: display `+MM:SS`, offer an inline "End break"
 
 **Intent**: When a break is in overtime, show the `+MM:SS` count-up and an inline "End break" button that triggers accept. Keep progress ring sane past 100%.
 
-**Contract**: Consume the signed remaining / overtime value; render overtime label via the new formatter ([:148](src/app/_components/timer-panel.tsx:148)); clamp/cap the progress computation past configured end ([:105](src/app/_components/timer-panel.tsx:105)); add an "End break" button wired to the hook's accept (`confirmComplete`). Button visible only for a break in overtime.
+**Contract**: Consume the signed remaining / overtime value; render overtime label via the new formatter ([:148](src/app/_components/timer-panel.tsx)); clamp/cap the progress computation past configured end ([:105](src/app/_components/timer-panel.tsx)); add an "End break" button wired to the hook's accept (`confirmComplete`). Button visible only for a break in overtime.
 
 #### 3. Suppress auto break overlay; keep accept path
 
@@ -162,7 +163,7 @@ Make overtime visible and endable: display `+MM:SS`, offer an inline "End break"
 
 **Intent**: Breaks no longer auto-transition to `completed`, so the break branch of `CycleCompleteOverlay` no longer auto-appears. The accept action now originates from the inline "End break" control. Preserve the WORK completion overlay unchanged.
 
-**Contract**: The break branch of `CycleCompleteOverlay` ([cycle-complete-overlay.tsx:50-121](src/app/_components/cycle-complete-overlay.tsx:50)) is no longer reached via break expiry; remove/guard it or repoint its usage. Ensure the dashboard renders no break overlay during overtime and routes End break → `confirmComplete`. Verify no dead-end: End break dismisses and advances to kickoff (lessons: dismiss oracle per gate).
+**Contract**: The break branch of `CycleCompleteOverlay` ([cycle-complete-overlay.tsx:50-121](src/app/_components/cycle-complete-overlay.tsx)) is no longer reached via break expiry; remove/guard it or repoint its usage. Ensure the dashboard renders no break overlay during overtime and routes End break → `confirmComplete`. Verify no dead-end: End break dismisses and advances to kickoff (lessons: dismiss oracle per gate).
 
 #### 4. Retire BREAK_CONFIRM for breaks
 
@@ -170,7 +171,7 @@ Make overtime visible and endable: display `+MM:SS`, offer an inline "End break"
 
 **Intent**: A break never "ends while away" now, so the `BREAK_CONFIRM` "ended N ago" gate is obsolete for breaks. Remove it for break kinds; WORK's `WORK_CONFIRM` stays.
 
-**Contract**: `deriveCatchUpGate` ([derive-gate.ts:32-34](src/lib/catch-up/derive-gate.ts:32)) no longer returns `BREAK_CONFIRM` for a completed break (or the break-completed input no longer occurs). `setCatchUpFromExpiry` ([use-pomodoro-cycle.ts:666](src/hooks/use-pomodoro-cycle.ts:666)) is not invoked for breaks. Update `derive-gate.test.ts`. Retire/mark-unused `BREAK_CONFIRM` copy in `catch-up/copy.ts` as appropriate.
+**Contract**: `deriveCatchUpGate` ([derive-gate.ts:32-34](src/lib/catch-up/derive-gate.ts)) no longer returns `BREAK_CONFIRM` for a completed break (or the break-completed input no longer occurs). `setCatchUpFromExpiry` ([use-pomodoro-cycle.ts:666](src/hooks/use-pomodoro-cycle.ts)) is not invoked for breaks. Update `derive-gate.test.ts`. Retire/mark-unused `BREAK_CONFIRM` copy in `catch-up/copy.ts` as appropriate.
 
 #### 5. i18n copy for overtime + End break
 
@@ -216,7 +217,7 @@ Add a persistent "Start break" quick action in any idle state that opens a short
 
 **Intent**: New public action that creates a break from idle in both data modes without touching any penalty counter, then reconciles running state exactly like `startBreakAfterWorkComplete` (minus the cadence increment).
 
-**Contract**: `startAdHocBreak(kind: "SHORT_BREAK" | "LONG_BREAK", durationSec: number)`. Guard `state === "idle"`. Idle prologue: `const session = await sessions.getOrCreateActive(); setActiveSessionId(session.id); setHasActiveSession(true)` (both modes). Then `cycles.create({ kind, configuredDurationSec: durationSec })`; reconcile `setActiveCycle({...,task:null})` / `setCycleKind` / `cycleKindRef` / `setState("running")` / `stateRef` / `startWorker` / `fireBreakOutOfTabAlert` / `showBreakTransitionLine` (mirror [:2435-2444](src/hooks/use-pomodoro-cycle.ts:2435)); `await invalidateServerCycle()`. **Do NOT** call `setCompletedWorkCycles`, `computeBreakAfterWork`, `cycles.complete/interrupt/rebindTask`, or set `pendingIncrementInterruptionRef`. Wrap in try/catch with rollback to idle (pattern [:1968-1979](src/hooks/use-pomodoro-cycle.ts:1968)). Export in the hook return (~[:3650](src/hooks/use-pomodoro-cycle.ts:3650)).
+**Contract**: `startAdHocBreak(kind: "SHORT_BREAK" | "LONG_BREAK", durationSec: number)`. Guard `state === "idle"`. Idle prologue: `const session = await sessions.getOrCreateActive(); setActiveSessionId(session.id); setHasActiveSession(true)` (both modes). Then `cycles.create({ kind, configuredDurationSec: durationSec })`; reconcile `setActiveCycle({...,task:null})` / `setCycleKind` / `cycleKindRef` / `setState("running")` / `stateRef` / `startWorker` / `fireBreakOutOfTabAlert` / `showBreakTransitionLine` (mirror [:2435-2444](src/hooks/use-pomodoro-cycle.ts)); `await invalidateServerCycle()`. **Do NOT** call `setCompletedWorkCycles`, `computeBreakAfterWork`, `cycles.complete/interrupt/rebindTask`, or set `pendingIncrementInterruptionRef`. Wrap in try/catch with rollback to idle (pattern [:1968-1979](src/hooks/use-pomodoro-cycle.ts)). Export in the hook return (~[:3650](src/hooks/use-pomodoro-cycle.ts)).
 
 #### 2. "Start break" quick action + picker
 
@@ -224,7 +225,7 @@ Add a persistent "Start break" quick action in any idle state that opens a short
 
 **Intent**: Add a third action ("Start break") that opens a compact short/long + duration picker; confirming calls `startAdHocBreak`.
 
-**Contract**: New `onStartBreak?: (kind, durationSec) => Promise<void>` prop and a picker surface reusing `DurationPicker` ([duration-picker.tsx:53](src/app/_components/duration-picker.tsx:53)) with short/long presets (`getShort/getLongBreakPresets`) and defaults (`getShort/getLongBreakDuration`). Follow the existing `icon + label + chevron` item pattern; add `data-testid` (e.g. `quick-action-start-break`).
+**Contract**: New `onStartBreak?: (kind, durationSec) => Promise<void>` prop and a picker surface reusing `DurationPicker` ([duration-picker.tsx:53](src/app/_components/duration-picker.tsx)) with short/long presets (`getShort/getLongBreakPresets`) and defaults (`getShort/getLongBreakDuration`). Follow the existing `icon + label + chevron` item pattern; add `data-testid` (e.g. `quick-action-start-break`).
 
 #### 3. Dashboard wiring
 
@@ -232,7 +233,7 @@ Add a persistent "Start break" quick action in any idle state that opens a short
 
 **Intent**: Pass a handler from the dashboard's `usePomodoroCycleContext` into `QuickActions`, so the persistent action is available across idle states.
 
-**Contract**: Wire `onStartBreak` → `pomodoro.startAdHocBreak` at the `QuickActions` mount ([pomodoro-dashboard.tsx:999-1005](src/app/_components/pomodoro-dashboard.tsx:999)). The break bypasses the focus-permission prompt (that gate is WORK-only).
+**Contract**: Wire `onStartBreak` → `pomodoro.startAdHocBreak` at the `QuickActions` mount ([pomodoro-dashboard.tsx:999-1005](src/app/_components/pomodoro-dashboard.tsx)). The break bypasses the focus-permission prompt (that gate is WORK-only).
 
 #### 4. i18n for the action
 
@@ -275,7 +276,7 @@ Close the pre-existing kind-aware duration-validation gap and run the full break
 
 **Intent**: Reject break cycles longer than the break cap; keep the work-cycle bounds for WORK.
 
-**Contract**: Validate `configuredDurationSec` per `kind` — breaks bounded by `MIN_BREAK_DURATION_SEC`/`MAX_BREAK_DURATION_SEC` (1800), WORK by the existing work bounds ([cycle.ts:85-89](src/server/api/routers/cycle.ts:85)). Add/extend a router test asserting an oversized break is rejected.
+**Contract**: Validate `configuredDurationSec` per `kind` — breaks bounded by `MIN_BREAK_DURATION_SEC`/`MAX_BREAK_DURATION_SEC` (1800), WORK by the existing work bounds ([cycle.ts:85-89](src/server/api/routers/cycle.ts)). Add/extend a router test asserting an oversized break is rejected.
 
 #### 2. Break test cluster regression
 
@@ -283,7 +284,7 @@ Close the pre-existing kind-aware duration-validation gap and run the full break
 
 **Intent**: Update oracles that locked the old freeze-at-0 / `BREAK_CONFIRM` / auto-overlay behavior; add coverage for overtime + ad-hoc entry per lessons (hook/component layer, dismiss oracle per gate).
 
-**Contract**: Update the break cluster incl. `"break complete returns to idle"` ([:1203](src/hooks/use-pomodoro-cycle.test.tsx:1203)), the check-in-gated break tests ([:1623](src/hooks/use-pomodoro-cycle.test.tsx:1623), [:2026](src/hooks/use-pomodoro-cycle.test.tsx:2026)), out-of-tab alert ([:4377](src/hooks/use-pomodoro-cycle.test.tsx:4377)), and optimistic break tests ([:3278](src/hooks/use-pomodoro-cycle.test.tsx:3278)) to the new semantics. New tests: overtime accrual/pause-freeze/tab-return, End break → kickoff, `startAdHocBreak` no-counter-touch in both modes.
+**Contract**: Update the break cluster incl. `"break complete returns to idle"` ([:1203](src/hooks/use-pomodoro-cycle.test.tsx)), the check-in-gated break tests ([:1623](src/hooks/use-pomodoro-cycle.test.tsx), [:2026](src/hooks/use-pomodoro-cycle.test.tsx)), out-of-tab alert ([:4377](src/hooks/use-pomodoro-cycle.test.tsx)), and optimistic break tests ([:3278](src/hooks/use-pomodoro-cycle.test.tsx)) to the new semantics. New tests: overtime accrual/pause-freeze/tab-return, End break → kickoff, `startAdHocBreak` no-counter-touch in both modes.
 
 #### 3. E2E belt gate
 
@@ -355,7 +356,7 @@ No schema or data migration. `cycle.endedAt` already stamps accept time; existin
 
 ## Progress
 
-> Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
+> Convention: `- [ ]` pending, `- [x]` done. Append `— <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
 
 ### Phase 1: Overtime timer core (B — logic)
 

@@ -76,7 +76,7 @@ Remove the button, its handler, and the orphaned i18n key; fix the unit suite by
 
 - Type checking passes: `pnpm typecheck`
 - Linting passes: `pnpm check`
-- Dashboard unit tests pass: `pnpm exec vitest run src/app/_components/pomodoro-dashboard.test.ts`
+- Dashboard unit tests pass: `pnpm exec vitest run src/app/_components/pomodoro-dashboard.test.tsx`
 - No dangling references: repo grep for `pauseEndSession` and `pause-and-end-session-btn` returns only the change-doc files under `context/`
 
 #### Manual Verification:
@@ -153,7 +153,7 @@ None — UI-only removal plus an i18n key deletion. No data, schema, or API chan
 
 ## Progress
 
-> Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
+> Convention: `- [ ]` pending, `- [x]` done. Append `— <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
 
 ### Phase 1: Remove the coupled button and re-home unit coverage
 
@@ -161,7 +161,7 @@ None — UI-only removal plus an i18n key deletion. No data, schema, or API chan
 
 - [ ] 1.1 Type checking passes: `pnpm typecheck`
 - [ ] 1.2 Linting passes: `pnpm check`
-- [ ] 1.3 Dashboard unit tests pass: `pnpm exec vitest run src/app/_components/pomodoro-dashboard.test.ts`
+- [ ] 1.3 Dashboard unit tests pass: `pnpm exec vitest run src/app/_components/pomodoro-dashboard.test.tsx`
 - [ ] 1.4 No dangling references: grep for `pauseEndSession` / `pause-and-end-session-btn` returns only `context/` docs
 
 #### Manual

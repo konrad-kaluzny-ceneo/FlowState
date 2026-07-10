@@ -471,6 +471,131 @@ on it.
 - Conductor: `src/lib/wedge/transition-conductor.ts:104`
 - Lessons: "Test every wedge transition before shipping" (dismiss-oracle per gate); L-06 (task-list on `/tasks`)
 
+## Phase 5: CodeRabbit review fixes (PR #200)
+
+### Overview
+
+Address actionable code-review findings from CodeRabbit on PR #200 that target
+shipped code in this branch. Six items: one E2E anti-pattern, one insufficient
+test, three hook resilience/correctness issues, and one cadence-tracking
+inconsistency.
+
+### Changes Required:
+
+#### 1. Replace `waitForTimeout` with deterministic wait in E2E helper
+
+**File**: `e2e/helpers/break-choice.ts`
+
+**Intent**: Remove the `waitForTimeout(2000)` anti-pattern (contradicts its own
+comment and violates the project's `seed.spec.ts` line-5 rule). Replace with
+`page.waitForResponse` targeting the `cycles.complete` tRPC mutation so the wait
+is both fast and deterministic.
+
+**Contract**: The helper waits for the server response confirming cycle completion
+before clicking the break-choice button. Remove the misleading comment about
+"polling button enabled-state". Timeout: 10 s (generous for CI).
+
+#### 2. Non-focused completion test — invoke actual completion path
+
+**File**: `src/hooks/use-pomodoro-cycle.test.tsx`
+
+**Intent**: The test "non-focused task completion during cycle leaves timer and
+focused task unchanged (integration)" only asserts state identity without
+exercising the non-focused path. Add an actual task-update call for a
+non-focused task and verify the cycle state, timer, focusedTask,
+awaitingCheckIn, and awaitingBreakChoice remain unchanged.
+
+**Contract**: Render with a mock `task.update` mutation (or the existing task
+update mechanism); invoke completion for a task whose `id !== focusedTaskId`;
+assert state is untouched AND the mutation was called for the non-focused task.
+
+#### 3. `onChooseBreak` error handling — preserve retry state
+
+**File**: `src/hooks/use-pomodoro-cycle.ts`
+
+**Intent**: The catch block in `onChooseBreak` currently wipes all break-related
+state (focusedTaskId, focusedTask, activeCycle, etc.) and forces idle, losing
+the mandatory-break contract. Instead, preserve the selected break kind and mark
+the gate as recoverable so the user can retry.
+
+**Contract**: On `startBreakAfterWorkComplete` failure inside `onChooseBreak`:
+- Set error message (existing).
+- Re-open the break-choice gate (`setAwaitingBreakChoice(true)`) with the
+  previously chosen kind as the suggestion, rather than discarding it.
+- Do NOT clear `focusedTaskId`, `focusedTask`, `activeCycle`, `cycleKind`.
+- The existing `pendingWedgeRecovery` mechanism may be reused or a simpler inline
+  retry is acceptable if it preserves the gate.
+
+#### 4. Await `cycles.complete` before opening the break-choice gate (auth path)
+
+**File**: `src/hooks/use-pomodoro-cycle.ts`
+
+**Intent**: In `continueAfterCheckIn`, `cycles.complete` runs fire-and-forget
+while `setAwaitingBreakChoice(true)` is already set. If the user clicks the
+break button before `cycles.complete` resolves, `cycles.create` races with it
+("A cycle is already running"). Guard the chooser button by deferring
+`setAwaitingBreakChoice(true)` until after `cycles.complete` succeeds, OR keep
+the gate open but disable the confirm action (via a `breakChoicePending` flag)
+until completion settles.
+
+**Contract**: The break-choice overlay may render immediately (to reduce perceived
+latency), but its confirm button must be disabled/unclickable until
+`cycles.complete` resolves. On failure, roll back to the `pendingWedgeRecovery`
+error state. Update the E2E helper if the timing changes.
+
+#### 5. Rehydrate `cyclesSinceLastLong` from session history on recovery
+
+**File**: `src/hooks/use-pomodoro-cycle.ts`
+
+**Intent**: `cyclesSinceLastLong` starts at 0 on mount and is never rehydrated
+from the persisted session's completed cycles / break history. After a page
+reload mid-session the cadence suggestion resets, potentially offering Short
+when Long is due (or vice-versa).
+
+**Contract**: During the existing recovery/rehydration path (where `activeCycle`
+is restored from the server), derive `cyclesSinceLastLong` from the session's
+completed WORK cycles and the last LONG_BREAK position. Reset to 0 at session
+start and session end (already correct). Add a unit test that verifies a
+rehydrated hook produces the correct suggestion after N short breaks in the
+session.
+
+#### 6. Consolidate cadence tracking — fix double-increment risk
+
+**File**: `src/hooks/use-pomodoro-cycle.ts`
+
+**Intent**: `computeBreakAfterWork` increments `completedWorkCycles` (returns
+`newCount = completedWorkCycles + 1`) and `continueAfterCheckIn` immediately
+calls `setCompletedWorkCycles(newCount)`. Then `startBreakAfterWorkComplete`
+*also* reads `completedWorkCycles` and increments it (`const newCount =
+completedWorkCycles + 1`). Because React state batching may or may not have
+flushed the first update, the second increment can produce a double-count or a
+stale-value suggestion.
+
+**Contract**: Remove the `setCompletedWorkCycles(newCount)` in
+`continueAfterCheckIn` — let `startBreakAfterWorkComplete` be the single owner
+of that counter increment. The cadence suggestion in `continueAfterCheckIn`
+should be derived from `cyclesSinceLastLong` alone (which is already the intent
+of step 5's contract). `computeBreakAfterWork` may be inlined or kept as a pure
+helper that does NOT mutate state. Add a test asserting that after
+`continueAfterCheckIn` → `onChooseBreak`, `completedWorkCycles` incremented
+exactly once.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Type checking passes: `pnpm typecheck`
+- Lint/format passes: `pnpm check`
+- Hook tests pass (cadence, retry, non-focused): `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx`
+- E2E belt passes: `pnpm test:e2e:belt`
+
+#### Manual Verification:
+
+- After a page reload mid-session (with 2 short breaks taken), the break-choice overlay suggests the correct kind (not reset to Short).
+- If break creation fails (simulate offline), the chooser stays open with the retry option rather than dumping to idle.
+
+---
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
@@ -530,3 +655,18 @@ on it.
 
 - [x] 4.5 `/focus` completion circle ends the cycle into the break flow — 5f74981
 - [x] 4.6 `/tasks` focused completion redirects to `/focus` and gates play; non-focused stays put — 5f74981
+
+
+### Phase 5: CodeRabbit review fixes (PR #200)
+
+#### Automated
+
+- [ ] 5.1 Type checking passes: `pnpm typecheck`
+- [ ] 5.2 Lint/format passes: `pnpm check`
+- [ ] 5.3 Hook tests pass (cadence, retry, non-focused)
+- [ ] 5.4 E2E belt passes
+
+#### Manual
+
+- [ ] 5.5 After page reload mid-session, break-choice suggests correct kind (not reset)
+- [ ] 5.6 If break creation fails, chooser stays open with retry (not dumped to idle)
