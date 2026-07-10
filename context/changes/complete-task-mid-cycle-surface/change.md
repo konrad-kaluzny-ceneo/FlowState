@@ -1,9 +1,9 @@
 ---
 change_id: complete-task-mid-cycle-surface
 title: One session = one task — finishing the focused task ends the cycle into a mandatory break
-status: implementing
+status: implemented
 created: 2026-07-06
-updated: 2026-07-09
+updated: 2026-07-10
 archived_at: null
 ---
 
