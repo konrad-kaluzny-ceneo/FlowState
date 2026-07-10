@@ -351,7 +351,8 @@
 		"breakSettingsShort": "Short break",
 		"breakSettingsLong": "Long break",
 		"boundsBreak": "1 s – 30 min",
-		"completeFocusedTaskAria": "Mark focused task complete"
+		"completeFocusedTaskAria": "Mark focused task complete",
+		"completeFocusedTaskLabel": "Done"
 	},
 	"Home": {
 		"offlineBanner": "You're offline — retry when you're back online."

@@ -132,22 +132,25 @@ export function TimerPanel({
 							: t("statusFocusingOn")}
 				</p>
 				{!isBreak && (
-					<div className="mt-1 flex items-center justify-center gap-2">
+					<div className="mt-1 flex items-center justify-center gap-3">
+						<p className="font-semibold text-primary text-xl">
+							{focusedTask?.title ?? t("focusedTaskFallback")}
+						</p>
 						{onCompleteFocusedTask != null && !isPaused && (
 							<button
 								aria-label={t("completeFocusedTaskAria")}
-								className="shrink-0 rounded-full text-text-secondary transition hover:text-accent-success focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40"
+								className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent-success/30 bg-accent-success/10 px-2.5 py-1 text-accent-success transition hover:border-accent-success/50 hover:bg-accent-success/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40"
 								data-testid="focus-complete-focused-task"
 								disabled={isCompletingFocusedTask}
 								onClick={onCompleteFocusedTask}
 								type="button"
 							>
-								<CheckCircle aria-hidden="true" className="h-5 w-5" />
+								<CheckCircle aria-hidden="true" className="h-4 w-4" />
+								<span className="font-semibold text-xs">
+									{t("completeFocusedTaskLabel")}
+								</span>
 							</button>
 						)}
-						<p className="font-semibold text-primary text-xl">
-							{focusedTask?.title ?? t("focusedTaskFallback")}
-						</p>
 					</div>
 				)}
 				<div className="mt-4 flex justify-center">
