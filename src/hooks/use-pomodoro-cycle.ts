@@ -2180,7 +2180,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			const breakKind: CycleKind =
 				overrideBreakKind ??
-				(newCount % 4 === 0 ? "LONG_BREAK" : "SHORT_BREAK");
+				(cyclesSinceLastLong + 1 >= 4 ? "LONG_BREAK" : "SHORT_BREAK");
 
 			// Cadence tracking: taking a Long resets; taking a Short increments.
 			if (breakKind === "LONG_BREAK") {
@@ -2223,6 +2223,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		},
 		[
 			completedWorkCycles,
+			cyclesSinceLastLong,
 			cycles,
 			invalidateDailyRecap,
 			invalidateDayPlan,
@@ -2627,6 +2628,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				// Preserve the mandatory-break contract: re-open the gate with the
 				// chosen kind as suggestion so the user can retry. Do NOT wipe cycle
 				// state — the work cycle is already completed server-side.
+				// Roll back optimistic counter increments so retry suggestion is correct.
+				setCompletedWorkCycles((c) => c - 1);
+				if (kind === "LONG_BREAK") {
+					setCyclesSinceLastLong((prev) => prev + 1);
+				} else {
+					setCyclesSinceLastLong((prev) => Math.max(0, prev - 1));
+				}
 				setError(tErrors("breakStartFailed"));
 				setPendingMarkTaskDone(markTaskDone);
 				setSuggestedBreakKind(kind);
@@ -2747,6 +2755,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				setPendingMarkTaskDone(true);
 				setAwaitingBreakChoice(true);
 			} catch {
+				// Guest mode: accept state loss on failure (no server recovery).
+				// The error banner is shown; user restarts manually.
 				setError(tErrors("breakStartFailed"));
 				setState("idle");
 				setRemainingMs(0);

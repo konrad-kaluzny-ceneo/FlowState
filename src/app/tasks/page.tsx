@@ -55,6 +55,9 @@ function AuthenticatedTasksPage() {
 					}}
 					onMidCycleMarkComplete={(taskId, task) => {
 						pomodoro.onMidCycleMarkComplete(taskId, task);
+						// Navigate to /focus where check-in/break-choice gates render.
+						// Async completion persists in the shared context provider
+						// across route changes.
 						router.push("/focus");
 					}}
 					onOpenArchive={() => setView("archive")}
@@ -102,6 +105,9 @@ function GuestTasksPage() {
 					}}
 					onMidCycleMarkComplete={(taskId, task) => {
 						pomodoro.onMidCycleMarkComplete(taskId, task);
+						// Navigate to /focus where check-in/break-choice gates render.
+						// Async completion persists in the shared context provider
+						// across route changes.
 						router.push("/focus");
 					}}
 					onOpenArchive={() => setView("archive")}

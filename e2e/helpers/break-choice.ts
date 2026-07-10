@@ -15,17 +15,17 @@ export async function chooseBreakKind(
 	kind: BreakChoiceKind = "short",
 ) {
 	const overlay = page.getByTestId("break-choice-overlay");
-	await expect(overlay).toBeVisible({ timeout: 15_000 });
+	await expect(overlay).toBeVisible({ timeout: 10_000 });
 	const testId = kind === "short" ? "break-choice-short" : "break-choice-long";
 	const btn = page.getByTestId(testId);
 
 	// The button starts disabled while cycles.complete is in-flight. Wait for it
 	// to become enabled — this is the deterministic signal that the server
 	// confirmed work-cycle completion and break creation is safe.
-	await expect(btn).toBeEnabled({ timeout: 10_000 });
+	await expect(btn).toBeEnabled({ timeout: 5_000 });
 
 	await btn.click();
-	await expect(overlay).toBeHidden({ timeout: 10_000 });
+	await expect(overlay).toBeHidden({ timeout: 5_000 });
 }
 
 /**
