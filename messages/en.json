@@ -350,7 +350,8 @@
 		"breakSettingsShow": "Break settings ▼",
 		"breakSettingsShort": "Short break",
 		"breakSettingsLong": "Long break",
-		"boundsBreak": "1 s – 30 min"
+		"boundsBreak": "1 s – 30 min",
+		"completeFocusedTaskAria": "Mark focused task complete"
 	},
 	"Home": {
 		"offlineBanner": "You're offline — retry when you're back online."

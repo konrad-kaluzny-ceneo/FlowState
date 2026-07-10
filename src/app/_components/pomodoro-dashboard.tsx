@@ -779,7 +779,16 @@ export function PomodoroDashboardBody({
 			focusedTask={
 				showCalmKickoffTimer ? calmKickoffTask : pomodoro.focusedTask
 			}
+			isCompletingFocusedTask={pomodoro.isMidCycleSubmitting}
 			isStarting={false}
+			onCompleteFocusedTask={
+				!showCalmKickoffTimer &&
+				pomodoro.state === "running" &&
+				pomodoro.cycleKind === "WORK" &&
+				pomodoro.focusedTaskId != null
+					? pomodoro.onCompleteFocusedTask
+					: undefined
+			}
 			onInterrupt={pomodoro.interrupt}
 			onOutOfTabBreakAlertsChange={setOutOfTabBreakAlertsEnabled}
 			onPause={pomodoro.pause}

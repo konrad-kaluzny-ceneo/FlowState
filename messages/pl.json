@@ -350,7 +350,8 @@
 		"breakSettingsShow": "Ustawienia przerwy ▼",
 		"breakSettingsShort": "Krótka przerwa",
 		"breakSettingsLong": "Długa przerwa",
-		"boundsBreak": "1 s – 30 min"
+		"boundsBreak": "1 s – 30 min",
+		"completeFocusedTaskAria": "Oznacz skupione zadanie jako ukończone"
 	},
 	"Home": {
 		"offlineBanner": "Jesteś offline — spróbuj ponownie, gdy wrócisz online."
