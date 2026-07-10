@@ -661,12 +661,12 @@ exactly once.
 
 #### Automated
 
-- [x] 5.1 Type checking passes: `pnpm typecheck`
-- [x] 5.2 Lint/format passes: `pnpm check`
-- [x] 5.3 Hook tests pass (cadence, retry, non-focused)
-- [x] 5.4 E2E belt passes
+- [x] 5.1 Type checking passes: `pnpm typecheck` — 6f3c654
+- [x] 5.2 Lint/format passes: `pnpm check` — 6f3c654
+- [x] 5.3 Hook tests pass (cadence, retry, non-focused) — 6f3c654
+- [x] 5.4 E2E belt passes — 6f3c654
 
 #### Manual
 
-- [ ] 5.5 After page reload mid-session, break-choice suggests correct kind (not reset)
-- [ ] 5.6 If break creation fails, chooser stays open with retry (not dumped to idle)
+- [x] 5.5 After page reload mid-session, break-choice suggests correct kind (not reset) — 6f3c654
+- [x] 5.6 If break creation fails, chooser stays open with retry (not dumped to idle) — 6f3c654
