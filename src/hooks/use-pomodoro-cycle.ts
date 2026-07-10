@@ -2729,6 +2729,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		setIsMidCycleSubmitting(true);
 		setError(null);
 
+		// Clear focused task state so the completed task is not shown after the
+		// break — whether the break ends naturally or is interrupted early.
+		setPreFocusedTask(null);
+		setFocusedTaskId(null);
+		setFocusedTask(null);
+
 		stopWorker();
 		endTimeRef.current = null;
 		setState("completed");
