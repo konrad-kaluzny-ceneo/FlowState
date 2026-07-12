@@ -5,6 +5,7 @@
  * Anti-patterns avoided: UI login, waitForTimeout, CSS/XPath locators, shared storageState.
  */
 import { expect, test } from "./fixtures";
+import { chooseBreakKind } from "./helpers/break-choice";
 import { completeCheckIn } from "./helpers/check-in";
 import { resetCycleRecoveryAfterReload } from "./helpers/cycle-recovery";
 import { continueLaterButton } from "./helpers/i18n-locators";
@@ -67,6 +68,7 @@ test.describe("Seed exemplar — Risk #7 check-in gate", () => {
 		await expectShortBreakPhaseHidden(page);
 		await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 		await completeCheckIn(page, "steady");
+		await chooseBreakKind(page, "short");
 		await expectShortBreakPhaseVisible(page);
 	});
 });

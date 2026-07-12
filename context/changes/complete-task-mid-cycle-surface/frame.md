@@ -1,118 +1,152 @@
-# Frame Brief: Completing a task mid-cycle is invisible where it's triggered
+# Frame Brief: One session = one task → mandatory break on completing the focused task
 
 > Framing step before /10x-plan. This document captures what is *actually*
 > at issue, separated from what was initially assumed.
+>
+> **Revised 2026-07-09.** The user changed the framing after the first pass (see
+> "Framing history" below). Both the observation and the desired product model
+> are now different from the original brief — this version is authoritative.
 
 ## Reported Observation
 
 When I complete a task during a running cycle, I only see the option to switch
 to the next task **after I navigate to the `/focus` view**. On the task list
-(`/tasks`) itself, clicking the task's complete-circle produces **nothing
-visible** (user-confirmed). Two things should be possible:
+(`/tasks`), clicking the task's complete-circle produces **nothing visible**.
 
-- From the task list, properly close a task (pick the next task, or end the session).
-- From the Focus view, finish the current task.
+## Framing history
 
-## Initial Framing (preserved)
+- **Original framing (2026-07-06):** user offered two candidate causes —
+  (a) completion mid-cycle shouldn't be allowed without ending the cycle, or
+  (b) next-task functions are missing. First-pass investigation ruled both out
+  and reframed the issue as a *split surface* (trigger on `/tasks`, overlay only
+  on `/focus`), recommending the overlay simply be co-located.
+- **Revised framing (2026-07-09, authoritative):** user deliberately adopts a
+  variant of candidate (a). The problem is **not** where the overlay renders —
+  it is that the app *allows finishing a task mid-cycle and continuing the same
+  cycle with a different task at all*. That context-switch-within-a-session is
+  the thing to remove. The product model should be **"one session = one task,
+  then a short break to clear the mind."**
 
-- **User's stated cause or approach**: Either (a) the problem is *allowing*
-  task completion mid-cycle without ending the cycle, or (b) the problem is a
-  *lack of functions* to select the next task.
-- **User's proposed direction**: Deliver both — (1) close a task from the task
-  list with a next/end-session choice; (2) finish the current task from Focus.
-- **Pre-dispatch narrowing**: On `/tasks`, "nothing visible happens" when the
-  complete-circle is clicked mid-cycle. Both deliverables are equally in scope
-  and should be treated as one coherent change.
+## Desired Behavior Model (user, authoritative)
+
+1. Finishing a task before the session ends must lead into a **short break**
+   (mind reset) — no "continue this cycle with another task" branch.
+2. The focused task can be completed **from the Focus view**.
+3. Completing the **focused** task (the one the session is about) from `/tasks`
+   **auto-ends the session into a break**, exactly as if done from `/focus`.
+4. Completing a **non-focused** task must **not** affect the running session —
+   `/focus` stays on the active task, cycle keeps running.
+5. Completing the focused task → **auto-transition to break**, with **no
+   next-task selection** for the current session.
+6. The user chooses **short vs long break**; the system-suggested option is
+   marked with a **star** (★) alongside.
+7. Effect: "one session = one task without changing context, then a short break."
+8. On ending the **session**, the user still gets the **"did you finish the
+   task?"** choice.
+
+## Current Behavior vs Desired (grounded in code)
+
+| # | Desired | Current code | Gap |
+| --- | --- | --- | --- |
+| 1/5 | Focused-task completion → mandatory break, no next-task pick | `onMidCycleMarkComplete` (`use-pomodoro-cycle.ts:2700`) opens `MidCycleCompletionPrompt`, which offers **"continue with another task"** OR "end cycle & break" (`mid-cycle-completion-prompt.tsx`) | The continue-with-another-task branch must be **removed** for the focused task; completion should route straight to break |
+| 2 | Complete focused task from `/focus` | No trigger anywhere in `pomodoro-dashboard.tsx`; `/focus` shows the task title only (TaskList moved to `/tasks`, lessons L-06) | New affordance needed on `/focus` |
+| 3 | Focused completion on `/tasks` behaves like `/focus` (auto break) | Trigger sets shared `midCyclePendingTask` but the overlay is mounted **only** on `/focus` (`pomodoro-dashboard.tsx:1058`); `/tasks` renders nothing → "nothing visible" | `/tasks` must drive the same auto-break path, not silently set state |
+| 4 | Non-focused completion doesn't touch the session | `onMidCycleMarkComplete` fires for **every** row (`task-list.tsx:609` `canMidCycleMarkComplete`) and sets the prompt regardless of whether the task is focused (no focused/other distinction at line 2700) | Must branch: non-focused → plain complete, no session effect |
+| 6 | User picks short/long break, star on suggestion | Break kind is **auto-computed** by cadence: `computeBreakAfterWork` / `startBreakAfterWorkComplete` use `newCount % 4 === 0 ? LONG : SHORT` (`use-pomodoro-cycle.ts:223,2156`); no chooser, no star | New break-kind chooser UI + keep the cadence result as the ★-marked suggestion |
+| 8 | Session-end keeps "finished the task?" prompt | `CycleCompleteOverlay` WORK variant already offers mark-complete / continue-later (`cycle-complete-overlay.tsx:152-170`); `endSession` exists (`use-pomodoro-cycle.ts`) | Preserve this prompt on the session-end path |
 
 ## Dimension Map
 
 The observation could originate at any of these dimensions:
 
-1. **Completion is disallowed mid-cycle (candidate a)** — the app forbids
-   closing a task while a cycle runs, so the click is a no-op by design.
-2. **Missing next-task selection logic (candidate b)** — no functions exist to
-   pick the next task or end the session after completion.
-3. **Overlay mount location** — the completion trigger and the overlay that
-   renders its state live on different pages, so the trigger sets state with no
-   local surface to display it.
-4. **Missing trigger on Focus** — `/focus` renders the overlay but exposes no
-   control to complete the *current* focused task.
+1. **Mid-cycle completion *semantics*** — what finishing a task during a WORK
+   cycle should do (continue vs break; focused vs other). ← revised framing lands here
+2. **Missing next-task / end-session logic** — whether the functions exist.
+3. **Overlay mount location** — trigger and overlay on different pages.
+4. **Missing trigger on Focus** — no control to complete the current task.
+5. **Break-kind selection** — whether the user can choose short vs long.
 
 ## Hypothesis Investigation
 
 | Hypothesis | Evidence | Verdict |
 | --- | --- | --- |
-| 1. Completion disallowed mid-cycle | `task-list.tsx:609` `canMidCycleMarkComplete` is intentionally enabled during a running/paused WORK cycle; `TaskCompleteButton` routes to `onMidCycleMarkComplete` (`task-list.tsx:143`). The mid-cycle flow is a designed feature, not a block. | NONE |
-| 2. Missing next-task / end-session logic | `MidCycleCompletionPrompt` (`mid-cycle-completion-prompt.tsx`) already renders a selectable list of other active tasks + resume note, plus an "end cycle and break" button. Hook exposes `onMidCycleContinueWithTask` and `onMidCycleEndCycleAndBreak` (`use-pomodoro-cycle.ts:3034,3357`). All logic exists. | NONE |
-| 3. Overlay mount location | Trigger on `/tasks` sets shared context: `onMidCycleMarkComplete` → `setMidCyclePendingTask` (`use-pomodoro-cycle.ts:3023-3029`). Overlay is rendered **only** in `pomodoro-dashboard.tsx:1211` (the `/focus` page via `HomeShell`). `grep` for `TaskList`/`MidCycleCompletionPrompt` in `tasks/page.tsx` shows the trigger but no overlay; `grep` for `TaskList` in `pomodoro-dashboard.tsx` returns nothing. State is shared via `pomodoro-cycle-provider`, so it persists and appears only after navigating to `/focus`. User confirms "nothing visible happens" on `/tasks`. | STRONG |
-| 4. Missing trigger on Focus | `grep` for `onMidCycleMarkComplete` / `task-complete` in the Focus dashboard components returns no matches. `/focus` shows the focused task **title** only; TaskList was moved off `/focus` in the UI refactor (lessons L-06). No control exists to complete the focused task from Focus. | STRONG |
+| 2. Missing next-task/end-session logic | `MidCycleCompletionPrompt` + `onMidCycleContinueWithTask`/`onMidCycleEndCycleAndBreak` (`use-pomodoro-cycle.ts:2711,2999`) all exist | NONE (logic exists) |
+| 3. Overlay mount location | Overlay only in `pomodoro-dashboard.tsx:1058`; `/tasks` wires the trigger but renders no overlay; state shared via provider → appears only after navigating to `/focus`. User-confirmed "nothing visible" on `/tasks` | STRONG (real, but a *symptom*, not the product problem) |
+| 4. Missing trigger on Focus | No `onMidCycleMarkComplete`/complete control in the Focus dashboard | STRONG |
+| 1/5. Completion semantics wrong for the model | Current flow lets a session context-switch to another task and treats every completion identically (no focused/other split); break is never mandatory. Contradicts the desired "one session = one task → break" | STRONG (this is the product problem per the revised framing) |
+| 6. No break-kind choice | Break kind auto-decided by `%4` cadence, no user control (`use-pomodoro-cycle.ts:223,2156`) | STRONG |
 
 ## Narrowing Signals
 
-- User-confirmed: on `/tasks`, clicking complete mid-cycle shows **nothing** —
-  rules in Dimension 3 (state set, no local surface) and rules out Dimension 1
-  (a disallowed action would be disabled/greyed, not silently swallowed).
-- The `MidCycleCompletionPrompt` component and its hook callbacks exist and are
-  fully wired — rules out Dimension 2.
-- `/focus` exposes the focused task title but no completion control — confirms
-  Dimension 4 independently of the `/tasks` issue.
-- User: both deliverables equally in scope → this is one change spanning both
-  surfaces, not two competing framings.
+- User-confirmed: `/tasks` completion shows **nothing** (state set, no local surface).
+- User decision (2026-07-09): keep the cycle→break coupling **mandatory** and
+  drop the "continue with another task" branch for the focused task.
+- Code shows completion is currently **task-agnostic** (focused vs other not
+  distinguished) — directly at odds with rules 3–5.
+- Break kind is currently **not** user-selectable — rule 6 is net-new UI.
 
 ## Cross-System Convention
 
-In this codebase, transition/completion decisions are surfaced through overlay
-gates (`CycleCompleteOverlay`, `end-session-confirm-overlay`,
-`session-closure-overlay`) that must be **mounted on the page where the action
-originates** and must open→accept→dismiss on that same surface. Lessons: "Test
-every wedge transition before shipping" warns specifically about gates that
-"appear but do nothing" / trap the user. The current state — a trigger on
-`/tasks` whose gate only renders on `/focus` — is exactly the dead-end shape
-that convention exists to prevent. The leading hypothesis matches the
-convention: the overlay must live wherever its trigger lives.
+Break sequencing is owned by the transition conductor / wedge overlays
+(`transition-conductor.ts`, `CycleCompleteOverlay`, `startBreakAfterWorkComplete`),
+and gates must open→accept→dismiss on the surface where the action originates
+(lessons: "Test every wedge transition before shipping" — guard against gates
+that "appear but do nothing"). The new mandatory-break-on-completion path and the
+break-kind chooser should route through the conductor, not stack ad-hoc overlays.
 
 ## Reframed (or Confirmed) Problem Statement
 
-> **The actual problem to plan around is**: the mid-cycle task-completion flow
-> exists and works, but its **surfaces are split across pages** — the trigger
-> lives on `/tasks` while the choice overlay is mounted only on `/focus`, and
-> `/focus` has the overlay but no trigger. So the completion decision never
-> appears on the page where the user acts.
+> **The actual problem to plan around is**: mid-cycle task completion currently
+> lets a session change context (continue the same cycle with a different task)
+> and never forces a break, which breaks the intended "one session = one task →
+> short break" rhythm. Completing the **focused** task should end the cycle into
+> a **mandatory, user-chosen (short/long, ★-suggested) break** from either
+> `/tasks` or `/focus`; completing a **non-focused** task should do nothing to
+> the session; and the session-end "did you finish the task?" prompt stays.
 
-Both of the user's candidate causes are wrong: completion mid-cycle is an
-intended feature (not a bug to remove), and the next-task/end-session functions
-already exist (not missing). Addressing the real problem means making the
-`MidCycleCompletionPrompt` render wherever `midCyclePendingTask` is set (so
-`/tasks` shows it in place), and giving `/focus` a way to complete the current
-focused task so it can trigger the same flow. Nothing about the cycle-lifecycle
-or the selection logic needs to change.
+This supersedes the original "just co-locate the overlay" direction. The overlay
+split (Dimension 3) and the missing `/focus` trigger (Dimension 4) are still
+real and must be fixed, but as *part of* delivering the new completion semantics
+— not as the whole change. Note this **removes** an existing, tested feature
+(the "continue with another task" mid-cycle branch), so its tests/e2e
+(`e2e/mid-cycle-last-task.spec.ts`, `mid-cycle-completion-prompt.test.tsx`) need
+updating/retiring.
 
 ## Confidence
 
-- **HIGH** — strong, file-referenced evidence for Dimensions 3 and 4; none for
-  the two initial candidates; matches the codebase's overlay-gate convention;
-  and the decisive narrowing signal ("nothing visible on `/tasks`") is
-  user-confirmed.
+- **HIGH** — the desired model is a direct user product decision, and every
+  current-vs-desired gap is grounded with file:line evidence. The one open
+  design question (short/long break chooser UX + star) is a UI detail for
+  /10x-plan, not a framing risk.
 
 ## What Changes for /10x-plan
 
-The plan should be about **co-locating the completion surface with its trigger**
-on both pages, not about cycle rules or new selection logic: (1) render
-`MidCycleCompletionPrompt` (bound to shared `midCyclePendingTask`) on `/tasks`
-so completing there shows the next/end-session choice in place; (2) add a
-"complete current task" affordance to the `/focus` dashboard that calls the
-existing `onMidCycleMarkComplete`. Reuse the existing hook callbacks and
-overlay; watch the lessons' dismiss-oracle rule for every gate on every surface.
+Plan the **new mid-cycle completion semantics**, not an overlay relocation:
+(1) branch `onMidCycleMarkComplete` on focused vs non-focused — non-focused
+completes plainly with no session effect; (2) focused completion routes to a
+**mandatory break** via the existing break-start path, dropping the
+continue-with-another-task branch; (3) add a complete-focused-task affordance on
+`/focus`, and make `/tasks` focused-completion drive the same path (so it works
+from both surfaces); (4) add a **short/long break chooser** with the
+cadence-based suggestion marked by a ★, replacing the silent `%4` auto-decision;
+(5) preserve the "did you finish the task?" prompt on session end; (6) update or
+retire the mid-cycle "continue with another task" tests. Treat all break/gate
+transitions as critical paths with dismiss-oracles (lessons).
 
 ## References
 
 - Source files:
-  - `src/app/_components/mid-cycle-completion-prompt.tsx` (overlay UI)
-  - `src/app/_components/pomodoro-dashboard.tsx:1211` (overlay mounted, /focus only)
+  - `src/hooks/use-pomodoro-cycle.ts:2700` (`onMidCycleMarkComplete`, no focused/other split)
+  - `src/hooks/use-pomodoro-cycle.ts:2711` (`onMidCycleContinueWithTask` — branch to drop)
+  - `src/hooks/use-pomodoro-cycle.ts:2999` (`onMidCycleEndCycleAndBreak`)
+  - `src/hooks/use-pomodoro-cycle.ts:223,2156` (`computeBreakAfterWork` / `startBreakAfterWorkComplete` — %4 cadence)
+  - `src/app/_components/mid-cycle-completion-prompt.tsx` (continue-with-another-task UI)
+  - `src/app/_components/cycle-complete-overlay.tsx:152` ("finished the task?" prompt)
+  - `src/app/_components/pomodoro-dashboard.tsx:1058` (overlay mounted, /focus only)
   - `src/app/tasks/page.tsx:56` (trigger wired, no overlay)
-  - `src/app/_components/task-list.tsx:143,609` (complete-circle → onMidCycleMarkComplete)
-  - `src/hooks/use-pomodoro-cycle.ts:3023,3034,3357` (hook callbacks + state)
-  - `src/app/_components/pomodoro-cycle-provider.tsx` (shared context)
+  - `src/app/_components/task-list.tsx:609` (`canMidCycleMarkComplete`, every row)
 - Related lessons: `context/foundation/lessons.md` — "Test every wedge
   transition before shipping"; L-06 (task-list moved from /focus to /tasks)
-- Investigation: direct source trace (no sub-agents dispatched; surface small)
+- Tests to update/retire: `e2e/mid-cycle-last-task.spec.ts`,
+  `src/app/_components/mid-cycle-completion-prompt.test.tsx`
+- Investigation: direct source trace (no sub-agents; surface small)

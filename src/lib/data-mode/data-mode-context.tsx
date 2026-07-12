@@ -113,11 +113,6 @@ export function DataModeProvider({
 						input: Parameters<typeof utils.client.cycle.resume.mutate>[0],
 					) => utils.client.cycle.resume.mutate(input),
 				},
-				rebindTask: {
-					mutate: (
-						input: Parameters<typeof utils.client.cycle.rebindTask.mutate>[0],
-					) => utils.client.cycle.rebindTask.mutate(input),
-				},
 			},
 			session: {
 				getOrCreateActive: {

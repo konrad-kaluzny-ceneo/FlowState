@@ -1,6 +1,6 @@
 "use client";
 
-import { Pause, Play, Square } from "lucide-react";
+import { CheckCircle, Pause, Play, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -47,6 +47,8 @@ type TimerPanelProps = {
 	onWorkDurationManualChange?: () => void;
 	outOfTabBreakAlertsEnabled?: boolean;
 	onOutOfTabBreakAlertsChange?: (enabled: boolean) => void;
+	onCompleteFocusedTask?: () => void;
+	isCompletingFocusedTask?: boolean;
 };
 
 export function TimerPanel({
@@ -64,6 +66,8 @@ export function TimerPanel({
 	onWorkDurationManualChange,
 	outOfTabBreakAlertsEnabled = true,
 	onOutOfTabBreakAlertsChange,
+	onCompleteFocusedTask,
+	isCompletingFocusedTask = false,
 }: TimerPanelProps) {
 	const t = useTranslations("Timer");
 	const [workDurationSec, setWorkDurationSec] = useState(
@@ -128,9 +132,26 @@ export function TimerPanel({
 							: t("statusFocusingOn")}
 				</p>
 				{!isBreak && (
-					<p className="mt-1 font-semibold text-primary text-xl">
-						{focusedTask?.title ?? t("focusedTaskFallback")}
-					</p>
+					<div className="mt-1 flex items-center justify-center gap-3">
+						<p className="font-semibold text-primary text-xl">
+							{focusedTask?.title ?? t("focusedTaskFallback")}
+						</p>
+						{onCompleteFocusedTask != null && !isPaused && (
+							<button
+								aria-label={t("completeFocusedTaskAria")}
+								className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent-success/30 bg-accent-success/10 px-2.5 py-1 text-accent-success transition hover:border-accent-success/50 hover:bg-accent-success/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40"
+								data-testid="focus-complete-focused-task"
+								disabled={isCompletingFocusedTask}
+								onClick={onCompleteFocusedTask}
+								type="button"
+							>
+								<CheckCircle aria-hidden="true" className="h-4 w-4" />
+								<span className="font-semibold text-xs">
+									{t("completeFocusedTaskLabel")}
+								</span>
+							</button>
+						)}
+					</div>
 				)}
 				<div className="mt-4 flex justify-center">
 					<ProgressRing

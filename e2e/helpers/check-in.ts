@@ -29,6 +29,8 @@ export async function completeCheckIn(
 	await page.getByTestId(ENERGY_TEST_IDS[energy]).click();
 	if (options?.waitForHidden !== false) {
 		// B-04: check-in may stay mounted during post-check-in async break start.
+		// After Phase 1 (break-choice gate), the break-choice overlay may appear
+		// before the actual break starts.
 		await expect
 			.poll(
 				async () => {
@@ -36,10 +38,18 @@ export async function completeCheckIn(
 						.getByTestId("wind-down-overlay")
 						.isVisible();
 					const shortBreakVisible = await isShortBreakPhaseVisible(page);
+					const breakChoiceVisible = await page
+						.getByTestId("break-choice-overlay")
+						.isVisible();
 					const checkInHidden = !(await page
 						.getByTestId("check-in-overlay")
 						.isVisible());
-					return windDownVisible || shortBreakVisible || checkInHidden;
+					return (
+						windDownVisible ||
+						shortBreakVisible ||
+						breakChoiceVisible ||
+						checkInHidden
+					);
 				},
 				{ timeout: 15_000 },
 			)

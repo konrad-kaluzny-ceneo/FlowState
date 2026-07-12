@@ -14,6 +14,7 @@ import { flushSync } from "react-dom";
 
 import { AddTaskModal } from "~/app/_components/add-task-modal";
 import { BreakAlertsPermissionPrompt } from "~/app/_components/break-alerts-permission-prompt";
+import { BreakChoiceOverlay } from "~/app/_components/break-choice-overlay";
 import { CheckInOverlay } from "~/app/_components/check-in-overlay";
 import { CycleCompleteOverlay } from "~/app/_components/cycle-complete-overlay";
 import { DailyRecapPanel } from "~/app/_components/daily-recap-panel";
@@ -29,7 +30,6 @@ import { FocusTip } from "~/app/_components/focus-tip";
 import { GuestContextRail } from "~/app/_components/guest-context-rail";
 import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
-import { MidCycleCompletionPrompt } from "~/app/_components/mid-cycle-completion-prompt";
 import { usePomodoroCycleContext } from "~/app/_components/pomodoro-cycle-provider";
 import { QuickActions } from "~/app/_components/quick-actions";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
@@ -329,15 +329,6 @@ export function PomodoroDashboardBody({
 
 	const { markDoneForToday, createTask, isCreating } = useTaskMutations();
 
-	const midCycleOtherActiveTasks = useMemo(() => {
-		if (pomodoro.midCyclePendingTask == null) {
-			return [];
-		}
-		return tasks.filter(
-			(t) => t.status === "active" && t.id !== pomodoro.midCyclePendingTask?.id,
-		);
-	}, [tasks, pomodoro.midCyclePendingTask]);
-
 	const showTimer =
 		pomodoro.focusedTask != null ||
 		pomodoro.state === "running" ||
@@ -375,6 +366,7 @@ export function PomodoroDashboardBody({
 				enableSuggestionGate,
 				pendingClosureLine: pomodoro.pendingClosureLine,
 				awaitingCheckIn: pomodoro.awaitingCheckIn,
+				awaitingBreakChoice: pomodoro.awaitingBreakChoice,
 				awaitingWindDown: pomodoro.awaitingWindDown,
 				windDownRationale: pomodoro.windDownRationale,
 				isPostCheckInTransitioning: pomodoro.isPostCheckInTransitioning,
@@ -388,6 +380,7 @@ export function PomodoroDashboardBody({
 			enableSuggestionGate,
 			pomodoro.pendingClosureLine,
 			pomodoro.awaitingCheckIn,
+			pomodoro.awaitingBreakChoice,
 			pomodoro.awaitingWindDown,
 			pomodoro.windDownRationale,
 			pomodoro.isPostCheckInTransitioning,
@@ -786,7 +779,16 @@ export function PomodoroDashboardBody({
 			focusedTask={
 				showCalmKickoffTimer ? calmKickoffTask : pomodoro.focusedTask
 			}
+			isCompletingFocusedTask={pomodoro.isMidCycleSubmitting}
 			isStarting={false}
+			onCompleteFocusedTask={
+				!showCalmKickoffTimer &&
+				pomodoro.state === "running" &&
+				pomodoro.cycleKind === "WORK" &&
+				pomodoro.focusedTaskId != null
+					? pomodoro.onCompleteFocusedTask
+					: undefined
+			}
 			onInterrupt={pomodoro.interrupt}
 			onOutOfTabBreakAlertsChange={setOutOfTabBreakAlertsEnabled}
 			onPause={pomodoro.pause}
@@ -1055,23 +1057,6 @@ export function PomodoroDashboardBody({
 				)}
 			</div>
 
-			{pomodoro.midCyclePendingTask != null && (
-				<MidCycleCompletionPrompt
-					isSubmitting={pomodoro.isMidCycleSubmitting}
-					onContinueWithTask={async (taskId, resumeNote) => {
-						const nextTask = tasks.find((t) => t.id === taskId);
-						await pomodoro.onMidCycleContinueWithTask(
-							taskId,
-							nextTask ?? null,
-							resumeNote,
-						);
-					}}
-					onEndCycleAndBreak={pomodoro.onMidCycleEndCycleAndBreak}
-					otherActiveTasks={midCycleOtherActiveTasks}
-					pendingTask={pomodoro.midCyclePendingTask}
-				/>
-			)}
-
 			{showCycleCompleteCatchUp && catchUp != null && (
 				<div className="fixed inset-x-0 top-4 z-[55] flex justify-center px-4">
 					<div className="w-full max-w-md shadow-xl">
@@ -1159,6 +1144,14 @@ export function PomodoroDashboardBody({
 					onEndSession={() => void pomodoro.onWindDownEndSession()}
 					onKeepGoing={() => void pomodoro.onWindDownKeepGoing()}
 					rationale={pomodoro.windDownRationale}
+				/>
+			)}
+
+			{wedgeBeat.showBreakChoice && (
+				<BreakChoiceOverlay
+					isSubmitting={pomodoro.breakChoicePending || pomodoro.isConfirming}
+					onChoose={(kind) => void pomodoro.onChooseBreak(kind)}
+					suggestedKind={pomodoro.suggestedBreakKind}
 				/>
 			)}
 

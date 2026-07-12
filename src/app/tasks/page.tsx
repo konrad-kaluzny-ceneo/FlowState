@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
 
 import { usePomodoroCycleContext } from "~/app/_components/pomodoro-cycle-provider";
@@ -22,6 +23,7 @@ function AuthenticatedTasksPage() {
 	const pomodoro = usePomodoroCycleContext();
 	const { recap } = useDailyRecap();
 	const [view, setView] = useState<"inventory" | "archive">("inventory");
+	const router = useRouter();
 
 	if (view === "archive") {
 		return (
@@ -53,6 +55,10 @@ function AuthenticatedTasksPage() {
 					}}
 					onMidCycleMarkComplete={(taskId, task) => {
 						pomodoro.onMidCycleMarkComplete(taskId, task);
+						// Navigate to /focus where check-in/break-choice gates render.
+						// Async completion persists in the shared context provider
+						// across route changes.
+						router.push("/focus");
 					}}
 					onOpenArchive={() => setView("archive")}
 					onRefresh={refresh}
@@ -68,6 +74,7 @@ function GuestTasksPage() {
 	const { tasks, refresh } = useGuestDomainTasks();
 	const pomodoro = usePomodoroCycleContext();
 	const [view, setView] = useState<"inventory" | "archive">("inventory");
+	const router = useRouter();
 
 	if (view === "archive") {
 		return (
@@ -98,6 +105,10 @@ function GuestTasksPage() {
 					}}
 					onMidCycleMarkComplete={(taskId, task) => {
 						pomodoro.onMidCycleMarkComplete(taskId, task);
+						// Navigate to /focus where check-in/break-choice gates render.
+						// Async completion persists in the shared context provider
+						// across route changes.
+						router.push("/focus");
 					}}
 					onOpenArchive={() => setView("archive")}
 					onRefresh={refresh}

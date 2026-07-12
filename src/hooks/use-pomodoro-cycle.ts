@@ -220,21 +220,6 @@ function allocateOptimisticCycleId(): number {
 	return nextOptimisticCycleId;
 }
 
-function computeBreakAfterWork(completedWorkCycles: number): {
-	newCount: number;
-	breakKind: "SHORT_BREAK" | "LONG_BREAK";
-	breakDurationSec: number;
-} {
-	const newCount = completedWorkCycles + 1;
-	const breakKind: "SHORT_BREAK" | "LONG_BREAK" =
-		newCount % 4 === 0 ? "LONG_BREAK" : "SHORT_BREAK";
-	const breakDurationSec =
-		breakKind === "LONG_BREAK"
-			? getLongBreakDuration()
-			: getShortBreakDuration();
-	return { newCount, breakKind, breakDurationSec };
-}
-
 type WedgeTransitionSnapshot = {
 	awaitingCheckIn: boolean;
 	pendingMarkTaskDone: boolean | null;
@@ -364,7 +349,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const locale = useLocale() as UserLocale;
 	const tErrors = useTranslations("Errors.cycle");
 	const mode = useDataMode();
-	const { cycles, sessions, tasks, refreshGuest } = useRepositories();
+	const { cycles, sessions, refreshGuest } = useRepositories();
 	const utils = api.useUtils();
 
 	const [state, setState] = useState<PomodoroCycleState>("idle");
@@ -383,8 +368,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		null,
 	);
 	const [hasActiveSession, setHasActiveSession] = useState(false);
-	const [midCyclePendingTask, setMidCyclePendingTask] =
-		useState<FocusedTask>(null);
 	const [isMidCycleSubmitting, setIsMidCycleSubmitting] = useState(false);
 	const [awaitingCheckIn, setAwaitingCheckIn] = useState(false);
 	const [pendingMarkTaskDone, setPendingMarkTaskDone] = useState<
@@ -413,6 +396,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const [awaitingWindDown, setAwaitingWindDown] = useState(false);
 	const [isPostCheckInTransitioning, setIsPostCheckInTransitioning] =
 		useState(false);
+	const [awaitingBreakChoice, setAwaitingBreakChoice] = useState(false);
+	const [breakChoicePending, setBreakChoicePending] = useState(false);
+	const [suggestedBreakKind, setSuggestedBreakKind] = useState<
+		"SHORT_BREAK" | "LONG_BREAK"
+	>("SHORT_BREAK");
+	const [cyclesSinceLastLong, setCyclesSinceLastLong] = useState(0);
 	const [windDownDismissed, setWindDownDismissed] = useState(false);
 	const [windDownRationale, setWindDownRationale] = useState<string | null>(
 		null,
@@ -966,16 +955,44 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						sessionId: Number(active.sessionId),
 					});
 					setCompletedWorkCycles(count);
+
+					// Derive cyclesSinceLastLong from session cycle history
+					const sessionCycles = await utils.client.cycle.list.query({
+						sessionId: Number(active.sessionId),
+					});
+					// Cycles are ordered desc by startedAt — reverse for chronological
+					const chronological = [...sessionCycles].reverse();
+					let sinceLastLong = 0;
+					for (const c of chronological) {
+						if (c.kind === "LONG_BREAK" && c.state === "COMPLETED") {
+							sinceLastLong = 0;
+						} else if (c.kind === "WORK" && c.state === "COMPLETED") {
+							sinceLastLong++;
+						}
+					}
+					setCyclesSinceLastLong(sinceLastLong);
 				} else {
 					const { loadSnapshot } = await import("~/lib/guest/store");
 					const snapshot = loadSnapshot();
-					const count = snapshot.cycles.filter(
-						(c) =>
-							c.sessionId === active.sessionId &&
-							c.kind === "WORK" &&
-							c.state === "COMPLETED",
+					const sessionCycles = snapshot.cycles.filter(
+						(c) => c.sessionId === active.sessionId,
+					);
+					const count = sessionCycles.filter(
+						(c) => c.kind === "WORK" && c.state === "COMPLETED",
 					).length;
 					setCompletedWorkCycles(count);
+
+					// Derive cyclesSinceLastLong from guest session history
+					// Guest cycles are stored in insertion order (chronological)
+					let sinceLastLong = 0;
+					for (const c of sessionCycles) {
+						if (c.kind === "LONG_BREAK" && c.state === "COMPLETED") {
+							sinceLastLong = 0;
+						} else if (c.kind === "WORK" && c.state === "COMPLETED") {
+							sinceLastLong++;
+						}
+					}
+					setCyclesSinceLastLong(sinceLastLong);
 				}
 			} catch {
 				// Best effort — counter stays at 0, worst case is wrong break type
@@ -2154,12 +2171,24 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	]);
 
 	const startBreakAfterWorkComplete = useCallback(
-		async (markTaskDone: boolean) => {
+		async (
+			markTaskDone: boolean,
+			overrideBreakKind?: "SHORT_BREAK" | "LONG_BREAK",
+		) => {
 			const newCount = completedWorkCycles + 1;
 			setCompletedWorkCycles(newCount);
 
 			const breakKind: CycleKind =
-				newCount % 4 === 0 ? "LONG_BREAK" : "SHORT_BREAK";
+				overrideBreakKind ??
+				(cyclesSinceLastLong + 1 >= 4 ? "LONG_BREAK" : "SHORT_BREAK");
+
+			// Cadence tracking: taking a Long resets; taking a Short increments.
+			if (breakKind === "LONG_BREAK") {
+				setCyclesSinceLastLong(0);
+			} else {
+				setCyclesSinceLastLong((prev) => prev + 1);
+			}
+
 			const breakDuration =
 				breakKind === "LONG_BREAK"
 					? getLongBreakDuration()
@@ -2194,6 +2223,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		},
 		[
 			completedWorkCycles,
+			cyclesSinceLastLong,
 			cycles,
 			invalidateDailyRecap,
 			invalidateDayPlan,
@@ -2327,17 +2357,15 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			endTimeRef.current = null;
 
 			if (currentKind === "WORK") {
-				try {
-					await startBreakAfterWorkComplete(markTaskDone);
-				} catch {
-					setError(tErrors("breakStartFailed"));
-					setState("idle");
-					setRemainingMs(0);
-					setActiveCycle(null);
-					setCycleKind(null);
-					setFocusedTaskId(null);
-					setFocusedTask(null);
-				}
+				// Defer break creation to the break choice gate
+				const cadenceSuggestion: "SHORT_BREAK" | "LONG_BREAK" =
+					cyclesSinceLastLong + 1 >= 4 ? "LONG_BREAK" : "SHORT_BREAK";
+				setSuggestedBreakKind(cadenceSuggestion);
+				setPendingMarkTaskDone(markTaskDone);
+				setState("completed");
+				stateRef.current = "completed";
+				setRemainingMs(0);
+				setAwaitingBreakChoice(true);
 			} else {
 				clearBreakTransitionLine();
 				const keptFocus = preFocusedTask;
@@ -2366,10 +2394,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		[
 			activeCycle,
 			cycles,
+			cyclesSinceLastLong,
 			invalidateServerCycle,
 			mode,
 			resolvePersistableCycleId,
-			startBreakAfterWorkComplete,
 			stopWorker,
 			utils.task.list,
 			preFocusedTask,
@@ -2455,38 +2483,22 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			const snapshot = captureWedgeTransitionSnapshot();
 			setIsPostCheckInTransitioning(true);
 
-			const { newCount, breakKind, breakDurationSec } =
-				computeBreakAfterWork(completedWorkCycles);
-			const startedAt = new Date();
-			const optimisticEndTime = startedAt.getTime() + breakDurationSec * 1000;
-			const optimisticBreakCycle: DomainActiveCycle = {
-				id: allocateOptimisticCycleId(),
-				sessionId: _activeSessionId ?? -1,
-				userId: "",
-				taskId: null,
-				kind: breakKind,
-				state: "RUNNING",
-				configuredDurationSec: breakDurationSec,
-				startedAt,
-				endedAt: null,
-				task: null,
-			};
-
 			stopWorker();
 			endTimeRef.current = null;
-			setCompletedWorkCycles(newCount);
-			setActiveCycle(optimisticBreakCycle);
-			activeCycleRef.current = optimisticBreakCycle;
-			setCycleKind(breakKind);
-			cycleKindRef.current = breakKind;
-			setState("running");
-			stateRef.current = "running";
-			startWorker(optimisticEndTime);
-			fireBreakOutOfTabAlert(breakKind, optimisticBreakCycle.id);
-			showBreakTransitionLine(breakKind);
+			setState("completed");
+			stateRef.current = "completed";
 			setAwaitingCheckIn(false);
-			setPendingMarkTaskDone(null);
+			setPendingMarkTaskDone(markTaskDone);
 			setIsPostCheckInTransitioning(false);
+
+			// Compute cadence suggestion from cyclesSinceLastLong alone —
+			// completedWorkCycles is incremented only in startBreakAfterWorkComplete
+			// (single owner, no double-increment risk).
+			const cadenceSuggestion: "SHORT_BREAK" | "LONG_BREAK" =
+				cyclesSinceLastLong + 1 >= 4 ? "LONG_BREAK" : "SHORT_BREAK";
+			setSuggestedBreakKind(cadenceSuggestion);
+			setBreakChoicePending(true);
+			setAwaitingBreakChoice(true);
 
 			const endSuggestionFetch = beginSuggestionFetch();
 			const checkInAlreadySaved = options?.checkInAlreadySaved ?? false;
@@ -2529,33 +2541,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					);
 					pendingIncrementInterruptionRef.current = false;
 
-					failurePhase = "start_break";
-					const createCall = cycles.create({
-						kind: breakKind,
-						configuredDurationSec: breakDurationSec,
-					});
-					pendingBreakCreateRef.current = createCall;
-					let breakCycle: CreatedActiveCycle;
-					try {
-						breakCycle = await createCall;
-					} catch (createError) {
-						pendingBreakCreateRef.current = null;
-						throw createError;
-					}
-					pendingBreakCreateRef.current = null;
-
-					const endTime = cycleEndTimeMs(breakCycle);
-					const reconciledBreak: DomainActiveCycle = {
-						...breakCycle,
-						task: null,
-					};
-					setActiveCycle(reconciledBreak);
-					activeCycleRef.current = reconciledBreak;
-					setCycleKind(breakKind);
-					cycleKindRef.current = breakKind;
-					if (Math.abs(endTime - optimisticEndTime) > 2000) {
-						startWorker(endTime);
-					}
+					// Break creation deferred to onChooseBreak — gate is open.
+					setBreakChoicePending(false);
+					pendingWedgeIntentRef.current = null;
+					setPendingWedgeRecovery(null);
 
 					await Promise.all([
 						invalidateServerCycle(),
@@ -2567,12 +2556,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					if (_activeSessionId != null) {
 						void refreshNarrativeStats(_activeSessionId);
 					}
-
-					pendingWedgeIntentRef.current = null;
-					setPendingWedgeRecovery(null);
 				} catch {
 					if (energy == null) {
 						rollbackOptimisticCheckInTransition(snapshot);
+						setBreakChoicePending(false);
+						setAwaitingBreakChoice(false);
 						setError(failureMessage);
 						return;
 					}
@@ -2582,8 +2570,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						energy,
 						markTaskDone,
 						workCycleId,
-						breakKind,
-						breakDurationSec,
+						breakKind: cadenceSuggestion,
+						breakDurationSec:
+							cadenceSuggestion === "LONG_BREAK"
+								? getLongBreakDuration()
+								: getShortBreakDuration(),
 					};
 					pendingWedgeIntentRef.current = wedgeIntent;
 					setPendingWedgeRecovery({
@@ -2592,13 +2583,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						energy,
 					});
 					setError(failureMessage);
+					setBreakChoicePending(false);
 
-					if (failurePhase === "start_break") {
-						return;
-					}
-
-					rollbackOptimisticCheckInTransition(snapshot);
 					if (failurePhase === "check_in") {
+						rollbackOptimisticCheckInTransition(snapshot);
+						setAwaitingBreakChoice(false);
 						setAwaitingCheckIn(true);
 					}
 				} finally {
@@ -2612,10 +2601,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			clearKickoffSuggestion,
 			clearKickoffIdleFlags,
 			captureWedgeTransitionSnapshot,
-			completedWorkCycles,
+			cyclesSinceLastLong,
 			_activeSessionId,
 			stopWorker,
-			startWorker,
 			createCheckIn,
 			cycles,
 			invalidateDailyRecap,
@@ -2624,8 +2612,39 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			utils.task.list,
 			refreshNarrativeStats,
 			rollbackOptimisticCheckInTransition,
-			fireBreakOutOfTabAlert,
-			showBreakTransitionLine,
+			tErrors,
+		],
+	);
+
+	const onChooseBreak = useCallback(
+		async (kind: "SHORT_BREAK" | "LONG_BREAK") => {
+			if (breakChoicePending) return;
+			setAwaitingBreakChoice(false);
+			const markTaskDone = pendingMarkTaskDone ?? false;
+			setPendingMarkTaskDone(null);
+			try {
+				await startBreakAfterWorkComplete(markTaskDone, kind);
+			} catch {
+				// Preserve the mandatory-break contract: re-open the gate with the
+				// chosen kind as suggestion so the user can retry. Do NOT wipe cycle
+				// state — the work cycle is already completed server-side.
+				// Roll back optimistic counter increments so retry suggestion is correct.
+				setCompletedWorkCycles((c) => c - 1);
+				if (kind === "LONG_BREAK") {
+					setCyclesSinceLastLong((prev) => prev + 1);
+				} else {
+					setCyclesSinceLastLong((prev) => Math.max(0, prev - 1));
+				}
+				setError(tErrors("breakStartFailed"));
+				setPendingMarkTaskDone(markTaskDone);
+				setSuggestedBreakKind(kind);
+				setAwaitingBreakChoice(true);
+			}
+		},
+		[
+			breakChoicePending,
+			pendingMarkTaskDone,
+			startBreakAfterWorkComplete,
 			tErrors,
 		],
 	);
@@ -2697,78 +2716,91 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		],
 	);
 
-	const onMidCycleMarkComplete = useCallback(
-		(taskId: DomainTaskId, task: FocusedTask) => {
-			if (state !== "running" || cycleKind !== "WORK" || activeCycle == null) {
-				return;
-			}
-			setError(null);
-			setMidCyclePendingTask(task ?? { id: taskId, title: "" });
-		},
-		[state, cycleKind, activeCycle],
-	);
+	const onCompleteFocusedTask = useCallback(async () => {
+		if (
+			state !== "running" ||
+			cycleKind !== "WORK" ||
+			activeCycle == null ||
+			focusedTaskId == null
+		) {
+			return;
+		}
 
-	const onMidCycleContinueWithTask = useCallback(
-		async (
-			nextTaskId: DomainTaskId,
-			nextTask: FocusedTask,
-			resumeNote: string | null = null,
-		) => {
-			if (midCyclePendingTask == null || activeCycle == null) {
-				return;
-			}
+		setIsMidCycleSubmitting(true);
+		setError(null);
 
-			setIsMidCycleSubmitting(true);
-			setError(null);
+		// Clear focused task state so the completed task is not shown after the
+		// break — whether the break ends naturally or is interrupted early.
+		setPreFocusedTask(null);
+		setFocusedTaskId(null);
+		setFocusedTask(null);
 
+		stopWorker();
+		endTimeRef.current = null;
+		setState("completed");
+		setRemainingMs(0);
+
+		if (mode === "guest") {
 			try {
 				const cycleId = await resolvePersistableCycleId();
-				await tasks.update({
-					id: midCyclePendingTask.id,
-					status: "completed",
-				});
-				if (resumeNote != null && resumeNote.length > 0) {
-					await tasks.update({
-						id: nextTaskId,
-						resumeNote,
-					});
-				}
-				const rebound = await cycles.rebindTask({
-					cycleId,
-					taskId: nextTaskId,
-				});
-				const updatedCycle: DomainActiveCycle = {
-					...activeCycle,
-					id: cycleId,
-					taskId: nextTaskId,
-					task: nextTask ?? rebound.task,
-				};
-				setActiveCycle(updatedCycle);
-				activeCycleRef.current = updatedCycle;
-				setFocusedTaskId(nextTaskId);
-				setFocusedTask(nextTask ?? rebound.task);
-				setMidCyclePendingTask(null);
-
-				await Promise.all([
-					invalidateServerCycle(),
-					utils.task.list.invalidate(),
-				]);
+				await retryOnce(() =>
+					cycles.complete(
+						withWorkDayPlanKey(
+							{
+								cycleId,
+								markTaskDone: true,
+							},
+							{ kind: "WORK", mode },
+						),
+					),
+				);
+				// Defer break creation to the break choice gate
+				const cadenceSuggestion: "SHORT_BREAK" | "LONG_BREAK" =
+					cyclesSinceLastLong + 1 >= 4 ? "LONG_BREAK" : "SHORT_BREAK";
+				setSuggestedBreakKind(cadenceSuggestion);
+				setPendingMarkTaskDone(true);
+				setAwaitingBreakChoice(true);
 			} catch {
-				setError(tErrors("switchTaskFailed"));
+				// Guest mode: accept state loss on failure (no server recovery).
+				// The error banner is shown; user restarts manually.
+				setError(tErrors("breakStartFailed"));
+				setState("idle");
+				setRemainingMs(0);
+				setActiveCycle(null);
+				setCycleKind(null);
+				setFocusedTaskId(null);
+				setFocusedTask(null);
 			} finally {
 				setIsMidCycleSubmitting(false);
 			}
+			return;
+		}
+
+		// Authenticated WORK: route through check-in → break choice gate
+		setPendingMarkTaskDone(true);
+		pendingIncrementInterruptionRef.current = true;
+		setAwaitingCheckIn(true);
+		setIsMidCycleSubmitting(false);
+	}, [
+		state,
+		cycleKind,
+		activeCycle,
+		focusedTaskId,
+		mode,
+		cyclesSinceLastLong,
+		cycles,
+		resolvePersistableCycleId,
+		stopWorker,
+		tErrors,
+	]);
+
+	const onMidCycleMarkComplete = useCallback(
+		(_taskId: DomainTaskId, _task: FocusedTask) => {
+			// For the focused task: delegate to the mandatory-break flow.
+			// The task-list now only calls this for the focused task (Phase 2 step 2).
+			void onCompleteFocusedTask();
 		},
-		[
-			midCyclePendingTask,
-			activeCycle,
-			tasks,
-			cycles,
-			invalidateServerCycle,
-			resolvePersistableCycleId,
-			utils.task.list,
-			tErrors,
-		],
+		[onCompleteFocusedTask],
 	);
 
 	const onCycleCompleteConfirm = useCallback(
@@ -2996,66 +3028,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		tErrors,
 	]);
 
-	const onMidCycleEndCycleAndBreak = useCallback(async () => {
-		if (midCyclePendingTask == null || activeCycle == null) {
-			return;
-		}
-
-		setIsMidCycleSubmitting(true);
-		setError(null);
-
-		stopWorker();
-		endTimeRef.current = null;
-		setMidCyclePendingTask(null);
-		setState("completed");
-		setRemainingMs(0);
-
-		const currentKind = activeCycle.kind;
-
-		if (currentKind !== "WORK" || mode === "guest") {
-			try {
-				const cycleId = await resolvePersistableCycleId();
-				await retryOnce(() =>
-					cycles.complete(
-						withWorkDayPlanKey(
-							{
-								cycleId,
-								markTaskDone: true,
-							},
-							{ kind: currentKind, mode },
-						),
-					),
-				);
-				await startBreakAfterWorkComplete(true);
-			} catch {
-				setError(tErrors("breakStartFailed"));
-				setState("idle");
-				setRemainingMs(0);
-				setActiveCycle(null);
-				setCycleKind(null);
-				setFocusedTaskId(null);
-				setFocusedTask(null);
-			} finally {
-				setIsMidCycleSubmitting(false);
-			}
-			return;
-		}
-
-		setPendingMarkTaskDone(true);
-		pendingIncrementInterruptionRef.current = true;
-		setAwaitingCheckIn(true);
-		setIsMidCycleSubmitting(false);
-	}, [
-		midCyclePendingTask,
-		activeCycle,
-		mode,
-		cycles,
-		resolvePersistableCycleId,
-		startBreakAfterWorkComplete,
-		stopWorker,
-		tErrors,
-	]);
-
 	const endSession = useCallback(
 		async (options?: { endedBy?: "user" | "pause_cap" }) => {
 			const endedBy = options?.endedBy ?? "user";
@@ -3247,9 +3219,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		if (awaitingCheckIn || awaitingWindDown || isPostCheckInTransitioning) {
 			return null;
 		}
-		if (midCyclePendingTask != null) {
-			return null;
-		}
 
 		return buildInFlowSummary({
 			cyclesCompleted: completedWorkCycles,
@@ -3263,7 +3232,6 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		awaitingCheckIn,
 		awaitingWindDown,
 		isPostCheckInTransitioning,
-		midCyclePendingTask,
 		completedWorkCycles,
 		narrativeTasksCompleted,
 		narrativeLatestEnergy,
@@ -3280,10 +3248,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		hasActiveSession,
 		error,
 		pendingWedgeRecovery,
-		midCyclePendingTask,
 		isMidCycleSubmitting,
 		awaitingCheckIn,
 		isPostCheckInTransitioning,
+		awaitingBreakChoice,
+		breakChoicePending,
+		suggestedBreakKind,
 		awaitingWindDown,
 		windDownRationale,
 		isConfirming,
@@ -3347,8 +3317,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		onWindDownKeepGoing,
 		onWindDownEndSession,
 		onMidCycleMarkComplete,
-		onMidCycleContinueWithTask,
-		onMidCycleEndCycleAndBreak,
+		onCompleteFocusedTask,
+		onChooseBreak,
 		endSession,
 		clearError,
 		dismissPendingWedgeRecovery,

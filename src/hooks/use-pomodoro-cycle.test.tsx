@@ -19,7 +19,6 @@ const completeCycle = vi.fn();
 const interruptCycle = vi.fn();
 const pauseCycle = vi.fn();
 const resumeCycle = vi.fn();
-const rebindTask = vi.fn();
 const updateTask = vi.fn();
 const getActiveCycle = vi.fn();
 const invalidateGetActive = vi.fn();
@@ -31,6 +30,8 @@ const suggestionNextMutate = vi.fn();
 const recordDecisionMutate = vi.fn();
 const taskListQuery = vi.fn();
 const getLastEndedQuery = vi.fn();
+const cycleListQuery = vi.fn();
+const countCompletedWorkQuery = vi.fn();
 
 let activeCycleData: DomainActiveCycle | null = null;
 
@@ -108,7 +109,6 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 			interrupt: interruptCycle,
 			pause: pauseCycle,
 			resume: resumeCycle,
-			rebindTask,
 		},
 		tasks: {
 			update: updateTask,
@@ -134,14 +134,14 @@ vi.mock("~/trpc/react", () => ({
 			recap: { getDaily: { invalidate: invalidateRecap } },
 			client: {
 				cycle: {
-					countCompletedWork: { query: vi.fn().mockResolvedValue(0) },
+					countCompletedWork: { query: countCompletedWorkQuery },
 					countTasksCompletedInSession: {
 						query: vi.fn().mockResolvedValue(0),
 					},
 					getLatestCheckInEnergy: {
 						query: vi.fn().mockResolvedValue(null),
 					},
-					list: { query: vi.fn().mockResolvedValue([]) },
+					list: { query: cycleListQuery },
 				},
 				task: { list: { query: taskListQuery } },
 				session: {
@@ -225,12 +225,14 @@ function assertNoCycleCompleteFlash(result: PomodoroCycleHookResult) {
 	const {
 		awaitingCheckIn,
 		awaitingWindDown,
+		awaitingBreakChoice,
 		isPostCheckInTransitioning,
 		state,
 	} = result.current;
 	if (
 		!awaitingCheckIn &&
 		!awaitingWindDown &&
+		!awaitingBreakChoice &&
 		!isPostCheckInTransitioning &&
 		state === "completed"
 	) {
@@ -454,18 +456,8 @@ describe("usePomodoroCycle", () => {
 		});
 		taskListQuery.mockResolvedValue([]);
 		getLastEndedQuery.mockResolvedValue(null);
-		rebindTask.mockImplementation(async (input) => ({
-			id: 99,
-			sessionId: 1,
-			userId: "user-1",
-			taskId: input.taskId,
-			kind: "WORK",
-			state: "RUNNING",
-			configuredDurationSec: 120,
-			startedAt: new Date(),
-			endedAt: null,
-			task: { id: input.taskId, title: "Next task" },
-		}));
+		cycleListQuery.mockResolvedValue([]);
+		countCompletedWorkQuery.mockResolvedValue(0);
 	});
 
 	it("starts idle and transitions to running on start()", async () => {
@@ -1124,12 +1116,20 @@ describe("usePomodoroCycle", () => {
 			await result.current.confirmComplete(true);
 		});
 
+		// After confirmComplete, break-choice gate opens
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
+
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
 		expect(completeCycle).toHaveBeenCalledWith({
 			cycleId: 11,
 			markTaskDone: true,
 			localDateKey: "2026-06-19",
 		});
-		// After work cycle complete, break auto-starts
+		// After choosing break, break starts
 		expect(result.current.state).toBe("running");
 		expect(result.current.cycleKind).toBe("SHORT_BREAK");
 	});
@@ -1174,6 +1174,14 @@ describe("usePomodoroCycle", () => {
 
 			await act(async () => {
 				await result.current.confirmComplete(false);
+			});
+
+			// Break-choice gate opens
+			expect(result.current.awaitingBreakChoice).toBe(true);
+
+			const breakKind = result.current.suggestedBreakKind;
+			await act(async () => {
+				await result.current.onChooseBreak(breakKind);
 			});
 
 			// Now in break state â€” complete the break
@@ -1234,7 +1242,7 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.cycleKind).toBeNull();
 	});
 
-	it("break creation failure after work complete shows error and resets to idle", async () => {
+	it("break creation failure after work complete re-opens break-choice gate for retry", async () => {
 		activeCycleData = makeActiveCycle({
 			id: 30,
 			configuredDurationSec: 300,
@@ -1263,8 +1271,22 @@ describe("usePomodoroCycle", () => {
 			await result.current.confirmComplete(false);
 		});
 
-		expect(result.current.state).toBe("idle");
+		// Break-choice gate opens
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
+
+		// Choosing break triggers the failed createCycle
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
+		// State stays completed (not idle) — break-choice gate re-opens for retry
+		expect(result.current.state).toBe("completed");
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.suggestedBreakKind).toBe("SHORT_BREAK");
 		expect(result.current.error).toMatch(/Break could not start/);
+		// Focused task preserved — not wiped
+		expect(result.current.focusedTaskId).toBe(4);
 	});
 
 	it("shows completed when recovered cycle already expired", async () => {
@@ -1678,6 +1700,14 @@ describe("usePomodoroCycle", () => {
 			localDateKey: "2026-06-19",
 		});
 		expect(result.current.awaitingCheckIn).toBe(false);
+		// After check-in, break-choice gate opens
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
+
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
 		expect(result.current.state).toBe("running");
 		expect(result.current.cycleKind).toBe("SHORT_BREAK");
 		expect(result.current.breakTransitionLine).toBe(BREAK_START_SHORT);
@@ -1730,6 +1760,10 @@ describe("usePomodoroCycle", () => {
 				await result.current.submitCheckIn("FOCUSED");
 			});
 
+			await act(async () => {
+				await result.current.onChooseBreak("SHORT_BREAK");
+			});
+
 			expect(result.current.breakTransitionLine).toBe(BREAK_START_SHORT);
 
 			act(() => {
@@ -1770,6 +1804,10 @@ describe("usePomodoroCycle", () => {
 			try {
 				await act(async () => {
 					await result.current.submitCheckIn("FOCUSED");
+				});
+
+				await act(async () => {
+					await result.current.onChooseBreak("SHORT_BREAK");
 				});
 
 				expect(result.current.breakTransitionLine).toBe(BREAK_START_SHORT);
@@ -1813,6 +1851,10 @@ describe("usePomodoroCycle", () => {
 
 			await act(async () => {
 				await result.current.submitCheckIn("FOCUSED");
+			});
+
+			await act(async () => {
+				await result.current.onChooseBreak("SHORT_BREAK");
 			});
 
 			expect(result.current.breakTransitionLine).toBe(BREAK_START_SHORT);
@@ -1868,14 +1910,23 @@ describe("usePomodoroCycle", () => {
 		await waitFor(() => {
 			assertNoCycleCompleteFlash(result);
 			expect(result.current.awaitingCheckIn).toBe(false);
-			expect(result.current.state).toBe("running");
-			expect(result.current.cycleKind).toBe("SHORT_BREAK");
+			expect(result.current.awaitingBreakChoice).toBe(true);
+			expect(result.current.state).toBe("completed");
 		});
 
 		releaseCompleteCycle();
 
 		await act(async () => {
 			await submitPromise;
+		});
+
+		assertNoCycleCompleteFlash(result);
+		expect(result.current.awaitingCheckIn).toBe(false);
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
+
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
 		});
 
 		assertNoCycleCompleteFlash(result);
@@ -1929,14 +1980,22 @@ describe("usePomodoroCycle", () => {
 
 		await waitFor(() => {
 			assertNoCycleCompleteFlash(result);
-			expect(result.current.state).toBe("running");
-			expect(result.current.cycleKind).toBe("SHORT_BREAK");
+			expect(result.current.awaitingBreakChoice).toBe(true);
+			expect(result.current.state).toBe("completed");
 		});
 
 		releaseCompleteCycle();
 
 		await act(async () => {
 			await keepGoingPromise;
+		});
+
+		assertNoCycleCompleteFlash(result);
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
+
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
 		});
 
 		assertNoCycleCompleteFlash(result);
@@ -2005,12 +2064,15 @@ describe("usePomodoroCycle", () => {
 		});
 
 		assertNoCycleCompleteFlash(result);
-		expect(result.current.awaitingCheckIn).toBe(true);
+		// After complete_work failure, stays at break choice gate with recovery available
+		expect(result.current.awaitingBreakChoice).toBe(true);
 		expect(result.current.isPostCheckInTransitioning).toBe(false);
+		expect(result.current.pendingWedgeRecovery?.phase).toBe("complete_work");
 		expect(completeCycle).toHaveBeenCalledTimes(2);
 
+		// Retry via retryWedgeSync
 		await act(async () => {
-			await result.current.submitCheckIn("FOCUSED");
+			await result.current.retryWedgeSync();
 		});
 
 		expect(completeCycle).toHaveBeenCalledTimes(3);
@@ -2020,7 +2082,8 @@ describe("usePomodoroCycle", () => {
 			localDateKey: "2026-06-19",
 		});
 		expect(result.current.awaitingCheckIn).toBe(false);
-		expect(result.current.state).toBe("running");
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
 	});
 
 	it("break cycle-end skips check-in gate", async () => {
@@ -2059,48 +2122,7 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.state).toBe("idle");
 	});
 
-	it("mid-cycle continue preserves running state and rebinds task", async () => {
-		activeCycleData = makeActiveCycle({
-			id: 60,
-			taskId: 4,
-			task: { id: 4, title: "Current" },
-		});
-
-		const { result } = renderHook(() => usePomodoroCycle(), {
-			wrapper: createWrapper(),
-		});
-
-		await waitFor(() => {
-			expect(result.current.state).toBe("running");
-		});
-
-		const remainingBefore = result.current.remainingMs;
-
-		act(() => {
-			result.current.onMidCycleMarkComplete(4, { id: 4, title: "Current" });
-		});
-
-		expect(result.current.midCyclePendingTask).toMatchObject({
-			id: 4,
-			title: "Current",
-		});
-
-		await act(async () => {
-			await result.current.onMidCycleContinueWithTask(8, {
-				id: 8,
-				title: "Next",
-			});
-		});
-
-		expect(updateTask).toHaveBeenCalledWith({ id: 4, status: "completed" });
-		expect(rebindTask).toHaveBeenCalledWith({ cycleId: 60, taskId: 8 });
-		expect(result.current.state).toBe("running");
-		expect(result.current.focusedTask).toMatchObject({ id: 8, title: "Next" });
-		expect(result.current.midCyclePendingTask).toBeNull();
-		expect(result.current.remainingMs).toBe(remainingBefore);
-	});
-
-	it("mid-cycle end-break completes work cycle and starts break", async () => {
+	it("focused-task completion enters mandatory break flow (check-in → break choice)", async () => {
 		activeCycleData = makeActiveCycle({
 			id: 61,
 			taskId: 4,
@@ -2128,16 +2150,11 @@ describe("usePomodoroCycle", () => {
 			expect(result.current.state).toBe("running");
 		});
 
-		act(() => {
-			result.current.onMidCycleMarkComplete(4, { id: 4, title: "Done now" });
-		});
-
 		await act(async () => {
-			await result.current.onMidCycleEndCycleAndBreak();
+			await result.current.onCompleteFocusedTask();
 		});
 
 		expect(result.current.awaitingCheckIn).toBe(true);
-		expect(result.current.midCyclePendingTask).toBeNull();
 		expect(completeCycle).not.toHaveBeenCalled();
 
 		await act(async () => {
@@ -2155,8 +2172,190 @@ describe("usePomodoroCycle", () => {
 			localDateKey: "2026-06-19",
 		});
 		expect(result.current.awaitingCheckIn).toBe(false);
+		// Break-choice gate opens after check-in
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
+
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
 		expect(result.current.state).toBe("running");
 		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+	});
+
+	it("onMidCycleMarkComplete delegates to onCompleteFocusedTask", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 60,
+			taskId: 4,
+			task: { id: 4, title: "Current" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			result.current.onMidCycleMarkComplete(4, { id: 4, title: "Current" });
+		});
+
+		// Should enter the break flow (check-in gate for authenticated)
+		expect(result.current.awaitingCheckIn).toBe(true);
+		expect(result.current.state).toBe("completed");
+	});
+
+	it("focused completion enters break flow with no next-task selection (integration)", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 62,
+			taskId: 4,
+			task: { id: 4, title: "Focused task" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 201,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+			expect(result.current.focusedTaskId).toBe(4);
+		});
+
+		// Complete the focused task
+		await act(async () => {
+			await result.current.onCompleteFocusedTask();
+		});
+
+		// Enters check-in gate (authenticated path) — NOT a next-task selection
+		expect(result.current.awaitingCheckIn).toBe(true);
+		expect(result.current.state).toBe("completed");
+		// No midCyclePendingTask or next-task selection state exists
+		expect(result.current).not.toHaveProperty("midCyclePendingTask");
+
+		// Complete the check-in → break choice gate opens
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		expect(result.current.awaitingCheckIn).toBe(false);
+		expect(result.current.awaitingBreakChoice).toBe(true);
+
+		// Choose break → break starts (no task selection in between)
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
+		expect(result.current.state).toBe("running");
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+	});
+
+	it("non-focused task completion during cycle leaves timer and focused task unchanged (integration)", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 63,
+			configuredDurationSec: 1500,
+			taskId: 4,
+			task: { id: 4, title: "Focused task" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+			expect(result.current.focusedTaskId).toBe(4);
+		});
+
+		const remainingBefore = result.current.remainingMs;
+		const focusedTaskBefore = result.current.focusedTask;
+
+		// Simulate completing a non-focused task (id=99) through the repository —
+		// this is what the task-list component does for non-focused rows: it calls
+		// tasks.update directly, bypassing onCompleteFocusedTask entirely.
+		await act(async () => {
+			await updateTask({ id: 99, status: "completed" });
+		});
+
+		// The task-update mutation was called for the non-focused task
+		expect(updateTask).toHaveBeenCalledWith({ id: 99, status: "completed" });
+
+		// Cycle state, timer, focused task, and gates are completely unaffected
+		expect(result.current.state).toBe("running");
+		expect(result.current.remainingMs).toBe(remainingBefore);
+		expect(result.current.focusedTask).toBe(focusedTaskBefore);
+		expect(result.current.focusedTaskId).toBe(4);
+		expect(result.current.awaitingCheckIn).toBe(false);
+		expect(result.current.awaitingBreakChoice).toBe(false);
+		expect(result.current.cycleKind).toBe("WORK");
+		// The cycle was not completed or interrupted
+		expect(completeCycle).not.toHaveBeenCalled();
+		expect(interruptCycle).not.toHaveBeenCalled();
+	});
+
+	it("early-completed WORK cycle records focusMinutes > 0 (focus-time accounting)", async () => {
+		const startedAt = new Date(Date.now() - 5 * 60 * 1000); // 5 min ago
+		activeCycleData = makeActiveCycle({
+			id: 64,
+			configuredDurationSec: 1500, // 25 min configured
+			taskId: 4,
+			task: { id: 4, title: "Focused task" },
+			startedAt,
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		// Complete the focused task early (5 min into a 25-min cycle)
+		await act(async () => {
+			await result.current.onCompleteFocusedTask();
+		});
+
+		// Authenticated path: check-in first
+		expect(result.current.awaitingCheckIn).toBe(true);
+
+		await act(async () => {
+			await result.current.submitCheckIn("STEADY");
+		});
+
+		// Critical: cycles.complete is called (not interrupt) — this is what makes
+		// computeCycleFocusedMinutes count the elapsed time
+		expect(completeCycle).toHaveBeenCalledWith(
+			expect.objectContaining({
+				cycleId: 64,
+				markTaskDone: true,
+			}),
+		);
+		expect(interruptCycle).not.toHaveBeenCalled();
+
+		// The cycle is now COMPLETED — computeCycleFocusedMinutes will return > 0
+		// for any COMPLETED WORK cycle with startedAt and endedAt set.
+		// Verify the localDateKey is passed (needed for day-plan focus budget)
+		expect(completeCycle).toHaveBeenCalledWith(
+			expect.objectContaining({
+				localDateKey: expect.any(String),
+			}),
+		);
 	});
 
 	it("blocks selectTask during WORK running", async () => {
@@ -2785,8 +2984,8 @@ describe("usePomodoroCycle", () => {
 			await waitFor(() => {
 				assertNoCycleCompleteFlash(result);
 				expect(result.current.awaitingCheckIn).toBe(false);
-				expect(result.current.state).toBe("running");
-				expect(result.current.cycleKind).toBe("SHORT_BREAK");
+				expect(result.current.awaitingBreakChoice).toBe(true);
+				expect(result.current.state).toBe("completed");
 			});
 
 			await act(async () => {
@@ -2855,8 +3054,11 @@ describe("usePomodoroCycle", () => {
 			});
 
 			await waitFor(() => {
-				expect(result.current.awaitingCheckIn).toBe(true);
+				expect(result.current.awaitingBreakChoice).toBe(true);
 				expect(result.current.error).toMatch(/Break could not start/i);
+				expect(result.current.pendingWedgeRecovery?.phase).toBe(
+					"complete_work",
+				);
 			});
 		});
 	});
@@ -2913,8 +3115,16 @@ describe("usePomodoroCycle", () => {
 					energy: "FOCUSED",
 				});
 				expect(result.current.awaitingCheckIn).toBe(false);
-				expect(result.current.state).toBe("running");
+				expect(result.current.awaitingBreakChoice).toBe(true);
+				expect(result.current.state).toBe("completed");
 			});
+
+			await act(async () => {
+				await result.current.onChooseBreak("SHORT_BREAK");
+			});
+
+			expect(result.current.state).toBe("running");
+			expect(result.current.cycleKind).toBe("SHORT_BREAK");
 		});
 
 		const kickoffActiveTaskList = [
@@ -3655,6 +3865,10 @@ describe("usePomodoroCycle break out-of-tab alerts", () => {
 			await result.current.submitCheckIn("FOCUSED");
 		});
 
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
 		expect(maybeAlertBreakStartMock).toHaveBeenCalled();
 	});
 
@@ -4099,25 +4313,28 @@ describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () =
 
 		await driveWorkCycleToCheckIn(result);
 
-		let submitPromise!: Promise<void>;
-		act(() => {
-			submitPromise = result.current.submitCheckIn("FOCUSED");
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
 		});
 
-		await waitFor(() => {
-			expect(result.current.cycleKind).toBe("SHORT_BREAK");
-		});
+		// After submitCheckIn, break-choice gate opens
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.state).toBe("completed");
 
-		const breakDurationSec = getShortBreakDuration();
-		const optimisticEndMs = fakeWorkers[fakeWorkers.length - 1]?.endTime ?? 0;
-		optimisticBreakStartMs = optimisticEndMs - breakDurationSec * 1000;
-		expect(optimisticEndMs).toBeGreaterThan(0);
+		// Record approximate time the break will be created
+		optimisticBreakStartMs = Date.now();
+
+		// Release the blocked createCycle before calling onChooseBreak
+		releaseBreakCreate();
 
 		await act(async () => {
-			releaseBreakCreate();
-			await submitPromise;
+			await result.current.onChooseBreak("SHORT_BREAK");
 		});
 
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+
+		const breakDurationSec = getShortBreakDuration();
+		// The server returns startedAt with serverDriftMs added, so endTime uses server timing
 		const serverBreakEndMs =
 			optimisticBreakStartMs + serverDriftMs + breakDurationSec * 1000;
 		expect(fakeWorkers[fakeWorkers.length - 1]?.endTime).toBe(serverBreakEndMs);
@@ -4129,7 +4346,7 @@ describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () =
 		);
 	});
 
-	it("no-ops onMidCycleMarkComplete when idle", async () => {
+	it("no-ops onCompleteFocusedTask when idle", async () => {
 		const { result } = renderHook(() => usePomodoroCycle(), {
 			wrapper: createWrapper(),
 		});
@@ -4138,13 +4355,14 @@ describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () =
 			expect(result.current.state).toBe("idle");
 		});
 
-		act(() => {
-			result.current.onMidCycleMarkComplete(4, { id: 4, title: "Idle task" });
+		await act(async () => {
+			await result.current.onCompleteFocusedTask();
 		});
-		expect(result.current.midCyclePendingTask).toBeNull();
+		expect(result.current.state).toBe("idle");
+		expect(result.current.awaitingCheckIn).toBe(false);
 	});
 
-	it("no-ops onMidCycleMarkComplete during break", async () => {
+	it("no-ops onCompleteFocusedTask during break", async () => {
 		activeCycleData = makeActiveCycle({
 			id: 10,
 			kind: "SHORT_BREAK",
@@ -4161,16 +4379,15 @@ describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () =
 			expect(result.current.state).toBe("running");
 		});
 
-		act(() => {
-			result.current.onMidCycleMarkComplete(4, {
-				id: 4,
-				title: "Break task",
-			});
+		await act(async () => {
+			await result.current.onCompleteFocusedTask();
 		});
-		expect(result.current.midCyclePendingTask).toBeNull();
+		// Still running the break — no transition occurred
+		expect(result.current.state).toBe("running");
+		expect(result.current.awaitingCheckIn).toBe(false);
 	});
 
-	it("no-ops onMidCycleMarkComplete when paused", async () => {
+	it("no-ops onCompleteFocusedTask when paused", async () => {
 		activeCycleData = makeActiveCycle({
 			id: 11,
 			configuredDurationSec: 300,
@@ -4190,13 +4407,12 @@ describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () =
 			await result.current.pause();
 		});
 
-		act(() => {
-			result.current.onMidCycleMarkComplete(4, {
-				id: 4,
-				title: "Paused work",
-			});
+		await act(async () => {
+			await result.current.onCompleteFocusedTask();
 		});
-		expect(result.current.midCyclePendingTask).toBeNull();
+		// Still paused — no transition occurred
+		expect(result.current.state).toBe("paused");
+		expect(result.current.awaitingCheckIn).toBe(false);
 	});
 
 	it("sets awaitingCheckIn for WORK completion before break transition", async () => {
@@ -4231,5 +4447,156 @@ describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () =
 		expect(result.current.awaitingCheckIn).toBe(true);
 		expect(completeCycle).not.toHaveBeenCalled();
 		expect(createCheckInMutate).not.toHaveBeenCalled();
+	});
+
+	it("rehydrates cyclesSinceLastLong from session history on recovery", async () => {
+		// Session has 2 completed WORK cycles after the last LONG_BREAK
+		const sessionId = 5;
+		activeCycleData = makeActiveCycle({
+			id: 80,
+			sessionId,
+			configuredDurationSec: 1500,
+			taskId: 4,
+			task: { id: 4, title: "Current task" },
+		});
+
+		// Session history (ordered desc by startedAt — as returned by server)
+		countCompletedWorkQuery.mockResolvedValue(5);
+		cycleListQuery.mockResolvedValue([
+			// Most recent first (desc order)
+			{
+				id: 79,
+				kind: "WORK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T12:00:00Z"),
+			},
+			{
+				id: 78,
+				kind: "SHORT_BREAK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T11:45:00Z"),
+			},
+			{
+				id: 77,
+				kind: "WORK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T11:20:00Z"),
+			},
+			{
+				id: 76,
+				kind: "LONG_BREAK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T11:00:00Z"),
+			},
+			{
+				id: 75,
+				kind: "WORK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T10:35:00Z"),
+			},
+			{
+				id: 74,
+				kind: "SHORT_BREAK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T10:30:00Z"),
+			},
+			{
+				id: 73,
+				kind: "WORK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T10:05:00Z"),
+			},
+			{
+				id: 72,
+				kind: "SHORT_BREAK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T10:00:00Z"),
+			},
+			{
+				id: 71,
+				kind: "WORK",
+				state: "COMPLETED",
+				sessionId,
+				startedAt: new Date("2026-07-10T09:35:00Z"),
+			},
+		]);
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		// After LONG_BREAK at id=76, there are 2 completed WORK cycles (id=77, 79)
+		// so cyclesSinceLastLong should be 2, meaning the suggestion is SHORT_BREAK
+		// (Long is suggested when cyclesSinceLastLong + 1 >= 4)
+		expect(result.current.suggestedBreakKind).toBe("SHORT_BREAK");
+
+		// Complete the focused task to trigger the check-in → break-choice path
+		await act(async () => {
+			await result.current.onCompleteFocusedTask();
+		});
+
+		expect(result.current.awaitingCheckIn).toBe(true);
+
+		await act(async () => {
+			await result.current.submitCheckIn("STEADY");
+		});
+
+		// Cadence suggestion should reflect 2+1=3 (still < 4 → SHORT)
+		expect(result.current.awaitingBreakChoice).toBe(true);
+		expect(result.current.suggestedBreakKind).toBe("SHORT_BREAK");
+	});
+
+	it("completedWorkCycles increments exactly once after continueAfterCheckIn → onChooseBreak", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 90,
+			configuredDurationSec: 1500,
+			taskId: 4,
+			task: { id: 4, title: "Focused task" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		const initialCount = result.current.completedWorkCycles;
+
+		// Complete focused task → check-in → break choice
+		await act(async () => {
+			await result.current.onCompleteFocusedTask();
+		});
+
+		expect(result.current.awaitingCheckIn).toBe(true);
+
+		await act(async () => {
+			await result.current.submitCheckIn("FOCUSED");
+		});
+
+		// After continueAfterCheckIn, completedWorkCycles should NOT be incremented yet
+		expect(result.current.completedWorkCycles).toBe(initialCount);
+		expect(result.current.awaitingBreakChoice).toBe(true);
+
+		// onChooseBreak → startBreakAfterWorkComplete is the single owner of the increment
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
+		// Now it should have incremented exactly once
+		expect(result.current.completedWorkCycles).toBe(initialCount + 1);
 	});
 });

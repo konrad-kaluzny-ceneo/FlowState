@@ -151,10 +151,11 @@ function makePomodoroMock(
 		hasActiveSession: false,
 		error: null,
 		pendingWedgeRecovery: null,
-		midCyclePendingTask: null,
 		isMidCycleSubmitting: false,
 		awaitingCheckIn: false,
 		isPostCheckInTransitioning: false,
+		awaitingBreakChoice: false,
+		suggestedBreakKind: "SHORT_BREAK" as const,
 		awaitingWindDown: false,
 		windDownRationale: null,
 		isConfirming: false,
@@ -203,8 +204,8 @@ function makePomodoroMock(
 		onWindDownKeepGoing: vi.fn(),
 		onWindDownEndSession: vi.fn(),
 		onMidCycleMarkComplete: vi.fn(),
-		onMidCycleContinueWithTask: vi.fn(),
-		onMidCycleEndCycleAndBreak: vi.fn(),
+		onCompleteFocusedTask: vi.fn(),
+		onChooseBreak: vi.fn(),
 		endSession: vi.fn(),
 		outOfTabBreakAlertsEnabled: true,
 		setOutOfTabBreakAlertsEnabled: vi.fn(),
@@ -281,14 +282,6 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		);
 
 		expect(screen.queryByTestId("check-in-overlay")).toBeNull();
-	});
-
-	it("shows mid-cycle prompt when a task completion is pending", () => {
-		renderBody({
-			midCyclePendingTask: { id: 1, title: "Completed task" },
-		});
-
-		expect(screen.getByTestId("mid-cycle-prompt-overlay")).toBeTruthy();
 	});
 
 	it("shows wind-down overlay when wind-down gate is enabled", () => {
@@ -1731,5 +1724,95 @@ describe("PomodoroDashboardBody focus empty state and quick actions", () => {
 		fireEvent.click(screen.getByTestId("quick-action-add-task"));
 
 		expect(screen.getByTestId("add-task-modal")).toBeTruthy();
+	});
+});
+
+describe("Focus completion circle", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("shows focus-complete button during running WORK cycle with focused task", () => {
+		renderBody({
+			state: "running",
+			cycleKind: "WORK",
+			focusedTaskId: "task-1",
+			focusedTask: { id: "task-1", title: "Focus task" },
+			hasActiveSession: true,
+			activeCycle: { id: 42, configuredDurationSec: 1500 },
+		});
+
+		expect(screen.getByTestId("focus-complete-focused-task")).toBeTruthy();
+	});
+
+	it("hides focus-complete button when paused", () => {
+		renderBody({
+			state: "paused",
+			cycleKind: "WORK",
+			focusedTaskId: "task-1",
+			focusedTask: { id: "task-1", title: "Focus task" },
+			hasActiveSession: true,
+			activeCycle: { id: 42, configuredDurationSec: 1500 },
+		});
+
+		expect(screen.queryByTestId("focus-complete-focused-task")).toBeNull();
+	});
+
+	it("hides focus-complete button during break", () => {
+		renderBody({
+			state: "running",
+			cycleKind: "SHORT_BREAK",
+			focusedTaskId: "task-1",
+			focusedTask: { id: "task-1", title: "Focus task" },
+			hasActiveSession: true,
+			activeCycle: { id: 42, configuredDurationSec: 300 },
+		});
+
+		expect(screen.queryByTestId("focus-complete-focused-task")).toBeNull();
+	});
+
+	it("hides focus-complete button when no focused task", () => {
+		renderBody({
+			state: "running",
+			cycleKind: "WORK",
+			focusedTaskId: null,
+			focusedTask: null,
+			hasActiveSession: true,
+			activeCycle: { id: 42, configuredDurationSec: 1500 },
+		});
+
+		expect(screen.queryByTestId("focus-complete-focused-task")).toBeNull();
+	});
+
+	it("calls onCompleteFocusedTask when focus-complete is clicked", () => {
+		const onCompleteFocusedTask = vi.fn();
+		renderBody({
+			state: "running",
+			cycleKind: "WORK",
+			focusedTaskId: "task-1",
+			focusedTask: { id: "task-1", title: "Focus task" },
+			hasActiveSession: true,
+			activeCycle: { id: 42, configuredDurationSec: 1500 },
+			onCompleteFocusedTask,
+		});
+
+		fireEvent.click(screen.getByTestId("focus-complete-focused-task"));
+
+		expect(onCompleteFocusedTask).toHaveBeenCalledTimes(1);
+	});
+
+	it("disables focus-complete button when isMidCycleSubmitting is true", () => {
+		renderBody({
+			state: "running",
+			cycleKind: "WORK",
+			focusedTaskId: "task-1",
+			focusedTask: { id: "task-1", title: "Focus task" },
+			hasActiveSession: true,
+			activeCycle: { id: 42, configuredDurationSec: 1500 },
+			isMidCycleSubmitting: true,
+		});
+
+		const btn = screen.getByTestId("focus-complete-focused-task");
+		expect(btn).toHaveProperty("disabled", true);
 	});
 });

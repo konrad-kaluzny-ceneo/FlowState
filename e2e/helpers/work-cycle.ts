@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import { splitSecToMinSec } from "../../src/lib/duration-input";
+import { chooseBreakIfVisible } from "./break-choice";
 import { completeCheckIn } from "./check-in";
 import {
 	continueLaterButton,
@@ -430,4 +431,5 @@ export async function completeWorkCycleWithCheckIn(
 	await expect(page.getByTestId("check-in-overlay")).toBeVisible();
 	await completeCheckIn(page, energy);
 	await dismissWindDownIfVisible(page);
+	await chooseBreakIfVisible(page);
 }

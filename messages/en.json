@@ -350,7 +350,9 @@
 		"breakSettingsShow": "Break settings ▼",
 		"breakSettingsShort": "Short break",
 		"breakSettingsLong": "Long break",
-		"boundsBreak": "1 s – 30 min"
+		"boundsBreak": "1 s – 30 min",
+		"completeFocusedTaskAria": "Mark focused task complete",
+		"completeFocusedTaskLabel": "Done"
 	},
 	"Home": {
 		"offlineBanner": "You're offline — retry when you're back online."
@@ -667,6 +669,15 @@
 	"CheckIn": {
 		"heading": "How's your energy?",
 		"description": "Select one before your break starts."
+	},
+	"BreakChoice": {
+		"heading": "Choose your break",
+		"description": "Take a moment to reset before the next cycle.",
+		"shortLabel": "Short break",
+		"shortLabelSuggested": "Short break — suggested",
+		"longLabel": "Long break",
+		"longLabelSuggested": "Long break — suggested",
+		"suggestedAria": "Suggested by cadence"
 	},
 	"FocusBudget": {
 		"title": "Today's focus hours",

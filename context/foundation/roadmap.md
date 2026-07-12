@@ -3,7 +3,7 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-07-07
+updated: 2026-07-09
 structure: split
 active_slices: []
 prd_version: 3
@@ -101,6 +101,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-47 | delegation-suggestion-in-plan | [FLO-98](https://linear.app/flowstate-10xdev/issue/FLO-98/delegation-suggestion-in-plan-dnia-s-47) | [#192](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/192) | in Plan dnia view, scorer proposes tasks suitable for delegation (to AI agent or human) with one-line rationale; user accepts/skips | S-45 (Plan dnia), S-46 | new | backlog |
 | S-48 | analytics-trends-plan-vs-execution | [FLO-99](https://linear.app/flowstate-10xdev/issue/FLO-99/analytics-weeklymonthly-trends-plan-vs-execution-s-48) | [#193](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/193) | weekly/monthly trends in Podsumowanie; plan-vs-execution comparison; context-switch pattern analytics | S-45 (Podsumowanie) | follow-up ui-refactor | backlog |
 | S-49 | workspace-setup-advisor | [FLO-100](https://linear.app/flowstate-10xdev/issue/FLO-100/workspace-setup-advisor-environment-config-tips-s-49) | [#194](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/194) | advisory tips for configuring work environment (Cursor/Claude agent settings, Slack/Teams DND, notification batching) surfaced in Ustawienia or onboarding; no physical blocking — coaching only | S-45 (Ustawienia), F-14 | new | backlog |
+| S-50 | complete-task-mid-cycle-surface | _pending_ | [#199](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/199) | finish the focused task (from Fokus or Zadania) → mandatory user-chosen break (short/long ★, override resets cadence); non-focused completion leaves the session untouched; early-completion focus time counted; removes mid-cycle "continue with another task" | F-07, S-03, S-30 | **US-01**, US-03 | planned |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -121,7 +122,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | K | Wellness re-skin | F-06 → S-28 | Pastel + Calm Garden |
 | L | Task UX + standup | S-29 → **S-36** (done); S-32 after S-36; S-30; S-27 | PRD v3 US-02–03 |
 | M | Coherence craft | S-31 ∥ S-28; S-30 footprint | Focus shell, atmosphere |
-| N | PRD v3 flow conductor | **B-05 → B-06 → F-07 (+B-07)** → S-21 ∥ S-33; S-34 ∥ S-35; S-24 → **B-08 → B-09 ∥ S-38** | US-01 — see [`prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md) |
+| N | PRD v3 flow conductor | **B-05 → B-06 → F-07 (+B-07)** → S-21 ∥ S-33; S-34 ∥ S-35; S-24 → **B-08 → B-09 ∥ S-38** → **S-50** | US-01 — see [`prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md); S-50 reworks S-03 mid-cycle prompt into one-task→break rhythm |
 | O | Choice revisit | break-alerts-out-of-tab (merged) → **S-37** | MVP: notification prefs on timer hub; broader pattern deferred |
 | P | Accessible wedge operation | F-07 + S-21 + S-28 → **S-39** | Unparks P-102/P-103 now that transition conductor, copy, and Calm Garden overlay craft have landed |
 | Q | PRD v3 quality hardening | S-39 → **Q-08** → **Q-09** | Q-08 test-plan Phase 8 (risks #8–#12); Q-09 test-plan Phase 5 mutation oracle hardening (risks #1–#6) |
