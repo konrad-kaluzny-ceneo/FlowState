@@ -1,7 +1,12 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { incrementUsedFocusMinutes } from "~/lib/day-plan/increment-used-focus-minutes";
-import { getMinWorkDurationSec } from "~/lib/duration-bounds";
+import {
+	getMinWorkDurationSec,
+	MAX_BREAK_DURATION_SEC,
+	MAX_WORK_DURATION_SEC,
+	MIN_BREAK_DURATION_SEC,
+} from "~/lib/duration-bounds";
 import { computeCycleFocusedMinutes } from "~/lib/recap/compute-cycle-focused-minutes";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
@@ -79,17 +84,32 @@ export const cycleRouter = createTRPCRouter({
 
 	create: protectedProcedure
 		.input(
-			z.object({
-				sessionId: z.number().int().optional(),
-				kind: z.enum(["WORK", "SHORT_BREAK", "LONG_BREAK"]),
-				configuredDurationSec: z
-					.number()
-					.int()
-					.min(minWorkCycleSec)
-					.max(90 * 60),
-				taskId: z.number().int().optional(),
-				intention: z.string().max(80).optional(),
-			}),
+			z
+				.object({
+					sessionId: z.number().int().optional(),
+					kind: z.enum(["WORK", "SHORT_BREAK", "LONG_BREAK"]),
+					configuredDurationSec: z.number().int(),
+					taskId: z.number().int().optional(),
+					intention: z.string().max(80).optional(),
+				})
+				.refine(
+					(data) => {
+						if (data.kind === "WORK") {
+							return (
+								data.configuredDurationSec >= minWorkCycleSec &&
+								data.configuredDurationSec <= MAX_WORK_DURATION_SEC
+							);
+						}
+						return (
+							data.configuredDurationSec >= MIN_BREAK_DURATION_SEC &&
+							data.configuredDurationSec <= MAX_BREAK_DURATION_SEC
+						);
+					},
+					{
+						message: "Duration out of bounds for the given cycle kind",
+						path: ["configuredDurationSec"],
+					},
+				),
 		)
 		.mutation(async ({ ctx, input }) => {
 			const sessionId =
