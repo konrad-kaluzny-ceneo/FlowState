@@ -405,10 +405,10 @@ No schema or data migration. `cycle.endedAt` already stamps accept time; existin
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `pnpm typecheck`
-- [ ] 3.2 Lint/format passes: `pnpm check`
-- [ ] 3.3 `quick-actions` component tests pass (Start break action)
-- [ ] 3.4 Hook tests pass, incl. `startAdHocBreak` (both modes, no counter touch)
+- [x] 3.1 Type checking passes: `pnpm typecheck`
+- [x] 3.2 Lint/format passes: `pnpm check`
+- [x] 3.3 `quick-actions` component tests pass (Start break action)
+- [x] 3.4 Hook tests pass, incl. `startAdHocBreak` (both modes, no counter touch)
 
 #### Manual
 

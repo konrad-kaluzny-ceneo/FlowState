@@ -2335,6 +2335,58 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		],
 	);
 
+	const startAdHocBreak = useCallback(
+		async (kind: "SHORT_BREAK" | "LONG_BREAK", durationSec: number) => {
+			if (stateRef.current !== "idle") {
+				return;
+			}
+
+			setError(null);
+
+			try {
+				const session = await sessions.getOrCreateActive();
+				setActiveSessionId(session.id);
+				setHasActiveSession(true);
+
+				const breakCycle = await cycles.create({
+					kind,
+					configuredDurationSec: durationSec,
+				});
+
+				const endTime = cycleEndTimeMs(breakCycle);
+
+				setActiveCycle({ ...breakCycle, task: null });
+				setCycleKind(kind);
+				cycleKindRef.current = kind;
+				breakOvertimeEnteredRef.current = false;
+				setState("running");
+				stateRef.current = "running";
+				startWorker(endTime);
+				fireBreakOutOfTabAlert(kind, breakCycle.id);
+				showBreakTransitionLine(kind);
+
+				await invalidateServerCycle();
+			} catch {
+				// Rollback to idle on failure (pattern from startCycle)
+				setState("idle");
+				stateRef.current = "idle";
+				setActiveCycle(null);
+				setCycleKind(null);
+				cycleKindRef.current = null;
+				setError(tErrors("startFailed"));
+			}
+		},
+		[
+			sessions,
+			cycles,
+			invalidateServerCycle,
+			startWorker,
+			fireBreakOutOfTabAlert,
+			showBreakTransitionLine,
+			tErrors,
+		],
+	);
+
 	const completeWorkCycleOnly = useCallback(
 		async (markTaskDone: boolean): Promise<boolean> => {
 			if (activeCycle == null) {
@@ -3425,6 +3477,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		resume,
 		confirmComplete,
 		endBreakFromOvertime,
+		startAdHocBreak,
 		onCycleCompleteConfirm,
 		submitCheckIn,
 		onWindDownKeepGoing,

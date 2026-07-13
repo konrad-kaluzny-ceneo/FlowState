@@ -385,7 +385,13 @@
 	"QuickActions": {
 		"heading": "Szybkie akcje",
 		"addTask": "Dodaj zadanie",
-		"planDay": "Zaplanuj dzień"
+		"planDay": "Zaplanuj dzień",
+		"startBreak": "Rozpocznij przerwę",
+		"shortBreak": "Krótka",
+		"longBreak": "Długa",
+		"cancel": "Anuluj",
+		"startBreakConfirm": "Rozpocznij",
+		"starting": "Rozpoczynanie…"
 	},
 	"FocusEmpty": {
 		"heading": "Twój dzień czeka na Ciebie",

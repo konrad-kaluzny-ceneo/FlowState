@@ -4878,3 +4878,336 @@ describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () =
 		expect(result.current.completedWorkCycles).toBe(initialCount + 1);
 	});
 });
+
+describe("startAdHocBreak", () => {
+	beforeEach(() => {
+		activeCycleData = null;
+		fakeWorkers.length = 0;
+		getOrCreateSession.mockResolvedValue({ id: 1 });
+		createCycle.mockImplementation(
+			({
+				kind,
+				configuredDurationSec,
+			}: {
+				kind: string;
+				configuredDurationSec: number;
+			}) => ({
+				id: 200,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: null,
+				kind,
+				state: "RUNNING",
+				configuredDurationSec,
+				startedAt: new Date(),
+				endedAt: null,
+				task: null,
+			}),
+		);
+		countCompletedWorkQuery.mockResolvedValue(0);
+		taskListQuery.mockResolvedValue([]);
+		getLastEndedQuery.mockResolvedValue(null);
+		cycleListQuery.mockResolvedValue([]);
+		getActiveCycle.mockResolvedValue(null);
+		invalidateGetActive.mockResolvedValue(undefined);
+	});
+
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("creates a break from idle without touching completedWorkCycles", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		const initialCount = result.current.completedWorkCycles;
+
+		await act(async () => {
+			await result.current.startAdHocBreak("SHORT_BREAK", 300);
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+		expect(result.current.completedWorkCycles).toBe(initialCount);
+		expect(createCycle).toHaveBeenCalledWith({
+			kind: "SHORT_BREAK",
+			configuredDurationSec: 300,
+		});
+	});
+
+	it("creates a long break from idle", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		await act(async () => {
+			await result.current.startAdHocBreak("LONG_BREAK", 900);
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		expect(result.current.cycleKind).toBe("LONG_BREAK");
+		expect(createCycle).toHaveBeenCalledWith({
+			kind: "LONG_BREAK",
+			configuredDurationSec: 900,
+		});
+	});
+
+	it("ensures session exists before creating break", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		await act(async () => {
+			await result.current.startAdHocBreak("SHORT_BREAK", 300);
+		});
+
+		expect(getOrCreateSession).toHaveBeenCalled();
+	});
+
+	it("does nothing when not idle", async () => {
+		createCycle.mockImplementation(
+			({
+				configuredDurationSec,
+			}: {
+				kind: string;
+				configuredDurationSec: number;
+			}) => ({
+				id: 100,
+				sessionId: 1,
+				userId: "user-1",
+				taskId: 3,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec,
+				startedAt: new Date(),
+				endedAt: null,
+				task: { id: 3, title: "Test" },
+			}),
+		);
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		// Select a task and start a work cycle first
+		act(() => {
+			result.current.selectTask(3, { id: 3, title: "Test" });
+		});
+
+		await act(async () => {
+			await result.current.start(120);
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		// Reset mock to track only the ad-hoc call
+		createCycle.mockClear();
+
+		await act(async () => {
+			await result.current.startAdHocBreak("SHORT_BREAK", 300);
+		});
+
+		// Should not have called create since state != idle
+		expect(createCycle).not.toHaveBeenCalled();
+	});
+
+	it("rolls back to idle on create failure", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		createCycle.mockRejectedValueOnce(new Error("Network error"));
+
+		await act(async () => {
+			await result.current.startAdHocBreak("SHORT_BREAK", 300);
+		});
+
+		expect(result.current.state).toBe("idle");
+		expect(result.current.cycleKind).toBeNull();
+		expect(result.current.error).toBeTruthy();
+	});
+
+	it("ad-hoc break enters overtime and endBreakFromOvertime transitions to idle (kickoff)", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		// Start ad-hoc break
+		await act(async () => {
+			await result.current.startAdHocBreak("SHORT_BREAK", 300);
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+
+		// Simulate worker sending overtime signal (break passed configured end)
+		const worker = fakeWorkers[fakeWorkers.length - 1];
+		act(() => {
+			worker?.onmessage?.({
+				data: { type: "overtime", elapsed: 15_000 },
+			} as MessageEvent);
+		});
+
+		// Break stays running in overtime with negative remainingMs
+		expect(result.current.state).toBe("running");
+		expect(result.current.remainingMs).toBe(-15_000);
+
+		// End break from overtime → lands in idle (kickoff)
+		await act(async () => {
+			await result.current.endBreakFromOvertime();
+		});
+
+		expect(result.current.state).toBe("idle");
+		expect(result.current.cycleKind).toBeNull();
+	});
+
+	it("ad-hoc break does not increment completedWorkCycles after full cycle (no cadence change)", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		const countBefore = result.current.completedWorkCycles;
+
+		// Start ad-hoc break
+		await act(async () => {
+			await result.current.startAdHocBreak("LONG_BREAK", 900);
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		// Simulate overtime
+		const worker = fakeWorkers[fakeWorkers.length - 1];
+		act(() => {
+			worker?.onmessage?.({
+				data: { type: "overtime", elapsed: 5_000 },
+			} as MessageEvent);
+		});
+
+		// End break
+		await act(async () => {
+			await result.current.endBreakFromOvertime();
+		});
+
+		expect(result.current.state).toBe("idle");
+		// completedWorkCycles must NOT have changed
+		expect(result.current.completedWorkCycles).toBe(countBefore);
+	});
+
+	it("ad-hoc break is available from post-break idle state", async () => {
+		// Simulate a break that has already ended (recovery into idle)
+		activeCycleData = null;
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		// Start another ad-hoc break from idle (simulates post-break idle availability)
+		await act(async () => {
+			await result.current.startAdHocBreak("SHORT_BREAK", 180);
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+		expect(createCycle).toHaveBeenCalledWith({
+			kind: "SHORT_BREAK",
+			configuredDurationSec: 180,
+		});
+	});
+
+	it("ad-hoc break picker supports short/long selection with different durations", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		// Start with short break
+		await act(async () => {
+			await result.current.startAdHocBreak("SHORT_BREAK", 180);
+		});
+
+		expect(createCycle).toHaveBeenCalledWith({
+			kind: "SHORT_BREAK",
+			configuredDurationSec: 180,
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		// End it
+		const worker1 = fakeWorkers[fakeWorkers.length - 1];
+		act(() => {
+			worker1?.onmessage?.({
+				data: { type: "overtime", elapsed: 1_000 },
+			} as MessageEvent);
+		});
+		await act(async () => {
+			await result.current.endBreakFromOvertime();
+		});
+
+		expect(result.current.state).toBe("idle");
+		createCycle.mockClear();
+
+		// Now start a long break
+		await act(async () => {
+			await result.current.startAdHocBreak("LONG_BREAK", 1200);
+		});
+
+		expect(createCycle).toHaveBeenCalledWith({
+			kind: "LONG_BREAK",
+			configuredDurationSec: 1200,
+		});
+	});
+});

@@ -385,7 +385,13 @@
 	"QuickActions": {
 		"heading": "Quick actions",
 		"addTask": "Add task",
-		"planDay": "Plan day"
+		"planDay": "Plan day",
+		"startBreak": "Start break",
+		"shortBreak": "Short",
+		"longBreak": "Long",
+		"cancel": "Cancel",
+		"startBreakConfirm": "Start",
+		"starting": "Starting…"
 	},
 	"FocusEmpty": {
 		"heading": "Your day is waiting for you",
