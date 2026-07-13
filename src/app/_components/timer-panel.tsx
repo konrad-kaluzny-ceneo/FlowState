@@ -40,6 +40,7 @@ type TimerPanelProps = {
 	onPause: () => Promise<void>;
 	onResume: () => Promise<void>;
 	onInterrupt: () => Promise<void>;
+	onEndBreak?: () => Promise<void>;
 	isStarting?: boolean;
 	cycleKind?: CycleKind | null;
 	configuredDurationSec?: number | null;
@@ -59,6 +60,7 @@ export function TimerPanel({
 	onPause,
 	onResume,
 	onInterrupt,
+	onEndBreak,
 	isStarting = false,
 	cycleKind = null,
 	configuredDurationSec = null,
@@ -102,11 +104,15 @@ export function TimerPanel({
 		const breakLabel =
 			cycleKind === "LONG_BREAK" ? t("breakLong") : t("breakShort");
 		const isPaused = state === "paused";
+		const isOvertime = isBreak && remainingMs < 0;
 		const configuredDurationMs =
 			configuredDurationSec != null ? configuredDurationSec * 1000 : null;
 		const ringProgress =
 			configuredDurationMs != null && configuredDurationMs > 0
-				? (configuredDurationMs - remainingMs) / configuredDurationMs
+				? Math.min(
+						1,
+						(configuredDurationMs - remainingMs) / configuredDurationMs,
+					)
 				: 0;
 
 		return (
@@ -127,9 +133,11 @@ export function TimerPanel({
 						? isBreak
 							? t("statusBreakPaused")
 							: t("statusPaused")
-						: isBreak
-							? breakLabel
-							: t("statusFocusingOn")}
+						: isOvertime
+							? t("overtimeLabel")
+							: isBreak
+								? breakLabel
+								: t("statusFocusingOn")}
 				</p>
 				{!isBreak && (
 					<div className="mt-1 flex items-center justify-center gap-3">
@@ -170,7 +178,31 @@ export function TimerPanel({
 						</p>
 					</ProgressRing>
 				</div>
-				{isPaused ? (
+				{isOvertime && onEndBreak != null ? (
+					<div className="mt-6 flex flex-col gap-3">
+						<button
+							aria-label={t("endBreakAria")}
+							className="flex w-full items-center justify-center rounded-control bg-accent-break py-3 font-semibold text-on-cta transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+							data-testid="timer-end-break"
+							onClick={() => void onEndBreak()}
+							type="button"
+						>
+							{t("endBreakLabel")}
+						</button>
+						{isPaused && (
+							<button
+								aria-label={t("resumeBreakAria")}
+								className="flex w-full items-center justify-center rounded-control border border-border-break bg-surface-break px-4 py-2 font-semibold text-accent-break transition hover:bg-surface-break/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+								data-testid="timer-resume"
+								onClick={() => void onResume()}
+								type="button"
+							>
+								<Play aria-hidden="true" className="mr-2 h-4 w-4" />
+								{t("resumeBreakAria")}
+							</button>
+						)}
+					</div>
+				) : isPaused ? (
 					<button
 						aria-label={isBreak ? t("resumeBreakAria") : t("resumeAria")}
 						className="mt-6 flex w-full items-center justify-center rounded-control bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"

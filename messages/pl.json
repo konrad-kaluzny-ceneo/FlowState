@@ -352,7 +352,10 @@
 		"breakSettingsLong": "Długa przerwa",
 		"boundsBreak": "1 s – 30 min",
 		"completeFocusedTaskAria": "Oznacz skupione zadanie jako ukończone",
-		"completeFocusedTaskLabel": "Gotowe"
+		"completeFocusedTaskLabel": "Gotowe",
+		"overtimeLabel": "Przerwa · po czasie",
+		"endBreakLabel": "Zakończ przerwę",
+		"endBreakAria": "Zakończ przerwę"
 	},
 	"Home": {
 		"offlineBanner": "Jesteś offline — spróbuj ponownie, gdy wrócisz online."

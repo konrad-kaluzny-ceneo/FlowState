@@ -866,6 +866,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			breakOvertimeEnteredRef.current = false;
 			setActiveCycle(cycle);
 			setCycleKind(cycle.kind);
+			cycleKindRef.current = cycle.kind;
 			setActiveSessionId(cycle.sessionId);
 			setHasActiveSession(true);
 			setFocusedTask(
@@ -2503,6 +2504,19 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		],
 	);
 
+	/**
+	 * End a break from overtime (or paused-overtime).
+	 * Stops the worker, transitions state, and delegates to confirmComplete.
+	 * This is the only call path for the inline "End break" button.
+	 */
+	const endBreakFromOvertime = useCallback(async () => {
+		if (!isBreakKind(cycleKindRef.current)) {
+			return;
+		}
+		stopWorker();
+		await confirmComplete(false);
+	}, [confirmComplete, stopWorker]);
+
 	// NFR 200ms: authenticated wedge check-in → break/suggestion (S-34); start/interrupt (B-03).
 	// S-34 / L-04: authenticated wedge optimism — each tap surface needs a deferred-mock oracle in tests.
 	const captureWedgeTransitionSnapshot =
@@ -3410,6 +3424,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		pause,
 		resume,
 		confirmComplete,
+		endBreakFromOvertime,
 		onCycleCompleteConfirm,
 		submitCheckIn,
 		onWindDownKeepGoing,

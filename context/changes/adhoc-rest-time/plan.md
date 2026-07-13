@@ -371,10 +371,10 @@ No schema or data migration. `cycle.endedAt` already stamps accept time; existin
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `pnpm typecheck`
-- [x] 1.2 Lint/format passes: `pnpm check`
-- [x] 1.3 Timer worker logic unit tests pass (overtime cases)
-- [x] 1.4 Hook tests pass, incl. overtime cases
+- [x] 1.1 Type checking passes: `pnpm typecheck` — f585e68
+- [x] 1.2 Lint/format passes: `pnpm check` — f585e68
+- [x] 1.3 Timer worker logic unit tests pass (overtime cases) — f585e68
+- [x] 1.4 Hook tests pass, incl. overtime cases — f585e68
 
 #### Manual
 
@@ -386,12 +386,12 @@ No schema or data migration. `cycle.endedAt` already stamps accept time; existin
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `pnpm typecheck`
-- [ ] 2.2 Lint/format passes: `pnpm check`
-- [ ] 2.3 `format-remaining` tests pass (overtime rendering)
-- [ ] 2.4 `derive-gate` tests pass (BREAK_CONFIRM retired)
-- [ ] 2.5 `cycle-complete-overlay` + `timer-panel` component tests pass
-- [ ] 2.6 No missing-i18n-key errors
+- [x] 2.1 Type checking passes: `pnpm typecheck`
+- [x] 2.2 Lint/format passes: `pnpm check`
+- [x] 2.3 `format-remaining` tests pass (overtime rendering)
+- [x] 2.4 `derive-gate` tests pass (BREAK_CONFIRM retired)
+- [x] 2.5 `cycle-complete-overlay` + `timer-panel` component tests pass
+- [x] 2.6 No missing-i18n-key errors
 
 #### Manual
 

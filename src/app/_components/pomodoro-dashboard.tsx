@@ -789,6 +789,7 @@ export function PomodoroDashboardBody({
 					? pomodoro.onCompleteFocusedTask
 					: undefined
 			}
+			onEndBreak={pomodoro.endBreakFromOvertime}
 			onInterrupt={pomodoro.interrupt}
 			onOutOfTabBreakAlertsChange={setOutOfTabBreakAlertsEnabled}
 			onPause={pomodoro.pause}

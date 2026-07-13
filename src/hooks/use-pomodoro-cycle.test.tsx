@@ -3911,6 +3911,284 @@ describe("usePomodoroCycle break out-of-tab alerts", () => {
 
 		expect(maybeAlertBreakStartMock).not.toHaveBeenCalled();
 	});
+
+	describe("break overtime UI integration", () => {
+		it("break past configured duration stays running with negative remainingMs via overtime message", async () => {
+			// Start a running break with time still remaining
+			activeCycleData = makeActiveCycle({
+				id: 20,
+				kind: "SHORT_BREAK",
+				configuredDurationSec: 300,
+				taskId: null,
+				task: null,
+				startedAt: new Date(),
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			expect(result.current.cycleKind).toBe("SHORT_BREAK");
+
+			const worker = fakeWorkers[fakeWorkers.length - 1]!;
+
+			// Simulate break expiring — worker sends overtime message
+			act(() => {
+				worker.onmessage?.({
+					data: { type: "overtime", elapsed: 30_000 },
+				} as MessageEvent);
+			});
+
+			// State must NOT be "completed" — break stays running in overtime
+			expect(result.current.state).toBe("running");
+			// remainingMs should be negative (overtime)
+			expect(result.current.remainingMs).toBe(-30_000);
+		});
+
+		it("endBreakFromOvertime transitions break from running-overtime to idle (kickoff)", async () => {
+			// Start a running break
+			activeCycleData = makeActiveCycle({
+				id: 21,
+				kind: "SHORT_BREAK",
+				configuredDurationSec: 300,
+				taskId: null,
+				task: null,
+				startedAt: new Date(),
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			const worker = fakeWorkers[fakeWorkers.length - 1]!;
+
+			// Enter overtime
+			act(() => {
+				worker.onmessage?.({
+					data: { type: "overtime", elapsed: 10_000 },
+				} as MessageEvent);
+			});
+
+			expect(result.current.remainingMs).toBe(-10_000);
+
+			// End break from overtime
+			await act(async () => {
+				await result.current.endBreakFromOvertime();
+			});
+
+			expect(result.current.state).toBe("idle");
+			expect(result.current.cycleKind).toBeNull();
+		});
+
+		it("endBreakFromOvertime works from paused-overtime state", async () => {
+			// Start a running break started long enough ago that endTime is in the past
+			const tenSecondsAgo = new Date(Date.now() - 10_000);
+			activeCycleData = makeActiveCycle({
+				id: 22,
+				kind: "SHORT_BREAK",
+				configuredDurationSec: 5,
+				taskId: null,
+				task: null,
+				startedAt: tenSecondsAgo,
+			});
+
+			// Mock pauseCycle to return a SHORT_BREAK cycle (not default WORK)
+			pauseCycle.mockImplementation(
+				async (input: {
+					cycleId: number | string;
+					remainingDurationSec: number;
+				}) => ({
+					...makeActiveCycle({
+						id: input.cycleId as number,
+						kind: "SHORT_BREAK",
+						taskId: null,
+						task: null,
+					}),
+					state: "PAUSED" as const,
+					remainingDurationSec: input.remainingDurationSec,
+					pausedAt: new Date(),
+				}),
+			);
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			const worker = fakeWorkers[fakeWorkers.length - 1]!;
+
+			// Emit overtime message to confirm state
+			act(() => {
+				worker.onmessage?.({
+					data: { type: "overtime", elapsed: 5000 },
+				} as MessageEvent);
+			});
+
+			expect(result.current.remainingMs).toBe(-5000);
+
+			// Pause during overtime
+			await act(async () => {
+				await result.current.pause();
+			});
+
+			expect(result.current.state).toBe("paused");
+
+			// End break directly from paused-overtime (no resume needed)
+			await act(async () => {
+				await result.current.endBreakFromOvertime();
+			});
+
+			expect(result.current.state).toBe("idle");
+			expect(result.current.cycleKind).toBeNull();
+		});
+
+		it("break expiry via worker overtime message fires alarm exactly once", async () => {
+			// Start a running break with time remaining
+			activeCycleData = makeActiveCycle({
+				id: 23,
+				kind: "SHORT_BREAK",
+				configuredDurationSec: 5,
+				taskId: null,
+				task: null,
+				startedAt: new Date(),
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			const worker = fakeWorkers[fakeWorkers.length - 1]!;
+
+			// Simulate worker sending overtime message (break past end)
+			act(() => {
+				worker.onmessage?.({
+					data: { type: "overtime", elapsed: 5000 },
+				} as MessageEvent);
+			});
+
+			expect(result.current.remainingMs).toBe(-5000);
+			expect(result.current.state).toBe("running"); // NOT completed
+			expect(playAlarm).toHaveBeenCalledTimes(1);
+
+			// Second overtime tick should NOT fire alarm again
+			act(() => {
+				worker.onmessage?.({
+					data: { type: "overtime", elapsed: 6000 },
+				} as MessageEvent);
+			});
+
+			expect(result.current.remainingMs).toBe(-6000);
+			expect(playAlarm).toHaveBeenCalledTimes(1); // still only once
+		});
+
+		it("pause during break overtime freezes the negative remaining value", async () => {
+			// Start a running break that already expired (endTime in the past)
+			const fiveSecondsAgo = new Date(Date.now() - 5000);
+			activeCycleData = makeActiveCycle({
+				id: 24,
+				kind: "SHORT_BREAK",
+				configuredDurationSec: 5,
+				taskId: null,
+				task: null,
+				startedAt: fiveSecondsAgo,
+			});
+
+			// Mock pauseCycle to return a SHORT_BREAK cycle (not default WORK)
+			pauseCycle.mockImplementation(
+				async (input: {
+					cycleId: number | string;
+					remainingDurationSec: number;
+				}) => ({
+					...makeActiveCycle({
+						id: input.cycleId as number,
+						kind: "SHORT_BREAK",
+						taskId: null,
+						task: null,
+					}),
+					state: "PAUSED" as const,
+					remainingDurationSec: input.remainingDurationSec,
+					pausedAt: new Date(),
+				}),
+			);
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			// At this point, the break has already entered overtime via recovery
+			// Emit explicit overtime to confirm
+			const worker = fakeWorkers[fakeWorkers.length - 1]!;
+			act(() => {
+				worker.onmessage?.({
+					data: { type: "overtime", elapsed: 3000 },
+				} as MessageEvent);
+			});
+
+			expect(result.current.remainingMs).toBe(-3000);
+
+			// Pause during overtime
+			await act(async () => {
+				await result.current.pause();
+			});
+
+			expect(result.current.state).toBe("paused");
+			// endTimeRef is in the past, so pause freezes a negative remaining
+			expect(result.current.remainingMs).toBeLessThanOrEqual(0);
+		});
+
+		it("no BREAK_CONFIRM catch-up gate fires for breaks in overtime", async () => {
+			// Start a break and enter overtime
+			activeCycleData = makeActiveCycle({
+				id: 25,
+				kind: "SHORT_BREAK",
+				configuredDurationSec: 300,
+				taskId: null,
+				task: null,
+				startedAt: new Date(),
+			});
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.state).toBe("running");
+			});
+
+			const worker = fakeWorkers[fakeWorkers.length - 1]!;
+
+			// Enter overtime via worker message
+			act(() => {
+				worker.onmessage?.({
+					data: { type: "overtime", elapsed: 60_000 },
+				} as MessageEvent);
+			});
+
+			// Break is in overtime, no catch-up gate fires
+			expect(result.current.catchUp).toBeNull();
+			expect(result.current.state).toBe("running");
+			expect(result.current.remainingMs).toBe(-60_000);
+		});
+	});
 });
 
 describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () => {
