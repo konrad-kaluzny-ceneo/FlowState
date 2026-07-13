@@ -174,8 +174,8 @@ None — UI-only removal plus an i18n key deletion. No data, schema, or API chan
 
 #### Automated
 
-- [x] 2.1 Rewritten spec passes: `pnpm exec playwright test e2e/session-closure.spec.ts` (spec green — rewritten test quarantined `test.fixme` pending pre-existing pause regression, bug filed at `context/changes/fix-timer-pause-cycle-not-running/`; standalone end-session test passes)
-- [x] 2.2 No dangling reference: grep of `e2e/` for `pause-and-end-session-btn` is empty
+- [x] 2.1 Rewritten spec passes: `pnpm exec playwright test e2e/session-closure.spec.ts` (spec green — rewritten test quarantined `test.fixme` pending pre-existing pause regression, bug filed at `context/changes/fix-timer-pause-cycle-not-running/`; standalone end-session test passes) — 4fcb6ee
+- [x] 2.2 No dangling reference: grep of `e2e/` for `pause-and-end-session-btn` is empty — 4fcb6ee
 
 #### Manual
 
