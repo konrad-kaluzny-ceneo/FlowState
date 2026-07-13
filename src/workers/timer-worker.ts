@@ -4,6 +4,12 @@ import {
 	type TimerWorkerOutbound,
 } from "~/workers/timer-worker-logic";
 
+/**
+ * Safety ceiling: self-stop after 2 hours of overtime to avoid burning
+ * battery/memory on zombie tabs where the main thread never sent "stop".
+ */
+const MAX_OVERTIME_MS = 2 * 60 * 60 * 1000;
+
 let intervalId: ReturnType<typeof setInterval> | null = null;
 let activeEndTime: number | null = null;
 let activeMode: "work" | "break" = "work";
@@ -29,6 +35,13 @@ function tick(): void {
 	if (result.type === "complete") {
 		stopTimer();
 		postOutbound(result);
+		return;
+	}
+
+	// Safety ceiling: force-complete if overtime exceeds 2 hours
+	if (result.type === "overtime" && result.elapsed >= MAX_OVERTIME_MS) {
+		stopTimer();
+		postOutbound({ type: "complete" });
 		return;
 	}
 

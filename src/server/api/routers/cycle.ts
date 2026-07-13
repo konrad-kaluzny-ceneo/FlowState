@@ -192,6 +192,17 @@ export const cycleRouter = createTRPCRouter({
 				if (
 					error instanceof Error &&
 					"code" in error &&
+					(error as { code: string }).code === "P2002"
+				) {
+					// Partial unique index: cycle_one_active_per_user
+					throw new TRPCError({
+						code: "CONFLICT",
+						message: "A cycle is already running",
+					});
+				}
+				if (
+					error instanceof Error &&
+					"code" in error &&
 					(error as { code: string }).code === "P2003"
 				) {
 					throw new TRPCError({ code: "NOT_FOUND" });

@@ -2565,6 +2565,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		if (!isBreakKind(cycleKindRef.current)) {
 			return;
 		}
+		// Stop ticking immediately so no UI updates fire during the server call
+		// (confirmComplete will also stop, but we want silence before the await)
 		stopWorker();
 		await confirmComplete(false);
 	}, [confirmComplete, stopWorker]);
