@@ -290,14 +290,6 @@ export function PomodoroDashboardBody({
 		void pomodoro.endSession();
 	}, [pomodoro]);
 
-	const handlePauseAndEndSessionClick = useCallback(async () => {
-		if (pomodoro.state === "running") {
-			await pomodoro.pause();
-		}
-		setEndSessionConfirmVariant("after-pause");
-		setEndSessionConfirmOpen(true);
-	}, [pomodoro]);
-
 	const handleEndSessionConfirm = useCallback(async () => {
 		setIsEndingSession(true);
 		try {
@@ -1171,17 +1163,6 @@ export function PomodoroDashboardBody({
 
 			{pomodoro.hasActiveSession && (
 				<div className="flex flex-col items-center gap-2">
-					{pomodoro.state === "running" && (
-						<button
-							className="rounded-lg border border-border-subtle px-4 py-2 text-sm text-text-secondary transition hover:border-energy-steady-border hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40"
-							data-testid="pause-and-end-session-btn"
-							disabled={pomodoro.isConfirming || isEndingSession}
-							onClick={() => void handlePauseAndEndSessionClick()}
-							type="button"
-						>
-							{tDashboard("pauseEndSession")}
-						</button>
-					)}
 					<button
 						className="rounded-lg border border-border-subtle px-4 py-2 text-sm text-text-secondary transition hover:border-red-400/40 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
 						data-testid="end-session-btn"

@@ -112,7 +112,6 @@
 		},
 		"dashboard": {
 			"errorDismiss": "Dismiss",
-			"pauseEndSession": "Pause & end session",
 			"endSession": "End session"
 		}
 	},

@@ -779,37 +779,31 @@ describe("PomodoroDashboardBody end session while running", () => {
 		});
 	});
 
-	it("shows pause and end session when running", () => {
-		renderBody({
-			hasActiveSession: true,
-			state: "running",
-			activeCycle: { id: 42 },
-		});
-
-		expect(screen.getByTestId("pause-and-end-session-btn")).toBeTruthy();
-	});
-
-	it("pauses then opens after-pause confirm on pause and end click", async () => {
-		const pause = vi.fn().mockResolvedValue(undefined);
+	it("shows after-pause confirm on end session click when paused", () => {
 		const endSession = vi.fn();
 		renderBody({
 			hasActiveSession: true,
-			state: "running",
+			state: "paused",
 			activeCycle: { id: 42 },
-			pause,
 			endSession,
 		});
 
-		fireEvent.click(screen.getByTestId("pause-and-end-session-btn"));
+		fireEvent.click(screen.getByTestId("end-session-btn"));
 
-		await waitFor(() => {
-			expect(pause).toHaveBeenCalledTimes(1);
-		});
-		await waitFor(() => {
-			expect(screen.getByTestId("end-session-confirm-overlay")).toBeTruthy();
-		});
+		expect(screen.getByTestId("end-session-confirm-overlay")).toBeTruthy();
 		expect(screen.getByText("Stay paused")).toBeTruthy();
 		expect(endSession).not.toHaveBeenCalled();
+	});
+
+	it("does not render the coupled pause-and-end button when running", () => {
+		renderBody({
+			hasActiveSession: true,
+			state: "running",
+			activeCycle: { id: 42 },
+		});
+
+		expect(screen.queryByTestId("pause-and-end-session-btn")).toBeNull();
+		expect(screen.getByTestId("end-session-btn")).toBeTruthy();
 	});
 
 	it("shows break-neutral confirm copy when ending during SHORT_BREAK", () => {

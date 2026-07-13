@@ -9,7 +9,7 @@ The "Wstrzymaj i zakończ sesję" button is a redundant third control — pause 
 
 ## Starting Point
 
-During a running session the timer hub stacks three controls: the ⏸/▶ Pause⇄Resume icon inside the timer card (`timer-panel.tsx:152-172`), the coupled "Wstrzymaj i zakończ sesję" text button that pauses **and** opens the end confirm (`pomodoro-dashboard.tsx:322-328`), and the plain "Zakończ sesję" end button (`:310-320`). `handleEndSessionClick` already opens the calm `after-pause` confirm variant when paused, so ending-after-pause needs no new code.
+During a running session the timer hub stacks three controls: the ⏸/▶ Pause⇄Resume icon inside the timer card (`timer-panel.tsx:196-221`), the coupled "Wstrzymaj i zakończ sesję" text button that pauses **and** opens the end confirm (`pomodoro-dashboard.tsx:293-299`), and the plain "Zakończ sesję" end button (`:281-291`). `handleEndSessionClick` already opens the calm `after-pause` confirm variant when paused, so ending-after-pause needs no new code.
 
 ## Desired End State
 
@@ -54,7 +54,7 @@ Pure UI removal plus test re-homing. The coupled button was a convenience shortc
 
 ## Open Risks & Assumptions
 
-- Assumes `dashboard.pauseEndSession` has no references outside `pomodoro-dashboard.tsx:1338` (verified by repo-wide grep at plan time).
+- Assumes `dashboard.pauseEndSession` has no references outside `pomodoro-dashboard.tsx:1182` (verified by repo-wide grep at plan time).
 - Assumes the `timer-pause` icon is reliably clickable in e2e while running (it renders whenever `state === "running"`).
 
 ## Success Criteria (Summary)
