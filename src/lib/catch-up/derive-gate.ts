@@ -7,12 +7,6 @@ export type CatchUpGateSnapshot = {
 	cyclePaused?: boolean;
 };
 
-function isBreakKind(
-	kind: CatchUpGateSnapshot["cycleKind"],
-): kind is "SHORT_BREAK" | "LONG_BREAK" {
-	return kind === "SHORT_BREAK" || kind === "LONG_BREAK";
-}
-
 export function deriveCatchUpGate(
 	snapshot: CatchUpGateSnapshot,
 ): CatchUpGate | null {
@@ -28,9 +22,8 @@ export function deriveCatchUpGate(
 		if (snapshot.cycleKind === "WORK") {
 			return "WORK_CONFIRM";
 		}
-		if (isBreakKind(snapshot.cycleKind)) {
-			return "BREAK_CONFIRM";
-		}
+		// Breaks no longer enter "completed" state — they run overtime until
+		// the user explicitly accepts. BREAK_CONFIRM is retired.
 	}
 
 	return null;

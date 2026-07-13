@@ -74,7 +74,7 @@ Teach the timer worker, the main-thread fallback, and the `use-pomodoro-cycle` s
 
 **Intent**: Stop treating `remaining <= 0` as terminal; emit an overtime signal carrying elapsed-past-end so the worker keeps ticking. Completion becomes user-driven (inbound `stop`), not time-driven.
 
-**Contract**: Extend `TimerWorkerOutbound` with an `{ type: "overtime"; elapsed: number }` variant (or fold into `tick` as a signed `remaining`). Extend `TimerWorkerInbound` start message with a `mode: "work" | "break"` field so the worker knows whether to emit `complete` (WORK) or `overtime` (BREAK) when `now >= endTime`. `getTimerTickResult(endTime, now, mode)` returns overtime (`now - endTime`) for breaks and `{ type: "complete" }` for work. Add tests covering both modes in `timer-worker-logic.test.ts`.
+**Contract**: Extend `TimerWorkerOutbound` with a new `{ type: "overtime"; elapsed: number }` variant (distinct from `tick` — keeps `tick` semantics unchanged for positive remaining). Extend `TimerWorkerInbound` start message with a `mode: "work" | "break"` field so the worker knows whether to emit `complete` (WORK) or `overtime` (BREAK) when `now >= endTime`. `getTimerTickResult(endTime, now, mode)` returns `{ type: "overtime", elapsed: now - endTime }` for breaks and `{ type: "complete" }` for work. Add tests covering both modes in `timer-worker-logic.test.ts`.
 
 #### 2. Timer worker lifecycle — don't stop on overtime
 
@@ -82,7 +82,7 @@ Teach the timer worker, the main-thread fallback, and the `use-pomodoro-cycle` s
 
 **Intent**: Keep the interval alive through overtime; only clear it on an explicit inbound `stop`.
 
-**Contract**: `tick()` no longer calls `stopTimer()` for the overtime case; the interval survives until an inbound `stop` message ([timer-worker.ts:52](src/workers/timer-worker.ts)).
+**Contract**: `tick()` no longer calls `stopTimer()` for the overtime case; instead, when `getTimerTickResult` returns `{ type: "overtime" }`, the worker posts the message and keeps the interval alive. The interval is only cleared on an explicit inbound `stop` message ([timer-worker.ts:52](src/workers/timer-worker.ts)).
 
 #### 3. Hook — break expiry becomes overtime, not completion
 
@@ -94,7 +94,7 @@ Teach the timer worker, the main-thread fallback, and the `use-pomodoro-cycle` s
 - `handleCycleExpired` ([:688](src/hooks/use-pomodoro-cycle.ts)): branch on `cycleKindRef.current`. For breaks — keep `state = "running"`, keep `endTimeRef`, fire the end alarm/tab-pulse once, do **not** set catch-up, begin overtime accrual. For WORK — unchanged (`completed` + existing catch-up/pulse).
 - `startFallbackTimer` tick ([:767-778](src/hooks/use-pomodoro-cycle.ts)): for breaks, past `endTime` keep ticking and surface elapsed instead of calling `handleCycleExpired` terminally.
 - `recalculateFromEndTime` ([:819-836](src/hooks/use-pomodoro-cycle.ts)): for breaks, resume overtime counting instead of firing `handleCycleExpired`.
-- `attachWorkerHandlers` ([:746-760](src/hooks/use-pomodoro-cycle.ts)): handle the new `overtime` message → surface elapsed.
+- `attachWorkerHandlers` ([:746-760](src/hooks/use-pomodoro-cycle.ts)): add a third branch for the new `{ type: "overtime"; elapsed }` message → surface elapsed (e.g. `setOvertimeMs(message.elapsed)` or `setRemainingMs(-message.elapsed)`).
 - Represent overtime via a signed `remainingMs` (negative = overtime) or a dedicated `overtimeMs` state; `endTimeRef` stays non-null for breaks in overtime.
 - **Idempotency guard**: Add a per-cycle `breakOvertimeEnteredRef` (reset when a new cycle starts). The end alarm and tab pulse execute only once — when the break first crosses the deadline. Subsequent observations (from `startFallbackTimer`, `recalculateFromEndTime`, `attachWorkerHandlers`, and recovery) only update the elapsed overtime value and preserve `endTimeRef` without repeating side effects. This prevents double-alarm on tab-return or worker↔fallback swaps.
 
@@ -155,7 +155,15 @@ Make overtime visible and endable: display `+MM:SS`, offer an inline "End break"
 
 **Intent**: When a break is in overtime, show the `+MM:SS` count-up and an inline "End break" button that triggers accept. Keep progress ring sane past 100%.
 
-**Contract**: Consume the signed remaining / overtime value; render overtime label via the new formatter ([:148](src/app/_components/timer-panel.tsx)); clamp/cap the progress computation past configured end ([:105](src/app/_components/timer-panel.tsx)); add an "End break" button wired to the hook's accept (`confirmComplete`). Button visible only for a break in overtime.
+**Contract**: Consume the signed remaining / overtime value; render overtime label via the new formatter ([:148](src/app/_components/timer-panel.tsx)); clamp/cap the progress computation past configured end ([:105](src/app/_components/timer-panel.tsx)); add an "End break" button wired to the hook's `endBreakFromOvertime()` (see §2a below). Button visible for a break **both in running-overtime and paused-overtime** (user can end a paused break directly without resuming first).
+
+#### 2a. `endBreakFromOvertime` hook wrapper
+
+**File**: `src/hooks/use-pomodoro-cycle.ts`
+
+**Intent**: Provide an explicit entry point for ending a break from the overtime (or paused-overtime) state, making the contract boundary clear — the caller doesn't need to know that `confirmComplete` was designed for the `completed` state.
+
+**Contract**: `endBreakFromOvertime()` — guards `isBreakKind(cycleKindRef.current)`. Idempotently stops the worker (no-op if already stopped by pause), transitions internal state, then delegates to `confirmComplete(false)`. Exported alongside `confirmComplete` in the hook return. This is the **only** call path for the inline "End break" button (Phases 2 and 3).
 
 #### 3. Suppress auto break overlay; keep accept path
 
@@ -196,6 +204,7 @@ Make overtime visible and endable: display `+MM:SS`, offer an inline "End break"
 
 - [ ] At configured end, a break shows `+MM:SS` counting up and an "End break" button — no overlay auto-pops.
 - [ ] Clicking End break advances to the normal kickoff beat (no dead-end).
+- [ ] End break is clickable while paused-in-overtime (user doesn't need to resume first).
 - [ ] Copy reads calm in both en and pl; overtime label is not alarming.
 - [ ] `prefers-reduced-motion` respected (no new blocking motion).
 
@@ -225,7 +234,7 @@ Add a persistent "Start break" quick action in any idle state that opens a short
 
 **Intent**: Add a third action ("Start break") that opens a compact short/long + duration picker; confirming calls `startAdHocBreak`.
 
-**Contract**: New `onStartBreak?: (kind, durationSec) => Promise<void>` prop and a picker surface reusing `DurationPicker` ([duration-picker.tsx:53](src/app/_components/duration-picker.tsx)) with short/long presets (`getShort/getLongBreakPresets`) and defaults (`getShort/getLongBreakDuration`). Follow the existing `icon + label + chevron` item pattern; add `data-testid` (e.g. `quick-action-start-break`).
+**Contract**: New `onStartBreak?: (kind, durationSec) => Promise<void>` prop and a picker surface reusing `DurationPicker` ([duration-picker.tsx:53](src/app/_components/duration-picker.tsx)) with short/long presets (`getShort/getLongBreakPresets`) and defaults (`getShort/getLongBreakDuration`). Follow the existing `icon + label + chevron` item pattern in the **widget variant** (add to the `items` array); also add a corresponding button in the **inline variant** (hardcoded JSX row) so "Start break" appears in both renders. Add `data-testid` (e.g. `quick-action-start-break`).
 
 #### 3. Dashboard wiring
 
@@ -276,7 +285,7 @@ Close the pre-existing kind-aware duration-validation gap and run the full break
 
 **Intent**: Reject break cycles longer than the break cap; keep the work-cycle bounds for WORK.
 
-**Contract**: Validate `configuredDurationSec` per `kind` — breaks bounded by `MIN_BREAK_DURATION_SEC`/`MAX_BREAK_DURATION_SEC` (1800), WORK by the existing work bounds ([cycle.ts:85-89](src/server/api/routers/cycle.ts)). Add/extend a router test asserting an oversized break is rejected.
+**Contract**: Validate `configuredDurationSec` per `kind` — breaks bounded by `MIN_BREAK_DURATION_SEC`/`MAX_BREAK_DURATION_SEC` (1800), WORK by the existing work bounds ([cycle.ts:85-89](src/server/api/routers/cycle.ts)). This is a **loosening** of the min for breaks (from `minWorkCycleSec` → 1 sec) and a **tightening** of the max (from 90 min → 30 min); all existing break presets (max 20 min) are within the new bounds. Add/extend a router test asserting an oversized break is rejected.
 
 #### 2. Break test cluster regression
 
@@ -362,10 +371,10 @@ No schema or data migration. `cycle.endedAt` already stamps accept time; existin
 
 #### Automated
 
-- [ ] 1.1 Type checking passes: `pnpm typecheck`
-- [ ] 1.2 Lint/format passes: `pnpm check`
-- [ ] 1.3 Timer worker logic unit tests pass (overtime cases)
-- [ ] 1.4 Hook tests pass, incl. overtime cases
+- [x] 1.1 Type checking passes: `pnpm typecheck` — f585e68
+- [x] 1.2 Lint/format passes: `pnpm check` — f585e68
+- [x] 1.3 Timer worker logic unit tests pass (overtime cases) — f585e68
+- [x] 1.4 Hook tests pass, incl. overtime cases — f585e68
 
 #### Manual
 
@@ -377,28 +386,29 @@ No schema or data migration. `cycle.endedAt` already stamps accept time; existin
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `pnpm typecheck`
-- [ ] 2.2 Lint/format passes: `pnpm check`
-- [ ] 2.3 `format-remaining` tests pass (overtime rendering)
-- [ ] 2.4 `derive-gate` tests pass (BREAK_CONFIRM retired)
-- [ ] 2.5 `cycle-complete-overlay` + `timer-panel` component tests pass
-- [ ] 2.6 No missing-i18n-key errors
+- [x] 2.1 Type checking passes: `pnpm typecheck`
+- [x] 2.2 Lint/format passes: `pnpm check`
+- [x] 2.3 `format-remaining` tests pass (overtime rendering)
+- [x] 2.4 `derive-gate` tests pass (BREAK_CONFIRM retired)
+- [x] 2.5 `cycle-complete-overlay` + `timer-panel` component tests pass
+- [x] 2.6 No missing-i18n-key errors
 
 #### Manual
 
 - [ ] 2.7 Overtime shows `+MM:SS` + End break button, no overlay auto-pop
 - [ ] 2.8 End break advances to kickoff (no dead-end)
-- [ ] 2.9 Copy reads calm in en + pl; not alarming
-- [ ] 2.10 `prefers-reduced-motion` respected
+- [ ] 2.9 End break works while paused-in-overtime (no resume needed)
+- [ ] 2.10 Copy reads calm in en + pl; not alarming
+- [ ] 2.11 `prefers-reduced-motion` respected
 
 ### Phase 3: Ad-hoc break entry (A)
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `pnpm typecheck`
-- [ ] 3.2 Lint/format passes: `pnpm check`
-- [ ] 3.3 `quick-actions` component tests pass (Start break action)
-- [ ] 3.4 Hook tests pass, incl. `startAdHocBreak` (both modes, no counter touch)
+- [x] 3.1 Type checking passes: `pnpm typecheck` — d36811f
+- [x] 3.2 Lint/format passes: `pnpm check` — d36811f
+- [x] 3.3 `quick-actions` component tests pass (Start break action) — d36811f
+- [x] 3.4 Hook tests pass, incl. `startAdHocBreak` (both modes, no counter touch) — d36811f
 
 #### Manual
 
@@ -410,11 +420,11 @@ No schema or data migration. `cycle.endedAt` already stamps accept time; existin
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `pnpm typecheck`
-- [ ] 4.2 Lint/format passes: `pnpm check`
-- [ ] 4.3 Cycle router tests pass (kind-aware bound)
-- [ ] 4.4 Full unit/integration suite passes: `pnpm test`
-- [ ] 4.5 E2E belt passes: `pnpm test:e2e:belt`
+- [x] 4.1 Type checking passes: `pnpm typecheck` — 90ce25f
+- [x] 4.2 Lint/format passes: `pnpm check` — 90ce25f
+- [x] 4.3 Cycle router tests pass (kind-aware bound) — 90ce25f
+- [x] 4.4 Full unit/integration suite passes: `pnpm test` — 90ce25f
+- [x] 4.5 E2E belt passes: `pnpm test:e2e:belt` — 90ce25f
 
 #### Manual
 

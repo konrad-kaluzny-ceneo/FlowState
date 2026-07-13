@@ -789,6 +789,7 @@ export function PomodoroDashboardBody({
 					? pomodoro.onCompleteFocusedTask
 					: undefined
 			}
+			onEndBreak={pomodoro.endBreakFromOvertime}
 			onInterrupt={pomodoro.interrupt}
 			onOutOfTabBreakAlertsChange={setOutOfTabBreakAlertsEnabled}
 			onPause={pomodoro.pause}
@@ -857,7 +858,10 @@ export function PomodoroDashboardBody({
 		<div className="flex w-full flex-col gap-4">
 			{calmFocusSummary}
 			<FocusTip />
-			<QuickActions onAddTask={() => setShowAddModal(true)} />
+			<QuickActions
+				onAddTask={() => setShowAddModal(true)}
+				onStartBreak={pomodoro.startAdHocBreak}
+			/>
 		</div>
 	) : null;
 

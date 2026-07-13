@@ -352,7 +352,10 @@
 		"breakSettingsLong": "Long break",
 		"boundsBreak": "1 s – 30 min",
 		"completeFocusedTaskAria": "Mark focused task complete",
-		"completeFocusedTaskLabel": "Done"
+		"completeFocusedTaskLabel": "Done",
+		"overtimeLabel": "On break · over time",
+		"endBreakLabel": "End break",
+		"endBreakAria": "End break"
 	},
 	"Home": {
 		"offlineBanner": "You're offline — retry when you're back online."
@@ -382,7 +385,13 @@
 	"QuickActions": {
 		"heading": "Quick actions",
 		"addTask": "Add task",
-		"planDay": "Plan day"
+		"planDay": "Plan day",
+		"startBreak": "Start break",
+		"shortBreak": "Short",
+		"longBreak": "Long",
+		"cancel": "Cancel",
+		"startBreakConfirm": "Start",
+		"starting": "Starting…"
 	},
 	"FocusEmpty": {
 		"heading": "Your day is waiting for you",

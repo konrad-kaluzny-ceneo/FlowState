@@ -1,9 +1,9 @@
 ---
 change_id: adhoc-rest-time
 title: Ad-hoc break that resumes the work cycle when it ends
-status: planned
+status: impl_reviewed
 created: 2026-07-06
-updated: 2026-07-06
+updated: 2026-07-13
 archived_at: null
 ---
 

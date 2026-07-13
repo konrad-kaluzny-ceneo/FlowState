@@ -16,7 +16,7 @@ describe("timer worker logic", () => {
 		const now = Date.now();
 		const endTime = now + 25_000;
 
-		expect(getTimerTickResult(endTime, now)).toEqual({
+		expect(getTimerTickResult(endTime, now, "work")).toEqual({
 			type: "tick",
 			remaining: 25_000,
 		});
@@ -26,20 +26,28 @@ describe("timer worker logic", () => {
 		const now = Date.now();
 		const endTime = now;
 
-		expect(getTimerTickResult(endTime, now)).toEqual({ type: "complete" });
-		expect(getTimerTickResult(endTime - 1, now)).toEqual({ type: "complete" });
+		expect(getTimerTickResult(endTime, now, "work")).toEqual({
+			type: "complete",
+		});
+		expect(getTimerTickResult(endTime - 1, now, "work")).toEqual({
+			type: "complete",
+		});
 	});
 
 	it("returns tick within ±2s boundary before end time", () => {
 		const endTime = Date.now() + 10_000;
 
-		const atTwoSecondsBefore = getTimerTickResult(endTime, endTime - 2000);
+		const atTwoSecondsBefore = getTimerTickResult(
+			endTime,
+			endTime - 2000,
+			"work",
+		);
 		expect(atTwoSecondsBefore).toEqual({
 			type: "tick",
 			remaining: 2000,
 		});
 
-		const justBeforeEnd = getTimerTickResult(endTime, endTime - 1);
+		const justBeforeEnd = getTimerTickResult(endTime, endTime - 1, "work");
 		expect(justBeforeEnd.type).toBe("tick");
 		if (justBeforeEnd.type === "tick") {
 			expect(justBeforeEnd.remaining).toBe(1);
@@ -49,8 +57,10 @@ describe("timer worker logic", () => {
 	it("returns complete at endTime and up to 2s past end time", () => {
 		const endTime = Date.now() + 5_000;
 
-		expect(getTimerTickResult(endTime, endTime)).toEqual({ type: "complete" });
-		expect(getTimerTickResult(endTime, endTime + 2000)).toEqual({
+		expect(getTimerTickResult(endTime, endTime, "work")).toEqual({
+			type: "complete",
+		});
+		expect(getTimerTickResult(endTime, endTime + 2000, "work")).toEqual({
 			type: "complete",
 		});
 	});
@@ -62,7 +72,7 @@ describe("timer worker logic", () => {
 
 		const tick = () => {
 			if (endTime == null) return;
-			const result = getTimerTickResult(endTime, Date.now());
+			const result = getTimerTickResult(endTime, Date.now(), "work");
 			messages.push(result);
 			if (result.type === "complete" && intervalId != null) {
 				clearInterval(intervalId);

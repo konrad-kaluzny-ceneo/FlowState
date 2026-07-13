@@ -84,6 +84,7 @@ import type {
 	TimerWorkerInbound,
 	TimerWorkerOutbound,
 } from "~/workers/timer-worker-logic";
+import { MAX_OVERTIME_MS } from "~/workers/timer-worker-logic";
 
 export const POMODORO_ALARM_URL = "/sounds/pomodoro-complete.mp3";
 
@@ -472,6 +473,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const awaitingCheckInRef = useRef(awaitingCheckIn);
 	const isPostCheckInTransitioningRef = useRef(isPostCheckInTransitioning);
 	const endTimeRef = useRef<number | null>(null);
+	const breakOvertimeEnteredRef = useRef(false);
 	const workerRef = useRef<Worker | null>(null);
 	const fallbackIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
 		null,
@@ -634,6 +636,30 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		if (stateRef.current !== "running") {
 			return;
 		}
+
+		// For breaks, enter overtime instead of completing
+		if (isBreakKind(cycleKindRef.current)) {
+			if (!breakOvertimeEnteredRef.current) {
+				breakOvertimeEnteredRef.current = true;
+				// Fire alarm once at break end
+				void audioRef.current
+					.playAlarm({ mode: getCycleEndAudioModeRef.current() })
+					.catch(() => {});
+				stopCycleEndTabPulse();
+				maybeStartCycleEndTabPulse(
+					cycleKindRef.current,
+					tabWasHiddenWhileRunningRef.current,
+					() => getCycleEndAudioModeRef.current(),
+				);
+			}
+			// Keep running — overtime is tracked via negative remainingMs
+			// endTimeRef stays set; worker/fallback keeps ticking
+			const endTime = endTimeRef.current ?? Date.now();
+			setRemainingMs(endTime - Date.now());
+			return;
+		}
+
+		// WORK cycles: existing behavior
 		const endedAtMs = endTimeRef.current ?? Date.now();
 		const wasHiddenWhileRunning = tabWasHiddenWhileRunningRef.current;
 		stopWorker();
@@ -696,6 +722,23 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					setRemainingMs(message.remaining);
 					return;
 				}
+				if (message.type === "overtime") {
+					// Break overtime: surface as negative remaining
+					if (!breakOvertimeEnteredRef.current) {
+						breakOvertimeEnteredRef.current = true;
+						void audioRef.current
+							.playAlarm({ mode: getCycleEndAudioModeRef.current() })
+							.catch(() => {});
+						stopCycleEndTabPulse();
+						maybeStartCycleEndTabPulse(
+							cycleKindRef.current,
+							tabWasHiddenWhileRunningRef.current,
+							() => getCycleEndAudioModeRef.current(),
+						);
+					}
+					setRemainingMs(-message.elapsed);
+					return;
+				}
 				if (message.type === "complete") {
 					handleCycleExpired();
 				}
@@ -715,6 +758,30 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				}
 				const remaining = endTime - Date.now();
 				if (remaining <= 0) {
+					if (isBreakKind(cycleKindRef.current)) {
+						// Break overtime: keep ticking, surface negative remaining
+						if (!breakOvertimeEnteredRef.current) {
+							breakOvertimeEnteredRef.current = true;
+							void audioRef.current
+								.playAlarm({ mode: getCycleEndAudioModeRef.current() })
+								.catch(() => {});
+							stopCycleEndTabPulse();
+							maybeStartCycleEndTabPulse(
+								cycleKindRef.current,
+								tabWasHiddenWhileRunningRef.current,
+								() => getCycleEndAudioModeRef.current(),
+							);
+						}
+						// Safety ceiling: after 2h of overtime, stop the interval to
+						// spare battery (mirrors the worker). The break stays frozen in
+						// running/overtime; the session inactivity timeout is the real
+						// completion backstop.
+						if (-remaining >= MAX_OVERTIME_MS) {
+							stopFallbackTimer();
+						}
+						setRemainingMs(remaining);
+						return;
+					}
 					stopFallbackTimer();
 					handleCycleExpired();
 					return;
@@ -733,6 +800,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			endTimeRef.current = endTime;
 			setRemainingMs(Math.max(0, endTime - Date.now()));
 
+			const workerMode: "work" | "break" = isBreakKind(cycleKindRef.current)
+				? "break"
+				: "work";
+
 			if (useWorkerRef.current && typeof Worker !== "undefined") {
 				try {
 					if (workerRef.current == null) {
@@ -747,6 +818,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					workerRef.current.postMessage({
 						type: "start",
 						endTime,
+						mode: workerMode,
 					} satisfies TimerWorkerInbound);
 					return;
 				} catch {
@@ -773,6 +845,23 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 		const remaining = endTime - Date.now();
 		if (remaining <= 0) {
+			if (isBreakKind(cycleKindRef.current)) {
+				// Break overtime: surface negative remaining, fire alarm once
+				if (!breakOvertimeEnteredRef.current) {
+					breakOvertimeEnteredRef.current = true;
+					void audioRef.current
+						.playAlarm({ mode: getCycleEndAudioModeRef.current() })
+						.catch(() => {});
+					stopCycleEndTabPulse();
+					maybeStartCycleEndTabPulse(
+						cycleKindRef.current,
+						tabWasHiddenWhileRunningRef.current,
+						() => getCycleEndAudioModeRef.current(),
+					);
+				}
+				setRemainingMs(remaining);
+				return;
+			}
 			handleCycleExpired();
 			return;
 		}
@@ -782,8 +871,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const resumeFromActiveCycle = useCallback(
 		(cycle: DomainActiveCycle) => {
+			breakOvertimeEnteredRef.current = false;
 			setActiveCycle(cycle);
 			setCycleKind(cycle.kind);
+			cycleKindRef.current = cycle.kind;
 			setActiveSessionId(cycle.sessionId);
 			setHasActiveSession(true);
 			setFocusedTask(
@@ -808,6 +899,17 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			const endTime = cycleEndTimeMs(cycle);
 
 			if (endTime <= Date.now()) {
+				if (isBreakKind(cycle.kind)) {
+					// Break past end: resume in overtime
+					breakOvertimeEnteredRef.current = true;
+					setState("running");
+					stateRef.current = "running";
+					setRemainingMs(endTime - Date.now());
+					startWorker(endTime);
+					return;
+				}
+
+				// WORK cycle: existing completed + catch-up behavior
 				setState("completed");
 				void audioRef.current
 					.playAlarm({ mode: getCycleEndAudioModeRef.current() })
@@ -2011,9 +2113,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 		const savedEndTime = endTimeRef.current;
 		const frozenRemainingMs =
-			savedEndTime != null
-				? Math.max(0, savedEndTime - Date.now())
-				: remainingMs;
+			savedEndTime != null ? savedEndTime - Date.now() : remainingMs;
 		const remainingDurationSec = Math.max(
 			0,
 			Math.ceil(frozenRemainingMs / 1000),
@@ -2091,8 +2191,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			return;
 		}
 
-		const frozenRemainingMs =
-			activeCycle.remainingDurationSec != null
+		// For break overtime: remainingMs is negative (accrued overtime).
+		// Server stores remainingDurationSec as 0 for overtime pauses,
+		// so use local remainingMs which preserves the negative value.
+		const isOvertimePause = isBreakKind(cycleKind) && remainingMs < 0;
+		const frozenRemainingMs = isOvertimePause
+			? remainingMs
+			: activeCycle.remainingDurationSec != null
 				? activeCycle.remainingDurationSec * 1000
 				: remainingMs;
 		const newEndTime = Date.now() + frozenRemainingMs;
@@ -2204,6 +2309,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setActiveCycle({ ...breakCycle, task: null });
 			setCycleKind(breakKind);
 			cycleKindRef.current = breakKind;
+			breakOvertimeEnteredRef.current = false;
 			setState("running");
 			stateRef.current = "running";
 			startWorker(endTime);
@@ -2234,6 +2340,58 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			utils.task.list,
 			_activeSessionId,
 			refreshNarrativeStats,
+		],
+	);
+
+	const startAdHocBreak = useCallback(
+		async (kind: "SHORT_BREAK" | "LONG_BREAK", durationSec: number) => {
+			if (stateRef.current !== "idle") {
+				return;
+			}
+
+			setError(null);
+
+			try {
+				const session = await sessions.getOrCreateActive();
+				setActiveSessionId(session.id);
+				setHasActiveSession(true);
+
+				const breakCycle = await cycles.create({
+					kind,
+					configuredDurationSec: durationSec,
+				});
+
+				const endTime = cycleEndTimeMs(breakCycle);
+
+				setActiveCycle({ ...breakCycle, task: null });
+				setCycleKind(kind);
+				cycleKindRef.current = kind;
+				breakOvertimeEnteredRef.current = false;
+				setState("running");
+				stateRef.current = "running";
+				startWorker(endTime);
+				fireBreakOutOfTabAlert(kind, breakCycle.id);
+				showBreakTransitionLine(kind);
+
+				await invalidateServerCycle();
+			} catch {
+				// Rollback to idle on failure (pattern from startCycle)
+				setState("idle");
+				stateRef.current = "idle";
+				setActiveCycle(null);
+				setCycleKind(null);
+				cycleKindRef.current = null;
+				setError(tErrors("startFailed"));
+			}
+		},
+		[
+			sessions,
+			cycles,
+			invalidateServerCycle,
+			startWorker,
+			fireBreakOutOfTabAlert,
+			showBreakTransitionLine,
+			tErrors,
 		],
 	);
 
@@ -2405,6 +2563,29 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			tErrors,
 		],
 	);
+
+	/**
+	 * End a break from overtime (or paused-overtime).
+	 * Stops the worker, transitions state, and delegates to confirmComplete.
+	 * This is the only call path for the inline "End break" button.
+	 */
+	const endBreakFromOvertime = useCallback(async () => {
+		if (!isBreakKind(cycleKindRef.current)) {
+			return;
+		}
+		// A break paused during overtime can't be completed directly — the
+		// server's cycles.complete only updates RUNNING cycles, so confirmComplete
+		// would fail. Resume first so the accept targets a running cycle. (This
+		// paused-overtime state isn't currently reachable from the UI, but the
+		// timer panel and resume() both anticipate it; keep this path consistent.)
+		if (stateRef.current === "paused") {
+			await resume();
+		}
+		// Stop ticking immediately so no UI updates fire during the server call
+		// (confirmComplete will also stop, but we want silence before the await)
+		stopWorker();
+		await confirmComplete(false);
+	}, [confirmComplete, resume, stopWorker]);
 
 	// NFR 200ms: authenticated wedge check-in → break/suggestion (S-34); start/interrupt (B-03).
 	// S-34 / L-04: authenticated wedge optimism — each tap surface needs a deferred-mock oracle in tests.
@@ -2683,6 +2864,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				activeCycleRef.current = reconciledBreak;
 				setCycleKind(intent.breakKind);
 				cycleKindRef.current = intent.breakKind;
+				breakOvertimeEnteredRef.current = false;
 				startWorker(endTime);
 
 				await Promise.all([
@@ -3312,6 +3494,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		pause,
 		resume,
 		confirmComplete,
+		endBreakFromOvertime,
+		startAdHocBreak,
 		onCycleCompleteConfirm,
 		submitCheckIn,
 		onWindDownKeepGoing,

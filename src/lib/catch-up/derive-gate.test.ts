@@ -23,24 +23,24 @@ describe("deriveCatchUpGate", () => {
 		).toBe("WORK_CONFIRM");
 	});
 
-	it("returns BREAK_CONFIRM for short break completion", () => {
+	it("returns null for short break completion (BREAK_CONFIRM retired)", () => {
 		expect(
 			deriveCatchUpGate({
 				state: "completed",
 				cycleKind: "SHORT_BREAK",
 				awaitingCheckIn: false,
 			}),
-		).toBe("BREAK_CONFIRM");
+		).toBeNull();
 	});
 
-	it("returns BREAK_CONFIRM for long break completion", () => {
+	it("returns null for long break completion (BREAK_CONFIRM retired)", () => {
 		expect(
 			deriveCatchUpGate({
 				state: "completed",
 				cycleKind: "LONG_BREAK",
 				awaitingCheckIn: false,
 			}),
-		).toBe("BREAK_CONFIRM");
+		).toBeNull();
 	});
 
 	it("returns null when break is running (no suggestion gate)", () => {

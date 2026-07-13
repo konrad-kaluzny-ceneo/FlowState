@@ -1592,4 +1592,156 @@ describe("cycle router lifecycle", () => {
 			expect(db.task.update).not.toHaveBeenCalled();
 		});
 	});
+
+	describe("kind-aware duration bounds", () => {
+		it("rejects a SHORT_BREAK exceeding MAX_BREAK_DURATION_SEC (1800)", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+
+			await expect(
+				caller().create({
+					sessionId: 1,
+					kind: "SHORT_BREAK",
+					configuredDurationSec: 1801,
+				}),
+			).rejects.toThrow();
+		});
+
+		it("rejects a LONG_BREAK exceeding MAX_BREAK_DURATION_SEC (1800)", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+
+			await expect(
+				caller().create({
+					sessionId: 1,
+					kind: "LONG_BREAK",
+					configuredDurationSec: 1801,
+				}),
+			).rejects.toThrow();
+		});
+
+		it("accepts a SHORT_BREAK at exactly MAX_BREAK_DURATION_SEC (1800)", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+
+			const created = await caller().create({
+				sessionId: 1,
+				kind: "SHORT_BREAK",
+				configuredDurationSec: 1800,
+			});
+
+			expect(created.kind).toBe("SHORT_BREAK");
+			expect(created.configuredDurationSec).toBe(1800);
+		});
+
+		it("accepts a WORK cycle up to MAX_WORK_DURATION_SEC (5400)", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+
+			const created = await caller().create({
+				sessionId: 1,
+				kind: "WORK",
+				configuredDurationSec: 5400,
+			});
+
+			expect(created.kind).toBe("WORK");
+			expect(created.configuredDurationSec).toBe(5400);
+		});
+
+		it("rejects a WORK cycle exceeding MAX_WORK_DURATION_SEC (5400)", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+
+			await expect(
+				caller().create({
+					sessionId: 1,
+					kind: "WORK",
+					configuredDurationSec: 5401,
+				}),
+			).rejects.toThrow();
+		});
+
+		it("accepts a break with MIN_BREAK_DURATION_SEC (1 sec)", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+
+			const created = await caller().create({
+				sessionId: 1,
+				kind: "SHORT_BREAK",
+				configuredDurationSec: 1,
+			});
+
+			expect(created.kind).toBe("SHORT_BREAK");
+			expect(created.configuredDurationSec).toBe(1);
+		});
+
+		it("rejects a break with 0 sec duration", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					interruptionCount: 0,
+				},
+			];
+
+			await expect(
+				caller().create({
+					sessionId: 1,
+					kind: "SHORT_BREAK",
+					configuredDurationSec: 0,
+				}),
+			).rejects.toThrow();
+		});
+	});
 });
