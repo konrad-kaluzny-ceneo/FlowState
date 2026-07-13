@@ -47,6 +47,9 @@ export function getCatchUpCopy(
 				subcopy: t("workConfirmSubcopy"),
 			};
 		}
+		// Unreachable via runtime: since the ad-hoc-break/overtime change,
+		// breaks no longer end while away, so deriveCatchUpGate never returns
+		// BREAK_CONFIRM. Retained for CatchUpGate union exhaustiveness.
 		case "BREAK_CONFIRM":
 			return {
 				headline: t("breakConfirmHeadline", {

@@ -47,6 +47,11 @@ export function CycleCompleteOverlay({
 
 	const isBreak = cycleKind === "SHORT_BREAK" || cycleKind === "LONG_BREAK";
 
+	// Unreachable via runtime since the ad-hoc-break/overtime change: no path
+	// drives a break to state === "completed" (breaks end via the inline
+	// "End break" control → confirmComplete → idle, never this overlay). Kept
+	// (and prop-tested) as the accept surface in case break completion is ever
+	// re-routed through the overlay.
 	if (isBreak) {
 		const hasPreFocus = preFocusedTask != null;
 		const breakLabel =

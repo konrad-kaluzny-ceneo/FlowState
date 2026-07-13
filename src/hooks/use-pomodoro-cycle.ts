@@ -84,6 +84,7 @@ import type {
 	TimerWorkerInbound,
 	TimerWorkerOutbound,
 } from "~/workers/timer-worker-logic";
+import { MAX_OVERTIME_MS } from "~/workers/timer-worker-logic";
 
 export const POMODORO_ALARM_URL = "/sounds/pomodoro-complete.mp3";
 
@@ -770,6 +771,13 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 								tabWasHiddenWhileRunningRef.current,
 								() => getCycleEndAudioModeRef.current(),
 							);
+						}
+						// Safety ceiling: after 2h of overtime, stop the interval to
+						// spare battery (mirrors the worker). The break stays frozen in
+						// running/overtime; the session inactivity timeout is the real
+						// completion backstop.
+						if (-remaining >= MAX_OVERTIME_MS) {
+							stopFallbackTimer();
 						}
 						setRemainingMs(remaining);
 						return;
@@ -2565,11 +2573,19 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		if (!isBreakKind(cycleKindRef.current)) {
 			return;
 		}
+		// A break paused during overtime can't be completed directly — the
+		// server's cycles.complete only updates RUNNING cycles, so confirmComplete
+		// would fail. Resume first so the accept targets a running cycle. (This
+		// paused-overtime state isn't currently reachable from the UI, but the
+		// timer panel and resume() both anticipate it; keep this path consistent.)
+		if (stateRef.current === "paused") {
+			await resume();
+		}
 		// Stop ticking immediately so no UI updates fire during the server call
 		// (confirmComplete will also stop, but we want silence before the await)
 		stopWorker();
 		await confirmComplete(false);
-	}, [confirmComplete, stopWorker]);
+	}, [confirmComplete, resume, stopWorker]);
 
 	// NFR 200ms: authenticated wedge check-in → break/suggestion (S-34); start/interrupt (B-03).
 	// S-34 / L-04: authenticated wedge optimism — each tap surface needs a deferred-mock oracle in tests.

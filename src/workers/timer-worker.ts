@@ -1,14 +1,9 @@
 import {
 	getTimerTickResult,
+	MAX_OVERTIME_MS,
 	type TimerWorkerInbound,
 	type TimerWorkerOutbound,
 } from "~/workers/timer-worker-logic";
-
-/**
- * Safety ceiling: self-stop after 2 hours of overtime to avoid burning
- * battery/memory on zombie tabs where the main thread never sent "stop".
- */
-const MAX_OVERTIME_MS = 2 * 60 * 60 * 1000;
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 let activeEndTime: number | null = null;
@@ -38,10 +33,13 @@ function tick(): void {
 		return;
 	}
 
-	// Safety ceiling: force-complete if overtime exceeds 2 hours
+	// Safety ceiling: after 2h of overtime, stop ticking to spare battery on
+	// zombie tabs. This does NOT complete the break (the main thread keeps the
+	// frozen running/overtime state); the session inactivity timeout is the
+	// real backstop. Post the final elapsed so the display freezes accurately.
 	if (result.type === "overtime" && result.elapsed >= MAX_OVERTIME_MS) {
 		stopTimer();
-		postOutbound({ type: "complete" });
+		postOutbound(result);
 		return;
 	}
 
