@@ -420,11 +420,11 @@ No schema or data migration. `cycle.endedAt` already stamps accept time; existin
 
 #### Automated
 
-- [x] 4.1 Type checking passes: `pnpm typecheck`
-- [x] 4.2 Lint/format passes: `pnpm check`
-- [x] 4.3 Cycle router tests pass (kind-aware bound)
-- [x] 4.4 Full unit/integration suite passes: `pnpm test`
-- [x] 4.5 E2E belt passes: `pnpm test:e2e:belt`
+- [x] 4.1 Type checking passes: `pnpm typecheck` — 90ce25f
+- [x] 4.2 Lint/format passes: `pnpm check` — 90ce25f
+- [x] 4.3 Cycle router tests pass (kind-aware bound) — 90ce25f
+- [x] 4.4 Full unit/integration suite passes: `pnpm test` — 90ce25f
+- [x] 4.5 E2E belt passes: `pnpm test:e2e:belt` — 90ce25f
 
 #### Manual
 
