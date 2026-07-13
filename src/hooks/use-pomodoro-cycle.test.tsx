@@ -4410,6 +4410,47 @@ describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () =
 		expect(result.current.catchUp).toBeNull();
 	});
 
+	it("resumes break overtime on tab return (no completed, no catch-up)", async () => {
+		// A running break whose endTime is already 10s in the past
+		const startedAt = new Date(Date.now() - 15_000);
+		activeCycleData = makeActiveCycle({
+			id: 30,
+			kind: "SHORT_BREAK",
+			configuredDurationSec: 5,
+			taskId: null,
+			task: null,
+			startedAt,
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		// Break should already be in overtime (endTime was 10s ago)
+		expect(result.current.remainingMs).toBeLessThan(0);
+
+		// Simulate tab hidden
+		setVisibilityState("hidden");
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		// Simulate tab return
+		setVisibilityState("visible");
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		// Break must still be running (not completed, not catch-up)
+		expect(result.current.state).toBe("running");
+		expect(result.current.remainingMs).toBeLessThan(0);
+		expect(result.current.catchUp).toBeNull();
+	});
+
 	it("calls getActive only once across remount for the same auth mode", async () => {
 		activeCycleData = makeActiveCycle();
 

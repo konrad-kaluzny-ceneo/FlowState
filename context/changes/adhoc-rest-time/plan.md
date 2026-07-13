@@ -405,10 +405,10 @@ No schema or data migration. `cycle.endedAt` already stamps accept time; existin
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `pnpm typecheck`
-- [x] 3.2 Lint/format passes: `pnpm check`
-- [x] 3.3 `quick-actions` component tests pass (Start break action)
-- [x] 3.4 Hook tests pass, incl. `startAdHocBreak` (both modes, no counter touch)
+- [x] 3.1 Type checking passes: `pnpm typecheck` — d36811f
+- [x] 3.2 Lint/format passes: `pnpm check` — d36811f
+- [x] 3.3 `quick-actions` component tests pass (Start break action) — d36811f
+- [x] 3.4 Hook tests pass, incl. `startAdHocBreak` (both modes, no counter touch) — d36811f
 
 #### Manual
 
@@ -420,11 +420,11 @@ No schema or data migration. `cycle.endedAt` already stamps accept time; existin
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `pnpm typecheck`
-- [ ] 4.2 Lint/format passes: `pnpm check`
-- [ ] 4.3 Cycle router tests pass (kind-aware bound)
-- [ ] 4.4 Full unit/integration suite passes: `pnpm test`
-- [ ] 4.5 E2E belt passes: `pnpm test:e2e:belt`
+- [x] 4.1 Type checking passes: `pnpm typecheck`
+- [x] 4.2 Lint/format passes: `pnpm check`
+- [x] 4.3 Cycle router tests pass (kind-aware bound)
+- [x] 4.4 Full unit/integration suite passes: `pnpm test`
+- [x] 4.5 E2E belt passes: `pnpm test:e2e:belt`
 
 #### Manual
 

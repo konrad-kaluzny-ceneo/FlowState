@@ -254,4 +254,119 @@ describe("TimerPanel", () => {
 			"stroke-accent-break",
 		);
 	});
+
+	it("renders overtime countdown with + prefix when break remainingMs is negative", () => {
+		render(
+			<TimerPanel
+				{...defaultProps}
+				configuredDurationSec={300}
+				cycleKind="SHORT_BREAK"
+				onEndBreak={vi.fn().mockResolvedValue(undefined)}
+				remainingMs={-65_000}
+				state="running"
+			/>,
+		);
+
+		expect(screen.getByTestId("timer-countdown").textContent).toBe("+01:05");
+	});
+
+	it("renders End break button during overtime", () => {
+		const onEndBreak = vi.fn().mockResolvedValue(undefined);
+		render(
+			<TimerPanel
+				{...defaultProps}
+				configuredDurationSec={300}
+				cycleKind="SHORT_BREAK"
+				onEndBreak={onEndBreak}
+				remainingMs={-10_000}
+				state="running"
+			/>,
+		);
+
+		expect(screen.getByTestId("timer-end-break")).toBeTruthy();
+	});
+
+	it("calls onEndBreak when End break button is clicked", () => {
+		const onEndBreak = vi.fn().mockResolvedValue(undefined);
+		render(
+			<TimerPanel
+				{...defaultProps}
+				configuredDurationSec={300}
+				cycleKind="SHORT_BREAK"
+				onEndBreak={onEndBreak}
+				remainingMs={-10_000}
+				state="running"
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("timer-end-break"));
+
+		expect(onEndBreak).toHaveBeenCalledOnce();
+	});
+
+	it("renders End break button when paused in overtime", () => {
+		const onEndBreak = vi.fn().mockResolvedValue(undefined);
+		render(
+			<TimerPanel
+				{...defaultProps}
+				configuredDurationSec={300}
+				cycleKind="SHORT_BREAK"
+				onEndBreak={onEndBreak}
+				remainingMs={-5_000}
+				state="paused"
+			/>,
+		);
+
+		expect(screen.getByTestId("timer-end-break")).toBeTruthy();
+	});
+
+	it("does not render End break during normal running (positive remaining)", () => {
+		render(
+			<TimerPanel
+				{...defaultProps}
+				configuredDurationSec={300}
+				cycleKind="SHORT_BREAK"
+				onEndBreak={vi.fn().mockResolvedValue(undefined)}
+				remainingMs={150_000}
+				state="running"
+			/>,
+		);
+
+		expect(screen.queryByTestId("timer-end-break")).toBeNull();
+	});
+
+	it("does not render End break for WORK cycles even with negative remaining", () => {
+		render(
+			<TimerPanel
+				{...defaultProps}
+				configuredDurationSec={1500}
+				cycleKind={null}
+				onEndBreak={vi.fn().mockResolvedValue(undefined)}
+				remainingMs={-5_000}
+				state="running"
+			/>,
+		);
+
+		expect(screen.queryByTestId("timer-end-break")).toBeNull();
+	});
+
+	it("clamps progress ring at 100% during overtime", () => {
+		const { container } = render(
+			<TimerPanel
+				{...defaultProps}
+				configuredDurationSec={300}
+				cycleKind="SHORT_BREAK"
+				onEndBreak={vi.fn().mockResolvedValue(undefined)}
+				remainingMs={-60_000}
+				state="running"
+			/>,
+		);
+
+		const progressCircle = container.querySelectorAll("circle")[1];
+		const dashOffset = Number(
+			progressCircle?.getAttribute("stroke-dashoffset"),
+		);
+		// Should be 0 or very close to 0 (fully filled)
+		expect(dashOffset).toBeLessThanOrEqual(0.1);
+	});
 });
