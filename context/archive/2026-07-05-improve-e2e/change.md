@@ -1,10 +1,10 @@
 ---
 change_id: improve-e2e
 title: Restore belt E2E and accessibility after ui-refactor
-status: implementing
+status: archived
 created: 2026-07-05
-updated: 2026-07-06
-archived_at: null
+updated: 2026-07-13
+archived_at: 2026-07-13T16:23:00Z
 ---
 
 ## Notes
