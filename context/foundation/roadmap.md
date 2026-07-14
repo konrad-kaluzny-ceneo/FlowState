@@ -3,7 +3,7 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-07-09
+updated: 2026-07-14
 structure: split
 active_slices: []
 prd_version: 3
@@ -101,7 +101,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-47 | delegation-suggestion-in-plan | [FLO-98](https://linear.app/flowstate-10xdev/issue/FLO-98/delegation-suggestion-in-plan-dnia-s-47) | [#192](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/192) | in Plan dnia view, scorer proposes tasks suitable for delegation (to AI agent or human) with one-line rationale; user accepts/skips | S-45 (Plan dnia), S-46 | new | backlog |
 | S-48 | analytics-trends-plan-vs-execution | [FLO-99](https://linear.app/flowstate-10xdev/issue/FLO-99/analytics-weeklymonthly-trends-plan-vs-execution-s-48) | [#193](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/193) | weekly/monthly trends in Podsumowanie; plan-vs-execution comparison; context-switch pattern analytics | S-45 (Podsumowanie) | follow-up ui-refactor | backlog |
 | S-49 | workspace-setup-advisor | [FLO-100](https://linear.app/flowstate-10xdev/issue/FLO-100/workspace-setup-advisor-environment-config-tips-s-49) | [#194](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/194) | advisory tips for configuring work environment (Cursor/Claude agent settings, Slack/Teams DND, notification batching) surfaced in Ustawienia or onboarding; no physical blocking — coaching only | S-45 (Ustawienia), F-14 | new | backlog |
-| S-50 | complete-task-mid-cycle-surface | _pending_ | [#199](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/199) | finish the focused task (from Fokus or Zadania) → mandatory user-chosen break (short/long ★, override resets cadence); non-focused completion leaves the session untouched; early-completion focus time counted; removes mid-cycle "continue with another task" | F-07, S-03, S-30 | **US-01**, US-03 | planned |
+| S-50 | complete-task-mid-cycle-surface | _pending_ | [#199](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/199) | finish the focused task (from Fokus or Zadania) → mandatory user-chosen break (short/long ★, override resets cadence); non-focused completion leaves the session untouched; early-completion focus time counted; removes mid-cycle "continue with another task" | F-07, S-03, S-30 | **US-01**, US-03 | done |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -223,6 +223,16 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **fix-timer-pause-cycle-not-running (ad-hoc):** Pause e2e failed under Playwright's fake clock — **not** a product bug — Archived 2026-07-14 → `context/archive/2026-07-13-fix-timer-pause-cycle-not-running/`. Lesson: a generic client error toast is not evidence of a server rejection; the fake clock starves timer-dispatched mutations so the request never leaves the browser (see `lessons.md`).
+- **fix-pause-decouple-end-session (ad-hoc):** Removed the redundant "Wstrzymaj i zakończ sesję" button — pause (⏸) and end are now two single-purpose controls — Archived 2026-07-14 → `context/archive/2026-07-06-fix-pause-decouple-end-session/`. Refines B-09. Lesson: —.
+- **adhoc-rest-time (ad-hoc):** Ad-hoc break that resumes the work cycle when it ends — Archived 2026-07-13 → `context/archive/2026-07-06-adhoc-rest-time/`. PR [#201](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/201). Lesson: —.
+- **S-50: finish the focused task → mandatory user-chosen break (short/long ★); non-focused completion leaves the session untouched; early-completion focus time counted** — Archived 2026-07-12 → `context/archive/2026-07-06-complete-task-mid-cycle-surface/`. PR [#200](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/200). Issue [#199](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/199). Reworks S-03 into the one-task→break rhythm. Lesson: —.
+- **fix-suggestion-on-break-view (ad-hoc):** Next-task suggestion surfaces only as the star in "Gotów skupić się na" — standalone panels removed — Archived 2026-07-13 → `context/archive/2026-07-06-fix-suggestion-on-break-view/`. PR [#198](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/198). Lesson: captured as L-07.
+- **improve-e2e (ad-hoc):** E2E suite improvements — Archived 2026-07-13 → `context/archive/2026-07-05-improve-e2e/`. Lesson: —.
+- **task-ui-quick-fixes (ad-hoc):** Task UI quick fixes — Archived 2026-07-05 → `context/archive/2026-07-04-task-ui-quick-fixes/`. Lesson: —.
+- **task-edit-interaction-fixes (ad-hoc):** Task edit interaction fixes — Archived 2026-07-05 → `context/archive/2026-07-04-task-edit-interaction-fixes/`. Lesson: —.
+- **fix-home-layout-spacing (ad-hoc):** Home layout spacing fix — Archived 2026-07-05 → `context/archive/2026-07-03-fix-home-layout-spacing/`. Lesson: —.
+- **mvp-defect-intake (ad-hoc):** Post-MVP defect intake pass — Archived 2026-07-05 → `context/archive/2026-07-03-mvp-defect-intake/`. Lesson: —.
 - **ui-improvement (ad-hoc):** UI polish pass and "coming soon" surfacing across Focus, Tasks, Plan, Summary and Settings — Archived 2026-07-05 → `context/archive/2026-07-05-ui-improvement/`. PR [#196](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/196). Lesson: —.
 - **daily-tasks-bug (ad-hoc):** Daily standing tasks complete into Ukończone section — Archived 2026-07-05 → `context/archive/2026-07-04-daily-tasks-bug/`. Lesson: —.
 - **status-vocabulary-unification (ad-hoc):** Status vocabulary unification (PL labels) — Archived 2026-07-05 → `context/archive/2026-07-04-status-vocabulary-unification/`. Lesson: —.
