@@ -102,6 +102,8 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-48 | analytics-trends-plan-vs-execution | [FLO-99](https://linear.app/flowstate-10xdev/issue/FLO-99/analytics-weeklymonthly-trends-plan-vs-execution-s-48) | [#193](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/193) | weekly/monthly trends in Podsumowanie; plan-vs-execution comparison; context-switch pattern analytics | S-45 (Podsumowanie) | follow-up ui-refactor | backlog |
 | S-49 | workspace-setup-advisor | [FLO-100](https://linear.app/flowstate-10xdev/issue/FLO-100/workspace-setup-advisor-environment-config-tips-s-49) | [#194](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/194) | advisory tips for configuring work environment (Cursor/Claude agent settings, Slack/Teams DND, notification batching) surfaced in Ustawienia or onboarding; no physical blocking — coaching only | S-45 (Ustawienia), F-14 | new | backlog |
 | S-50 | complete-task-mid-cycle-surface | _pending_ | [#199](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/199) | finish the focused task (from Fokus or Zadania) → mandatory user-chosen break (short/long ★, override resets cadence); non-focused completion leaves the session untouched; early-completion focus time counted; removes mid-cycle "continue with another task" | F-07, S-03, S-30 | **US-01**, US-03 | done |
+| S-51 | blocked-task-status | — | — | mark a started task as blocked (waiting on someone/something) from the task list, at session end, and next to "Gotowe" mid-cycle; blocking mid-cycle hands off to a break like completion does; blocked tasks leave the suggestion pool | F-07, S-45, S-50 | **US-06** | ready |
+| S-52 | focus-and-break-time-totals | — | — | see honest "Twój dzień" totals — all time actually spent in focus cycles **and** on breaks, including cycles/breaks stopped early and cycles ended by finishing the task; paused time excluded | S-24, S-30, S-42, S-45, S-50 | **US-07** | ready |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -122,7 +124,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | K | Wellness re-skin | F-06 → S-28 | Pastel + Calm Garden |
 | L | Task UX + standup | S-29 → **S-36** (done); S-32 after S-36; S-30; S-27 | PRD v3 US-02–03 |
 | M | Coherence craft | S-31 ∥ S-28; S-30 footprint | Focus shell, atmosphere |
-| N | PRD v3 flow conductor | **B-05 → B-06 → F-07 (+B-07)** → S-21 ∥ S-33; S-34 ∥ S-35; S-24 → **B-08 → B-09 ∥ S-38** → **S-50** | US-01 — see [`prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md); S-50 reworks S-03 mid-cycle prompt into one-task→break rhythm |
+| N | PRD v3 flow conductor | **B-05 → B-06 → F-07 (+B-07)** → S-21 ∥ S-33; S-34 ∥ S-35; S-24 → **B-08 → B-09 ∥ S-38** → **S-50** → **S-51** | US-01 — see [`prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md); S-50 reworks S-03 mid-cycle prompt into one-task→break rhythm; S-51 adds the blocked exit to that rhythm |
 | O | Choice revisit | break-alerts-out-of-tab (merged) → **S-37** | MVP: notification prefs on timer hub; broader pattern deferred |
 | P | Accessible wedge operation | F-07 + S-21 + S-28 → **S-39** | Unparks P-102/P-103 now that transition conductor, copy, and Calm Garden overlay craft have landed |
 | Q | PRD v3 quality hardening | S-39 → **Q-08** → **Q-09** | Q-08 test-plan Phase 8 (risks #8–#12); Q-09 test-plan Phase 5 mutation oracle hardening (risks #1–#6) |
@@ -130,7 +132,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S | Task inventory hygiene | **S-44** | Stale-task archive + bulk delete; parallel S-40 for nav placement |
 | T | UI redesign (makiety) | **S-45** (phased in plan.md) | Builds on Stream R craft (S-40/S-41/S-43) + F-06 tokens; nav shell + 5 sections + green retint; 2 PRD amendments (Podsumowanie charts, Ustawienia page); graphics entry-gated |
 | U | Agent integration | F-15 → **S-46** → **S-47** | MCP server for AI agents; delegation proposals in Plan dnia |
-| V | Analytics depth | S-45 → **S-48** | Weekly/monthly trends, plan vs execution, context-switch patterns |
+| V | Analytics depth | S-45 → **S-52** → **S-48** | S-52 makes the daily totals honest (partial cycles + break time) before S-48 builds weekly/monthly trends, plan-vs-execution, and context-switch patterns on top of them |
 | W | Workspace coaching | S-45 + F-14 → **S-49** | Advisory tips for Cursor/Claude/Teams/Slack config; coaching, not blocking |
 
 ## Backlog Handoff
@@ -174,6 +176,8 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-47 | delegation-suggestion-in-plan | **no** | FLO-98 / #192; after S-46 (MCP) + S-45 (Plan dnia shipped); scorer extension for delegation signal |
 | S-48 | analytics-trends-plan-vs-execution | **no** | FLO-99 / #193; after S-45 Podsumowanie; needs research: data model for weekly aggregation |
 | S-49 | workspace-setup-advisor | **no** | FLO-100 / #194; after S-45 Ustawienia; content-first (tips authored); no external integration |
+| S-51 | blocked-task-status | **yes** | US-06; all prereqs done (F-07, S-45, S-50). **Linear/GitHub pair not created yet** — open both before `/10x-plan` (`update-status`). Touches the timer hub: run `pnpm change-impact` first; extend `TaskRepository` on **both** guest and authenticated sides |
+| S-52 | focus-and-break-time-totals | **yes** | US-07; all prereqs done (S-24, S-30, S-42, S-45, S-50). **Linear/GitHub pair not created yet** — open both before `/10x-plan`. Single seam: `computeCycleFocusedMinutes` + `aggregateDayStats`; hold the S-24 pause exclusion; decide forward-only vs backfill for past days |
 
 **Recommended next:** **F-15** `platform-refactor-batch` — timer hub + data-mode refactor batch (FLO-96 / [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190)); `ui-improvement` archived → `context/archive/2026-07-05-ui-improvement/`; PR [#196](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/196) merged 2026-07-05.
 

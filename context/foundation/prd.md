@@ -3,7 +3,7 @@ project: "FlowState"
 version: 3
 status: draft
 created: 2026-06-13
-updated: 2026-07-05
+updated: 2026-07-14
 context_type: brownfield
 product_type: web-app
 target_scale:
@@ -145,6 +145,24 @@ A developer, analyst, or team contributor whose workday is genuinely interrupt-d
 
 Value: zwiększenie przejrzystości aplikacji przez zmniejszenie liczby wyświetlanych tasków.
 
+### US-06: User parks a blocked task without breaking session rhythm
+
+- **Given** a logged-in user who started a task but cannot continue it because they are waiting on someone or something
+- **When** they mark it blocked — from the task inventory, at session end, or during a running cycle from the same place they can mark it done
+- **Then** the task moves to a distinct blocked state, separate from active, planned, and completed, and blocking it during a running cycle hands the session off to a break exactly as finishing the task would
+- **Before:** a task waiting on an external dependency either stayed indistinguishable from an active task or had to be marked done, and there was no way to step out of a cycle for that reason without losing the break handoff.
+
+Value: utrzymanie uczciwego obrazu listy zadań — zadanie czekające na kogoś lub coś nie udaje aktywnego ani ukończonego, a rytm sesji nie zostaje przerwany bez przerwy.
+
+### US-07: User sees total focus and break time, including time cut short
+
+- **Given** a logged-in user whose day includes cycles that ended before the timer ran out — a focus cycle stopped early, a break stopped early, or a task finished mid-cycle
+- **When** they read the daily "your day" statistics
+- **Then** the totals report all time actually spent in focus cycles and, separately, all time actually spent on breaks — not only the cycles the timer carried to their end
+- **Before:** the daily totals counted only work cycles that ran to the end of the timer; time from cycles the user stopped early was discarded and break time was not reported at all.
+
+Value: wiarygodny obraz realnie przepracowanego czasu skupienia i odpoczynku, a nie tylko sesji doprowadzonych do końca timera.
+
 ## Scope of Change
 
 ### New capabilities (must-have)
@@ -160,12 +178,15 @@ Value: zwiększenie przejrzystości aplikacji przez zmniejszenie liczby wyświet
 - [new] Optimistic wedge transitions — check-in to suggestion perceived within 200ms.
 - [new] Calm network-loss recovery on wedge gates — user sees recoverable state, not silent loss.
 - [new] Stale-task archive — active tasks with no user touch for three or more days leave the default list and appear in a dedicated archive view; user can permanently remove multiple archived tasks in one action. Refs: US-05.
+- [new] Blocked task state — a started task that is waiting on someone or something can be marked blocked from the task inventory, at session end, and during a running cycle from the same place it can be marked done; blocking during a cycle hands the session off to a break, as finishing the task does. Refs: US-06.
+- [new] Break time total — the daily statistics report total time spent on breaks alongside total focus time. Refs: US-07.
 
 ### Modified behavior
 
 - [modified] Scoring rule inputs extended: persona preset attributes, daily standing flag, focus-hours capacity budget.
 - [modified] Guest session narrative shortened — minimal closure in guest mode; full session narrative only after account merge.
 - [modified] Daily standing reset at local midnight in browser timezone.
+- [modified] Daily "your day" totals count time actually elapsed in every focus cycle and every break — including cycles the user stopped early and cycles ended by finishing the task — instead of counting only cycles carried to the end of the timer. Refs: US-07.
 
 ### Preserved behavior
 
@@ -186,6 +207,8 @@ Value: zwiększenie przejrzystości aplikacji przez zmniejszenie liczby wyświet
 - **Backward compatibility:** Existing tasks, sessions, check-ins, and guest merge must continue working; new fields are additive.
 - **Guest scope:** Guest trial remains narrower — no full wedge stack, shortened narrative only.
 - **Task archive:** Auto-archive applies only to stale active tasks; mark-done completion semantics unchanged. Archived tasks are excluded from the wedge suggestion pool until restored or permanently removed.
+- **Blocked tasks:** Blocked is a state a task can leave — it is neither completion nor archival. While blocked, a task stays out of the suggestion pool; active, planned, completed, and stale-archive semantics are unchanged for every other task.
+- **Daily totals:** The change is to what the daily totals count, not to timer accuracy or cycle cadence — a cycle that never started still contributes nothing, and the light in-flow recap footprint stays a footprint, not a dashboard.
 - **Data:** No breaking schema changes without migration path; guest blob merge policy unchanged (suffix on title collision).
 - **Integrations:** MCP server planned (read/write session and task state for AI agents); no inbound notification aggregation.
 - **Preserved SLAs from PRD v2:** 200ms acknowledgement for user actions; 90-day session history retention; mainstream desktop browser support (two latest major versions of Chrome, Firefox, Safari, Edge).

@@ -1,7 +1,7 @@
 ---
 project: FlowState
 version: 1
-updated: 2026-06-13
+updated: 2026-07-14
 prd_version: 3
 ---
 
@@ -9,7 +9,7 @@ prd_version: 3
 
 # PRD reference model (v3)
 
-PRD v3 is **brownfield**: acceptance is framed as **US-01–US-04** and **Scope of Change**, not `FR-NNN` lines. Do not grep `prd.md` for `FR-`.
+PRD v3 is **brownfield**: acceptance is framed as **US-01–US-07** and **Scope of Change**, not `FR-NNN` lines. Do not grep `prd.md` for `FR-`.
 
 | US | One-line contract |
 | --- | --- |
@@ -17,6 +17,9 @@ PRD v3 is **brownfield**: acceptance is framed as **US-01–US-04** and **Scope 
 | US-02 | Persona trust — first suggestion rationale cites preset context |
 | US-03 | Daily standing + light timing recap (footprint, not dashboard) |
 | US-04 | Pause/resume — timer preserved; ~30 min cap → calm session end |
+| US-05 | Stale-task archive — 3+ days untouched leave the active list; bulk permanent delete |
+| US-06 | Blocked task state — waiting-on-something exit; mid-cycle block hands off to a break |
+| US-07 | Honest daily totals — focus **and** break time actually elapsed, partial cycles included |
 
 Full scope map: [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md).
 
@@ -28,6 +31,9 @@ Full scope map: [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-
 | US-02 | **S-29**, **S-32** |
 | US-03 | **S-27**, **S-30** |
 | US-04 | **S-24**, B-08 (minimal), **B-09**, **S-38** |
+| US-05 | **S-44** |
+| US-06 | **S-51** |
+| US-07 | **S-52** |
 | Secondary craft | S-28, S-31 |
 
 ## Glance column tags (`roadmap.md`)

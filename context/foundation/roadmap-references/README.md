@@ -31,6 +31,8 @@ Progressive disclosure for `context/foundation/roadmap.md`. **Read the main file
 | F-14 | `items/F-14.md` | proposed (expand batch 7) |
 | S-01…S-31 | `items/S-NN.md` | see glance |
 | S-32…S-44 | `items/S-3N.md`, `items/S-44.md` | see glance |
+| S-45…S-50 | no item card — see glance row + `done.md` | done |
+| S-51, S-52 | `items/S-51.md`, `items/S-52.md` | ready |
 | B-01…B-09 | `items/B-0N.md` | see glance |
 
 Expand outcomes (F-07, S-32–S-35) and merge scope (P-202–P-205, P-GAP-*) live in the main [`roadmap.md`](../roadmap.md) glance + scope tables and in `items/` detail cards — no separate staging folder.
