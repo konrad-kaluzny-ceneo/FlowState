@@ -123,3 +123,21 @@ Never reverse this order.
 **Correct approach:** Route all suggestion UI through `FocusReadyState`'s star + popup (`pendingKickoffSuggestion` pipeline). Do not add a second suggestion surface for break or idle states, even for a narrow use case — extend the star's popup instead.
 
 - **Applies to**: suggestion, break-view, kickoff, wedge
+
+---
+
+## Never promote an inferred cause to "confirmed"
+
+- **Context**: Filing or framing any bug where the observable is a *client-side* error message and the suspected cause is server-side. Especially where one catch block maps every failure to a single generic message.
+- **Problem**: On 2026-07-13 a generic toast ("Nie udało się wstrzymać cyklu") was read as proof that the server rejected `cycle.pause` with "Cycle is not running". A bug was filed `verdict: confirmed`, blaming #200/#201. A runtime probe then showed **no `cycle.pause` request was ever sent** — the server was never involved. We came within one step of "fixing" high-blast-radius timer files (`use-pomodoro-cycle.ts`, `cycle.ts`) for a bug that did not exist.
+- **Rule**: Never mark a bug `verdict: confirmed` on an inferred cause. A generic client error proves that *something* failed — not that a *specific* server guard rejected it. Confirm by observing the actual failure (network response, server log, or persisted state), or file it as `suspected`. When two code paths produce the same user-visible message, the message identifies neither.
+- **Applies to**: frame, research, plan, implement, impl-review
+
+---
+
+## Playwright's fake clock starves timer-dispatched mutations
+
+- **Context**: Any Playwright spec that installs `page.clock` (via `ensureFakeClock` / `startFocusedWorkCycle`) and then triggers a UI action whose mutation is dispatched from a timer callback — pause, and anything batched/debounced through tRPC. Extends L-06.
+- **Problem**: With a frozen clock the click lands and the request is *scheduled*, but the schedule never runs — zero requests leave the browser. The client rolls back its optimistic update and shows a generic error that looks exactly like a server rejection. This cost a full false-alarm investigation (2026-07-13/14): pause was never broken.
+- **Rule**: If a journey never advances time, do not install the fake clock — pass `{ fakeClock: false }` to `startFocusedWorkCycle` / `clickStartCycle` and use a cycle duration long enough that it cannot expire. Reserve the fake clock for journeys that actually advance time. When an action "fails" under a fake clock, first check whether its request was ever sent before blaming the server.
+- **Applies to**: implement, impl-review, e2e/testing
