@@ -154,14 +154,33 @@ async function clickNavFocus(page: Page) {
 }
 
 /**
+ * Options for cycle-start helpers.
+ *
+ * `fakeClock` defaults to `true` — the fake clock must stay the default because
+ * E2E client timer mode (`NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1`) computes cycle expiry
+ * from client `Date.now()`, so sub-second cycles would race the real wall clock
+ * (`e2e-belt-timer-flakiness`).
+ *
+ * Pass `{ fakeClock: false }` only for journeys that never advance time and whose
+ * mutations are dispatched from timer callbacks (e.g. pause), which a frozen clock
+ * never fires.
+ */
+export type StartCycleOptions = { fakeClock?: boolean };
+
+/**
  * Click Start Cycle and await server create on authenticated dashboards.
  *
  * E2E client timer mode (`NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER=1`) computes cycle expiry
  * from client `Date.now()`, so the fake clock must be installed before Start Cycle —
  * otherwise sub-second cycles race the real wall clock (`e2e-belt-timer-flakiness`).
  */
-export async function clickStartCycle(page: Page) {
-	await ensureFakeClock(page);
+export async function clickStartCycle(
+	page: Page,
+	{ fakeClock = true }: StartCycleOptions = {},
+) {
+	if (fakeClock) {
+		await ensureFakeClock(page);
+	}
 	await dismissFirstRunIfVisible(page);
 	await dismissCycleCompleteIfVisible(page);
 	await dismissKickoffReadinessIfVisible(page);
@@ -181,6 +200,7 @@ export async function startFocusedWorkCycle(
 	page: Page,
 	taskTitle: string,
 	durationSec: number,
+	{ fakeClock = true }: StartCycleOptions = {},
 ) {
 	// Navigate to /tasks to add and focus the task
 	await ensureOnTasksPage(page);
@@ -216,7 +236,7 @@ export async function startFocusedWorkCycle(
 	}
 	await setWorkDurationSec(page, durationSec);
 	await dismissKickoffReadinessIfVisible(page);
-	await clickStartCycle(page);
+	await clickStartCycle(page, { fakeClock });
 	await expect(page.getByTestId("timer-panel-running")).toBeVisible({
 		timeout: 15_000,
 	});
