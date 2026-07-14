@@ -1,10 +1,10 @@
 ---
 change_id: fix-pause-decouple-end-session
 title: Remove the redundant "Wstrzymaj i zakończ sesję" button
-status: implemented
+status: archived
 created: 2026-07-06
-updated: 2026-07-13
-archived_at: null
+updated: 2026-07-14
+archived_at: 2026-07-14T16:34:08Z
 ---
 
 ## Notes
