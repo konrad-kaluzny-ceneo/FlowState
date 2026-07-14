@@ -208,7 +208,7 @@ Value: wiarygodny obraz realnie przepracowanego czasu skupienia i odpoczynku, a 
 - **Guest scope:** Guest trial remains narrower — no full wedge stack, shortened narrative only.
 - **Task archive:** Auto-archive applies only to stale active tasks; mark-done completion semantics unchanged. Archived tasks are excluded from the wedge suggestion pool until restored or permanently removed.
 - **Blocked tasks:** Blocked is a state a task can leave — it is neither completion nor archival. While blocked, a task stays out of the suggestion pool; active, planned, completed, and stale-archive semantics are unchanged for every other task.
-- **Daily totals:** The change is to what the daily totals count, not to timer accuracy or cycle cadence — a cycle that never started still contributes nothing, and the light in-flow recap footprint stays a footprint, not a dashboard.
+- **Daily totals:** The change is to what the daily totals count, not to timer accuracy or cycle cadence — a cycle that never started still contributes nothing, and the light in-flow recap footprint stays a footprint, not a dashboard. Counting applies **forward only**: days recorded before the change keep the totals the user already saw; past days are not recomputed.
 - **Data:** No breaking schema changes without migration path; guest blob merge policy unchanged (suffix on title collision).
 - **Integrations:** MCP server planned (read/write session and task state for AI agents); no inbound notification aggregation.
 - **Preserved SLAs from PRD v2:** 200ms acknowledgement for user actions; 90-day session history retention; mainstream desktop browser support (two latest major versions of Chrome, Firefox, Safari, Edge).
