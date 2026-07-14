@@ -1,10 +1,10 @@
 ---
 change_id: fix-timer-pause-cycle-not-running
 title: Pause e2e fails under Playwright fake clock (NOT a product bug)
-status: implemented
+status: archived
 created: 2026-07-13
 updated: 2026-07-14
-archived_at: null
+archived_at: 2026-07-14T16:34:08Z
 ---
 
 ## Notes
