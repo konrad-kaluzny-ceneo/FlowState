@@ -29,8 +29,7 @@ export const recapRouter = createTRPCRouter({
 			const cycles = await ctx.db.cycle.findMany({
 				where: {
 					userId,
-					kind: "WORK",
-					state: "COMPLETED",
+					state: { in: ["COMPLETED", "INTERRUPTED"] },
 					OR: [
 						{ startedAt: { gte: windowStart } },
 						{ endedAt: { gte: windowStart } },

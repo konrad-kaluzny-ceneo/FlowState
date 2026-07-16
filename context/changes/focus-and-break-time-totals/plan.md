@@ -373,10 +373,10 @@ resolved decision.
 
 #### Automated
 
-- [x] 2.1 Cycle router tests pass
-- [x] 2.2 Cycle isolation tests pass
-- [x] 2.3 Guest repository tests pass
-- [x] 2.4 Type checking passes
+- [x] 2.1 Cycle router tests pass — 55816dd
+- [x] 2.2 Cycle isolation tests pass — 55816dd
+- [x] 2.3 Guest repository tests pass — 55816dd
+- [x] 2.4 Type checking passes — 55816dd
 
 #### Manual
 
@@ -386,11 +386,11 @@ resolved decision.
 
 #### Automated
 
-- [ ] 3.1 Aggregation tests pass
-- [ ] 3.2 Recap builder tests pass
-- [ ] 3.3 Guest recap tests pass
-- [ ] 3.4 Type checking passes
-- [ ] 3.5 Full unit suite passes
+- [x] 3.1 Aggregation tests pass
+- [x] 3.2 Recap builder tests pass
+- [x] 3.3 Guest recap tests pass
+- [x] 3.4 Type checking passes
+- [x] 3.5 Full unit suite passes
 
 #### Manual
 

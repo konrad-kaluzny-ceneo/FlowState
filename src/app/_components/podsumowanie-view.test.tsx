@@ -11,6 +11,7 @@ const emptyStats: DayStats = {
 	tasksWithFocusCount: 0,
 	doneTasksCount: 0,
 	focusMinutes: 0,
+	breakMinutes: 0,
 	sessionCount: 0,
 	avgSessionMinutes: 0,
 	hourBuckets: Array.from({ length: 24 }, (_, i) => ({
@@ -25,6 +26,7 @@ const statsWithData: DayStats = {
 	tasksWithFocusCount: 2,
 	doneTasksCount: 1,
 	focusMinutes: 75,
+	breakMinutes: 10,
 	sessionCount: 3,
 	avgSessionMinutes: 25,
 	hourBuckets: Array.from({ length: 24 }, (_, i) => ({

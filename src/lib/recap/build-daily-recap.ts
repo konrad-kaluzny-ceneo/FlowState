@@ -28,7 +28,7 @@ export async function buildDailyRecap(
 		where: {
 			userId,
 			kind: "WORK",
-			state: "COMPLETED",
+			state: { in: ["COMPLETED", "INTERRUPTED"] },
 			OR: [
 				{ startedAt: { gte: windowStart } },
 				{ endedAt: { gte: windowStart } },
@@ -198,7 +198,7 @@ async function buildFootprints(
 		where: {
 			userId,
 			kind: "WORK",
-			state: "COMPLETED",
+			state: { in: ["COMPLETED", "INTERRUPTED"] },
 			taskId: { in: numericTaskIds },
 		},
 		select: {

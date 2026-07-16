@@ -53,7 +53,7 @@ function createMockDb() {
 					where: {
 						userId: string;
 						kind?: string;
-						state?: string;
+						state?: string | { in: string[] };
 						taskId?: { in: number[] };
 						OR?: Array<{
 							startedAt?: { gte: Date };
@@ -66,7 +66,12 @@ function createMockDb() {
 						rows = rows.filter((c) => c.kind === args.where.kind);
 					}
 					if (args.where.state != null) {
-						rows = rows.filter((c) => c.state === args.where.state);
+						if (typeof args.where.state === "string") {
+							rows = rows.filter((c) => c.state === args.where.state);
+						} else {
+							const allowed = new Set(args.where.state.in);
+							rows = rows.filter((c) => allowed.has(c.state));
+						}
 					}
 					if (args.where.taskId?.in != null) {
 						const allowed = new Set(args.where.taskId.in);
