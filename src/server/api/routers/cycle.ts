@@ -320,7 +320,10 @@ export const cycleRouter = createTRPCRouter({
 				},
 				data: {
 					state: "INTERRUPTED",
-					endedAt: new Date(),
+					endedAt:
+						cycle.state === "PAUSED" && cycle.pausedAt != null
+							? cycle.pausedAt
+							: new Date(),
 					pausedAt: null,
 					remainingDurationSec: null,
 				},

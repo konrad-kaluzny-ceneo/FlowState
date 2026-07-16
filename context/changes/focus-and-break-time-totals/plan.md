@@ -365,18 +365,18 @@ resolved decision.
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: compute-cycle-focused-minutes.test.ts
-- [x] 1.2 Type checking passes
-- [x] 1.3 Linting passes
+- [x] 1.1 Unit tests pass: compute-cycle-focused-minutes.test.ts — 8d8b321
+- [x] 1.2 Type checking passes — 8d8b321
+- [x] 1.3 Linting passes — 8d8b321
 
 ### Phase 2: Pause-exclusion correctness at the write path
 
 #### Automated
 
-- [ ] 2.1 Cycle router tests pass
-- [ ] 2.2 Cycle isolation tests pass
-- [ ] 2.3 Guest repository tests pass
-- [ ] 2.4 Type checking passes
+- [x] 2.1 Cycle router tests pass
+- [x] 2.2 Cycle isolation tests pass
+- [x] 2.3 Guest repository tests pass
+- [x] 2.4 Type checking passes
 
 #### Manual
 
