@@ -717,26 +717,26 @@ accepts it).
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `pnpm typecheck` — 1ab6f17
-- [x] 1.2 Lint/format passes: `pnpm check` — 1ab6f17
-- [x] 1.3 Task router + isolation tests pass — 1ab6f17
-- [x] 1.4 Guest repository tests pass — 1ab6f17
-- [x] 1.5 Suggestion-pool exclusion test passes — 1ab6f17
-- [x] 1.6 Mapper test accepts blocked — 1ab6f17
+- [x] 1.1 Type checking passes: `pnpm typecheck` — 6ae0d92
+- [x] 1.2 Lint/format passes: `pnpm check` — 6ae0d92
+- [x] 1.3 Task router + isolation tests pass — 6ae0d92
+- [x] 1.4 Guest repository tests pass — 6ae0d92
+- [x] 1.5 Suggestion-pool exclusion test passes — 6ae0d92
+- [x] 1.6 Mapper test accepts blocked — 6ae0d92
 
 #### Manual
 
-- [x] 1.7 Blocked status persists and re-reads on both modes, no mapper throw — 1ab6f17
-- [x] 1.8 Stale blocked task is not auto-archived on list load — 1ab6f17
+- [x] 1.7 Blocked status persists and re-reads on both modes, no mapper throw — 6ae0d92
+- [x] 1.8 Stale blocked task is not auto-archived on list load — 6ae0d92
 
 ### Phase 2: Task list — Zablokowane tab + block/unblock controls
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `pnpm typecheck`
-- [x] 2.2 Lint/format passes: `pnpm check`
-- [x] 2.3 Task-list component tests pass
-- [x] 2.4 Detail-panel test passes
+- [x] 2.1 Type checking passes: `pnpm typecheck` — 6ae0d92
+- [x] 2.2 Lint/format passes: `pnpm check` — 6ae0d92
+- [x] 2.3 Task-list component tests pass — 6ae0d92
+- [x] 2.4 Detail-panel test passes — 6ae0d92
 
 #### Manual
 
@@ -748,11 +748,11 @@ accepts it).
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `pnpm typecheck`
-- [ ] 3.2 Lint/format passes: `pnpm check`
-- [ ] 3.3 Cycle router tests pass (blocked outcome + focus minutes)
-- [ ] 3.4 Guest repository cycle tests pass
-- [ ] 3.5 Focus-minute accounting unchanged
+- [x] 3.1 Type checking passes: `pnpm typecheck`
+- [x] 3.2 Lint/format passes: `pnpm check`
+- [x] 3.3 Cycle router tests pass (blocked outcome + focus minutes)
+- [x] 3.4 Guest repository cycle tests pass
+- [x] 3.5 Focus-minute accounting unchanged
 
 ### Phase 4: Mid-cycle block → break hand-off
 

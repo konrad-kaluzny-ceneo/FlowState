@@ -379,6 +379,26 @@ describe("guest repositories", () => {
 		expect(updatedTask?.status).toBe("completed");
 	});
 
+	it("completes a running cycle and marks task blocked when markTaskBlocked", async () => {
+		const { tasks, cycles } = createGuestRepositories();
+		const task = await tasks.create({ title: "Block me" });
+		const cycle = await cycles.create({
+			kind: "WORK",
+			configuredDurationSec: 900,
+			taskId: task.id,
+		});
+
+		await cycles.complete({ cycleId: cycle.id, markTaskBlocked: true });
+
+		const active = await cycles.getActive();
+		expect(active).toBeNull();
+
+		const updatedTask = (await tasks.list()).find(
+			(item) => item.id === task.id,
+		);
+		expect(updatedTask?.status).toBe("blocked");
+	});
+
 	it("rejects invalid reorder requests", async () => {
 		const { tasks } = createGuestRepositories();
 		const first = await tasks.create({ title: "First", isDailyStanding: true });

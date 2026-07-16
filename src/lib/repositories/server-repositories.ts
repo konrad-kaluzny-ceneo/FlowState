@@ -92,6 +92,7 @@ type TrpcClient = {
 			mutate: (input: {
 				cycleId: number;
 				markTaskDone?: boolean;
+				markTaskBlocked?: boolean;
 				incrementInterruption?: boolean;
 				localDateKey?: string;
 			}) => Promise<unknown>;
@@ -179,6 +180,7 @@ export function createServerCycleRepository(
 			await client.cycle.complete.mutate({
 				cycleId: toNumericId(input.cycleId),
 				markTaskDone: input.markTaskDone,
+				markTaskBlocked: input.markTaskBlocked,
 				incrementInterruption: input.incrementInterruption,
 				...(input.localDateKey != null
 					? { localDateKey: input.localDateKey }

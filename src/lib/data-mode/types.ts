@@ -140,6 +140,7 @@ export interface CycleRepository {
 	complete(input: {
 		cycleId: DomainTaskId;
 		markTaskDone?: boolean;
+		markTaskBlocked?: boolean;
 		incrementInterruption?: boolean;
 		localDateKey?: string;
 	}): Promise<void>;
