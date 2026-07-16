@@ -63,9 +63,15 @@ const inProgressRow: RecapTaskRow = {
 };
 
 describe("PodsumowanieView", () => {
-	it("renders guest empty state", () => {
+	it("renders guest empty state when stats is null", () => {
 		render(<PodsumowanieView isGuest stats={null} />);
 		expect(screen.getByTestId("podsumowanie-guest-empty")).toBeTruthy();
+	});
+
+	it("renders full KPI view for guest when stats is present", () => {
+		render(<PodsumowanieView isGuest stats={statsWithData} />);
+		expect(screen.queryByTestId("podsumowanie-guest-empty")).toBeNull();
+		expect(screen.getByTestId("podsumowanie-kpis")).toBeTruthy();
 	});
 
 	it("renders loading state", () => {
@@ -78,9 +84,13 @@ describe("PodsumowanieView", () => {
 		expect(screen.getByTestId("podsumowanie-no-data")).toBeTruthy();
 	});
 
-	it("renders KPI cards when data is present", () => {
+	it("renders KPI cards including break time when data is present", () => {
 		render(<PodsumowanieView stats={statsWithData} />);
-		expect(screen.getByTestId("podsumowanie-kpis")).toBeTruthy();
+		const kpis = screen.getByTestId("podsumowanie-kpis");
+		expect(kpis).toBeTruthy();
+		expect(kpis.textContent).toContain("Focus time");
+		expect(kpis.textContent).toContain("Break time");
+		expect(kpis.textContent).toContain("10 min");
 	});
 
 	it("renders hourly chart when data is present", () => {

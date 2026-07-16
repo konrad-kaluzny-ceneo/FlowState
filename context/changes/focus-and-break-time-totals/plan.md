@@ -386,11 +386,11 @@ resolved decision.
 
 #### Automated
 
-- [x] 3.1 Aggregation tests pass
-- [x] 3.2 Recap builder tests pass
-- [x] 3.3 Guest recap tests pass
-- [x] 3.4 Type checking passes
-- [x] 3.5 Full unit suite passes
+- [x] 3.1 Aggregation tests pass — 7b7764e
+- [x] 3.2 Recap builder tests pass — 7b7764e
+- [x] 3.3 Guest recap tests pass — 7b7764e
+- [x] 3.4 Type checking passes — 7b7764e
+- [x] 3.5 Full unit suite passes — 7b7764e
 
 #### Manual
 
@@ -400,9 +400,9 @@ resolved decision.
 
 #### Automated
 
-- [ ] 4.1 Guest day-stats tests pass
-- [ ] 4.2 Auth/guest parity test passes
-- [ ] 4.3 Type checking passes
+- [x] 4.1 Guest day-stats tests pass
+- [x] 4.2 Auth/guest parity test passes
+- [x] 4.3 Type checking passes
 
 #### Manual
 
@@ -412,10 +412,10 @@ resolved decision.
 
 #### Automated
 
-- [ ] 5.1 Podsumowanie view tests pass
-- [ ] 5.2 i18n completeness / test suite passes
-- [ ] 5.3 Linting passes
-- [ ] 5.4 E2E belt passes
+- [x] 5.1 Podsumowanie view tests pass
+- [x] 5.2 i18n completeness / test suite passes
+- [x] 5.3 Linting passes
+- [x] 5.4 E2E belt passes
 
 #### Manual
 

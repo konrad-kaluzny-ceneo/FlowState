@@ -439,6 +439,7 @@
 		"guestEmpty": "Podsumowanie jest dostępne po zalogowaniu.",
 		"kpiTasksDone": "Wykonane zadania",
 		"kpiFocusTime": "Czas skupienia",
+		"kpiBreakTime": "Czas przerw",
 		"kpiSessions": "Sesje skupienia",
 		"kpiAvgSession": "Średnia długość sesji",
 		"kpiMinutes": "{minutes} min",

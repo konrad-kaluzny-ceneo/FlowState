@@ -345,7 +345,7 @@ export function PodsumowanieView({
 		return t(key as Parameters<typeof t>[0]);
 	};
 
-	if (isGuest) {
+	if (isGuest && stats == null) {
 		return (
 			<div
 				className="w-full max-w-lg space-y-4"
@@ -443,7 +443,7 @@ export function PodsumowanieView({
 				<>
 					{/* KPI grid */}
 					<div
-						className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+						className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
 						data-testid="podsumowanie-kpis"
 					>
 						<KpiCard
@@ -454,6 +454,10 @@ export function PodsumowanieView({
 							label={t("kpiFocusTime")}
 							progress={focusProgress}
 							value={t("kpiMinutes", { minutes: stats.focusMinutes })}
+						/>
+						<KpiCard
+							label={t("kpiBreakTime")}
+							value={t("kpiMinutes", { minutes: stats.breakMinutes })}
 						/>
 						<KpiCard
 							label={t("kpiSessions")}
