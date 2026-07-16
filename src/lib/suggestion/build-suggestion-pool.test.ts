@@ -186,6 +186,19 @@ describe("buildSuggestionPool archive exclusion", () => {
 		expect(pool.map((task) => task.id)).toEqual([1, 2]);
 	});
 
+	it("excludes blocked tasks from the suggestion pool", async () => {
+		const tasks = [
+			makeTask({ id: 1, title: "Active", status: "active" }),
+			makeTask({ id: 2, title: "Blocked", status: "blocked" }),
+			makeTask({ id: 3, title: "Planned", status: "planned" }),
+		];
+		const db = createDb(tasks);
+
+		const pool = await buildSuggestionPool(db, USER_ID, LOCAL_DATE_KEY);
+
+		expect(pool.map((task) => task.id)).toEqual([1, 3]);
+	});
+
 	it("getDoneTodayTaskIds returns completion ids", async () => {
 		const db = {
 			taskDayCompletion: {

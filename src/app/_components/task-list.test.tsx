@@ -399,4 +399,94 @@ describe("TaskList", () => {
 		expect(screen.getByRole("button", { name: "Deep task" })).toBeTruthy();
 		expect(screen.queryByRole("button", { name: "Ops task" })).toBeNull();
 	});
+
+	it("shows blocked tab with count", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({ id: 1, title: "Active one", status: "active" }),
+					makeTask({ id: 2, title: "Blocked one", status: "blocked" }),
+				]}
+			/>,
+		);
+
+		expect(screen.getByText("Blocked (1)")).toBeTruthy();
+	});
+
+	it("blocking a task calls updateTask with status blocked", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Block me", status: "active" })]}
+			/>,
+		);
+
+		const blockBtn = screen.getByTestId("task-block-button");
+		fireEvent.click(blockBtn);
+
+		expect(updateTask).toHaveBeenCalledWith({ id: 1, status: "blocked" });
+	});
+
+	it("switches to blocked tab and shows blocked rows with unblock button", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Blocked task", status: "blocked" })]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("tab", { name: "Blocked (1)" }));
+
+		expect(screen.getByRole("button", { name: "Blocked task" })).toBeTruthy();
+		expect(screen.getByTestId("task-unblock-button")).toBeTruthy();
+	});
+
+	it("unblocking a task calls updateTask with status active", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Blocked task", status: "blocked" })]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("tab", { name: "Blocked (1)" }));
+		fireEvent.click(screen.getByTestId("task-unblock-button"));
+
+		expect(updateTask).toHaveBeenCalledWith({ id: 1, status: "active" });
+	});
+
+	it("block button is not shown on completed or blocked rows", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({ id: 1, title: "Done", status: "completed" }),
+					makeTask({ id: 2, title: "Blocked", status: "blocked" }),
+				]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("tab", { name: "Completed (1)" }));
+		expect(screen.queryByTestId("task-block-button")).toBeNull();
+
+		fireEvent.click(screen.getByRole("tab", { name: "Blocked (1)" }));
+		expect(screen.queryByTestId("task-block-button")).toBeNull();
+	});
+
+	it("shows blocked status in the detail panel pill", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Blocked", status: "blocked" })]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("tab", { name: "Blocked (1)" }));
+		fireEvent.click(screen.getByRole("button", { name: "Blocked" }));
+
+		expect(screen.getByTestId("task-detail-status-pill").textContent).toBe(
+			"Blocked",
+		);
+	});
 });

@@ -276,6 +276,11 @@
 		"statusPlanned": "Planned",
 		"statusCompleted": "Completed",
 		"statusArchived": "Archived",
+		"statusBlocked": "Blocked",
+		"sectionBlocked": "Blocked ({count})",
+		"blockedEmpty": "No blocked tasks",
+		"blockAria": "Block task",
+		"unblockAria": "Unblock task",
 		"plannedEmpty": "No planned tasks yet",
 		"completedEmpty": "No completed tasks yet",
 		"workType": {

@@ -276,6 +276,11 @@
 		"statusPlanned": "Planowane",
 		"statusCompleted": "Ukończone",
 		"statusArchived": "Zarchiwizowane",
+		"statusBlocked": "Zablokowane",
+		"sectionBlocked": "Zablokowane ({count})",
+		"blockedEmpty": "Brak zablokowanych zadań",
+		"blockAria": "Zablokuj zadanie",
+		"unblockAria": "Odblokuj zadanie",
 		"plannedEmpty": "Brak zaplanowanych zadań",
 		"completedEmpty": "Brak ukończonych zadań",
 		"workType": {

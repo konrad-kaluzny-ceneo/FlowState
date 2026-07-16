@@ -37,7 +37,7 @@ import type { UserLocale } from "~/lib/domain/user-locale";
 import type { TaskFootprint } from "~/lib/recap/types";
 
 type WorkType = "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
-type TabValue = "active" | "planned" | "completed";
+type TabValue = "active" | "planned" | "completed" | "blocked";
 type TypeFilterValue = "all" | WorkType;
 type SortValue = "manual" | "priority" | "effort";
 
@@ -162,6 +162,7 @@ function TaskRowFooter({
 	isMutating,
 	onFocusTask,
 	onDeleteTask,
+	onUpdateTask,
 	locale,
 	t,
 }: {
@@ -172,6 +173,7 @@ function TaskRowFooter({
 	isMutating: boolean;
 	onFocusTask: TaskRowProps["onFocusTask"];
 	onDeleteTask: TaskRowProps["onDeleteTask"];
+	onUpdateTask: TaskRowProps["onUpdateTask"];
 	locale: UserLocale;
 	t: ReturnType<typeof useTranslations<"Tasks">>;
 }) {
@@ -184,6 +186,18 @@ function TaskRowFooter({
 				workType={task.workType}
 			/>
 			<div className="flex shrink-0 items-center gap-1">
+				<button
+					aria-label={t("blockAria")}
+					className="shrink-0 rounded-lg p-2 text-text-dimmed transition hover:bg-amber-400/20 hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40"
+					data-testid="task-block-button"
+					disabled={cycleLocked || isMutating}
+					onClick={() => {
+						void onUpdateTask({ id: task.id, status: "blocked" });
+					}}
+					type="button"
+				>
+					⊘
+				</button>
 				<button
 					aria-label={
 						focusedTaskId === task.id ? t("focusedAria") : t("focusAria")
@@ -336,6 +350,7 @@ function SortableTaskRow({
 				locale={locale}
 				onDeleteTask={onDeleteTask}
 				onFocusTask={onFocusTask}
+				onUpdateTask={onUpdateTask}
 				t={t}
 				task={task}
 			/>
@@ -379,7 +394,8 @@ function StaticTaskRow({
 	locale,
 	t,
 	dimmed = false,
-}: TaskRowProps & { testId: string; dimmed?: boolean }) {
+	blocked = false,
+}: TaskRowProps & { testId: string; dimmed?: boolean; blocked?: boolean }) {
 	const isContinueRow = continueTaskId === task.id;
 	const footprint = footprints[String(task.id)];
 	const showFootprint = footprint != null && focusedTaskId === task.id;
@@ -388,13 +404,24 @@ function StaticTaskRow({
 		<li
 			className={`${taskRowCardClass} ${
 				dimmed ? "bg-surface-card-muted/80" : ""
-			} ${focusedTaskId === task.id ? "ring-2 ring-focus" : ""} ${
+			} ${blocked ? "bg-surface-card-muted/60 opacity-80" : ""} ${focusedTaskId === task.id ? "ring-2 ring-focus" : ""} ${
 				isContinueRow ? "ring-2 ring-accent-suggestion" : ""
 			} ${completingTaskId === task.id ? "animate-task-complete" : ""}`}
 			data-testid={testId}
 		>
 			<div className="flex w-full min-w-0 items-start gap-2">
-				{dimmed ? (
+				{blocked ? (
+					<button
+						aria-label={t("unblockAria")}
+						className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-amber-400 bg-amber-400/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
+						data-testid="task-unblock-button"
+						disabled={cycleLocked || isMutating}
+						onClick={() => {
+							void onUpdateTask({ id: task.id, status: "active" });
+						}}
+						type="button"
+					/>
+				) : dimmed ? (
 					<button
 						aria-label={t("revertAria")}
 						className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-accent-success bg-accent-success/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
@@ -446,7 +473,21 @@ function StaticTaskRow({
 					workType={task.workType}
 				/>
 				<div className="flex shrink-0 items-center gap-1">
-					{!dimmed && (
+					{!dimmed && !blocked && (
+						<button
+							aria-label={t("blockAria")}
+							className="shrink-0 rounded-lg p-2 text-text-dimmed transition hover:bg-amber-400/20 hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40"
+							data-testid="task-block-button"
+							disabled={cycleLocked || isMutating}
+							onClick={() => {
+								void onUpdateTask({ id: task.id, status: "blocked" });
+							}}
+							type="button"
+						>
+							⊘
+						</button>
+					)}
+					{!dimmed && !blocked && (
 						<button
 							aria-label={
 								focusedTaskId === task.id ? t("focusedAria") : t("focusAria")
@@ -574,6 +615,7 @@ export function TaskList({
 	const activeTasksAll = tasks.filter((task) => task.status === "active");
 	const plannedTasksAll = tasks.filter((task) => task.status === "planned");
 	const completedTasksAll = tasks.filter((task) => task.status === "completed");
+	const blockedTasksAll = tasks.filter((task) => task.status === "blocked");
 
 	const isManualView = typeFilter === "all" && sortKey === "manual";
 	const activeTasks = applyFilterAndSort(activeTasksAll, typeFilter, sortKey);
@@ -583,6 +625,7 @@ export function TaskList({
 		typeFilter,
 		sortKey,
 	);
+	const blockedTasks = applyFilterAndSort(blockedTasksAll, typeFilter, sortKey);
 
 	const projectSuggestions = useMemo(() => {
 		const values = new Set<string>();
@@ -668,6 +711,10 @@ export function TaskList({
 		{
 			value: "completed",
 			label: t("sectionCompleted", { count: completedTasksAll.length }),
+		},
+		{
+			value: "blocked",
+			label: t("sectionBlocked", { count: blockedTasksAll.length }),
 		},
 	];
 
@@ -876,6 +923,24 @@ export function TaskList({
 								key={String(task.id)}
 								task={task}
 								testId="completed-task-row"
+							/>
+						))}
+					</ul>
+				)}
+			</TabPanel>
+
+			<TabPanel activeValue={activeTab} tabsId="zadania-tabs" value="blocked">
+				{blockedTasks.length === 0 ? (
+					<p className="text-sm text-text-secondary">{t("blockedEmpty")}</p>
+				) : (
+					<ul className="space-y-3">
+						{blockedTasks.map((task) => (
+							<StaticTaskRow
+								{...rowSharedProps}
+								blocked
+								key={String(task.id)}
+								task={task}
+								testId="blocked-task-row"
 							/>
 						))}
 					</ul>

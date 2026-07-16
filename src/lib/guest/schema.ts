@@ -13,7 +13,7 @@ export const commitmentHorizonSchema = z.enum([
 export const guestTaskSchema = z.object({
 	id: z.string().uuid(),
 	title: z.string().min(1).max(256),
-	status: z.enum(["active", "completed", "archived", "planned"]),
+	status: z.enum(["active", "completed", "archived", "planned", "blocked"]),
 	workType: z
 		.enum(["DEEP_WORK", "OPERATIONAL", "REACTIVE"])
 		.default("OPERATIONAL"),
@@ -35,7 +35,7 @@ export const guestTaskSchema = z.object({
 export type GuestTask = {
 	id: string;
 	title: string;
-	status: "active" | "completed" | "archived" | "planned";
+	status: "active" | "completed" | "archived" | "planned" | "blocked";
 	workType: "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 	weight: number;
 	importance: 1 | 2 | 3;

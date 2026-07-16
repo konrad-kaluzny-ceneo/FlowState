@@ -433,6 +433,86 @@ describe("task reorder isolation", () => {
 	});
 });
 
+describe("blocked status isolation", () => {
+	beforeEach(() => {
+		allTasks = [];
+		vi.clearAllMocks();
+	});
+
+	it("user can set a task to blocked and read it back", async () => {
+		allTasks = [
+			{
+				id: 1,
+				title: "Block me",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 0,
+				createdAt: new Date(2024, 0, 1),
+				updatedAt: null,
+				archivedAt: null,
+				isDailyStanding: false,
+			},
+		];
+
+		await taskCaller(USER_A).update({ id: 1, status: "blocked" });
+
+		const list = await taskCaller(USER_A).list();
+		expect(list.find((t) => t.id === 1)?.status).toBe("blocked");
+	});
+
+	it("blocked task of user A is not visible to user B", async () => {
+		allTasks = [
+			{
+				id: 1,
+				title: "A blocked",
+				status: "blocked",
+				userId: USER_A,
+				sortOrder: 0,
+				createdAt: new Date(2024, 0, 1),
+				updatedAt: null,
+				archivedAt: null,
+				isDailyStanding: false,
+			},
+		];
+
+		const list = await taskCaller(USER_B).list();
+		expect(list).toHaveLength(0);
+	});
+
+	it("unblocking (blocked→active) assigns a sortOrder past existing actives", async () => {
+		allTasks = [
+			{
+				id: 1,
+				title: "Existing active",
+				status: "active",
+				userId: USER_A,
+				sortOrder: 0,
+				createdAt: new Date(2024, 0, 1),
+				updatedAt: null,
+				archivedAt: null,
+				isDailyStanding: false,
+			},
+			{
+				id: 2,
+				title: "Blocked task",
+				status: "blocked",
+				userId: USER_A,
+				sortOrder: 5,
+				createdAt: new Date(2024, 0, 2),
+				updatedAt: null,
+				archivedAt: null,
+				isDailyStanding: false,
+			},
+		];
+
+		await taskCaller(USER_A).update({ id: 2, status: "active" });
+
+		const unblocked = allTasks.find((t) => t.id === 2);
+		expect(unblocked?.status).toBe("active");
+		expect(unblocked?.sortOrder).toBe(1);
+	});
+});
+
 describe("archive isolation", () => {
 	beforeEach(() => {
 		allTasks = [];

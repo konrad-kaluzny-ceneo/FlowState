@@ -1,9 +1,9 @@
 ---
 change_id: blocked-task-status
 title: Blocked task status — park a task waiting on someone/something without breaking session rhythm
-status: planned
+status: implementing
 created: 2026-07-15
-updated: 2026-07-15
+updated: 2026-07-16
 roadmap_id: S-51
 prd_refs: US-06
 ---
@@ -30,4 +30,5 @@ atomic block outcome param · dedicated "Zablokowane" tab · inline block/unbloc
 blocked exempt from stale-archive · recap reporting out of scope · RUNNING-only mid-cycle block ·
 immediate (no confirm) · hook/component/router tests + one focused belt e2e.
 
-**Linear/GitHub pair not created yet** — open both before implementation (`update-status`).
+**Linear:** [FLO-104](https://linear.app/flowstate-10xdev/issue/FLO-104/user-can-mark-a-started-task-as-blocked-waiting-on-someone-or)
+**GitHub:** [#203](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/203)
