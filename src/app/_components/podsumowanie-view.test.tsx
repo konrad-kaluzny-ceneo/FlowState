@@ -93,6 +93,19 @@ describe("PodsumowanieView", () => {
 		expect(kpis.textContent).toContain("10 min");
 	});
 
+	it("shows KPIs when only interrupted cycles exist (focusMinutes > 0 but sessionCount === 0)", () => {
+		const interruptedOnlyStats: DayStats = {
+			...emptyStats,
+			focusMinutes: 3,
+			breakMinutes: 0,
+			sessionCount: 0,
+			doneTasksCount: 0,
+		};
+		render(<PodsumowanieView stats={interruptedOnlyStats} />);
+		expect(screen.queryByTestId("podsumowanie-no-data")).toBeNull();
+		expect(screen.getByTestId("podsumowanie-kpis")).toBeTruthy();
+	});
+
 	it("renders hourly chart when data is present", () => {
 		render(<PodsumowanieView stats={statsWithData} />);
 		expect(screen.getByTestId("podsumowanie-hourly-chart")).toBeTruthy();

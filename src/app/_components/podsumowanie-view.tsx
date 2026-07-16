@@ -418,7 +418,11 @@ export function PodsumowanieView({
 	];
 	const totalTasks = done + partial + undone;
 
-	const hasAnyData = stats.sessionCount > 0 || stats.doneTasksCount > 0;
+	const hasAnyData =
+		stats.focusMinutes > 0 ||
+		stats.breakMinutes > 0 ||
+		stats.sessionCount > 0 ||
+		stats.doneTasksCount > 0;
 
 	return (
 		<div className="w-full max-w-2xl space-y-6" data-testid="podsumowanie-view">
