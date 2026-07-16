@@ -287,7 +287,7 @@ async function driveWorkCycleToCheckIn(result: PomodoroCycleHookResult) {
 	});
 	expect(result.current.state).toBe("completed");
 	await act(async () => {
-		await result.current.onCycleCompleteConfirm(false);
+		await result.current.onCycleCompleteConfirm("keep");
 	});
 	expect(result.current.awaitingCheckIn).toBe(true);
 }
@@ -637,7 +637,7 @@ describe("usePomodoroCycle", () => {
 		});
 
 		await act(async () => {
-			await result.current.onCycleCompleteConfirm(false);
+			await result.current.onCycleCompleteConfirm("keep");
 		});
 
 		expect(result.current.awaitingCheckIn).toBe(true);
@@ -1680,7 +1680,7 @@ describe("usePomodoroCycle", () => {
 		expect(result.current.state).toBe("completed");
 
 		await act(async () => {
-			await result.current.onCycleCompleteConfirm(false);
+			await result.current.onCycleCompleteConfirm("keep");
 		});
 
 		expect(result.current.awaitingCheckIn).toBe(true);
@@ -1753,7 +1753,7 @@ describe("usePomodoroCycle", () => {
 			});
 
 			await act(async () => {
-				await result.current.onCycleCompleteConfirm(false);
+				await result.current.onCycleCompleteConfirm("keep");
 			});
 
 			await act(async () => {
@@ -1797,7 +1797,7 @@ describe("usePomodoroCycle", () => {
 			});
 
 			await act(async () => {
-				await result.current.onCycleCompleteConfirm(false);
+				await result.current.onCycleCompleteConfirm("keep");
 			});
 
 			vi.useFakeTimers();
@@ -1846,7 +1846,7 @@ describe("usePomodoroCycle", () => {
 			});
 
 			await act(async () => {
-				await result.current.onCycleCompleteConfirm(false);
+				await result.current.onCycleCompleteConfirm("keep");
 			});
 
 			await act(async () => {
@@ -2110,7 +2110,7 @@ describe("usePomodoroCycle", () => {
 		});
 
 		await act(async () => {
-			await result.current.onCycleCompleteConfirm(false);
+			await result.current.onCycleCompleteConfirm("keep");
 		});
 
 		expect(result.current.awaitingCheckIn).toBe(false);
@@ -2356,6 +2356,214 @@ describe("usePomodoroCycle", () => {
 				localDateKey: expect.any(String),
 			}),
 		);
+	});
+
+	it("onCycleCompleteConfirm('blocked') sets pendingMarkTaskBlocked and routes through check-in to cycles.complete", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 90,
+			configuredDurationSec: 300,
+			taskId: 4,
+			task: { id: 4, title: "Blocked at session end" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 90 : 303,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		// Timer fires — cycle ends naturally
+		act(() => {
+			fakeWorkers[fakeWorkers.length - 1]?.onmessage?.({
+				data: { type: "complete" },
+			} as MessageEvent);
+		});
+
+		expect(result.current.state).toBe("completed");
+
+		// User picks "blocked" in the overlay
+		await act(async () => {
+			await result.current.onCycleCompleteConfirm("blocked");
+		});
+
+		// Should open check-in gate (authenticated WORK)
+		expect(result.current.awaitingCheckIn).toBe(true);
+		expect(completeCycle).not.toHaveBeenCalled();
+
+		// Submit check-in
+		await act(async () => {
+			await result.current.submitCheckIn("STEADY");
+		});
+
+		// cycles.complete called with markTaskBlocked: true
+		expect(completeCycle).toHaveBeenCalledWith(
+			expect.objectContaining({
+				cycleId: 90,
+				markTaskDone: false,
+				markTaskBlocked: true,
+				localDateKey: expect.any(String),
+			}),
+		);
+		expect(result.current.awaitingCheckIn).toBe(false);
+		expect(result.current.awaitingBreakChoice).toBe(true);
+
+		// Dismiss-oracle (L-05): break choice gate accepts and closes
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
+		expect(result.current.state).toBe("running");
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+		expect(result.current.awaitingBreakChoice).toBe(false);
+	});
+
+	it("onBlockFocusedTask enters mandatory break flow with markTaskBlocked (check-in → break choice)", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 65,
+			taskId: 4,
+			task: { id: 4, title: "Blocked now" },
+		});
+
+		createCycle.mockImplementation(async (input) => ({
+			id: input.kind === "WORK" ? 42 : 202,
+			sessionId: 1,
+			userId: "user-1",
+			taskId: null,
+			kind: input.kind,
+			state: "RUNNING",
+			startedAt: new Date(),
+			endedAt: null,
+			task: null,
+			configuredDurationSec: input.configuredDurationSec,
+		}));
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.onBlockFocusedTask();
+		});
+
+		// Authenticated path: check-in gate opens
+		expect(result.current.awaitingCheckIn).toBe(true);
+		expect(result.current.state).toBe("completed");
+		expect(completeCycle).not.toHaveBeenCalled();
+
+		await act(async () => {
+			await result.current.submitCheckIn("STEADY");
+		});
+
+		expect(createCheckInMutate).toHaveBeenCalledWith({
+			cycleId: 65,
+			energy: "STEADY",
+		});
+		// cycles.complete called with markTaskBlocked: true (not markTaskDone)
+		expect(completeCycle).toHaveBeenCalledWith(
+			expect.objectContaining({
+				cycleId: 65,
+				markTaskBlocked: true,
+				incrementInterruption: true,
+				localDateKey: expect.any(String),
+			}),
+		);
+		expect(result.current.awaitingCheckIn).toBe(false);
+		// Break-choice gate opens
+		expect(result.current.awaitingBreakChoice).toBe(true);
+
+		// Dismiss-oracle (L-05): break choice gate accepts choice and closes
+		await act(async () => {
+			await result.current.onChooseBreak("SHORT_BREAK");
+		});
+
+		expect(result.current.state).toBe("running");
+		expect(result.current.cycleKind).toBe("SHORT_BREAK");
+		expect(result.current.awaitingBreakChoice).toBe(false);
+	});
+
+	it("onMidCycleBlock delegates to onBlockFocusedTask", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 66,
+			taskId: 4,
+			task: { id: 4, title: "Block me" },
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			result.current.onMidCycleBlock(4, { id: 4, title: "Block me" });
+		});
+
+		// Should enter the break flow (check-in gate for authenticated)
+		expect(result.current.awaitingCheckIn).toBe(true);
+		expect(result.current.state).toBe("completed");
+	});
+
+	it("onBlockFocusedTask no-ops when idle", async () => {
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("idle");
+		});
+
+		await act(async () => {
+			await result.current.onBlockFocusedTask();
+		});
+
+		expect(result.current.state).toBe("idle");
+		expect(result.current.awaitingCheckIn).toBe(false);
+	});
+
+	it("onBlockFocusedTask no-ops during break", async () => {
+		activeCycleData = makeActiveCycle({
+			id: 67,
+			kind: "SHORT_BREAK",
+			configuredDurationSec: 300,
+			taskId: null,
+			task: null,
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.state).toBe("running");
+		});
+
+		await act(async () => {
+			await result.current.onBlockFocusedTask();
+		});
+
+		expect(result.current.state).toBe("running");
+		expect(result.current.awaitingCheckIn).toBe(false);
 	});
 
 	it("blocks selectTask during WORK running", async () => {
@@ -4760,7 +4968,7 @@ describe("usePomodoroCycle timer recovery oracles (mutation hardening p2)", () =
 		expect(result.current.awaitingCheckIn).toBe(false);
 
 		await act(async () => {
-			await result.current.onCycleCompleteConfirm(false);
+			await result.current.onCycleCompleteConfirm("keep");
 		});
 
 		expect(result.current.awaitingCheckIn).toBe(true);

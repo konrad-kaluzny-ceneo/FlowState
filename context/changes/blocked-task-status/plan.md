@@ -748,22 +748,22 @@ accepts it).
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `pnpm typecheck`
-- [x] 3.2 Lint/format passes: `pnpm check`
-- [x] 3.3 Cycle router tests pass (blocked outcome + focus minutes)
-- [x] 3.4 Guest repository cycle tests pass
-- [x] 3.5 Focus-minute accounting unchanged
+- [x] 3.1 Type checking passes: `pnpm typecheck` — 7269e45
+- [x] 3.2 Lint/format passes: `pnpm check` — 7269e45
+- [x] 3.3 Cycle router tests pass (blocked outcome + focus minutes) — 7269e45
+- [x] 3.4 Guest repository cycle tests pass — 7269e45
+- [x] 3.5 Focus-minute accounting unchanged — 7269e45
 
 ### Phase 4: Mid-cycle block → break hand-off
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `pnpm typecheck`
-- [ ] 4.2 Lint/format passes: `pnpm check`
-- [ ] 4.3 Hook tests pass (block→break, gate dismiss-oracle, guard)
-- [ ] 4.4 Timer-panel component test passes
+- [x] 4.1 Type checking passes: `pnpm typecheck`
+- [x] 4.2 Lint/format passes: `pnpm check`
+- [x] 4.3 Hook tests pass (block→break, gate dismiss-oracle, guard)
+- [x] 4.4 Timer-panel component test passes
 - [ ] 4.5 Mid-cycle block e2e passes
-- [ ] 4.6 `pnpm change-impact` co-change/test suggestions addressed
+- [x] 4.6 `pnpm change-impact` co-change/test suggestions addressed
 
 #### Manual
 
@@ -775,12 +775,12 @@ accepts it).
 
 #### Automated
 
-- [ ] 5.1 Type checking passes: `pnpm typecheck`
-- [ ] 5.2 Lint/format passes: `pnpm check`
-- [ ] 5.3 Overlay test passes (blocked button + dismiss-oracle)
-- [ ] 5.4 Hook test passes (blocked fate → cycles.complete block outcome)
-- [ ] 5.5 Dashboard test passes (three-option WORK overlay)
-- [ ] 5.6 Full suite passes: `pnpm test`
+- [x] 5.1 Type checking passes: `pnpm typecheck`
+- [x] 5.2 Lint/format passes: `pnpm check`
+- [x] 5.3 Overlay test passes (blocked button + dismiss-oracle)
+- [x] 5.4 Hook test passes (blocked fate → cycles.complete block outcome)
+- [x] 5.5 Dashboard test passes (three-option WORK overlay)
+- [x] 5.6 Full suite passes: `pnpm test`
 - [ ] 5.7 Belt e2e passes: `pnpm test:e2e:belt`
 
 #### Manual

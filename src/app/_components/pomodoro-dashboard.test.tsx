@@ -566,7 +566,61 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 			screen.getByRole("button", { name: /Continue later/i }),
 		);
 
-		expect(onCycleCompleteConfirm).toHaveBeenCalledWith(false);
+		expect(onCycleCompleteConfirm).toHaveBeenCalledWith("keep");
+	});
+
+	it("shows three options (done, blocked, continue later) in WORK cycle complete overlay", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "completed",
+				cycleKind: "WORK",
+				focusedTask: { id: 1, title: "Focus task" },
+				onCycleCompleteConfirm: vi.fn(),
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				enableCheckInGate
+				refreshTasks={async () => {}}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("cycle-complete-overlay")).toBeTruthy();
+		expect(
+			screen.getByRole("button", { name: /Done — mark task complete/i }),
+		).toBeTruthy();
+		expect(screen.getByTestId("cycle-complete-blocked-btn")).toBeTruthy();
+		expect(
+			screen.getByRole("button", { name: /Continue later/i }),
+		).toBeTruthy();
+	});
+
+	it("fires blocked fate when blocked button is clicked in cycle complete overlay", async () => {
+		const onCycleCompleteConfirm = vi.fn().mockResolvedValue(undefined);
+
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "completed",
+				cycleKind: "WORK",
+				focusedTaskId: "task-1",
+				focusedTask: { id: "task-1", title: "Focus task" },
+				onCycleCompleteConfirm,
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				enableCheckInGate
+				refreshTasks={async () => {}}
+				tasks={tasks}
+			/>,
+		);
+
+		await fireEvent.click(screen.getByTestId("cycle-complete-blocked-btn"));
+
+		expect(onCycleCompleteConfirm).toHaveBeenCalledWith("blocked");
 	});
 
 	it("shows session closure overlay when pending closure line is set", () => {

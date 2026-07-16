@@ -13,12 +13,14 @@ import type {
 	PomodoroCycleState,
 } from "~/hooks/use-pomodoro-cycle";
 
+export type CycleCompleteFate = "done" | "keep" | "blocked";
+
 type CycleCompleteOverlayProps = {
 	state: PomodoroCycleState;
 	focusedTask: FocusedTask;
 	canMarkTaskDone: boolean;
 	primaryMarksDoneForToday?: boolean;
-	onConfirm: (markTaskDone: boolean) => Promise<void>;
+	onConfirm: (fate: CycleCompleteFate) => Promise<void>;
 	isConfirming?: boolean;
 	cycleKind?: CycleKind | null;
 	preFocusedTask?: FocusedTask;
@@ -71,7 +73,7 @@ export function CycleCompleteOverlay({
 									onDismissPreFocus();
 									return;
 								}
-								void onConfirm(false);
+								void onConfirm("keep");
 							}
 				}
 				role="dialog"
@@ -100,7 +102,7 @@ export function CycleCompleteOverlay({
 									: "break-continue-btn"
 							}
 							disabled={isConfirming}
-							onClick={() => void onConfirm(false)}
+							onClick={() => void onConfirm("keep")}
 							type="button"
 						>
 							{hasPreFocus
@@ -135,7 +137,7 @@ export function CycleCompleteOverlay({
 				focusedTask != null ? "cycle-complete-description" : undefined
 			}
 			ariaLabelledBy="cycle-complete-heading"
-			onEscape={isConfirming ? undefined : () => void onConfirm(false)}
+			onEscape={isConfirming ? undefined : () => void onConfirm("keep")}
 			role="dialog"
 			testId="cycle-complete-overlay"
 		>
@@ -159,15 +161,24 @@ export function CycleCompleteOverlay({
 						aria-label={primaryActionLabel}
 						className={overlayButtonClass.success}
 						disabled={!canMarkTaskDone || isConfirming}
-						onClick={() => void onConfirm(true)}
+						onClick={() => void onConfirm("done")}
 						type="button"
 					>
 						{primaryActionLabel}
 					</button>
 					<button
 						className={overlayButtonClass.secondary}
+						data-testid="cycle-complete-blocked-btn"
+						disabled={!canMarkTaskDone || isConfirming}
+						onClick={() => void onConfirm("blocked")}
+						type="button"
+					>
+						{t("workMarkBlocked")}
+					</button>
+					<button
+						className={overlayButtonClass.secondary}
 						disabled={isConfirming}
-						onClick={() => void onConfirm(false)}
+						onClick={() => void onConfirm("keep")}
 						type="button"
 					>
 						{t("workContinueLater")}

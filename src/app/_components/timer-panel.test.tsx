@@ -369,4 +369,77 @@ describe("TimerPanel", () => {
 		// Should be 0 or very close to 0 (fully filled)
 		expect(dashOffset).toBeLessThanOrEqual(0.1);
 	});
+
+	it("renders block focused task button when onBlockFocusedTask is provided and running", () => {
+		const onBlockFocusedTask = vi.fn();
+		render(
+			<TimerPanel
+				{...defaultProps}
+				onBlockFocusedTask={onBlockFocusedTask}
+				remainingMs={60_000}
+				state="running"
+			/>,
+		);
+
+		const blockBtn = screen.getByTestId("focus-block-focused-task");
+		expect(blockBtn).toBeTruthy();
+	});
+
+	it("calls onBlockFocusedTask when block button is clicked", () => {
+		const onBlockFocusedTask = vi.fn();
+		render(
+			<TimerPanel
+				{...defaultProps}
+				onBlockFocusedTask={onBlockFocusedTask}
+				remainingMs={60_000}
+				state="running"
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("focus-block-focused-task"));
+		expect(onBlockFocusedTask).toHaveBeenCalledTimes(1);
+	});
+
+	it("disables block button while isCompletingFocusedTask is true", () => {
+		const onBlockFocusedTask = vi.fn();
+		render(
+			<TimerPanel
+				{...defaultProps}
+				isCompletingFocusedTask={true}
+				onBlockFocusedTask={onBlockFocusedTask}
+				remainingMs={60_000}
+				state="running"
+			/>,
+		);
+
+		const blockBtn = screen.getByTestId("focus-block-focused-task");
+		expect(blockBtn).toHaveProperty("disabled", true);
+	});
+
+	it("does not render block button when paused", () => {
+		render(
+			<TimerPanel
+				{...defaultProps}
+				onBlockFocusedTask={vi.fn()}
+				remainingMs={60_000}
+				state="paused"
+			/>,
+		);
+
+		expect(screen.queryByTestId("focus-block-focused-task")).toBeNull();
+	});
+
+	it("does not render block button during break", () => {
+		render(
+			<TimerPanel
+				{...defaultProps}
+				cycleKind="SHORT_BREAK"
+				onBlockFocusedTask={vi.fn()}
+				remainingMs={60_000}
+				state="running"
+			/>,
+		);
+
+		expect(screen.queryByTestId("focus-block-focused-task")).toBeNull();
+	});
 });

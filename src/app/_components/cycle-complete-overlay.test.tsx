@@ -91,7 +91,7 @@ describe("CycleCompleteOverlay", () => {
 		);
 
 		fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
-		expect(onConfirm).toHaveBeenCalledWith(false);
+		expect(onConfirm).toHaveBeenCalledWith("keep");
 	});
 
 	it("keeps Tab focus inside the work-cycle modal gate", () => {
@@ -112,5 +112,82 @@ describe("CycleCompleteOverlay", () => {
 		secondary.focus();
 		fireEvent.keyDown(screen.getByRole("dialog"), { key: "Tab" });
 		expect(document.activeElement).toBe(primary);
+	});
+
+	it("renders blocked button in work-cycle overlay", () => {
+		render(
+			<CycleCompleteOverlay
+				canMarkTaskDone
+				focusedTask={{ id: 1, title: "Ship feature" }}
+				onConfirm={vi.fn().mockResolvedValue(undefined)}
+				state="completed"
+			/>,
+		);
+
+		expect(screen.getByTestId("cycle-complete-blocked-btn")).toBeTruthy();
+		expect(
+			screen.getByRole("button", { name: "Blocked — waiting on something" }),
+		).toBeTruthy();
+	});
+
+	it("fires blocked fate when blocked button is clicked (dismiss-oracle)", () => {
+		const onConfirm = vi.fn().mockResolvedValue(undefined);
+		render(
+			<CycleCompleteOverlay
+				canMarkTaskDone
+				focusedTask={{ id: 1, title: "Ship feature" }}
+				onConfirm={onConfirm}
+				state="completed"
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("cycle-complete-blocked-btn"));
+		expect(onConfirm).toHaveBeenCalledWith("blocked");
+	});
+
+	it("fires done fate when primary button is clicked", () => {
+		const onConfirm = vi.fn().mockResolvedValue(undefined);
+		render(
+			<CycleCompleteOverlay
+				canMarkTaskDone
+				focusedTask={{ id: 1, title: "Ship feature" }}
+				onConfirm={onConfirm}
+				state="completed"
+			/>,
+		);
+
+		fireEvent.click(
+			screen.getByRole("button", { name: "Done — mark task complete" }),
+		);
+		expect(onConfirm).toHaveBeenCalledWith("done");
+	});
+
+	it("fires keep fate when Continue later button is clicked", () => {
+		const onConfirm = vi.fn().mockResolvedValue(undefined);
+		render(
+			<CycleCompleteOverlay
+				canMarkTaskDone
+				focusedTask={{ id: 1, title: "Ship feature" }}
+				onConfirm={onConfirm}
+				state="completed"
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "Continue later" }));
+		expect(onConfirm).toHaveBeenCalledWith("keep");
+	});
+
+	it("disables blocked button when canMarkTaskDone is false", () => {
+		render(
+			<CycleCompleteOverlay
+				canMarkTaskDone={false}
+				focusedTask={{ id: 1, title: "Ship feature" }}
+				onConfirm={vi.fn().mockResolvedValue(undefined)}
+				state="completed"
+			/>,
+		);
+
+		const blocked = screen.getByTestId("cycle-complete-blocked-btn");
+		expect(blocked).toHaveProperty("disabled", true);
 	});
 });

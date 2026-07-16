@@ -357,6 +357,8 @@
 		"boundsBreak": "1 s – 30 min",
 		"completeFocusedTaskAria": "Oznacz skupione zadanie jako ukończone",
 		"completeFocusedTaskLabel": "Gotowe",
+		"blockFocusedTaskAria": "Oznacz skupione zadanie jako zablokowane",
+		"blockFocusedTaskLabel": "Zablokowane",
 		"overtimeLabel": "Przerwa · po czasie",
 		"endBreakLabel": "Zakończ przerwę",
 		"endBreakAria": "Zakończ przerwę"
@@ -511,6 +513,7 @@
 		"breakChooseDifferent": "Wybierz inne zadanie",
 		"workDoneForToday": "Gotowe na dziś",
 		"workMarkComplete": "Gotowe — oznacz zadanie jako ukończone",
+		"workMarkBlocked": "Zablokowane — czekam na coś",
 		"workHeading": "Cykl ukończony!",
 		"workContinueLater": "Kontynuuj później",
 		"workTaskInactiveNote": "To zadanie nie jest już aktywne — możesz tylko kontynuować później."

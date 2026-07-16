@@ -86,6 +86,7 @@ type TaskListProps = {
 	cycleState: "idle" | "running" | "paused" | "completed";
 	cycleKind?: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null;
 	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
+	onMidCycleBlock?: (taskId: DomainTaskId, task: DomainTask) => void;
 	suggestionLoading?: boolean;
 	footprints?: Record<string, TaskFootprint>;
 	chromeSubdued?: boolean;
@@ -101,11 +102,13 @@ type TaskRowProps = {
 	markCompleteLocked: boolean;
 	isMutating: boolean;
 	canMidCycleMarkComplete: boolean;
+	canMidCycleBlock: boolean;
 	focusLocked: boolean;
 	cycleLocked: boolean;
 	completingTaskId: DomainTaskId | null;
 	onBeginComplete: (taskId: DomainTaskId) => void;
 	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
+	onMidCycleBlock?: (taskId: DomainTaskId, task: DomainTask) => void;
 	onUpdateTask: ReturnType<typeof useTaskMutations>["updateTask"];
 	onFocusTask: (taskId: DomainTaskId, task: DomainTask) => void | Promise<void>;
 	onDeleteTask: ReturnType<typeof useTaskMutations>["deleteTask"];
@@ -160,6 +163,8 @@ function TaskRowFooter({
 	focusLocked,
 	cycleLocked,
 	isMutating,
+	canMidCycleBlock,
+	onMidCycleBlock,
 	onFocusTask,
 	onDeleteTask,
 	onUpdateTask,
@@ -171,12 +176,16 @@ function TaskRowFooter({
 	focusLocked: boolean;
 	cycleLocked: boolean;
 	isMutating: boolean;
+	canMidCycleBlock: boolean;
+	onMidCycleBlock?: (taskId: DomainTaskId, task: DomainTask) => void;
 	onFocusTask: TaskRowProps["onFocusTask"];
 	onDeleteTask: TaskRowProps["onDeleteTask"];
 	onUpdateTask: TaskRowProps["onUpdateTask"];
 	locale: UserLocale;
 	t: ReturnType<typeof useTranslations<"Tasks">>;
 }) {
+	const isFocusedTask = task.id === focusedTaskId;
+	const blockViasMidCycle = canMidCycleBlock && isFocusedTask;
 	return (
 		<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-9">
 			<TaskBadges
@@ -190,8 +199,12 @@ function TaskRowFooter({
 					aria-label={t("blockAria")}
 					className="shrink-0 rounded-lg p-2 text-text-dimmed transition hover:bg-amber-400/20 hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40"
 					data-testid="task-block-button"
-					disabled={cycleLocked || isMutating}
+					disabled={blockViasMidCycle ? isMutating : cycleLocked || isMutating}
 					onClick={() => {
+						if (blockViasMidCycle && onMidCycleBlock != null) {
+							onMidCycleBlock(task.id, task);
+							return;
+						}
 						void onUpdateTask({ id: task.id, status: "blocked" });
 					}}
 					type="button"
@@ -241,11 +254,13 @@ function SortableTaskRow({
 	markCompleteLocked,
 	isMutating,
 	canMidCycleMarkComplete,
+	canMidCycleBlock,
 	focusLocked,
 	cycleLocked,
 	completingTaskId,
 	onBeginComplete,
 	onMidCycleMarkComplete,
+	onMidCycleBlock,
 	onUpdateTask,
 	onFocusTask,
 	onDeleteTask,
@@ -343,6 +358,7 @@ function SortableTaskRow({
 				</p>
 			)}
 			<TaskRowFooter
+				canMidCycleBlock={canMidCycleBlock}
 				cycleLocked={cycleLocked}
 				focusedTaskId={focusedTaskId}
 				focusLocked={focusLocked}
@@ -350,6 +366,7 @@ function SortableTaskRow({
 				locale={locale}
 				onDeleteTask={onDeleteTask}
 				onFocusTask={onFocusTask}
+				onMidCycleBlock={onMidCycleBlock}
 				onUpdateTask={onUpdateTask}
 				t={t}
 				task={task}
@@ -573,6 +590,7 @@ export function TaskList({
 	cycleState,
 	cycleKind = null,
 	onMidCycleMarkComplete,
+	onMidCycleBlock,
 	suggestionLoading = false,
 	footprints = {},
 	chromeSubdued = false,
@@ -657,6 +675,10 @@ export function TaskList({
 		(cycleState === "running" || cycleState === "paused") &&
 		cycleKind === "WORK" &&
 		onMidCycleMarkComplete != null;
+	const canMidCycleBlock =
+		(cycleState === "running" || cycleState === "paused") &&
+		cycleKind === "WORK" &&
+		onMidCycleBlock != null;
 	const dragDisabled = cycleLocked || isMutating || !isManualView;
 
 	const sensors = useSensors(
@@ -738,11 +760,13 @@ export function TaskList({
 		markCompleteLocked,
 		isMutating,
 		canMidCycleMarkComplete,
+		canMidCycleBlock,
 		focusLocked,
 		cycleLocked,
 		completingTaskId,
 		onBeginComplete: beginCompleteAnimation,
 		onMidCycleMarkComplete,
+		onMidCycleBlock,
 		onUpdateTask: updateTask,
 		onFocusTask,
 		onDeleteTask: deleteTask,
