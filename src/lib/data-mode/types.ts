@@ -23,7 +23,12 @@ export function defaultEisenhowerFields(weight: 1 | 2 | 3 = 2): {
 	};
 }
 
-export type DomainTaskStatus = "active" | "completed" | "archived" | "planned";
+export type DomainTaskStatus =
+	| "active"
+	| "completed"
+	| "archived"
+	| "planned"
+	| "blocked";
 
 export type DomainTask = {
 	id: DomainTaskId;
@@ -102,7 +107,7 @@ export interface TaskRepository {
 		input: {
 			id: DomainTaskId;
 			title?: string;
-			status?: "active" | "completed" | "planned";
+			status?: "active" | "completed" | "planned" | "blocked";
 			workType?: WorkType;
 			weight?: 1 | 2 | 3;
 			resumeNote?: string | null;
@@ -135,6 +140,7 @@ export interface CycleRepository {
 	complete(input: {
 		cycleId: DomainTaskId;
 		markTaskDone?: boolean;
+		markTaskBlocked?: boolean;
 		incrementInterruption?: boolean;
 		localDateKey?: string;
 	}): Promise<void>;

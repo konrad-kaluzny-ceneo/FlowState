@@ -240,7 +240,9 @@ export function createGuestTaskRepository(): TaskRepository {
 					}
 
 					const wasCompletedOrPlanned =
-						task.status === "completed" || task.status === "planned";
+						task.status === "completed" ||
+						task.status === "planned" ||
+						task.status === "blocked";
 					const becomingActive = input.status === "active";
 					let sortOrder = task.sortOrder;
 					if (wasCompletedOrPlanned && becomingActive) {
@@ -665,18 +667,28 @@ export function createGuestCycleRepository(): CycleRepository {
 					throw new Error("Cycle is not running");
 				}
 
-				const tasks =
-					input.markTaskDone && cycle.taskId != null
-						? snapshot.tasks.map((task) =>
-								task.id === cycle.taskId
-									? {
-											...task,
-											status: "completed" as const,
-											updatedAt: endedAt,
-										}
-									: task,
-							)
-						: snapshot.tasks;
+				let tasks = snapshot.tasks;
+				if (input.markTaskDone && cycle.taskId != null) {
+					tasks = tasks.map((task) =>
+						task.id === cycle.taskId
+							? {
+									...task,
+									status: "completed" as const,
+									updatedAt: endedAt,
+								}
+							: task,
+					);
+				} else if (input.markTaskBlocked && cycle.taskId != null) {
+					tasks = tasks.map((task) =>
+						task.id === cycle.taskId
+							? {
+									...task,
+									status: "blocked" as const,
+									updatedAt: endedAt,
+								}
+							: task,
+					);
+				}
 
 				return {
 					...snapshot,

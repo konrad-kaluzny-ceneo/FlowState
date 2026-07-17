@@ -717,26 +717,26 @@ accepts it).
 
 #### Automated
 
-- [ ] 1.1 Type checking passes: `pnpm typecheck`
-- [ ] 1.2 Lint/format passes: `pnpm check`
-- [ ] 1.3 Task router + isolation tests pass
-- [ ] 1.4 Guest repository tests pass
-- [ ] 1.5 Suggestion-pool exclusion test passes
-- [ ] 1.6 Mapper test accepts blocked
+- [x] 1.1 Type checking passes: `pnpm typecheck` — 6ae0d92
+- [x] 1.2 Lint/format passes: `pnpm check` — 6ae0d92
+- [x] 1.3 Task router + isolation tests pass — 6ae0d92
+- [x] 1.4 Guest repository tests pass — 6ae0d92
+- [x] 1.5 Suggestion-pool exclusion test passes — 6ae0d92
+- [x] 1.6 Mapper test accepts blocked — 6ae0d92
 
 #### Manual
 
-- [ ] 1.7 Blocked status persists and re-reads on both modes, no mapper throw
-- [ ] 1.8 Stale blocked task is not auto-archived on list load
+- [x] 1.7 Blocked status persists and re-reads on both modes, no mapper throw — 6ae0d92
+- [x] 1.8 Stale blocked task is not auto-archived on list load — 6ae0d92
 
 ### Phase 2: Task list — Zablokowane tab + block/unblock controls
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `pnpm typecheck`
-- [ ] 2.2 Lint/format passes: `pnpm check`
-- [ ] 2.3 Task-list component tests pass
-- [ ] 2.4 Detail-panel test passes
+- [x] 2.1 Type checking passes: `pnpm typecheck` — 6ae0d92
+- [x] 2.2 Lint/format passes: `pnpm check` — 6ae0d92
+- [x] 2.3 Task-list component tests pass — 6ae0d92
+- [x] 2.4 Detail-panel test passes — 6ae0d92
 
 #### Manual
 
@@ -748,22 +748,22 @@ accepts it).
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `pnpm typecheck`
-- [ ] 3.2 Lint/format passes: `pnpm check`
-- [ ] 3.3 Cycle router tests pass (blocked outcome + focus minutes)
-- [ ] 3.4 Guest repository cycle tests pass
-- [ ] 3.5 Focus-minute accounting unchanged
+- [x] 3.1 Type checking passes: `pnpm typecheck` — 7269e45
+- [x] 3.2 Lint/format passes: `pnpm check` — 7269e45
+- [x] 3.3 Cycle router tests pass (blocked outcome + focus minutes) — 7269e45
+- [x] 3.4 Guest repository cycle tests pass — 7269e45
+- [x] 3.5 Focus-minute accounting unchanged — 7269e45
 
 ### Phase 4: Mid-cycle block → break hand-off
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `pnpm typecheck`
-- [ ] 4.2 Lint/format passes: `pnpm check`
-- [ ] 4.3 Hook tests pass (block→break, gate dismiss-oracle, guard)
-- [ ] 4.4 Timer-panel component test passes
+- [x] 4.1 Type checking passes: `pnpm typecheck`
+- [x] 4.2 Lint/format passes: `pnpm check`
+- [x] 4.3 Hook tests pass (block→break, gate dismiss-oracle, guard)
+- [x] 4.4 Timer-panel component test passes
 - [ ] 4.5 Mid-cycle block e2e passes
-- [ ] 4.6 `pnpm change-impact` co-change/test suggestions addressed
+- [x] 4.6 `pnpm change-impact` co-change/test suggestions addressed
 
 #### Manual
 
@@ -775,12 +775,12 @@ accepts it).
 
 #### Automated
 
-- [ ] 5.1 Type checking passes: `pnpm typecheck`
-- [ ] 5.2 Lint/format passes: `pnpm check`
-- [ ] 5.3 Overlay test passes (blocked button + dismiss-oracle)
-- [ ] 5.4 Hook test passes (blocked fate → cycles.complete block outcome)
-- [ ] 5.5 Dashboard test passes (three-option WORK overlay)
-- [ ] 5.6 Full suite passes: `pnpm test`
+- [x] 5.1 Type checking passes: `pnpm typecheck`
+- [x] 5.2 Lint/format passes: `pnpm check`
+- [x] 5.3 Overlay test passes (blocked button + dismiss-oracle)
+- [x] 5.4 Hook test passes (blocked fate → cycles.complete block outcome)
+- [x] 5.5 Dashboard test passes (three-option WORK overlay)
+- [x] 5.6 Full suite passes: `pnpm test`
 - [ ] 5.7 Belt e2e passes: `pnpm test:e2e:belt`
 
 #### Manual

@@ -216,6 +216,7 @@ export const cycleRouter = createTRPCRouter({
 			z.object({
 				cycleId: z.number().int(),
 				markTaskDone: z.boolean().optional(),
+				markTaskBlocked: z.boolean().optional(),
 				incrementInterruption: z.boolean().optional(),
 				localDateKey: z
 					.string()
@@ -255,6 +256,11 @@ export const cycleRouter = createTRPCRouter({
 					await tx.task.update({
 						where: { id: cycle.taskId, userId: ctx.session.user.id },
 						data: { status: "completed" },
+					});
+				} else if (input.markTaskBlocked && cycle.taskId != null) {
+					await tx.task.update({
+						where: { id: cycle.taskId, userId: ctx.session.user.id },
+						data: { status: "blocked" },
 					});
 				}
 

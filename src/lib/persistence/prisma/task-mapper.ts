@@ -11,6 +11,7 @@ const DOMAIN_TASK_STATUSES: readonly DomainTaskStatus[] = [
 	"completed",
 	"archived",
 	"planned",
+	"blocked",
 ];
 
 // Task.status is a free-form String column, so validate it at the persistence

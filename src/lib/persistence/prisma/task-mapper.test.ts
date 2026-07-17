@@ -34,6 +34,12 @@ describe("mapTaskFromPrisma", () => {
 		expect(mapTaskFromPrisma(row).status).toBe("planned");
 	});
 
+	it("maps a blocked status row without throwing", () => {
+		const row = makeRow({ status: "blocked" });
+		expect(() => mapTaskFromPrisma(row)).not.toThrow();
+		expect(mapTaskFromPrisma(row).status).toBe("blocked");
+	});
+
 	it("maps a null project to null and a stored project through", () => {
 		expect(mapTaskFromPrisma(makeRow()).project).toBeNull();
 		expect(mapTaskFromPrisma(makeRow({ project: "Acme" })).project).toBe(

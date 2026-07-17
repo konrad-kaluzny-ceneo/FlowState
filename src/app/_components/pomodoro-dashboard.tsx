@@ -775,6 +775,14 @@ export function PomodoroDashboardBody({
 			}
 			isCompletingFocusedTask={pomodoro.isMidCycleSubmitting}
 			isStarting={false}
+			onBlockFocusedTask={
+				!showCalmKickoffTimer &&
+				pomodoro.state === "running" &&
+				pomodoro.cycleKind === "WORK" &&
+				pomodoro.focusedTaskId != null
+					? pomodoro.onBlockFocusedTask
+					: undefined
+			}
 			onCompleteFocusedTask={
 				!showCalmKickoffTimer &&
 				pomodoro.state === "running" &&
@@ -1073,10 +1081,10 @@ export function PomodoroDashboardBody({
 					cycleKind={pomodoro.cycleKind}
 					focusedTask={pomodoro.focusedTask}
 					isConfirming={pomodoro.isConfirming}
-					onConfirm={async (markPrimary) => {
+					onConfirm={async (fate) => {
 						pomodoro.dismissCatchUp();
 						if (
-							markPrimary &&
+							fate === "done" &&
 							focusedActiveTask?.isDailyStanding === true &&
 							focusedActiveTask.doneForToday !== true
 						) {
@@ -1084,10 +1092,10 @@ export function PomodoroDashboardBody({
 								id: focusedActiveTask.id,
 								localDateKey: recapDateKey,
 							});
-							await pomodoro.onCycleCompleteConfirm(false);
+							await pomodoro.onCycleCompleteConfirm("keep");
 							return;
 						}
-						await pomodoro.onCycleCompleteConfirm(markPrimary);
+						await pomodoro.onCycleCompleteConfirm(fate);
 					}}
 					onDismissPreFocus={pomodoro.dismissPreFocus}
 					preFocusedTask={pomodoro.preFocusedTask}

@@ -53,6 +53,10 @@ function AuthenticatedTasksPage() {
 					onFocusTask={(taskId, task) => {
 						pomodoro.selectTask(taskId, task);
 					}}
+					onMidCycleBlock={(taskId, task) => {
+						pomodoro.onMidCycleBlock(taskId, task);
+						router.push("/focus");
+					}}
 					onMidCycleMarkComplete={(taskId, task) => {
 						pomodoro.onMidCycleMarkComplete(taskId, task);
 						// Navigate to /focus where check-in/break-choice gates render.
@@ -102,6 +106,10 @@ function GuestTasksPage() {
 					highlightedTaskId={pomodoro.kickoffSuggestedTaskId ?? null}
 					onFocusTask={(taskId, task) => {
 						pomodoro.selectTask(taskId, task);
+					}}
+					onMidCycleBlock={(taskId, task) => {
+						pomodoro.onMidCycleBlock(taskId, task);
+						router.push("/focus");
 					}}
 					onMidCycleMarkComplete={(taskId, task) => {
 						pomodoro.onMidCycleMarkComplete(taskId, task);

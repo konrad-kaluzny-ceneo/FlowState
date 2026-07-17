@@ -296,6 +296,69 @@ describe("guest repositories", () => {
 		expect(list[1]?.sortOrder).toBe(1);
 	});
 
+	it("sets a task to blocked and reads it back as blocked", async () => {
+		const { tasks } = createGuestRepositories();
+		const task = await tasks.create({
+			title: "Block me",
+			isDailyStanding: true,
+		});
+
+		await tasks.update({ id: task.id, status: "blocked" });
+
+		const list = await tasks.list();
+		const blocked = list.find((item) => item.id === task.id);
+		expect(blocked?.status).toBe("blocked");
+	});
+
+	it("reactivates blocked task at the tail sortOrder", async () => {
+		const { tasks } = createGuestRepositories();
+		const task = await tasks.create({
+			title: "Unblock me",
+			isDailyStanding: true,
+		});
+
+		await tasks.update({ id: task.id, status: "blocked" });
+		await tasks.create({ title: "Active tail", isDailyStanding: true });
+		await tasks.update({ id: task.id, status: "active" });
+
+		const list = await tasks.list();
+		const activeList = list.filter((item) => item.status === "active");
+		expect(activeList.map((item) => item.title)).toEqual([
+			"Active tail",
+			"Unblock me",
+		]);
+		expect(activeList[1]?.sortOrder).toBe(1);
+	});
+
+	it("does not auto-archive a stale blocked task on list", async () => {
+		const staleAt = new Date();
+		staleAt.setDate(staleAt.getDate() - (STALE_TASK_ARCHIVE_DAYS + 1));
+		saveSnapshot({
+			...createEmptyGuestSnapshot(),
+			tasks: [
+				{
+					id: crypto.randomUUID(),
+					title: "Stale blocked",
+					status: "blocked",
+					workType: "OPERATIONAL",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					sortOrder: 0,
+					resumeNote: null,
+					project: null,
+					createdAt: staleAt,
+					updatedAt: staleAt,
+				},
+			],
+		});
+
+		const { tasks } = createGuestRepositories();
+		const list = await tasks.list();
+		expect(list.find((task) => task.title === "Stale blocked")?.status).toBe(
+			"blocked",
+		);
+	});
+
 	it("completes a running cycle and optionally marks task done", async () => {
 		const { tasks, cycles } = createGuestRepositories();
 		const task = await tasks.create({ title: "Complete me" });
@@ -314,6 +377,26 @@ describe("guest repositories", () => {
 			(item) => item.id === task.id,
 		);
 		expect(updatedTask?.status).toBe("completed");
+	});
+
+	it("completes a running cycle and marks task blocked when markTaskBlocked", async () => {
+		const { tasks, cycles } = createGuestRepositories();
+		const task = await tasks.create({ title: "Block me" });
+		const cycle = await cycles.create({
+			kind: "WORK",
+			configuredDurationSec: 900,
+			taskId: task.id,
+		});
+
+		await cycles.complete({ cycleId: cycle.id, markTaskBlocked: true });
+
+		const active = await cycles.getActive();
+		expect(active).toBeNull();
+
+		const updatedTask = (await tasks.list()).find(
+			(item) => item.id === task.id,
+		);
+		expect(updatedTask?.status).toBe("blocked");
 	});
 
 	it("rejects invalid reorder requests", async () => {

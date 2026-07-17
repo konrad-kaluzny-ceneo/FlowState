@@ -276,6 +276,11 @@
 		"statusPlanned": "Planned",
 		"statusCompleted": "Completed",
 		"statusArchived": "Archived",
+		"statusBlocked": "Blocked",
+		"sectionBlocked": "Blocked ({count})",
+		"blockedEmpty": "No blocked tasks",
+		"blockAria": "Block task",
+		"unblockAria": "Unblock task",
 		"plannedEmpty": "No planned tasks yet",
 		"completedEmpty": "No completed tasks yet",
 		"workType": {
@@ -352,6 +357,8 @@
 		"boundsBreak": "1 s – 30 min",
 		"completeFocusedTaskAria": "Mark focused task complete",
 		"completeFocusedTaskLabel": "Done",
+		"blockFocusedTaskAria": "Mark focused task blocked",
+		"blockFocusedTaskLabel": "Blocked",
 		"overtimeLabel": "On break · over time",
 		"endBreakLabel": "End break",
 		"endBreakAria": "End break"
@@ -507,6 +514,7 @@
 		"breakChooseDifferent": "Choose different task",
 		"workDoneForToday": "Done for today",
 		"workMarkComplete": "Done — mark task complete",
+		"workMarkBlocked": "Blocked — waiting on something",
 		"workHeading": "Cycle Complete!",
 		"workContinueLater": "Continue later",
 		"workTaskInactiveNote": "This task is no longer active — you can only continue later."

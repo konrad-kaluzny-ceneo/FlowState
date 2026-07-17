@@ -535,6 +535,37 @@ describe("cycle router lifecycle", () => {
 		expect(tasks[0]?.status).toBe("completed");
 	});
 
+	it("complete with markTaskBlocked sets task status to blocked", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+		];
+		tasks = [{ id: 5, title: "Block task", status: "active", userId: USER_ID }];
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: 5,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
+
+		await caller().complete({ cycleId: 1, markTaskBlocked: true });
+		expect(tasks[0]?.status).toBe("blocked");
+		expect(cycles[0]?.state).toBe("COMPLETED");
+	});
+
 	it("complete WORK cycle with localDateKey increments day plan used minutes", async () => {
 		sessions = [
 			{
