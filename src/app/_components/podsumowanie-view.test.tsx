@@ -11,6 +11,7 @@ const emptyStats: DayStats = {
 	tasksWithFocusCount: 0,
 	doneTasksCount: 0,
 	focusMinutes: 0,
+	breakMinutes: 0,
 	sessionCount: 0,
 	avgSessionMinutes: 0,
 	hourBuckets: Array.from({ length: 24 }, (_, i) => ({
@@ -25,6 +26,7 @@ const statsWithData: DayStats = {
 	tasksWithFocusCount: 2,
 	doneTasksCount: 1,
 	focusMinutes: 75,
+	breakMinutes: 10,
 	sessionCount: 3,
 	avgSessionMinutes: 25,
 	hourBuckets: Array.from({ length: 24 }, (_, i) => ({
@@ -61,9 +63,15 @@ const inProgressRow: RecapTaskRow = {
 };
 
 describe("PodsumowanieView", () => {
-	it("renders guest empty state", () => {
+	it("renders guest empty state when stats is null", () => {
 		render(<PodsumowanieView isGuest stats={null} />);
 		expect(screen.getByTestId("podsumowanie-guest-empty")).toBeTruthy();
+	});
+
+	it("renders full KPI view for guest when stats is present", () => {
+		render(<PodsumowanieView isGuest stats={statsWithData} />);
+		expect(screen.queryByTestId("podsumowanie-guest-empty")).toBeNull();
+		expect(screen.getByTestId("podsumowanie-kpis")).toBeTruthy();
 	});
 
 	it("renders loading state", () => {
@@ -76,8 +84,25 @@ describe("PodsumowanieView", () => {
 		expect(screen.getByTestId("podsumowanie-no-data")).toBeTruthy();
 	});
 
-	it("renders KPI cards when data is present", () => {
+	it("renders KPI cards including break time when data is present", () => {
 		render(<PodsumowanieView stats={statsWithData} />);
+		const kpis = screen.getByTestId("podsumowanie-kpis");
+		expect(kpis).toBeTruthy();
+		expect(kpis.textContent).toContain("Focus time");
+		expect(kpis.textContent).toContain("Break time");
+		expect(kpis.textContent).toContain("10 min");
+	});
+
+	it("shows KPIs when only interrupted cycles exist (focusMinutes > 0 but sessionCount === 0)", () => {
+		const interruptedOnlyStats: DayStats = {
+			...emptyStats,
+			focusMinutes: 3,
+			breakMinutes: 0,
+			sessionCount: 0,
+			doneTasksCount: 0,
+		};
+		render(<PodsumowanieView stats={interruptedOnlyStats} />);
+		expect(screen.queryByTestId("podsumowanie-no-data")).toBeNull();
 		expect(screen.getByTestId("podsumowanie-kpis")).toBeTruthy();
 	});
 

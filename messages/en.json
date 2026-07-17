@@ -439,6 +439,7 @@
 		"guestEmpty": "Summary is available after signing in.",
 		"kpiTasksDone": "Tasks done",
 		"kpiFocusTime": "Focus time",
+		"kpiBreakTime": "Break time",
 		"kpiSessions": "Focus sessions",
 		"kpiAvgSession": "Avg session length",
 		"kpiMinutes": "{minutes} min",

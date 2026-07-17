@@ -365,18 +365,18 @@ resolved decision.
 
 #### Automated
 
-- [ ] 1.1 Unit tests pass: compute-cycle-focused-minutes.test.ts
-- [ ] 1.2 Type checking passes
-- [ ] 1.3 Linting passes
+- [x] 1.1 Unit tests pass: compute-cycle-focused-minutes.test.ts — 8d8b321
+- [x] 1.2 Type checking passes — 8d8b321
+- [x] 1.3 Linting passes — 8d8b321
 
 ### Phase 2: Pause-exclusion correctness at the write path
 
 #### Automated
 
-- [ ] 2.1 Cycle router tests pass
-- [ ] 2.2 Cycle isolation tests pass
-- [ ] 2.3 Guest repository tests pass
-- [ ] 2.4 Type checking passes
+- [x] 2.1 Cycle router tests pass — 55816dd
+- [x] 2.2 Cycle isolation tests pass — 55816dd
+- [x] 2.3 Guest repository tests pass — 55816dd
+- [x] 2.4 Type checking passes — 55816dd
 
 #### Manual
 
@@ -386,11 +386,11 @@ resolved decision.
 
 #### Automated
 
-- [ ] 3.1 Aggregation tests pass
-- [ ] 3.2 Recap builder tests pass
-- [ ] 3.3 Guest recap tests pass
-- [ ] 3.4 Type checking passes
-- [ ] 3.5 Full unit suite passes
+- [x] 3.1 Aggregation tests pass — 7b7764e
+- [x] 3.2 Recap builder tests pass — 7b7764e
+- [x] 3.3 Guest recap tests pass — 7b7764e
+- [x] 3.4 Type checking passes — 7b7764e
+- [x] 3.5 Full unit suite passes — 7b7764e
 
 #### Manual
 
@@ -400,9 +400,9 @@ resolved decision.
 
 #### Automated
 
-- [ ] 4.1 Guest day-stats tests pass
-- [ ] 4.2 Auth/guest parity test passes
-- [ ] 4.3 Type checking passes
+- [x] 4.1 Guest day-stats tests pass
+- [x] 4.2 Auth/guest parity test passes
+- [x] 4.3 Type checking passes
 
 #### Manual
 
@@ -412,10 +412,10 @@ resolved decision.
 
 #### Automated
 
-- [ ] 5.1 Podsumowanie view tests pass
-- [ ] 5.2 i18n completeness / test suite passes
-- [ ] 5.3 Linting passes
-- [ ] 5.4 E2E belt passes
+- [x] 5.1 Podsumowanie view tests pass
+- [x] 5.2 i18n completeness / test suite passes
+- [x] 5.3 Linting passes
+- [x] 5.4 E2E belt passes
 
 #### Manual
 

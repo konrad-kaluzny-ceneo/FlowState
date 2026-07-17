@@ -345,7 +345,7 @@ export function PodsumowanieView({
 		return t(key as Parameters<typeof t>[0]);
 	};
 
-	if (isGuest) {
+	if (isGuest && stats == null) {
 		return (
 			<div
 				className="w-full max-w-lg space-y-4"
@@ -418,7 +418,11 @@ export function PodsumowanieView({
 	];
 	const totalTasks = done + partial + undone;
 
-	const hasAnyData = stats.sessionCount > 0 || stats.doneTasksCount > 0;
+	const hasAnyData =
+		stats.focusMinutes > 0 ||
+		stats.breakMinutes > 0 ||
+		stats.sessionCount > 0 ||
+		stats.doneTasksCount > 0;
 
 	return (
 		<div className="w-full max-w-2xl space-y-6" data-testid="podsumowanie-view">
@@ -443,7 +447,7 @@ export function PodsumowanieView({
 				<>
 					{/* KPI grid */}
 					<div
-						className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+						className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
 						data-testid="podsumowanie-kpis"
 					>
 						<KpiCard
@@ -454,6 +458,10 @@ export function PodsumowanieView({
 							label={t("kpiFocusTime")}
 							progress={focusProgress}
 							value={t("kpiMinutes", { minutes: stats.focusMinutes })}
+						/>
+						<KpiCard
+							label={t("kpiBreakTime")}
+							value={t("kpiMinutes", { minutes: stats.breakMinutes })}
 						/>
 						<KpiCard
 							label={t("kpiSessions")}

@@ -5,7 +5,10 @@
  * All aggregation is today-scoped (rolling 24h window) and purely functional.
  */
 
-import { computeCycleFocusedMinutes } from "~/lib/recap/compute-cycle-focused-minutes";
+import {
+	computeCycleBreakMinutes,
+	computeCycleFocusedMinutes,
+} from "~/lib/recap/compute-cycle-focused-minutes";
 
 // ─── Input types ──────────────────────────────────────────────────────────────
 
@@ -43,12 +46,14 @@ export type TaskCompletionStat = {
 };
 
 export type DayStats = {
-	/** Total tasks with at least one COMPLETED WORK cycle today. */
+	/** Total tasks with at least one ended WORK cycle today. */
 	tasksWithFocusCount: number;
 	/** Total tasks whose status is "completed" among focused tasks. */
 	doneTasksCount: number;
-	/** Total focus minutes (COMPLETED WORK cycles). */
+	/** Total focus minutes (COMPLETED + INTERRUPTED WORK cycles). */
 	focusMinutes: number;
+	/** Total break minutes (COMPLETED + INTERRUPTED break cycles). */
+	breakMinutes: number;
 	/** Number of COMPLETED WORK cycles. */
 	sessionCount: number;
 	/** Average session length in minutes (0 if no sessions). */
@@ -64,9 +69,13 @@ export type DayStats = {
 // ─── Aggregation ──────────────────────────────────────────────────────────────
 
 /**
- * Aggregates COMPLETED WORK cycles for today into KPIs and chart data.
+ * Aggregates ended WORK and break cycles for today into KPIs and chart data.
  *
- * @param cycles       Completed WORK cycles from the rolling 24h window.
+ * Focus minutes include COMPLETED and INTERRUPTED WORK cycles.
+ * Session count / avg stay COMPLETED-WORK-only.
+ * Break minutes sum elapsed from COMPLETED/INTERRUPTED break cycles.
+ *
+ * @param cycles       Ended cycles (WORK + breaks) from the rolling 24h window.
  * @param activeCount  Number of active (non-completed, non-archived) tasks —
  *                     used to compute the "undone" slice of the tasks donut.
  */
@@ -75,8 +84,12 @@ export function aggregateDayStats(
 	activeCount: number,
 ): DayStats {
 	const workCycles = cycles.filter(
-		(c) => c.kind === "WORK" && c.state === "COMPLETED",
+		(c) =>
+			c.kind === "WORK" &&
+			(c.state === "COMPLETED" || c.state === "INTERRUPTED"),
 	);
+
+	const completedWorkCycles = workCycles.filter((c) => c.state === "COMPLETED");
 
 	// Initialise 24 hour buckets
 	const hourBuckets: HourBucket[] = Array.from({ length: 24 }, (_, i) => ({
@@ -131,13 +144,21 @@ export function aggregateDayStats(
 		}
 	}
 
-	const sessionCount = workCycles.filter((c) => {
+	// Session count derives from COMPLETED WORK only
+	const sessionCount = completedWorkCycles.filter((c) => {
 		const m = computeCycleFocusedMinutes(c);
 		return m > 0;
 	}).length;
 
 	const avgSessionMinutes =
-		sessionCount > 0 ? Math.round(totalFocusMinutes / sessionCount) : 0;
+		sessionCount > 0
+			? Math.round(
+					completedWorkCycles.reduce(
+						(sum, c) => sum + computeCycleFocusedMinutes(c),
+						0,
+					) / sessionCount,
+				)
+			: 0;
 
 	const workTypeStats: WorkTypeStat[] = Array.from(workTypeMap.entries()).map(
 		([workType, data]) => ({ workType, ...data }),
@@ -154,10 +175,17 @@ export function aggregateDayStats(
 		undone: Math.max(0, activeCount),
 	};
 
+	// Break minutes
+	let totalBreakMinutes = 0;
+	for (const cycle of cycles) {
+		totalBreakMinutes += computeCycleBreakMinutes(cycle);
+	}
+
 	return {
 		tasksWithFocusCount: focusedTaskIds.size,
 		doneTasksCount: doneTaskIds.size,
 		focusMinutes: Math.round(totalFocusMinutes),
+		breakMinutes: Math.round(totalBreakMinutes),
 		sessionCount,
 		avgSessionMinutes,
 		hourBuckets,

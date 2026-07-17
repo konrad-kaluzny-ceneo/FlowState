@@ -41,6 +41,7 @@ import { WedgeSyncRecovery } from "~/app/_components/wedge-sync-recovery";
 import { WindDownOverlay } from "~/app/_components/wind-down-overlay";
 import { useDailyRecap } from "~/hooks/use-daily-recap";
 import { useDayPlan } from "~/hooks/use-day-plan";
+import { useDayStats } from "~/hooks/use-day-stats";
 import { useOnboarding } from "~/hooks/use-onboarding-state";
 import { useSyncBreakAtmosphere } from "~/hooks/use-sync-break-atmosphere";
 import { useSyncWorkFocusShell } from "~/hooks/use-sync-work-focus-shell";
@@ -149,6 +150,7 @@ export function PomodoroDashboardBody({
 	onSuggestionCoachSeen?: () => void;
 }) {
 	const pomodoro = usePomodoroCycleContext();
+	const { stats: dayStats } = useDayStats();
 	const pomodoroRef = useRef(pomodoro);
 	pomodoroRef.current = pomodoro;
 	const { outOfTabBreakAlertsEnabled, setOutOfTabBreakAlertsEnabled } =
@@ -830,7 +832,7 @@ export function PomodoroDashboardBody({
 				sessionsCompleted={pomodoro.completedWorkCycles}
 				tasksDone={todayPlanStats.done}
 				tasksTotal={todayPlanStats.total}
-				usedMinutes={dayPlan.usedMinutes}
+				usedMinutes={dayStats?.focusMinutes ?? 0}
 			/>
 		) : showCalmLanding ? (
 			<HomeFocusSummary
@@ -842,7 +844,7 @@ export function PomodoroDashboardBody({
 				sessionsCompleted={pomodoro.completedWorkCycles}
 				tasksDone={todayPlanStats.done}
 				tasksTotal={todayPlanStats.total}
-				usedMinutes={0}
+				usedMinutes={dayStats?.focusMinutes ?? 0}
 			/>
 		) : null;
 

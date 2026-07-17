@@ -65,7 +65,7 @@ function createMockDb() {
 					where: {
 						userId: string;
 						kind?: string;
-						state?: string;
+						state?: string | { in: string[] };
 						taskId?: { in: number[] };
 						OR?: Array<{
 							startedAt?: { gte: Date };
@@ -78,7 +78,12 @@ function createMockDb() {
 						rows = rows.filter((c) => c.kind === args.where.kind);
 					}
 					if (args.where.state != null) {
-						rows = rows.filter((c) => c.state === args.where.state);
+						if (typeof args.where.state === "string") {
+							rows = rows.filter((c) => c.state === args.where.state);
+						} else {
+							const allowed = new Set(args.where.state.in);
+							rows = rows.filter((c) => allowed.has(c.state));
+						}
 					}
 					if (args.where.taskId?.in != null) {
 						const allowed = new Set(args.where.taskId.in);
@@ -131,6 +136,21 @@ function createMockDb() {
 						);
 					}
 					return Promise.resolve(rows);
+				},
+			),
+			count: vi.fn(
+				(args: {
+					where: {
+						userId: string;
+						status?: { notIn: string[] };
+					};
+				}) => {
+					let rows = tasks.filter((t) => t.userId === args.where.userId);
+					if (args.where.status?.notIn != null) {
+						const excluded = new Set(args.where.status.notIn);
+						rows = rows.filter((t) => !excluded.has(t.status));
+					}
+					return Promise.resolve(rows.length);
 				},
 			),
 		},
@@ -237,5 +257,145 @@ describe("recap router integration", () => {
 		expect(result.todayPlan.map((row) => row.taskId)).toEqual([1, 2]);
 		expect(result.footprints["1"]?.cumulativeMinutes).toBe(15);
 		expect(result.footprints["2"]?.cumulativeMinutes).toBe(10);
+	});
+
+	it("getDayStats includes interrupted WORK in focusMinutes but not sessionCount", async () => {
+		const { now, localDateKey } = recapTestAnchor();
+
+		tasks.push({
+			id: 1,
+			userId: USER,
+			title: "Deep task",
+			status: "active",
+			isDailyStanding: false,
+			effortMinutes: 25,
+			sortOrder: 0,
+			createdAt: now,
+			updatedAt: now,
+		});
+
+		cycles.push(
+			{
+				id: 10,
+				userId: USER,
+				taskId: 1,
+				kind: "WORK",
+				state: "COMPLETED",
+				configuredDurationSec: 1500,
+				startedAt: new Date(now.getTime() - 3 * 60 * 60 * 1000),
+				endedAt: new Date(now.getTime() - 2.75 * 60 * 60 * 1000),
+				task: { id: 1, title: "Deep task" },
+			},
+			{
+				id: 11,
+				userId: USER,
+				taskId: 1,
+				kind: "WORK",
+				state: "INTERRUPTED",
+				configuredDurationSec: 1500,
+				startedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+				endedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000 + 10 * 60 * 1000),
+				task: { id: 1, title: "Deep task" },
+			},
+		);
+
+		const db = createMockDb();
+		const result = await recapCaller(USER, db).getDayStats({ localDateKey });
+
+		// Completed (15 min) + interrupted (≈10 min) = 25
+		expect(result.focusMinutes).toBe(25);
+		// Only the completed cycle counts as a session
+		expect(result.sessionCount).toBe(1);
+		expect(result.avgSessionMinutes).toBe(15);
+	});
+
+	it("getDayStats reports breakMinutes from completed and interrupted breaks", async () => {
+		const { now, localDateKey } = recapTestAnchor();
+
+		tasks.push({
+			id: 1,
+			userId: USER,
+			title: "Task",
+			status: "active",
+			isDailyStanding: false,
+			effortMinutes: null,
+			sortOrder: 0,
+			createdAt: now,
+			updatedAt: now,
+		});
+
+		cycles.push(
+			{
+				id: 20,
+				userId: USER,
+				taskId: null,
+				kind: "SHORT_BREAK",
+				state: "COMPLETED",
+				configuredDurationSec: 300,
+				startedAt: new Date(now.getTime() - 1 * 60 * 60 * 1000),
+				endedAt: new Date(now.getTime() - 55 * 60 * 1000),
+				task: null,
+			},
+			{
+				id: 21,
+				userId: USER,
+				taskId: null,
+				kind: "LONG_BREAK",
+				state: "INTERRUPTED",
+				configuredDurationSec: 900,
+				startedAt: new Date(now.getTime() - 50 * 60 * 1000),
+				endedAt: new Date(now.getTime() - 43 * 60 * 1000),
+				task: null,
+			},
+		);
+
+		const db = createMockDb();
+		const result = await recapCaller(USER, db).getDayStats({ localDateKey });
+
+		// SHORT_BREAK completed: 5 min, LONG_BREAK interrupted: 7 min = 12
+		expect(result.breakMinutes).toBe(12);
+		// No WORK cycles → focus = 0, sessions = 0
+		expect(result.focusMinutes).toBe(0);
+		expect(result.sessionCount).toBe(0);
+	});
+
+	it("getDayStats paused-then-stopped cycle counts only pre-pause elapsed", async () => {
+		const { now, localDateKey } = recapTestAnchor();
+
+		tasks.push({
+			id: 1,
+			userId: USER,
+			title: "Paused task",
+			status: "active",
+			isDailyStanding: false,
+			effortMinutes: null,
+			sortOrder: 0,
+			createdAt: now,
+			updatedAt: now,
+		});
+
+		// Simulates: started 2h ago, ran for 5 min, paused, then interrupted
+		// with endedAt = pausedAt (Phase 2 fix). So elapsed = 5 min.
+		const startedAt = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+		const pausedAndEndedAt = new Date(startedAt.getTime() + 5 * 60 * 1000);
+
+		cycles.push({
+			id: 30,
+			userId: USER,
+			taskId: 1,
+			kind: "WORK",
+			state: "INTERRUPTED",
+			configuredDurationSec: 1500,
+			startedAt,
+			endedAt: pausedAndEndedAt,
+			task: { id: 1, title: "Paused task" },
+		});
+
+		const db = createMockDb();
+		const result = await recapCaller(USER, db).getDayStats({ localDateKey });
+
+		// Only 5 min of actual focus (not the paused span)
+		expect(result.focusMinutes).toBe(5);
+		expect(result.sessionCount).toBe(0);
 	});
 });

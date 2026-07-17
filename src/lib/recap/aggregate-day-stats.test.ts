@@ -142,7 +142,7 @@ describe("aggregateDayStats", () => {
 		expect(result.taskCompletionStat.undone).toBe(3);
 	});
 
-	it("ignores non-WORK and non-COMPLETED cycles", () => {
+	it("includes INTERRUPTED WORK in focus, breaks in breakMinutes, sessionCount stays COMPLETED-only", () => {
 		const cycles: CycleRow[] = [
 			{
 				id: 1,
@@ -167,8 +167,11 @@ describe("aggregateDayStats", () => {
 		];
 
 		const result = aggregateDayStats(cycles, 0);
+		// INTERRUPTED WORK counts toward focus but not sessionCount
 		expect(result.sessionCount).toBe(0);
-		expect(result.focusMinutes).toBe(0);
+		expect(result.focusMinutes).toBe(10);
+		// Break cycle contributes to breakMinutes
+		expect(result.breakMinutes).toBe(5);
 	});
 
 	it("computes correct average session length", () => {

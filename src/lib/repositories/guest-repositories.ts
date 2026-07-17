@@ -695,7 +695,6 @@ export function createGuestCycleRepository(): CycleRepository {
 		},
 
 		async interrupt(input) {
-			const endedAt = new Date();
 			const { error } = mutateSnapshot((snapshot) => {
 				const cycle = snapshot.cycles.find((c) => c.id === input.cycleId);
 				if (
@@ -704,6 +703,11 @@ export function createGuestCycleRepository(): CycleRepository {
 				) {
 					throw new Error("Cycle is not running or paused");
 				}
+
+				const endedAt =
+					cycle.state === "PAUSED" && cycle.pausedAt != null
+						? new Date(cycle.pausedAt)
+						: new Date();
 
 				return {
 					...snapshot,

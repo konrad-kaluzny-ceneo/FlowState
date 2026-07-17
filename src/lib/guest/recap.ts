@@ -24,7 +24,7 @@ export function buildGuestDailyRecap(
 	const cycles = snapshot.cycles.filter(
 		(cycle) =>
 			cycle.kind === "WORK" &&
-			cycle.state === "COMPLETED" &&
+			(cycle.state === "COMPLETED" || cycle.state === "INTERRUPTED") &&
 			(cycle.startedAt >= windowStart ||
 				(cycle.endedAt != null && cycle.endedAt >= windowStart)),
 	);
@@ -164,7 +164,7 @@ function buildGuestFootprints(
 	for (const cycle of cycles) {
 		if (
 			cycle.kind !== "WORK" ||
-			cycle.state !== "COMPLETED" ||
+			(cycle.state !== "COMPLETED" && cycle.state !== "INTERRUPTED") ||
 			cycle.taskId == null ||
 			!allowed.has(cycle.taskId)
 		) {
