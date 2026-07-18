@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { auth } from "~/lib/auth/server";
 import type { UserLocale } from "~/lib/domain/user-locale";
-import type { SignInFormState } from "./sign-in-form";
+import type { SignInFormState } from "./schema";
 
 export async function signInAction(
 	_prevState: SignInFormState,

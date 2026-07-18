@@ -7,11 +7,7 @@ import { useActionState } from "react";
 import { AuthDivider } from "~/app/auth/_components/auth-divider";
 import { GoogleSignInButton } from "~/app/auth/_components/google-sign-in-button";
 import { signInAction } from "./action";
-
-export interface SignInFormState {
-	error: string | null;
-	email: string;
-}
+import type { SignInFormState } from "./schema";
 
 const initialState: SignInFormState = {
 	error: null,
