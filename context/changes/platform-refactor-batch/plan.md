@@ -358,27 +358,27 @@ Extract remaining pure helpers from `use-pomodoro-cycle.ts` into colocated modul
 
 #### Automated
 
-- [x] 1.1 `pnpm depcruise` reports no import cycle in `src/app/auth/sign-in`
-- [x] 1.2 `pnpm typecheck` passes
-- [x] 1.3 `pnpm check` passes
-- [x] 1.4 Sign-in action + validation tests pass
+- [x] 1.1 `pnpm depcruise` reports no import cycle in `src/app/auth/sign-in` — 3d78b21
+- [x] 1.2 `pnpm typecheck` passes — 3d78b21
+- [x] 1.3 `pnpm check` passes — 3d78b21
+- [x] 1.4 Sign-in action + validation tests pass — 3d78b21
 
 #### Manual
 
-- [x] 1.5 Sign-in form renders and submits (happy + validation error) with no behavior change
+- [x] 1.5 Sign-in form renders and submits (happy + validation error) with no behavior change — 3d78b21
 
 ### Phase 2: Production Health Probe
 
 #### Automated
 
-- [ ] 2.1 Health route test passes (200 ok path; 503 simulated DB failure)
-- [ ] 2.2 `pnpm typecheck` passes
-- [ ] 2.3 `pnpm check` passes
+- [x] 2.1 Health route test passes (200 ok path; 503 simulated DB failure)
+- [x] 2.2 `pnpm typecheck` passes
+- [x] 2.3 `pnpm check` passes
 
 #### Manual
 
-- [ ] 2.4 `curl /api/health` returns 200 + component statuses live
-- [ ] 2.5 Broken `DATABASE_URL` yields 503, not a crash
+- [x] 2.4 `curl /api/health` returns 200 + component statuses live
+- [x] 2.5 Broken `DATABASE_URL` yields 503, not a crash
 
 ### Phase 3: Sentry Error Monitoring (App-Wide)
 
