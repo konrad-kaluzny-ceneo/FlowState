@@ -371,14 +371,14 @@ Extract remaining pure helpers from `use-pomodoro-cycle.ts` into colocated modul
 
 #### Automated
 
-- [x] 2.1 Health route test passes (200 ok path; 503 simulated DB failure)
-- [x] 2.2 `pnpm typecheck` passes
-- [x] 2.3 `pnpm check` passes
+- [x] 2.1 Health route test passes (200 ok path; 503 simulated DB failure) — e3b19c8
+- [x] 2.2 `pnpm typecheck` passes — e3b19c8
+- [x] 2.3 `pnpm check` passes — e3b19c8
 
 #### Manual
 
-- [x] 2.4 `curl /api/health` returns 200 + component statuses live
-- [x] 2.5 Broken `DATABASE_URL` yields 503, not a crash
+- [x] 2.4 `curl /api/health` returns 200 + component statuses live — e3b19c8
+- [x] 2.5 Broken `DATABASE_URL` yields 503, not a crash — e3b19c8
 
 ### Phase 3: Sentry Error Monitoring (App-Wide)
 

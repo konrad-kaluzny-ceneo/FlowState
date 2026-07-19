@@ -38,18 +38,16 @@ async function checkDatabase(): Promise<CheckStatus> {
 
 async function checkAuth(): Promise<CheckStatus> {
 	try {
+		// Read via process.env (not the import-time-snapshotted `env`)
+		// so route tests can stub NEON_AUTH_BASE_URL at runtime.
 		const baseUrl = process.env.NEON_AUTH_BASE_URL;
 		if (!baseUrl) return "fail";
 
-		await withTimeout(
-			fetch(`${baseUrl}/.well-known/jwks.json`, {
-				method: "GET",
-				signal: AbortSignal.timeout(TIMEOUT_MS),
-			}).then((res) => {
-				if (!res.ok) throw new Error(`Auth config returned ${res.status}`);
-			}),
-			TIMEOUT_MS,
-		);
+		const res = await fetch(`${baseUrl}/.well-known/jwks.json`, {
+			method: "GET",
+			signal: AbortSignal.timeout(TIMEOUT_MS),
+		});
+		if (!res.ok) throw new Error(`Auth config returned ${res.status}`);
 		return "ok";
 	} catch {
 		return "fail";
