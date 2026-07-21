@@ -186,6 +186,8 @@ Integrate `@sentry/nextjs` across client, server, and edge runtimes, inert unles
 
 **Implementation Note**: Pause for manual confirmation before Phase 4.
 
+**Manual Verification Guide**: See [`sentry-manual-verification.md`](./sentry-manual-verification.md) for step-by-step instructions.
+
 ---
 
 ## Phase 4: Auth-Boundary Audit
@@ -384,14 +386,14 @@ Extract remaining pure helpers from `use-pomodoro-cycle.ts` into colocated modul
 
 #### Automated
 
-- [ ] 3.1 Build/typecheck/check succeed with no DSN set (Sentry inert)
-- [ ] 3.2 `pnpm test` passes
-- [ ] 3.3 `pnpm test:e2e:belt` passes (no Sentry noise)
+- [x] 3.1 Build/typecheck/check succeed with no DSN set (Sentry inert)
+- [x] 3.2 `pnpm test` passes
+- [x] 3.3 `pnpm test:e2e:belt` passes (no Sentry noise)
 
 #### Manual
 
-- [ ] 3.4 Thrown error appears in Sentry with a scratch DSN (client + server)
-- [ ] 3.5 DSN unset → dev boots clean, no Sentry traffic
+- [ ] 3.4 Thrown error appears in Sentry with a scratch DSN (client + server) — DEFERRED: needs user-supplied Sentry DSN, see sentry-manual-verification.md
+- [ ] 3.5 DSN unset → dev boots clean, no Sentry traffic — DEFERRED: needs user-supplied Sentry DSN, see sentry-manual-verification.md
 
 ### Phase 4: Auth-Boundary Audit
 

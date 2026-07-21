@@ -43,6 +43,7 @@
 		"@neondatabase/serverless": "^1.1.0",
 		"@prisma/adapter-neon": "^7.8.0",
 		"@prisma/client": "^7.8.0",
+		"@sentry/nextjs": "^10.66.0",
 		"@t3-oss/env-nextjs": "^0.13.11",
 		"@tanstack/react-query": "^5.100.14",
 		"@trpc/client": "^11.17.0",

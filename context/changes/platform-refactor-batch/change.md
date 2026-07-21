@@ -3,7 +3,7 @@ change_id: platform-refactor-batch
 title: Platform refactor batch (F-15) — close the remaining refactor-opportunities tail + prod hygiene
 status: implementing
 created: 2026-07-18
-updated: 2026-07-19
+updated: 2026-07-21
 roadmap_id: F-15
 prd_refs: guardrails
 ---
