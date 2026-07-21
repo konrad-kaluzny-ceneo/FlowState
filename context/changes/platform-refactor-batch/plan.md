@@ -386,9 +386,9 @@ Extract remaining pure helpers from `use-pomodoro-cycle.ts` into colocated modul
 
 #### Automated
 
-- [x] 3.1 Build/typecheck/check succeed with no DSN set (Sentry inert)
-- [x] 3.2 `pnpm test` passes
-- [x] 3.3 `pnpm test:e2e:belt` passes (no Sentry noise)
+- [x] 3.1 Build/typecheck/check succeed with no DSN set (Sentry inert) — 71d9827
+- [x] 3.2 `pnpm test` passes — 71d9827
+- [x] 3.3 `pnpm test:e2e:belt` passes (no Sentry noise) — 71d9827
 
 #### Manual
 
@@ -399,12 +399,12 @@ Extract remaining pure helpers from `use-pomodoro-cycle.ts` into colocated modul
 
 #### Automated
 
-- [ ] 4.1 Unauthed-rejection smoke test passes
-- [ ] 4.2 `pnpm check` passes
+- [x] 4.1 Unauthed-rejection smoke test passes
+- [x] 4.2 `pnpm check` passes
 
 #### Manual
 
-- [ ] 4.3 Checklist reads accurately against current `trpc.ts` behavior
+- [x] 4.3 Checklist reads accurately against current `trpc.ts` behavior
 
 ### Phase 5: F-13 — Guest-Merge Consolidation
 

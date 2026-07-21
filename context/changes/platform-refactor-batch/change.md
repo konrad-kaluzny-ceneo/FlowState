@@ -32,3 +32,11 @@ Sentry app-wide · health = readiness (Neon + auth) · auth-audit = doc + one sm
 
 **Linear:** FLO-96 (sync pending — connector unauthorized this session)
 **GitHub:** [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190)
+
+### Known gaps / follow-ups
+
+- **No `src/app/global-error.tsx`** (discovered during Phase 3). React render errors that
+  escape to the root error boundary are therefore **not** captured by Sentry — only the
+  client/server/edge instrumentation hooks report. Deliberately deferred: the page needs
+  i18n copy (`src/i18n/`) plus a `DESIGN.md`-conformant treatment, which is beyond the
+  Phase 3 "wire up Sentry" scope. Track as a follow-up change.
