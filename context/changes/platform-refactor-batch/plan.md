@@ -410,28 +410,28 @@ Extract remaining pure helpers from `use-pomodoro-cycle.ts` into colocated modul
 
 #### Automated
 
-- [x] 5.1 Migrated guest-merge tests pass (against action/core)
-- [x] 5.2 `pnpm typecheck` passes (no dangling `api.guest`)
-- [x] 5.3 `pnpm test:e2e:belt` passes (`guest-merge-on-sign-in` green)
-- [x] 5.4 `pnpm check` passes
+- [x] 5.1 Migrated guest-merge tests pass (against action/core) — 7723ae6
+- [x] 5.2 `pnpm typecheck` passes (no dangling `api.guest`) — 7723ae6
+- [x] 5.3 `pnpm test:e2e:belt` passes (`guest-merge-on-sign-in` green) — 7723ae6
+- [x] 5.4 `pnpm check` passes — 7723ae6
 
 #### Manual
 
-- [x] 5.5 Guest → sign-in merge works end-to-end (data imported, localStorage cleared)
+- [x] 5.5 Guest → sign-in merge works end-to-end (data imported, localStorage cleared) — 7723ae6 (covered by the `guest-merge-on-sign-in` belt spec: task imported into the account list + `flowstate:guest-v1` cleared)
 
 ### Phase 6: F-09 — Cycle-Hook Pure Extracts (cut-able)
 
 #### Automated
 
-- [ ] 6.1 Hook test suite unchanged and green
-- [ ] 6.2 New pure-helper tests pass
-- [ ] 6.3 Dashboard tests pass
-- [ ] 6.4 `pnpm typecheck` + `pnpm check` pass
-- [ ] 6.5 `pnpm test:e2e:belt` passes
+- [x] 6.1 Hook test suite unchanged and green
+- [x] 6.2 New pure-helper tests pass
+- [x] 6.3 Dashboard tests pass
+- [x] 6.4 `pnpm typecheck` + `pnpm check` pass
+- [x] 6.5 `pnpm test:e2e:belt` passes (11/12; the single failure is the pre-existing `completeCheckIn` timeout at `e2e/helpers/check-in.ts:56`, reproduced identically at bare HEAD with this phase stashed)
 
 #### Manual
 
-- [ ] 6.6 Full cycle behaves identically in the browser
+- [ ] 6.6 Full cycle behaves identically in the browser — needs manual browser check
 
 ### Closeout
 
