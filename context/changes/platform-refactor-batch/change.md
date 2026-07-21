@@ -1,7 +1,7 @@
 ---
 change_id: platform-refactor-batch
 title: Platform refactor batch (F-15) — close the remaining refactor-opportunities tail + prod hygiene
-status: implementing
+status: impl_reviewed
 created: 2026-07-18
 updated: 2026-07-21
 roadmap_id: F-15
@@ -40,3 +40,16 @@ Sentry app-wide · health = readiness (Neon + auth) · auth-audit = doc + one sm
   client/server/edge instrumentation hooks report. Deliberately deferred: the page needs
   i18n copy (`src/i18n/`) plus a `DESIGN.md`-conformant treatment, which is beyond the
   Phase 3 "wire up Sentry" scope. Track as a follow-up change.
+
+Full follow-up register: [`follow-ups/review-fixes.md`](./follow-ups/review-fixes.md) (FU-1
+global-error, FU-2 `/api/health` cost bound, FU-3 DSN provisioning cleanup).
+
+### Implementation review (S8)
+
+[`reviews/impl-review.md`](./reviews/impl-review.md) — 2026-07-21, **APPROVED**:
+0 critical / 2 warnings / 8 observations. All four plan deviations (Sentry `instrumentation-client.ts`
++ `process.env` boot reads, the p4 dynamic procedure sweep, the p6 optional `now`/`clientTimer`
+params) judged correct. Zero return-API churn in `use-pomodoro-cycle.ts`; no guest/authenticated
+asymmetry from retiring the tRPC `guest` router. `typecheck` / `check` / `test` (1413) / `depcruise`
+all green. Two fixes applied during review: Sentry entries added to `.gitignore`, and the
+health-route `process.env` comment corrected to cite parity with `src/lib/auth/server.ts`.

@@ -423,11 +423,11 @@ Extract remaining pure helpers from `use-pomodoro-cycle.ts` into colocated modul
 
 #### Automated
 
-- [x] 6.1 Hook test suite unchanged and green
-- [x] 6.2 New pure-helper tests pass
-- [x] 6.3 Dashboard tests pass
-- [x] 6.4 `pnpm typecheck` + `pnpm check` pass
-- [x] 6.5 `pnpm test:e2e:belt` passes (11/12; the single failure is the pre-existing `completeCheckIn` timeout at `e2e/helpers/check-in.ts:56`, reproduced identically at bare HEAD with this phase stashed)
+- [x] 6.1 Hook test suite unchanged and green — f7be4ce
+- [x] 6.2 New pure-helper tests pass — f7be4ce
+- [x] 6.3 Dashboard tests pass — f7be4ce
+- [x] 6.4 `pnpm typecheck` + `pnpm check` pass — f7be4ce
+- [x] 6.5 `pnpm test:e2e:belt` passes — f7be4ce (11/12; the single failure is the pre-existing `completeCheckIn` timeout at `e2e/helpers/check-in.ts:56`, reproduced identically at bare HEAD with this phase stashed)
 
 #### Manual
 

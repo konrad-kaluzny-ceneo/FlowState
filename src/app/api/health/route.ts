@@ -38,8 +38,10 @@ async function checkDatabase(): Promise<CheckStatus> {
 
 async function checkAuth(): Promise<CheckStatus> {
 	try {
-		// Read via process.env (not the import-time-snapshotted `env`)
-		// so route tests can stub NEON_AUTH_BASE_URL at runtime.
+		// Read via process.env, not the validated `~/env` accessor, for parity with
+		// `src/lib/auth/server.ts` — the auth client resolves the same variable the
+		// same way, so the probe checks exactly what auth will use. (It also lets
+		// route tests stub the value at runtime.)
 		const baseUrl = process.env.NEON_AUTH_BASE_URL;
 		if (!baseUrl) return "fail";
 
