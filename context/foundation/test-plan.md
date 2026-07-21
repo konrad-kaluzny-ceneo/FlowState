@@ -239,7 +239,7 @@ CI merge gate — **16 tests across 13 spec files** (change `testing-e2e-belt-fa
 
 ### 6.5 Adding a guest/localStorage test
 
-- **Location**: `src/server/api/routers/guest.test.ts` (router `import` procedure); core merge logic in `src/server/api/lib/import-guest-snapshot.ts`.
+- **Location**: `src/app/_actions/import-guest-snapshot.test.ts` (server action `importGuestSnapshotAction` — the sole merge entry point since F-13 retired the tRPC `guest` router); core merge logic in `src/server/api/lib/import-guest-snapshot.ts`.
 - **Mocking policy**: mock `$transaction` with in-memory `tasks` / `sessions` / `cycles` arrays; `cycle.updateMany` must mutate the store (not no-op `{ count: 0 }`) when testing account RUNNING closure.
 - **Dual-user**: N/A for merge — caller is always the importing account; test pre-seeded account rows vs guest snapshot payload.
 - **Reference tests** (Risk #5):
@@ -248,7 +248,8 @@ CI merge gate — **16 tests across 13 spec files** (change `testing-e2e-belt-fa
   - Expired guest RUNNING → COMPLETED: `normalizes expired guest RUNNING cycle to COMPLETED with endedAt` (use `startedAt` far enough in the past that `startedAt + configuredDurationSec * 1000 <= Date.now()`)
   - Empty snapshot short-circuit: `returns zero counts for empty snapshot without DB writes`
   - Unmapped cycle taskId: `sets taskId null when guest cycle references unmapped task UUID`
-- **Run locally**: `pnpm exec vitest run src/server/api/routers/guest.test.ts`
+  - Entry-point gates: `rejects an unauthenticated caller without touching the database`, `rejects a malformed snapshot without touching the database`
+- **Run locally**: `pnpm exec vitest run src/app/_actions/import-guest-snapshot.test.ts`
 - **Limitation**: browser guest→auth merge e2e deferred to a follow-up change; integration-only in Phase 3 rollout.
 
 ### 6.6 Per-rollout-phase notes

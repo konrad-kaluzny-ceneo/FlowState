@@ -399,25 +399,25 @@ Extract remaining pure helpers from `use-pomodoro-cycle.ts` into colocated modul
 
 #### Automated
 
-- [x] 4.1 Unauthed-rejection smoke test passes
-- [x] 4.2 `pnpm check` passes
+- [x] 4.1 Unauthed-rejection smoke test passes — 9a87872
+- [x] 4.2 `pnpm check` passes — 9a87872
 
 #### Manual
 
-- [x] 4.3 Checklist reads accurately against current `trpc.ts` behavior
+- [x] 4.3 Checklist reads accurately against current `trpc.ts` behavior — 9a87872
 
 ### Phase 5: F-13 — Guest-Merge Consolidation
 
 #### Automated
 
-- [ ] 5.1 Migrated guest-merge tests pass (against action/core)
-- [ ] 5.2 `pnpm typecheck` passes (no dangling `api.guest`)
-- [ ] 5.3 `pnpm test:e2e:belt` passes (`guest-merge-on-sign-in` green)
-- [ ] 5.4 `pnpm check` passes
+- [x] 5.1 Migrated guest-merge tests pass (against action/core)
+- [x] 5.2 `pnpm typecheck` passes (no dangling `api.guest`)
+- [x] 5.3 `pnpm test:e2e:belt` passes (`guest-merge-on-sign-in` green)
+- [x] 5.4 `pnpm check` passes
 
 #### Manual
 
-- [ ] 5.5 Guest → sign-in merge works end-to-end (data imported, localStorage cleared)
+- [x] 5.5 Guest → sign-in merge works end-to-end (data imported, localStorage cleared)
 
 ### Phase 6: F-09 — Cycle-Hook Pure Extracts (cut-able)
 
