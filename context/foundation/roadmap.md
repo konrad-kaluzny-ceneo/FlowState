@@ -3,7 +3,7 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-07-18
+updated: 2026-07-23
 structure: split
 active_slices: [F-15]
 prd_version: 3
@@ -96,7 +96,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-43 | stateful-illustration-system | [FLO-91](https://linear.app/flowstate-10xdev/issue/FLO-91/flowstate-stateful-illustration-system-s-43) | [#175](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/175) | S-28 phase 2 — state-bound Calm Garden on hero/rail; not on gates | S-28, F-06, F-07, S-39 | Secondary | done |
 | S-44 | archive-old-tasks | [FLO-94](https://linear.app/flowstate-10xdev/issue/FLO-94/flowstate-stale-task-archive-view-bulk-delete-s-44) | [#178](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/178) | review stale tasks in archive view; multi-select + permanent delete | S-09, S-13 | **US-05** | done |
 | S-45 | ui-refactor | [FLO-95](https://linear.app/flowstate-10xdev/issue/FLO-95/flowstate-ui-redesign-makiety-alignment-s-45) | [#189](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/189) | (epic — phased in plan.md) experience the makiety redesign: 5-section nav (Fokus/Zadania/Plan dnia/Podsumowanie/Ustawienia), green retint, ring timer, minimal task cards + add-task modal, once-per-day steering; **includes former planning-cycle (#87) via Plan dnia** | S-40, S-41, S-43, F-06 | **ui-refactor PRD thread** (2 amendments) | done |
-| F-15 | platform-refactor-batch | [FLO-96](https://linear.app/flowstate-10xdev/issue/FLO-96) | [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190) | (foundation epic) timer hub + data-mode refactor batch: ACL verify, hook extracts, change-impact, sign-in schema, guest merge, health probe, auth smoke, Sentry wedge | F-07; after or parallel S-45 | guardrails | active |
+| F-15 | platform-refactor-batch | [FLO-96](https://linear.app/flowstate-10xdev/issue/FLO-96) | [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190) | (foundation epic) timer hub + data-mode refactor batch: ACL verify, hook extracts, change-impact, sign-in schema, guest merge, health probe, auth smoke, Sentry wedge | F-07; after or parallel S-45 | guardrails | done |
 | S-46 | mcp-server-for-agents | [FLO-97](https://linear.app/flowstate-10xdev/issue/FLO-97/flowstate-mcp-server-for-ai-agents-s-46) | [#191](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/191) | expose MCP server so AI agents (Cursor, Claude, Copilot) can read/write tasks + session state; enables agent-driven task delegation proposals | F-15, S-45 | PRD v3 amended Non-Goals | backlog |
 | S-47 | delegation-suggestion-in-plan | [FLO-98](https://linear.app/flowstate-10xdev/issue/FLO-98/delegation-suggestion-in-plan-dnia-s-47) | [#192](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/192) | in Plan dnia view, scorer proposes tasks suitable for delegation (to AI agent or human) with one-line rationale; user accepts/skips | S-45 (Plan dnia), S-46 | new | backlog |
 | S-48 | analytics-trends-plan-vs-execution | [FLO-99](https://linear.app/flowstate-10xdev/issue/FLO-99/analytics-weeklymonthly-trends-plan-vs-execution-s-48) | [#193](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/193) | weekly/monthly trends in Podsumowanie; plan-vs-execution comparison; context-switch pattern analytics | S-45 (Podsumowanie) | follow-up ui-refactor | backlog |
@@ -171,7 +171,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-43 | stateful-illustration-system | **done** | Shipped 2026-07-03 PR #185; FLO-91 / #175 synced |
 | S-44 | archive-old-tasks | **done** | Archived 2026-06-27 → `context/archive/2026-06-27-archive-old-tasks/`; PR #179; FLO-94 / #178 |
 | S-45 | ui-refactor | **done** | FLO-95 / #189; archived `context/archive/2026-07-04-ui-refactor/` (2026-07-05); GitHub #189 closed |
-| F-15 | platform-refactor-batch | **active** | FLO-96 / #190; umbrella for F-08–F-13 + observability hygiene; phased after S-45 |
+| F-15 | platform-refactor-batch | **done** | FLO-96 / #190; umbrella for F-08–F-13 + observability hygiene; phased after S-45 |
 | S-46 | mcp-server-for-agents | **no** | FLO-97 / #191; after F-15 + S-45; needs research: MCP protocol surface, auth model for agents; create Linear/GitHub before plan |
 | S-47 | delegation-suggestion-in-plan | **no** | FLO-98 / #192; after S-46 (MCP) + S-45 (Plan dnia shipped); scorer extension for delegation signal |
 | S-48 | analytics-trends-plan-vs-execution | **no** | FLO-99 / #193; after S-45 Podsumowanie; needs research: data model for weekly aggregation |
@@ -227,6 +227,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **F-15: (foundation epic) timer hub + data-mode refactor batch: ACL verify, hook extracts, change-impact, sign-in schema, guest merge, health probe, auth smoke, Sentry wedge** — Archived 2026-07-23 → `context/archive/2026-07-18-platform-refactor-batch/`. PR [#207](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/207). Lesson: —.
 - **fix-timer-pause-cycle-not-running (ad-hoc):** Pause e2e failed under Playwright's fake clock — **not** a product bug — Archived 2026-07-14 → `context/archive/2026-07-13-fix-timer-pause-cycle-not-running/`. Lesson: a generic client error toast is not evidence of a server rejection; the fake clock starves timer-dispatched mutations so the request never leaves the browser (see `lessons.md`).
 - **fix-pause-decouple-end-session (ad-hoc):** Removed the redundant "Wstrzymaj i zakończ sesję" button — pause (⏸) and end are now two single-purpose controls — Archived 2026-07-14 → `context/archive/2026-07-06-fix-pause-decouple-end-session/`. Refines B-09. Lesson: —.
 - **adhoc-rest-time (ad-hoc):** Ad-hoc break that resumes the work cycle when it ends — Archived 2026-07-13 → `context/archive/2026-07-06-adhoc-rest-time/`. PR [#201](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/201). Lesson: —.
