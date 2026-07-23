@@ -3,9 +3,9 @@
 import { NEON_AUTH_NETWORK_ERROR_CODES } from "@neondatabase/auth/next/server";
 import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
+import type { SignInFormState } from "~/app/auth/sign-in/schema";
 import { auth } from "~/lib/auth/server";
 import type { UserLocale } from "~/lib/domain/user-locale";
-import type { SignInFormState } from "./schema";
 
 export async function signInAction(
 	_prevState: SignInFormState,

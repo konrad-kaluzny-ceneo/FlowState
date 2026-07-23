@@ -171,7 +171,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-43 | stateful-illustration-system | **done** | Shipped 2026-07-03 PR #185; FLO-91 / #175 synced |
 | S-44 | archive-old-tasks | **done** | Archived 2026-06-27 → `context/archive/2026-06-27-archive-old-tasks/`; PR #179; FLO-94 / #178 |
 | S-45 | ui-refactor | **done** | FLO-95 / #189; archived `context/archive/2026-07-04-ui-refactor/` (2026-07-05); GitHub #189 closed |
-| F-15 | platform-refactor-batch | **backlog** | FLO-96 / #190; umbrella for F-08–F-13 + observability hygiene; phased after S-45 |
+| F-15 | platform-refactor-batch | **active** | FLO-96 / #190; umbrella for F-08–F-13 + observability hygiene; phased after S-45 |
 | S-46 | mcp-server-for-agents | **no** | FLO-97 / #191; after F-15 + S-45; needs research: MCP protocol surface, auth model for agents; create Linear/GitHub before plan |
 | S-47 | delegation-suggestion-in-plan | **no** | FLO-98 / #192; after S-46 (MCP) + S-45 (Plan dnia shipped); scorer extension for delegation signal |
 | S-48 | analytics-trends-plan-vs-execution | **no** | FLO-99 / #193; after S-45 Podsumowanie; needs research: data model for weekly aggregation |
