@@ -738,14 +738,20 @@
 		"sectionBreaksNotifications": "Przerwy i powiadomienia",
 		"sectionAppearance": "Wygląd",
 		"sectionDayEnergy": "Energia dnia",
+		"sectionWorkspace": "Środowisko",
 		"sectionIntegrations": "Integracje",
 		"tabGeneralDesc": "Preferencje i konto",
 		"tabFocusDesc": "Ustawienia Pomodoro",
 		"tabBreaksDesc": "Przerwy i alerty",
 		"tabAppearanceDesc": "Motyw i kolory",
 		"tabEnergyDesc": "Twój poziom na dziś",
+		"tabWorkspaceDesc": "Spokojne wskazówki do narzędzi",
 		"tabIntegrationsDesc": "Połączenia zewnętrzne",
 		"dayEnergyBody": "Wybierz, jak się dziś czujesz — ta informacja pomaga FlowState dopasować sugestie zadań.",
+		"workspaceBody": "Drobne ustawienia otoczenia, które wyciszają sesje skupienia. Oznacz to, co już masz — bez pośpiechu.",
+		"workspaceNudgeBody": "Krótka lista wskazówek do spokojniejszych narzędzi jest w sekcji Środowisko — kiedy zechcesz.",
+		"workspaceNudgeAction": "Otwórz Środowisko",
+		"workspaceNudgeDismiss": "Zamknij",
 		"integrationsBody": "Połącz FlowState z narzędziami, których używasz na co dzień.",
 		"mcpComingSoon": "Integracja MCP wkrótce",
 		"mcpMockTitle": "Agent FlowState",
@@ -762,5 +768,62 @@
 		"breakAlertsLabel": "Powiadomienia o przerwie",
 		"cycleEndAudioLabel": "Dźwięk końca cyklu",
 		"themeLabel": "Motyw"
+	},
+	"WorkspaceSetup": {
+		"categories": {
+			"editor": "Edytory i agenci",
+			"chat": "Komunikatory",
+			"notifications": "Powiadomienia i poczta",
+			"device": "Telefon i system"
+		},
+		"guideLabel": "Otwórz poradnik",
+		"tips": {
+			"cursor-agents": {
+				"title": "Spróbuj Cursor Agent przy zmianach w wielu plikach",
+				"body": "Gdy zmiana obejmuje kilka plików, otwórz Agenta i opisz efekt — potem spokojnie przejrzyj diff, zanim go zostawisz.",
+				"guideUrl": "https://cursor.com/docs/agent/overview",
+				"guideLabel": "Dokumentacja Cursor Agent"
+			},
+			"claude-agents": {
+				"title": "Użyj Claude Code do dłuższych zadań kodowych",
+				"body": "Przy większej zmianie pozwól Claude Code zbadać i edytować w skupionym przebiegu — zostań obok, żeby zatwierdzić kierunek.",
+				"guideUrl": "https://code.claude.com/docs/en/overview",
+				"guideLabel": "Dokumentacja Claude Code"
+			},
+			"slack-dnd": {
+				"title": "Wycisz Slack na czas skupienia",
+				"body": "Wstrzymaj powiadomienia na długość cyklu — wiadomości poczekają; status pokaże, że jesteś niedostępny.",
+				"guideUrl": "https://slack.com/help/articles/214908388-Pause-your-Slack-notifications",
+				"guideLabel": "Wstrzymywanie powiadomień Slack"
+			},
+			"teams-focus": {
+				"title": "Ustaw Teams na Nie przeszkadzać",
+				"body": "Zmień status na Nie przeszkadzać (lub Focusing), żeby czaty milczały podczas cyklu.",
+				"guideUrl": "https://support.microsoft.com/en-us/office/change-your-status-in-microsoft-teams-ce36da01-9803-4209-851c-1b16dd6eebb0",
+				"guideLabel": "Status w Teams"
+			},
+			"browser-notifications": {
+				"title": "Wycisz powiadomienia stron w przeglądarce",
+				"body": "Wyłącz powiadomienia witryn, które nie potrzebują Cię w środku cyklu — zostaw tylko to, co naprawdę ważne.",
+				"guideUrl": "https://support.google.com/chrome/answer/3220216",
+				"guideLabel": "Powiadomienia w Chrome"
+			},
+			"email-batching": {
+				"title": "Sprawdzaj pocztę partiami",
+				"body": "Zamknij skrzynkę podczas skupienia i otwieraj ją między cyklami — mniej półczytań, spokojniejsze odpowiedzi."
+			},
+			"phone-dnd": {
+				"title": "Wycisz telefon na cykl",
+				"body": "Włącz Nie przeszkadzać lub Focus na telefonie, żeby w trakcie pracy docierali tylko wybrani ludzie.",
+				"guideUrl": "https://support.apple.com/guide/iphone/set-up-a-focus-iphd6288a67f/ios",
+				"guideLabel": "Focus na iPhonie"
+			},
+			"os-focus": {
+				"title": "Włącz Focus w systemie",
+				"body": "Windows Focus lub macOS Focus wycisza banery w aplikacjach — spokojniejsze biurko na kolejny cykl.",
+				"guideUrl": "https://support.microsoft.com/en-us/windows/focus-stay-on-task-without-distractions-in-windows-cbcc9ddb-8164-43fa-8919-b9a2af072382",
+				"guideLabel": "Focus w Windows"
+			}
+		}
 	}
 }

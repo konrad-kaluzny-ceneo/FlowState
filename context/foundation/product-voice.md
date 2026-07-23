@@ -73,6 +73,7 @@ Map user-facing strings to zones before editing. Each zone has a message namespa
 | **Wedge transitions** | One interstitial line per beat | `Session.transition.*` | Voice exemplar; migrate only |
 | **Session narrative** | In-flow summary + closure overlay | `Session.narrative.*`, `narrative-builder.ts` | Infrastructure copy; distinct from day memory |
 | **Onboarding / auth value** | First-run promise | `Onboarding.*`, `Auth.*` | Cite voice; no rewrite in F-14 |
+| **Settings / workspace tips** | Settings chrome + coaching checklist for environment setup | `Settings.*` (tab/nudge), `WorkspaceSetup.*` (tips) | Cite voice; locale parity; no hustle / streak language |
 | **Errors / recovery** | Calm retry, no blame | `Errors.*` | Cite voice |
 
 **Recap vs. narrative:** S-30 daily recap (timing log) and S-17 session narrative (prose closure) stay separate. S-42 day memory uses **DayMemory** vocabulary — not session closure strings.
