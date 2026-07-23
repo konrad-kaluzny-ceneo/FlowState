@@ -64,16 +64,19 @@ async function waitForTaskCreateSettled(addButton: Locator) {
 }
 
 async function isGuestDashboard(page: Page) {
-	// Guest mode: no auth session cookie present. Check for the session cookie
-	// that Neon Auth / next-auth sets.
+	// Guest mode: no auth session cookie present.
+	//
+	// Match on a NAME PATTERN, not an allow-list. This guard previously listed
+	// next-auth/authjs cookie names only (`authjs.session-token`, ...), which no
+	// longer exist: FlowState signs in through Neon Auth, whose cookie is
+	// `__Secure-neon-auth.session_token` (note the underscore in `session_token`).
+	// The stale list made every *authenticated* worker look like a guest, so
+	// `waitForCycleCreateSettled` returned immediately and `clickStartCycle`
+	// stopped blocking on the server cycle — surfacing as a rotating check-in
+	// timeout flake in unrelated belt specs. A pattern keeps working across
+	// provider/prefix renames instead of silently rotting into a no-op.
 	const cookies = await page.context().cookies();
-	const hasSessionCookie = cookies.some(
-		(c) =>
-			c.name === "__Secure-authjs.session-token" ||
-			c.name === "authjs.session-token" ||
-			c.name === "__Secure-next-auth.session-token" ||
-			c.name === "next-auth.session-token",
-	);
+	const hasSessionCookie = cookies.some((c) => /session[_-]token/.test(c.name));
 	return !hasSessionCookie;
 }
 

@@ -1,7 +1,6 @@
 import { checkInRouter } from "~/server/api/routers/check-in";
 import { cycleRouter } from "~/server/api/routers/cycle";
 import { dayPlanRouter } from "~/server/api/routers/day-plan";
-import { guestRouter } from "~/server/api/routers/guest";
 import { preferenceRouter } from "~/server/api/routers/preference";
 import { recapRouter } from "~/server/api/routers/recap";
 import { sessionRouter } from "~/server/api/routers/session";
@@ -19,7 +18,6 @@ export const appRouter = createTRPCRouter({
 	session: sessionRouter,
 	cycle: cycleRouter,
 	checkIn: checkInRouter,
-	guest: guestRouter,
 	preference: preferenceRouter,
 	dayPlan: dayPlanRouter,
 	recap: recapRouter,

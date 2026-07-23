@@ -235,6 +235,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Sentry (may contain SENTRY_AUTH_TOKEN)
+.sentryclirc
+.env.sentry-build-plugin
+
 # vercel
 .vercel
 

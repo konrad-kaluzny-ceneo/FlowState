@@ -14,6 +14,12 @@ import { maybeAlertBreakStart } from "~/lib/break-out-of-tab-alert/maybe-alert-b
 import { getNotificationPermission } from "~/lib/break-out-of-tab-alert/notify-break-start";
 import { deriveCatchUpGate } from "~/lib/catch-up/derive-gate";
 import type { CatchUpState } from "~/lib/catch-up/types";
+import {
+	isBreakKind,
+	resolveBreakCadenceSuggestion,
+} from "~/lib/cycle/break-cadence";
+import { cycleEndTimeMs, pausedRemainingMs } from "~/lib/cycle/end-time";
+import { withWorkDayPlanKey } from "~/lib/cycle/work-day-plan-key";
 import type { CycleEndAudioMode } from "~/lib/cycle-audio-preference/types";
 import {
 	startCycleEndTabPulse,
@@ -24,7 +30,6 @@ import {
 	useRepositories,
 } from "~/lib/data-mode/data-mode-context";
 import type {
-	DataMode,
 	DomainActiveCycle,
 	DomainTaskId,
 	FocusedTask,
@@ -34,6 +39,7 @@ type CreatedActiveCycle = Omit<DomainActiveCycle, "task"> & {
 	task?: DomainActiveCycle["task"];
 };
 
+import type { CycleKind } from "~/lib/domain/cycle-kind";
 import type { EnergyLevel } from "~/lib/domain/energy-level";
 import type { UserLocale } from "~/lib/domain/user-locale";
 import {
@@ -123,26 +129,6 @@ function getGuestLastEndedSnapshot(): GuestSession | null {
 	return cachedGuestLastEnded;
 }
 
-type CompleteCycleArgs = {
-	cycleId: DomainTaskId;
-	markTaskDone?: boolean;
-	markTaskBlocked?: boolean;
-	incrementInterruption?: boolean;
-};
-
-function withWorkDayPlanKey(
-	input: CompleteCycleArgs,
-	options: {
-		kind: "WORK" | "SHORT_BREAK" | "LONG_BREAK" | null;
-		mode: DataMode;
-	},
-): CompleteCycleArgs & { localDateKey?: string } {
-	if (options.mode !== "authenticated" || options.kind !== "WORK") {
-		return input;
-	}
-	return { ...input, localDateKey: formatLocalDateKey() };
-}
-
 function taskPoolHasKickoffCandidates(
 	tasks: Array<{
 		status: string;
@@ -160,35 +146,12 @@ function taskPoolHasKickoffCandidates(
 	);
 }
 
-export { taskPoolHasKickoffCandidates };
-
-/** E2E uses Playwright fake timers; server `startedAt` must not drive break expiry. */
-const useE2eClientTimer = process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER === "1";
-
-function cycleEndTimeMs(cycle: {
-	startedAt: Date;
-	configuredDurationSec: number;
-	state?: DomainActiveCycle["state"];
-	remainingDurationSec?: number | null;
-}): number {
-	if (cycle.state === "PAUSED" && cycle.remainingDurationSec != null) {
-		return Date.now() + cycle.remainingDurationSec * 1000;
-	}
-	if (useE2eClientTimer) {
-		return Date.now() + cycle.configuredDurationSec * 1000;
-	}
-	return cycle.startedAt.getTime() + cycle.configuredDurationSec * 1000;
-}
-
-function pausedRemainingMs(cycle: DomainActiveCycle): number {
-	return Math.max(0, (cycle.remainingDurationSec ?? 0) * 1000);
-}
-
 export type { FocusedTask };
+export { taskPoolHasKickoffCandidates };
 
 export type PomodoroCycleState = "idle" | "running" | "paused" | "completed";
 
-export type CycleKind = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
+export type { CycleKind };
 
 export type KickoffSuggestionResult = {
 	sessionId: number;
@@ -257,10 +220,6 @@ type PendingWedgeIntent = {
 	breakKind?: "SHORT_BREAK" | "LONG_BREAK";
 	breakDurationSec?: number;
 };
-
-function isBreakKind(kind: CycleKind | null): boolean {
-	return kind === "SHORT_BREAK" || kind === "LONG_BREAK";
-}
 
 function maybeStartCycleEndTabPulse(
 	cycleKind: CycleKind | null,
@@ -2291,8 +2250,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setCompletedWorkCycles(newCount);
 
 			const breakKind: CycleKind =
-				overrideBreakKind ??
-				(cyclesSinceLastLong + 1 >= 4 ? "LONG_BREAK" : "SHORT_BREAK");
+				overrideBreakKind ?? resolveBreakCadenceSuggestion(cyclesSinceLastLong);
 
 			// Cadence tracking: taking a Long resets; taking a Short increments.
 			if (breakKind === "LONG_BREAK") {
@@ -2534,8 +2492,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			if (currentKind === "WORK") {
 				// Defer break creation to the break choice gate
-				const cadenceSuggestion: "SHORT_BREAK" | "LONG_BREAK" =
-					cyclesSinceLastLong + 1 >= 4 ? "LONG_BREAK" : "SHORT_BREAK";
+				const cadenceSuggestion =
+					resolveBreakCadenceSuggestion(cyclesSinceLastLong);
 				setSuggestedBreakKind(cadenceSuggestion);
 				setPendingMarkTaskDone(markTaskDone);
 				setPendingMarkTaskBlocked(markTaskBlocked);
@@ -2668,9 +2626,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				try {
 					await confirmComplete(markTaskDone);
 					const breakStarted =
-						stateRef.current === "running" &&
-						(cycleKindRef.current === "SHORT_BREAK" ||
-							cycleKindRef.current === "LONG_BREAK");
+						stateRef.current === "running" && isBreakKind(cycleKindRef.current);
 					if (breakStarted) {
 						setAwaitingCheckIn(false);
 						setPendingMarkTaskDone(null);
@@ -2698,8 +2654,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			// Compute cadence suggestion from cyclesSinceLastLong alone —
 			// completedWorkCycles is incremented only in startBreakAfterWorkComplete
 			// (single owner, no double-increment risk).
-			const cadenceSuggestion: "SHORT_BREAK" | "LONG_BREAK" =
-				cyclesSinceLastLong + 1 >= 4 ? "LONG_BREAK" : "SHORT_BREAK";
+			const cadenceSuggestion =
+				resolveBreakCadenceSuggestion(cyclesSinceLastLong);
 			setSuggestedBreakKind(cadenceSuggestion);
 			setBreakChoicePending(true);
 			setAwaitingBreakChoice(true);
@@ -2970,8 +2926,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					),
 				);
 				// Defer break creation to the break choice gate
-				const cadenceSuggestion: "SHORT_BREAK" | "LONG_BREAK" =
-					cyclesSinceLastLong + 1 >= 4 ? "LONG_BREAK" : "SHORT_BREAK";
+				const cadenceSuggestion =
+					resolveBreakCadenceSuggestion(cyclesSinceLastLong);
 				setSuggestedBreakKind(cadenceSuggestion);
 				setPendingMarkTaskDone(true);
 				setAwaitingBreakChoice(true);
@@ -3048,8 +3004,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					),
 				);
 				// Defer break creation to the break choice gate
-				const cadenceSuggestion: "SHORT_BREAK" | "LONG_BREAK" =
-					cyclesSinceLastLong + 1 >= 4 ? "LONG_BREAK" : "SHORT_BREAK";
+				const cadenceSuggestion =
+					resolveBreakCadenceSuggestion(cyclesSinceLastLong);
 				setSuggestedBreakKind(cadenceSuggestion);
 				setPendingMarkTaskBlocked(true);
 				setAwaitingBreakChoice(true);

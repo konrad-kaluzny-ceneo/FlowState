@@ -39,6 +39,12 @@ export const env = createEnv({
 		NODE_ENV: z
 			.enum(["development", "test", "production"])
 			.default("development"),
+		/** Sentry auth token for source-map uploads (optional — no uploads when absent) */
+		SENTRY_AUTH_TOKEN: z.string().optional(),
+		/** Sentry org slug — build-time only, used by `withSentryConfig` in `next.config.js` */
+		SENTRY_ORG: z.string().optional(),
+		/** Sentry project slug — build-time only, used by `withSentryConfig` in `next.config.js` */
+		SENTRY_PROJECT: z.string().optional(),
 	},
 
 	/**
@@ -51,6 +57,8 @@ export const env = createEnv({
 		NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER: z.enum(["1"]).optional(),
 		/** Milliseconds before return handoff shows; Playwright sets "1" for belt specs. */
 		NEXT_PUBLIC_E2E_RETURN_HANDOFF_THRESHOLD_MS: z.string().optional(),
+		/** Sentry DSN for error monitoring (optional — Sentry disabled when absent) */
+		NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
 	},
 
 	/**
@@ -63,10 +71,14 @@ export const env = createEnv({
 		NEON_AUTH_BASE_URL: process.env.NEON_AUTH_BASE_URL,
 		NEON_AUTH_COOKIE_SECRET: process.env.NEON_AUTH_COOKIE_SECRET,
 		NODE_ENV: process.env.NODE_ENV,
+		SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
+		SENTRY_ORG: process.env.SENTRY_ORG,
+		SENTRY_PROJECT: process.env.SENTRY_PROJECT,
 		NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER:
 			process.env.NEXT_PUBLIC_E2E_MAIN_THREAD_TIMER,
 		NEXT_PUBLIC_E2E_RETURN_HANDOFF_THRESHOLD_MS:
 			process.env.NEXT_PUBLIC_E2E_RETURN_HANDOFF_THRESHOLD_MS,
+		NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
 	},
 	/**
 	 * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

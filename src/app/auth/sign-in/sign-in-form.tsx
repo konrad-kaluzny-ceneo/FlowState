@@ -6,12 +6,8 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { AuthDivider } from "~/app/auth/_components/auth-divider";
 import { GoogleSignInButton } from "~/app/auth/_components/google-sign-in-button";
+import type { SignInFormState } from "~/app/auth/sign-in/schema";
 import { signInAction } from "./action";
-
-export interface SignInFormState {
-	error: string | null;
-	email: string;
-}
 
 const initialState: SignInFormState = {
 	error: null,

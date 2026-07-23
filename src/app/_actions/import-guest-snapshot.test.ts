@@ -3,8 +3,27 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultEisenhowerFields } from "~/lib/data-mode/types";
 import type { GuestSnapshotV1 } from "~/lib/guest/schema";
 
+/**
+ * Feature: guest → account merge (S-08 / Risk #5), Property: the server action is
+ * the single entry point for the merge.
+ *
+ * Migrated from `src/server/api/routers/guest.test.ts` when F-13 retired the tRPC
+ * `guest` router (platform-refactor-batch, phase 5). Every invariant previously
+ * asserted through `api.guest.import` is asserted here against
+ * `importGuestSnapshotAction`, plus the auth/validation gates the router used to
+ * get from `protectedProcedure` + `.input(guestSnapshotV1Schema)`.
+ *
+ * Complements — deliberately does not duplicate:
+ * - `src/server/api/lib/import-guest-snapshot.test.ts` — pure `resolveUniqueTitle`
+ *   + archived-field mapping against the core function.
+ * - `src/app/_components/guest-import-on-mount.test.tsx` — client mount/guard
+ *   behavior with the action mocked.
+ */
+
+const getSession = vi.fn();
+
 vi.mock("~/lib/auth/server", () => ({
-	auth: { getSession: vi.fn() },
+	auth: { getSession },
 }));
 
 type TaskRow = {
@@ -136,28 +155,26 @@ vi.mock("~/server/db/index", () => ({
 	},
 }));
 
-const { createCallerFactory } = await import("~/server/api/trpc");
-const { guestRouter } = await import("~/server/api/routers/guest");
-const { db } = await import("~/server/db/index");
+// Import after mocks are set up
+const { importGuestSnapshotAction } = await import(
+	"~/app/_actions/import-guest-snapshot"
+);
 
-const createCaller = createCallerFactory(guestRouter);
 const USER_ID = "user-1";
 
-function guestCaller() {
-	return createCaller({
-		db: db as never,
-		session: {
+function signedIn() {
+	getSession.mockResolvedValue({
+		data: {
 			user: {
 				id: USER_ID,
 				email: "test@example.com",
 				name: "Test User",
 			},
 		},
-		headers: new Headers(),
 	});
 }
 
-describe("guest.import", () => {
+describe("importGuestSnapshotAction", () => {
 	beforeEach(() => {
 		tasks = [
 			{
@@ -179,6 +196,65 @@ describe("guest.import", () => {
 		cycleUpdateMany.mockClear();
 		cycleCreate.mockClear();
 		dbTransaction.mockClear();
+		getSession.mockReset();
+		signedIn();
+	});
+
+	it("rejects an unauthenticated caller without touching the database", async () => {
+		getSession.mockResolvedValue({ data: null });
+
+		const result = await importGuestSnapshotAction({
+			version: 1,
+			tasks: [],
+			sessions: [],
+			cycles: [],
+		});
+
+		expect(result).toEqual({ ok: false, error: "UNAUTHORIZED" });
+		expect(dbTransaction).not.toHaveBeenCalled();
+		expect(cycleUpdateMany).not.toHaveBeenCalled();
+	});
+
+	it("rejects a malformed snapshot without touching the database", async () => {
+		const result = await importGuestSnapshotAction({
+			version: 1,
+			tasks: [{ id: "not-a-uuid", title: "" }],
+			sessions: [],
+			cycles: [],
+		});
+
+		expect(result).toEqual({ ok: false, error: "INVALID_SNAPSHOT" });
+		expect(dbTransaction).not.toHaveBeenCalled();
+		expect(tasks).toHaveLength(1);
+	});
+
+	it("reports IMPORT_FAILED instead of throwing when the transaction rejects", async () => {
+		dbTransaction.mockImplementationOnce(() =>
+			Promise.reject(new Error("db down")),
+		);
+
+		const result = await importGuestSnapshotAction({
+			version: 1,
+			tasks: [
+				{
+					id: "550e8400-e29b-41d4-a716-446655440040",
+					title: "Will not land",
+					status: "active",
+					workType: "OPERATIONAL",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					sortOrder: 0,
+					resumeNote: null,
+					project: null,
+					createdAt: new Date("2026-05-29T10:00:00.000Z"),
+					updatedAt: null,
+				},
+			],
+			sessions: [],
+			cycles: [],
+		});
+
+		expect(result).toEqual({ ok: false, error: "IMPORT_FAILED" });
 	});
 
 	it("imports guest tasks with title suffix on collision and remaps cycle FKs", async () => {
@@ -236,10 +312,9 @@ describe("guest.import", () => {
 			],
 		};
 
-		const result = await guestCaller().import(snapshot);
+		const result = await importGuestSnapshotAction(snapshot);
 
-		expect(result.importedTasks).toBe(2);
-		expect(result.importedCycles).toBe(1);
+		expect(result).toEqual({ ok: true, importedTasks: 2, importedCycles: 1 });
 		expect(tasks.map((task) => task.title).sort()).toEqual([
 			"Bar",
 			"Foo",
@@ -312,9 +387,9 @@ describe("guest.import", () => {
 			cycles: [],
 		};
 
-		const result = await guestCaller().import(snapshot);
+		const result = await importGuestSnapshotAction(snapshot);
 
-		expect(result).toEqual({ importedTasks: 1, importedCycles: 0 });
+		expect(result).toEqual({ ok: true, importedTasks: 1, importedCycles: 0 });
 		expect(cycleUpdateMany).toHaveBeenCalledWith({
 			where: { userId: USER_ID, state: { in: ["RUNNING", "PAUSED"] } },
 			data: { state: "COMPLETED", endedAt: expect.any(Date) },
@@ -361,9 +436,9 @@ describe("guest.import", () => {
 			],
 		};
 
-		const result = await guestCaller().import(snapshot);
+		const result = await importGuestSnapshotAction(snapshot);
 
-		expect(result.importedCycles).toBe(1);
+		expect(result).toEqual({ ok: true, importedTasks: 0, importedCycles: 1 });
 		expect(cycles[0]?.state).toBe("COMPLETED");
 		expect(cycles[0]?.endedAt).not.toBeNull();
 	});
@@ -397,9 +472,9 @@ describe("guest.import", () => {
 			],
 		};
 
-		const result = await guestCaller().import(snapshot);
+		const result = await importGuestSnapshotAction(snapshot);
 
-		expect(result.importedCycles).toBe(1);
+		expect(result).toEqual({ ok: true, importedTasks: 0, importedCycles: 1 });
 		expect(cycles).toHaveLength(1);
 		expect(cycles[0]?.state).toBe("COMPLETED");
 		expect(cycles[0]?.endedAt).not.toBeNull();
@@ -410,14 +485,14 @@ describe("guest.import", () => {
 		const cyclesBefore = cycles.length;
 		const sessionsBefore = sessions.length;
 
-		const result = await guestCaller().import({
+		const result = await importGuestSnapshotAction({
 			version: 1,
 			tasks: [],
 			sessions: [],
 			cycles: [],
 		});
 
-		expect(result).toEqual({ importedTasks: 0, importedCycles: 0 });
+		expect(result).toEqual({ ok: true, importedTasks: 0, importedCycles: 0 });
 		expect(dbTransaction).not.toHaveBeenCalled();
 		expect(cycleUpdateMany).not.toHaveBeenCalled();
 		expect(tasks).toHaveLength(tasksBefore);
@@ -460,9 +535,9 @@ describe("guest.import", () => {
 			cycles: [],
 		};
 
-		const result = await guestCaller().import(snapshot);
+		const result = await importGuestSnapshotAction(snapshot);
 
-		expect(result.importedTasks).toBe(2);
+		expect(result).toEqual({ ok: true, importedTasks: 2, importedCycles: 0 });
 		const imported = tasks.filter((task) => task.id > 1);
 		expect(imported.map((task) => task.title)).toEqual([
 			"Guest first",
@@ -497,9 +572,9 @@ describe("guest.import", () => {
 			cycles: [],
 		};
 
-		const result = await guestCaller().import(snapshot);
+		const result = await importGuestSnapshotAction(snapshot);
 
-		expect(result.importedTasks).toBe(1);
+		expect(result).toEqual({ ok: true, importedTasks: 1, importedCycles: 0 });
 		const imported = tasks.find((task) => task.title === "ASAP deep work");
 		expect(imported).toMatchObject({
 			importance: 3,
@@ -536,9 +611,9 @@ describe("guest.import", () => {
 			cycles: [],
 		};
 
-		const result = await guestCaller().import(snapshot);
+		const result = await importGuestSnapshotAction(snapshot);
 
-		expect(result.importedTasks).toBe(1);
+		expect(result).toEqual({ ok: true, importedTasks: 1, importedCycles: 0 });
 		const imported = tasks.find((task) => task.title === "Synchro guest");
 		expect(imported?.personaPresetId).toBe("synchro");
 	});
@@ -571,9 +646,9 @@ describe("guest.import", () => {
 			],
 		};
 
-		const result = await guestCaller().import(snapshot);
+		const result = await importGuestSnapshotAction(snapshot);
 
-		expect(result.importedCycles).toBe(1);
+		expect(result).toEqual({ ok: true, importedTasks: 0, importedCycles: 1 });
 		expect(cycleCreate).toHaveBeenCalledWith({
 			data: expect.objectContaining({ taskId: null }),
 		});
