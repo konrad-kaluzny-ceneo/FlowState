@@ -283,8 +283,8 @@ No Prisma migration. Existing users get empty `doneTipIds` and `nudgeDismissed: 
 
 #### Automated
 
-- [x] 2.1 Vitest ustawienia-view + workspace-setup-checklist tests pass
-- [x] 2.2 Biome check and typecheck pass
+- [x] 2.1 Vitest ustawienia-view + workspace-setup-checklist tests pass — 05d4615
+- [x] 2.2 Biome check and typecheck pass — 05d4615
 
 #### Manual
 
@@ -296,8 +296,8 @@ No Prisma migration. Existing users get empty `doneTipIds` and `nudgeDismissed: 
 
 #### Automated
 
-- [x] 3.1 Vitest nudge show / dismiss / stay dismissed
-- [x] 3.2 Biome check and typecheck pass
+- [x] 3.1 Vitest nudge show / dismiss / stay dismissed — 05d4615
+- [x] 3.2 Biome check and typecheck pass — 05d4615
 
 #### Manual
 
@@ -309,7 +309,7 @@ No Prisma migration. Existing users get empty `doneTipIds` and `nudgeDismissed: 
 #### Automated
 
 - [ ] 4.1 Playwright workspace-setup-advisor spec passes standalone
-- [ ] 4.2 pnpm check + typecheck + related vitest green
+- [x] 4.2 pnpm check + typecheck + related vitest green
 
 #### Manual
 
