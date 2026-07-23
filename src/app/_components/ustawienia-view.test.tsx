@@ -143,7 +143,7 @@ describe("UstawieniaView", () => {
 		expect(screen.getByTestId("workspace-tip-cursor-agents")).toBeTruthy();
 	});
 
-	it("shows workspace nudge by default and dismisses it", () => {
+	it("shows workspace nudge after hydrate and dismisses it", () => {
 		renderView(
 			<UstawieniaView
 				scope={{ mode: "authenticated", userId: "user-1" }}
@@ -173,6 +173,19 @@ describe("UstawieniaView", () => {
 				userName="Konrad"
 			/>,
 		);
+
+		expect(screen.queryByTestId("settings-workspace-nudge")).toBeNull();
+	});
+
+	it("keeps nudge hidden before checklist hook hydrates", () => {
+		mockUseWorkspaceSetupChecklist.mockReturnValue({
+			doneTipIds: [],
+			nudgeDismissed: true,
+			toggleTip: mockToggleTip,
+			dismissNudge: mockDismissNudge,
+		});
+
+		renderView(<UstawieniaView scope={{ mode: "guest" }} userName={null} />);
 
 		expect(screen.queryByTestId("settings-workspace-nudge")).toBeNull();
 	});

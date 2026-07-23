@@ -1,9 +1,12 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import { WORKSPACE_SETUP_KEY_GUEST } from "~/lib/workspace-setup-advisor/keys";
-import { readWorkspaceSetupState } from "~/lib/workspace-setup-advisor/storage";
+import {
+	readWorkspaceSetupState,
+	writeNudgeDismissed,
+} from "~/lib/workspace-setup-advisor/storage";
 import type { WorkspaceTipId } from "~/lib/workspace-setup-advisor/types";
 
 import { useWorkspaceSetupChecklist } from "./use-workspace-setup-checklist";
@@ -49,11 +52,33 @@ describe("useWorkspaceSetupChecklist integration", () => {
 		localStorage.clear();
 	});
 
-	it("toggles tips and dismisses nudge against scoped storage", () => {
+	it("exposes nudge as not dismissed after client hydrate", async () => {
 		render(<ChecklistProbe scope={{ mode: "guest" }} />);
 
+		await waitFor(() => {
+			expect(screen.getByTestId("nudge-dismissed").textContent).toBe("false");
+		});
+	});
+
+	it("keeps nudge dismissed after hydrate when storage says so", async () => {
+		writeNudgeDismissed({ mode: "guest" }, true);
+
+		render(<ChecklistProbe scope={{ mode: "guest" }} />);
+
+		await waitFor(() => {
+			expect(screen.getByTestId("done-ids").textContent).toBe("");
+		});
+		expect(screen.getByTestId("nudge-dismissed").textContent).toBe("true");
+	});
+
+	it("toggles tips and dismisses nudge against scoped storage", async () => {
+		render(<ChecklistProbe scope={{ mode: "guest" }} />);
+
+		await waitFor(() => {
+			expect(screen.getByTestId("nudge-dismissed").textContent).toBe("false");
+		});
+
 		expect(screen.getByTestId("done-ids").textContent).toBe("");
-		expect(screen.getByTestId("nudge-dismissed").textContent).toBe("false");
 
 		fireEvent.click(screen.getByTestId("toggle-cursor"));
 		fireEvent.click(screen.getByTestId("dismiss-nudge"));
@@ -69,8 +94,12 @@ describe("useWorkspaceSetupChecklist integration", () => {
 		);
 	});
 
-	it("keeps guest and auth checklist state isolated", () => {
+	it("keeps guest and auth checklist state isolated", async () => {
 		const { unmount } = render(<ChecklistProbe scope={{ mode: "guest" }} />);
+
+		await waitFor(() => {
+			expect(screen.getByTestId("nudge-dismissed").textContent).toBe("false");
+		});
 
 		fireEvent.click(screen.getByTestId("toggle-slack"));
 		unmount();
@@ -79,8 +108,11 @@ describe("useWorkspaceSetupChecklist integration", () => {
 			<ChecklistProbe scope={{ mode: "authenticated", userId: "user-a" }} />,
 		);
 
+		await waitFor(() => {
+			expect(screen.getByTestId("nudge-dismissed").textContent).toBe("false");
+		});
+
 		expect(screen.getByTestId("done-ids").textContent).toBe("");
-		expect(screen.getByTestId("nudge-dismissed").textContent).toBe("false");
 
 		fireEvent.click(screen.getByTestId("toggle-os"));
 
