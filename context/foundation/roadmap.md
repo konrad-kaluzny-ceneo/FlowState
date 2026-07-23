@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-07-23
 structure: split
-active_slices: [F-15]
+active_slices: []
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -176,7 +176,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-47 | delegation-suggestion-in-plan | **no** | FLO-98 / #192; after S-46 (MCP) + S-45 (Plan dnia shipped); scorer extension for delegation signal |
 | S-48 | analytics-trends-plan-vs-execution | **no** | FLO-99 / #193; after S-45 Podsumowanie; needs research: data model for weekly aggregation |
 | S-49 | workspace-setup-advisor | **no** | FLO-100 / #194; after S-45 Ustawienia; content-first (tips authored); no external integration |
-| S-51 | blocked-task-status | **yes** | US-06; all prereqs done (F-07, S-45, S-50). **Linear/GitHub pair not created yet** — open both before `/10x-plan` (`update-status`). Touches the timer hub: run `pnpm change-impact` first; extend `TaskRepository` on **both** guest and authenticated sides |
+| S-51 | blocked-task-status | **done** | US-06; implemented + merged PR [#206](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/206) 2026-07-17; archived 2026-07-23. Linear/GitHub pair never created (code shipped directly) |
 | S-52 | focus-and-break-time-totals | **yes** | US-07; all prereqs done (S-24, S-30, S-42, S-45, S-50). **Linear/GitHub pair not created yet** — open both before `/10x-plan`. Single seam: `computeCycleFocusedMinutes` + `aggregateDayStats`; hold the S-24 pause exclusion; decide forward-only vs backfill for past days |
 
 **Recommended next:** **F-15** `platform-refactor-batch` — timer hub + data-mode refactor batch (FLO-96 / [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190)); `ui-improvement` archived → `context/archive/2026-07-05-ui-improvement/`; PR [#196](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/196) merged 2026-07-05.
@@ -227,6 +227,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **S-51: mark a started task as blocked (waiting on someone/something) from the task list, at session end, and next to "Gotowe" mid-cycle; blocking mid-cycle hands off to a break like completion does; blocked tasks leave the suggestion pool** — Archived 2026-07-23 → `context/archive/2026-07-15-blocked-task-status/`. PR [#206](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/206) merged 2026-07-17. Lesson: —.
 - **F-15: (foundation epic) timer hub + data-mode refactor batch: ACL verify, hook extracts, change-impact, sign-in schema, guest merge, health probe, auth smoke, Sentry wedge** — Archived 2026-07-23 → `context/archive/2026-07-18-platform-refactor-batch/`. PR [#207](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/207). Lesson: —.
 - **fix-timer-pause-cycle-not-running (ad-hoc):** Pause e2e failed under Playwright's fake clock — **not** a product bug — Archived 2026-07-14 → `context/archive/2026-07-13-fix-timer-pause-cycle-not-running/`. Lesson: a generic client error toast is not evidence of a server rejection; the fake clock starves timer-dispatched mutations so the request never leaves the browser (see `lessons.md`).
 - **fix-pause-decouple-end-session (ad-hoc):** Removed the redundant "Wstrzymaj i zakończ sesję" button — pause (⏸) and end are now two single-purpose controls — Archived 2026-07-14 → `context/archive/2026-07-06-fix-pause-decouple-end-session/`. Refines B-09. Lesson: —.

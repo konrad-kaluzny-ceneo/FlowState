@@ -1,9 +1,10 @@
 ---
 change_id: blocked-task-status
 title: Blocked task status — park a task waiting on someone/something without breaking session rhythm
-status: implementing
+status: archived
+archived_at: 2026-07-23T10:05:12Z
 created: 2026-07-15
-updated: 2026-07-16
+updated: 2026-07-23
 roadmap_id: S-51
 prd_refs: US-06
 ---
