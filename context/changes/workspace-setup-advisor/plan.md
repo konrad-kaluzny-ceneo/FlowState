@@ -309,7 +309,7 @@ No Prisma migration. Existing users get empty `doneTipIds` and `nudgeDismissed: 
 #### Automated
 
 - [ ] 4.1 Playwright workspace-setup-advisor spec passes standalone
-- [x] 4.2 pnpm check + typecheck + related vitest green
+- [x] 4.2 pnpm check + typecheck + related vitest green — ffccde7
 
 #### Manual
 
