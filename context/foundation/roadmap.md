@@ -177,7 +177,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-48 | analytics-trends-plan-vs-execution | **no** | FLO-99 / #193; after S-45 Podsumowanie; needs research: data model for weekly aggregation |
 | S-49 | workspace-setup-advisor | **no** | FLO-100 / #194; after S-45 Ustawienia; content-first (tips authored); no external integration |
 | S-51 | blocked-task-status | **done** | US-06; implemented + merged PR [#206](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/206) 2026-07-17; archived 2026-07-23. Linear/GitHub pair never created (code shipped directly) |
-| S-52 | focus-and-break-time-totals | **yes** | US-07; all prereqs done (S-24, S-30, S-42, S-45, S-50). **Linear/GitHub pair not created yet** — open both before `/10x-plan`. Single seam: `computeCycleFocusedMinutes` + `aggregateDayStats`; hold the S-24 pause exclusion; decide forward-only vs backfill for past days |
+| S-52 | focus-and-break-time-totals | **done** | US-07; implemented + merged PR [#205](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/205) 2026-07-17; archived 2026-07-23. Linear/GitHub pair never created (code shipped directly) |
 
 **Recommended next:** **F-15** `platform-refactor-batch` — timer hub + data-mode refactor batch (FLO-96 / [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190)); `ui-improvement` archived → `context/archive/2026-07-05-ui-improvement/`; PR [#196](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/196) merged 2026-07-05.
 
@@ -227,6 +227,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **S-52: see honest "Twój dzień" totals — all time actually spent in focus cycles and on breaks, including cycles/breaks stopped early and cycles ended by finishing the task; paused time excluded; counts forward only (no backfill of past days)** — Archived 2026-07-23 → `context/archive/2026-07-15-focus-and-break-time-totals/`. PR [#205](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/205) merged 2026-07-17. Lesson: —.
 - **S-51: mark a started task as blocked (waiting on someone/something) from the task list, at session end, and next to "Gotowe" mid-cycle; blocking mid-cycle hands off to a break like completion does; blocked tasks leave the suggestion pool** — Archived 2026-07-23 → `context/archive/2026-07-15-blocked-task-status/`. PR [#206](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/206) merged 2026-07-17. Lesson: —.
 - **F-15: (foundation epic) timer hub + data-mode refactor batch: ACL verify, hook extracts, change-impact, sign-in schema, guest merge, health probe, auth smoke, Sentry wedge** — Archived 2026-07-23 → `context/archive/2026-07-18-platform-refactor-batch/`. PR [#207](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/207). Lesson: —.
 - **fix-timer-pause-cycle-not-running (ad-hoc):** Pause e2e failed under Playwright's fake clock — **not** a product bug — Archived 2026-07-14 → `context/archive/2026-07-13-fix-timer-pause-cycle-not-running/`. Lesson: a generic client error toast is not evidence of a server rejection; the fake clock starves timer-dispatched mutations so the request never leaves the browser (see `lessons.md`).

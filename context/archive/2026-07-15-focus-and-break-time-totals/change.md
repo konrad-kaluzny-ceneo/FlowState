@@ -1,9 +1,10 @@
 ---
 change_id: focus-and-break-time-totals
 title: Honest focus and break time totals — count stopped-early cycles and report break time
-status: implementing
+status: archived
+archived_at: 2026-07-23T10:05:12Z
 created: 2026-07-15
-updated: 2026-07-16
+updated: 2026-07-23
 roadmap_id: S-52
 prd_refs: US-07
 ---
