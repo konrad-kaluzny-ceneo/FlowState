@@ -1,0 +1,98 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it } from "vitest";
+
+import type { OnboardingScope } from "~/lib/onboarding/types";
+import { WORKSPACE_SETUP_KEY_GUEST } from "~/lib/workspace-setup-advisor/keys";
+import { readWorkspaceSetupState } from "~/lib/workspace-setup-advisor/storage";
+import type { WorkspaceTipId } from "~/lib/workspace-setup-advisor/types";
+
+import { useWorkspaceSetupChecklist } from "./use-workspace-setup-checklist";
+
+function ChecklistProbe({ scope }: { scope: OnboardingScope }) {
+	const { doneTipIds, nudgeDismissed, toggleTip, dismissNudge } =
+		useWorkspaceSetupChecklist(scope);
+
+	return (
+		<div>
+			<span data-testid="done-ids">{doneTipIds.join(",")}</span>
+			<span data-testid="nudge-dismissed">{String(nudgeDismissed)}</span>
+			<button
+				data-testid="toggle-cursor"
+				onClick={() => toggleTip("cursor-agents")}
+				type="button"
+			>
+				Toggle cursor
+			</button>
+			<button
+				data-testid="toggle-slack"
+				onClick={() => toggleTip("slack-dnd" satisfies WorkspaceTipId)}
+				type="button"
+			>
+				Toggle slack
+			</button>
+			<button
+				data-testid="toggle-os"
+				onClick={() => toggleTip("os-focus")}
+				type="button"
+			>
+				Toggle os
+			</button>
+			<button data-testid="dismiss-nudge" onClick={dismissNudge} type="button">
+				Dismiss
+			</button>
+		</div>
+	);
+}
+
+describe("useWorkspaceSetupChecklist integration", () => {
+	beforeEach(() => {
+		localStorage.clear();
+	});
+
+	it("toggles tips and dismisses nudge against scoped storage", () => {
+		render(<ChecklistProbe scope={{ mode: "guest" }} />);
+
+		expect(screen.getByTestId("done-ids").textContent).toBe("");
+		expect(screen.getByTestId("nudge-dismissed").textContent).toBe("false");
+
+		fireEvent.click(screen.getByTestId("toggle-cursor"));
+		fireEvent.click(screen.getByTestId("dismiss-nudge"));
+
+		expect(screen.getByTestId("done-ids").textContent).toBe("cursor-agents");
+		expect(screen.getByTestId("nudge-dismissed").textContent).toBe("true");
+		expect(readWorkspaceSetupState({ mode: "guest" })).toEqual({
+			doneTipIds: ["cursor-agents"],
+			nudgeDismissed: true,
+		});
+		expect(localStorage.getItem(WORKSPACE_SETUP_KEY_GUEST)).toContain(
+			"cursor-agents",
+		);
+	});
+
+	it("keeps guest and auth checklist state isolated", () => {
+		const { unmount } = render(<ChecklistProbe scope={{ mode: "guest" }} />);
+
+		fireEvent.click(screen.getByTestId("toggle-slack"));
+		unmount();
+
+		render(
+			<ChecklistProbe scope={{ mode: "authenticated", userId: "user-a" }} />,
+		);
+
+		expect(screen.getByTestId("done-ids").textContent).toBe("");
+		expect(screen.getByTestId("nudge-dismissed").textContent).toBe("false");
+
+		fireEvent.click(screen.getByTestId("toggle-os"));
+
+		expect(screen.getByTestId("done-ids").textContent).toBe("os-focus");
+		expect(readWorkspaceSetupState({ mode: "guest" }).doneTipIds).toEqual([
+			"slack-dnd",
+		]);
+		expect(
+			readWorkspaceSetupState({
+				mode: "authenticated",
+				userId: "user-a",
+			}).doneTipIds,
+		).toEqual(["os-focus"]);
+	});
+});

@@ -41,6 +41,19 @@ vi.mock("~/hooks/use-cycle-end-audio-preference", () => ({
 	})),
 }));
 
+const mockToggleTip = vi.fn();
+const mockDismissNudge = vi.fn();
+const mockUseWorkspaceSetupChecklist = vi.fn(() => ({
+	doneTipIds: [] as string[],
+	nudgeDismissed: false,
+	toggleTip: mockToggleTip,
+	dismissNudge: mockDismissNudge,
+}));
+
+vi.mock("~/hooks/use-workspace-setup-checklist", () => ({
+	useWorkspaceSetupChecklist: () => mockUseWorkspaceSetupChecklist(),
+}));
+
 vi.mock("~/lib/break-out-of-tab-alert/notify-break-start", () => ({
 	getNotificationPermission: () => "default" as NotificationPermission,
 	requestNotificationPermission: async () =>
@@ -58,6 +71,14 @@ function renderView(ui: ReactElement) {
 describe("UstawieniaView", () => {
 	beforeEach(() => {
 		mockSetEnergy.mockClear();
+		mockToggleTip.mockClear();
+		mockDismissNudge.mockClear();
+		mockUseWorkspaceSetupChecklist.mockReturnValue({
+			doneTipIds: [],
+			nudgeDismissed: false,
+			toggleTip: mockToggleTip,
+			dismissNudge: mockDismissNudge,
+		});
 	});
 
 	it("renders sidebar tabs and default general panel", () => {
@@ -71,6 +92,7 @@ describe("UstawieniaView", () => {
 		expect(screen.getByTestId("settings-nav")).toBeTruthy();
 		expect(screen.getByTestId("settings-tab-general")).toBeTruthy();
 		expect(screen.getByTestId("settings-tab-focus")).toBeTruthy();
+		expect(screen.getByTestId("settings-tab-workspace")).toBeTruthy();
 		expect(screen.getByTestId("settings-tab-integrations")).toBeTruthy();
 		expect(screen.getByTestId("settings-panel-general")).toBeTruthy();
 		expect(screen.getByText(messages.Settings.subtitle)).toBeTruthy();
@@ -110,6 +132,49 @@ describe("UstawieniaView", () => {
 		renderView(<UstawieniaView scope={{ mode: "guest" }} userName={null} />);
 
 		expect(screen.queryByTestId("settings-tab-energy")).toBeNull();
+	});
+
+	it("shows workspace tab for guest and auth and renders checklist", () => {
+		renderView(<UstawieniaView scope={{ mode: "guest" }} userName={null} />);
+
+		expect(screen.getByTestId("settings-tab-workspace")).toBeTruthy();
+		fireEvent.click(screen.getByTestId("settings-tab-workspace"));
+		expect(screen.getByTestId("settings-workspace-section")).toBeTruthy();
+		expect(screen.getByTestId("workspace-tip-cursor-agents")).toBeTruthy();
+	});
+
+	it("shows workspace nudge by default and dismisses it", () => {
+		renderView(
+			<UstawieniaView
+				scope={{ mode: "authenticated", userId: "user-1" }}
+				userName="Konrad"
+			/>,
+		);
+
+		expect(screen.getByTestId("settings-workspace-nudge")).toBeTruthy();
+		fireEvent.click(screen.getByTestId("settings-workspace-nudge-action"));
+		expect(screen.getByTestId("settings-workspace-section")).toBeTruthy();
+
+		fireEvent.click(screen.getByTestId("settings-workspace-nudge-dismiss"));
+		expect(mockDismissNudge).toHaveBeenCalledTimes(1);
+	});
+
+	it("hides workspace nudge when already dismissed", () => {
+		mockUseWorkspaceSetupChecklist.mockReturnValue({
+			doneTipIds: [],
+			nudgeDismissed: true,
+			toggleTip: mockToggleTip,
+			dismissNudge: mockDismissNudge,
+		});
+
+		renderView(
+			<UstawieniaView
+				scope={{ mode: "authenticated", userId: "user-1" }}
+				userName="Konrad"
+			/>,
+		);
+
+		expect(screen.queryByTestId("settings-workspace-nudge")).toBeNull();
 	});
 
 	it("renders MCP coming soon preview on integrations tab", () => {

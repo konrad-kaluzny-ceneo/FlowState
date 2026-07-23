@@ -270,9 +270,9 @@ No Prisma migration. Existing users get empty `doneTipIds` and `nudgeDismissed: 
 
 #### Automated
 
-- [x] 1.1 Vitest storage tests pass (`workspace-setup-advisor/storage.test.ts`)
-- [x] 1.2 Typecheck passes for new modules
-- [x] 1.3 Biome check clean on touched files
+- [x] 1.1 Vitest storage tests pass (`workspace-setup-advisor/storage.test.ts`) — a39612b
+- [x] 1.2 Typecheck passes for new modules — a39612b
+- [x] 1.3 Biome check clean on touched files — a39612b
 
 #### Manual
 
@@ -283,8 +283,8 @@ No Prisma migration. Existing users get empty `doneTipIds` and `nudgeDismissed: 
 
 #### Automated
 
-- [ ] 2.1 Vitest ustawienia-view + workspace-setup-checklist tests pass
-- [ ] 2.2 Biome check and typecheck pass
+- [x] 2.1 Vitest ustawienia-view + workspace-setup-checklist tests pass
+- [x] 2.2 Biome check and typecheck pass
 
 #### Manual
 
@@ -296,8 +296,8 @@ No Prisma migration. Existing users get empty `doneTipIds` and `nudgeDismissed: 
 
 #### Automated
 
-- [ ] 3.1 Vitest nudge show / dismiss / stay dismissed
-- [ ] 3.2 Biome check and typecheck pass
+- [x] 3.1 Vitest nudge show / dismiss / stay dismissed
+- [x] 3.2 Biome check and typecheck pass
 
 #### Manual
 
