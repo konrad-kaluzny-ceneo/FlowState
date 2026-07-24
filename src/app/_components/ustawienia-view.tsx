@@ -3,6 +3,7 @@
 import {
 	Bell,
 	Check,
+	ListChecks,
 	type LucideIcon,
 	Monitor,
 	Moon,
@@ -26,10 +27,13 @@ import {
 	SettingsRow,
 } from "~/app/_components/settings-primitives";
 import { ComingSoonPreview } from "~/app/_components/ui/coming-soon-preview";
+import { WorkspaceSetupChecklist } from "~/app/_components/workspace-setup-checklist";
+import { WorkspaceSetupNudge } from "~/app/_components/workspace-setup-nudge";
 import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preference";
 import { useDayEnergy } from "~/hooks/use-day-energy";
 import { useLanguagePreference } from "~/hooks/use-language-preference";
 import { useOutOfTabBreakAlertsPreference } from "~/hooks/use-out-of-tab-break-alerts-preference";
+import { useWorkspaceSetupChecklist } from "~/hooks/use-workspace-setup-checklist";
 import { authClient } from "~/lib/auth/client";
 import {
 	getLongBreakPresets,
@@ -63,6 +67,7 @@ type SettingsTab =
 	| "breaks"
 	| "appearance"
 	| "energy"
+	| "workspace"
 	| "integrations";
 
 type TabDef = {
@@ -73,6 +78,7 @@ type TabDef = {
 		| "sectionBreaksNotifications"
 		| "sectionAppearance"
 		| "sectionDayEnergy"
+		| "sectionWorkspace"
 		| "sectionIntegrations";
 	descKey:
 		| "tabGeneralDesc"
@@ -80,6 +86,7 @@ type TabDef = {
 		| "tabBreaksDesc"
 		| "tabAppearanceDesc"
 		| "tabEnergyDesc"
+		| "tabWorkspaceDesc"
 		| "tabIntegrationsDesc";
 	icon: LucideIcon;
 	authOnly?: boolean;
@@ -116,6 +123,12 @@ const TAB_DEFS: TabDef[] = [
 		descKey: "tabEnergyDesc",
 		icon: Zap,
 		authOnly: true,
+	},
+	{
+		id: "workspace",
+		labelKey: "sectionWorkspace",
+		descKey: "tabWorkspaceDesc",
+		icon: ListChecks,
 	},
 	{
 		id: "integrations",
@@ -170,6 +183,9 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 	const { mode: audioMode, setMode: setAudioMode } =
 		useCycleEndAudioPreference(scope);
 
+	const { doneTipIds, nudgeDismissed, toggleTip, dismissNudge } =
+		useWorkspaceSetupChecklist(scope);
+
 	const {
 		energy,
 		setEnergy,
@@ -205,6 +221,16 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 					{t("subtitle")}
 				</p>
 			</header>
+
+			{!nudgeDismissed && (
+				<WorkspaceSetupNudge
+					actionLabel={t("workspaceNudgeAction")}
+					body={t("workspaceNudgeBody")}
+					dismissLabel={t("workspaceNudgeDismiss")}
+					onDismiss={dismissNudge}
+					onOpenWorkspace={() => setActiveTab("workspace")}
+				/>
+			)}
 
 			<div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
 				<nav
@@ -410,6 +436,13 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 								/>
 							</SettingsRow>
 						</SettingsPanel>
+					)}
+
+					{resolvedTab === "workspace" && (
+						<WorkspaceSetupChecklist
+							doneTipIds={doneTipIds}
+							onToggleTip={toggleTip}
+						/>
 					)}
 
 					{resolvedTab === "integrations" && (

@@ -738,14 +738,20 @@
 		"sectionBreaksNotifications": "Breaks & Notifications",
 		"sectionAppearance": "Appearance",
 		"sectionDayEnergy": "Day energy",
+		"sectionWorkspace": "Workspace",
 		"sectionIntegrations": "Integrations",
 		"tabGeneralDesc": "Preferences and account",
 		"tabFocusDesc": "Pomodoro settings",
 		"tabBreaksDesc": "Breaks and alerts",
 		"tabAppearanceDesc": "Theme and colors",
 		"tabEnergyDesc": "How you feel today",
+		"tabWorkspaceDesc": "Calm setup tips for your tools",
 		"tabIntegrationsDesc": "External connections",
 		"dayEnergyBody": "Choose how you feel today — this helps FlowState tailor task suggestions.",
+		"workspaceBody": "Small environment tweaks that make focus sessions quieter. Mark what you've already set up — no rush.",
+		"workspaceNudgeBody": "A short checklist for quieter tools lives under Workspace — whenever you're ready.",
+		"workspaceNudgeAction": "Open Workspace",
+		"workspaceNudgeDismiss": "Dismiss",
 		"integrationsBody": "Connect FlowState with the tools you use every day.",
 		"mcpComingSoon": "MCP integration coming soon",
 		"mcpMockTitle": "FlowState Agent",
@@ -762,5 +768,62 @@
 		"breakAlertsLabel": "Break notifications",
 		"cycleEndAudioLabel": "Cycle end audio",
 		"themeLabel": "Theme"
+	},
+	"WorkspaceSetup": {
+		"categories": {
+			"editor": "Editors & agents",
+			"chat": "Chat apps",
+			"notifications": "Notifications & email",
+			"device": "Phone & system"
+		},
+		"guideLabel": "Open guide",
+		"tips": {
+			"cursor-agents": {
+				"title": "Try Cursor Agent for multi-file work",
+				"body": "When a change spans several files, open Agent and describe the outcome — then review the diff before you keep it.",
+				"guideUrl": "https://cursor.com/docs/agent/overview",
+				"guideLabel": "Cursor Agent docs"
+			},
+			"claude-agents": {
+				"title": "Use Claude Code for longer coding tasks",
+				"body": "For a larger change, let Claude Code explore and edit in a focused pass — stay nearby to approve the direction.",
+				"guideUrl": "https://code.claude.com/docs/en/overview",
+				"guideLabel": "Claude Code docs"
+			},
+			"slack-dnd": {
+				"title": "Pause Slack during focus",
+				"body": "Pause notifications for the length of a cycle — messages wait; your status shows you're unavailable.",
+				"guideUrl": "https://slack.com/help/articles/214908388-Pause-your-Slack-notifications",
+				"guideLabel": "Slack notification pause"
+			},
+			"teams-focus": {
+				"title": "Set Teams to Do not disturb",
+				"body": "Switch status to Do not disturb (or Focusing) so chat pings stay quiet while you work a cycle.",
+				"guideUrl": "https://support.microsoft.com/en-us/office/change-your-status-in-microsoft-teams-ce36da01-9803-4209-851c-1b16dd6eebb0",
+				"guideLabel": "Teams status guide"
+			},
+			"browser-notifications": {
+				"title": "Quiet browser site notifications",
+				"body": "Turn off notifications for sites that don't need your attention mid-cycle — keep only what you truly need.",
+				"guideUrl": "https://support.google.com/chrome/answer/3220216",
+				"guideLabel": "Chrome notification settings"
+			},
+			"email-batching": {
+				"title": "Check email in batches",
+				"body": "Close the inbox during focus and open it between cycles — fewer half-reads, clearer replies."
+			},
+			"phone-dnd": {
+				"title": "Silence the phone for a cycle",
+				"body": "Use Do Not Disturb or Focus on your phone so only priority people can reach you while you work.",
+				"guideUrl": "https://support.apple.com/guide/iphone/set-up-a-focus-iphd6288a67f/ios",
+				"guideLabel": "Apple Focus guide"
+			},
+			"os-focus": {
+				"title": "Turn on system Focus",
+				"body": "Windows Focus or macOS Focus can hush banners across apps — a quiet desk for the next cycle.",
+				"guideUrl": "https://support.microsoft.com/en-us/windows/focus-stay-on-task-without-distractions-in-windows-cbcc9ddb-8164-43fa-8919-b9a2af072382",
+				"guideLabel": "Windows Focus guide"
+			}
+		}
 	}
 }
