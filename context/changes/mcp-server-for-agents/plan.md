@@ -326,11 +326,11 @@ One additive migration (`flow_state_api_key` table + `ApiKeyScope` enum) via `pn
 
 #### Automated
 
-- [x] 3.1 Tests pass: `pnpm exec vitest run src/lib/api-keys/verify-token.test.ts src/app/api/mcp/mcp-tools.test.ts`
-- [x] 3.2 Type checking passes: `pnpm typecheck`
-- [x] 3.3 Linting passes: `pnpm check`
-- [x] 3.4 Build succeeds: `pnpm build`
-- [x] 3.5 Full unit suite green: `pnpm test`
+- [x] 3.1 Tests pass: `pnpm exec vitest run src/lib/api-keys/verify-token.test.ts src/app/api/mcp/mcp-tools.test.ts` — c72f406
+- [x] 3.2 Type checking passes: `pnpm typecheck` — c72f406
+- [x] 3.3 Linting passes: `pnpm check` — c72f406
+- [x] 3.4 Build succeeds: `pnpm build` — c72f406
+- [x] 3.5 Full unit suite green: `pnpm test` — c72f406
 
 #### Manual
 
