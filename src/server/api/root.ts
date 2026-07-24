@@ -1,3 +1,4 @@
+import { apiKeyRouter } from "~/server/api/routers/api-key";
 import { checkInRouter } from "~/server/api/routers/check-in";
 import { cycleRouter } from "~/server/api/routers/cycle";
 import { dayPlanRouter } from "~/server/api/routers/day-plan";
@@ -22,6 +23,7 @@ export const appRouter = createTRPCRouter({
 	dayPlan: dayPlanRouter,
 	recap: recapRouter,
 	suggestion: suggestionRouter,
+	apiKey: apiKeyRouter,
 });
 
 // export type definition of API

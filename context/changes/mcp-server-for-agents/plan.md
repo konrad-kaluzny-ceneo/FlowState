@@ -295,25 +295,25 @@ One additive migration (`flow_state_api_key` table + `ApiKeyScope` enum) via `pn
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly: `pnpm db:migrate`
-- [x] 1.2 Prisma client generates
-- [x] 1.3 Unit tests pass: `pnpm exec vitest run src/lib/api-keys/api-key.test.ts`
-- [x] 1.4 Type checking passes: `pnpm typecheck`
-- [x] 1.5 Linting passes: `pnpm check`
+- [x] 1.1 Migration applies cleanly: `pnpm db:migrate` — 9e2140b
+- [x] 1.2 Prisma client generates — 9e2140b
+- [x] 1.3 Unit tests pass: `pnpm exec vitest run src/lib/api-keys/api-key.test.ts` — 9e2140b
+- [x] 1.4 Type checking passes: `pnpm typecheck` — 9e2140b
+- [x] 1.5 Linting passes: `pnpm check` — 9e2140b
 
 #### Manual
 
-- [x] 1.6 Key round-trips (parse/verify true/false) verified
-- [x] 1.7 `flow_state_api_key` table visible in `pnpm db:studio` with expected columns
+- [x] 1.6 Key round-trips (parse/verify true/false) verified — 9e2140b
+- [x] 1.7 `flow_state_api_key` table visible in `pnpm db:studio` with expected columns — 9e2140b
 
 ### Phase 2: Key management (tRPC router + Ustawienia UI)
 
 #### Automated
 
-- [ ] 2.1 Isolation test passes: `pnpm exec vitest run src/server/api/routers/api-key-isolation.test.ts`
-- [ ] 2.2 Type checking passes: `pnpm typecheck`
-- [ ] 2.3 Linting passes: `pnpm check`
-- [ ] 2.4 Full unit suite green: `pnpm test`
+- [x] 2.1 Isolation test passes: `pnpm exec vitest run src/server/api/routers/api-key-isolation.test.ts`
+- [x] 2.2 Type checking passes: `pnpm typecheck`
+- [x] 2.3 Linting passes: `pnpm check`
+- [x] 2.4 Full unit suite green: `pnpm test`
 
 #### Manual
 

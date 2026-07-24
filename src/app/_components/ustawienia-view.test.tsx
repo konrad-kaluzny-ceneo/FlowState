@@ -60,6 +60,25 @@ vi.mock("~/lib/break-out-of-tab-alert/notify-break-start", () => ({
 		"granted" as NotificationPermission,
 }));
 
+// ApiKeysPanel (integrations tab) calls the tRPC client directly; stub it so the
+// view can render without a tRPC provider.
+vi.mock("~/trpc/react", () => ({
+	api: {
+		useUtils: () => ({ apiKey: { list: { invalidate: vi.fn() } } }),
+		apiKey: {
+			list: {
+				useQuery: () => ({ data: [], isLoading: false }),
+			},
+			create: {
+				useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+			},
+			revoke: {
+				useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+			},
+		},
+	},
+}));
+
 function renderView(ui: ReactElement) {
 	return render(
 		<IntlTestWrapper>
