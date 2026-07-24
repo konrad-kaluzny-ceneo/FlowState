@@ -1,10 +1,10 @@
 ---
 change_id: workspace-setup-advisor
 title: Workspace setup advisor — environment config tips checklist
-status: impl_reviewed
+status: archived
 created: 2026-07-23
 updated: 2026-07-24
-archived_at: null
+archived_at: 2026-07-24T10:27:33Z
 ---
 
 ## Notes
