@@ -310,10 +310,10 @@ One additive migration (`flow_state_api_key` table + `ApiKeyScope` enum) via `pn
 
 #### Automated
 
-- [x] 2.1 Isolation test passes: `pnpm exec vitest run src/server/api/routers/api-key-isolation.test.ts`
-- [x] 2.2 Type checking passes: `pnpm typecheck`
-- [x] 2.3 Linting passes: `pnpm check`
-- [x] 2.4 Full unit suite green: `pnpm test`
+- [x] 2.1 Isolation test passes: `pnpm exec vitest run src/server/api/routers/api-key-isolation.test.ts` — bd5fab0
+- [x] 2.2 Type checking passes: `pnpm typecheck` — bd5fab0
+- [x] 2.3 Linting passes: `pnpm check` — bd5fab0
+- [x] 2.4 Full unit suite green: `pnpm test` — bd5fab0
 
 #### Manual
 
@@ -326,11 +326,11 @@ One additive migration (`flow_state_api_key` table + `ApiKeyScope` enum) via `pn
 
 #### Automated
 
-- [ ] 3.1 Tests pass: `pnpm exec vitest run src/lib/api-keys/verify-token.test.ts src/app/api/mcp/mcp-tools.test.ts`
-- [ ] 3.2 Type checking passes: `pnpm typecheck`
-- [ ] 3.3 Linting passes: `pnpm check`
-- [ ] 3.4 Build succeeds: `pnpm build`
-- [ ] 3.5 Full unit suite green: `pnpm test`
+- [x] 3.1 Tests pass: `pnpm exec vitest run src/lib/api-keys/verify-token.test.ts src/app/api/mcp/mcp-tools.test.ts`
+- [x] 3.2 Type checking passes: `pnpm typecheck`
+- [x] 3.3 Linting passes: `pnpm check`
+- [x] 3.4 Build succeeds: `pnpm build`
+- [x] 3.5 Full unit suite green: `pnpm test`
 
 #### Manual
 
