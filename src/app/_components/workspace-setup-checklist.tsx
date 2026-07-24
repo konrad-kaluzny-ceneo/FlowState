@@ -33,7 +33,9 @@ function tipGuideUrl(
 		return null;
 	}
 	const url = tSetup(key);
-	return url.length > 0 ? url : null;
+	// Only trust absolute https guide links; guard against a future
+	// translator inserting a javascript:/data: scheme into the catalog.
+	return url.startsWith("https://") ? url : null;
 }
 
 function tipGuideLabel(

@@ -17,11 +17,16 @@ export function WorkspaceSetupNudge({
 }: WorkspaceSetupNudgeProps) {
 	return (
 		<aside
-			aria-label={body}
+			aria-labelledby="workspace-nudge-body"
 			className="mb-6 flex flex-col gap-3 rounded-card border border-border-subtle bg-surface-card-muted/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
 			data-testid="settings-workspace-nudge"
 		>
-			<p className="text-sm text-text-secondary leading-relaxed">{body}</p>
+			<p
+				className="text-sm text-text-secondary leading-relaxed"
+				id="workspace-nudge-body"
+			>
+				{body}
+			</p>
 			<div className="flex shrink-0 flex-wrap items-center gap-2">
 				<button
 					className="rounded-control bg-accent-cta px-3 py-1.5 font-medium text-on-cta text-sm transition-opacity hover:opacity-90"
