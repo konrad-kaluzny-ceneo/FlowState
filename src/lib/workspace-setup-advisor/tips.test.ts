@@ -4,8 +4,16 @@ import { filterKnownTipIds, isWorkspaceTipId, WORKSPACE_TIPS } from "./tips";
 
 describe("workspace-setup-advisor tips", () => {
 	it("exposes stable tip ids with categories", () => {
-		expect(WORKSPACE_TIPS.length).toBeGreaterThanOrEqual(8);
-		expect(WORKSPACE_TIPS.every((tip) => tip.id && tip.category)).toBe(true);
+		expect(WORKSPACE_TIPS).toEqual([
+			{ id: "cursor-agents", category: "editor" },
+			{ id: "claude-agents", category: "editor" },
+			{ id: "slack-dnd", category: "chat" },
+			{ id: "teams-focus", category: "chat" },
+			{ id: "browser-notifications", category: "notifications" },
+			{ id: "email-batching", category: "notifications" },
+			{ id: "phone-dnd", category: "device" },
+			{ id: "os-focus", category: "device" },
+		]);
 	});
 
 	it("guards known tip ids", () => {

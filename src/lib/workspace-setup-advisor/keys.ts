@@ -14,5 +14,7 @@ export function workspaceSetupKeyForScope(
 		return null;
 	}
 
-	return `flowstate:workspaceSetupAdvisor:${scope.userId}`;
+	// Namespace authenticated keys under `user:` so an (unlikely) userId of
+	// "guest" cannot collide with the guest key and merge state across scopes.
+	return `flowstate:workspaceSetupAdvisor:user:${scope.userId}`;
 }

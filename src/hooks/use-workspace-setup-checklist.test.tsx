@@ -5,6 +5,7 @@ import type { OnboardingScope } from "~/lib/onboarding/types";
 import { WORKSPACE_SETUP_KEY_GUEST } from "~/lib/workspace-setup-advisor/keys";
 import {
 	readWorkspaceSetupState,
+	writeDoneTipIds,
 	writeNudgeDismissed,
 } from "~/lib/workspace-setup-advisor/storage";
 import type { WorkspaceTipId } from "~/lib/workspace-setup-advisor/types";
@@ -61,12 +62,15 @@ describe("useWorkspaceSetupChecklist integration", () => {
 	});
 
 	it("keeps nudge dismissed after hydrate when storage says so", async () => {
+		// Prepopulate a non-default done tip so the assertion only holds once
+		// hydration actually read storage (defaults would leave done-ids empty).
+		writeDoneTipIds({ mode: "guest" }, ["cursor-agents"]);
 		writeNudgeDismissed({ mode: "guest" }, true);
 
 		render(<ChecklistProbe scope={{ mode: "guest" }} />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId("done-ids").textContent).toBe("");
+			expect(screen.getByTestId("done-ids").textContent).toBe("cursor-agents");
 		});
 		expect(screen.getByTestId("nudge-dismissed").textContent).toBe("true");
 	});

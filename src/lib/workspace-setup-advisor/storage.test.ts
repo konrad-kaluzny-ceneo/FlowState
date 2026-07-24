@@ -84,7 +84,27 @@ describe("workspace-setup-advisor storage", () => {
 				mode: "authenticated",
 				userId: "user-a",
 			}),
-		).toBe("flowstate:workspaceSetupAdvisor:user-a");
+		).toBe("flowstate:workspaceSetupAdvisor:user:user-a");
+	});
+
+	it("isolates an authenticated userId of 'guest' from guest state", () => {
+		writeDoneTipIds({ mode: "guest" }, ["cursor-agents"]);
+		writeDoneTipIds({ mode: "authenticated", userId: "guest" }, ["slack-dnd"]);
+
+		expect(workspaceSetupKeyForScope({ mode: "guest" })).toBe(
+			WORKSPACE_SETUP_KEY_GUEST,
+		);
+		expect(
+			workspaceSetupKeyForScope({ mode: "authenticated", userId: "guest" }),
+		).toBe("flowstate:workspaceSetupAdvisor:user:guest");
+
+		expect(readWorkspaceSetupState({ mode: "guest" }).doneTipIds).toEqual([
+			"cursor-agents",
+		]);
+		expect(
+			readWorkspaceSetupState({ mode: "authenticated", userId: "guest" })
+				.doneTipIds,
+		).toEqual(["slack-dnd"]);
 	});
 
 	it("returns defaults and skips writes for missing auth userId", () => {

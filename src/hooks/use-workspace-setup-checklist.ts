@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import type { OnboardingScope } from "~/lib/onboarding/types";
 import {
@@ -14,9 +14,6 @@ import {
 } from "~/lib/workspace-setup-advisor/types";
 
 export function useWorkspaceSetupChecklist(scope: OnboardingScope) {
-	const scopeRef = useRef(scope);
-	scopeRef.current = scope;
-
 	// SSR-safe: defaults on server; hydrate from localStorage on client mount.
 	const [state, setState] = useState(DEFAULT_WORKSPACE_SETUP_STATE);
 	const [hydrated, setHydrated] = useState(false);
@@ -26,15 +23,18 @@ export function useWorkspaceSetupChecklist(scope: OnboardingScope) {
 		setHydrated(true);
 	}, [scope]);
 
-	const toggleTip = useCallback((id: WorkspaceTipId) => {
-		const next = toggleDoneTip(scopeRef.current, id);
-		setState(next);
-	}, []);
+	// Bind writes to the committed `scope` (not a render-phase ref) so an
+	// interrupted guest/auth transition cannot persist under a stale scope.
+	const toggleTip = useCallback(
+		(id: WorkspaceTipId) => {
+			setState(toggleDoneTip(scope, id));
+		},
+		[scope],
+	);
 
 	const dismissNudge = useCallback(() => {
-		const next = writeNudgeDismissed(scopeRef.current, true);
-		setState(next);
-	}, []);
+		setState(writeNudgeDismissed(scope, true));
+	}, [scope]);
 
 	return {
 		doneTipIds: state.doneTipIds,

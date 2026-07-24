@@ -99,7 +99,7 @@ Define the broad tip library (stable ids + categories), EN/PL copy with optional
 - Spot-read EN + PL tip bodies for calm voice (no streak/urgency language)
 - Confirm each `guideUrl` opens a sensible official doc (or is omitted)
 
-**Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase. Phase blocks use plain bullets — the corresponding `- [ ]` checkboxes for these items live in the `## Progress` section at the bottom of the plan.
+**Implementation Note**: After completing this phase and all automated verification passes, prefer pausing for manual confirmation from the human before proceeding. Manual validation may be deferred to a single end-of-implementation walkthrough when the human opts to keep momentum — in that case the automated gates carry each phase and the still-pending `- [ ]` Manual checkboxes in `## Progress` are the record of what remains to confirm. Phase blocks use plain bullets — the corresponding checkboxes for these items live in the `## Progress` section at the bottom of the plan.
 
 ---
 
