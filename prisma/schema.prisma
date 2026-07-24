@@ -62,6 +62,11 @@ enum CommitmentHorizon {
   WHEN_POSSIBLE
 }
 
+enum ApiKeyScope {
+  READ
+  READ_WRITE
+}
+
 // --- Models ---
 
 model Task {
@@ -218,4 +223,21 @@ model TaskDayCompletion {
   @@unique([userId, taskId, localDateKey], name: "task_day_completion_user_task_date")
   @@index([userId, localDateKey], name: "task_day_completion_user_date_idx")
   @@map("flow_state_task_day_completion")
+}
+
+model ApiKey {
+  id           Int         @id @default(autoincrement())
+  userId       String      @map("user_id") @db.VarChar(255)
+  name         String      @db.VarChar(64)
+  tokenId      String      @unique @map("token_id") @db.VarChar(64)
+  hashedSecret String      @map("hashed_secret") @db.VarChar(128)
+  scope        ApiKeyScope @default(READ)
+  userEmail    String      @map("user_email") @db.VarChar(320)
+  userName     String      @map("user_name") @db.VarChar(255)
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  lastUsedAt   DateTime?   @map("last_used_at") @db.Timestamptz
+  revokedAt    DateTime?   @map("revoked_at") @db.Timestamptz
+
+  @@index([userId], name: "api_key_user_id_idx")
+  @@map("flow_state_api_key")
 }
