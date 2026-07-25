@@ -172,7 +172,16 @@ function callerFor(userId: string): ReturnType<typeof createCaller> {
 }
 
 function textOf(result: { content: Array<{ type: string; text?: string }> }) {
-	return result.content.map((c) => c.text ?? "").join("");
+	return result.content
+		.map((c) => {
+			// A valid MCP text content block must carry a string `text`. Asserting
+			// here means a void-returning tool that serializes to `text: undefined`
+			// fails loudly instead of being silently coerced to "" (regression guard
+			// for update_task/complete_task returning an invalid CallToolResult).
+			expect(typeof c.text).toBe("string");
+			return c.text ?? "";
+		})
+		.join("");
 }
 
 const USER_A = "user-a";
@@ -245,6 +254,38 @@ describe("Feature: MCP server (S-46), curated tool delegation + scope gating", (
 		);
 		expect(result.isError).toBeUndefined();
 		expect(allTasks[0]?.status).toBe("completed");
+		// The tool must return the updated task as a valid JSON content block, not
+		// a void result that serializes to `text: undefined` (invalid MCP result).
+		const payload = JSON.parse(textOf(result)) as {
+			id: number;
+			status: string;
+		};
+		expect(payload.id).toBe(taskId);
+		expect(payload.status).toBe("completed");
+	});
+
+	it("update_task with READ_WRITE returns the updated task", async () => {
+		await tools.createTask(
+			callerFor(USER_A),
+			{ title: "Before" },
+			"READ_WRITE",
+		);
+		const taskId = allTasks[0]?.id as number;
+
+		const result = await tools.updateTask(
+			callerFor(USER_A),
+			{ id: taskId, title: "After", urgency: 3 },
+			"READ_WRITE",
+		);
+		expect(result.isError).toBeUndefined();
+		const payload = JSON.parse(textOf(result)) as {
+			id: number;
+			title: string;
+			urgency: number;
+		};
+		expect(payload.id).toBe(taskId);
+		expect(payload.title).toBe("After");
+		expect(payload.urgency).toBe(3);
 	});
 
 	it("maps a NOT_FOUND tRPC error to a safe tool error (no stack trace)", async () => {

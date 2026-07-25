@@ -31,7 +31,11 @@ export type McpCaller = ReturnType<typeof createCaller>;
 // --- Result + error helpers ---------------------------------------------------
 
 function ok(data: unknown): CallToolResult {
-	return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+	// `JSON.stringify(undefined)` returns `undefined` (not a string), which would
+	// produce an invalid `CallToolResult` content block. Guard so a void-returning
+	// caller can never emit a malformed MCP result.
+	const text = JSON.stringify(data, null, 2) ?? "null";
+	return { content: [{ type: "text", text }] };
 }
 
 function errorResult(message: string): CallToolResult {
