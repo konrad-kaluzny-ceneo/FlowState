@@ -236,6 +236,7 @@ model ApiKey {
   userName     String      @map("user_name") @db.VarChar(255)
   createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz
   lastUsedAt   DateTime?   @map("last_used_at") @db.Timestamptz
+  expiresAt    DateTime?   @map("expires_at") @db.Timestamptz
   revokedAt    DateTime?   @map("revoked_at") @db.Timestamptz
 
   @@index([userId], name: "api_key_user_id_idx")

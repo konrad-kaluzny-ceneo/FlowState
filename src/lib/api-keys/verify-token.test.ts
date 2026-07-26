@@ -19,6 +19,7 @@ type ApiKeyRow = {
 	userName: string;
 	createdAt: Date;
 	lastUsedAt: Date | null;
+	expiresAt: Date | null;
 	revokedAt: Date | null;
 };
 
@@ -61,6 +62,7 @@ function seed(overrides?: Partial<ApiKeyRow>): {
 		userName: "User One",
 		createdAt: new Date(),
 		lastUsedAt: null,
+		expiresAt: null,
 		revokedAt: null,
 		...overrides,
 	};
@@ -128,6 +130,21 @@ describe("Feature: MCP API keys (S-46), Property: key → identity bridge", () =
 		const result = await verifyApiKey(plaintext);
 		expect(result).toBeNull();
 		expect(db.apiKey.update).not.toHaveBeenCalled();
+	});
+
+	it("returns null for an expired key (no lastUsedAt bump)", async () => {
+		const { plaintext } = seed({ expiresAt: new Date(Date.now() - 1000) });
+		const result = await verifyApiKey(plaintext);
+		expect(result).toBeNull();
+		expect(db.apiKey.update).not.toHaveBeenCalled();
+	});
+
+	it("accepts a key whose expiry is still in the future", async () => {
+		const { plaintext } = seed({
+			expiresAt: new Date(Date.now() + 60_000),
+		});
+		const result = await verifyApiKey(plaintext);
+		expect(result).not.toBeNull();
 	});
 
 	it("returns null when the secret does not match the stored hash", async () => {

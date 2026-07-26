@@ -6,6 +6,9 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const apiKeyScopeSchema = z.enum(["READ", "READ_WRITE"]);
 
+/** Ceiling on non-revoked, non-expired keys a single user can hold. */
+export const MAX_ACTIVE_KEYS_PER_USER = 10;
+
 /**
  * Self-serve management of personal API keys used to authenticate the MCP
  * server (S-46). All procedures are `protectedProcedure`, so keys are always
@@ -42,6 +45,20 @@ export const apiKeyRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const activeCount = await ctx.db.apiKey.count({
+				where: {
+					userId: ctx.session.user.id,
+					revokedAt: null,
+					OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+				},
+			});
+			if (activeCount >= MAX_ACTIVE_KEYS_PER_USER) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Active API key limit reached — revoke an unused key first.",
+				});
+			}
+
 			const { plaintext, tokenId, hashedSecret } = generateApiKey();
 
 			const row = await ctx.db.apiKey.create({

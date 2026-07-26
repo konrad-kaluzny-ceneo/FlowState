@@ -22,7 +22,9 @@ vi.mock("~/server/db/index", () => ({
 			findFirst: vi.fn(() => Promise.resolve(existingTask)),
 			update: vi.fn((args: { data: Record<string, unknown> }) => {
 				capturedUpdate = args.data;
-				return Promise.resolve({ id: 1, ...args.data });
+				// `task.update` maps its result through `mapTaskFromPrisma`, which
+				// validates the full row — so return the merged row, not just the patch.
+				return Promise.resolve({ ...existingTask, ...args.data });
 			}),
 			delete: vi.fn(() => Promise.resolve({ id: 1 })),
 		},
@@ -55,6 +57,18 @@ describe("task resumeNote", () => {
 			status: "active",
 			sortOrder: 0,
 			resumeNote: "old note",
+			createdAt: new Date(),
+			updatedAt: null,
+			workType: "OPERATIONAL",
+			weight: 2,
+			importance: 2,
+			urgency: 2,
+			effortMinutes: null,
+			commitmentHorizon: "WHEN_POSSIBLE",
+			project: null,
+			personaPresetId: null,
+			isDailyStanding: false,
+			archivedAt: null,
 		};
 	});
 

@@ -9,7 +9,7 @@ import { db } from "~/server/db/index";
  * A presented bearer key is resolved to a live user identity + scope by:
  *   1. strict `parseApiKey` (format check — no DB hit for garbage input),
  *   2. an O(1) indexed lookup by the public `tokenId`,
- *   3. a revocation check,
+ *   3. a revocation + expiry check,
  *   4. a constant-time secret comparison.
  *
  * ANY failure returns `null` with no distinguishing error — a bad token, an
@@ -46,6 +46,8 @@ export async function verifyApiKey(
 	});
 	if (row == null) return null;
 	if (row.revokedAt != null) return null;
+	if (row.expiresAt != null && row.expiresAt.getTime() <= Date.now())
+		return null;
 	if (!verifySecret(parsed.secret, row.hashedSecret)) return null;
 
 	// Identity is resolved — a failure to stamp last-used must not flip a valid

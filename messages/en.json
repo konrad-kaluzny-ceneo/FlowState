@@ -772,6 +772,7 @@
 			"createButton": "Create key",
 			"creating": "Creating…",
 			"createError": "Couldn't create the key. Please try again.",
+			"revokeError": "Couldn't revoke the key. It is still active — please try again.",
 			"revealTitle": "Your new key",
 			"revealWarning": "Copy it now — for your security, we won't show it again.",
 			"copy": "Copy",

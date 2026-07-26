@@ -16,6 +16,7 @@ type ApiKeyRow = {
 	userName: string;
 	createdAt: Date;
 	lastUsedAt: Date | null;
+	expiresAt: Date | null;
 	revokedAt: Date | null;
 };
 
@@ -91,12 +92,26 @@ vi.mock("~/server/db/index", () => {
 				userName: args.data.userName,
 				createdAt: new Date(),
 				lastUsedAt: null,
+				expiresAt: null,
 				revokedAt: null,
 			};
 			allKeys.push(row);
 			return Promise.resolve({ id: row.id });
 		},
 	);
+
+	const mockCount = vi.fn((args: { where?: { userId?: string } }) => {
+		const userId = args?.where?.userId;
+		const now = Date.now();
+		return Promise.resolve(
+			allKeys.filter(
+				(k) =>
+					(userId == null || k.userId === userId) &&
+					k.revokedAt == null &&
+					(k.expiresAt == null || k.expiresAt.getTime() > now),
+			).length,
+		);
+	});
 
 	const mockFindFirst = vi.fn(
 		(args: { where?: { id?: number; userId?: string } }) => {
@@ -126,6 +141,7 @@ vi.mock("~/server/db/index", () => {
 			apiKey: {
 				findMany: mockFindMany,
 				create: mockCreate,
+				count: mockCount,
 				findFirst: mockFindFirst,
 				update: mockUpdate,
 			},
@@ -135,7 +151,9 @@ vi.mock("~/server/db/index", () => {
 
 // Import after mocks are set up.
 const { createCallerFactory } = await import("~/server/api/trpc");
-const { apiKeyRouter } = await import("~/server/api/routers/api-key");
+const { apiKeyRouter, MAX_ACTIVE_KEYS_PER_USER } = await import(
+	"~/server/api/routers/api-key"
+);
 const { db } = await import("~/server/db/index");
 
 const createCaller = createCallerFactory(apiKeyRouter);
@@ -228,5 +246,28 @@ describe("Feature: MCP API keys (S-46), Property: API-key isolation", () => {
 		const stored = allKeys.find((k) => k.id === created.id);
 		expect(stored?.revokedAt).toBeNull();
 		expect(db.apiKey.update).not.toHaveBeenCalled();
+	});
+
+	it("create rejects once the active-key cap is reached; revoked keys free a slot", async () => {
+		for (let i = 0; i < MAX_ACTIVE_KEYS_PER_USER; i++) {
+			await apiKeyCaller(USER_A).create({ name: `Key ${i}`, scope: "READ" });
+		}
+
+		await expect(
+			apiKeyCaller(USER_A).create({ name: "One too many", scope: "READ" }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+		// The cap is per user — B is unaffected by A's full quota.
+		await expect(
+			apiKeyCaller(USER_B).create({ name: "B key", scope: "READ" }),
+		).resolves.toMatchObject({ plaintext: "fsk_test_plaintext" });
+
+		// Revoking one of A's keys frees a slot.
+		const first = allKeys.find((k) => k.userId === USER_A);
+		expect(first).toBeDefined();
+		await apiKeyCaller(USER_A).revoke({ id: (first as ApiKeyRow).id });
+		await expect(
+			apiKeyCaller(USER_A).create({ name: "Replacement", scope: "READ" }),
+		).resolves.toMatchObject({ id: expect.any(Number) });
 	});
 });

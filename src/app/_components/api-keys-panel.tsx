@@ -66,6 +66,7 @@ function AuthenticatedApiKeysPanel() {
 	const [revealedKey, setRevealedKey] = useState<string | null>(null);
 	const [copied, setCopied] = useState(false);
 	const [formError, setFormError] = useState<string | null>(null);
+	const [revokeError, setRevokeError] = useState<string | null>(null);
 
 	const createMutation = api.apiKey.create.useMutation({
 		onSuccess: (data) => {
@@ -82,7 +83,11 @@ function AuthenticatedApiKeysPanel() {
 
 	const revokeMutation = api.apiKey.revoke.useMutation({
 		onSuccess: () => {
+			setRevokeError(null);
 			void utils.apiKey.list.invalidate();
+		},
+		onError: () => {
+			setRevokeError(t("revokeError"));
 		},
 	});
 
@@ -243,6 +248,11 @@ function AuthenticatedApiKeysPanel() {
 
 			<div className="space-y-3">
 				<h4 className="font-semibold text-primary text-sm">{t("listTitle")}</h4>
+				{revokeError != null && (
+					<p className="text-red-400 text-sm" role="alert">
+						{revokeError}
+					</p>
+				)}
 				{listQuery.isLoading ? (
 					<p className="text-sm text-text-dimmed">{t("loading")}</p>
 				) : keys.length === 0 ? (

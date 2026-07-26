@@ -44,6 +44,8 @@ const verifyToken = async (
 	return {
 		token: bearerToken,
 		clientId: identity.userId,
+		// Advisory only — nothing enforces `scopes`. The authoritative gate is
+		// `extra.scope`, checked per write tool via `requireWrite` in mcp-tools.
 		scopes: identity.scope === "READ_WRITE" ? ["read", "write"] : ["read"],
 		extra: {
 			userId: identity.userId,

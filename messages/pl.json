@@ -772,6 +772,7 @@
 			"createButton": "Utwórz klucz",
 			"creating": "Tworzenie…",
 			"createError": "Nie udało się utworzyć klucza. Spróbuj ponownie.",
+			"revokeError": "Nie udało się unieważnić klucza. Klucz jest nadal aktywny — spróbuj ponownie.",
 			"revealTitle": "Twój nowy klucz",
 			"revealWarning": "Skopiuj go teraz — ze względów bezpieczeństwa nie pokażemy go ponownie.",
 			"copy": "Kopiuj",

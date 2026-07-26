@@ -72,7 +72,7 @@ type TrpcClient = {
 	task: {
 		list: { fetch: () => Promise<DomainTask[]> };
 		create: { mutate: (input: CreateTaskInput) => Promise<DomainTask> };
-		update: { mutate: (input: UpdateTaskInput) => Promise<unknown> };
+		update: { mutate: (input: UpdateTaskInput) => Promise<DomainTask> };
 		delete: { mutate: (input: { id: number }) => Promise<void> };
 		reorder: { mutate: (input: { orderedIds: number[] }) => Promise<void> };
 		archiveList: { fetch: () => Promise<DomainTask[]> };

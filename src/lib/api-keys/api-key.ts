@@ -1,4 +1,4 @@
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 import { env } from "~/env";
 
@@ -9,7 +9,7 @@ import { env } from "~/env";
  *   `fsk_<tokenId>_<secret>`
  * - `tokenId` (16 random bytes, hex) is stored in plaintext and indexed — it drives
  *   an O(1) lookup at verification time. It is NOT a secret on its own.
- * - `secret` (32 random bytes, hex) is never stored; only `sha256(secret + pepper)` is.
+ * - `secret` (32 random bytes, hex) is never stored; only `HMAC-SHA256(pepper, secret)` is.
  *
  * Hex encoding keeps the shape unambiguous (no `_` inside the segments), so parsing is
  * a strict regex. The high entropy of the secret plus the server-side pepper means a
@@ -27,14 +27,14 @@ export type GeneratedApiKey = {
 	plaintext: string;
 	/** Public, indexed identifier persisted alongside the hash. */
 	tokenId: string;
-	/** `sha256(secret + pepper)` hex digest — the only secret-derived value persisted. */
+	/** `HMAC-SHA256(pepper, secret)` hex digest — the only secret-derived value persisted. */
 	hashedSecret: string;
 };
 
-/** Mix the secret with the server-side pepper before hashing. */
+/** Keyed hash of the secret under the server-side pepper. */
 function hashSecret(secret: string): string {
-	return createHash("sha256")
-		.update(`${secret}${env.MCP_API_KEY_PEPPER}`)
+	return createHmac("sha256", env.MCP_API_KEY_PEPPER)
+		.update(secret)
 		.digest("hex");
 }
 
