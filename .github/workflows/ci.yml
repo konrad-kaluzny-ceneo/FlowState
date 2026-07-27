@@ -69,6 +69,7 @@ jobs:
       DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
       NEON_AUTH_BASE_URL: ${{ secrets.NEON_AUTH_BASE_URL }}
       NEON_AUTH_COOKIE_SECRET: ${{ secrets.NEON_AUTH_COOKIE_SECRET }}
+      MCP_API_KEY_PEPPER: ${{ secrets.MCP_API_KEY_PEPPER }}
     steps:
       - uses: actions/checkout@v4
         with:
