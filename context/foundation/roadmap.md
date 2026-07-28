@@ -3,7 +3,7 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-07-24
+updated: 2026-07-28
 structure: split
 active_slices: [S-46]
 prd_version: 3
@@ -97,7 +97,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-44 | archive-old-tasks | [FLO-94](https://linear.app/flowstate-10xdev/issue/FLO-94/flowstate-stale-task-archive-view-bulk-delete-s-44) | [#178](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/178) | review stale tasks in archive view; multi-select + permanent delete | S-09, S-13 | **US-05** | done |
 | S-45 | ui-refactor | [FLO-95](https://linear.app/flowstate-10xdev/issue/FLO-95/flowstate-ui-redesign-makiety-alignment-s-45) | [#189](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/189) | (epic — phased in plan.md) experience the makiety redesign: 5-section nav (Fokus/Zadania/Plan dnia/Podsumowanie/Ustawienia), green retint, ring timer, minimal task cards + add-task modal, once-per-day steering; **includes former planning-cycle (#87) via Plan dnia** | S-40, S-41, S-43, F-06 | **ui-refactor PRD thread** (2 amendments) | done |
 | F-15 | platform-refactor-batch | [FLO-96](https://linear.app/flowstate-10xdev/issue/FLO-96) | [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190) | (foundation epic) timer hub + data-mode refactor batch: ACL verify, hook extracts, change-impact, sign-in schema, guest merge, health probe, auth smoke, Sentry wedge | F-07; after or parallel S-45 | guardrails | done |
-| S-46 | mcp-server-for-agents | [FLO-97](https://linear.app/flowstate-10xdev/issue/FLO-97/flowstate-mcp-server-for-ai-agents-s-46) | [#191](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/191) | expose MCP server so AI agents (Cursor, Claude, Copilot) can read/write tasks + session state; enables agent-driven task delegation proposals | F-15, S-45 | PRD v3 amended Non-Goals | active |
+| S-46 | mcp-server-for-agents | [FLO-97](https://linear.app/flowstate-10xdev/issue/FLO-97/flowstate-mcp-server-for-ai-agents-s-46) | [#191](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/191) | expose MCP server so AI agents (Cursor, Claude, Copilot) can read/write tasks + session state; enables agent-driven task delegation proposals | F-15, S-45 | PRD v3 amended Non-Goals | done |
 | S-47 | delegation-suggestion-in-plan | [FLO-98](https://linear.app/flowstate-10xdev/issue/FLO-98/delegation-suggestion-in-plan-dnia-s-47) | [#192](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/192) | in Plan dnia view, scorer proposes tasks suitable for delegation (to AI agent or human) with one-line rationale; user accepts/skips | S-45 (Plan dnia), S-46 | new | backlog |
 | S-48 | analytics-trends-plan-vs-execution | [FLO-99](https://linear.app/flowstate-10xdev/issue/FLO-99/analytics-weeklymonthly-trends-plan-vs-execution-s-48) | [#193](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/193) | weekly/monthly trends in Podsumowanie; plan-vs-execution comparison; context-switch pattern analytics | S-45 (Podsumowanie) | follow-up ui-refactor | backlog |
 | S-49 | workspace-setup-advisor | [FLO-100](https://linear.app/flowstate-10xdev/issue/FLO-100/workspace-setup-advisor-environment-config-tips-s-49) | [#194](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/194) | advisory tips for configuring work environment (Cursor/Claude agent settings, Slack/Teams DND, notification batching) surfaced in Ustawienia or onboarding; no physical blocking — coaching only | S-45 (Ustawienia), F-14 | new | done |
@@ -172,7 +172,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-44 | archive-old-tasks | **done** | Archived 2026-06-27 → `context/archive/2026-06-27-archive-old-tasks/`; PR #179; FLO-94 / #178 |
 | S-45 | ui-refactor | **done** | FLO-95 / #189; archived `context/archive/2026-07-04-ui-refactor/` (2026-07-05); GitHub #189 closed |
 | F-15 | platform-refactor-batch | **done** | FLO-96 / #190; umbrella for F-08–F-13 + observability hygiene; phased after S-45 |
-| S-46 | mcp-server-for-agents | **no** | FLO-97 / #191; after F-15 + S-45; needs research: MCP protocol surface, auth model for agents; create Linear/GitHub before plan |
+| S-46 | mcp-server-for-agents | **done** | FLO-97 / #191; archived `context/archive/2026-07-24-mcp-server-for-agents/` (2026-07-28) |
 | S-47 | delegation-suggestion-in-plan | **no** | FLO-98 / #192; after S-46 (MCP) + S-45 (Plan dnia shipped); scorer extension for delegation signal |
 | S-48 | analytics-trends-plan-vs-execution | **no** | FLO-99 / #193; after S-45 Podsumowanie; needs research: data model for weekly aggregation |
 | S-49 | workspace-setup-advisor | **no** | FLO-100 / #194; after S-45 Ustawienia; content-first (tips authored); no external integration |
@@ -227,6 +227,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **S-46: expose MCP server so AI agents (Cursor, Claude, Copilot) can read/write tasks + session state; enables agent-driven task delegation proposals** — Archived 2026-07-28 → `context/archive/2026-07-24-mcp-server-for-agents/`. Lesson: —.
 - **S-49: advisory tips for configuring work environment (Cursor/Claude agent settings, Slack/Teams DND, notification batching) surfaced in Ustawienia or onboarding; no physical blocking — coaching only** — Archived 2026-07-24 → `context/archive/2026-07-23-workspace-setup-advisor/`. PR [#209](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/209) merged 2026-07-24. Lesson: —.
 - **S-52: see honest "Twój dzień" totals — all time actually spent in focus cycles and on breaks, including cycles/breaks stopped early and cycles ended by finishing the task; paused time excluded; counts forward only (no backfill of past days)** — Archived 2026-07-23 → `context/archive/2026-07-15-focus-and-break-time-totals/`. PR [#205](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/205) merged 2026-07-17. Lesson: —.
 - **S-51: mark a started task as blocked (waiting on someone/something) from the task list, at session end, and next to "Gotowe" mid-cycle; blocking mid-cycle hands off to a break like completion does; blocked tasks leave the suggestion pool** — Archived 2026-07-23 → `context/archive/2026-07-15-blocked-task-status/`. PR [#206](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/206) merged 2026-07-17. Lesson: —.

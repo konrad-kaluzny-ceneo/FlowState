@@ -1,10 +1,10 @@
 ---
 change_id: mcp-server-for-agents
 title: Mcp server for agents
-status: impl_reviewed
+status: archived
 created: 2026-07-24
-updated: 2026-07-26
-archived_at: null
+updated: 2026-07-28
+archived_at: 2026-07-28T08:22:11Z
 ---
 
 ## Notes
