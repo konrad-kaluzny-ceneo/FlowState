@@ -72,7 +72,7 @@ type TrpcClient = {
 	task: {
 		list: { fetch: () => Promise<DomainTask[]> };
 		create: { mutate: (input: CreateTaskInput) => Promise<DomainTask> };
-		update: { mutate: (input: UpdateTaskInput) => Promise<void> };
+		update: { mutate: (input: UpdateTaskInput) => Promise<DomainTask> };
 		delete: { mutate: (input: { id: number }) => Promise<void> };
 		reorder: { mutate: (input: { orderedIds: number[] }) => Promise<void> };
 		archiveList: { fetch: () => Promise<DomainTask[]> };
@@ -134,11 +134,12 @@ export function createServerTaskRepository(client: TrpcClient): TaskRepository {
 			(await client.task.list.fetch()).map((task) => normalizeDomainTask(task)),
 		create: async (input) =>
 			normalizeDomainTask(await client.task.create.mutate(input)),
-		update: (input) =>
-			client.task.update.mutate({
+		update: async (input) => {
+			await client.task.update.mutate({
 				...input,
 				id: toNumericId(input.id),
-			}),
+			});
+		},
 		delete: (input) => client.task.delete.mutate({ id: toNumericId(input.id) }),
 		reorder: (input) =>
 			client.task.reorder.mutate({

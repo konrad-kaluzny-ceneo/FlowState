@@ -17,6 +17,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
+import { ApiKeysPanel } from "~/app/_components/api-keys-panel";
 import { CycleAudioPreferenceControl } from "~/app/_components/cycle-audio-preference-control";
 import { DurationPicker } from "~/app/_components/duration-picker";
 import { EnergySelector } from "~/app/_components/energy-selector";
@@ -462,6 +463,7 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 									{t("integrationsBody")}
 								</p>
 							</div>
+							<ApiKeysPanel isAuthenticated={isAuthenticated} />
 							<ComingSoonPreview
 								label={t("mcpComingSoon")}
 								testId="settings-mcp-preview"

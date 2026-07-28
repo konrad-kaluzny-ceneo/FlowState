@@ -47,6 +47,9 @@ export const taskRouter = createTRPCRouter({
 		)
 		.query(async ({ ctx, input }) => {
 			const userId = ctx.session.user.id;
+			// Lazy self-maintenance write on a read path: this also runs for
+			// READ-scoped MCP keys via list_tasks — an intended exception to
+			// "READ never writes" (own-data only, same semantics as the web app).
 			await archiveStaleTasksForUser(ctx.db, userId);
 			const tasks = await ctx.db.task.findMany({
 				where: { userId },
@@ -199,7 +202,7 @@ export const taskRouter = createTRPCRouter({
 
 			if (data.status === "completed") {
 				updateData = { ...updateData, resumeNote: null };
-				await ctx.db.$transaction([
+				const [, updatedTask] = await ctx.db.$transaction([
 					ctx.db.taskDayCompletion.deleteMany({
 						where: { userId: ctx.session.user.id, taskId: id },
 					}),
@@ -208,13 +211,14 @@ export const taskRouter = createTRPCRouter({
 						data: updateData,
 					}),
 				]);
-				return;
+				return mapTaskFromPrisma(updatedTask);
 			}
 
-			await ctx.db.task.update({
+			const updated = await ctx.db.task.update({
 				where: { id },
 				data: updateData,
 			});
+			return mapTaskFromPrisma(updated);
 		}),
 
 	reorder: protectedProcedure

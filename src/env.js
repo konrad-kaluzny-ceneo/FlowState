@@ -36,6 +36,10 @@ export const env = createEnv({
 		NEON_AUTH_COOKIE_SECRET: z.string().min(32, {
 			message: "NEON_AUTH_COOKIE_SECRET must be at least 32 characters",
 		}),
+		/** Server-side pepper mixed into API-key secret hashes (S-46 MCP auth). */
+		MCP_API_KEY_PEPPER: z.string().min(32, {
+			message: "MCP_API_KEY_PEPPER must be at least 32 characters",
+		}),
 		NODE_ENV: z
 			.enum(["development", "test", "production"])
 			.default("development"),
@@ -70,6 +74,7 @@ export const env = createEnv({
 		DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED,
 		NEON_AUTH_BASE_URL: process.env.NEON_AUTH_BASE_URL,
 		NEON_AUTH_COOKIE_SECRET: process.env.NEON_AUTH_COOKIE_SECRET,
+		MCP_API_KEY_PEPPER: process.env.MCP_API_KEY_PEPPER,
 		NODE_ENV: process.env.NODE_ENV,
 		SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
 		SENTRY_ORG: process.env.SENTRY_ORG,

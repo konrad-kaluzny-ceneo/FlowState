@@ -267,3 +267,6 @@ auth.json
 .claude/worktrees/
 .claude/skills/10x-*
 .claude/skills/next-slice-selector
+
+# Personal, machine-specific Claude Code permissions (not shared settings)
+.claude/settings.local.json

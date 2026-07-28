@@ -18,6 +18,7 @@ export default defineConfig({
 			SKIP_ENV_VALIDATION: "1",
 			DATABASE_URL: "postgresql://test:test@localhost:5432/test",
 			DATABASE_URL_UNPOOLED: "postgresql://test:test@localhost:5432/test",
+			MCP_API_KEY_PEPPER: "test-pepper-value-at-least-32-characters-long",
 			NODE_ENV: "test",
 		},
 	},
