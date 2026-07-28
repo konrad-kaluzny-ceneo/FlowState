@@ -780,6 +780,7 @@
 			"dismissReveal": "I've saved it",
 			"listTitle": "Your keys",
 			"loading": "Loading keys…",
+			"listError": "Couldn't load your keys. Try refreshing the page.",
 			"empty": "No keys yet. Create one above to get started.",
 			"createdAt": "Created {date}",
 			"lastUsedAt": "last used {date}",

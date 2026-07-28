@@ -50,7 +50,7 @@ Three bottom-up layers. **(1)** A pure key primitive: key string = `fsk_<tokenId
 
 ## Open Risks & Assumptions
 
-- The synthetic context must supply `user.email` + `user.name` (not just `id`) or `enforceAuth` rejects it — handled via a snapshot stored on the key row; snapshot can go stale (only affects the unused `name` fallback).
+- The synthetic context must supply `user.email` + `user.name` (not just `id`) or `enforceAuth` rejects it — handled via a snapshot stored on the key row. `verifyApiKey` only checks `revokedAt`/expiry against that snapshot, not live Neon Auth account status, so a disabled (not deleted) account's keys keep authenticating — a security/account-lifecycle risk, not just staleness of the unused `name` fallback. See F2 in `follow-ups/review-fixes.md`.
 - `get_next_suggestion` needs an active session id; when none is active it returns a graceful "no active session" result rather than creating one.
 - Prisma may need `serverExternalPackages` in `next.config.js` if the route bundling complains (currently unset).
 - No rate limiting in v1 on a public authenticated endpoint — acceptable for single-user, flagged as follow-up.

@@ -134,7 +134,7 @@ Register alongside the existing 8 routers in `root.ts`.
 
 #### 3. Settings panel
 
-**File**: `src/app/settings/_components/api-keys-panel.tsx` (new) + wiring into the Ustawienia page
+**File**: `src/app/_components/api-keys-panel.tsx` (new) + wiring into the Ustawienia page
 
 **Intent**: A calm, on-brand panel to create a named key (choosing scope), reveal the secret once with a copy affordance, list existing keys with scope/created/last-used, and revoke.
 
@@ -272,11 +272,11 @@ Mount the MCP server, authenticate it with a key, and expose curated read/write 
 
 ## Performance Considerations
 
-Stateless Streamable HTTP, one indexed key lookup per request, Node runtime. Keep each tool to a single `createCaller` round-trip to stay well under the 10s Hobby cap; `maxDuration = 10` set explicitly. Neon serverless HTTP driver already used — expect ~300-500ms cold start on the first hit.
+Stateless Streamable HTTP, one indexed key lookup per request, Node runtime. Most tools make a single `createCaller` round-trip; `get_session_state` and `get_next_suggestion` compose a few `createCaller` calls each, so they carry a proportionally higher multi-call latency budget. All tools stay well under the 10s Hobby cap; `maxDuration = 10` set explicitly. Neon serverless HTTP driver already used — expect ~300-500ms cold start on the first hit.
 
 ## Migration Notes
 
-One additive migration (`flow_state_api_key` table + `ApiKeyScope` enum) via `pnpm db:migrate` — no changes to existing tables, no data backfill. Rollback = drop the table/enum; no other surface depends on it until Phase 3 ships.
+Two additive migrations: `flow_state_api_key` table + `ApiKeyScope` enum (`add_api_key`), followed by an `expires_at` column (`add_api_key_expiry`) — no changes to existing tables, no data backfill. The API-key model and `verifyApiKey` both treat `expiresAt` as optional (null = never expires). Rollback = drop the `expires_at` column, then the table/enum; no other surface depends on it until Phase 3 ships.
 
 ## References
 

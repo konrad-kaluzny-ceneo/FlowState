@@ -76,8 +76,8 @@ function AuthenticatedApiKeysPanel() {
 			setScope("READ");
 			void utils.apiKey.list.invalidate();
 		},
-		onError: () => {
-			setFormError(t("createError"));
+		onError: (error) => {
+			setFormError(error.message || t("createError"));
 		},
 	});
 
@@ -255,6 +255,10 @@ function AuthenticatedApiKeysPanel() {
 				)}
 				{listQuery.isLoading ? (
 					<p className="text-sm text-text-dimmed">{t("loading")}</p>
+				) : listQuery.isError ? (
+					<p className="text-red-400 text-sm" role="alert">
+						{t("listError")}
+					</p>
 				) : keys.length === 0 ? (
 					<p
 						className="rounded-card border border-border-subtle border-dashed px-4 py-6 text-center text-sm text-text-dimmed"

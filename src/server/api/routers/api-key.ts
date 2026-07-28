@@ -45,33 +45,41 @@ export const apiKeyRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const activeCount = await ctx.db.apiKey.count({
-				where: {
-					userId: ctx.session.user.id,
-					revokedAt: null,
-					OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-				},
-			});
-			if (activeCount >= MAX_ACTIVE_KEYS_PER_USER) {
-				throw new TRPCError({
-					code: "BAD_REQUEST",
-					message: "Active API key limit reached — revoke an unused key first.",
-				});
-			}
-
 			const { plaintext, tokenId, hashedSecret } = generateApiKey();
+			const userId = ctx.session.user.id;
 
-			const row = await ctx.db.apiKey.create({
-				data: {
-					userId: ctx.session.user.id,
-					name: input.name,
-					scope: input.scope,
-					tokenId,
-					hashedSecret,
-					userEmail: ctx.session.user.email,
-					userName: ctx.session.user.name,
-				},
-				select: { id: true },
+			const row = await ctx.db.$transaction(async (tx) => {
+				// Serializes concurrent creates for this user so the count check
+				// below can't race with another in-flight create for the same user.
+				await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${userId}, 0))`;
+
+				const activeCount = await tx.apiKey.count({
+					where: {
+						userId,
+						revokedAt: null,
+						OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+					},
+				});
+				if (activeCount >= MAX_ACTIVE_KEYS_PER_USER) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message:
+							"Active API key limit reached — revoke an unused key first.",
+					});
+				}
+
+				return tx.apiKey.create({
+					data: {
+						userId,
+						name: input.name,
+						scope: input.scope,
+						tokenId,
+						hashedSecret,
+						userEmail: ctx.session.user.email,
+						userName: ctx.session.user.name,
+					},
+					select: { id: true },
+				});
 			});
 
 			// Returned exactly once — the plaintext is never stored or logged.

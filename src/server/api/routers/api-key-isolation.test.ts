@@ -136,15 +136,27 @@ vi.mock("~/server/db/index", () => {
 		},
 	);
 
+	const dbHandle = {
+		apiKey: {
+			findMany: mockFindMany,
+			create: mockCreate,
+			count: mockCount,
+			findFirst: mockFindFirst,
+			update: mockUpdate,
+		},
+		$executeRaw: vi.fn(() => Promise.resolve(0)),
+	};
+
+	// No real concurrency in this in-memory fake — the transaction callback
+	// just runs against the same delegates the advisory lock would guard.
+	const mockTransaction = vi.fn(
+		(fn: (tx: typeof dbHandle) => Promise<unknown>) => fn(dbHandle),
+	);
+
 	return {
 		db: {
-			apiKey: {
-				findMany: mockFindMany,
-				create: mockCreate,
-				count: mockCount,
-				findFirst: mockFindFirst,
-				update: mockUpdate,
-			},
+			...dbHandle,
+			$transaction: mockTransaction,
 		},
 	};
 });

@@ -5,11 +5,11 @@ Queued from `reviews/impl-review.md` triage (2026-07-26).
 ## F2 — Revoke API keys for deleted/disabled accounts (Fix A)
 
 - **Source**: impl-review F2 (⚠️ WARNING, Safety & Quality) — `src/lib/api-keys/verify-token.ts:44`
-- **Problem**: `verifyApiKey` trusts the mint-time snapshot on the `ApiKey` row; a user deleted/disabled in Neon Auth keeps working keys, and `userEmail`/`userName` PII goes stale.
+- **Problem**: `verifyApiKey` trusts the mint-time snapshot on the `ApiKey` row and only checks `revokedAt`/expiry — it never checks live Neon Auth account status. A user deleted **or disabled** in Neon Auth keeps working keys, and `userEmail`/`userName` PII goes stale. This is a security/account-lifecycle gap, not just a staleness concern.
 - **Action**:
-  1. Document (wherever account-deletion lands) that deleting an account MUST revoke all its API keys.
-  2. Add a periodic cleanup job that revokes keys whose `userId` no longer exists in Neon Auth.
-- **Open question**: verify Neon Auth exposes a server-side user-exists lookup usable from a job.
+  1. Document (wherever account-deletion/disablement lands) that deleting or disabling an account MUST revoke all its API keys.
+  2. Add a periodic cleanup job that revokes keys whose `userId` no longer exists, or is disabled, in Neon Auth.
+- **Open question**: verify Neon Auth exposes a server-side user-exists/disabled-status lookup usable from a job.
 
 ## F7 — Rate limiting on /api/mcp
 
