@@ -753,10 +753,6 @@
 		"workspaceNudgeAction": "Otwórz Środowisko",
 		"workspaceNudgeDismiss": "Zamknij",
 		"integrationsBody": "Połącz FlowState z narzędziami, których używasz na co dzień.",
-		"mcpComingSoon": "Integracja MCP wkrótce",
-		"mcpMockTitle": "Agent FlowState",
-		"mcpMockDescription": "Połącz asystenta AI przez Model Context Protocol, aby zarządzać zadaniami głosem.",
-		"mcpMockConnect": "Połącz przez MCP",
 		"apiKeys": {
 			"title": "Klucze API",
 			"body": "Utwórz osobisty klucz, aby połączyć FlowState z agentami AI przez MCP. Każdy klucz działa tylko na Twoim koncie.",

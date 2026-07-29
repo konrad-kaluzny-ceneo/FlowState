@@ -27,7 +27,6 @@ import {
 	SettingsPanel,
 	SettingsRow,
 } from "~/app/_components/settings-primitives";
-import { ComingSoonPreview } from "~/app/_components/ui/coming-soon-preview";
 import { WorkspaceSetupChecklist } from "~/app/_components/workspace-setup-checklist";
 import { WorkspaceSetupNudge } from "~/app/_components/workspace-setup-nudge";
 import { useCycleEndAudioPreference } from "~/hooks/use-cycle-end-audio-preference";
@@ -464,36 +463,9 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 								</p>
 							</div>
 							<ApiKeysPanel isAuthenticated={isAuthenticated} />
-							<ComingSoonPreview
-								label={t("mcpComingSoon")}
-								testId="settings-mcp-preview"
-							>
-								<McpIntegrationMock />
-							</ComingSoonPreview>
 						</section>
 					)}
 				</div>
-			</div>
-		</div>
-	);
-}
-
-function McpIntegrationMock() {
-	const t = useTranslations("Settings");
-
-	return (
-		<div className="space-y-4 p-6">
-			<div className="rounded-card border border-card-border bg-surface-card-muted p-5">
-				<h3 className="font-semibold text-primary">{t("mcpMockTitle")}</h3>
-				<p className="mt-2 text-sm text-text-secondary">
-					{t("mcpMockDescription")}
-				</p>
-				<button
-					className="mt-4 rounded-control bg-accent-cta px-4 py-2 font-medium text-on-cta text-sm"
-					type="button"
-				>
-					{t("mcpMockConnect")}
-				</button>
 			</div>
 		</div>
 	);

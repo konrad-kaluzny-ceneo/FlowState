@@ -209,7 +209,7 @@ describe("UstawieniaView", () => {
 		expect(screen.queryByTestId("settings-workspace-nudge")).toBeNull();
 	});
 
-	it("renders MCP coming soon preview on integrations tab", () => {
+	it("renders integrations panel without the stale MCP preview", () => {
 		renderView(
 			<UstawieniaView
 				scope={{ mode: "authenticated", userId: "user-1" }}
@@ -220,7 +220,7 @@ describe("UstawieniaView", () => {
 		fireEvent.click(screen.getByTestId("settings-tab-integrations"));
 
 		expect(screen.getByTestId("settings-integrations-section")).toBeTruthy();
-		expect(screen.getByTestId("settings-mcp-preview")).toBeTruthy();
-		expect(screen.getByText(messages.Settings.mcpComingSoon)).toBeTruthy();
+		expect(screen.getByTestId("settings-api-keys-section")).toBeTruthy();
+		expect(screen.queryByTestId("settings-mcp-preview")).toBeNull();
 	});
 });
