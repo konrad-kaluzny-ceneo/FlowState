@@ -230,13 +230,13 @@ Not applicable — no data model or persisted-state changes.
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `pnpm exec vitest run src/app/_components/ustawienia-view.test.tsx`
-- [x] 2.2 Type checking passes: `pnpm typecheck`
-- [x] 2.3 Linting passes: `pnpm check`
+- [x] 2.1 Unit tests pass: `pnpm exec vitest run src/app/_components/ustawienia-view.test.tsx` — c540610
+- [x] 2.2 Type checking passes: `pnpm typecheck` — c540610
+- [x] 2.3 Linting passes: `pnpm check` — c540610
 
 #### Manual
 
-- [x] 2.4 Instructions block shows correct live endpoint, Bearer-auth line, tool summary
-- [x] 2.5 Copy button copies correct JSON (real origin, placeholder key)
-- [x] 2.6 PL/EN toggle shows correct translations, no missing-key fallback
-- [x] 2.7 Guest view still shows only the sign-in prompt, no instructions block
+- [x] 2.4 Instructions block shows correct live endpoint, Bearer-auth line, tool summary — c540610
+- [x] 2.5 Copy button copies correct JSON (real origin, placeholder key) — c540610
+- [x] 2.6 PL/EN toggle shows correct translations, no missing-key fallback — c540610
+- [x] 2.7 Guest view still shows only the sign-in prompt, no instructions block — c540610
