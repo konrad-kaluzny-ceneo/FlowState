@@ -209,7 +209,7 @@ describe("UstawieniaView", () => {
 		expect(screen.queryByTestId("settings-workspace-nudge")).toBeNull();
 	});
 
-	it("renders MCP coming soon preview on integrations tab", () => {
+	it("renders integrations panel without the stale MCP preview", () => {
 		renderView(
 			<UstawieniaView
 				scope={{ mode: "authenticated", userId: "user-1" }}
@@ -220,7 +220,57 @@ describe("UstawieniaView", () => {
 		fireEvent.click(screen.getByTestId("settings-tab-integrations"));
 
 		expect(screen.getByTestId("settings-integrations-section")).toBeTruthy();
-		expect(screen.getByTestId("settings-mcp-preview")).toBeTruthy();
-		expect(screen.getByText(messages.Settings.mcpComingSoon)).toBeTruthy();
+		expect(screen.getByTestId("settings-api-keys-section")).toBeTruthy();
+		expect(screen.queryByTestId("settings-mcp-preview")).toBeNull();
+	});
+
+	it("shows MCP setup instructions with the live endpoint for authenticated users", () => {
+		renderView(
+			<UstawieniaView
+				scope={{ mode: "authenticated", userId: "user-1" }}
+				userName="Konrad"
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("settings-tab-integrations"));
+
+		expect(screen.getByTestId("mcp-setup-section")).toBeTruthy();
+		expect(screen.getByTestId("mcp-setup-endpoint").textContent).toContain(
+			"/api/mcp",
+		);
+		expect(screen.getByTestId("mcp-setup-config").textContent).toContain(
+			"/api/mcp",
+		);
+	});
+
+	it("copies the MCP client config when the copy button is clicked", async () => {
+		const writeText = vi.fn().mockResolvedValue(undefined);
+		Object.defineProperty(window.navigator, "clipboard", {
+			value: { writeText },
+			configurable: true,
+		});
+
+		renderView(
+			<UstawieniaView
+				scope={{ mode: "authenticated", userId: "user-1" }}
+				userName="Konrad"
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("settings-tab-integrations"));
+		fireEvent.click(screen.getByTestId("mcp-setup-copy-config"));
+
+		await vi.waitFor(() => {
+			expect(writeText).toHaveBeenCalledTimes(1);
+		});
+		expect(writeText.mock.calls[0]?.[0]).toContain("YOUR_API_KEY");
+	});
+
+	it("hides MCP setup instructions for guests", () => {
+		renderView(<UstawieniaView scope={{ mode: "guest" }} userName={null} />);
+
+		fireEvent.click(screen.getByTestId("settings-tab-integrations"));
+
+		expect(screen.queryByTestId("mcp-setup-section")).toBeNull();
 	});
 });
