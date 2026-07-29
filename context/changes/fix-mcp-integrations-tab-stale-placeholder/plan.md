@@ -133,7 +133,7 @@ EN values:
 - `setupTitle`: "Connect an AI agent"
 - `setupIntro`: "Point your MCP client at this endpoint and use your key above as the Bearer token."
 - `endpointLabel`: "Endpoint"
-- `authLabel`: "Authorization: Bearer <your API key>"
+- `authLabel`: "Authorization: Bearer YOUR_API_KEY" (reuses the same placeholder token as the config snippet — angle-bracket placeholders like `<your API key>` break next-intl's ICU tag parser and silently fall back to the raw message key, confirmed during manual verification)
 - `toolsReadLabel`: "Read access: tasks, session state, day stats and plan, next-task suggestion."
 - `toolsWriteLabel`: "Write access (read-write keys only): create, update, and complete tasks."
 - `configLabel`: "Client config"
@@ -142,7 +142,7 @@ PL values:
 - `setupTitle`: "Połącz agenta AI"
 - `setupIntro`: "Wskaż ten punkt końcowy w swoim kliencie MCP i użyj klucza powyżej jako tokenu Bearer."
 - `endpointLabel`: "Punkt końcowy"
-- `authLabel`: "Autoryzacja: Bearer <Twój klucz API>"
+- `authLabel`: "Autoryzacja: Bearer YOUR_API_KEY"
 - `toolsReadLabel`: "Odczyt: zadania, stan sesji, statystyki i plan dnia, sugestia następnego zadania."
 - `toolsWriteLabel`: "Zapis (tylko klucze do odczytu i zapisu): tworzenie, aktualizacja i ukończanie zadań."
 - `configLabel`: "Konfiguracja klienta"
@@ -216,27 +216,27 @@ Not applicable — no data model or persisted-state changes.
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `pnpm exec vitest run src/app/_components/ustawienia-view.test.tsx`
-- [x] 1.2 Type checking passes: `pnpm typecheck`
-- [x] 1.3 Linting passes: `pnpm check`
-- [x] 1.4 Repo-wide grep confirms no remaining references to the stale mock
+- [x] 1.1 Unit tests pass: `pnpm exec vitest run src/app/_components/ustawienia-view.test.tsx` — edc9a4f
+- [x] 1.2 Type checking passes: `pnpm typecheck` — edc9a4f
+- [x] 1.3 Linting passes: `pnpm check` — edc9a4f
+- [x] 1.4 Repo-wide grep confirms no remaining references to the stale mock — edc9a4f
 
 #### Manual
 
-- [x] 1.5 No "coming soon" card/button on Integracje tab (authenticated, PL)
-- [x] 1.6 Same check in English locale
+- [x] 1.5 No "coming soon" card/button on Integracje tab (authenticated, PL) — edc9a4f
+- [x] 1.6 Same check in English locale — edc9a4f
 
 ### Phase 2: Add MCP setup instructions to ApiKeysPanel
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `pnpm exec vitest run src/app/_components/ustawienia-view.test.tsx`
-- [ ] 2.2 Type checking passes: `pnpm typecheck`
-- [ ] 2.3 Linting passes: `pnpm check`
+- [x] 2.1 Unit tests pass: `pnpm exec vitest run src/app/_components/ustawienia-view.test.tsx`
+- [x] 2.2 Type checking passes: `pnpm typecheck`
+- [x] 2.3 Linting passes: `pnpm check`
 
 #### Manual
 
-- [ ] 2.4 Instructions block shows correct live endpoint, Bearer-auth line, tool summary
-- [ ] 2.5 Copy button copies correct JSON (real origin, placeholder key)
-- [ ] 2.6 PL/EN toggle shows correct translations, no missing-key fallback
-- [ ] 2.7 Guest view still shows only the sign-in prompt, no instructions block
+- [x] 2.4 Instructions block shows correct live endpoint, Bearer-auth line, tool summary
+- [x] 2.5 Copy button copies correct JSON (real origin, placeholder key)
+- [x] 2.6 PL/EN toggle shows correct translations, no missing-key fallback
+- [x] 2.7 Guest view still shows only the sign-in prompt, no instructions block

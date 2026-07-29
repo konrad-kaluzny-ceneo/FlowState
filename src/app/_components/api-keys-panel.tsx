@@ -2,7 +2,7 @@
 
 import { Check, Copy, Eye, KeyRound, Trash2 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { api } from "~/trpc/react";
 
@@ -67,6 +67,14 @@ function AuthenticatedApiKeysPanel() {
 	const [copied, setCopied] = useState(false);
 	const [formError, setFormError] = useState<string | null>(null);
 	const [revokeError, setRevokeError] = useState<string | null>(null);
+	const [origin, setOrigin] = useState<string | null>(null);
+	const [configCopied, setConfigCopied] = useState(false);
+
+	// Read after mount only — reading window.location during render would
+	// mismatch server/client hydration.
+	useEffect(() => {
+		setOrigin(window.location.origin);
+	}, []);
 
 	const createMutation = api.apiKey.create.useMutation({
 		onSuccess: (data) => {
@@ -118,6 +126,31 @@ function AuthenticatedApiKeysPanel() {
 	}
 
 	const keys = listQuery.data ?? [];
+
+	const mcpEndpoint = `${origin ?? ""}/api/mcp`;
+	// Always a redacted placeholder, never the transient revealedKey — see
+	// plan.md Critical Implementation Details for why.
+	const mcpConfigSnippet = JSON.stringify(
+		{
+			mcpServers: {
+				flowstate: {
+					url: mcpEndpoint,
+					headers: { Authorization: "Bearer YOUR_API_KEY" },
+				},
+			},
+		},
+		null,
+		2,
+	);
+
+	async function handleCopyConfig() {
+		try {
+			await navigator.clipboard.writeText(mcpConfigSnippet);
+			setConfigCopied(true);
+		} catch {
+			// Clipboard may be unavailable; the snippet remains visible to copy manually.
+		}
+	}
 
 	return (
 		<section
@@ -323,6 +356,67 @@ function AuthenticatedApiKeysPanel() {
 						})}
 					</ul>
 				)}
+			</div>
+
+			<div
+				className="space-y-3 border-border-subtle border-t pt-6"
+				data-testid="mcp-setup-section"
+			>
+				<div>
+					<h4 className="font-semibold text-primary text-sm">
+						{t("setupTitle")}
+					</h4>
+					<p className="mt-1.5 text-sm text-text-secondary">
+						{t("setupIntro")}
+					</p>
+				</div>
+
+				<div className="space-y-1.5 text-sm">
+					<p className="text-text-secondary">
+						<span className="font-medium text-primary">
+							{t("endpointLabel")}:
+						</span>{" "}
+						<code
+							className="rounded-control border border-border-subtle bg-surface-card-muted px-2 py-0.5 font-mono text-primary text-xs"
+							data-testid="mcp-setup-endpoint"
+						>
+							{mcpEndpoint}
+						</code>
+					</p>
+					<p className="text-text-dimmed text-xs">{t("authLabel")}</p>
+				</div>
+
+				<ul className="space-y-1 text-text-secondary text-xs">
+					<li>{t("toolsReadLabel")}</li>
+					<li>{t("toolsWriteLabel")}</li>
+				</ul>
+
+				<div className="space-y-2">
+					<div className="flex items-center justify-between">
+						<span className="font-medium text-primary text-sm">
+							{t("configLabel")}
+						</span>
+						<button
+							className="inline-flex items-center gap-1.5 rounded-control border border-border-subtle px-3 py-1.5 font-medium text-primary text-xs transition-colors hover:bg-surface-card-muted"
+							data-testid="mcp-setup-copy-config"
+							onClick={() => void handleCopyConfig()}
+							type="button"
+						>
+							{configCopied ? (
+								<Check aria-hidden="true" className="h-3.5 w-3.5" />
+							) : (
+								<Copy aria-hidden="true" className="h-3.5 w-3.5" />
+							)}
+							{configCopied ? t("copied") : t("copy")}
+						</button>
+					</div>
+					<pre
+						className="overflow-x-auto rounded-control border border-border-subtle bg-surface-card-muted p-3 font-mono text-primary text-xs"
+						data-testid="mcp-setup-config"
+					>
+						<code>{mcpConfigSnippet}</code>
+					</pre>
+				</div>
 			</div>
 		</section>
 	);

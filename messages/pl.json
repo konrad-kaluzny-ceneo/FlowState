@@ -782,7 +782,14 @@
 			"lastUsedAt": "ostatnio użyto {date}",
 			"neverUsed": "nigdy nie użyto",
 			"revokedBadge": "Unieważniony",
-			"revoke": "Unieważnij"
+			"revoke": "Unieważnij",
+			"setupTitle": "Połącz agenta AI",
+			"setupIntro": "Wskaż ten punkt końcowy w swoim kliencie MCP i użyj klucza powyżej jako tokenu Bearer.",
+			"endpointLabel": "Punkt końcowy",
+			"authLabel": "Autoryzacja: Bearer YOUR_API_KEY",
+			"toolsReadLabel": "Odczyt: zadania, stan sesji, statystyki i plan dnia, sugestia następnego zadania.",
+			"toolsWriteLabel": "Zapis (tylko klucze do odczytu i zapisu): tworzenie, aktualizacja i ukończanie zadań.",
+			"configLabel": "Konfiguracja klienta"
 		},
 		"languageLabel": "Język",
 		"userNameLabel": "Konto",

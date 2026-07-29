@@ -782,7 +782,14 @@
 			"lastUsedAt": "last used {date}",
 			"neverUsed": "never used",
 			"revokedBadge": "Revoked",
-			"revoke": "Revoke"
+			"revoke": "Revoke",
+			"setupTitle": "Connect an AI agent",
+			"setupIntro": "Point your MCP client at this endpoint and use your key above as the Bearer token.",
+			"endpointLabel": "Endpoint",
+			"authLabel": "Authorization: Bearer YOUR_API_KEY",
+			"toolsReadLabel": "Read access: tasks, session state, day stats and plan, next-task suggestion.",
+			"toolsWriteLabel": "Write access (read-write keys only): create, update, and complete tasks.",
+			"configLabel": "Client config"
 		},
 		"languageLabel": "Language",
 		"userNameLabel": "Account",
