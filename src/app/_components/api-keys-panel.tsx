@@ -144,8 +144,23 @@ function AuthenticatedApiKeysPanel() {
 	);
 
 	async function handleCopyConfig() {
+		// Read window.location.origin directly (guaranteed available here — this
+		// only runs from a client click handler) instead of the origin state,
+		// which may still be null if clicked before the mount effect resolves it.
+		const configToCopy = JSON.stringify(
+			{
+				mcpServers: {
+					flowstate: {
+						url: `${window.location.origin}/api/mcp`,
+						headers: { Authorization: "Bearer YOUR_API_KEY" },
+					},
+				},
+			},
+			null,
+			2,
+		);
 		try {
-			await navigator.clipboard.writeText(mcpConfigSnippet);
+			await navigator.clipboard.writeText(configToCopy);
 			setConfigCopied(true);
 		} catch {
 			// Clipboard may be unavailable; the snippet remains visible to copy manually.

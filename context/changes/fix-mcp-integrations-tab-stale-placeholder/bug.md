@@ -21,7 +21,7 @@ Once MCP integration is live, the Integracje tab should not show a "coming soon"
 
 Trace from trigger to symptom:
 - `src/app/_components/ustawienia-view.tsx:449-474` — the `integrations` tab branch renders `<ApiKeysPanel isAuthenticated={isAuthenticated} />` (the real, working key-management UI, `src/app/_components/api-keys-panel.tsx`) immediately followed by:
-  ```
+  ```tsx
   <ComingSoonPreview label={t("mcpComingSoon")} testId="settings-mcp-preview">
     <McpIntegrationMock />
   </ComingSoonPreview>
