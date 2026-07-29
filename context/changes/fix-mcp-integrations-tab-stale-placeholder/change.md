@@ -1,7 +1,7 @@
 ---
 change_id: fix-mcp-integrations-tab-stale-placeholder
 title: Remove stale MCP "coming soon" mock and add setup instructions to Integracje tab
-status: implemented
+status: impl_reviewed
 created: 2026-07-29
 updated: 2026-07-29
 archived_at: null
