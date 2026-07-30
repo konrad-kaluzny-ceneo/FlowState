@@ -197,6 +197,8 @@
 			"kickoff_fresh": "Nowa sesja — sensowny punkt startowy",
 			"kickoff_resume": "Po przerwie — gotów na następny blok skupienia",
 			"capacity_fit": "Mieści się w ~{minutes} min, które zostały dziś",
+			"delegation_low_effort": "Szybkie, mało czasochłonne zadanie — dobre do oddelegowania",
+			"delegation_operational": "Zadanie operacyjne — dobre do oddelegowania",
 			"default": "Kolejny krok — zgodnie z energią i zadaniami na dziś"
 		},
 		"factorChips": {

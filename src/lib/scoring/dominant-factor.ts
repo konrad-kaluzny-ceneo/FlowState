@@ -1,3 +1,4 @@
+import type { DelegationCandidateTask } from "./delegation-score";
 import { buildRationale, type RationaleKey } from "./rationale";
 import {
 	computeEisenhowerBase,
@@ -159,5 +160,34 @@ export function formatKickoffRationale(
 	return {
 		rationaleKey,
 		rationale: buildRationale(rationaleKey, context),
+	};
+}
+
+// Delegation rationale keys are picked from task attributes alone — they
+// don't read energy/fatigue/time-of-day, so this stub context exists purely
+// to satisfy buildRationale's required ScoringContext parameter. Neither
+// "delegation_low_effort" nor "delegation_operational" reads any of its
+// fields. No locale is threaded through here, matching every other
+// buildRationale call site in this module and in suggestion.ts — server
+// rationale text is always English today, which is a pre-existing,
+// codebase-wide gap outside this slice's scope.
+const DELEGATION_STUB_CONTEXT: ScoringContext = {
+	energy: "STEADY",
+	completedWorkCycles: 0,
+	interruptionCount: 0,
+	localHour: 12,
+};
+
+export function formatDelegationRationale(task: DelegationCandidateTask): {
+	rationaleKey: RationaleKey;
+	rationale: string;
+} {
+	const rationaleKey: RationaleKey =
+		task.effortMinutes != null && task.effortMinutes <= 30
+			? "delegation_low_effort"
+			: "delegation_operational";
+	return {
+		rationaleKey,
+		rationale: buildRationale(rationaleKey, DELEGATION_STUB_CONTEXT),
 	};
 }

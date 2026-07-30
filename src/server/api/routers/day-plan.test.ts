@@ -5,6 +5,8 @@ vi.mock("~/lib/auth/server", () => ({
 }));
 
 type Energy = "FOCUSED" | "STEADY" | "FADING";
+type WorkType = "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
+type CommitmentHorizon = "ASAP" | "THIS_WEEK" | "WHEN_POSSIBLE";
 
 type DayPlanRow = {
 	id: number;
@@ -17,8 +19,63 @@ type DayPlanRow = {
 	updatedAt: Date;
 };
 
+type TaskRow = {
+	id: number;
+	title: string;
+	status: string;
+	userId: string;
+	workType: WorkType;
+	weight: number;
+	importance: number;
+	urgency: number;
+	effortMinutes: number | null;
+	commitmentHorizon: CommitmentHorizon;
+	sortOrder: number;
+	resumeNote: string | null;
+	project: string | null;
+	personaPresetId: string | null;
+	isDailyStanding: boolean;
+	archivedAt: Date | null;
+	createdAt: Date;
+	updatedAt: Date | null;
+};
+
+type TaskDelegationSkipRow = {
+	id: number;
+	userId: string;
+	taskId: number;
+	localDateKey: string;
+	skippedAt: Date;
+};
+
 let dayPlans: DayPlanRow[] = [];
 let nextDayPlanId = 1;
+let tasks: TaskRow[] = [];
+let taskDelegationSkips: TaskDelegationSkipRow[] = [];
+let nextTaskDelegationSkipId = 1;
+
+function mkTaskRow(overrides: Partial<TaskRow> & Pick<TaskRow, "id">): TaskRow {
+	return {
+		title: `Task ${overrides.id}`,
+		status: "active",
+		userId: USER_A,
+		workType: "OPERATIONAL",
+		weight: 2,
+		importance: 2,
+		urgency: 2,
+		effortMinutes: null,
+		commitmentHorizon: "WHEN_POSSIBLE",
+		sortOrder: overrides.id,
+		resumeNote: null,
+		project: null,
+		personaPresetId: null,
+		isDailyStanding: false,
+		archivedAt: null,
+		createdAt: new Date("2026-01-01"),
+		updatedAt: null,
+		...overrides,
+	};
+}
 
 vi.mock("~/server/db/index", () => ({
 	db: {
@@ -99,6 +156,84 @@ vi.mock("~/server/db/index", () => ({
 				},
 			),
 		},
+		task: {
+			findMany: vi.fn(
+				(args: { where: { userId: string; status?: { in: string[] } } }) => {
+					const { userId, status } = args.where;
+					const matches = tasks.filter((task) => {
+						if (task.userId !== userId) {
+							return false;
+						}
+						if (status?.in != null && !status.in.includes(task.status)) {
+							return false;
+						}
+						return true;
+					});
+					matches.sort((a, b) => {
+						if (a.sortOrder !== b.sortOrder) {
+							return a.sortOrder - b.sortOrder;
+						}
+						return a.createdAt.getTime() - b.createdAt.getTime();
+					});
+					return Promise.resolve(matches);
+				},
+			),
+			findFirst: vi.fn((args: { where: { id: number; userId: string } }) => {
+				const row = tasks.find(
+					(task) =>
+						task.id === args.where.id && task.userId === args.where.userId,
+				);
+				return Promise.resolve(row ?? null);
+			}),
+		},
+		taskDayCompletion: {
+			findMany: vi.fn(() => Promise.resolve([])),
+		},
+		taskDelegationSkip: {
+			findMany: vi.fn(
+				(args: { where: { userId: string; localDateKey: string } }) => {
+					const { userId, localDateKey } = args.where;
+					const matches = taskDelegationSkips.filter(
+						(row) => row.userId === userId && row.localDateKey === localDateKey,
+					);
+					return Promise.resolve(matches);
+				},
+			),
+			upsert: vi.fn(
+				(args: {
+					where: {
+						task_delegation_skip_user_task_date: {
+							userId: string;
+							taskId: number;
+							localDateKey: string;
+						};
+					};
+					create: { userId: string; taskId: number; localDateKey: string };
+					update: Record<string, never>;
+				}) => {
+					const { userId, taskId, localDateKey } =
+						args.where.task_delegation_skip_user_task_date;
+					const existing = taskDelegationSkips.find(
+						(row) =>
+							row.userId === userId &&
+							row.taskId === taskId &&
+							row.localDateKey === localDateKey,
+					);
+					if (existing) {
+						return Promise.resolve(existing);
+					}
+					const row: TaskDelegationSkipRow = {
+						id: nextTaskDelegationSkipId++,
+						userId: args.create.userId,
+						taskId: args.create.taskId,
+						localDateKey: args.create.localDateKey,
+						skippedAt: new Date(),
+					};
+					taskDelegationSkips.push(row);
+					return Promise.resolve(row);
+				},
+			),
+		},
 	},
 }));
 
@@ -134,6 +269,9 @@ describe("dayPlan router", () => {
 	beforeEach(() => {
 		dayPlans = [];
 		nextDayPlanId = 1;
+		tasks = [];
+		taskDelegationSkips = [];
+		nextTaskDelegationSkipId = 1;
 	});
 
 	it("getOrCreate returns null budget and null energy when no row exists", async () => {
@@ -284,5 +422,216 @@ describe("dayPlan router", () => {
 		});
 
 		expect(other.energyLevel).toBeNull();
+	});
+
+	describe("getDelegationSuggestion", () => {
+		it("returns the correct top candidate and never DEEP_WORK", async () => {
+			tasks = [
+				mkTaskRow({
+					id: 1,
+					status: "active",
+					workType: "DEEP_WORK",
+					importance: 1,
+					urgency: 1,
+				}),
+				mkTaskRow({
+					id: 2,
+					status: "active",
+					workType: "OPERATIONAL",
+					importance: 2,
+					urgency: 2,
+					effortMinutes: 20,
+					commitmentHorizon: "WHEN_POSSIBLE",
+				}),
+				mkTaskRow({
+					id: 3,
+					status: "active",
+					workType: "REACTIVE",
+					importance: 3,
+					urgency: 3,
+					effortMinutes: 90,
+					commitmentHorizon: "ASAP",
+				}),
+			];
+
+			const result = await dayPlanCaller(USER_A).getDelegationSuggestion({
+				localDateKey: DATE_KEY,
+			});
+
+			expect(result.status).toBe("ok");
+			if (result.status === "ok") {
+				expect(result.task.id).toBe(2);
+				expect(result.task.workType).not.toBe("DEEP_WORK");
+				expect(result.rationaleKey).toBe("delegation_low_effort");
+				expect(result.rationale.length).toBeGreaterThan(0);
+			}
+		});
+
+		it("respects skip records for the given localDateKey", async () => {
+			tasks = [
+				mkTaskRow({
+					id: 1,
+					status: "active",
+					workType: "OPERATIONAL",
+					importance: 2,
+					urgency: 2,
+					effortMinutes: 20,
+					commitmentHorizon: "WHEN_POSSIBLE",
+				}),
+				mkTaskRow({
+					id: 2,
+					status: "active",
+					workType: "OPERATIONAL",
+					importance: 2,
+					urgency: 2,
+					effortMinutes: 60,
+					commitmentHorizon: "THIS_WEEK",
+				}),
+			];
+			taskDelegationSkips = [
+				{
+					id: nextTaskDelegationSkipId++,
+					userId: USER_A,
+					taskId: 1,
+					localDateKey: DATE_KEY,
+					skippedAt: new Date(),
+				},
+			];
+
+			const result = await dayPlanCaller(USER_A).getDelegationSuggestion({
+				localDateKey: DATE_KEY,
+			});
+
+			expect(result.status).toBe("ok");
+			if (result.status === "ok") {
+				expect(result.task.id).toBe(2);
+			}
+		});
+
+		it("returns empty when the candidate pool is exhausted", async () => {
+			tasks = [mkTaskRow({ id: 1, status: "active", workType: "DEEP_WORK" })];
+
+			const result = await dayPlanCaller(USER_A).getDelegationSuggestion({
+				localDateKey: DATE_KEY,
+			});
+
+			expect(result).toEqual({ status: "empty" });
+		});
+
+		it("returns empty when there are no tasks at all", async () => {
+			const result = await dayPlanCaller(USER_A).getDelegationSuggestion({
+				localDateKey: DATE_KEY,
+			});
+
+			expect(result).toEqual({ status: "empty" });
+		});
+
+		it("does not leak candidates across users", async () => {
+			tasks = [
+				mkTaskRow({
+					id: 1,
+					userId: USER_A,
+					status: "active",
+					workType: "OPERATIONAL",
+				}),
+			];
+
+			const result = await dayPlanCaller(USER_B).getDelegationSuggestion({
+				localDateKey: DATE_KEY,
+			});
+
+			expect(result).toEqual({ status: "empty" });
+		});
+	});
+
+	describe("skipDelegationSuggestion", () => {
+		it("persists a skip record", async () => {
+			tasks = [mkTaskRow({ id: 1, userId: USER_A, status: "active" })];
+
+			await dayPlanCaller(USER_A).skipDelegationSuggestion({
+				localDateKey: DATE_KEY,
+				taskId: 1,
+			});
+
+			expect(taskDelegationSkips).toMatchObject([
+				{ userId: USER_A, taskId: 1, localDateKey: DATE_KEY },
+			]);
+		});
+
+		it("is idempotent when the same task is skipped twice", async () => {
+			tasks = [mkTaskRow({ id: 1, userId: USER_A, status: "active" })];
+
+			await dayPlanCaller(USER_A).skipDelegationSuggestion({
+				localDateKey: DATE_KEY,
+				taskId: 1,
+			});
+			await expect(
+				dayPlanCaller(USER_A).skipDelegationSuggestion({
+					localDateKey: DATE_KEY,
+					taskId: 1,
+				}),
+			).resolves.toBeUndefined();
+
+			expect(taskDelegationSkips).toHaveLength(1);
+		});
+
+		it("throws NOT_FOUND for a taskId the caller doesn't own", async () => {
+			tasks = [mkTaskRow({ id: 1, userId: USER_B, status: "active" })];
+
+			await expect(
+				dayPlanCaller(USER_A).skipDelegationSuggestion({
+					localDateKey: DATE_KEY,
+					taskId: 1,
+				}),
+			).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+			expect(taskDelegationSkips).toHaveLength(0);
+		});
+
+		it("advances getDelegationSuggestion to the next candidate after a skip", async () => {
+			tasks = [
+				mkTaskRow({
+					id: 1,
+					status: "active",
+					workType: "OPERATIONAL",
+					importance: 2,
+					urgency: 2,
+					effortMinutes: 20,
+					commitmentHorizon: "WHEN_POSSIBLE",
+				}),
+				mkTaskRow({
+					id: 2,
+					status: "active",
+					workType: "OPERATIONAL",
+					importance: 2,
+					urgency: 2,
+					effortMinutes: 60,
+					commitmentHorizon: "THIS_WEEK",
+				}),
+			];
+
+			const caller = dayPlanCaller(USER_A);
+			const first = await caller.getDelegationSuggestion({
+				localDateKey: DATE_KEY,
+			});
+			expect(first.status).toBe("ok");
+			if (first.status !== "ok") {
+				throw new Error("expected ok status");
+			}
+			expect(first.task.id).toBe(1);
+
+			await caller.skipDelegationSuggestion({
+				localDateKey: DATE_KEY,
+				taskId: 1,
+			});
+
+			const second = await caller.getDelegationSuggestion({
+				localDateKey: DATE_KEY,
+			});
+			expect(second.status).toBe("ok");
+			if (second.status === "ok") {
+				expect(second.task.id).toBe(2);
+			}
+		});
 	});
 });

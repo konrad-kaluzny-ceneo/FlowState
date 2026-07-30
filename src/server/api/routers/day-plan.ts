@@ -1,7 +1,15 @@
 import type { EnergyLevel } from "@prisma/generated";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { remainingFocusMinutes } from "~/lib/day-plan/remaining-focus-minutes";
+import { mapTaskFromPrisma } from "~/lib/persistence/prisma/task-mapper";
+import {
+	type DelegationCandidateTask,
+	pickDelegationCandidate,
+} from "~/lib/scoring/delegation-score";
+import { formatDelegationRationale } from "~/lib/scoring/dominant-factor";
+import { buildSuggestionPool } from "~/lib/suggestion/build-suggestion-pool";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const localDateKeySchema = z
@@ -135,5 +143,91 @@ export const dayPlanRouter = createTRPCRouter({
 				localDateKey: row.localDateKey,
 				energyLevel: row.energyLevel,
 			};
+		}),
+
+	getDelegationSuggestion: protectedProcedure
+		.input(z.object({ localDateKey: localDateKeySchema }))
+		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+
+			const pool = await buildSuggestionPool(
+				ctx.db,
+				userId,
+				input.localDateKey,
+			);
+
+			const skips = await ctx.db.taskDelegationSkip.findMany({
+				where: { userId, localDateKey: input.localDateKey },
+				select: { taskId: true },
+			});
+			const skippedIds = new Set(skips.map((row) => row.taskId));
+
+			const candidates: DelegationCandidateTask[] = pool
+				.filter((task) => !skippedIds.has(task.id))
+				.map((task) => ({
+					id: task.id,
+					workType: task.workType,
+					effortMinutes: task.effortMinutes,
+					commitmentHorizon: task.commitmentHorizon,
+					importance: task.importance,
+					urgency: task.urgency,
+					sortOrder: task.sortOrder,
+					createdAt: task.createdAt,
+				}));
+
+			const winner = pickDelegationCandidate(candidates);
+
+			if (winner == null) {
+				return { status: "empty" as const };
+			}
+
+			const task = pool.find((t) => t.id === winner.id);
+			if (task == null) {
+				return { status: "empty" as const };
+			}
+
+			const { rationaleKey, rationale } = formatDelegationRationale(winner);
+
+			return {
+				status: "ok" as const,
+				task: mapTaskFromPrisma(task),
+				rationaleKey,
+				rationale,
+			};
+		}),
+
+	skipDelegationSuggestion: protectedProcedure
+		.input(
+			z.object({
+				localDateKey: localDateKeySchema,
+				taskId: z.number().int(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+
+			const task = await ctx.db.task.findFirst({
+				where: { id: input.taskId, userId },
+			});
+
+			if (!task) {
+				throw new TRPCError({ code: "NOT_FOUND" });
+			}
+
+			await ctx.db.taskDelegationSkip.upsert({
+				where: {
+					task_delegation_skip_user_task_date: {
+						userId,
+						taskId: input.taskId,
+						localDateKey: input.localDateKey,
+					},
+				},
+				create: {
+					userId,
+					taskId: input.taskId,
+					localDateKey: input.localDateKey,
+				},
+				update: {},
+			});
 		}),
 });

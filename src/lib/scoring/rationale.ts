@@ -16,6 +16,8 @@ export type RationaleKey =
 	| "kickoff_fresh"
 	| "kickoff_resume"
 	| "capacity_fit"
+	| "delegation_low_effort"
+	| "delegation_operational"
 	| "default";
 
 /** F-14 acceptance examples — guarded by copy-contract tests. */
@@ -63,6 +65,10 @@ export function buildRationale(
 			const minutes = context.remainingFocusMinutes ?? 0;
 			return t("capacity_fit", { minutes });
 		}
+		case "delegation_low_effort":
+			return t("delegation_low_effort");
+		case "delegation_operational":
+			return t("delegation_operational");
 		default:
 			return t("default");
 	}

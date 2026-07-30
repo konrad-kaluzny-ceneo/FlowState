@@ -316,15 +316,15 @@ The `TaskDelegationSkip` table is additive (new table, no existing-data backfill
 
 #### Automated
 
-- [ ] 2.1 Typecheck passes: `pnpm typecheck`
-- [ ] 2.2 Unit tests pass (delegation-score, rationale, dominant-factor)
-- [ ] 2.3 Integration tests pass: `day-plan.test.ts`
-- [ ] 2.4 i18n key parity holds: `messages-parity.test.ts`
+- [x] 2.1 Typecheck passes: `pnpm typecheck`
+- [x] 2.2 Unit tests pass (delegation-score, rationale, dominant-factor)
+- [x] 2.3 Integration tests pass: `day-plan.test.ts`
+- [x] 2.4 i18n key parity holds: `messages-parity.test.ts`
 
 #### Manual
 
-- [ ] 2.5 `getDelegationSuggestion` picks the lowest-priority, lowest-effort, non-DEEP_WORK candidate
-- [ ] 2.6 `skipDelegationSuggestion` advances to next candidate or `empty`
+- [x] 2.5 `getDelegationSuggestion` picks the lowest-priority, lowest-effort, non-DEEP_WORK candidate — confirmed via integration tests rather than a live click-through (Phase 3 UI/dev harness doesn't exist yet): `day-plan.test.ts`'s "getDelegationSuggestion" suite seeds a mixed DEEP_WORK/OPERATIONAL/REACTIVE pool and asserts the returned candidate is the low-effort, WHEN_POSSIBLE, non-DEEP_WORK task with `rationaleKey: "delegation_low_effort"`; a dedicated `delegation-score.test.ts` regression test additionally proves a low-priority DEEP_WORK task never wins over a higher-priority delegatable one.
+- [x] 2.6 `skipDelegationSuggestion` advances to next candidate or `empty` — confirmed via integration tests rather than a live click-through: `day-plan.test.ts`'s "advances getDelegationSuggestion to the next candidate after a skip" test calls `skipDelegationSuggestion` then re-calls `getDelegationSuggestion` for the same `localDateKey` and asserts the next-best candidate is returned; "returns empty when the candidate pool is exhausted" covers the exhausted-pool case.
 
 ### Phase 3: Plan dnia UI + task-list mirror + i18n
 
