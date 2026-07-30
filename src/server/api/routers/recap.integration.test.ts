@@ -25,6 +25,15 @@ function recapTestAnchor() {
 	return { now, localDateKey };
 }
 
+/** Wide range covering "now" — mirrors what getLocalDayBoundary would produce
+ * for a test anchored on `now`, without depending on wall-clock local time. */
+function wideRangeAround(now: Date) {
+	return {
+		rangeStart: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+		rangeEnd: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+	};
+}
+
 type CycleRow = {
 	id: number;
 	userId: string;
@@ -68,8 +77,8 @@ function createMockDb() {
 						state?: string | { in: string[] };
 						taskId?: { in: number[] };
 						OR?: Array<{
-							startedAt?: { gte: Date };
-							endedAt?: { gte: Date };
+							startedAt?: { gte: Date; lt?: Date };
+							endedAt?: { gte: Date; lt?: Date };
 						}>;
 					};
 				}) => {
@@ -92,14 +101,24 @@ function createMockDb() {
 						);
 					}
 					if (args.where.OR != null) {
-						const windowStart = args.where.OR[0]?.startedAt?.gte;
-						if (windowStart != null) {
-							rows = rows.filter(
-								(c) =>
-									c.startedAt >= windowStart ||
-									(c.endedAt != null && c.endedAt >= windowStart),
-							);
-						}
+						const startClause = args.where.OR[0]?.startedAt;
+						const endClause = args.where.OR[1]?.endedAt;
+						const gte = startClause?.gte;
+						const lt = startClause?.lt;
+						rows = rows.filter((c) => {
+							const startedInRange =
+								gte != null &&
+								c.startedAt >= gte &&
+								(lt == null || c.startedAt < lt);
+							const endGte = endClause?.gte ?? gte;
+							const endLt = endClause?.lt ?? lt;
+							const endedInRange =
+								c.endedAt != null &&
+								endGte != null &&
+								c.endedAt >= endGte &&
+								(endLt == null || c.endedAt < endLt);
+							return startedInRange || endedInRange;
+						});
 					}
 					return Promise.resolve(rows);
 				},
@@ -260,7 +279,7 @@ describe("recap router integration", () => {
 	});
 
 	it("getDayStats includes interrupted WORK in focusMinutes but not sessionCount", async () => {
-		const { now, localDateKey } = recapTestAnchor();
+		const { now } = recapTestAnchor();
 
 		tasks.push({
 			id: 1,
@@ -300,7 +319,9 @@ describe("recap router integration", () => {
 		);
 
 		const db = createMockDb();
-		const result = await recapCaller(USER, db).getDayStats({ localDateKey });
+		const result = await recapCaller(USER, db).getDayStats(
+			wideRangeAround(now),
+		);
 
 		// Completed (15 min) + interrupted (≈10 min) = 25
 		expect(result.focusMinutes).toBe(25);
@@ -310,7 +331,7 @@ describe("recap router integration", () => {
 	});
 
 	it("getDayStats reports breakMinutes from completed and interrupted breaks", async () => {
-		const { now, localDateKey } = recapTestAnchor();
+		const { now } = recapTestAnchor();
 
 		tasks.push({
 			id: 1,
@@ -350,7 +371,9 @@ describe("recap router integration", () => {
 		);
 
 		const db = createMockDb();
-		const result = await recapCaller(USER, db).getDayStats({ localDateKey });
+		const result = await recapCaller(USER, db).getDayStats(
+			wideRangeAround(now),
+		);
 
 		// SHORT_BREAK completed: 5 min, LONG_BREAK interrupted: 7 min = 12
 		expect(result.breakMinutes).toBe(12);
@@ -360,7 +383,7 @@ describe("recap router integration", () => {
 	});
 
 	it("getDayStats paused-then-stopped cycle counts only pre-pause elapsed", async () => {
-		const { now, localDateKey } = recapTestAnchor();
+		const { now } = recapTestAnchor();
 
 		tasks.push({
 			id: 1,
@@ -392,10 +415,65 @@ describe("recap router integration", () => {
 		});
 
 		const db = createMockDb();
-		const result = await recapCaller(USER, db).getDayStats({ localDateKey });
+		const result = await recapCaller(USER, db).getDayStats(
+			wideRangeAround(now),
+		);
 
 		// Only 5 min of actual focus (not the paused span)
 		expect(result.focusMinutes).toBe(5);
 		expect(result.sessionCount).toBe(0);
+	});
+
+	it("getDayStats only includes cycles within the requested range", async () => {
+		const { now } = recapTestAnchor();
+
+		tasks.push({
+			id: 1,
+			userId: USER,
+			title: "Task",
+			status: "active",
+			isDailyStanding: false,
+			effortMinutes: null,
+			sortOrder: 0,
+			createdAt: now,
+			updatedAt: now,
+		});
+
+		// In range: 2h ago
+		cycles.push({
+			id: 40,
+			userId: USER,
+			taskId: 1,
+			kind: "WORK",
+			state: "COMPLETED",
+			configuredDurationSec: 1500,
+			startedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+			endedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000 + 20 * 60 * 1000),
+			task: { id: 1, title: "Task" },
+		});
+
+		// Out of range: 3 days ago
+		cycles.push({
+			id: 41,
+			userId: USER,
+			taskId: 1,
+			kind: "WORK",
+			state: "COMPLETED",
+			configuredDurationSec: 1500,
+			startedAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
+			endedAt: new Date(
+				now.getTime() - 3 * 24 * 60 * 60 * 1000 + 20 * 60 * 1000,
+			),
+			task: { id: 1, title: "Task" },
+		});
+
+		const db = createMockDb();
+		const result = await recapCaller(USER, db).getDayStats(
+			wideRangeAround(now),
+		);
+
+		// Only the in-range cycle (20 min) counts; the 3-day-old cycle is excluded
+		expect(result.focusMinutes).toBe(20);
+		expect(result.sessionCount).toBe(1);
 	});
 });

@@ -4,8 +4,12 @@ import {
 	type CycleRow,
 	type DayStats,
 } from "~/lib/recap/aggregate-day-stats";
+import { getLocalDayBoundary } from "~/lib/time/local-day-boundary";
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+function defaultTodayRange(): { start: Date; end: Date } {
+	const { start, end } = getLocalDayBoundary();
+	return { start, end };
+}
 
 /**
  * Aggregates guest snapshot cycles into DayStats, reusing the same
@@ -16,16 +20,16 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
  */
 export function buildGuestDayStats(
 	snapshot: GuestSnapshotV1,
-	now: Date = new Date(),
+	range: { start: Date; end: Date } = defaultTodayRange(),
 ): DayStats {
-	const windowStart = new Date(now.getTime() - MS_PER_DAY);
-
-	// Filter to ended cycles within the rolling 24h window
+	// Filter to ended cycles within the requested range
 	const windowCycles = snapshot.cycles.filter(
 		(cycle) =>
 			(cycle.state === "COMPLETED" || cycle.state === "INTERRUPTED") &&
-			(cycle.startedAt >= windowStart ||
-				(cycle.endedAt != null && cycle.endedAt >= windowStart)),
+			((cycle.startedAt >= range.start && cycle.startedAt < range.end) ||
+				(cycle.endedAt != null &&
+					cycle.endedAt >= range.start &&
+					cycle.endedAt < range.end)),
 	);
 
 	// Map guest string taskIds to stable numeric surrogates

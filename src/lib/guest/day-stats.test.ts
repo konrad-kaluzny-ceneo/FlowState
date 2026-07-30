@@ -7,7 +7,10 @@ import {
 	type CycleRow,
 } from "~/lib/recap/aggregate-day-stats";
 
-const NOW = new Date("2026-07-10T14:00:00Z");
+const RANGE = {
+	start: new Date("2026-07-10T00:00:00Z"),
+	end: new Date("2026-07-11T00:00:00Z"),
+};
 
 function makeSnapshot(
 	overrides: Partial<GuestSnapshotV1> = {},
@@ -23,7 +26,7 @@ function makeSnapshot(
 
 describe("buildGuestDayStats", () => {
 	it("returns empty stats for empty snapshot", () => {
-		const result = buildGuestDayStats(makeSnapshot(), NOW);
+		const result = buildGuestDayStats(makeSnapshot(), RANGE);
 		expect(result.focusMinutes).toBe(0);
 		expect(result.breakMinutes).toBe(0);
 		expect(result.sessionCount).toBe(0);
@@ -76,7 +79,7 @@ describe("buildGuestDayStats", () => {
 			],
 		});
 
-		const result = buildGuestDayStats(snapshot, NOW);
+		const result = buildGuestDayStats(snapshot, RANGE);
 		expect(result.focusMinutes).toBe(35); // 25 + 10
 		expect(result.sessionCount).toBe(1); // Only COMPLETED
 		expect(result.avgSessionMinutes).toBe(25);
@@ -110,12 +113,12 @@ describe("buildGuestDayStats", () => {
 			],
 		});
 
-		const result = buildGuestDayStats(snapshot, NOW);
+		const result = buildGuestDayStats(snapshot, RANGE);
 		expect(result.breakMinutes).toBe(12); // 5 + 7
 		expect(result.focusMinutes).toBe(0);
 	});
 
-	it("excludes cycles outside the 24h window", () => {
+	it("excludes cycles outside the requested range", () => {
 		const snapshot = makeSnapshot({
 			cycles: [
 				{
@@ -132,7 +135,7 @@ describe("buildGuestDayStats", () => {
 			],
 		});
 
-		const result = buildGuestDayStats(snapshot, NOW);
+		const result = buildGuestDayStats(snapshot, RANGE);
 		expect(result.focusMinutes).toBe(0);
 	});
 
@@ -194,7 +197,7 @@ describe("buildGuestDayStats", () => {
 			],
 		});
 
-		const guestResult = buildGuestDayStats(snapshot, NOW);
+		const guestResult = buildGuestDayStats(snapshot, RANGE);
 
 		// Build equivalent CycleRow[] for aggregateDayStats
 		const authCycles: CycleRow[] = [

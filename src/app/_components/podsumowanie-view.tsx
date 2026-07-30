@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { ComingSoonPreview } from "~/app/_components/ui/coming-soon-preview";
@@ -12,6 +13,19 @@ import type { UserLocale } from "~/lib/domain/user-locale";
 import type { DayStats, HourBucket } from "~/lib/recap/aggregate-day-stats";
 import { filterCompletedRecapRows } from "~/lib/recap/filter-completed-recap-rows";
 import type { RecapTaskRow } from "~/lib/recap/types";
+import { formatLocalDateKey } from "~/lib/time/local-date-key";
+
+function parseLocalDateKey(localDateKey: string): Date {
+	const [year, month, day] = localDateKey.split("-").map(Number);
+	return new Date(year ?? 1970, (month ?? 1) - 1, day ?? 1);
+}
+
+function formatViewedDate(localDateKey: string, locale: UserLocale): string {
+	return new Intl.DateTimeFormat(locale, {
+		month: "short",
+		day: "numeric",
+	}).format(parseLocalDateKey(localDateKey));
+}
 
 // ─── KPI card ─────────────────────────────────────────────────────────────────
 
@@ -327,6 +341,11 @@ export type PodsumowanieViewProps = {
 	last24Hours?: RecapTaskRow[];
 	isLoading?: boolean;
 	isGuest?: boolean;
+	viewedLocalDateKey?: string;
+	onPreviousDay?: () => void;
+	onNextDay?: () => void;
+	onToday?: () => void;
+	canGoNext?: boolean;
 };
 
 export function PodsumowanieView({
@@ -334,11 +353,26 @@ export function PodsumowanieView({
 	last24Hours = [],
 	isLoading = false,
 	isGuest = false,
+	viewedLocalDateKey,
+	onPreviousDay,
+	onNextDay,
+	onToday,
+	canGoNext = false,
 }: PodsumowanieViewProps) {
 	const t = useTranslations("Podsumowanie");
 	const tTasks = useTranslations("Tasks");
 	const locale = useLocale() as UserLocale;
 	const completedTasks = filterCompletedRecapRows(last24Hours);
+
+	const isViewingToday =
+		viewedLocalDateKey == null || viewedLocalDateKey === formatLocalDateKey();
+	const formattedViewedDate =
+		viewedLocalDateKey != null
+			? formatViewedDate(viewedLocalDateKey, locale)
+			: "";
+	const subtitle = isViewingToday
+		? t("subtitle")
+		: t("subtitlePastDay", { date: formattedViewedDate });
 
 	const workTypeLabel = (wt: string) => {
 		const key = WORK_TYPE_LABEL_KEY[wt] ?? "workTypeUncategorized";
@@ -355,7 +389,7 @@ export function PodsumowanieView({
 					<h2 className="font-semibold text-lg text-text-section">
 						{t("title")}
 					</h2>
-					<p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
+					<p className="mt-1 text-sm text-text-secondary">{subtitle}</p>
 				</div>
 				<div
 					className="rounded-card border border-card-border bg-surface-card px-4 py-3 shadow-sm"
@@ -377,7 +411,7 @@ export function PodsumowanieView({
 					<h2 className="font-semibold text-lg text-text-section">
 						{t("title")}
 					</h2>
-					<p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
+					<p className="mt-1 text-sm text-text-secondary">{subtitle}</p>
 				</div>
 				<p
 					className="text-sm text-text-dimmed"
@@ -431,7 +465,7 @@ export function PodsumowanieView({
 				<h2 className="font-semibold text-lg text-text-section">
 					{t("title")}
 				</h2>
-				<p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
+				<p className="mt-1 text-sm text-text-secondary">{subtitle}</p>
 			</div>
 
 			{/* No data state */}
@@ -610,16 +644,40 @@ export function PodsumowanieView({
 					</ComingSoonPreview>
 				</div>
 				<div className="flex items-end">
-					<ComingSoonPreview
-						label={t("dateNavComingSoon")}
-						testId="podsumowanie-date-nav-preview"
+					<fieldset
+						aria-label={t("dateNavAria")}
+						className="m-0 flex w-full items-center justify-between gap-2 rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
+						data-testid="podsumowanie-date-nav"
 					>
-						<div className="flex items-center justify-between gap-2 p-4">
-							<div className="h-8 w-8 rounded-full bg-segment-inactive" />
-							<div className="h-4 w-24 rounded bg-segment-inactive" />
-							<div className="h-8 w-8 rounded-full bg-segment-inactive" />
-						</div>
-					</ComingSoonPreview>
+						<button
+							aria-label={t("dateNavPrevious")}
+							className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-card-muted"
+							data-testid="podsumowanie-date-nav-prev"
+							onClick={onPreviousDay}
+							type="button"
+						>
+							<ChevronLeft aria-hidden="true" className="h-4 w-4" />
+						</button>
+						<button
+							className="font-medium text-primary text-sm disabled:cursor-default"
+							data-testid="podsumowanie-date-nav-label"
+							disabled={isViewingToday}
+							onClick={onToday}
+							type="button"
+						>
+							{isViewingToday ? t("dateNavToday") : formattedViewedDate}
+						</button>
+						<button
+							aria-label={t("dateNavNext")}
+							className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-card-muted disabled:opacity-40"
+							data-testid="podsumowanie-date-nav-next"
+							disabled={!canGoNext}
+							onClick={onNextDay}
+							type="button"
+						>
+							<ChevronRight aria-hidden="true" className="h-4 w-4" />
+						</button>
+					</fieldset>
 				</div>
 			</div>
 

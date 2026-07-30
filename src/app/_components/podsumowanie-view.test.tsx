@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import { PodsumowanieView } from "~/app/_components/podsumowanie-view";
 import type { DayStats } from "~/lib/recap/aggregate-day-stats";
@@ -121,11 +121,11 @@ describe("PodsumowanieView", () => {
 		expect(screen.getByTestId("podsumowanie-task-donut")).toBeTruthy();
 	});
 
-	it("always renders deferred placeholders", () => {
+	it("always renders deferred placeholders and date nav", () => {
 		render(<PodsumowanieView stats={statsWithData} />);
 		expect(screen.getByTestId("podsumowanie-deferred")).toBeTruthy();
 		expect(screen.getByTestId("podsumowanie-best-time-preview")).toBeTruthy();
-		expect(screen.getByTestId("podsumowanie-date-nav-preview")).toBeTruthy();
+		expect(screen.getByTestId("podsumowanie-date-nav")).toBeTruthy();
 	});
 
 	it("renders motivational footer banner", () => {
@@ -154,5 +154,54 @@ describe("PodsumowanieView", () => {
 			<PodsumowanieView last24Hours={[inProgressRow]} stats={statsWithData} />,
 		);
 		expect(screen.getByTestId("podsumowanie-completed-empty")).toBeTruthy();
+	});
+
+	it("disables the next-day button when viewing today", () => {
+		render(<PodsumowanieView canGoNext={false} stats={statsWithData} />);
+		const nextButton = screen.getByTestId(
+			"podsumowanie-date-nav-next",
+		) as HTMLButtonElement;
+		expect(nextButton.disabled).toBe(true);
+	});
+
+	it("enables the next-day button and calls onNextDay when viewing a past day", () => {
+		const onNextDay = vi.fn();
+		render(
+			<PodsumowanieView
+				canGoNext
+				onNextDay={onNextDay}
+				stats={statsWithData}
+				viewedLocalDateKey="2026-06-19"
+			/>,
+		);
+		const nextButton = screen.getByTestId(
+			"podsumowanie-date-nav-next",
+		) as HTMLButtonElement;
+		expect(nextButton.disabled).toBe(false);
+		fireEvent.click(nextButton);
+		expect(onNextDay).toHaveBeenCalledOnce();
+	});
+
+	it("calls onPreviousDay when the previous-day button is clicked", () => {
+		const onPreviousDay = vi.fn();
+		render(
+			<PodsumowanieView onPreviousDay={onPreviousDay} stats={statsWithData} />,
+		);
+		fireEvent.click(screen.getByTestId("podsumowanie-date-nav-prev"));
+		expect(onPreviousDay).toHaveBeenCalledOnce();
+	});
+
+	it("shows the past-day subtitle when viewing a day other than today", () => {
+		render(
+			<PodsumowanieView
+				stats={statsWithData}
+				viewedLocalDateKey="2026-06-19"
+			/>,
+		);
+		const view = screen.getByTestId("podsumowanie-view");
+		expect(view.textContent).toContain("Your focus activity for Jun 19.");
+		expect(view.textContent).not.toContain(
+			"Your focus activity from the last 24 hours.",
+		);
 	});
 });
