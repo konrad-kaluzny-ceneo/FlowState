@@ -3,9 +3,12 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 
+import { DelegationSuggestionCard } from "~/app/_components/delegation-suggestion-card";
 import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
 import { ComingSoonPreview } from "~/app/_components/ui/coming-soon-preview";
 import type { useDayPlan } from "~/hooks/use-day-plan";
+import { useDelegationSuggestion } from "~/hooks/use-delegation-suggestion";
+import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { formatFocusMinutes } from "~/lib/time/format-focus-minutes";
 
 const PRESET_HOURS_MINUTES = [120, 240, 360] as const;
@@ -229,6 +232,46 @@ function BudgetPanel({
 	);
 }
 
+function DelegationSuggestionSection() {
+	const delegation = useDelegationSuggestion();
+	const { updateTask } = useTaskMutations();
+	const [isAccepting, setIsAccepting] = useState(false);
+
+	const handleAccept = useCallback(async () => {
+		if (delegation.candidate == null) {
+			return;
+		}
+		setIsAccepting(true);
+		try {
+			await updateTask({ id: delegation.candidate.id, status: "delegated" });
+		} finally {
+			setIsAccepting(false);
+		}
+	}, [delegation.candidate, updateTask]);
+
+	if (
+		delegation.status !== "ready" ||
+		delegation.candidate == null ||
+		delegation.rationale == null
+	) {
+		const fallbackStatus =
+			delegation.status === "ready" ? "empty" : delegation.status;
+		return <DelegationSuggestionCard status={fallbackStatus} />;
+	}
+
+	return (
+		<DelegationSuggestionCard
+			isAccepting={isAccepting}
+			isSkipping={delegation.isSkipping}
+			onAccept={() => void handleAccept()}
+			onSkip={() => void delegation.skip()}
+			rationale={delegation.rationale}
+			status="ready"
+			taskTitle={delegation.candidate.title}
+		/>
+	);
+}
+
 export function PlanDniaView({ dayPlan }: PlanDniaViewProps) {
 	const t = useTranslations("PlanDnia");
 
@@ -270,6 +313,8 @@ export function PlanDniaView({ dayPlan }: PlanDniaViewProps) {
 			) : (
 				<BudgetPanel dayPlan={dayPlan} />
 			)}
+
+			{dayPlan != null && !dayPlan.isLoading && <DelegationSuggestionSection />}
 		</div>
 	);
 }

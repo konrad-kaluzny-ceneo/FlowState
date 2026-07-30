@@ -181,6 +181,15 @@
 		"acceptLabel": "Skup się na tym",
 		"retry": "Spróbuj ponownie"
 	},
+	"Delegation": {
+		"heading": "Rozważ oddelegowanie",
+		"loading": "Szukam czegoś do oddelegowania…",
+		"empty": "Nic do oddelegowania dziś.",
+		"acceptPending": "Deleguję…",
+		"acceptLabel": "Oddeleguj",
+		"skipPending": "Pomijam…",
+		"skipLabel": "Pomiń"
+	},
 	"Scoring": {
 		"rationale": {
 			"energy_deep": "Głęboka praca — masz skupienie i mało rozproszeń",
@@ -279,10 +288,14 @@
 		"statusCompleted": "Ukończone",
 		"statusArchived": "Zarchiwizowane",
 		"statusBlocked": "Zablokowane",
+		"statusDelegated": "Oddelegowane",
 		"sectionBlocked": "Zablokowane ({count})",
+		"sectionDelegated": "Oddelegowane ({count})",
 		"blockedEmpty": "Brak zablokowanych zadań",
+		"delegatedEmpty": "Brak oddelegowanych zadań",
 		"blockAria": "Zablokuj zadanie",
 		"unblockAria": "Odblokuj zadanie",
+		"undelegateAria": "Przywróć do aktywnych",
 		"plannedEmpty": "Brak zaplanowanych zadań",
 		"completedEmpty": "Brak ukończonych zadań",
 		"workType": {

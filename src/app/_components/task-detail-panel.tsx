@@ -136,7 +136,9 @@ export function TaskDetailPanel({
 					? t("statusCompleted")
 					: task.status === "blocked"
 						? t("statusBlocked")
-						: t("statusArchived");
+						: task.status === "delegated"
+							? t("statusDelegated")
+							: t("statusArchived");
 
 	return (
 		<ModalShell

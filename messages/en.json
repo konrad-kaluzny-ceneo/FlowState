@@ -181,6 +181,15 @@
 		"acceptLabel": "Focus this",
 		"retry": "Retry"
 	},
+	"Delegation": {
+		"heading": "Consider delegating",
+		"loading": "Looking for something to hand off…",
+		"empty": "Nothing to delegate today.",
+		"acceptPending": "Delegating…",
+		"acceptLabel": "Delegate",
+		"skipPending": "Skipping…",
+		"skipLabel": "Skip"
+	},
 	"Scoring": {
 		"rationale": {
 			"energy_deep": "Deep work — you're focused with few interruptions",
@@ -279,10 +288,14 @@
 		"statusCompleted": "Completed",
 		"statusArchived": "Archived",
 		"statusBlocked": "Blocked",
+		"statusDelegated": "Delegated",
 		"sectionBlocked": "Blocked ({count})",
+		"sectionDelegated": "Delegated ({count})",
 		"blockedEmpty": "No blocked tasks",
+		"delegatedEmpty": "No delegated tasks",
 		"blockAria": "Block task",
 		"unblockAria": "Unblock task",
+		"undelegateAria": "Revert to active",
 		"plannedEmpty": "No planned tasks yet",
 		"completedEmpty": "No completed tasks yet",
 		"workType": {
