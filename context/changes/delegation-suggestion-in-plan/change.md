@@ -14,7 +14,7 @@ In the Plan dnia view, the scorer proposes tasks suitable for delegation (to an 
 
 Prerequisites: S-45 (Plan dnia, shipped), S-46 (MCP server, archived 2026-07-28) — both done.
 
-Plan complete: `context/changes/delegation-suggestion-in-plan/plan.md` (+ `plan-brief.md`). 3 phases: (1) `"delegated"` status seam + `TaskDelegationSkip` migration, (2) delegation scoring/rationale + `dayPlanRouter` procedures, (3) Plan dnia UI + `/tasks` Delegated tab + i18n. Start implementation with `/10x-implement delegation-suggestion-in-plan phase 1`.
+Plan complete: `context/changes/delegation-suggestion-in-plan/plan.md` (+ `plan-brief.md`). 3 phases: (1) `"delegated"` status seam + `TaskDelegationSkip` migration, (2) delegation scoring/rationale + `dayPlanRouter` procedures, (3) Plan dnia UI + `/tasks` Delegated tab + i18n. All 3 phases implemented — see "Implementation complete" below.
 
 Plan reviewed: `context/changes/delegation-suggestion-in-plan/reviews/plan-review.md`. Verdict APPROVED (fixed in place) — 3 WARNINGs fixed: DEEP_WORK hard-excluded from delegation scoring (was a soft multiplier dominated by the priority divisor), ownership check added to `skipDelegationSuggestion`, `formatDelegationRationale` signature/locale inconsistency clarified. No CRITICAL findings, no PRD/roadmap drift.
 

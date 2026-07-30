@@ -127,6 +127,12 @@ export function TaskDetailPanel({
 		onClose();
 	}
 
+	// Mirrors the row-level guard in task-list.tsx (`!dimmed && !blocked &&
+	// !delegated`, i.e. only "active"/"planned" rows show a Target button):
+	// blocked, delegated, and completed tasks must not be startable into a
+	// focus session, including via the detail panel's Start Working action.
+	const canStartFocus = task.status === "active" || task.status === "planned";
+
 	const statusLabel =
 		task.status === "active"
 			? t("statusActive")
@@ -187,7 +193,7 @@ export function TaskDetailPanel({
 				<button
 					className={overlayButtonClass.primaryFull}
 					data-testid="task-detail-start"
-					disabled={cycleLocked}
+					disabled={cycleLocked || !canStartFocus}
 					onClick={() => {
 						commitIfDirty();
 						onStartFocus(task.id, task);

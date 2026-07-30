@@ -577,4 +577,57 @@ describe("TaskList", () => {
 			"Delegated",
 		);
 	});
+
+	it("disables Start Working in the detail panel for a delegated task", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[
+					makeTask({ id: 1, title: "Delegated task", status: "delegated" }),
+				]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("tab", { name: "Delegated (1)" }));
+		fireEvent.click(screen.getByRole("button", { name: "Delegated task" }));
+		fireEvent.click(screen.getByTestId("task-detail-start"));
+
+		expect(
+			(screen.getByTestId("task-detail-start") as HTMLButtonElement).disabled,
+		).toBe(true);
+		expect(onFocusTask).not.toHaveBeenCalled();
+	});
+
+	it("disables Start Working in the detail panel for a blocked task", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Blocked task", status: "blocked" })]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("tab", { name: "Blocked (1)" }));
+		fireEvent.click(screen.getByRole("button", { name: "Blocked task" }));
+		fireEvent.click(screen.getByTestId("task-detail-start"));
+
+		expect(
+			(screen.getByTestId("task-detail-start") as HTMLButtonElement).disabled,
+		).toBe(true);
+		expect(onFocusTask).not.toHaveBeenCalled();
+	});
+
+	it("keeps Start Working enabled in the detail panel for an active task", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Active task", status: "active" })]}
+			/>,
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "Active task" }));
+
+		expect(
+			(screen.getByTestId("task-detail-start") as HTMLButtonElement).disabled,
+		).toBe(false);
+	});
 });
