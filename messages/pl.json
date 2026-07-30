@@ -181,6 +181,15 @@
 		"acceptLabel": "Skup się na tym",
 		"retry": "Spróbuj ponownie"
 	},
+	"Delegation": {
+		"heading": "Rozważ oddelegowanie",
+		"loading": "Szukam czegoś do oddelegowania…",
+		"empty": "Nic do oddelegowania dziś.",
+		"acceptPending": "Deleguję…",
+		"acceptLabel": "Oddeleguj",
+		"skipPending": "Pomijam…",
+		"skipLabel": "Pomiń"
+	},
 	"Scoring": {
 		"rationale": {
 			"energy_deep": "Głęboka praca — masz skupienie i mało rozproszeń",
@@ -197,6 +206,8 @@
 			"kickoff_fresh": "Nowa sesja — sensowny punkt startowy",
 			"kickoff_resume": "Po przerwie — gotów na następny blok skupienia",
 			"capacity_fit": "Mieści się w ~{minutes} min, które zostały dziś",
+			"delegation_low_effort": "Szybkie, mało czasochłonne zadanie — dobre do oddelegowania",
+			"delegation_operational": "Zadanie operacyjne — dobre do oddelegowania",
 			"default": "Kolejny krok — zgodnie z energią i zadaniami na dziś"
 		},
 		"factorChips": {
@@ -277,10 +288,14 @@
 		"statusCompleted": "Ukończone",
 		"statusArchived": "Zarchiwizowane",
 		"statusBlocked": "Zablokowane",
+		"statusDelegated": "Oddelegowane",
 		"sectionBlocked": "Zablokowane ({count})",
+		"sectionDelegated": "Oddelegowane ({count})",
 		"blockedEmpty": "Brak zablokowanych zadań",
+		"delegatedEmpty": "Brak oddelegowanych zadań",
 		"blockAria": "Zablokuj zadanie",
 		"unblockAria": "Odblokuj zadanie",
+		"undelegateAria": "Przywróć do aktywnych",
 		"plannedEmpty": "Brak zaplanowanych zadań",
 		"completedEmpty": "Brak ukończonych zadań",
 		"workType": {

@@ -89,8 +89,9 @@ model Task {
   createdAt         DateTime          @default(now()) @map("createdAt") @db.Timestamptz
   updatedAt         DateTime?         @updatedAt @map("updatedAt") @db.Timestamptz
 
-  cycles         Cycle[]
-  dayCompletions TaskDayCompletion[]
+  cycles          Cycle[]
+  dayCompletions  TaskDayCompletion[]
+  delegationSkips TaskDelegationSkip[]
 
   lastFocusedSessions Session[] @relation("SessionLastFocusedTask")
 
@@ -223,6 +224,20 @@ model TaskDayCompletion {
   @@unique([userId, taskId, localDateKey], name: "task_day_completion_user_task_date")
   @@index([userId, localDateKey], name: "task_day_completion_user_date_idx")
   @@map("flow_state_task_day_completion")
+}
+
+model TaskDelegationSkip {
+  id           Int      @id @default(autoincrement())
+  userId       String   @map("user_id") @db.VarChar(255)
+  taskId       Int      @map("task_id")
+  localDateKey String   @map("local_date_key") @db.VarChar(10)
+  skippedAt    DateTime @default(now()) @map("skipped_at") @db.Timestamptz
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taskId, localDateKey], name: "task_delegation_skip_user_task_date")
+  @@index([userId, localDateKey], name: "task_delegation_skip_user_date_idx")
+  @@map("flow_state_task_delegation_skip")
 }
 
 model ApiKey {

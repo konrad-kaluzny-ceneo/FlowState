@@ -37,7 +37,7 @@ import type { UserLocale } from "~/lib/domain/user-locale";
 import type { TaskFootprint } from "~/lib/recap/types";
 
 type WorkType = "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
-type TabValue = "active" | "planned" | "completed" | "blocked";
+type TabValue = "active" | "planned" | "completed" | "blocked" | "delegated";
 type TypeFilterValue = "all" | WorkType;
 type SortValue = "manual" | "priority" | "effort";
 
@@ -412,7 +412,13 @@ function StaticTaskRow({
 	t,
 	dimmed = false,
 	blocked = false,
-}: TaskRowProps & { testId: string; dimmed?: boolean; blocked?: boolean }) {
+	delegated = false,
+}: TaskRowProps & {
+	testId: string;
+	dimmed?: boolean;
+	blocked?: boolean;
+	delegated?: boolean;
+}) {
 	const isContinueRow = continueTaskId === task.id;
 	const footprint = footprints[String(task.id)];
 	const showFootprint = footprint != null && focusedTaskId === task.id;
@@ -421,7 +427,7 @@ function StaticTaskRow({
 		<li
 			className={`${taskRowCardClass} ${
 				dimmed ? "bg-surface-card-muted/80" : ""
-			} ${blocked ? "bg-surface-card-muted/60 opacity-80" : ""} ${focusedTaskId === task.id ? "ring-2 ring-focus" : ""} ${
+			} ${blocked ? "bg-surface-card-muted/60 opacity-80" : ""} ${delegated ? "bg-surface-card-muted/60 opacity-80" : ""} ${focusedTaskId === task.id ? "ring-2 ring-focus" : ""} ${
 				isContinueRow ? "ring-2 ring-accent-suggestion" : ""
 			} ${completingTaskId === task.id ? "animate-task-complete" : ""}`}
 			data-testid={testId}
@@ -432,6 +438,17 @@ function StaticTaskRow({
 						aria-label={t("unblockAria")}
 						className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-amber-400 bg-amber-400/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
 						data-testid="task-unblock-button"
+						disabled={cycleLocked || isMutating}
+						onClick={() => {
+							void onUpdateTask({ id: task.id, status: "active" });
+						}}
+						type="button"
+					/>
+				) : delegated ? (
+					<button
+						aria-label={t("undelegateAria")}
+						className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-sky-400 bg-sky-400/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
+						data-testid="task-undelegate-button"
 						disabled={cycleLocked || isMutating}
 						onClick={() => {
 							void onUpdateTask({ id: task.id, status: "active" });
@@ -490,7 +507,7 @@ function StaticTaskRow({
 					workType={task.workType}
 				/>
 				<div className="flex shrink-0 items-center gap-1">
-					{!dimmed && !blocked && (
+					{!dimmed && !blocked && !delegated && (
 						<button
 							aria-label={t("blockAria")}
 							className="shrink-0 rounded-lg p-2 text-text-dimmed transition hover:bg-amber-400/20 hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40"
@@ -504,7 +521,7 @@ function StaticTaskRow({
 							⊘
 						</button>
 					)}
-					{!dimmed && !blocked && (
+					{!dimmed && !blocked && !delegated && (
 						<button
 							aria-label={
 								focusedTaskId === task.id ? t("focusedAria") : t("focusAria")
@@ -634,6 +651,7 @@ export function TaskList({
 	const plannedTasksAll = tasks.filter((task) => task.status === "planned");
 	const completedTasksAll = tasks.filter((task) => task.status === "completed");
 	const blockedTasksAll = tasks.filter((task) => task.status === "blocked");
+	const delegatedTasksAll = tasks.filter((task) => task.status === "delegated");
 
 	const isManualView = typeFilter === "all" && sortKey === "manual";
 	const activeTasks = applyFilterAndSort(activeTasksAll, typeFilter, sortKey);
@@ -644,6 +662,11 @@ export function TaskList({
 		sortKey,
 	);
 	const blockedTasks = applyFilterAndSort(blockedTasksAll, typeFilter, sortKey);
+	const delegatedTasks = applyFilterAndSort(
+		delegatedTasksAll,
+		typeFilter,
+		sortKey,
+	);
 
 	const projectSuggestions = useMemo(() => {
 		const values = new Set<string>();
@@ -737,6 +760,10 @@ export function TaskList({
 		{
 			value: "blocked",
 			label: t("sectionBlocked", { count: blockedTasksAll.length }),
+		},
+		{
+			value: "delegated",
+			label: t("sectionDelegated", { count: delegatedTasksAll.length }),
 		},
 	];
 
@@ -965,6 +992,24 @@ export function TaskList({
 								key={String(task.id)}
 								task={task}
 								testId="blocked-task-row"
+							/>
+						))}
+					</ul>
+				)}
+			</TabPanel>
+
+			<TabPanel activeValue={activeTab} tabsId="zadania-tabs" value="delegated">
+				{delegatedTasks.length === 0 ? (
+					<p className="text-sm text-text-secondary">{t("delegatedEmpty")}</p>
+				) : (
+					<ul className="space-y-3">
+						{delegatedTasks.map((task) => (
+							<StaticTaskRow
+								{...rowSharedProps}
+								delegated
+								key={String(task.id)}
+								task={task}
+								testId="delegated-task-row"
 							/>
 						))}
 					</ul>

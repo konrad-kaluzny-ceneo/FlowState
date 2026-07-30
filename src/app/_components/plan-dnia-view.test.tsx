@@ -1,12 +1,54 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { useDayPlan } from "~/hooks/use-day-plan";
+import type { useDelegationSuggestion } from "~/hooks/use-delegation-suggestion";
 import { IntlTestWrapper } from "~/i18n/test-intl";
 
 import { PlanDniaView } from "./plan-dnia-view";
 
 type DayPlan = ReturnType<typeof useDayPlan>;
+type DelegationSuggestion = ReturnType<typeof useDelegationSuggestion>;
+
+const delegationSuggestionMock = vi.fn<() => DelegationSuggestion>();
+const updateTaskMock = vi.fn().mockResolvedValue(undefined);
+const invalidateDelegationSuggestionMock = vi.fn().mockResolvedValue(undefined);
+
+vi.mock("~/hooks/use-delegation-suggestion", () => ({
+	useDelegationSuggestion: () => delegationSuggestionMock(),
+}));
+
+vi.mock("~/hooks/use-task-mutations", () => ({
+	useTaskMutations: () => ({
+		updateTask: updateTaskMock,
+	}),
+}));
+
+vi.mock("~/trpc/react", () => ({
+	api: {
+		useUtils: () => ({
+			dayPlan: {
+				getDelegationSuggestion: {
+					invalidate: invalidateDelegationSuggestionMock,
+				},
+			},
+		}),
+	},
+}));
+
+function makeDelegationSuggestion(
+	overrides: Partial<DelegationSuggestion> = {},
+): DelegationSuggestion {
+	return {
+		localDateKey: "2026-07-05",
+		status: "empty",
+		candidate: null,
+		rationale: null,
+		skip: vi.fn().mockResolvedValue(undefined),
+		isSkipping: false,
+		...overrides,
+	};
+}
 
 function makeDayPlan(overrides: Partial<DayPlan> = {}): DayPlan {
 	return {
@@ -30,6 +72,13 @@ function renderView(ui: ReactElement) {
 }
 
 describe("PlanDniaView", () => {
+	beforeEach(() => {
+		delegationSuggestionMock.mockReset();
+		delegationSuggestionMock.mockReturnValue(makeDelegationSuggestion());
+		updateTaskMock.mockClear();
+		invalidateDelegationSuggestionMock.mockClear();
+	});
+
 	it("shows a guest empty state when there is no day plan", () => {
 		renderView(<PlanDniaView dayPlan={undefined} />);
 
@@ -93,5 +142,83 @@ describe("PlanDniaView", () => {
 
 		await screen.findByTestId("plan-dnia-change-btn");
 		expect(setBudget).toHaveBeenCalledWith(360);
+	});
+
+	it("shows the delegation suggestion card with a ready candidate", () => {
+		delegationSuggestionMock.mockReturnValue(
+			makeDelegationSuggestion({
+				status: "ready",
+				candidate: { id: 7, title: "File expense report" } as never,
+				rationale: "Operational work — a good fit to hand off",
+			}),
+		);
+
+		renderView(
+			<PlanDniaView
+				dayPlan={makeDayPlan({
+					hasBudget: true,
+					budgetMinutes: 240,
+					usedMinutes: 60,
+					remainingMinutes: 180,
+				})}
+			/>,
+		);
+
+		expect(screen.getByTestId("delegation-suggestion-card")).toBeTruthy();
+		expect(screen.getByTestId("delegation-task-title").textContent).toBe(
+			"File expense report",
+		);
+	});
+
+	it("accepting the delegation suggestion calls updateTask with status delegated", async () => {
+		delegationSuggestionMock.mockReturnValue(
+			makeDelegationSuggestion({
+				localDateKey: "2026-07-05",
+				status: "ready",
+				candidate: { id: 7, title: "File expense report" } as never,
+				rationale: "Operational work — a good fit to hand off",
+			}),
+		);
+
+		renderView(
+			<PlanDniaView
+				dayPlan={makeDayPlan({
+					hasBudget: true,
+					budgetMinutes: 240,
+					usedMinutes: 60,
+					remainingMinutes: 180,
+				})}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId("delegation-accept-btn"));
+
+		expect(updateTaskMock).toHaveBeenCalledWith({
+			id: 7,
+			status: "delegated",
+		});
+
+		// Accepting must invalidate the cached suggestion the same way skip
+		// already does — otherwise the card keeps showing the just-delegated
+		// task as a live "ready" candidate until the query's staleTime lapses.
+		await vi.waitFor(() => {
+			expect(invalidateDelegationSuggestionMock).toHaveBeenCalledWith({
+				localDateKey: "2026-07-05",
+			});
+		});
+	});
+
+	it("shows nothing for guest mode (no day plan)", () => {
+		renderView(<PlanDniaView dayPlan={undefined} />);
+
+		expect(screen.queryByTestId("delegation-suggestion-card")).toBeNull();
+		expect(delegationSuggestionMock).not.toHaveBeenCalled();
+	});
+
+	it("shows nothing for the delegation card while the day plan is loading", () => {
+		renderView(<PlanDniaView dayPlan={makeDayPlan({ isLoading: true })} />);
+
+		expect(screen.queryByTestId("delegation-suggestion-card")).toBeNull();
+		expect(delegationSuggestionMock).not.toHaveBeenCalled();
 	});
 });

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import type { DelegationCandidateTask } from "./delegation-score";
 import {
+	formatDelegationRationale,
 	getDominantRationaleKey,
 	getFactorContributions,
 } from "./dominant-factor";
@@ -174,5 +176,58 @@ describe("getDominantRationaleKey", () => {
 		expect(
 			contributions.find((item) => item.key === "horizon_asap"),
 		).toMatchObject({ magnitude: 0.72 });
+	});
+});
+
+const baseDelegationTask: DelegationCandidateTask = {
+	id: 1,
+	workType: "OPERATIONAL",
+	effortMinutes: null,
+	commitmentHorizon: "WHEN_POSSIBLE",
+	importance: 2,
+	urgency: 2,
+	sortOrder: 0,
+	createdAt: new Date("2026-01-01"),
+};
+
+describe("formatDelegationRationale", () => {
+	it("picks delegation_low_effort when effortMinutes <= 30", () => {
+		const task: DelegationCandidateTask = {
+			...baseDelegationTask,
+			effortMinutes: 20,
+		};
+		const result = formatDelegationRationale(task);
+		expect(result.rationaleKey).toBe("delegation_low_effort");
+		expect(result.rationale.length).toBeGreaterThan(0);
+	});
+
+	it("picks delegation_operational when effortMinutes is null", () => {
+		const task: DelegationCandidateTask = {
+			...baseDelegationTask,
+			effortMinutes: null,
+		};
+		const result = formatDelegationRationale(task);
+		expect(result.rationaleKey).toBe("delegation_operational");
+	});
+
+	it("picks delegation_operational when effortMinutes > 30", () => {
+		const task: DelegationCandidateTask = {
+			...baseDelegationTask,
+			effortMinutes: 45,
+		};
+		const result = formatDelegationRationale(task);
+		expect(result.rationaleKey).toBe("delegation_operational");
+	});
+
+	it("returns a non-empty English rationale sentence regardless of task attributes", () => {
+		const lowEffort = formatDelegationRationale({
+			...baseDelegationTask,
+			effortMinutes: 10,
+		});
+		const operational = formatDelegationRationale({
+			...baseDelegationTask,
+			effortMinutes: 60,
+		});
+		expect(lowEffort.rationale).not.toBe(operational.rationale);
 	});
 });

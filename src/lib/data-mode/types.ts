@@ -28,7 +28,8 @@ export type DomainTaskStatus =
 	| "completed"
 	| "archived"
 	| "planned"
-	| "blocked";
+	| "blocked"
+	| "delegated";
 
 export type DomainTask = {
 	id: DomainTaskId;
@@ -107,7 +108,7 @@ export interface TaskRepository {
 		input: {
 			id: DomainTaskId;
 			title?: string;
-			status?: "active" | "completed" | "planned" | "blocked";
+			status?: "active" | "completed" | "planned" | "blocked" | "delegated";
 			workType?: WorkType;
 			weight?: 1 | 2 | 3;
 			resumeNote?: string | null;

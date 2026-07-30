@@ -181,6 +181,15 @@
 		"acceptLabel": "Focus this",
 		"retry": "Retry"
 	},
+	"Delegation": {
+		"heading": "Consider delegating",
+		"loading": "Looking for something to hand off…",
+		"empty": "Nothing to delegate today.",
+		"acceptPending": "Delegating…",
+		"acceptLabel": "Delegate",
+		"skipPending": "Skipping…",
+		"skipLabel": "Skip"
+	},
 	"Scoring": {
 		"rationale": {
 			"energy_deep": "Deep work — you're focused with few interruptions",
@@ -197,6 +206,8 @@
 			"kickoff_fresh": "Fresh session — here's a strong starting point",
 			"kickoff_resume": "Back from break — ready for your next focus block",
 			"capacity_fit": "Fits ~{minutes} min left today",
+			"delegation_low_effort": "Quick, low-effort task — a good fit to hand off",
+			"delegation_operational": "Operational work — a good fit to hand off",
 			"default": "Next up based on your energy and task mix"
 		},
 		"factorChips": {
@@ -277,10 +288,14 @@
 		"statusCompleted": "Completed",
 		"statusArchived": "Archived",
 		"statusBlocked": "Blocked",
+		"statusDelegated": "Delegated",
 		"sectionBlocked": "Blocked ({count})",
+		"sectionDelegated": "Delegated ({count})",
 		"blockedEmpty": "No blocked tasks",
+		"delegatedEmpty": "No delegated tasks",
 		"blockAria": "Block task",
 		"unblockAria": "Unblock task",
+		"undelegateAria": "Revert to active",
 		"plannedEmpty": "No planned tasks yet",
 		"completedEmpty": "No completed tasks yet",
 		"workType": {

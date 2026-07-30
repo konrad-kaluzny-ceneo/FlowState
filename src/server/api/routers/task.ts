@@ -140,7 +140,7 @@ export const taskRouter = createTRPCRouter({
 				id: z.number(),
 				title: z.string().min(1).max(256).optional(),
 				status: z
-					.enum(["active", "completed", "planned", "blocked"])
+					.enum(["active", "completed", "planned", "blocked", "delegated"])
 					.optional(),
 				workType: workTypeSchemaZod.optional(),
 				weight: axisSchema.optional(),
@@ -192,7 +192,8 @@ export const taskRouter = createTRPCRouter({
 				data.status === "active" &&
 				(existing.status === "completed" ||
 					existing.status === "planned" ||
-					existing.status === "blocked")
+					existing.status === "blocked" ||
+					existing.status === "delegated")
 			) {
 				updateData = {
 					...updateData,
