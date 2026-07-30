@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-07-28
 structure: split
-active_slices: [S-47]
+active_slices: []
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -98,7 +98,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-45 | ui-refactor | [FLO-95](https://linear.app/flowstate-10xdev/issue/FLO-95/flowstate-ui-redesign-makiety-alignment-s-45) | [#189](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/189) | (epic — phased in plan.md) experience the makiety redesign: 5-section nav (Fokus/Zadania/Plan dnia/Podsumowanie/Ustawienia), green retint, ring timer, minimal task cards + add-task modal, once-per-day steering; **includes former planning-cycle (#87) via Plan dnia** | S-40, S-41, S-43, F-06 | **ui-refactor PRD thread** (2 amendments) | done |
 | F-15 | platform-refactor-batch | [FLO-96](https://linear.app/flowstate-10xdev/issue/FLO-96) | [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190) | (foundation epic) timer hub + data-mode refactor batch: ACL verify, hook extracts, change-impact, sign-in schema, guest merge, health probe, auth smoke, Sentry wedge | F-07; after or parallel S-45 | guardrails | done |
 | S-46 | mcp-server-for-agents | [FLO-97](https://linear.app/flowstate-10xdev/issue/FLO-97/flowstate-mcp-server-for-ai-agents-s-46) | [#191](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/191) | expose MCP server so AI agents (Cursor, Claude, Copilot) can read/write tasks + session state; enables agent-driven task delegation proposals | F-15, S-45 | PRD v3 amended Non-Goals | done |
-| S-47 | delegation-suggestion-in-plan | [FLO-98](https://linear.app/flowstate-10xdev/issue/FLO-98/delegation-suggestion-in-plan-dnia-s-47) | [#192](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/192) | in Plan dnia view, scorer proposes tasks suitable for delegation (to AI agent or human) with one-line rationale; user accepts/skips | S-45 (Plan dnia), S-46 | new | active |
+| S-47 | delegation-suggestion-in-plan | [FLO-98](https://linear.app/flowstate-10xdev/issue/FLO-98/delegation-suggestion-in-plan-dnia-s-47) | [#192](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/192) | in Plan dnia view, scorer proposes tasks suitable for delegation (to AI agent or human) with one-line rationale; user accepts/skips | S-45 (Plan dnia), S-46 | new | done |
 | S-48 | analytics-trends-plan-vs-execution | [FLO-99](https://linear.app/flowstate-10xdev/issue/FLO-99/analytics-weeklymonthly-trends-plan-vs-execution-s-48) | [#193](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/193) | weekly/monthly trends in Podsumowanie; plan-vs-execution comparison; context-switch pattern analytics | S-45 (Podsumowanie) | follow-up ui-refactor | backlog |
 | S-49 | workspace-setup-advisor | [FLO-100](https://linear.app/flowstate-10xdev/issue/FLO-100/workspace-setup-advisor-environment-config-tips-s-49) | [#194](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/194) | advisory tips for configuring work environment (Cursor/Claude agent settings, Slack/Teams DND, notification batching) surfaced in Ustawienia or onboarding; no physical blocking — coaching only | S-45 (Ustawienia), F-14 | new | done |
 | S-50 | complete-task-mid-cycle-surface | _pending_ | [#199](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/199) | finish the focused task (from Fokus or Zadania) → mandatory user-chosen break (short/long ★, override resets cadence); non-focused completion leaves the session untouched; early-completion focus time counted; removes mid-cycle "continue with another task" | F-07, S-03, S-30 | **US-01**, US-03 | done |
@@ -173,7 +173,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-45 | ui-refactor | **done** | FLO-95 / #189; archived `context/archive/2026-07-04-ui-refactor/` (2026-07-05); GitHub #189 closed |
 | F-15 | platform-refactor-batch | **done** | FLO-96 / #190; umbrella for F-08–F-13 + observability hygiene; phased after S-45 |
 | S-46 | mcp-server-for-agents | **done** | FLO-97 / #191; archived `context/archive/2026-07-24-mcp-server-for-agents/` (2026-07-28) |
-| S-47 | delegation-suggestion-in-plan | **yes** | FLO-98 / #192; S-46 (MCP) archived 2026-07-28 + S-45 (Plan dnia) shipped; scorer extension for delegation signal; activated 2026-07-28 |
+| S-47 | delegation-suggestion-in-plan | **done** | FLO-98 / #192; merged PR [#214](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/214) 2026-07-30; Linear Done, GitHub closed |
 | S-48 | analytics-trends-plan-vs-execution | **no** | FLO-99 / #193; after S-45 Podsumowanie; needs research: data model for weekly aggregation |
 | S-49 | workspace-setup-advisor | **no** | FLO-100 / #194; after S-45 Ustawienia; content-first (tips authored); no external integration |
 | S-51 | blocked-task-status | **done** | US-06; implemented + merged PR [#206](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/206) 2026-07-17; archived 2026-07-23. Linear/GitHub pair never created (code shipped directly) |
