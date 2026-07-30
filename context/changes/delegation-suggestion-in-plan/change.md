@@ -1,9 +1,9 @@
 ---
 change_id: delegation-suggestion-in-plan
 roadmap_id: S-47
-status: planning
+status: implemented
 created: 2026-07-28
-updated: 2026-07-28
+updated: 2026-07-30
 linear: FLO-98
 github: 192
 ---
@@ -14,4 +14,8 @@ In the Plan dnia view, the scorer proposes tasks suitable for delegation (to an 
 
 Prerequisites: S-45 (Plan dnia, shipped), S-46 (MCP server, archived 2026-07-28) — both done.
 
-Planning in progress via `/10x-plan`. See `planning-notes.md` in this folder for research findings and all 12 questioning-round decisions made so far. Resume with `/10x-plan delegation-suggestion-in-plan` — do not re-ask the 12 questions already answered; go straight to Step 3 (plan structure) using the decisions log.
+Plan complete: `context/changes/delegation-suggestion-in-plan/plan.md` (+ `plan-brief.md`). 3 phases: (1) `"delegated"` status seam + `TaskDelegationSkip` migration, (2) delegation scoring/rationale + `dayPlanRouter` procedures, (3) Plan dnia UI + `/tasks` Delegated tab + i18n. Start implementation with `/10x-implement delegation-suggestion-in-plan phase 1`.
+
+Plan reviewed: `context/changes/delegation-suggestion-in-plan/reviews/plan-review.md`. Verdict APPROVED (fixed in place) — 3 WARNINGs fixed: DEEP_WORK hard-excluded from delegation scoring (was a soft multiplier dominated by the priority divisor), ownership check added to `skipDelegationSuggestion`, `formatDelegationRationale` signature/locale inconsistency clarified. No CRITICAL findings, no PRD/roadmap drift.
+
+Implementation complete: all 3 phases landed (`4de65c5`/`a602fe5`+`5e5bb4e`/`c379f70`+`f84a537`). Full suite 1531 tests passing, typecheck/lint clean. Next: `/10x-impl-review delegation-suggestion-in-plan`.
