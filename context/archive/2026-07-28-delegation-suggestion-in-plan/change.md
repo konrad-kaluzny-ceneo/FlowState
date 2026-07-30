@@ -1,7 +1,8 @@
 ---
 change_id: delegation-suggestion-in-plan
 roadmap_id: S-47
-status: impl_reviewed
+status: archived
+archived_at: 2026-07-30T07:47:30Z
 created: 2026-07-28
 updated: 2026-07-30
 linear: FLO-98

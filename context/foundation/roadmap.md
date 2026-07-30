@@ -227,6 +227,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **S-47: in Plan dnia view, scorer proposes tasks suitable for delegation (to AI agent or human) with one-line rationale; user accepts/skips** — Archived 2026-07-30 → `context/archive/2026-07-28-delegation-suggestion-in-plan/`. PR [#214](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/214) merged 2026-07-30. Lesson: —.
 - **S-46: expose MCP server so AI agents (Cursor, Claude, Copilot) can read/write tasks + session state; enables agent-driven task delegation proposals** — Archived 2026-07-28 → `context/archive/2026-07-24-mcp-server-for-agents/`. Lesson: —.
 - **S-49: advisory tips for configuring work environment (Cursor/Claude agent settings, Slack/Teams DND, notification batching) surfaced in Ustawienia or onboarding; no physical blocking — coaching only** — Archived 2026-07-24 → `context/archive/2026-07-23-workspace-setup-advisor/`. PR [#209](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/209) merged 2026-07-24. Lesson: —.
 - **S-52: see honest "Twój dzień" totals — all time actually spent in focus cycles and on breaks, including cycles/breaks stopped early and cycles ended by finishing the task; paused time excluded; counts forward only (no backfill of past days)** — Archived 2026-07-23 → `context/archive/2026-07-15-focus-and-break-time-totals/`. PR [#205](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/205) merged 2026-07-17. Lesson: —.
