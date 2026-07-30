@@ -35,7 +35,7 @@ type CreateTaskInput = {
 type UpdateTaskInput = {
 	id: number;
 	title?: string;
-	status?: "active" | "completed" | "planned" | "blocked";
+	status?: "active" | "completed" | "planned" | "blocked" | "delegated";
 	workType?: WorkType;
 	weight?: 1 | 2 | 3;
 	importance?: 1 | 2 | 3;

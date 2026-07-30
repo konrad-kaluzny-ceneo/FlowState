@@ -242,7 +242,8 @@ export function createGuestTaskRepository(): TaskRepository {
 					const wasCompletedOrPlanned =
 						task.status === "completed" ||
 						task.status === "planned" ||
-						task.status === "blocked";
+						task.status === "blocked" ||
+						task.status === "delegated";
 					const becomingActive = input.status === "active";
 					let sortOrder = task.sortOrder;
 					if (wasCompletedOrPlanned && becomingActive) {

@@ -101,6 +101,9 @@ const effortMinutesSchema = z.number().int().min(5).max(240);
 const workTypeZod = z.enum(workTypeSchema);
 const commitmentHorizonZod = z.enum(commitmentHorizonSchema);
 const energyZod = z.enum(energyLevelSchema);
+// "delegated" is intentionally excluded from this write-tool enum: agents must
+// not be able to set/unset task delegation themselves. It still flows through
+// list_tasks reads automatically once added to DomainTaskStatus.
 const taskStatusZod = z.enum(["active", "completed", "planned", "blocked"]);
 
 export const listTasksSchema = z.object({
