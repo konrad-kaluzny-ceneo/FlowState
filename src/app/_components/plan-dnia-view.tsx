@@ -10,6 +10,7 @@ import type { useDayPlan } from "~/hooks/use-day-plan";
 import { useDelegationSuggestion } from "~/hooks/use-delegation-suggestion";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { formatFocusMinutes } from "~/lib/time/format-focus-minutes";
+import { api } from "~/trpc/react";
 
 const PRESET_HOURS_MINUTES = [120, 240, 360] as const;
 
@@ -236,6 +237,7 @@ function DelegationSuggestionSection() {
 	const delegation = useDelegationSuggestion();
 	const { updateTask } = useTaskMutations();
 	const [isAccepting, setIsAccepting] = useState(false);
+	const utils = api.useUtils();
 
 	const handleAccept = useCallback(async () => {
 		if (delegation.candidate == null) {
@@ -244,10 +246,13 @@ function DelegationSuggestionSection() {
 		setIsAccepting(true);
 		try {
 			await updateTask({ id: delegation.candidate.id, status: "delegated" });
+			await utils.dayPlan.getDelegationSuggestion.invalidate({
+				localDateKey: delegation.localDateKey,
+			});
 		} finally {
 			setIsAccepting(false);
 		}
-	}, [delegation.candidate, updateTask]);
+	}, [delegation.candidate, delegation.localDateKey, updateTask, utils]);
 
 	if (
 		delegation.status !== "ready" ||

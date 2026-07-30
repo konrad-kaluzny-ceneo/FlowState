@@ -12,6 +12,7 @@ type DelegationSuggestion = ReturnType<typeof useDelegationSuggestion>;
 
 const delegationSuggestionMock = vi.fn<() => DelegationSuggestion>();
 const updateTaskMock = vi.fn().mockResolvedValue(undefined);
+const invalidateDelegationSuggestionMock = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("~/hooks/use-delegation-suggestion", () => ({
 	useDelegationSuggestion: () => delegationSuggestionMock(),
@@ -21,6 +22,18 @@ vi.mock("~/hooks/use-task-mutations", () => ({
 	useTaskMutations: () => ({
 		updateTask: updateTaskMock,
 	}),
+}));
+
+vi.mock("~/trpc/react", () => ({
+	api: {
+		useUtils: () => ({
+			dayPlan: {
+				getDelegationSuggestion: {
+					invalidate: invalidateDelegationSuggestionMock,
+				},
+			},
+		}),
+	},
 }));
 
 function makeDelegationSuggestion(
@@ -63,6 +76,7 @@ describe("PlanDniaView", () => {
 		delegationSuggestionMock.mockReset();
 		delegationSuggestionMock.mockReturnValue(makeDelegationSuggestion());
 		updateTaskMock.mockClear();
+		invalidateDelegationSuggestionMock.mockClear();
 	});
 
 	it("shows a guest empty state when there is no day plan", () => {
@@ -156,9 +170,10 @@ describe("PlanDniaView", () => {
 		);
 	});
 
-	it("accepting the delegation suggestion calls updateTask with status delegated", () => {
+	it("accepting the delegation suggestion calls updateTask with status delegated", async () => {
 		delegationSuggestionMock.mockReturnValue(
 			makeDelegationSuggestion({
+				localDateKey: "2026-07-05",
 				status: "ready",
 				candidate: { id: 7, title: "File expense report" } as never,
 				rationale: "Operational work — a good fit to hand off",
@@ -181,6 +196,15 @@ describe("PlanDniaView", () => {
 		expect(updateTaskMock).toHaveBeenCalledWith({
 			id: 7,
 			status: "delegated",
+		});
+
+		// Accepting must invalidate the cached suggestion the same way skip
+		// already does — otherwise the card keeps showing the just-delegated
+		// task as a live "ready" candidate until the query's staleTime lapses.
+		await vi.waitFor(() => {
+			expect(invalidateDelegationSuggestionMock).toHaveBeenCalledWith({
+				localDateKey: "2026-07-05",
+			});
 		});
 	});
 
