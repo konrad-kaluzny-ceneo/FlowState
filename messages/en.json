@@ -499,6 +499,8 @@
 		"planVsExecutionPlannedLabel": "Planned",
 		"planVsExecutionActualLabel": "Actual",
 		"planVsExecutionGuestNudge": "Plan vs execution is available after signing in.",
+		"contextSwitchTitle": "Context switches",
+		"contextSwitchAria": "Daily context-switch count chart",
 		"completedListTitle": "Completed in the last 24 hours",
 		"completedListEmpty": "No completed tasks in the last 24 hours — that's a calm day too.",
 		"footerBannerTitle": "Good that you showed up",

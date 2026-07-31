@@ -545,7 +545,70 @@ describe("recap router integration", () => {
 			localDateKey: "2026-07-15",
 			focusMinutes: 20,
 			breakMinutes: 0,
+			switchCount: 0,
 		});
+	});
+
+	it("getTrendStats returns switchCount from alternating-task WORK cycles on the same day", async () => {
+		const todayLocalMidnightUtc = new Date(2026, 6, 15);
+
+		tasks.push(
+			{
+				id: 2,
+				userId: USER,
+				title: "Task A",
+				status: "active",
+				isDailyStanding: false,
+				effortMinutes: null,
+				sortOrder: 0,
+				createdAt: todayLocalMidnightUtc,
+				updatedAt: todayLocalMidnightUtc,
+			},
+			{
+				id: 3,
+				userId: USER,
+				title: "Task B",
+				status: "active",
+				isDailyStanding: false,
+				effortMinutes: null,
+				sortOrder: 1,
+				createdAt: todayLocalMidnightUtc,
+				updatedAt: todayLocalMidnightUtc,
+			},
+		);
+
+		cycles.push(
+			{
+				id: 70,
+				userId: USER,
+				taskId: 2,
+				kind: "WORK",
+				state: "COMPLETED",
+				configuredDurationSec: 1500,
+				startedAt: new Date(2026, 6, 15, 9, 0, 0),
+				endedAt: new Date(2026, 6, 15, 9, 25, 0),
+				task: { id: 2, title: "Task A" },
+			},
+			{
+				id: 71,
+				userId: USER,
+				taskId: 3,
+				kind: "WORK",
+				state: "COMPLETED",
+				configuredDurationSec: 1500,
+				startedAt: new Date(2026, 6, 15, 10, 0, 0),
+				endedAt: new Date(2026, 6, 15, 10, 25, 0),
+				task: { id: 3, title: "Task B" },
+			},
+		);
+
+		const db = createMockDb();
+		const result = await recapCaller(USER, db).getTrendStats({
+			todayLocalMidnightUtc,
+			windowDays: 7,
+		});
+
+		expect(result.at(-1)?.switchCount).toBe(1);
 	});
 
 	it("getTrendStats excludes a cycle whose startedAt is before the window", async () => {

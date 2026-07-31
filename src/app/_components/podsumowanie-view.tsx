@@ -170,6 +170,56 @@ function TrendBarChart({ points, ariaLabel }: TrendChartProps) {
 	);
 }
 
+// ─── Context-switch bar chart (variable bucket count, small companion chart) ─
+
+const SWITCH_CHART_HEIGHT = 40;
+
+type ContextSwitchChartProps = {
+	points: TrendPoint[];
+	ariaLabel: string;
+};
+
+function ContextSwitchChart({ points, ariaLabel }: ContextSwitchChartProps) {
+	const max = Math.max(...points.map((p) => p.switchCount), 1);
+	const barPadding = 2;
+	const barWidth =
+		points.length > 0 ? CHART_WIDTH / points.length - barPadding : 0;
+
+	return (
+		<svg
+			aria-label={ariaLabel}
+			className="w-full"
+			preserveAspectRatio="none"
+			role="img"
+			style={{ height: SWITCH_CHART_HEIGHT }}
+			viewBox={`0 0 ${CHART_WIDTH} ${SWITCH_CHART_HEIGHT}`}
+		>
+			{points.map((point, i) => {
+				const barH = Math.round(
+					(point.switchCount / max) * (SWITCH_CHART_HEIGHT - 4),
+				);
+				const x = i * (barWidth + barPadding);
+				const y = SWITCH_CHART_HEIGHT - barH;
+				return (
+					<rect
+						className={
+							barH > 0
+								? "fill-accent-break opacity-80"
+								: "fill-segment-inactive"
+						}
+						height={Math.max(barH, 2)}
+						key={point.localDateKey}
+						rx={2}
+						width={barWidth}
+						x={x}
+						y={barH > 0 ? y : SWITCH_CHART_HEIGHT - 2}
+					/>
+				);
+			})}
+		</svg>
+	);
+}
+
 // ─── Plan-vs-execution paired bar chart ───────────────────────────────────────
 
 type PlanVsExecutionChartProps = {
@@ -775,6 +825,16 @@ export function PodsumowanieView({
 					</div>
 				</div>
 				<TrendBarChart ariaLabel={t("trendChartAria")} points={trend} />
+
+				<div className="mt-4" data-testid="podsumowanie-context-switch-chart">
+					<p className="mb-2 font-medium text-primary text-sm">
+						{t("contextSwitchTitle")}
+					</p>
+					<ContextSwitchChart
+						ariaLabel={t("contextSwitchAria")}
+						points={trend}
+					/>
+				</div>
 			</div>
 
 			{/* Plan vs execution */}

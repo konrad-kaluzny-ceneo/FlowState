@@ -13,8 +13,18 @@ let rangeQueryInput: { localDateKeys: string[] } | undefined;
 let rangeQueryEnabled: boolean | undefined;
 
 const trendPoints: TrendPoint[] = [
-	{ localDateKey: "2026-06-14", focusMinutes: 20, breakMinutes: 0 },
-	{ localDateKey: "2026-06-15", focusMinutes: 90, breakMinutes: 0 },
+	{
+		localDateKey: "2026-06-14",
+		focusMinutes: 20,
+		breakMinutes: 0,
+		switchCount: 0,
+	},
+	{
+		localDateKey: "2026-06-15",
+		focusMinutes: 90,
+		breakMinutes: 0,
+		switchCount: 0,
+	},
 ];
 
 vi.mock("~/lib/data-mode/data-mode-context", () => ({

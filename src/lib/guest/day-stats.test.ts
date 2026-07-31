@@ -279,7 +279,42 @@ describe("buildGuestTrendStats", () => {
 			localDateKey: "2026-07-14",
 			focusMinutes: 25,
 			breakMinutes: 0,
+			switchCount: 0,
 		});
+	});
+
+	it("computes switchCount for cycles alternating between two tasks in one day", () => {
+		const snapshot = makeSnapshot({
+			cycles: [
+				{
+					id: "c1",
+					sessionId: "s1",
+					taskId: "t1",
+					kind: "WORK",
+					state: "COMPLETED",
+					configuredDurationSec: 1500,
+					startedAt: new Date(2026, 6, 15, 9, 0, 0),
+					endedAt: new Date(2026, 6, 15, 9, 25, 0),
+					pausedAt: null,
+				},
+				{
+					id: "c2",
+					sessionId: "s1",
+					taskId: "t2",
+					kind: "WORK",
+					state: "COMPLETED",
+					configuredDurationSec: 1500,
+					startedAt: new Date(2026, 6, 15, 10, 0, 0),
+					endedAt: new Date(2026, 6, 15, 10, 25, 0),
+					pausedAt: null,
+				},
+			],
+		});
+
+		const result = buildGuestTrendStats(snapshot, 7, now);
+		expect(
+			result.find((p) => p.localDateKey === "2026-07-15")?.switchCount,
+		).toBe(1);
 	});
 
 	it("excludes a cycle whose startedAt falls outside the window", () => {

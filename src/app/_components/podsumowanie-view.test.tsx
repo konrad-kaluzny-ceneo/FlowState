@@ -208,8 +208,18 @@ describe("PodsumowanieView", () => {
 	});
 
 	const trendPoints: TrendPoint[] = [
-		{ localDateKey: "2026-06-14", focusMinutes: 0, breakMinutes: 0 },
-		{ localDateKey: "2026-06-15", focusMinutes: 30, breakMinutes: 5 },
+		{
+			localDateKey: "2026-06-14",
+			focusMinutes: 0,
+			breakMinutes: 0,
+			switchCount: 0,
+		},
+		{
+			localDateKey: "2026-06-15",
+			focusMinutes: 30,
+			breakMinutes: 5,
+			switchCount: 2,
+		},
 	];
 
 	it("renders the trend chart, including zero-cycle days without error", () => {
@@ -220,6 +230,20 @@ describe("PodsumowanieView", () => {
 	it("renders the trend chart even without trend data", () => {
 		render(<PodsumowanieView stats={statsWithData} trend={[]} />);
 		expect(screen.getByTestId("podsumowanie-trend-chart")).toBeTruthy();
+	});
+
+	it("renders the context-switch chart alongside the trend chart", () => {
+		render(<PodsumowanieView stats={statsWithData} trend={trendPoints} />);
+		expect(
+			screen.getByTestId("podsumowanie-context-switch-chart"),
+		).toBeTruthy();
+	});
+
+	it("renders the context-switch chart for a fully empty window without error", () => {
+		render(<PodsumowanieView stats={statsWithData} trend={[]} />);
+		expect(
+			screen.getByTestId("podsumowanie-context-switch-chart"),
+		).toBeTruthy();
 	});
 
 	it("defaults the window toggle to 7d and calls onTrendWindowDaysChange on 30d click", () => {

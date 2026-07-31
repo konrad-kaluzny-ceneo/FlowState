@@ -435,31 +435,31 @@ No schema changes and no data migration in this plan — all new procedures read
 
 #### Automated
 
-- [x] 3.1 Router integration tests pass for `dayPlan.getRange`
-- [x] 3.2 Hook tests pass for `use-plan-vs-execution`
-- [x] 3.3 Component tests pass
-- [x] 3.4 Type checking passes
-- [x] 3.5 Linting passes
-- [x] 3.6 i18n parity check passes
+- [x] 3.1 Router integration tests pass for `dayPlan.getRange` — 47c5d35
+- [x] 3.2 Hook tests pass for `use-plan-vs-execution` — 47c5d35
+- [x] 3.3 Component tests pass — 47c5d35
+- [x] 3.4 Type checking passes — 47c5d35
+- [x] 3.5 Linting passes — 47c5d35
+- [x] 3.6 i18n parity check passes — 47c5d35
 
 #### Manual
 
-- [x] 3.7 Paired planned/actual bars render correctly; days without budget show actual only (verified via scripted real-browser check: real `dayPlan.setBudget` seeded for today only, fast work cycle run, /summary chart shows a 2-rect group for the budgeted day and 1-rect groups for the 6 unbudgeted days; no separate agent-run e2e spec was added per L-06)
-- [x] 3.8 Exceeding budget shows true actual, not capped value (verified deterministically: `use-plan-vs-execution.test.tsx` asserts `actualMinutes: 90` against `plannedMinutes: 60` unclamped, and `podsumowanie-view.test.tsx` asserts the rendered actual-bar SVG height exceeds the planned-bar height for the same fixture — a live multi-minute fake-clock jump in the browser proved unreliable, so the numeric "not capped" contract stays at the deterministic hook/component layer while the e2e check covers real end-to-end wiring)
-- [x] 3.9 Guest mode shows sign-in nudge instead of chart (verified: fresh guest snapshot at mobile viewport, `podsumowanie-plan-vs-execution-guest-nudge` visible, chart svg absent)
+- [x] 3.7 Paired planned/actual bars render correctly; days without budget show actual only (verified via scripted real-browser check: real `dayPlan.setBudget` seeded for today only, fast work cycle run, /summary chart shows a 2-rect group for the budgeted day and 1-rect groups for the 6 unbudgeted days; no separate agent-run e2e spec was added per L-06) — 47c5d35
+- [x] 3.8 Exceeding budget shows true actual, not capped value (verified deterministically: `use-plan-vs-execution.test.tsx` asserts `actualMinutes: 90` against `plannedMinutes: 60` unclamped, and `podsumowanie-view.test.tsx` asserts the rendered actual-bar SVG height exceeds the planned-bar height for the same fixture — a live multi-minute fake-clock jump in the browser proved unreliable, so the numeric "not capped" contract stays at the deterministic hook/component layer while the e2e check covers real end-to-end wiring) — 47c5d35
+- [x] 3.9 Guest mode shows sign-in nudge instead of chart (verified: fresh guest snapshot at mobile viewport, `podsumowanie-plan-vs-execution-guest-nudge` visible, chart svg absent) — 47c5d35
 
 ### Phase 4: Context-switch pattern analytics
 
 #### Automated
 
-- [ ] 4.1 Unit tests pass for `count-context-switches`
-- [ ] 4.2 Updated trend aggregation tests pass
-- [ ] 4.3 Guest parity tests pass
-- [ ] 4.4 Router integration tests pass
-- [ ] 4.5 Component tests pass
-- [ ] 4.6 Type checking passes
-- [ ] 4.7 Linting passes
-- [ ] 4.8 i18n parity check passes
+- [x] 4.1 Unit tests pass for `count-context-switches`
+- [x] 4.2 Updated trend aggregation tests pass
+- [x] 4.3 Guest parity tests pass
+- [x] 4.4 Router integration tests pass
+- [x] 4.5 Component tests pass
+- [x] 4.6 Type checking passes
+- [x] 4.7 Linting passes
+- [x] 4.8 i18n parity check passes
 
 #### Manual
 

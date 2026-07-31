@@ -72,9 +72,24 @@ describe("aggregateTrendStats", () => {
 		const points = aggregateTrendStats([], boundaries);
 
 		expect(points).toEqual([
-			{ localDateKey: "2026-07-13", focusMinutes: 0, breakMinutes: 0 },
-			{ localDateKey: "2026-07-14", focusMinutes: 0, breakMinutes: 0 },
-			{ localDateKey: "2026-07-15", focusMinutes: 0, breakMinutes: 0 },
+			{
+				localDateKey: "2026-07-13",
+				focusMinutes: 0,
+				breakMinutes: 0,
+				switchCount: 0,
+			},
+			{
+				localDateKey: "2026-07-14",
+				focusMinutes: 0,
+				breakMinutes: 0,
+				switchCount: 0,
+			},
+			{
+				localDateKey: "2026-07-15",
+				focusMinutes: 0,
+				breakMinutes: 0,
+				switchCount: 0,
+			},
 		]);
 	});
 
@@ -95,11 +110,34 @@ describe("aggregateTrendStats", () => {
 			localDateKey: "2026-07-15",
 			focusMinutes: 25,
 			breakMinutes: 5,
+			switchCount: 0,
 		});
 		expect(points.find((p) => p.localDateKey === "2026-07-14")).toEqual({
 			localDateKey: "2026-07-14",
 			focusMinutes: 10,
 			breakMinutes: 0,
+			switchCount: 0,
 		});
+	});
+
+	it("includes per-day switchCount from countContextSwitches", () => {
+		const cycles = [
+			workCycle({
+				id: 10,
+				taskId: 1,
+				startedAt: new Date(2026, 6, 15, 9, 0, 0),
+			}),
+			workCycle({
+				id: 11,
+				taskId: 2,
+				startedAt: new Date(2026, 6, 15, 9, 30, 0),
+			}),
+		];
+
+		const points = aggregateTrendStats(cycles, boundaries);
+
+		expect(
+			points.find((p) => p.localDateKey === "2026-07-15")?.switchCount,
+		).toBe(1);
 	});
 });

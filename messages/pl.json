@@ -499,6 +499,8 @@
 		"planVsExecutionPlannedLabel": "Planowane",
 		"planVsExecutionActualLabel": "Rzeczywiste",
 		"planVsExecutionGuestNudge": "Plan a wykonanie jest dostępne po zalogowaniu.",
+		"contextSwitchTitle": "Zmiany kontekstu",
+		"contextSwitchAria": "Wykres liczby zmian kontekstu wg dnia",
 		"completedListTitle": "Ukończone w ostatnich 24 godzinach",
 		"completedListEmpty": "Brak ukończonych zadań w ostatnich 24 godzinach — to też spokojny dzień.",
 		"footerBannerTitle": "Dobrze, że tu jesteś",
