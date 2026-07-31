@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { ComingSoonPreview } from "~/app/_components/ui/coming-soon-preview";
+import { SegmentedControl } from "~/app/_components/ui/segmented-control";
 import {
 	getWorkTypeLabel,
 	WORK_TYPE_CONFIG,
@@ -11,6 +12,7 @@ import {
 } from "~/lib/design/work-type-config";
 import type { UserLocale } from "~/lib/domain/user-locale";
 import type { DayStats, HourBucket } from "~/lib/recap/aggregate-day-stats";
+import type { TrendPoint } from "~/lib/recap/aggregate-trend-stats";
 import { filterCompletedRecapRows } from "~/lib/recap/filter-completed-recap-rows";
 import type { RecapTaskRow } from "~/lib/recap/types";
 import { formatLocalDateKey } from "~/lib/time/local-date-key";
@@ -118,6 +120,52 @@ function HourAxisLabels() {
 				</span>
 			))}
 		</div>
+	);
+}
+
+// ─── Trend bar chart (variable bucket count, mirrors HourlyBarChart) ─────────
+
+type TrendChartProps = {
+	points: TrendPoint[];
+	ariaLabel: string;
+};
+
+function TrendBarChart({ points, ariaLabel }: TrendChartProps) {
+	const max = Math.max(...points.map((p) => p.focusMinutes), 1);
+	const barPadding = 2;
+	const barWidth =
+		points.length > 0 ? CHART_WIDTH / points.length - barPadding : 0;
+
+	return (
+		<svg
+			aria-label={ariaLabel}
+			className="w-full"
+			preserveAspectRatio="none"
+			role="img"
+			style={{ height: CHART_HEIGHT }}
+			viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+		>
+			{points.map((point, i) => {
+				const barH = Math.round(
+					(point.focusMinutes / max) * (CHART_HEIGHT - 4),
+				);
+				const x = i * (barWidth + barPadding);
+				const y = CHART_HEIGHT - barH;
+				return (
+					<rect
+						className={
+							barH > 0 ? "fill-accent-cta opacity-80" : "fill-segment-inactive"
+						}
+						height={Math.max(barH, 2)}
+						key={point.localDateKey}
+						rx={2}
+						width={barWidth}
+						x={x}
+						y={barH > 0 ? y : CHART_HEIGHT - 2}
+					/>
+				);
+			})}
+		</svg>
 	);
 }
 
@@ -346,6 +394,9 @@ export type PodsumowanieViewProps = {
 	onNextDay?: () => void;
 	onToday?: () => void;
 	canGoNext?: boolean;
+	trend?: TrendPoint[];
+	trendWindowDays?: 7 | 30;
+	onTrendWindowDaysChange?: (windowDays: 7 | 30) => void;
 };
 
 export function PodsumowanieView({
@@ -358,6 +409,9 @@ export function PodsumowanieView({
 	onNextDay,
 	onToday,
 	canGoNext = false,
+	trend = [],
+	trendWindowDays = 7,
+	onTrendWindowDaysChange,
 }: PodsumowanieViewProps) {
 	const t = useTranslations("Podsumowanie");
 	const tTasks = useTranslations("Tasks");
@@ -622,6 +676,29 @@ export function PodsumowanieView({
 				tPodsumowanie={t}
 				tTasks={tTasks}
 			/>
+
+			{/* Trend chart */}
+			<div
+				className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
+				data-testid="podsumowanie-trend-chart"
+			>
+				<div className="mb-3 flex items-center justify-between">
+					<p className="font-medium text-primary text-sm">
+						{t("trendChartTitle")}
+					</p>
+					<div data-testid="podsumowanie-trend-window-toggle">
+						<SegmentedControl
+							onChange={(w) => onTrendWindowDaysChange?.(w)}
+							options={[
+								{ value: 7, label: t("trendWindow7d") },
+								{ value: 30, label: t("trendWindow30d") },
+							]}
+							value={trendWindowDays}
+						/>
+					</div>
+				</div>
+				<TrendBarChart ariaLabel={t("trendChartAria")} points={trend} />
+			</div>
 
 			{/* Deferred widgets */}
 			<div

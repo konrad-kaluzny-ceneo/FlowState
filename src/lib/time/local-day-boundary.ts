@@ -16,3 +16,26 @@ export function getLocalDayBoundary(date: Date = new Date()): LocalDayBoundary {
 	const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
 	return { start, end, localDateKey: formatLocalDateKey(date) };
 }
+
+/**
+ * Computes `windowDays` consecutive local-day boundaries ending on
+ * `referenceDate`'s local day (inclusive), oldest first. For client/guest use
+ * only — has real local-calendar access, unlike the server (see recap.ts's
+ * `getTrendStats`, which derives boundaries arithmetically from a single
+ * client-supplied UTC instant instead).
+ */
+export function getLocalDayBoundaries(
+	windowDays: number,
+	referenceDate: Date = new Date(),
+): LocalDayBoundary[] {
+	const boundaries: LocalDayBoundary[] = [];
+	for (let i = windowDays - 1; i >= 0; i--) {
+		const day = new Date(
+			referenceDate.getFullYear(),
+			referenceDate.getMonth(),
+			referenceDate.getDate() - i,
+		);
+		boundaries.push(getLocalDayBoundary(day));
+	}
+	return boundaries;
+}

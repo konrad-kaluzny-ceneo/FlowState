@@ -3,6 +3,7 @@
 import { PodsumowanieView } from "~/app/_components/podsumowanie-view";
 import { useDailyRecap } from "~/hooks/use-daily-recap";
 import { useDayStats } from "~/hooks/use-day-stats";
+import { useTrendStats } from "~/hooks/use-trend-stats";
 
 export default function SummaryPage() {
 	const {
@@ -16,6 +17,7 @@ export default function SummaryPage() {
 		canGoNext,
 	} = useDayStats();
 	const { recap, isLoading: isRecapLoading } = useDailyRecap();
+	const { trend, windowDays, setWindowDays } = useTrendStats();
 
 	return (
 		<div className="flex flex-1 flex-col items-center px-4 py-8">
@@ -28,7 +30,10 @@ export default function SummaryPage() {
 					onNextDay={goToNextDay}
 					onPreviousDay={goToPreviousDay}
 					onToday={goToToday}
+					onTrendWindowDaysChange={setWindowDays}
 					stats={stats}
+					trend={trend}
+					trendWindowDays={windowDays}
 					viewedLocalDateKey={viewedLocalDateKey}
 				/>
 			</div>

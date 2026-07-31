@@ -76,6 +76,7 @@ function createMockDb() {
 						kind?: string;
 						state?: string | { in: string[] };
 						taskId?: { in: number[] };
+						startedAt?: { gte: Date; lt?: Date };
 						OR?: Array<{
 							startedAt?: { gte: Date; lt?: Date };
 							endedAt?: { gte: Date; lt?: Date };
@@ -119,6 +120,11 @@ function createMockDb() {
 								(endLt == null || c.endedAt < endLt);
 							return startedInRange || endedInRange;
 						});
+					} else if (args.where.startedAt != null) {
+						const { gte, lt } = args.where.startedAt;
+						rows = rows.filter(
+							(c) => c.startedAt >= gte && (lt == null || c.startedAt < lt),
+						);
 					}
 					return Promise.resolve(rows);
 				},
@@ -475,5 +481,94 @@ describe("recap router integration", () => {
 		// Only the in-range cycle (20 min) counts; the 3-day-old cycle is excluded
 		expect(result.focusMinutes).toBe(20);
 		expect(result.sessionCount).toBe(1);
+	});
+
+	it("getTrendStats returns windowDays points in chronological order, per-user isolated", async () => {
+		const todayLocalMidnightUtc = new Date(2026, 6, 15);
+		const otherUser = "recap-integration-user-2";
+
+		tasks.push({
+			id: 1,
+			userId: USER,
+			title: "Task",
+			status: "active",
+			isDailyStanding: false,
+			effortMinutes: null,
+			sortOrder: 0,
+			createdAt: todayLocalMidnightUtc,
+			updatedAt: todayLocalMidnightUtc,
+		});
+
+		cycles.push(
+			{
+				id: 50,
+				userId: USER,
+				taskId: 1,
+				kind: "WORK",
+				state: "COMPLETED",
+				configuredDurationSec: 1500,
+				startedAt: new Date(2026, 6, 15, 10, 0, 0),
+				endedAt: new Date(2026, 6, 15, 10, 20, 0),
+				task: { id: 1, title: "Task" },
+			},
+			{
+				id: 51,
+				userId: otherUser,
+				taskId: null,
+				kind: "WORK",
+				state: "COMPLETED",
+				configuredDurationSec: 1500,
+				startedAt: new Date(2026, 6, 15, 10, 0, 0),
+				endedAt: new Date(2026, 6, 15, 10, 30, 0),
+				task: null,
+			},
+		);
+
+		const db = createMockDb();
+		const result = await recapCaller(USER, db).getTrendStats({
+			todayLocalMidnightUtc,
+			windowDays: 7,
+		});
+
+		expect(result).toHaveLength(7);
+		expect(result.map((p) => p.localDateKey)).toEqual([
+			"2026-07-09",
+			"2026-07-10",
+			"2026-07-11",
+			"2026-07-12",
+			"2026-07-13",
+			"2026-07-14",
+			"2026-07-15",
+		]);
+		// Only USER's cycle counts, not otherUser's
+		expect(result.at(-1)).toEqual({
+			localDateKey: "2026-07-15",
+			focusMinutes: 20,
+			breakMinutes: 0,
+		});
+	});
+
+	it("getTrendStats excludes a cycle whose startedAt is before the window", async () => {
+		const todayLocalMidnightUtc = new Date(2026, 6, 15);
+
+		cycles.push({
+			id: 60,
+			userId: USER,
+			taskId: null,
+			kind: "WORK",
+			state: "COMPLETED",
+			configuredDurationSec: 1500,
+			startedAt: new Date(2026, 6, 1, 10, 0, 0),
+			endedAt: new Date(2026, 6, 1, 10, 20, 0),
+			task: null,
+		});
+
+		const db = createMockDb();
+		const result = await recapCaller(USER, db).getTrendStats({
+			todayLocalMidnightUtc,
+			windowDays: 7,
+		});
+
+		expect(result.every((p) => p.focusMinutes === 0)).toBe(true);
 	});
 });

@@ -165,7 +165,7 @@ Reuse Phase 1's boundary primitive across a rolling window (7 or 30 days) to pro
 
 **Intent**: New procedure returning a rolling window's trend series, deriving day boundaries server-side from one client-supplied "start of today" instant.
 
-**Contract**: `getTrendStats` input `{ todayLocalMidnightUtc: z.coerce.date(), windowDays: z.union([z.literal(7), z.literal(30)]) }`; queries `Cycle` rows across the full window in one call (`gte: todayLocalMidnightUtc - windowDays*86400s`), derives the `windowDays` day-boundary array by subtracting whole-day multiples (see Critical Implementation Details), and returns `TrendPoint[]`.
+**Contract**: `getTrendStats` input `{ todayLocalMidnightUtc: z.coerce.date(), windowDays: z.union([z.literal(7), z.literal(30)]) }`; queries `Cycle` rows across the full window in one call, filtering on `startedAt` only — `startedAt: { gte: todayLocalMidnightUtc - (windowDays - 1)*86400s, lt: todayLocalMidnightUtc + 86400s }` (today included, per Critical Implementation Details' Window inclusivity note) — derives the `windowDays` day-boundary array by subtracting whole-day multiples (see Critical Implementation Details), and returns `TrendPoint[]`. Do not add an `OR`/`endedAt` branch here (see Critical Implementation Details' Query filter note) — bucketing is by `startedAt` only.
 
 #### 3. Trend query (guest)
 
@@ -179,7 +179,7 @@ Reuse Phase 1's boundary primitive across a rolling window (7 or 30 days) to pro
 
 **File**: `src/hooks/use-trend-stats.ts` (new)
 
-**Intent**: `windowDays` toggle state (default 7); calls `recap.getTrendStats` (authenticated) or `buildGuestTrendStats` (guest), mirroring `use-day-stats.ts`'s dual-mode pattern.
+**Intent**: `windowDays` toggle state (default 7); calls `recap.getTrendStats` (authenticated) or `buildGuestTrendStats` (guest), mirroring `use-day-stats.ts`'s dual-mode pattern. `windowDays`/`setWindowDays` is the single source of truth for the toggle — Phase 3's `usePlanVsExecution` takes it as a parameter rather than re-implementing its own toggle, so Trends, Plan-vs-execution, and the Phase 4 context-switch chart always show the same window.
 
 **Contract**: Returns `{ trend: TrendPoint[], windowDays, setWindowDays, isLoading, isGuest }`.
 
@@ -245,7 +245,7 @@ Layer `DayPlan`'s planned-minutes data over Phase 2's actual-minutes trend to pr
 
 **Intent**: Combine Phase 2's trend actuals with the new `DayPlan.getRange` planned data into a single per-day series; authenticated-only (returns a distinct "unavailable" state for guests rather than fetching).
 
-**Contract**: Returns `{ points: { localDateKey: string; plannedMinutes: number | null; actualMinutes: number }[], isLoading, isAvailable: boolean }` — `isAvailable` is `false` for guest mode.
+**Contract**: `usePlanVsExecution(windowDays: 7 | 30)` — `windowDays` is the same value driving Phase 2's `use-trend-stats` toggle (lifted to `PodsumowanieView`'s parent so the Trends and Plan-vs-execution sections never show mismatched windows). Returns `{ points: { localDateKey: string; plannedMinutes: number | null; actualMinutes: number }[], isLoading, isAvailable: boolean }` — `isAvailable` is `false` for guest mode.
 
 #### 3. Paired-bar chart UI
 
@@ -298,7 +298,7 @@ Add a per-day context-switch count (task changes across consecutive WORK cycles)
 
 **Intent**: Count adjacent-pair `taskId` changes among a day's WORK cycles ordered by `startedAt`, using the shared `bucketCyclesByLocalDay` helper from Phase 2.
 
-**Contract**: `countContextSwitches(cycles: CycleRow[], dayBoundaries): { localDateKey: string; switchCount: number }[]` — only WORK cycles considered; `null` `taskId` cycles do not count as a "switch" in either direction.
+**Contract**: `countContextSwitches(cycles: CycleRow[], dayBoundaries): { localDateKey: string; switchCount: number }[]` — only WORK cycles considered. Filter out `null`-`taskId` cycles from each day's ordered sequence *before* counting adjacent-pair changes (do not simply skip counting at a `null` cycle's position while leaving it in the sequence) — e.g. task A, an untracked/no-task cycle, then task B still counts as one switch (A→B), matching the product intent of "did the user change which task they're working on," not "did the immediately-previous cycle happen to have a different taskId."
 
 #### 2. Context-switch query (authenticated + guest)
 
@@ -353,7 +353,7 @@ Add a per-day context-switch count (task changes across consecutive WORK cycles)
 
 - `getLocalDayBoundary`: local midnight computed correctly for a range of times of day; DST-transition day produces a boundary approximation consistent with the documented limitation.
 - `aggregateTrendStats` / `bucketCyclesByLocalDay`: cycles bucket into the correct day; cycles spanning a day boundary attribute to `startedAt`'s day (matching existing `aggregateDayStats` hour-bucket convention).
-- `countContextSwitches`: zero switches for a single-task day; N-1 switches for N cycles alternating between two tasks; a `null`-taskId cycle does not count toward either side of a switch.
+- `countContextSwitches`: zero switches for a single-task day; N-1 switches for N cycles alternating between two tasks; a `null`-taskId cycle is excluded from the sequence before counting, so task A → untracked cycle → task B still counts as one switch (not zero).
 - `buildGuestDayStats` / `buildGuestTrendStats`: guest snapshot parity with the authenticated aggregation shape for equivalent inputs.
 
 ### Integration Tests:
@@ -395,14 +395,14 @@ No schema changes and no data migration in this plan — all new procedures read
 
 #### Automated
 
-- [x] 1.1 Unit tests pass for `getLocalDayBoundary`
-- [x] 1.2 Unit tests pass for updated `buildGuestDayStats`
-- [x] 1.3 Integration tests pass for updated `recap.getDayStats`
-- [x] 1.4 Component tests pass for date-nav UI
-- [x] 1.5 Hook tests pass for `use-day-stats`
-- [x] 1.6 Type checking passes
-- [x] 1.7 Linting passes
-- [x] 1.8 i18n parity check passes
+- [x] 1.1 Unit tests pass for `getLocalDayBoundary` — ac9d4b3
+- [x] 1.2 Unit tests pass for updated `buildGuestDayStats` — ac9d4b3
+- [x] 1.3 Integration tests pass for updated `recap.getDayStats` — ac9d4b3
+- [x] 1.4 Component tests pass for date-nav UI — ac9d4b3
+- [x] 1.5 Hook tests pass for `use-day-stats` — ac9d4b3
+- [x] 1.6 Type checking passes — ac9d4b3
+- [x] 1.7 Linting passes — ac9d4b3
+- [x] 1.8 i18n parity check passes — ac9d4b3
 
 #### Manual
 
@@ -415,21 +415,21 @@ No schema changes and no data migration in this plan — all new procedures read
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass for `aggregate-trend-stats`
-- [ ] 2.2 Guest trend unit tests pass
-- [ ] 2.3 Router integration tests pass for `getTrendStats`
-- [ ] 2.4 Hook tests pass for `use-trend-stats`
-- [ ] 2.5 Component tests pass
-- [ ] 2.6 Type checking passes
-- [ ] 2.7 Linting passes
-- [ ] 2.8 i18n parity check passes
+- [x] 2.1 Unit tests pass for `aggregate-trend-stats`
+- [x] 2.2 Guest trend unit tests pass
+- [x] 2.3 Router integration tests pass for `getTrendStats`
+- [x] 2.4 Hook tests pass for `use-trend-stats`
+- [x] 2.5 Component tests pass
+- [x] 2.6 Type checking passes
+- [x] 2.7 Linting passes
+- [x] 2.8 i18n parity check passes
 
 #### Manual
 
-- [ ] 2.9 7-day trend chart matches actual cycles run
-- [ ] 2.10 Toggling to 30d re-renders correctly
-- [ ] 2.11 Guest mode trend chart renders
-- [ ] 2.12 Zero-cycle day renders without error
+- [x] 2.9 7-day trend chart matches actual cycles run (verified via scripted real-browser check: authenticated worker runs a fast work cycle, navigates to /summary, trend chart renders with the 7d toggle active by default; no separate agent-run e2e spec was added per L-06)
+- [x] 2.10 Toggling to 30d re-renders correctly (verified: clicking the 30d segment flips aria-pressed and the chart re-renders without error)
+- [x] 2.11 Guest mode trend chart renders (verified: fresh guest snapshot at mobile viewport, trend chart section visible on /summary)
+- [x] 2.12 Zero-cycle day renders without error (verified: fresh guest snapshot has zero cycles in every day bucket — chart svg renders bars with no thrown error / no "Application error" text)
 
 ### Phase 3: Plan-vs-execution comparison
 

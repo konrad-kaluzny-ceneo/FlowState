@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { getLocalDayBoundary } from "~/lib/time/local-day-boundary";
+import {
+	getLocalDayBoundaries,
+	getLocalDayBoundary,
+} from "~/lib/time/local-day-boundary";
 
 describe("getLocalDayBoundary", () => {
 	it("computes local midnight to next local midnight", () => {
@@ -41,5 +44,42 @@ describe("getLocalDayBoundary", () => {
 	it("produces a start strictly before end", () => {
 		const { start, end } = getLocalDayBoundary(new Date(2026, 0, 1));
 		expect(start.getTime()).toBeLessThan(end.getTime());
+	});
+});
+
+describe("getLocalDayBoundaries", () => {
+	it("returns windowDays boundaries in chronological order, today last", () => {
+		const reference = new Date(2026, 6, 15, 10, 0, 0);
+		const boundaries = getLocalDayBoundaries(7, reference);
+
+		expect(boundaries).toHaveLength(7);
+		expect(boundaries[0]?.localDateKey).toBe("2026-07-09");
+		expect(boundaries[6]?.localDateKey).toBe("2026-07-15");
+
+		for (let i = 1; i < boundaries.length; i++) {
+			const prevEnd = boundaries[i - 1]?.end.getTime();
+			const curStart = boundaries[i]?.start.getTime();
+			expect(curStart).toBe(prevEnd);
+		}
+	});
+
+	it("supports a 30-day window", () => {
+		const reference = new Date(2026, 6, 15);
+		const boundaries = getLocalDayBoundaries(30, reference);
+
+		expect(boundaries).toHaveLength(30);
+		expect(boundaries[0]?.localDateKey).toBe("2026-06-16");
+		expect(boundaries[29]?.localDateKey).toBe("2026-07-15");
+	});
+
+	it("rolls over correctly across a month boundary", () => {
+		const reference = new Date(2026, 6, 2);
+		const boundaries = getLocalDayBoundaries(3, reference);
+
+		expect(boundaries.map((b) => b.localDateKey)).toEqual([
+			"2026-06-30",
+			"2026-07-01",
+			"2026-07-02",
+		]);
 	});
 });

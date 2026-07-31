@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { PodsumowanieView } from "~/app/_components/podsumowanie-view";
 import type { DayStats } from "~/lib/recap/aggregate-day-stats";
+import type { TrendPoint } from "~/lib/recap/aggregate-trend-stats";
 import type { RecapTaskRow } from "~/lib/recap/types";
 
 // next-intl is globally mocked by src/test/setup.ts; no wrapper needed.
@@ -203,5 +204,38 @@ describe("PodsumowanieView", () => {
 		expect(view.textContent).not.toContain(
 			"Your focus activity from the last 24 hours.",
 		);
+	});
+
+	const trendPoints: TrendPoint[] = [
+		{ localDateKey: "2026-06-14", focusMinutes: 0, breakMinutes: 0 },
+		{ localDateKey: "2026-06-15", focusMinutes: 30, breakMinutes: 5 },
+	];
+
+	it("renders the trend chart, including zero-cycle days without error", () => {
+		render(<PodsumowanieView stats={statsWithData} trend={trendPoints} />);
+		expect(screen.getByTestId("podsumowanie-trend-chart")).toBeTruthy();
+	});
+
+	it("renders the trend chart even without trend data", () => {
+		render(<PodsumowanieView stats={statsWithData} trend={[]} />);
+		expect(screen.getByTestId("podsumowanie-trend-chart")).toBeTruthy();
+	});
+
+	it("defaults the window toggle to 7d and calls onTrendWindowDaysChange on 30d click", () => {
+		const onTrendWindowDaysChange = vi.fn();
+		render(
+			<PodsumowanieView
+				onTrendWindowDaysChange={onTrendWindowDaysChange}
+				stats={statsWithData}
+				trend={trendPoints}
+			/>,
+		);
+		const toggle = screen.getByTestId("podsumowanie-trend-window-toggle");
+		const [sevenDay, thirtyDay] = within(toggle).getAllByRole("button");
+		expect(sevenDay?.getAttribute("aria-pressed")).toBe("true");
+		expect(thirtyDay?.getAttribute("aria-pressed")).toBe("false");
+
+		fireEvent.click(thirtyDay as Element);
+		expect(onTrendWindowDaysChange).toHaveBeenCalledWith(30);
 	});
 });

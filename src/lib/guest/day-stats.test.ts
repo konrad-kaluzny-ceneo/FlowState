@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { buildGuestDayStats } from "~/lib/guest/day-stats";
+import {
+	buildGuestDayStats,
+	buildGuestTrendStats,
+} from "~/lib/guest/day-stats";
 import type { GuestSnapshotV1 } from "~/lib/guest/schema";
 import {
 	aggregateDayStats,
 	type CycleRow,
 } from "~/lib/recap/aggregate-day-stats";
+import { aggregateTrendStats } from "~/lib/recap/aggregate-trend-stats";
+import { getLocalDayBoundaries } from "~/lib/time/local-day-boundary";
 
 const RANGE = {
 	start: new Date("2026-07-10T00:00:00Z"),
@@ -240,5 +245,100 @@ describe("buildGuestDayStats", () => {
 		expect(guestResult.breakMinutes).toBe(authResult.breakMinutes);
 		expect(guestResult.sessionCount).toBe(authResult.sessionCount);
 		expect(guestResult.avgSessionMinutes).toBe(authResult.avgSessionMinutes);
+	});
+});
+
+describe("buildGuestTrendStats", () => {
+	const now = new Date(2026, 6, 15, 10, 0, 0);
+
+	it("returns windowDays zero-filled points for an empty snapshot", () => {
+		const result = buildGuestTrendStats(makeSnapshot(), 7, now);
+		expect(result).toHaveLength(7);
+		expect(result.every((p) => p.focusMinutes === 0)).toBe(true);
+	});
+
+	it("buckets a cycle into its local startedAt day", () => {
+		const snapshot = makeSnapshot({
+			cycles: [
+				{
+					id: "c1",
+					sessionId: "s1",
+					taskId: null,
+					kind: "WORK",
+					state: "COMPLETED",
+					configuredDurationSec: 1500,
+					startedAt: new Date(2026, 6, 14, 9, 0, 0),
+					endedAt: new Date(2026, 6, 14, 9, 25, 0),
+					pausedAt: null,
+				},
+			],
+		});
+
+		const result = buildGuestTrendStats(snapshot, 7, now);
+		expect(result.find((p) => p.localDateKey === "2026-07-14")).toEqual({
+			localDateKey: "2026-07-14",
+			focusMinutes: 25,
+			breakMinutes: 0,
+		});
+	});
+
+	it("excludes a cycle whose startedAt falls outside the window", () => {
+		const snapshot = makeSnapshot({
+			cycles: [
+				{
+					id: "c1",
+					sessionId: "s1",
+					taskId: null,
+					kind: "WORK",
+					state: "COMPLETED",
+					configuredDurationSec: 1500,
+					startedAt: new Date(2026, 5, 1, 9, 0, 0),
+					endedAt: new Date(2026, 5, 1, 9, 25, 0),
+					pausedAt: null,
+				},
+			],
+		});
+
+		const result = buildGuestTrendStats(snapshot, 7, now);
+		expect(result.every((p) => p.focusMinutes === 0)).toBe(true);
+	});
+
+	it("produces the same totals as aggregateTrendStats for an equivalent fixture", () => {
+		const snapshot = makeSnapshot({
+			cycles: [
+				{
+					id: "c1",
+					sessionId: "s1",
+					taskId: "t1",
+					kind: "WORK",
+					state: "COMPLETED",
+					configuredDurationSec: 1500,
+					startedAt: new Date(2026, 6, 15, 10, 0, 0),
+					endedAt: new Date(2026, 6, 15, 10, 20, 0),
+					pausedAt: null,
+				},
+			],
+		});
+
+		const guestResult = buildGuestTrendStats(snapshot, 7, now);
+
+		const authCycles: CycleRow[] = [
+			{
+				id: 1,
+				taskId: 1,
+				kind: "WORK",
+				state: "COMPLETED",
+				configuredDurationSec: 1500,
+				startedAt: new Date(2026, 6, 15, 10, 0, 0),
+				endedAt: new Date(2026, 6, 15, 10, 20, 0),
+				task: null,
+			},
+		];
+		const authResult = aggregateTrendStats(
+			authCycles,
+			getLocalDayBoundaries(7, now),
+		);
+
+		expect(guestResult).toEqual(authResult);
 	});
 });
