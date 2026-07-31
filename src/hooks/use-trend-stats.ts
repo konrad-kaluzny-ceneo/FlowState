@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import { buildGuestTrendStats } from "~/lib/guest/day-stats";
@@ -10,7 +10,7 @@ import type { TrendPoint } from "~/lib/recap/aggregate-trend-stats";
 import { getLocalDayBoundary } from "~/lib/time/local-day-boundary";
 import { api } from "~/trpc/react";
 
-type WindowDays = 7 | 30;
+export type WindowDays = 7 | 30;
 
 // ─── Guest TrendPoint[] via useSyncExternalStore ──────────────────────────────
 
@@ -41,11 +41,10 @@ function getGuestTrendServerSnapshot(): TrendPoint[] {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export function useTrendStats() {
+export function useTrendStats(windowDays: WindowDays) {
 	const mode = useDataMode();
 	const isAuthenticated = mode === "authenticated";
 
-	const [windowDays, setWindowDays] = useState<WindowDays>(7);
 	const todayLocalMidnightUtc = getLocalDayBoundary().start;
 
 	const query = api.recap.getTrendStats.useQuery(
@@ -66,8 +65,6 @@ export function useTrendStats() {
 
 	return {
 		trend: isAuthenticated ? (query.data ?? emptyGuestTrend) : guestTrend,
-		windowDays,
-		setWindowDays,
 		isLoading: isAuthenticated && query.isLoading,
 		isGuest: !isAuthenticated,
 	};

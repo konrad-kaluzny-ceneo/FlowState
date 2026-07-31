@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { PodsumowanieView } from "~/app/_components/podsumowanie-view";
+import type { PlanVsExecutionPoint } from "~/hooks/use-plan-vs-execution";
 import type { DayStats } from "~/lib/recap/aggregate-day-stats";
 import type { TrendPoint } from "~/lib/recap/aggregate-trend-stats";
 import type { RecapTaskRow } from "~/lib/recap/types";
@@ -237,5 +238,72 @@ describe("PodsumowanieView", () => {
 
 		fireEvent.click(thirtyDay as Element);
 		expect(onTrendWindowDaysChange).toHaveBeenCalledWith(30);
+	});
+
+	const planVsExecutionPoints: PlanVsExecutionPoint[] = [
+		{ localDateKey: "2026-06-14", plannedMinutes: null, actualMinutes: 20 },
+		{ localDateKey: "2026-06-15", plannedMinutes: 60, actualMinutes: 90 },
+	];
+
+	it("renders the plan-vs-execution chart when available", () => {
+		render(
+			<PodsumowanieView
+				isPlanVsExecutionAvailable
+				planVsExecution={planVsExecutionPoints}
+				stats={statsWithData}
+			/>,
+		);
+		expect(
+			screen.getByTestId("podsumowanie-plan-vs-execution-chart"),
+		).toBeTruthy();
+		expect(
+			screen.queryByTestId("podsumowanie-plan-vs-execution-guest-nudge"),
+		).toBeNull();
+	});
+
+	it("renders the sign-in nudge instead of the chart when unavailable (guest)", () => {
+		render(
+			<PodsumowanieView
+				isPlanVsExecutionAvailable={false}
+				stats={statsWithData}
+			/>,
+		);
+		expect(
+			screen.getByTestId("podsumowanie-plan-vs-execution-guest-nudge"),
+		).toBeTruthy();
+	});
+
+	it("renders only the actual bar for a day with no planned budget", () => {
+		render(
+			<PodsumowanieView
+				isPlanVsExecutionAvailable
+				planVsExecution={planVsExecutionPoints}
+				stats={statsWithData}
+			/>,
+		);
+		const chart = screen.getByTestId("podsumowanie-plan-vs-execution-chart");
+		// 2 points: one with a planned bar (2 rects) + one without (1 rect) = 3 rects total.
+		expect(chart.querySelectorAll("svg rect")).toHaveLength(3);
+	});
+
+	it("renders the true actual (not capped) when actual exceeds the planned budget", () => {
+		render(
+			<PodsumowanieView
+				isPlanVsExecutionAvailable
+				planVsExecution={planVsExecutionPoints}
+				stats={statsWithData}
+			/>,
+		);
+		const chart = screen.getByTestId("podsumowanie-plan-vs-execution-chart");
+		// Second point: plannedMinutes 60, actualMinutes 90 — actual bar (2nd
+		// rect in that day's <g>) must render taller than the planned bar (1st),
+		// proving the actual isn't clamped to the budget.
+		const groups = chart.querySelectorAll("svg g");
+		const overBudgetGroup = groups[groups.length - 1];
+		const [plannedRect, actualRect] =
+			overBudgetGroup?.querySelectorAll("rect") ?? [];
+		const plannedHeight = Number(plannedRect?.getAttribute("height"));
+		const actualHeight = Number(actualRect?.getAttribute("height"));
+		expect(actualHeight).toBeGreaterThan(plannedHeight);
 	});
 });

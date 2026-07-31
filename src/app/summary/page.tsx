@@ -1,8 +1,12 @@
 "use client";
 
+import { useState } from "react";
+
 import { PodsumowanieView } from "~/app/_components/podsumowanie-view";
 import { useDailyRecap } from "~/hooks/use-daily-recap";
 import { useDayStats } from "~/hooks/use-day-stats";
+import { usePlanVsExecution } from "~/hooks/use-plan-vs-execution";
+import type { WindowDays } from "~/hooks/use-trend-stats";
 import { useTrendStats } from "~/hooks/use-trend-stats";
 
 export default function SummaryPage() {
@@ -17,7 +21,10 @@ export default function SummaryPage() {
 		canGoNext,
 	} = useDayStats();
 	const { recap, isLoading: isRecapLoading } = useDailyRecap();
-	const { trend, windowDays, setWindowDays } = useTrendStats();
+	const [windowDays, setWindowDays] = useState<WindowDays>(7);
+	const { trend } = useTrendStats(windowDays);
+	const { points: planVsExecution, isAvailable: isPlanVsExecutionAvailable } =
+		usePlanVsExecution(windowDays);
 
 	return (
 		<div className="flex flex-1 flex-col items-center px-4 py-8">
@@ -26,11 +33,13 @@ export default function SummaryPage() {
 					canGoNext={canGoNext}
 					isGuest={isGuest}
 					isLoading={isLoading || isRecapLoading}
+					isPlanVsExecutionAvailable={isPlanVsExecutionAvailable}
 					last24Hours={recap.last24Hours}
 					onNextDay={goToNextDay}
 					onPreviousDay={goToPreviousDay}
 					onToday={goToToday}
 					onTrendWindowDaysChange={setWindowDays}
+					planVsExecution={planVsExecution}
 					stats={stats}
 					trend={trend}
 					trendWindowDays={windowDays}

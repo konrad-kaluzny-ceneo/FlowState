@@ -123,6 +123,19 @@ function createMockDb() {
 					return Promise.resolve(row);
 				},
 			),
+			findMany: vi.fn(
+				(args: {
+					where: { userId: string; localDateKey: { in: string[] } };
+				}) => {
+					const allowed = new Set(args.where.localDateKey.in);
+					return Promise.resolve(
+						dayPlans.filter(
+							(p) =>
+								p.userId === args.where.userId && allowed.has(p.localDateKey),
+						),
+					);
+				},
+			),
 		},
 		cycle: { create: cycleCreate },
 		checkIn: { create: checkInCreate },
@@ -255,5 +268,59 @@ describe("dayPlan energy-of-the-day integration", () => {
 			localDateKey,
 		});
 		expect(otherUser.energyLevel).toBeNull();
+	});
+});
+
+describe("dayPlan.getRange", () => {
+	beforeEach(() => {
+		dayPlans = [];
+		nextDayPlanId = 1;
+	});
+
+	it("returns null budget for days without a DayPlan row, per-user isolated", async () => {
+		const db = createMockDb();
+
+		await dayPlanCaller(USER, db).setBudget({
+			localDateKey: "2026-07-14",
+			focusBudgetMinutes: 120,
+		});
+		await dayPlanCaller(OTHER_USER, db).setBudget({
+			localDateKey: "2026-07-15",
+			focusBudgetMinutes: 90,
+		});
+
+		const result = await dayPlanCaller(USER, db).getRange({
+			localDateKeys: ["2026-07-13", "2026-07-14", "2026-07-15"],
+		});
+
+		expect(result).toEqual([
+			{ localDateKey: "2026-07-13", focusBudgetMinutes: null },
+			{ localDateKey: "2026-07-14", focusBudgetMinutes: 120 },
+			// OTHER_USER's budget on 07-15 must not leak into USER's result
+			{ localDateKey: "2026-07-15", focusBudgetMinutes: null },
+		]);
+	});
+
+	it("preserves the requested key order regardless of row insertion order", async () => {
+		const db = createMockDb();
+
+		await dayPlanCaller(USER, db).setBudget({
+			localDateKey: "2026-07-15",
+			focusBudgetMinutes: 30,
+		});
+		await dayPlanCaller(USER, db).setBudget({
+			localDateKey: "2026-07-13",
+			focusBudgetMinutes: 60,
+		});
+
+		const result = await dayPlanCaller(USER, db).getRange({
+			localDateKeys: ["2026-07-13", "2026-07-14", "2026-07-15"],
+		});
+
+		expect(result.map((r) => r.localDateKey)).toEqual([
+			"2026-07-13",
+			"2026-07-14",
+			"2026-07-15",
+		]);
 	});
 });

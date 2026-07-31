@@ -415,38 +415,38 @@ No schema changes and no data migration in this plan — all new procedures read
 
 #### Automated
 
-- [x] 2.1 Unit tests pass for `aggregate-trend-stats`
-- [x] 2.2 Guest trend unit tests pass
-- [x] 2.3 Router integration tests pass for `getTrendStats`
-- [x] 2.4 Hook tests pass for `use-trend-stats`
-- [x] 2.5 Component tests pass
-- [x] 2.6 Type checking passes
-- [x] 2.7 Linting passes
-- [x] 2.8 i18n parity check passes
+- [x] 2.1 Unit tests pass for `aggregate-trend-stats` — c7f8112
+- [x] 2.2 Guest trend unit tests pass — c7f8112
+- [x] 2.3 Router integration tests pass for `getTrendStats` — c7f8112
+- [x] 2.4 Hook tests pass for `use-trend-stats` — c7f8112
+- [x] 2.5 Component tests pass — c7f8112
+- [x] 2.6 Type checking passes — c7f8112
+- [x] 2.7 Linting passes — c7f8112
+- [x] 2.8 i18n parity check passes — c7f8112
 
 #### Manual
 
-- [x] 2.9 7-day trend chart matches actual cycles run (verified via scripted real-browser check: authenticated worker runs a fast work cycle, navigates to /summary, trend chart renders with the 7d toggle active by default; no separate agent-run e2e spec was added per L-06)
-- [x] 2.10 Toggling to 30d re-renders correctly (verified: clicking the 30d segment flips aria-pressed and the chart re-renders without error)
-- [x] 2.11 Guest mode trend chart renders (verified: fresh guest snapshot at mobile viewport, trend chart section visible on /summary)
-- [x] 2.12 Zero-cycle day renders without error (verified: fresh guest snapshot has zero cycles in every day bucket — chart svg renders bars with no thrown error / no "Application error" text)
+- [x] 2.9 7-day trend chart matches actual cycles run (verified via scripted real-browser check: authenticated worker runs a fast work cycle, navigates to /summary, trend chart renders with the 7d toggle active by default; no separate agent-run e2e spec was added per L-06) — c7f8112
+- [x] 2.10 Toggling to 30d re-renders correctly (verified: clicking the 30d segment flips aria-pressed and the chart re-renders without error) — c7f8112
+- [x] 2.11 Guest mode trend chart renders (verified: fresh guest snapshot at mobile viewport, trend chart section visible on /summary) — c7f8112
+- [x] 2.12 Zero-cycle day renders without error (verified: fresh guest snapshot has zero cycles in every day bucket — chart svg renders bars with no thrown error / no "Application error" text) — c7f8112
 
 ### Phase 3: Plan-vs-execution comparison
 
 #### Automated
 
-- [ ] 3.1 Router integration tests pass for `dayPlan.getRange`
-- [ ] 3.2 Hook tests pass for `use-plan-vs-execution`
-- [ ] 3.3 Component tests pass
-- [ ] 3.4 Type checking passes
-- [ ] 3.5 Linting passes
-- [ ] 3.6 i18n parity check passes
+- [x] 3.1 Router integration tests pass for `dayPlan.getRange`
+- [x] 3.2 Hook tests pass for `use-plan-vs-execution`
+- [x] 3.3 Component tests pass
+- [x] 3.4 Type checking passes
+- [x] 3.5 Linting passes
+- [x] 3.6 i18n parity check passes
 
 #### Manual
 
-- [ ] 3.7 Paired planned/actual bars render correctly; days without budget show actual only
-- [ ] 3.8 Exceeding budget shows true actual, not capped value
-- [ ] 3.9 Guest mode shows sign-in nudge instead of chart
+- [x] 3.7 Paired planned/actual bars render correctly; days without budget show actual only (verified via scripted real-browser check: real `dayPlan.setBudget` seeded for today only, fast work cycle run, /summary chart shows a 2-rect group for the budgeted day and 1-rect groups for the 6 unbudgeted days; no separate agent-run e2e spec was added per L-06)
+- [x] 3.8 Exceeding budget shows true actual, not capped value (verified deterministically: `use-plan-vs-execution.test.tsx` asserts `actualMinutes: 90` against `plannedMinutes: 60` unclamped, and `podsumowanie-view.test.tsx` asserts the rendered actual-bar SVG height exceeds the planned-bar height for the same fixture — a live multi-minute fake-clock jump in the browser proved unreliable, so the numeric "not capped" contract stays at the deterministic hook/component layer while the e2e check covers real end-to-end wiring)
+- [x] 3.9 Guest mode shows sign-in nudge instead of chart (verified: fresh guest snapshot at mobile viewport, `podsumowanie-plan-vs-execution-guest-nudge` visible, chart svg absent)
 
 ### Phase 4: Context-switch pattern analytics
 

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { ComingSoonPreview } from "~/app/_components/ui/coming-soon-preview";
 import { SegmentedControl } from "~/app/_components/ui/segmented-control";
+import type { PlanVsExecutionPoint } from "~/hooks/use-plan-vs-execution";
 import {
 	getWorkTypeLabel,
 	WORK_TYPE_CONFIG,
@@ -163,6 +164,78 @@ function TrendBarChart({ points, ariaLabel }: TrendChartProps) {
 						x={x}
 						y={barH > 0 ? y : CHART_HEIGHT - 2}
 					/>
+				);
+			})}
+		</svg>
+	);
+}
+
+// ─── Plan-vs-execution paired bar chart ───────────────────────────────────────
+
+type PlanVsExecutionChartProps = {
+	points: PlanVsExecutionPoint[];
+	ariaLabel: string;
+};
+
+function PlanVsExecutionChart({
+	points,
+	ariaLabel,
+}: PlanVsExecutionChartProps) {
+	const max = Math.max(
+		...points.map((p) => Math.max(p.actualMinutes, p.plannedMinutes ?? 0)),
+		1,
+	);
+	const slotWidth = points.length > 0 ? CHART_WIDTH / points.length : 0;
+	const barGap = 2;
+	const pairedBarWidth = Math.max((slotWidth - barGap * 3) / 2, 0);
+
+	return (
+		<svg
+			aria-label={ariaLabel}
+			className="w-full"
+			preserveAspectRatio="none"
+			role="img"
+			style={{ height: CHART_HEIGHT }}
+			viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+		>
+			{points.map((point, i) => {
+				const slotX = i * slotWidth;
+				const hasPlanned = point.plannedMinutes != null;
+
+				const actualH = Math.round(
+					(point.actualMinutes / max) * (CHART_HEIGHT - 4),
+				);
+				const actualX = slotX + barGap + pairedBarWidth + barGap;
+
+				const plannedH = hasPlanned
+					? Math.round(((point.plannedMinutes ?? 0) / max) * (CHART_HEIGHT - 4))
+					: 0;
+
+				return (
+					<g key={point.localDateKey}>
+						{hasPlanned && (
+							<rect
+								className="fill-accent-break opacity-80"
+								height={Math.max(plannedH, 2)}
+								rx={2}
+								width={pairedBarWidth}
+								x={slotX + barGap}
+								y={plannedH > 0 ? CHART_HEIGHT - plannedH : CHART_HEIGHT - 2}
+							/>
+						)}
+						<rect
+							className={
+								actualH > 0
+									? "fill-accent-cta opacity-80"
+									: "fill-segment-inactive"
+							}
+							height={Math.max(actualH, 2)}
+							rx={2}
+							width={pairedBarWidth}
+							x={actualX}
+							y={actualH > 0 ? CHART_HEIGHT - actualH : CHART_HEIGHT - 2}
+						/>
+					</g>
 				);
 			})}
 		</svg>
@@ -397,6 +470,8 @@ export type PodsumowanieViewProps = {
 	trend?: TrendPoint[];
 	trendWindowDays?: 7 | 30;
 	onTrendWindowDaysChange?: (windowDays: 7 | 30) => void;
+	planVsExecution?: PlanVsExecutionPoint[];
+	isPlanVsExecutionAvailable?: boolean;
 };
 
 export function PodsumowanieView({
@@ -412,6 +487,8 @@ export function PodsumowanieView({
 	trend = [],
 	trendWindowDays = 7,
 	onTrendWindowDaysChange,
+	planVsExecution = [],
+	isPlanVsExecutionAvailable = false,
 }: PodsumowanieViewProps) {
 	const t = useTranslations("Podsumowanie");
 	const tTasks = useTranslations("Tasks");
@@ -698,6 +775,41 @@ export function PodsumowanieView({
 					</div>
 				</div>
 				<TrendBarChart ariaLabel={t("trendChartAria")} points={trend} />
+			</div>
+
+			{/* Plan vs execution */}
+			<div
+				className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
+				data-testid="podsumowanie-plan-vs-execution-chart"
+			>
+				<p className="mb-3 font-medium text-primary text-sm">
+					{t("planVsExecutionTitle")}
+				</p>
+				{isPlanVsExecutionAvailable ? (
+					<>
+						<PlanVsExecutionChart
+							ariaLabel={t("planVsExecutionAria")}
+							points={planVsExecution}
+						/>
+						<div className="mt-3 flex items-center gap-4">
+							<span className="flex items-center gap-1.5 text-text-secondary text-xs">
+								<span className="inline-block h-2.5 w-2.5 rounded-full bg-accent-break" />
+								{t("planVsExecutionPlannedLabel")}
+							</span>
+							<span className="flex items-center gap-1.5 text-text-secondary text-xs">
+								<span className="inline-block h-2.5 w-2.5 rounded-full bg-accent-cta" />
+								{t("planVsExecutionActualLabel")}
+							</span>
+						</div>
+					</>
+				) : (
+					<p
+						className="text-sm text-text-secondary"
+						data-testid="podsumowanie-plan-vs-execution-guest-nudge"
+					>
+						{t("planVsExecutionGuestNudge")}
+					</p>
+				)}
 			</div>
 
 			{/* Deferred widgets */}
