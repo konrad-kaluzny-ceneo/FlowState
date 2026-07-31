@@ -463,6 +463,6 @@ No schema changes and no data migration in this plan — all new procedures read
 
 #### Manual
 
-- [ ] 4.9 Alternating-task day shows higher switch count than single-task day
-- [ ] 4.10 Guest mode chart renders
-- [ ] 4.11 Fully empty window renders without error
+- [x] 4.9 Alternating-task day shows higher switch count than single-task day (confirmed by user)
+- [x] 4.10 Guest mode chart renders (confirmed by user)
+- [x] 4.11 Fully empty window renders without error (confirmed by user)

@@ -1,7 +1,7 @@
 ---
 change_id: analytics-trends-plan-vs-execution
 title: Analytics trends plan vs execution
-status: implementing
+status: implemented
 created: 2026-07-30
 updated: 2026-07-31
 archived_at: null
