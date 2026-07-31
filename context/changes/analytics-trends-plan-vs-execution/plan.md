@@ -452,14 +452,14 @@ No schema changes and no data migration in this plan — all new procedures read
 
 #### Automated
 
-- [x] 4.1 Unit tests pass for `count-context-switches`
-- [x] 4.2 Updated trend aggregation tests pass
-- [x] 4.3 Guest parity tests pass
-- [x] 4.4 Router integration tests pass
-- [x] 4.5 Component tests pass
-- [x] 4.6 Type checking passes
-- [x] 4.7 Linting passes
-- [x] 4.8 i18n parity check passes
+- [x] 4.1 Unit tests pass for `count-context-switches` — 1411098
+- [x] 4.2 Updated trend aggregation tests pass — 1411098
+- [x] 4.3 Guest parity tests pass — 1411098
+- [x] 4.4 Router integration tests pass — 1411098
+- [x] 4.5 Component tests pass — 1411098
+- [x] 4.6 Type checking passes — 1411098
+- [x] 4.7 Linting passes — 1411098
+- [x] 4.8 i18n parity check passes — 1411098
 
 #### Manual
 
