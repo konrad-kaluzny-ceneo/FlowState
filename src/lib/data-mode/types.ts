@@ -161,9 +161,25 @@ export interface SessionRepository {
 	}): Promise<DomainSession>;
 }
 
+export type TrendPoint = {
+	localDateKey: string;
+	focusMinutes: number;
+	breakMinutes: number;
+	switchCount: number;
+};
+
+export interface RecapRepository {
+	getTrendStats(input: {
+		todayLocalMidnightUtc: Date;
+		todayLocalDateKey: string;
+		windowDays: 7 | 30;
+	}): Promise<TrendPoint[]>;
+}
+
 export type Repositories = {
 	mode: DataMode;
 	tasks: TaskRepository;
 	cycles: CycleRepository;
 	sessions: SessionRepository;
+	recap: RecapRepository;
 };

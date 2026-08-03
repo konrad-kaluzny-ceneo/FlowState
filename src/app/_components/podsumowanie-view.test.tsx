@@ -1,8 +1,10 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PodsumowanieView } from "~/app/_components/podsumowanie-view";
+import type { PlanVsExecutionPoint } from "~/hooks/use-plan-vs-execution";
 import type { DayStats } from "~/lib/recap/aggregate-day-stats";
+import type { TrendPoint } from "~/lib/recap/aggregate-trend-stats";
 import type { RecapTaskRow } from "~/lib/recap/types";
 
 // next-intl is globally mocked by src/test/setup.ts; no wrapper needed.
@@ -63,6 +65,15 @@ const inProgressRow: RecapTaskRow = {
 };
 
 describe("PodsumowanieView", () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date(2026, 5, 20, 12, 0, 0));
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	it("renders guest empty state when stats is null", () => {
 		render(<PodsumowanieView isGuest stats={null} />);
 		expect(screen.getByTestId("podsumowanie-guest-empty")).toBeTruthy();
@@ -121,11 +132,11 @@ describe("PodsumowanieView", () => {
 		expect(screen.getByTestId("podsumowanie-task-donut")).toBeTruthy();
 	});
 
-	it("always renders deferred placeholders", () => {
+	it("always renders deferred placeholders and date nav", () => {
 		render(<PodsumowanieView stats={statsWithData} />);
 		expect(screen.getByTestId("podsumowanie-deferred")).toBeTruthy();
 		expect(screen.getByTestId("podsumowanie-best-time-preview")).toBeTruthy();
-		expect(screen.getByTestId("podsumowanie-date-nav-preview")).toBeTruthy();
+		expect(screen.getByTestId("podsumowanie-date-nav")).toBeTruthy();
 	});
 
 	it("renders motivational footer banner", () => {
@@ -154,5 +165,178 @@ describe("PodsumowanieView", () => {
 			<PodsumowanieView last24Hours={[inProgressRow]} stats={statsWithData} />,
 		);
 		expect(screen.getByTestId("podsumowanie-completed-empty")).toBeTruthy();
+	});
+
+	it("disables the next-day button when viewing today", () => {
+		render(<PodsumowanieView canGoNext={false} stats={statsWithData} />);
+		const nextButton = screen.getByTestId(
+			"podsumowanie-date-nav-next",
+		) as HTMLButtonElement;
+		expect(nextButton.disabled).toBe(true);
+	});
+
+	it("enables the next-day button and calls onNextDay when viewing a past day", () => {
+		const onNextDay = vi.fn();
+		render(
+			<PodsumowanieView
+				canGoNext
+				onNextDay={onNextDay}
+				stats={statsWithData}
+				viewedLocalDateKey="2026-06-19"
+			/>,
+		);
+		const nextButton = screen.getByTestId(
+			"podsumowanie-date-nav-next",
+		) as HTMLButtonElement;
+		expect(nextButton.disabled).toBe(false);
+		fireEvent.click(nextButton);
+		expect(onNextDay).toHaveBeenCalledOnce();
+	});
+
+	it("calls onPreviousDay when the previous-day button is clicked", () => {
+		const onPreviousDay = vi.fn();
+		render(
+			<PodsumowanieView onPreviousDay={onPreviousDay} stats={statsWithData} />,
+		);
+		fireEvent.click(screen.getByTestId("podsumowanie-date-nav-prev"));
+		expect(onPreviousDay).toHaveBeenCalledOnce();
+	});
+
+	it("shows the past-day subtitle when viewing a day other than today", () => {
+		render(
+			<PodsumowanieView
+				stats={statsWithData}
+				viewedLocalDateKey="2026-06-19"
+			/>,
+		);
+		const view = screen.getByTestId("podsumowanie-view");
+		expect(view.textContent).toContain("Your focus activity for Jun 19.");
+		expect(view.textContent).not.toContain(
+			"Your focus activity from the last 24 hours.",
+		);
+	});
+
+	const trendPoints: TrendPoint[] = [
+		{
+			localDateKey: "2026-06-14",
+			focusMinutes: 0,
+			breakMinutes: 0,
+			switchCount: 0,
+		},
+		{
+			localDateKey: "2026-06-15",
+			focusMinutes: 30,
+			breakMinutes: 5,
+			switchCount: 2,
+		},
+	];
+
+	it("renders the trend chart, including zero-cycle days without error", () => {
+		render(<PodsumowanieView stats={statsWithData} trend={trendPoints} />);
+		expect(screen.getByTestId("podsumowanie-trend-chart")).toBeTruthy();
+	});
+
+	it("renders the trend chart even without trend data", () => {
+		render(<PodsumowanieView stats={statsWithData} trend={[]} />);
+		expect(screen.getByTestId("podsumowanie-trend-chart")).toBeTruthy();
+	});
+
+	it("renders the context-switch chart alongside the trend chart", () => {
+		render(<PodsumowanieView stats={statsWithData} trend={trendPoints} />);
+		expect(
+			screen.getByTestId("podsumowanie-context-switch-chart"),
+		).toBeTruthy();
+	});
+
+	it("renders the context-switch chart for a fully empty window without error", () => {
+		render(<PodsumowanieView stats={statsWithData} trend={[]} />);
+		expect(
+			screen.getByTestId("podsumowanie-context-switch-chart"),
+		).toBeTruthy();
+	});
+
+	it("defaults the window toggle to 7d and calls onTrendWindowDaysChange on 30d click", () => {
+		const onTrendWindowDaysChange = vi.fn();
+		render(
+			<PodsumowanieView
+				onTrendWindowDaysChange={onTrendWindowDaysChange}
+				stats={statsWithData}
+				trend={trendPoints}
+			/>,
+		);
+		const toggle = screen.getByTestId("podsumowanie-trend-window-toggle");
+		const [sevenDay, thirtyDay] = within(toggle).getAllByRole("button");
+		expect(sevenDay?.getAttribute("aria-pressed")).toBe("true");
+		expect(thirtyDay?.getAttribute("aria-pressed")).toBe("false");
+
+		fireEvent.click(thirtyDay as Element);
+		expect(onTrendWindowDaysChange).toHaveBeenCalledWith(30);
+	});
+
+	const planVsExecutionPoints: PlanVsExecutionPoint[] = [
+		{ localDateKey: "2026-06-14", plannedMinutes: null, actualMinutes: 20 },
+		{ localDateKey: "2026-06-15", plannedMinutes: 60, actualMinutes: 90 },
+	];
+
+	it("renders the plan-vs-execution chart when available", () => {
+		render(
+			<PodsumowanieView
+				isPlanVsExecutionAvailable
+				planVsExecution={planVsExecutionPoints}
+				stats={statsWithData}
+			/>,
+		);
+		expect(
+			screen.getByTestId("podsumowanie-plan-vs-execution-chart"),
+		).toBeTruthy();
+		expect(
+			screen.queryByTestId("podsumowanie-plan-vs-execution-guest-nudge"),
+		).toBeNull();
+	});
+
+	it("renders the sign-in nudge instead of the chart when unavailable (guest)", () => {
+		render(
+			<PodsumowanieView
+				isPlanVsExecutionAvailable={false}
+				stats={statsWithData}
+			/>,
+		);
+		expect(
+			screen.getByTestId("podsumowanie-plan-vs-execution-guest-nudge"),
+		).toBeTruthy();
+	});
+
+	it("renders only the actual bar for a day with no planned budget", () => {
+		render(
+			<PodsumowanieView
+				isPlanVsExecutionAvailable
+				planVsExecution={planVsExecutionPoints}
+				stats={statsWithData}
+			/>,
+		);
+		const chart = screen.getByTestId("podsumowanie-plan-vs-execution-chart");
+		// 2 points: one with a planned bar (2 rects) + one without (1 rect) = 3 rects total.
+		expect(chart.querySelectorAll("svg rect")).toHaveLength(3);
+	});
+
+	it("renders the true actual (not capped) when actual exceeds the planned budget", () => {
+		render(
+			<PodsumowanieView
+				isPlanVsExecutionAvailable
+				planVsExecution={planVsExecutionPoints}
+				stats={statsWithData}
+			/>,
+		);
+		const chart = screen.getByTestId("podsumowanie-plan-vs-execution-chart");
+		// Second point: plannedMinutes 60, actualMinutes 90 — actual bar (2nd
+		// rect in that day's <g>) must render taller than the planned bar (1st),
+		// proving the actual isn't clamped to the budget.
+		const groups = chart.querySelectorAll("svg g");
+		const overBudgetGroup = groups[groups.length - 1];
+		const [plannedRect, actualRect] =
+			overBudgetGroup?.querySelectorAll("rect") ?? [];
+		const plannedHeight = Number(plannedRect?.getAttribute("height"));
+		const actualHeight = Number(actualRect?.getAttribute("height"));
+		expect(actualHeight).toBeGreaterThan(plannedHeight);
 	});
 });

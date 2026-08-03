@@ -821,10 +821,26 @@ export function createGuestCycleRepository(): CycleRepository {
 	};
 }
 
+export function createGuestRecapRepository() {
+	return {
+		async getTrendStats(input: {
+			todayLocalMidnightUtc: Date;
+			todayLocalDateKey: string;
+			windowDays: 7 | 30;
+		}) {
+			const { buildGuestTrendStats } = await import("~/lib/guest/day-stats");
+			const { loadSnapshot } = await import("~/lib/guest/store");
+			const snapshot = loadSnapshot();
+			return buildGuestTrendStats(snapshot, input.windowDays);
+		},
+	};
+}
+
 export function createGuestRepositories() {
 	return {
 		tasks: createGuestTaskRepository(),
 		sessions: createGuestSessionRepository(),
 		cycles: createGuestCycleRepository(),
+		recap: createGuestRecapRepository(),
 	};
 }

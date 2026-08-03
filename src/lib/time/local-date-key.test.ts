@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatLocalDateKey } from "./local-date-key";
+import { formatLocalDateKey, subtractLocalDateKey } from "./local-date-key";
 
 describe("formatLocalDateKey", () => {
 	it("formats a date as YYYY-MM-DD in local timezone", () => {
@@ -14,5 +14,12 @@ describe("formatLocalDateKey", () => {
 
 		const firstDayNextMonth = new Date(2026, 1, 1, 0, 1);
 		expect(formatLocalDateKey(firstDayNextMonth)).toBe("2026-02-01");
+	});
+});
+
+describe("subtractLocalDateKey", () => {
+	it("subtracts calendar days across month and year boundaries", () => {
+		expect(subtractLocalDateKey("2026-01-01", 1)).toBe("2025-12-31");
+		expect(subtractLocalDateKey("2026-03-01", 1)).toBe("2026-02-28");
 	});
 });

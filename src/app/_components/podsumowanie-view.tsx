@@ -1,8 +1,11 @@
 "use client";
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { ComingSoonPreview } from "~/app/_components/ui/coming-soon-preview";
+import { SegmentedControl } from "~/app/_components/ui/segmented-control";
+import type { PlanVsExecutionPoint } from "~/hooks/use-plan-vs-execution";
 import {
 	getWorkTypeLabel,
 	WORK_TYPE_CONFIG,
@@ -10,8 +13,22 @@ import {
 } from "~/lib/design/work-type-config";
 import type { UserLocale } from "~/lib/domain/user-locale";
 import type { DayStats, HourBucket } from "~/lib/recap/aggregate-day-stats";
+import type { TrendPoint } from "~/lib/recap/aggregate-trend-stats";
 import { filterCompletedRecapRows } from "~/lib/recap/filter-completed-recap-rows";
 import type { RecapTaskRow } from "~/lib/recap/types";
+import { formatLocalDateKey } from "~/lib/time/local-date-key";
+
+function parseLocalDateKey(localDateKey: string): Date {
+	const [year, month, day] = localDateKey.split("-").map(Number);
+	return new Date(year ?? 1970, (month ?? 1) - 1, day ?? 1);
+}
+
+function formatViewedDate(localDateKey: string, locale: UserLocale): string {
+	return new Intl.DateTimeFormat(locale, {
+		month: "short",
+		day: "numeric",
+	}).format(parseLocalDateKey(localDateKey));
+}
 
 // ─── KPI card ─────────────────────────────────────────────────────────────────
 
@@ -104,6 +121,133 @@ function HourAxisLabels() {
 				</span>
 			))}
 		</div>
+	);
+}
+
+// ─── Variable bar chart ───────────────────────────────────────────────────────
+
+type MetricBar = {
+	key: string;
+	value: number;
+};
+
+type MetricBarChartProps = {
+	bars: MetricBar[];
+	ariaLabel: string;
+	height: number;
+	activeBarClassName: string;
+};
+
+function MetricBarChart({
+	bars,
+	ariaLabel,
+	height,
+	activeBarClassName,
+}: MetricBarChartProps) {
+	const max = Math.max(...bars.map((bar) => bar.value), 1);
+	const barPadding = 2;
+	const barWidth = bars.length > 0 ? CHART_WIDTH / bars.length - barPadding : 0;
+
+	return (
+		<svg
+			aria-label={ariaLabel}
+			className="w-full"
+			preserveAspectRatio="none"
+			role="img"
+			style={{ height }}
+			viewBox={`0 0 ${CHART_WIDTH} ${height}`}
+		>
+			{bars.map((bar, i) => {
+				const barH = Math.round((bar.value / max) * (height - 4));
+				const x = i * (barWidth + barPadding);
+				const y = height - barH;
+				return (
+					<rect
+						className={barH > 0 ? activeBarClassName : "fill-segment-inactive"}
+						height={Math.max(barH, 2)}
+						key={bar.key}
+						rx={2}
+						width={barWidth}
+						x={x}
+						y={barH > 0 ? y : height - 2}
+					/>
+				);
+			})}
+		</svg>
+	);
+}
+
+const SWITCH_CHART_HEIGHT = 40;
+
+// ─── Plan-vs-execution paired bar chart ───────────────────────────────────────
+
+type PlanVsExecutionChartProps = {
+	points: PlanVsExecutionPoint[];
+	ariaLabel: string;
+};
+
+function PlanVsExecutionChart({
+	points,
+	ariaLabel,
+}: PlanVsExecutionChartProps) {
+	const max = Math.max(
+		...points.map((p) => Math.max(p.actualMinutes, p.plannedMinutes ?? 0)),
+		1,
+	);
+	const slotWidth = points.length > 0 ? CHART_WIDTH / points.length : 0;
+	const barGap = 2;
+	const pairedBarWidth = Math.max((slotWidth - barGap * 3) / 2, 0);
+
+	return (
+		<svg
+			aria-label={ariaLabel}
+			className="w-full"
+			preserveAspectRatio="none"
+			role="img"
+			style={{ height: CHART_HEIGHT }}
+			viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+		>
+			{points.map((point, i) => {
+				const slotX = i * slotWidth;
+				const hasPlanned = point.plannedMinutes != null;
+
+				const actualH = Math.round(
+					(point.actualMinutes / max) * (CHART_HEIGHT - 4),
+				);
+				const actualX = slotX + barGap + pairedBarWidth + barGap;
+
+				const plannedH = hasPlanned
+					? Math.round(((point.plannedMinutes ?? 0) / max) * (CHART_HEIGHT - 4))
+					: 0;
+
+				return (
+					<g key={point.localDateKey}>
+						{hasPlanned && (
+							<rect
+								className="fill-accent-break opacity-80"
+								height={Math.max(plannedH, 2)}
+								rx={2}
+								width={pairedBarWidth}
+								x={slotX + barGap}
+								y={plannedH > 0 ? CHART_HEIGHT - plannedH : CHART_HEIGHT - 2}
+							/>
+						)}
+						<rect
+							className={
+								actualH > 0
+									? "fill-accent-cta opacity-80"
+									: "fill-segment-inactive"
+							}
+							height={Math.max(actualH, 2)}
+							rx={2}
+							width={pairedBarWidth}
+							x={actualX}
+							y={actualH > 0 ? CHART_HEIGHT - actualH : CHART_HEIGHT - 2}
+						/>
+					</g>
+				);
+			})}
+		</svg>
 	);
 }
 
@@ -327,6 +471,16 @@ export type PodsumowanieViewProps = {
 	last24Hours?: RecapTaskRow[];
 	isLoading?: boolean;
 	isGuest?: boolean;
+	viewedLocalDateKey?: string;
+	onPreviousDay?: () => void;
+	onNextDay?: () => void;
+	onToday?: () => void;
+	canGoNext?: boolean;
+	trend?: TrendPoint[];
+	trendWindowDays?: 7 | 30;
+	onTrendWindowDaysChange?: (windowDays: 7 | 30) => void;
+	planVsExecution?: PlanVsExecutionPoint[];
+	isPlanVsExecutionAvailable?: boolean;
 };
 
 export function PodsumowanieView({
@@ -334,11 +488,31 @@ export function PodsumowanieView({
 	last24Hours = [],
 	isLoading = false,
 	isGuest = false,
+	viewedLocalDateKey,
+	onPreviousDay,
+	onNextDay,
+	onToday,
+	canGoNext = false,
+	trend = [],
+	trendWindowDays = 7,
+	onTrendWindowDaysChange,
+	planVsExecution = [],
+	isPlanVsExecutionAvailable = false,
 }: PodsumowanieViewProps) {
 	const t = useTranslations("Podsumowanie");
 	const tTasks = useTranslations("Tasks");
 	const locale = useLocale() as UserLocale;
 	const completedTasks = filterCompletedRecapRows(last24Hours);
+
+	const isViewingToday =
+		viewedLocalDateKey == null || viewedLocalDateKey === formatLocalDateKey();
+	const formattedViewedDate =
+		viewedLocalDateKey != null
+			? formatViewedDate(viewedLocalDateKey, locale)
+			: "";
+	const subtitle = isViewingToday
+		? t("subtitle")
+		: t("subtitlePastDay", { date: formattedViewedDate });
 
 	const workTypeLabel = (wt: string) => {
 		const key = WORK_TYPE_LABEL_KEY[wt] ?? "workTypeUncategorized";
@@ -355,7 +529,7 @@ export function PodsumowanieView({
 					<h2 className="font-semibold text-lg text-text-section">
 						{t("title")}
 					</h2>
-					<p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
+					<p className="mt-1 text-sm text-text-secondary">{subtitle}</p>
 				</div>
 				<div
 					className="rounded-card border border-card-border bg-surface-card px-4 py-3 shadow-sm"
@@ -377,7 +551,7 @@ export function PodsumowanieView({
 					<h2 className="font-semibold text-lg text-text-section">
 						{t("title")}
 					</h2>
-					<p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
+					<p className="mt-1 text-sm text-text-secondary">{subtitle}</p>
 				</div>
 				<p
 					className="text-sm text-text-dimmed"
@@ -431,7 +605,7 @@ export function PodsumowanieView({
 				<h2 className="font-semibold text-lg text-text-section">
 					{t("title")}
 				</h2>
-				<p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
+				<p className="mt-1 text-sm text-text-secondary">{subtitle}</p>
 			</div>
 
 			{/* No data state */}
@@ -589,6 +763,87 @@ export function PodsumowanieView({
 				tTasks={tTasks}
 			/>
 
+			{/* Trend chart */}
+			<div
+				className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
+				data-testid="podsumowanie-trend-chart"
+			>
+				<div className="mb-3 flex items-center justify-between">
+					<p className="font-medium text-primary text-sm">
+						{t("trendChartTitle")}
+					</p>
+					<div data-testid="podsumowanie-trend-window-toggle">
+						<SegmentedControl
+							onChange={(w) => onTrendWindowDaysChange?.(w)}
+							options={[
+								{ value: 7, label: t("trendWindow7d") },
+								{ value: 30, label: t("trendWindow30d") },
+							]}
+							value={trendWindowDays}
+						/>
+					</div>
+				</div>
+				<MetricBarChart
+					activeBarClassName="fill-accent-cta opacity-80"
+					ariaLabel={t("trendChartAria")}
+					bars={trend.map((point) => ({
+						key: point.localDateKey,
+						value: point.focusMinutes,
+					}))}
+					height={CHART_HEIGHT}
+				/>
+
+				<div className="mt-4" data-testid="podsumowanie-context-switch-chart">
+					<p className="mb-2 font-medium text-primary text-sm">
+						{t("contextSwitchTitle")}
+					</p>
+					<MetricBarChart
+						activeBarClassName="fill-accent-break opacity-80"
+						ariaLabel={t("contextSwitchAria")}
+						bars={trend.map((point) => ({
+							key: point.localDateKey,
+							value: point.switchCount,
+						}))}
+						height={SWITCH_CHART_HEIGHT}
+					/>
+				</div>
+			</div>
+
+			{/* Plan vs execution */}
+			<div
+				className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
+				data-testid="podsumowanie-plan-vs-execution-chart"
+			>
+				<p className="mb-3 font-medium text-primary text-sm">
+					{t("planVsExecutionTitle")}
+				</p>
+				{isPlanVsExecutionAvailable ? (
+					<>
+						<PlanVsExecutionChart
+							ariaLabel={t("planVsExecutionAria")}
+							points={planVsExecution}
+						/>
+						<div className="mt-3 flex items-center gap-4">
+							<span className="flex items-center gap-1.5 text-text-secondary text-xs">
+								<span className="inline-block h-2.5 w-2.5 rounded-full bg-accent-break" />
+								{t("planVsExecutionPlannedLabel")}
+							</span>
+							<span className="flex items-center gap-1.5 text-text-secondary text-xs">
+								<span className="inline-block h-2.5 w-2.5 rounded-full bg-accent-cta" />
+								{t("planVsExecutionActualLabel")}
+							</span>
+						</div>
+					</>
+				) : (
+					<p
+						className="text-sm text-text-secondary"
+						data-testid="podsumowanie-plan-vs-execution-guest-nudge"
+					>
+						{t("planVsExecutionGuestNudge")}
+					</p>
+				)}
+			</div>
+
 			{/* Deferred widgets */}
 			<div
 				className="grid grid-cols-1 gap-3 sm:grid-cols-2"
@@ -610,16 +865,42 @@ export function PodsumowanieView({
 					</ComingSoonPreview>
 				</div>
 				<div className="flex items-end">
-					<ComingSoonPreview
-						label={t("dateNavComingSoon")}
-						testId="podsumowanie-date-nav-preview"
+					{/* biome-ignore lint/a11y/useSemanticElements: Keep the requested div while exposing its date-navigation landmark. */}
+					<div
+						aria-label={t("dateNavAria")}
+						className="m-0 flex w-full items-center justify-between gap-2 rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
+						data-testid="podsumowanie-date-nav"
+						role="navigation"
 					>
-						<div className="flex items-center justify-between gap-2 p-4">
-							<div className="h-8 w-8 rounded-full bg-segment-inactive" />
-							<div className="h-4 w-24 rounded bg-segment-inactive" />
-							<div className="h-8 w-8 rounded-full bg-segment-inactive" />
-						</div>
-					</ComingSoonPreview>
+						<button
+							aria-label={t("dateNavPrevious")}
+							className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-card-muted"
+							data-testid="podsumowanie-date-nav-prev"
+							onClick={onPreviousDay}
+							type="button"
+						>
+							<ChevronLeft aria-hidden="true" className="h-4 w-4" />
+						</button>
+						<button
+							className="font-medium text-primary text-sm disabled:cursor-default"
+							data-testid="podsumowanie-date-nav-label"
+							disabled={isViewingToday}
+							onClick={onToday}
+							type="button"
+						>
+							{isViewingToday ? t("dateNavToday") : formattedViewedDate}
+						</button>
+						<button
+							aria-label={t("dateNavNext")}
+							className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-card-muted disabled:opacity-40"
+							data-testid="podsumowanie-date-nav-next"
+							disabled={!canGoNext}
+							onClick={onNextDay}
+							type="button"
+						>
+							<ChevronRight aria-hidden="true" className="h-4 w-4" />
+						</button>
+					</div>
 				</div>
 			</div>
 

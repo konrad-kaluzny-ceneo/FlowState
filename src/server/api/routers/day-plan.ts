@@ -145,6 +145,25 @@ export const dayPlanRouter = createTRPCRouter({
 			};
 		}),
 
+	getRange: protectedProcedure
+		.input(z.object({ localDateKeys: z.array(localDateKeySchema) }))
+		.query(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+
+			const rows = await ctx.db.dayPlan.findMany({
+				where: { userId, localDateKey: { in: input.localDateKeys } },
+			});
+
+			const budgetByKey = new Map(
+				rows.map((row) => [row.localDateKey, row.focusBudgetMinutes]),
+			);
+
+			return input.localDateKeys.map((localDateKey) => ({
+				localDateKey,
+				focusBudgetMinutes: budgetByKey.get(localDateKey) ?? null,
+			}));
+		}),
+
 	getDelegationSuggestion: protectedProcedure
 		.input(z.object({ localDateKey: localDateKeySchema }))
 		.query(async ({ ctx, input }) => {

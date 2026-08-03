@@ -68,6 +68,13 @@ type ServerSessionRow = {
 	archivedAt?: Date | null;
 };
 
+type TrendPoint = {
+	localDateKey: string;
+	focusMinutes: number;
+	breakMinutes: number;
+	switchCount: number;
+};
+
 type TrpcClient = {
 	task: {
 		list: { fetch: () => Promise<DomainTask[]> };
@@ -115,6 +122,15 @@ type TrpcClient = {
 				closureLine?: string;
 				lastFocusedTaskId?: number;
 			}) => Promise<ServerSessionRow>;
+		};
+	};
+	recap: {
+		getTrendStats: {
+			fetch: (input: {
+				todayLocalMidnightUtc: Date;
+				todayLocalDateKey: string;
+				windowDays: 7 | 30;
+			}) => Promise<TrendPoint[]>;
 		};
 	};
 };
@@ -245,5 +261,15 @@ export function createServerSessionRepository(
 							: undefined,
 				}),
 			),
+	};
+}
+
+export function createServerRecapRepository(client: TrpcClient) {
+	return {
+		getTrendStats: (input: {
+			todayLocalMidnightUtc: Date;
+			todayLocalDateKey: string;
+			windowDays: 7 | 30;
+		}) => client.recap.getTrendStats.fetch(input),
 	};
 }

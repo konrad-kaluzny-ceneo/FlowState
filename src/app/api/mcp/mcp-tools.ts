@@ -211,7 +211,13 @@ export function getDayStats(
 	input: DayStatsInput,
 	_scope: ApiKeyScope,
 ): Promise<CallToolResult> {
-	return runTool(() => caller.recap.getDayStats(input));
+	return runTool(() => {
+		// MCP callers have no browser-local timezone to reference, so the
+		// requested localDateKey is treated as a UTC calendar day.
+		const rangeStart = new Date(`${input.localDateKey}T00:00:00.000Z`);
+		const rangeEnd = new Date(rangeStart.getTime() + 24 * 60 * 60 * 1000);
+		return caller.recap.getDayStats({ rangeStart, rangeEnd });
+	});
 }
 
 export function getDayPlan(
