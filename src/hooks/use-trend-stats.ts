@@ -79,7 +79,11 @@ export function useTrendStats(windowDays: WindowDays) {
 			{ todayLocalMidnightUtc, todayLocalDateKey, windowDays },
 		],
 		queryFn: () =>
-			recap.getTrendStats({ todayLocalMidnightUtc, todayLocalDateKey, windowDays }),
+			recap.getTrendStats({
+				todayLocalMidnightUtc,
+				todayLocalDateKey,
+				windowDays,
+			}),
 		enabled: isAuthenticated,
 	});
 
