@@ -7,7 +7,6 @@ import { useDailyRecap } from "~/hooks/use-daily-recap";
 import { useDayStats } from "~/hooks/use-day-stats";
 import { usePlanVsExecution } from "~/hooks/use-plan-vs-execution";
 import type { WindowDays } from "~/hooks/use-trend-stats";
-import { useTrendStats } from "~/hooks/use-trend-stats";
 
 export default function SummaryPage() {
 	const {
@@ -22,9 +21,11 @@ export default function SummaryPage() {
 	} = useDayStats();
 	const { recap, isLoading: isRecapLoading } = useDailyRecap();
 	const [windowDays, setWindowDays] = useState<WindowDays>(7);
-	const { trend } = useTrendStats(windowDays);
-	const { points: planVsExecution, isAvailable: isPlanVsExecutionAvailable } =
-		usePlanVsExecution(windowDays);
+	const {
+		trend,
+		points: planVsExecution,
+		isAvailable: isPlanVsExecutionAvailable,
+	} = usePlanVsExecution(windowDays);
 
 	return (
 		<div className="flex flex-1 flex-col items-center px-4 py-8">

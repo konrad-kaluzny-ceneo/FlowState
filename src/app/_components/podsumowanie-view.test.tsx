@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PodsumowanieView } from "~/app/_components/podsumowanie-view";
 import type { PlanVsExecutionPoint } from "~/hooks/use-plan-vs-execution";
@@ -65,6 +65,15 @@ const inProgressRow: RecapTaskRow = {
 };
 
 describe("PodsumowanieView", () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date(2026, 5, 20, 12, 0, 0));
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	it("renders guest empty state when stats is null", () => {
 		render(<PodsumowanieView isGuest stats={null} />);
 		expect(screen.getByTestId("podsumowanie-guest-empty")).toBeTruthy();

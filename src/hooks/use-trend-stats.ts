@@ -7,6 +7,7 @@ import { buildGuestTrendStats } from "~/lib/guest/day-stats";
 import { GUEST_STORAGE_KEY } from "~/lib/guest/schema";
 import { loadSnapshot, subscribeGuestStore } from "~/lib/guest/store";
 import type { TrendPoint } from "~/lib/recap/aggregate-trend-stats";
+import { formatLocalDateKey } from "~/lib/time/local-date-key";
 import { getLocalDayBoundary } from "~/lib/time/local-day-boundary";
 import { api } from "~/trpc/react";
 
@@ -25,7 +26,8 @@ function getGuestTrendSnapshot(windowDays: WindowDays): TrendPoint[] {
 	}
 
 	const storageValue = localStorage.getItem(GUEST_STORAGE_KEY);
-	const cacheKey = `${storageValue ?? ""}::${windowDays}`;
+	const localDateKey = formatLocalDateKey();
+	const cacheKey = `${localDateKey}::${storageValue ?? ""}::${windowDays}`;
 	if (cacheKey === cachedGuestTrendKey) {
 		return cachedGuestTrend;
 	}
@@ -39,16 +41,40 @@ function getGuestTrendServerSnapshot(): TrendPoint[] {
 	return emptyGuestTrend;
 }
 
+function subscribeGuestTrend(onStoreChange: () => void): () => void {
+	const unsubscribeStore = subscribeGuestStore(onStoreChange);
+	let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+	const scheduleNextMidnight = () => {
+		const nextMidnight = new Date();
+		nextMidnight.setHours(24, 0, 0, 0);
+		timeoutId = setTimeout(() => {
+			cachedGuestTrendKey = undefined;
+			onStoreChange();
+			scheduleNextMidnight();
+		}, nextMidnight.getTime() - Date.now());
+	};
+
+	scheduleNextMidnight();
+	return () => {
+		unsubscribeStore();
+		if (timeoutId != null) {
+			clearTimeout(timeoutId);
+		}
+	};
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useTrendStats(windowDays: WindowDays) {
 	const mode = useDataMode();
 	const isAuthenticated = mode === "authenticated";
 
-	const todayLocalMidnightUtc = getLocalDayBoundary().start;
+	const { start: todayLocalMidnightUtc, localDateKey: todayLocalDateKey } =
+		getLocalDayBoundary();
 
 	const query = api.recap.getTrendStats.useQuery(
-		{ todayLocalMidnightUtc, windowDays },
+		{ todayLocalMidnightUtc, todayLocalDateKey, windowDays },
 		{ enabled: isAuthenticated },
 	);
 
@@ -58,7 +84,7 @@ export function useTrendStats(windowDays: WindowDays) {
 	);
 
 	const guestTrend = useSyncExternalStore(
-		subscribeGuestStore,
+		subscribeGuestTrend,
 		getGuestSnapshot,
 		getGuestTrendServerSnapshot,
 	);

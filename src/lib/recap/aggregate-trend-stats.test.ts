@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CycleRow } from "~/lib/recap/aggregate-day-stats";
-import {
-	aggregateTrendStats,
-	bucketCyclesByLocalDay,
-} from "~/lib/recap/aggregate-trend-stats";
+import { aggregateTrendStats } from "~/lib/recap/aggregate-trend-stats";
+import { bucketCyclesByLocalDay } from "~/lib/recap/bucket-cycles-by-local-day";
 import { getLocalDayBoundaries } from "~/lib/time/local-day-boundary";
 
 const boundaries = getLocalDayBoundaries(3, new Date(2026, 6, 15));

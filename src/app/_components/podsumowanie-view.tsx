@@ -124,18 +124,29 @@ function HourAxisLabels() {
 	);
 }
 
-// ─── Trend bar chart (variable bucket count, mirrors HourlyBarChart) ─────────
+// ─── Variable bar chart ───────────────────────────────────────────────────────
 
-type TrendChartProps = {
-	points: TrendPoint[];
-	ariaLabel: string;
+type MetricBar = {
+	key: string;
+	value: number;
 };
 
-function TrendBarChart({ points, ariaLabel }: TrendChartProps) {
-	const max = Math.max(...points.map((p) => p.focusMinutes), 1);
+type MetricBarChartProps = {
+	bars: MetricBar[];
+	ariaLabel: string;
+	height: number;
+	activeBarClassName: string;
+};
+
+function MetricBarChart({
+	bars,
+	ariaLabel,
+	height,
+	activeBarClassName,
+}: MetricBarChartProps) {
+	const max = Math.max(...bars.map((bar) => bar.value), 1);
 	const barPadding = 2;
-	const barWidth =
-		points.length > 0 ? CHART_WIDTH / points.length - barPadding : 0;
+	const barWidth = bars.length > 0 ? CHART_WIDTH / bars.length - barPadding : 0;
 
 	return (
 		<svg
@@ -143,82 +154,30 @@ function TrendBarChart({ points, ariaLabel }: TrendChartProps) {
 			className="w-full"
 			preserveAspectRatio="none"
 			role="img"
-			style={{ height: CHART_HEIGHT }}
-			viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+			style={{ height }}
+			viewBox={`0 0 ${CHART_WIDTH} ${height}`}
 		>
-			{points.map((point, i) => {
-				const barH = Math.round(
-					(point.focusMinutes / max) * (CHART_HEIGHT - 4),
-				);
+			{bars.map((bar, i) => {
+				const barH = Math.round((bar.value / max) * (height - 4));
 				const x = i * (barWidth + barPadding);
-				const y = CHART_HEIGHT - barH;
+				const y = height - barH;
 				return (
 					<rect
-						className={
-							barH > 0 ? "fill-accent-cta opacity-80" : "fill-segment-inactive"
-						}
+						className={barH > 0 ? activeBarClassName : "fill-segment-inactive"}
 						height={Math.max(barH, 2)}
-						key={point.localDateKey}
+						key={bar.key}
 						rx={2}
 						width={barWidth}
 						x={x}
-						y={barH > 0 ? y : CHART_HEIGHT - 2}
+						y={barH > 0 ? y : height - 2}
 					/>
 				);
 			})}
 		</svg>
 	);
 }
-
-// ─── Context-switch bar chart (variable bucket count, small companion chart) ─
 
 const SWITCH_CHART_HEIGHT = 40;
-
-type ContextSwitchChartProps = {
-	points: TrendPoint[];
-	ariaLabel: string;
-};
-
-function ContextSwitchChart({ points, ariaLabel }: ContextSwitchChartProps) {
-	const max = Math.max(...points.map((p) => p.switchCount), 1);
-	const barPadding = 2;
-	const barWidth =
-		points.length > 0 ? CHART_WIDTH / points.length - barPadding : 0;
-
-	return (
-		<svg
-			aria-label={ariaLabel}
-			className="w-full"
-			preserveAspectRatio="none"
-			role="img"
-			style={{ height: SWITCH_CHART_HEIGHT }}
-			viewBox={`0 0 ${CHART_WIDTH} ${SWITCH_CHART_HEIGHT}`}
-		>
-			{points.map((point, i) => {
-				const barH = Math.round(
-					(point.switchCount / max) * (SWITCH_CHART_HEIGHT - 4),
-				);
-				const x = i * (barWidth + barPadding);
-				const y = SWITCH_CHART_HEIGHT - barH;
-				return (
-					<rect
-						className={
-							barH > 0
-								? "fill-accent-break opacity-80"
-								: "fill-segment-inactive"
-						}
-						height={Math.max(barH, 2)}
-						key={point.localDateKey}
-						rx={2}
-						width={barWidth}
-						x={x}
-						y={barH > 0 ? y : SWITCH_CHART_HEIGHT - 2}
-					/>
-				);
-			})}
-		</svg>
-	);
-}
 
 // ─── Plan-vs-execution paired bar chart ───────────────────────────────────────
 
@@ -824,15 +783,28 @@ export function PodsumowanieView({
 						/>
 					</div>
 				</div>
-				<TrendBarChart ariaLabel={t("trendChartAria")} points={trend} />
+				<MetricBarChart
+					activeBarClassName="fill-accent-cta opacity-80"
+					ariaLabel={t("trendChartAria")}
+					bars={trend.map((point) => ({
+						key: point.localDateKey,
+						value: point.focusMinutes,
+					}))}
+					height={CHART_HEIGHT}
+				/>
 
 				<div className="mt-4" data-testid="podsumowanie-context-switch-chart">
 					<p className="mb-2 font-medium text-primary text-sm">
 						{t("contextSwitchTitle")}
 					</p>
-					<ContextSwitchChart
+					<MetricBarChart
+						activeBarClassName="fill-accent-break opacity-80"
 						ariaLabel={t("contextSwitchAria")}
-						points={trend}
+						bars={trend.map((point) => ({
+							key: point.localDateKey,
+							value: point.switchCount,
+						}))}
+						height={SWITCH_CHART_HEIGHT}
 					/>
 				</div>
 			</div>
@@ -893,10 +865,12 @@ export function PodsumowanieView({
 					</ComingSoonPreview>
 				</div>
 				<div className="flex items-end">
-					<fieldset
+					{/* biome-ignore lint/a11y/useSemanticElements: Keep the requested div while exposing its date-navigation landmark. */}
+					<div
 						aria-label={t("dateNavAria")}
 						className="m-0 flex w-full items-center justify-between gap-2 rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
 						data-testid="podsumowanie-date-nav"
+						role="navigation"
 					>
 						<button
 							aria-label={t("dateNavPrevious")}
@@ -926,7 +900,7 @@ export function PodsumowanieView({
 						>
 							<ChevronRight aria-hidden="true" className="h-4 w-4" />
 						</button>
-					</fieldset>
+					</div>
 				</div>
 			</div>
 

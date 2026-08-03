@@ -527,6 +527,7 @@ describe("recap router integration", () => {
 		const db = createMockDb();
 		const result = await recapCaller(USER, db).getTrendStats({
 			todayLocalMidnightUtc,
+			todayLocalDateKey: "2026-07-15",
 			windowDays: 7,
 		});
 
@@ -547,6 +548,25 @@ describe("recap router integration", () => {
 			breakMinutes: 0,
 			switchCount: 0,
 		});
+	});
+
+	it("uses the client calendar key for trend labels", async () => {
+		const db = createMockDb();
+		const result = await recapCaller(USER, db).getTrendStats({
+			todayLocalMidnightUtc: new Date("2026-07-15T04:00:00.000Z"),
+			todayLocalDateKey: "2026-07-15",
+			windowDays: 7,
+		});
+
+		expect(result.map((point) => point.localDateKey)).toEqual([
+			"2026-07-09",
+			"2026-07-10",
+			"2026-07-11",
+			"2026-07-12",
+			"2026-07-13",
+			"2026-07-14",
+			"2026-07-15",
+		]);
 	});
 
 	it("getTrendStats returns switchCount from alternating-task WORK cycles on the same day", async () => {
@@ -605,6 +625,7 @@ describe("recap router integration", () => {
 		const db = createMockDb();
 		const result = await recapCaller(USER, db).getTrendStats({
 			todayLocalMidnightUtc,
+			todayLocalDateKey: "2026-07-15",
 			windowDays: 7,
 		});
 
@@ -629,6 +650,7 @@ describe("recap router integration", () => {
 		const db = createMockDb();
 		const result = await recapCaller(USER, db).getTrendStats({
 			todayLocalMidnightUtc,
+			todayLocalDateKey: "2026-07-15",
 			windowDays: 7,
 		});
 

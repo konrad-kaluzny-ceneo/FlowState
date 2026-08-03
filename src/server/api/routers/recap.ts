@@ -5,7 +5,7 @@ import {
 } from "~/lib/recap/aggregate-day-stats";
 import { aggregateTrendStats } from "~/lib/recap/aggregate-trend-stats";
 import { buildDailyRecap } from "~/lib/recap/build-daily-recap";
-import { formatLocalDateKey } from "~/lib/time/local-date-key";
+import { subtractLocalDateKey } from "~/lib/time/local-date-key";
 import type { LocalDayBoundary } from "~/lib/time/local-day-boundary";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
@@ -24,13 +24,18 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
  */
 function deriveTrendDayBoundaries(
 	todayLocalMidnightUtc: Date,
+	todayLocalDateKey: string,
 	windowDays: number,
 ): LocalDayBoundary[] {
 	const boundaries: LocalDayBoundary[] = [];
 	for (let i = windowDays - 1; i >= 0; i--) {
 		const start = new Date(todayLocalMidnightUtc.getTime() - i * MS_PER_DAY);
 		const end = new Date(start.getTime() + MS_PER_DAY);
-		boundaries.push({ start, end, localDateKey: formatLocalDateKey(start) });
+		boundaries.push({
+			start,
+			end,
+			localDateKey: subtractLocalDateKey(todayLocalDateKey, i),
+		});
 	}
 	return boundaries;
 }
@@ -87,15 +92,17 @@ export const recapRouter = createTRPCRouter({
 		.input(
 			z.object({
 				todayLocalMidnightUtc: z.coerce.date(),
+				todayLocalDateKey: localDateKeySchema,
 				windowDays: z.union([z.literal(7), z.literal(30)]),
 			}),
 		)
 		.query(async ({ ctx, input }) => {
 			const userId = ctx.session.user.id;
-			const { todayLocalMidnightUtc, windowDays } = input;
+			const { todayLocalMidnightUtc, todayLocalDateKey, windowDays } = input;
 
 			const dayBoundaries = deriveTrendDayBoundaries(
 				todayLocalMidnightUtc,
+				todayLocalDateKey,
 				windowDays,
 			);
 			const windowStart = dayBoundaries[0]?.start ?? todayLocalMidnightUtc;

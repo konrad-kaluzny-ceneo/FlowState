@@ -14,8 +14,6 @@ export type TrendPoint = {
 	switchCount: number;
 };
 
-export { bucketCyclesByLocalDay } from "~/lib/recap/bucket-cycles-by-local-day";
-
 /**
  * Aggregates focus/break minutes and context-switch counts per day across
  * `dayBoundaries`, in order.

@@ -1,13 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { TrendPoint } from "~/lib/recap/aggregate-trend-stats";
 
 let dataMode: "authenticated" | "guest" = "authenticated";
 let trendStatsInput:
-	| { todayLocalMidnightUtc: Date; windowDays: 7 | 30 }
+	| {
+			todayLocalMidnightUtc: Date;
+			todayLocalDateKey: string;
+			windowDays: 7 | 30;
+	  }
 	| undefined;
 let rangeQueryInput: { localDateKeys: string[] } | undefined;
 let rangeQueryEnabled: boolean | undefined;
@@ -45,7 +49,11 @@ vi.mock("~/trpc/react", () => ({
 		recap: {
 			getTrendStats: {
 				useQuery: (
-					input: { todayLocalMidnightUtc: Date; windowDays: 7 | 30 },
+					input: {
+						todayLocalMidnightUtc: Date;
+						todayLocalDateKey: string;
+						windowDays: 7 | 30;
+					},
 					opts?: { enabled?: boolean },
 				) => {
 					if (opts?.enabled === false) {
@@ -104,17 +112,23 @@ describe("usePlanVsExecution", () => {
 		rangeQueryEnabled = undefined;
 	});
 
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	it("pairs trend actuals with planned budgets, null when no DayPlan row exists", () => {
 		const { result } = renderHook(() => usePlanVsExecution(7), {
 			wrapper: createWrapper(),
 		});
 
 		expect(result.current.isAvailable).toBe(true);
+		expect(result.current.trend).toEqual(trendPoints);
 		expect(result.current.points).toEqual([
 			{ localDateKey: "2026-06-14", plannedMinutes: null, actualMinutes: 20 },
 			{ localDateKey: "2026-06-15", plannedMinutes: 60, actualMinutes: 90 },
 		]);
 		expect(trendStatsInput?.windowDays).toBe(7);
+		expect(trendStatsInput?.todayLocalDateKey).toBe("2026-06-15");
 		expect(rangeQueryInput?.localDateKeys).toEqual([
 			"2026-06-14",
 			"2026-06-15",
@@ -140,6 +154,7 @@ describe("usePlanVsExecution", () => {
 		});
 
 		expect(result.current.isAvailable).toBe(false);
+		expect(result.current.trend).toEqual([]);
 		expect(result.current.points).toEqual([]);
 		expect(rangeQueryEnabled).toBe(false);
 	});

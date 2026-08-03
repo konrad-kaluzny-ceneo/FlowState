@@ -1,12 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { TrendPoint } from "~/lib/recap/aggregate-trend-stats";
 
 let dataMode: "authenticated" | "guest" = "authenticated";
-let queryInput: { todayLocalMidnightUtc: Date; windowDays: 7 | 30 } | undefined;
+let queryInput:
+	| {
+			todayLocalMidnightUtc: Date;
+			todayLocalDateKey: string;
+			windowDays: 7 | 30;
+	  }
+	| undefined;
 
 const emptyTrend: TrendPoint[] = [];
 
@@ -35,7 +41,11 @@ vi.mock("~/trpc/react", () => ({
 		recap: {
 			getTrendStats: {
 				useQuery: (
-					input: { todayLocalMidnightUtc: Date; windowDays: 7 | 30 },
+					input: {
+						todayLocalMidnightUtc: Date;
+						todayLocalDateKey: string;
+						windowDays: 7 | 30;
+					},
 					opts?: { enabled?: boolean },
 				) => {
 					if (opts?.enabled !== false) {
@@ -86,6 +96,7 @@ describe("useTrendStats", () => {
 		expect(result.current.trend).toEqual(emptyTrend);
 		expect(queryInput?.windowDays).toBe(7);
 		expect(queryInput?.todayLocalMidnightUtc).toEqual(new Date(2026, 5, 20));
+		expect(queryInput?.todayLocalDateKey).toBe("2026-06-20");
 	});
 
 	it("re-queries with a 30-day window when the caller passes windowDays=30", () => {
@@ -113,5 +124,18 @@ describe("useTrendStats", () => {
 		rerender({ windowDays: 30 });
 
 		expect(buildGuestTrendStats).toHaveBeenCalledWith(guestSnapshot, 30);
+	});
+
+	it("refreshes the guest snapshot at local midnight without a store mutation", () => {
+		dataMode = "guest";
+		localStorage.setItem(GUEST_STORAGE_KEY, '{"marker":"trend-guest-test"}');
+		renderHook(() => useTrendStats(7), { wrapper: createWrapper() });
+		buildGuestTrendStats.mockClear();
+
+		act(() => {
+			vi.advanceTimersByTime(12 * 60 * 60 * 1000);
+		});
+
+		expect(buildGuestTrendStats).toHaveBeenCalledWith(guestSnapshot, 7);
 	});
 });

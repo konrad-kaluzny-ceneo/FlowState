@@ -38,7 +38,12 @@ export function usePlanVsExecution(windowDays: WindowDays) {
 	);
 
 	if (!isAuthenticated) {
-		return { points: emptyPoints, isLoading: false, isAvailable: false };
+		return {
+			trend,
+			points: emptyPoints,
+			isLoading: false,
+			isAvailable: false,
+		};
 	}
 
 	const budgetByKey = new Map(
@@ -55,6 +60,7 @@ export function usePlanVsExecution(windowDays: WindowDays) {
 	}));
 
 	return {
+		trend,
 		points,
 		isLoading: isTrendLoading || rangeQuery.isLoading,
 		isAvailable: true,
