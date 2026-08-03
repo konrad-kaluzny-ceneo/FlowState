@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -31,8 +31,25 @@ const trendPoints: TrendPoint[] = [
 	},
 ];
 
+const mockGetTrendStats = vi.fn(
+	async (input: {
+		todayLocalMidnightUtc: Date;
+		todayLocalDateKey: string;
+		windowDays: 7 | 30;
+	}) => {
+		trendStatsInput = input;
+		return trendPoints;
+	},
+);
+
 vi.mock("~/lib/data-mode/data-mode-context", () => ({
 	useDataMode: () => dataMode,
+	useRepositories: () => ({
+		mode: dataMode,
+		recap: {
+			getTrendStats: mockGetTrendStats,
+		},
+	}),
 }));
 
 vi.mock("~/lib/guest/store", () => ({
@@ -116,10 +133,12 @@ describe("usePlanVsExecution", () => {
 		vi.useRealTimers();
 	});
 
-	it("pairs trend actuals with planned budgets, null when no DayPlan row exists", () => {
+	it("pairs trend actuals with planned budgets, null when no DayPlan row exists", async () => {
 		const { result } = renderHook(() => usePlanVsExecution(7), {
 			wrapper: createWrapper(),
 		});
+
+		await act(() => vi.advanceTimersByTimeAsync(0));
 
 		expect(result.current.isAvailable).toBe(true);
 		expect(result.current.trend).toEqual(trendPoints);
@@ -135,10 +154,12 @@ describe("usePlanVsExecution", () => {
 		]);
 	});
 
-	it("reflects the true actual even when it exceeds the planned budget", () => {
+	it("reflects the true actual even when it exceeds the planned budget", async () => {
 		const { result } = renderHook(() => usePlanVsExecution(7), {
 			wrapper: createWrapper(),
 		});
+
+		await act(() => vi.advanceTimersByTimeAsync(0));
 
 		const overBudgetDay = result.current.points.find(
 			(p) => p.localDateKey === "2026-06-15",

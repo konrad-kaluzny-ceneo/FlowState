@@ -1,15 +1,15 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useSyncExternalStore } from "react";
 
-import { useDataMode } from "~/lib/data-mode/data-mode-context";
+import { useRepositories } from "~/lib/data-mode/data-mode-context";
 import { buildGuestTrendStats } from "~/lib/guest/day-stats";
 import { GUEST_STORAGE_KEY } from "~/lib/guest/schema";
 import { loadSnapshot, subscribeGuestStore } from "~/lib/guest/store";
 import type { TrendPoint } from "~/lib/recap/aggregate-trend-stats";
 import { formatLocalDateKey } from "~/lib/time/local-date-key";
 import { getLocalDayBoundary } from "~/lib/time/local-day-boundary";
-import { api } from "~/trpc/react";
 
 export type WindowDays = 7 | 30;
 
@@ -67,16 +67,21 @@ function subscribeGuestTrend(onStoreChange: () => void): () => void {
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useTrendStats(windowDays: WindowDays) {
-	const mode = useDataMode();
+	const { mode, recap } = useRepositories();
 	const isAuthenticated = mode === "authenticated";
 
 	const { start: todayLocalMidnightUtc, localDateKey: todayLocalDateKey } =
 		getLocalDayBoundary();
 
-	const query = api.recap.getTrendStats.useQuery(
-		{ todayLocalMidnightUtc, todayLocalDateKey, windowDays },
-		{ enabled: isAuthenticated },
-	);
+	const query = useQuery({
+		queryKey: [
+			"recap.getTrendStats",
+			{ todayLocalMidnightUtc, todayLocalDateKey, windowDays },
+		],
+		queryFn: () =>
+			recap.getTrendStats({ todayLocalMidnightUtc, todayLocalDateKey, windowDays }),
+		enabled: isAuthenticated,
+	});
 
 	const getGuestSnapshot = useCallback(
 		() => getGuestTrendSnapshot(windowDays),

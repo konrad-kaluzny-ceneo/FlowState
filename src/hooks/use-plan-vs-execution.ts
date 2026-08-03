@@ -53,11 +53,14 @@ export function usePlanVsExecution(windowDays: WindowDays) {
 		]),
 	);
 
-	const points: PlanVsExecutionPoint[] = trend.map((point) => ({
-		localDateKey: point.localDateKey,
-		plannedMinutes: budgetByKey.get(point.localDateKey) ?? null,
-		actualMinutes: point.focusMinutes,
-	}));
+	const points: PlanVsExecutionPoint[] = trend.map((point) => {
+		const planned = budgetByKey.get(point.localDateKey);
+		return {
+			localDateKey: point.localDateKey,
+			plannedMinutes: (planned !== undefined ? planned : null) as number | null,
+			actualMinutes: point.focusMinutes,
+		};
+	});
 
 	return {
 		trend,

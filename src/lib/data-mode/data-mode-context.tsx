@@ -13,6 +13,7 @@ import type { DataMode, Repositories } from "~/lib/data-mode/types";
 import { createGuestRepositories } from "~/lib/repositories/guest-repositories";
 import {
 	createServerCycleRepository,
+	createServerRecapRepository,
 	createServerSessionRepository,
 	createServerTaskRepository,
 } from "~/lib/repositories/server-repositories";
@@ -129,6 +130,15 @@ export function DataModeProvider({
 						}),
 				},
 			},
+			recap: {
+				getTrendStats: {
+					fetch: (input: {
+						todayLocalMidnightUtc: Date;
+						todayLocalDateKey: string;
+						windowDays: 7 | 30;
+					}) => utils.client.recap.getTrendStats.query(input),
+				},
+			},
 		};
 
 		return {
@@ -136,6 +146,7 @@ export function DataModeProvider({
 			tasks: createServerTaskRepository(client),
 			cycles: createServerCycleRepository(client),
 			sessions: createServerSessionRepository(client),
+			recap: createServerRecapRepository(client),
 			refreshKey,
 			refreshGuest,
 		};

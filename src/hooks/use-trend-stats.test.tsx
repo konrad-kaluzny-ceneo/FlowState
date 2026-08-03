@@ -16,8 +16,28 @@ let queryInput:
 
 const emptyTrend: TrendPoint[] = [];
 
+const mockGetTrendStats = vi.fn(
+	async (_input: {
+		todayLocalMidnightUtc: Date;
+		todayLocalDateKey: string;
+		windowDays: 7 | 30;
+	}) => emptyTrend,
+);
+
 vi.mock("~/lib/data-mode/data-mode-context", () => ({
-	useDataMode: () => dataMode,
+	useRepositories: () => ({
+		mode: dataMode,
+		recap: {
+			getTrendStats: (input: {
+				todayLocalMidnightUtc: Date;
+				todayLocalDateKey: string;
+				windowDays: 7 | 30;
+			}) => {
+				queryInput = input;
+				return mockGetTrendStats(input);
+			},
+		},
+	}),
 }));
 
 const guestSnapshot = { tasks: [], sessions: [], cycles: [] as unknown[] };
@@ -34,29 +54,6 @@ const buildGuestTrendStats = vi.fn(
 vi.mock("~/lib/guest/day-stats", () => ({
 	buildGuestTrendStats: (snapshot: unknown, windowDays: 7 | 30) =>
 		buildGuestTrendStats(snapshot, windowDays),
-}));
-
-vi.mock("~/trpc/react", () => ({
-	api: {
-		recap: {
-			getTrendStats: {
-				useQuery: (
-					input: {
-						todayLocalMidnightUtc: Date;
-						todayLocalDateKey: string;
-						windowDays: 7 | 30;
-					},
-					opts?: { enabled?: boolean },
-				) => {
-					if (opts?.enabled !== false) {
-						queryInput = input;
-						return { data: emptyTrend, isLoading: false };
-					}
-					return { data: undefined, isLoading: false };
-				},
-			},
-		},
-	},
 }));
 
 const { useTrendStats } = await import("~/hooks/use-trend-stats");
