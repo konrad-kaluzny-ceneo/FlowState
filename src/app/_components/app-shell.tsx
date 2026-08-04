@@ -43,9 +43,10 @@ function isActive(pathname: string, href: string): boolean {
 	return pathname.startsWith(href);
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, scope, userName }: AppShellProps) {
 	const t = useTranslations("Navbar");
 	const pathname = usePathname();
+	const isGuest = scope.mode === "guest";
 
 	// Auth pages render without the navigation shell
 	if (pathname.startsWith("/auth")) {
@@ -94,6 +95,18 @@ export function AppShell({ children }: AppShellProps) {
 					})}
 				</nav>
 
+				{isGuest ? (
+					<div className="px-3 pb-3">
+						<Link
+							className="flex w-full items-center justify-center rounded-control border border-accent-cta/40 bg-accent-cta/10 px-3 py-2.5 font-semibold text-accent-cta text-sm transition-colors hover:bg-accent-cta/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+							data-testid="sidebar-sign-in"
+							href="/auth/sign-in"
+						>
+							{t("signIn")}
+						</Link>
+					</div>
+				) : null}
+
 				<div className="mx-3 mb-3 rounded-card border border-card-border bg-surface-card-muted/80 p-4">
 					<CalmGardenSprig className="mb-3 h-8 w-8 opacity-80" variant="idle" />
 					<p className="text-pretty text-text-secondary text-xs leading-relaxed">
@@ -114,6 +127,17 @@ export function AppShell({ children }: AppShellProps) {
 					<CalmGardenSprig className="h-6 w-6" variant="idle" />
 					{t("brand")}
 				</Link>
+				{isGuest ? (
+					<Link
+						className="font-semibold text-accent-cta text-sm hover:text-accent-cta-hover"
+						data-testid="mobile-header-sign-in"
+						href="/auth/sign-in"
+					>
+						{t("signIn")}
+					</Link>
+				) : userName != null ? (
+					<span className="truncate text-primary text-sm">{userName}</span>
+				) : null}
 			</header>
 
 			{/* Main content */}
