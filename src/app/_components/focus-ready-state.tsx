@@ -1,6 +1,6 @@
 "use client";
 
-import { Star } from "lucide-react";
+import { Star, Target } from "lucide-react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -326,12 +326,10 @@ export function FocusReadyState({
 											onClick={() => onSelectTask(task)}
 											type="button"
 										>
-											<span
+											<Target
 												aria-hidden="true"
-												className={`h-4 w-4 shrink-0 rounded-full border-2 ${
-													isSelected
-														? "border-accent-cta bg-accent-cta"
-														: "border-border-subtle"
+												className={`h-4 w-4 shrink-0 ${
+													isSelected ? "text-accent-cta" : "text-text-dimmed"
 												}`}
 											/>
 											<span className="min-w-0 flex-1 truncate font-medium text-primary text-sm">
