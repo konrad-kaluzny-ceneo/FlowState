@@ -57,9 +57,9 @@ Stop false "could not save suggestion preference" toasts on kickoff accept/overr
 
 #### Automated
 
-- [x] 1.1 Router: recordDecision succeeds when suggested/chosen tasks are planned
-- [x] 1.2 Hook: guest kickoff accept skips recordDecision (mode + finite-id guard in `recordKickoffDecision`)
-- [x] 1.3 Type checking / lint on touched files
+- [x] 1.1 Router: recordDecision succeeds when suggested/chosen tasks are planned — 7f203ce
+- [x] 1.2 Hook: guest kickoff accept skips recordDecision (mode + finite-id guard in `recordKickoffDecision`) — 7f203ce
+- [x] 1.3 Type checking / lint on touched files — 7f203ce
 
 #### Manual
 
