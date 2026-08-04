@@ -199,7 +199,7 @@ function FocusReadyKickoffChrome({
 			</div>
 
 			<button
-				aria-label={startAriaLabel}
+				aria-label={startAriaLabel ?? startLabel}
 				className="w-full rounded-control bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50"
 				data-testid="timer-start-cycle"
 				disabled={startDisabled || workPickerInvalid || !workValid}

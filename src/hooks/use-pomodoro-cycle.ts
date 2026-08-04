@@ -445,6 +445,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	);
 	const audioRef = useRef(createAudioManager());
 	const recoveredRef = useRef(false);
+	const activeCycleRecoveryGenRef = useRef(0);
 	const pendingIncrementInterruptionRef = useRef(false);
 	const pendingWindDownMarkTaskDoneRef = useRef<boolean | null>(null);
 	const pendingWindDownMarkTaskBlockedRef = useRef<boolean | null>(null);
@@ -1011,6 +1012,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 		recoveredRef.current = true;
 		activeCycleRecoveredForMode = mode;
+		const recoveryGeneration = ++activeCycleRecoveryGenRef.current;
 
 		try {
 			const active = await cycles.getActive();
@@ -1092,13 +1094,16 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				setSessionStartIdleFlag(true);
 			}
 		} finally {
-			setIsActiveCycleReady(true);
+			if (recoveryGeneration === activeCycleRecoveryGenRef.current) {
+				setIsActiveCycleReady(true);
+			}
 		}
 	}, [cycles, resumeFromActiveCycle, mode, utils, maybePresentTimeoutClosure]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: reset recovery guard when auth mode changes
 	useEffect(() => {
 		recoveredRef.current = false;
+		activeCycleRecoveryGenRef.current += 1;
 		setIsActiveCycleReady(false);
 	}, [mode]);
 
@@ -1181,6 +1186,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	useEffect(() => {
 		return subscribeActiveCycleRecoveryReset(() => {
 			recoveredRef.current = false;
+			activeCycleRecoveryGenRef.current += 1;
 			setIsActiveCycleReady(false);
 			void recoverActiveCycle();
 		});

@@ -990,17 +990,28 @@ export function PomodoroDashboardBody({
 
 	if (!pomodoro.isActiveCycleReady) {
 		return (
-			<FocusWorkbenchPending
-				kickoffPending={enableSuggestionGate && dataMode === "authenticated"}
-				onAddTask={() => setShowAddModal(true)}
-				onSelectTask={(task) => {
-					pomodoro.selectTask(task.id, {
-						id: task.id,
-						title: task.title,
-					});
-				}}
-				tasks={tasks}
-			/>
+			<>
+				<FocusWorkbenchPending
+					kickoffPending={enableSuggestionGate && dataMode === "authenticated"}
+					onAddTask={() => setShowAddModal(true)}
+					onSelectTask={(task) => {
+						pomodoro.selectTask(task.id, {
+							id: task.id,
+							title: task.title,
+						});
+					}}
+					tasks={tasks}
+				/>
+				{showAddModal && (
+					<AddTaskModal
+						isCreating={isCreating}
+						onClose={() => setShowAddModal(false)}
+						onCreate={async (input) => {
+							await createTask(input);
+						}}
+					/>
+				)}
+			</>
 		);
 	}
 

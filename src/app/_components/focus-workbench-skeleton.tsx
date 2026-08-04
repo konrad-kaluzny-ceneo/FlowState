@@ -76,7 +76,6 @@ export function FocusWorkbenchSkeleton() {
 				>
 					<FocusDaySummarySkeleton />
 					<FocusTip />
-					<QuickActions />
 				</div>
 			</div>
 		</div>

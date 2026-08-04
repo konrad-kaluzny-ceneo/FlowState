@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AppShell } from "./app-shell";
+import { AppShell } from "~/app/_components/app-shell";
 
 vi.mock("next/navigation", () => ({
 	usePathname: () => "/focus",

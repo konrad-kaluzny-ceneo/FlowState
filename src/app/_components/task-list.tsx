@@ -191,6 +191,7 @@ function TaskRowMoreMenu({
 }) {
 	const [open, setOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
+	const triggerRef = useRef<HTMLButtonElement>(null);
 	const isFocusedTask = task.id === focusedTaskId;
 	const blockViasMidCycle = canMidCycleBlock && isFocusedTask;
 	const completeViaMidCycle =
@@ -211,6 +212,7 @@ function TaskRowMoreMenu({
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (event.key === "Escape") {
 				setOpen(false);
+				triggerRef.current?.focus();
 			}
 		};
 		document.addEventListener("pointerdown", onPointerDown);
@@ -228,11 +230,12 @@ function TaskRowMoreMenu({
 		<div className="relative shrink-0" ref={menuRef}>
 			<button
 				aria-expanded={open}
-				aria-haspopup="menu"
+				aria-haspopup="true"
 				aria-label={t("moreActionsAria")}
 				className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface-panel px-2.5 py-1 text-text-section transition hover:bg-surface-card-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 				data-testid="task-more-actions"
 				onClick={() => setOpen((prev) => !prev)}
+				ref={triggerRef}
 				type="button"
 			>
 				<MoreHorizontal aria-hidden="true" className="h-4 w-4" />
@@ -242,7 +245,6 @@ function TaskRowMoreMenu({
 				<div
 					className="absolute top-full right-0 z-20 mt-1 min-w-[11rem] rounded-xl border border-card-border bg-surface-card p-1 shadow-md"
 					data-testid="task-more-menu"
-					role="menu"
 				>
 					<button
 						aria-label={t("markCompleteAria")}
@@ -258,7 +260,6 @@ function TaskRowMoreMenu({
 							onBeginComplete(task.id);
 							void onUpdateTask({ id: task.id, status: "completed" });
 						}}
-						role="menuitem"
 						type="button"
 					>
 						<CheckCircle
@@ -284,7 +285,6 @@ function TaskRowMoreMenu({
 							}
 							void onUpdateTask({ id: task.id, status: "blocked" });
 						}}
-						role="menuitem"
 						type="button"
 					>
 						<Ban aria-hidden="true" className="h-4 w-4 text-amber-400" />
@@ -299,7 +299,6 @@ function TaskRowMoreMenu({
 							setOpen(false);
 							void onDeleteTask({ id: task.id });
 						}}
-						role="menuitem"
 						type="button"
 					>
 						<Trash2 aria-hidden="true" className="h-4 w-4 text-red-400" />

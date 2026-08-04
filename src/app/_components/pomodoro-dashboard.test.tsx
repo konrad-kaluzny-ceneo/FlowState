@@ -244,6 +244,13 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.queryByTestId("timer-panel")).toBeNull();
 	});
 
+	it("opens AddTaskModal from recovery pending workbench", async () => {
+		renderBody({ isActiveCycleReady: false });
+
+		fireEvent.click(screen.getByTestId("quick-action-add-task"));
+		expect(await screen.findByTestId("add-task-modal")).toBeTruthy();
+	});
+
 	it("holds kickoff-shaped hero while calm landing suggestion is loading", () => {
 		usePomodoroCycleMock.mockReturnValue(
 			makePomodoroMock({

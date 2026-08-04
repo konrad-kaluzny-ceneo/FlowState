@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { FocusWorkbenchSkeleton } from "./focus-workbench-skeleton";
+import { FocusWorkbenchSkeleton } from "~/app/_components/focus-workbench-skeleton";
 
 describe("FocusWorkbenchSkeleton", () => {
 	it("mirrors kickoff chrome and only pulses dynamic slots", () => {
@@ -20,7 +20,7 @@ describe("FocusWorkbenchSkeleton", () => {
 		expect(screen.getByText("View all tasks →")).toBeTruthy();
 		expect(screen.getByText("Your day")).toBeTruthy();
 		expect(screen.getByTestId("focus-tip")).toBeTruthy();
-		expect(screen.getByTestId("quick-actions")).toBeTruthy();
+		expect(screen.queryByTestId("quick-actions")).toBeNull();
 		expect(screen.getByTestId("focus-info-banner")).toBeTruthy();
 
 		const pulses = root.querySelectorAll(".animate-pulse");
