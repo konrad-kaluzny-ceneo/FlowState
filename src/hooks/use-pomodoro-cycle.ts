@@ -1560,7 +1560,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					lastSessionIntentionRef.current,
 				);
 			} catch {
-				// Best effort — focus-ready still works with manual task pick.
+				// Best effort — fall through to manual pick chrome.
+				setPendingKickoffSuggestion({ status: "empty" });
 			}
 		})();
 	}, [

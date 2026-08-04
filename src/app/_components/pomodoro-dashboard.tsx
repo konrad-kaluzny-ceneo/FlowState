@@ -636,6 +636,13 @@ export function PomodoroDashboardBody({
 		!showSessionEnergy &&
 		calmKickoffTask != null;
 	const embedKickoffInFocusReady = showFocusReadyState && showCalmKickoffTimer;
+	const kickoffSuggestionPending =
+		enableSuggestionGate &&
+		dataMode === "authenticated" &&
+		showFocusReadyState &&
+		!embedKickoffInFocusReady &&
+		(pomodoro.pendingKickoffSuggestion.status === "idle" ||
+			pomodoro.pendingKickoffSuggestion.status === "loading");
 
 	const calmKickoffSuggestionCardData =
 		useMemo((): TaskSuggestionData | null => {
@@ -914,6 +921,7 @@ export function PomodoroDashboardBody({
 		<FocusReadyState
 			autoSuggestedTaskId={calmKickoffSuggestedTaskId}
 			isStartingKickoff={false}
+			kickoffPending={kickoffSuggestionPending}
 			kickoffTask={embedKickoffInFocusReady ? calmKickoffTask : null}
 			onAddTask={() => setShowAddModal(true)}
 			onSelectTask={(task) => {
@@ -983,6 +991,7 @@ export function PomodoroDashboardBody({
 	if (!pomodoro.isActiveCycleReady) {
 		return (
 			<FocusWorkbenchPending
+				kickoffPending={enableSuggestionGate && dataMode === "authenticated"}
 				onAddTask={() => setShowAddModal(true)}
 				onSelectTask={(task) => {
 					pomodoro.selectTask(task.id, {

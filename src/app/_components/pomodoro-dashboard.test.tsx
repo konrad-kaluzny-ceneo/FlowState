@@ -244,6 +244,77 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		expect(screen.queryByTestId("timer-panel")).toBeNull();
 	});
 
+	it("holds kickoff-shaped hero while calm landing suggestion is loading", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				cycleKind: null,
+				focusedTaskId: null,
+				pendingKickoffSuggestion: { status: "loading" },
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("focus-ready-kickoff-pending")).toBeTruthy();
+		expect(screen.getByText("Ready to focus on")).toBeTruthy();
+		expect(screen.queryByText("Ready to focus?")).toBeNull();
+		expect(screen.queryByTestId("focus-ready-kickoff")).toBeNull();
+	});
+
+	it("holds kickoff-shaped hero while calm landing suggestion is still idle", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				cycleKind: null,
+				focusedTaskId: null,
+				pendingKickoffSuggestion: { status: "idle" },
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByTestId("focus-ready-kickoff-pending")).toBeTruthy();
+		expect(screen.queryByText("Ready to focus?")).toBeNull();
+	});
+
+	it("shows choose-task hero when kickoff suggestion settles empty", () => {
+		usePomodoroCycleMock.mockReturnValue(
+			makePomodoroMock({
+				state: "idle",
+				cycleKind: null,
+				focusedTaskId: null,
+				pendingKickoffSuggestion: { status: "empty" },
+			}),
+		);
+
+		render(
+			<PomodoroDashboardBody
+				enableSuggestionGate
+				onboardingScope={authenticatedOnboardingScope}
+				refreshTasks={async () => {}}
+				tasks={tasks}
+			/>,
+		);
+
+		expect(screen.getByText("Ready to focus?")).toBeTruthy();
+		expect(screen.queryByTestId("focus-ready-kickoff-pending")).toBeNull();
+	});
+
 	it("shows embedded kickoff when a task is focused on calm landing", () => {
 		renderBody({
 			focusedTask: { id: 1, title: "Focus task" },
@@ -1059,7 +1130,7 @@ describe("PomodoroDashboardBody home IA layout", () => {
 			makePomodoroMock({
 				state: "idle",
 				focusedTaskId: null,
-				pendingKickoffSuggestion: { status: "idle" },
+				pendingKickoffSuggestion: { status: "empty" },
 			}),
 		);
 
@@ -1673,7 +1744,7 @@ describe("PomodoroDashboardBody context rail content", () => {
 			makePomodoroMock({
 				state: "idle",
 				focusedTaskId: null,
-				pendingKickoffSuggestion: { status: "idle" },
+				pendingKickoffSuggestion: { status: "empty" },
 			}),
 		);
 

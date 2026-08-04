@@ -7,17 +7,19 @@ import { useTranslations } from "next-intl";
 import { FocusEmptyState } from "~/app/_components/focus-empty-state";
 import { FocusGettingStarted } from "~/app/_components/focus-getting-started";
 import { FocusInfoBanner } from "~/app/_components/focus-info-banner";
-import { FocusReadyState } from "~/app/_components/focus-ready-state";
+import {
+	FocusReadyKickoffPending,
+	FocusReadyState,
+} from "~/app/_components/focus-ready-state";
 import { FocusTip } from "~/app/_components/focus-tip";
 import { FocusWidgetCard } from "~/app/_components/focus-widget-card";
 import { QuickActions } from "~/app/_components/quick-actions";
 import type { DomainTask } from "~/lib/data-mode/types";
-import { CalmGardenSprig } from "~/lib/design/illustrations/calm-garden-sprig";
 
 /**
  * Calm-landing placeholder for /focus while tasks suspend or guest storage
- * hydrates. Matches the most common settled view (FocusReady + rail); only
- * dynamic slots (task rows, day-summary values) pulse.
+ * hydrates. Hero matches the most common settled auth view (kickoff); only
+ * dynamic slots (task title / rows, day-summary values) pulse.
  */
 export function FocusWorkbenchSkeleton() {
 	const tHome = useTranslations("Home");
@@ -41,23 +43,7 @@ export function FocusWorkbenchSkeleton() {
 						data-testid="focus-ready-skeleton"
 					>
 						<div className="flex flex-col items-center gap-4 px-6 py-10 text-center">
-							<div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-cta/10">
-								<CalmGardenSprig className="h-8 w-8" variant="work" />
-							</div>
-							<div>
-								<h2 className="font-semibold text-primary text-xl">
-									{tReady("heading")}
-								</h2>
-								<p className="mt-2 max-w-sm text-sm text-text-secondary">
-									{tReady("subtitle")}
-								</p>
-							</div>
-							<span
-								aria-hidden="true"
-								className="rounded-control bg-accent-cta px-6 py-3 font-semibold text-on-cta text-sm"
-							>
-								{tReady("cta")}
-							</span>
+							<FocusReadyKickoffPending />
 						</div>
 
 						<div className="border-border-subtle border-t px-6 py-5">
@@ -105,10 +91,13 @@ export function FocusWorkbenchPending({
 	tasks,
 	onAddTask,
 	onSelectTask,
+	kickoffPending = false,
 }: {
 	tasks: DomainTask[];
 	onAddTask: () => void;
 	onSelectTask: (task: DomainTask) => void;
+	/** Prefer kickoff-shaped hero (auth + suggestion gate). */
+	kickoffPending?: boolean;
 }) {
 	const tHome = useTranslations("Home");
 	const hasFocusableTasks = tasks.some(
@@ -131,6 +120,7 @@ export function FocusWorkbenchPending({
 					{hasFocusableTasks ? (
 						<>
 							<FocusReadyState
+								kickoffPending={kickoffPending}
 								onAddTask={onAddTask}
 								onSelectTask={onSelectTask}
 								tasks={tasks}

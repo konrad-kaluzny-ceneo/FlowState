@@ -3,7 +3,7 @@
 import { Star, Target } from "lucide-react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { DurationPicker } from "~/app/_components/duration-picker";
 import { OverlayScrim } from "~/app/_components/overlay-shell";
@@ -45,6 +45,8 @@ type FocusReadyStateProps = {
 	onAddTask: () => void;
 	onSelectTask: (task: DomainTask) => void;
 	kickoffTask?: FocusKickoffTask | null;
+	/** Show kickoff chrome with pulsed title while suggestion settles. */
+	kickoffPending?: boolean;
 	preferredWorkDurationSec?: number | null;
 	onWorkDurationManualChange?: () => void;
 	onStartKickoff?: (durationSec: number) => Promise<void>;
@@ -126,24 +128,24 @@ function FocusReadySuggestionStar({
 	);
 }
 
-function FocusReadyKickoffHeader({
-	task,
+function FocusReadyKickoffChrome({
+	titleSlot,
+	startLabel,
+	startAriaLabel,
+	onStart,
+	startDisabled,
 	preferredWorkDurationSec,
 	onWorkDurationManualChange,
-	onStart,
-	isStarting = false,
-	showSuggestionStar = false,
-	suggestionStarAria,
-	onSuggestionStarClick,
+	testId,
 }: {
-	task: FocusKickoffTask;
+	titleSlot: ReactNode;
+	startLabel: string;
+	startAriaLabel?: string;
+	onStart?: (durationSec: number) => void;
+	startDisabled: boolean;
 	preferredWorkDurationSec?: number | null;
 	onWorkDurationManualChange?: () => void;
-	onStart: (durationSec: number) => Promise<void>;
-	isStarting?: boolean;
-	showSuggestionStar?: boolean;
-	suggestionStarAria?: string;
-	onSuggestionStarClick?: () => void;
+	testId: string;
 }) {
 	const t = useTranslations("Timer");
 	const [workDurationSec, setWorkDurationSec] = useState(
@@ -168,22 +170,13 @@ function FocusReadyKickoffHeader({
 	return (
 		<div
 			className="flex w-full flex-col items-center gap-4 text-center"
-			data-testid="focus-ready-kickoff"
+			data-testid={testId}
 		>
 			<p className="font-semibold text-sm text-text-section">
 				{t("idleReadyToFocusOn")}
 			</p>
-			<div className="flex max-w-full items-center justify-center gap-2">
-				<p className="font-semibold text-primary text-xl">{task.title}</p>
-				{showSuggestionStar &&
-				suggestionStarAria != null &&
-				onSuggestionStarClick != null ? (
-					<FocusReadySuggestionStar
-						ariaLabel={suggestionStarAria}
-						onClick={onSuggestionStarClick}
-						testId="focus-ready-kickoff-suggestion-star"
-					/>
-				) : null}
+			<div className="flex min-h-7 w-full max-w-full items-center justify-center gap-2">
+				{titleSlot}
 			</div>
 
 			<div className="w-full">
@@ -206,18 +199,93 @@ function FocusReadyKickoffHeader({
 			</div>
 
 			<button
-				aria-label={t("startCycleForTask", { title: task.title })}
+				aria-label={startAriaLabel}
 				className="w-full rounded-control bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50"
 				data-testid="timer-start-cycle"
-				disabled={isStarting || workPickerInvalid || !workValid}
-				onClick={() => void onStart(workDurationSec)}
+				disabled={startDisabled || workPickerInvalid || !workValid}
+				onClick={() => onStart?.(workDurationSec)}
 				type="button"
 			>
-				<span aria-hidden="true">
-					{isStarting ? t("starting") : t("startLabel")}
-				</span>
+				<span aria-hidden="true">{startLabel}</span>
 			</button>
 		</div>
+	);
+}
+
+function FocusReadyKickoffHeader({
+	task,
+	preferredWorkDurationSec,
+	onWorkDurationManualChange,
+	onStart,
+	isStarting = false,
+	showSuggestionStar = false,
+	suggestionStarAria,
+	onSuggestionStarClick,
+}: {
+	task: FocusKickoffTask;
+	preferredWorkDurationSec?: number | null;
+	onWorkDurationManualChange?: () => void;
+	onStart: (durationSec: number) => Promise<void>;
+	isStarting?: boolean;
+	showSuggestionStar?: boolean;
+	suggestionStarAria?: string;
+	onSuggestionStarClick?: () => void;
+}) {
+	const t = useTranslations("Timer");
+
+	return (
+		<FocusReadyKickoffChrome
+			onStart={(durationSec) => {
+				void onStart(durationSec);
+			}}
+			onWorkDurationManualChange={onWorkDurationManualChange}
+			preferredWorkDurationSec={preferredWorkDurationSec}
+			startAriaLabel={t("startCycleForTask", { title: task.title })}
+			startDisabled={isStarting}
+			startLabel={isStarting ? t("starting") : t("startLabel")}
+			testId="focus-ready-kickoff"
+			titleSlot={
+				<>
+					<p className="font-semibold text-primary text-xl">{task.title}</p>
+					{showSuggestionStar &&
+					suggestionStarAria != null &&
+					onSuggestionStarClick != null ? (
+						<FocusReadySuggestionStar
+							ariaLabel={suggestionStarAria}
+							onClick={onSuggestionStarClick}
+							testId="focus-ready-kickoff-suggestion-star"
+						/>
+					) : null}
+				</>
+			}
+		/>
+	);
+}
+
+/** Kickoff-shaped hero while calm-landing suggestion is still settling. */
+export function FocusReadyKickoffPending({
+	preferredWorkDurationSec,
+	onWorkDurationManualChange,
+}: {
+	preferredWorkDurationSec?: number | null;
+	onWorkDurationManualChange?: () => void;
+} = {}) {
+	const t = useTranslations("Timer");
+
+	return (
+		<FocusReadyKickoffChrome
+			onWorkDurationManualChange={onWorkDurationManualChange}
+			preferredWorkDurationSec={preferredWorkDurationSec}
+			startDisabled
+			startLabel={t("startLabel")}
+			testId="focus-ready-kickoff-pending"
+			titleSlot={
+				<span
+					aria-hidden="true"
+					className="inline-block h-6 w-48 max-w-[80%] animate-pulse rounded bg-surface-panel"
+				/>
+			}
+		/>
 	);
 }
 
@@ -226,6 +294,7 @@ export function FocusReadyState({
 	onAddTask,
 	onSelectTask,
 	kickoffTask = null,
+	kickoffPending = false,
 	preferredWorkDurationSec,
 	onWorkDurationManualChange,
 	onStartKickoff,
@@ -249,6 +318,51 @@ export function FocusReadyState({
 	const kickoffShowsSuggestionStar =
 		showKickoff && kickoffTask != null && isAutoSuggestedTask(kickoffTask.id);
 
+	const heroContent = showKickoff ? (
+		<FocusReadyKickoffHeader
+			isStarting={isStartingKickoff}
+			onStart={onStartKickoff}
+			onSuggestionStarClick={openSuggestionPopup}
+			onWorkDurationManualChange={onWorkDurationManualChange}
+			preferredWorkDurationSec={preferredWorkDurationSec}
+			showSuggestionStar={kickoffShowsSuggestionStar}
+			suggestionStarAria={t("suggestionStarAria")}
+			task={kickoffTask}
+		/>
+	) : kickoffPending ? (
+		<FocusReadyKickoffPending
+			onWorkDurationManualChange={onWorkDurationManualChange}
+			preferredWorkDurationSec={preferredWorkDurationSec}
+		/>
+	) : (
+		<>
+			<div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-cta/10">
+				<CalmGardenSprig className="h-8 w-8" variant="work" />
+			</div>
+			<div>
+				<h2 className="font-semibold text-primary text-xl">{t("heading")}</h2>
+				<p className="mt-2 max-w-sm text-sm text-text-secondary">
+					{t("subtitle")}
+				</p>
+			</div>
+			<button
+				className="rounded-control bg-accent-cta px-6 py-3 font-semibold text-on-cta text-sm transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+				data-testid="focus-ready-choose-task"
+				onClick={() => {
+					const first = suggestedTasks[0];
+					if (first != null) {
+						onSelectTask(first);
+						return;
+					}
+					onAddTask();
+				}}
+				type="button"
+			>
+				{t("cta")}
+			</button>
+		</>
+	);
+
 	return (
 		<>
 			<div
@@ -256,47 +370,7 @@ export function FocusReadyState({
 				data-testid="focus-ready-state"
 			>
 				<div className="flex flex-col items-center gap-4 px-6 py-10 text-center">
-					{showKickoff ? (
-						<FocusReadyKickoffHeader
-							isStarting={isStartingKickoff}
-							onStart={onStartKickoff}
-							onSuggestionStarClick={openSuggestionPopup}
-							onWorkDurationManualChange={onWorkDurationManualChange}
-							preferredWorkDurationSec={preferredWorkDurationSec}
-							showSuggestionStar={kickoffShowsSuggestionStar}
-							suggestionStarAria={t("suggestionStarAria")}
-							task={kickoffTask}
-						/>
-					) : (
-						<>
-							<div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-cta/10">
-								<CalmGardenSprig className="h-8 w-8" variant="work" />
-							</div>
-							<div>
-								<h2 className="font-semibold text-primary text-xl">
-									{t("heading")}
-								</h2>
-								<p className="mt-2 max-w-sm text-sm text-text-secondary">
-									{t("subtitle")}
-								</p>
-							</div>
-							<button
-								className="rounded-control bg-accent-cta px-6 py-3 font-semibold text-on-cta text-sm transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-								data-testid="focus-ready-choose-task"
-								onClick={() => {
-									const first = suggestedTasks[0];
-									if (first != null) {
-										onSelectTask(first);
-										return;
-									}
-									onAddTask();
-								}}
-								type="button"
-							>
-								{t("cta")}
-							</button>
-						</>
-					)}
+					{heroContent}
 				</div>
 
 				{suggestedTasks.length > 0 && (
