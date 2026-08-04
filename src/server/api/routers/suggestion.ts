@@ -18,6 +18,7 @@ import { resolveIntentionWorkType } from "~/lib/session/narrative-copy";
 import {
 	buildSuggestionPool,
 	loadRemainingFocusMinutes,
+	SUGGESTION_POOL_STATUSES,
 } from "~/lib/suggestion/build-suggestion-pool";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import type { db as dbClient } from "~/server/db/index";
@@ -125,14 +126,14 @@ async function verifyOwnedTasks(
 		where: {
 			id: suggestedTaskId,
 			userId,
-			status: "active",
+			status: { in: [...SUGGESTION_POOL_STATUSES] },
 		},
 	});
 	const chosenTask = await db.task.findFirst({
 		where: {
 			id: chosenTaskId,
 			userId,
-			status: "active",
+			status: { in: [...SUGGESTION_POOL_STATUSES] },
 		},
 	});
 

@@ -276,7 +276,7 @@ vi.mock("~/server/db/index", () => ({
 					where: {
 						id?: number;
 						userId?: string;
-						status?: string;
+						status?: string | { in?: string[] };
 					};
 				}) => {
 					return Promise.resolve(
@@ -287,8 +287,17 @@ vi.mock("~/server/db/index", () => ({
 							if (args.where.userId != null && t.userId !== args.where.userId) {
 								return false;
 							}
-							if (args.where.status != null && t.status !== args.where.status) {
-								return false;
+							const statusFilter = args.where.status;
+							if (statusFilter != null) {
+								if (typeof statusFilter === "string") {
+									if (t.status !== statusFilter) {
+										return false;
+									}
+								} else if (Array.isArray(statusFilter.in)) {
+									if (!statusFilter.in.includes(t.status)) {
+										return false;
+									}
+								}
 							}
 							return true;
 						}) ?? null,
@@ -691,6 +700,50 @@ describe("suggestion router", () => {
 			chosenTaskId: 2,
 		});
 		expect(overridden.accepted).toBe(false);
+	});
+
+	it("recordDecision succeeds when suggested and chosen tasks are planned", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		tasks = [
+			{
+				id: 1,
+				title: "Planned A",
+				status: "planned",
+				userId: USER_ID,
+				workType: "DEEP_WORK",
+				sortOrder: 0,
+				createdAt: new Date(),
+				...taskDefaults(2),
+			},
+			{
+				id: 2,
+				title: "Planned B",
+				status: "planned",
+				userId: USER_ID,
+				workType: "REACTIVE",
+				sortOrder: 1,
+				createdAt: new Date(),
+				...taskDefaults(2),
+			},
+		];
+
+		const row = await caller().recordDecision({
+			context: "kickoff",
+			sessionId: 1,
+			suggestedTaskId: 1,
+			chosenTaskId: 2,
+		});
+
+		expect(row).toMatchObject({
+			cycleId: null,
+			sessionId: 1,
+			context: "KICKOFF",
+			accepted: false,
+			suggestedTaskId: 1,
+			chosenTaskId: 2,
+		});
 	});
 
 	it("recordDecision throws BAD_REQUEST without check-in", async () => {

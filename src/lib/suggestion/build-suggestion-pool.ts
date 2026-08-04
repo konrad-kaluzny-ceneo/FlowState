@@ -36,7 +36,7 @@ export async function getDoneTodayTaskIds(
 	return new Set(completions.map((row) => row.taskId));
 }
 
-const SUGGESTION_POOL_STATUSES = ["active", "planned"] as const;
+export const SUGGESTION_POOL_STATUSES = ["active", "planned"] as const;
 
 export async function buildSuggestionPool(
 	db: DbClient,

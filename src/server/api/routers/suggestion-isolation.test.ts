@@ -75,7 +75,11 @@ vi.mock("~/server/db/index", () => ({
 			}),
 			findFirst: vi.fn(
 				(args: {
-					where: { id?: number; userId?: string; status?: string };
+					where: {
+						id?: number;
+						userId?: string;
+						status?: string | { in?: string[] };
+					};
 				}) => {
 					return Promise.resolve(
 						tasks.find((t) => {
@@ -85,8 +89,17 @@ vi.mock("~/server/db/index", () => ({
 							if (args.where.userId != null && t.userId !== args.where.userId) {
 								return false;
 							}
-							if (args.where.status != null && t.status !== args.where.status) {
-								return false;
+							const statusFilter = args.where.status;
+							if (statusFilter != null) {
+								if (typeof statusFilter === "string") {
+									if (t.status !== statusFilter) {
+										return false;
+									}
+								} else if (Array.isArray(statusFilter.in)) {
+									if (!statusFilter.in.includes(t.status)) {
+										return false;
+									}
+								}
 							}
 							return true;
 						}) ?? null,
