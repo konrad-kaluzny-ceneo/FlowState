@@ -247,11 +247,17 @@
 		"doneForTodayTitle": "Gotowe na dziś",
 		"markDoneForTodayAria": "Gotowe na dziś",
 		"markCompleteAria": "Oznacz jako ukończone",
+		"markCompleteLabel": "Gotowe",
 		"continueHere": "Kontynuuj tutaj",
 		"daily": "Codzienne",
 		"focusedAria": "Skupione",
 		"focusAria": "Skup się",
+		"focusLabel": "Skupienie",
 		"deleteAria": "Usuń zadanie",
+		"deleteLabel": "Usuń",
+		"moreActionsAria": "Więcej opcji",
+		"moreActionsLabel": "Więcej",
+		"blockLabel": "Zablokowane",
 		"footprint": "Ostatnie skupienie {ago} · łącznie {minutes} min",
 		"errorDismiss": "Zamknij",
 		"createTitlePlaceholder": "Dodaj nowe zadanie...",
@@ -379,7 +385,8 @@
 		"endBreakAria": "Zakończ przerwę"
 	},
 	"Home": {
-		"offlineBanner": "Jesteś offline — spróbuj ponownie, gdy wrócisz online."
+		"offlineBanner": "Jesteś offline — spróbuj ponownie, gdy wrócisz online.",
+		"dashboardLoading": "Ładuję widok fokusu…"
 	},
 	"HomeFocusSummary": {
 		"heading": "Twój dzień",

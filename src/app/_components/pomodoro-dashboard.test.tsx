@@ -160,6 +160,7 @@ function makePomodoroMock(
 		windDownRationale: null,
 		isConfirming: false,
 		isWedgeSyncRetrying: false,
+		isActiveCycleReady: true,
 		pendingKickoffSuggestion: { status: "idle" },
 		kickoffSuggestedTaskId: null,
 		hasPreFocusedKickoff: false,
@@ -232,6 +233,13 @@ function renderBody(overrides: Record<string, unknown> = {}) {
 describe("PomodoroDashboardBody overlay visibility", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+
+	it("shows workbench skeleton until active cycle recovery is ready", () => {
+		renderBody({ isActiveCycleReady: false });
+
+		expect(screen.getByTestId("dashboard-loading")).toBeTruthy();
+		expect(screen.queryByTestId("home-workbench-grid")).toBeNull();
 	});
 
 	it("shows embedded kickoff when a task is focused on calm landing", () => {

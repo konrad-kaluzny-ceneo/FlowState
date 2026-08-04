@@ -27,6 +27,7 @@ import { FocusGettingStarted } from "~/app/_components/focus-getting-started";
 import { FocusInfoBanner } from "~/app/_components/focus-info-banner";
 import { FocusReadyState } from "~/app/_components/focus-ready-state";
 import { FocusTip } from "~/app/_components/focus-tip";
+import { FocusWorkbenchSkeleton } from "~/app/_components/focus-workbench-skeleton";
 import { GuestContextRail } from "~/app/_components/guest-context-rail";
 import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
@@ -976,6 +977,10 @@ export function PomodoroDashboardBody({
 		(!showCalmLanding && dayPlan != null) ||
 		(!showCalmLanding && recapPanel != null);
 
+	if (!pomodoro.isActiveCycleReady) {
+		return <FocusWorkbenchSkeleton />;
+	}
+
 	return (
 		<div className="flex w-full flex-col gap-6">
 			{pomodoro.pendingWedgeRecovery != null ? (
@@ -1243,8 +1248,16 @@ function AuthenticatedPomodoroDashboard() {
 }
 
 function GuestPomodoroDashboard() {
+	const [hasMounted, setHasMounted] = useState(false);
+	useEffect(() => {
+		setHasMounted(true);
+	}, []);
 	const { tasks, refresh } = useGuestDomainTasks();
 	const guestScope = useMemo(() => ({ mode: "guest" as const }), []);
+
+	if (!hasMounted) {
+		return <FocusWorkbenchSkeleton />;
+	}
 
 	return (
 		<PomodoroDashboardBody
@@ -1263,13 +1276,7 @@ export function PomodoroDashboard() {
 	}
 
 	return (
-		<Suspense
-			fallback={
-				<p className="text-sm text-text-dimmed" data-testid="dashboard-loading">
-					Loading tasks…
-				</p>
-			}
-		>
+		<Suspense fallback={<FocusWorkbenchSkeleton />}>
 			<AuthenticatedPomodoroDashboard />
 		</Suspense>
 	);

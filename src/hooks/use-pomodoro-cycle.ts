@@ -356,6 +356,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const [kickoffSuggestedTaskId, setKickoffSuggestedTaskId] =
 		useState<DomainTaskId | null>(null);
 	const [sessionStartIdleFlag, setSessionStartIdleFlag] = useState(false);
+	const [isActiveCycleReady, setIsActiveCycleReady] = useState(false);
 	const [postBreakIdleFlag, setPostBreakIdleFlag] = useState(false);
 	const [hasActiveTasks, setHasActiveTasks] = useState(false);
 	const [awaitingWindDown, setAwaitingWindDown] = useState(false);
@@ -1004,95 +1005,101 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const recoverActiveCycle = useCallback(async () => {
 		if (activeCycleRecoveredForMode === mode || recoveredRef.current) {
+			setIsActiveCycleReady(true);
 			return;
 		}
 
 		recoveredRef.current = true;
 		activeCycleRecoveredForMode = mode;
 
-		const active = await cycles.getActive();
+		try {
+			const active = await cycles.getActive();
 
-		if (active != null) {
-			resumeFromActiveCycle(active);
+			if (active != null) {
+				resumeFromActiveCycle(active);
 
-			// Derive completed work cycle count from server for correct break cadence
-			try {
-				if (mode === "authenticated") {
-					const count = await utils.client.cycle.countCompletedWork.query({
-						sessionId: Number(active.sessionId),
-					});
-					setCompletedWorkCycles(count);
+				// Derive completed work cycle count from server for correct break cadence
+				try {
+					if (mode === "authenticated") {
+						const count = await utils.client.cycle.countCompletedWork.query({
+							sessionId: Number(active.sessionId),
+						});
+						setCompletedWorkCycles(count);
 
-					// Derive cyclesSinceLastLong from session cycle history
-					const sessionCycles = await utils.client.cycle.list.query({
-						sessionId: Number(active.sessionId),
-					});
-					// Cycles are ordered desc by startedAt — reverse for chronological
-					const chronological = [...sessionCycles].reverse();
-					let sinceLastLong = 0;
-					for (const c of chronological) {
-						if (c.kind === "LONG_BREAK" && c.state === "COMPLETED") {
-							sinceLastLong = 0;
-						} else if (c.kind === "WORK" && c.state === "COMPLETED") {
-							sinceLastLong++;
+						// Derive cyclesSinceLastLong from session cycle history
+						const sessionCycles = await utils.client.cycle.list.query({
+							sessionId: Number(active.sessionId),
+						});
+						// Cycles are ordered desc by startedAt — reverse for chronological
+						const chronological = [...sessionCycles].reverse();
+						let sinceLastLong = 0;
+						for (const c of chronological) {
+							if (c.kind === "LONG_BREAK" && c.state === "COMPLETED") {
+								sinceLastLong = 0;
+							} else if (c.kind === "WORK" && c.state === "COMPLETED") {
+								sinceLastLong++;
+							}
+						}
+						setCyclesSinceLastLong(sinceLastLong);
+					} else {
+						const { loadSnapshot } = await import("~/lib/guest/store");
+						const snapshot = loadSnapshot();
+						const sessionCycles = snapshot.cycles.filter(
+							(c) => c.sessionId === active.sessionId,
+						);
+						const count = sessionCycles.filter(
+							(c) => c.kind === "WORK" && c.state === "COMPLETED",
+						).length;
+						setCompletedWorkCycles(count);
+
+						// Derive cyclesSinceLastLong from guest session history
+						// Guest cycles are stored in insertion order (chronological)
+						let sinceLastLong = 0;
+						for (const c of sessionCycles) {
+							if (c.kind === "LONG_BREAK" && c.state === "COMPLETED") {
+								sinceLastLong = 0;
+							} else if (c.kind === "WORK" && c.state === "COMPLETED") {
+								sinceLastLong++;
+							}
+						}
+						setCyclesSinceLastLong(sinceLastLong);
+					}
+				} catch {
+					// Best effort — counter stays at 0, worst case is wrong break type
+				}
+			} else {
+				// No active cycle — session may have timed out server-side; reset counter
+				setCompletedWorkCycles(0);
+
+				try {
+					if (mode === "authenticated") {
+						const lastEnded = await utils.client.session.getLastEnded.query();
+						if (lastEnded != null && lastEnded.state === "ENDED_BY_TIMEOUT") {
+							await maybePresentTimeoutClosure(lastEnded.id);
+						}
+					} else {
+						const prior = [...loadSnapshot().sessions]
+							.reverse()
+							.find((session) => session.state === "ENDED_BY_TIMEOUT");
+						if (prior != null) {
+							await maybePresentTimeoutClosure(prior.id);
 						}
 					}
-					setCyclesSinceLastLong(sinceLastLong);
-				} else {
-					const { loadSnapshot } = await import("~/lib/guest/store");
-					const snapshot = loadSnapshot();
-					const sessionCycles = snapshot.cycles.filter(
-						(c) => c.sessionId === active.sessionId,
-					);
-					const count = sessionCycles.filter(
-						(c) => c.kind === "WORK" && c.state === "COMPLETED",
-					).length;
-					setCompletedWorkCycles(count);
-
-					// Derive cyclesSinceLastLong from guest session history
-					// Guest cycles are stored in insertion order (chronological)
-					let sinceLastLong = 0;
-					for (const c of sessionCycles) {
-						if (c.kind === "LONG_BREAK" && c.state === "COMPLETED") {
-							sinceLastLong = 0;
-						} else if (c.kind === "WORK" && c.state === "COMPLETED") {
-							sinceLastLong++;
-						}
-					}
-					setCyclesSinceLastLong(sinceLastLong);
+				} catch {
+					// Best effort — kickoff still available after hydrate
 				}
-			} catch {
-				// Best effort — counter stays at 0, worst case is wrong break type
-			}
-		} else {
-			// No active cycle — session may have timed out server-side; reset counter
-			setCompletedWorkCycles(0);
 
-			try {
-				if (mode === "authenticated") {
-					const lastEnded = await utils.client.session.getLastEnded.query();
-					if (lastEnded != null && lastEnded.state === "ENDED_BY_TIMEOUT") {
-						await maybePresentTimeoutClosure(lastEnded.id);
-					}
-				} else {
-					const prior = [...loadSnapshot().sessions]
-						.reverse()
-						.find((session) => session.state === "ENDED_BY_TIMEOUT");
-					if (prior != null) {
-						await maybePresentTimeoutClosure(prior.id);
-					}
-				}
-			} catch {
-				// Best effort — kickoff still available after hydrate
+				setSessionStartIdleFlag(true);
 			}
-
-			setSessionStartIdleFlag(true);
+		} finally {
+			setIsActiveCycleReady(true);
 		}
 	}, [cycles, resumeFromActiveCycle, mode, utils, maybePresentTimeoutClosure]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: reset recovery guard when auth mode changes
 	useEffect(() => {
 		recoveredRef.current = false;
+		setIsActiveCycleReady(false);
 	}, [mode]);
 
 	useEffect(() => {
@@ -1174,6 +1181,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	useEffect(() => {
 		return subscribeActiveCycleRecoveryReset(() => {
 			recoveredRef.current = false;
+			setIsActiveCycleReady(false);
 			void recoverActiveCycle();
 		});
 	}, [recoverActiveCycle]);
@@ -1287,23 +1295,33 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 	const recordKickoffDecision = useCallback(
 		async (suggestedId: DomainTaskId, chosenId: DomainTaskId) => {
-			if (_activeSessionId == null) {
+			if (mode === "guest" || _activeSessionId == null) {
+				return;
+			}
+			const sessionId = Number(_activeSessionId);
+			const suggestedTaskId = Number(suggestedId);
+			const chosenTaskId = Number(chosenId);
+			if (
+				!Number.isFinite(sessionId) ||
+				!Number.isFinite(suggestedTaskId) ||
+				!Number.isFinite(chosenTaskId)
+			) {
 				return;
 			}
 			try {
 				await retryOnce(() =>
 					recordDecisionMutation.mutateAsync({
 						context: "kickoff",
-						sessionId: Number(_activeSessionId),
-						suggestedTaskId: Number(suggestedId),
-						chosenTaskId: Number(chosenId),
+						sessionId,
+						suggestedTaskId,
+						chosenTaskId,
 					}),
 				);
 			} catch {
 				setError(tErrors("suggestionDecisionSaveFailed"));
 			}
 		},
-		[_activeSessionId, recordDecisionMutation, tErrors],
+		[_activeSessionId, mode, recordDecisionMutation, tErrors],
 	);
 
 	const fetchKickoffSuggestion = useCallback(
@@ -3543,6 +3561,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		windDownRationale,
 		isConfirming,
 		isWedgeSyncRetrying,
+		isActiveCycleReady,
 		preFocusedTask,
 		hasPreFocusedKickoff,
 		stagedKickoffDurationSec,

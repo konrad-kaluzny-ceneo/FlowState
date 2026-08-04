@@ -247,11 +247,17 @@
 		"doneForTodayTitle": "Done for today",
 		"markDoneForTodayAria": "Done for today",
 		"markCompleteAria": "Mark complete",
+		"markCompleteLabel": "Done",
 		"continueHere": "Continue here",
 		"daily": "Daily",
 		"focusedAria": "Focused",
 		"focusAria": "Focus",
+		"focusLabel": "Focus",
 		"deleteAria": "Delete task",
+		"deleteLabel": "Delete",
+		"moreActionsAria": "More actions",
+		"moreActionsLabel": "More",
+		"blockLabel": "Blocked",
 		"footprint": "Last focused {ago} · {minutes}m total",
 		"errorDismiss": "Dismiss",
 		"createTitlePlaceholder": "Add a new task...",
@@ -379,7 +385,8 @@
 		"endBreakAria": "End break"
 	},
 	"Home": {
-		"offlineBanner": "You're offline — retry when you're back online."
+		"offlineBanner": "You're offline — retry when you're back online.",
+		"dashboardLoading": "Loading your focus view…"
 	},
 	"HomeFocusSummary": {
 		"heading": "Your day",
