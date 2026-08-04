@@ -5,7 +5,7 @@ status: draft
 created: 2026-05-26
 updated: 2026-08-04
 structure: split
-active_slices: [S-48]
+active_slices: []
 prd_version: 3
 main_goal: quality
 top_blocker: flow-coherence (S-21 / S-34 unblocked)
@@ -174,7 +174,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | F-15 | platform-refactor-batch | **done** | FLO-96 / #190; umbrella for F-08–F-13 + observability hygiene; phased after S-45 |
 | S-46 | mcp-server-for-agents | **done** | FLO-97 / #191; archived `context/archive/2026-07-24-mcp-server-for-agents/` (2026-07-28) |
 | S-47 | delegation-suggestion-in-plan | **done** | FLO-98 / #192; merged PR [#214](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/214) 2026-07-30; Linear Done, GitHub closed |
-| S-48 | analytics-trends-plan-vs-execution | **yes** | FLO-99 / #193; research resolved 2026-07-30 (see below) — active, ready for /10x-plan |
+| S-48 | analytics-trends-plan-vs-execution | **done** | FLO-99 / #193; archived 2026-08-04 → `context/archive/2026-07-30-analytics-trends-plan-vs-execution/`; PR #215 |
 | S-49 | workspace-setup-advisor | **no** | FLO-100 / #194; after S-45 Ustawienia; content-first (tips authored); no external integration |
 | S-51 | blocked-task-status | **done** | US-06; implemented + merged PR [#206](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/206) 2026-07-17; archived 2026-07-23. Linear/GitHub pair never created (code shipped directly) |
 | S-52 | focus-and-break-time-totals | **done** | US-07; implemented + merged PR [#205](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/205) 2026-07-17; archived 2026-07-23. Linear/GitHub pair never created (code shipped directly) |
