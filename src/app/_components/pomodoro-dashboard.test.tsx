@@ -235,11 +235,13 @@ describe("PomodoroDashboardBody overlay visibility", () => {
 		vi.clearAllMocks();
 	});
 
-	it("shows workbench skeleton until active cycle recovery is ready", () => {
+	it("shows calm-landing pending until active cycle recovery is ready", () => {
 		renderBody({ isActiveCycleReady: false });
 
 		expect(screen.getByTestId("dashboard-loading")).toBeTruthy();
-		expect(screen.queryByTestId("home-workbench-grid")).toBeNull();
+		expect(screen.getByTestId("home-workbench-grid")).toBeTruthy();
+		expect(screen.getByTestId("focus-ready-state")).toBeTruthy();
+		expect(screen.queryByTestId("timer-panel")).toBeNull();
 	});
 
 	it("shows embedded kickoff when a task is focused on calm landing", () => {

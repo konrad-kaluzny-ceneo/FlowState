@@ -27,7 +27,10 @@ import { FocusGettingStarted } from "~/app/_components/focus-getting-started";
 import { FocusInfoBanner } from "~/app/_components/focus-info-banner";
 import { FocusReadyState } from "~/app/_components/focus-ready-state";
 import { FocusTip } from "~/app/_components/focus-tip";
-import { FocusWorkbenchSkeleton } from "~/app/_components/focus-workbench-skeleton";
+import {
+	FocusWorkbenchPending,
+	FocusWorkbenchSkeleton,
+} from "~/app/_components/focus-workbench-skeleton";
 import { GuestContextRail } from "~/app/_components/guest-context-rail";
 import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
@@ -978,7 +981,18 @@ export function PomodoroDashboardBody({
 		(!showCalmLanding && recapPanel != null);
 
 	if (!pomodoro.isActiveCycleReady) {
-		return <FocusWorkbenchSkeleton />;
+		return (
+			<FocusWorkbenchPending
+				onAddTask={() => setShowAddModal(true)}
+				onSelectTask={(task) => {
+					pomodoro.selectTask(task.id, {
+						id: task.id,
+						title: task.title,
+					});
+				}}
+				tasks={tasks}
+			/>
+		);
 	}
 
 	return (
