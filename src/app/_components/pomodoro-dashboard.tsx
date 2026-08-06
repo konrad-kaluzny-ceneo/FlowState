@@ -27,6 +27,10 @@ import { FocusGettingStarted } from "~/app/_components/focus-getting-started";
 import { FocusInfoBanner } from "~/app/_components/focus-info-banner";
 import { FocusReadyState } from "~/app/_components/focus-ready-state";
 import { FocusTip } from "~/app/_components/focus-tip";
+import {
+	FocusWorkbenchPending,
+	FocusWorkbenchSkeleton,
+} from "~/app/_components/focus-workbench-skeleton";
 import { GuestContextRail } from "~/app/_components/guest-context-rail";
 import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
@@ -632,6 +636,13 @@ export function PomodoroDashboardBody({
 		!showSessionEnergy &&
 		calmKickoffTask != null;
 	const embedKickoffInFocusReady = showFocusReadyState && showCalmKickoffTimer;
+	const kickoffSuggestionPending =
+		enableSuggestionGate &&
+		dataMode === "authenticated" &&
+		showFocusReadyState &&
+		!embedKickoffInFocusReady &&
+		(pomodoro.pendingKickoffSuggestion.status === "idle" ||
+			pomodoro.pendingKickoffSuggestion.status === "loading");
 
 	const calmKickoffSuggestionCardData =
 		useMemo((): TaskSuggestionData | null => {
@@ -910,6 +921,7 @@ export function PomodoroDashboardBody({
 		<FocusReadyState
 			autoSuggestedTaskId={calmKickoffSuggestedTaskId}
 			isStartingKickoff={false}
+			kickoffPending={kickoffSuggestionPending}
 			kickoffTask={embedKickoffInFocusReady ? calmKickoffTask : null}
 			onAddTask={() => setShowAddModal(true)}
 			onSelectTask={(task) => {
@@ -975,6 +987,33 @@ export function PomodoroDashboardBody({
 		pomodoro.overrideAcknowledgement != null ||
 		(!showCalmLanding && dayPlan != null) ||
 		(!showCalmLanding && recapPanel != null);
+
+	if (!pomodoro.isActiveCycleReady) {
+		return (
+			<>
+				<FocusWorkbenchPending
+					kickoffPending={enableSuggestionGate && dataMode === "authenticated"}
+					onAddTask={() => setShowAddModal(true)}
+					onSelectTask={(task) => {
+						pomodoro.selectTask(task.id, {
+							id: task.id,
+							title: task.title,
+						});
+					}}
+					tasks={tasks}
+				/>
+				{showAddModal && (
+					<AddTaskModal
+						isCreating={isCreating}
+						onClose={() => setShowAddModal(false)}
+						onCreate={async (input) => {
+							await createTask(input);
+						}}
+					/>
+				)}
+			</>
+		);
+	}
 
 	return (
 		<div className="flex w-full flex-col gap-6">
@@ -1243,8 +1282,16 @@ function AuthenticatedPomodoroDashboard() {
 }
 
 function GuestPomodoroDashboard() {
+	const [hasMounted, setHasMounted] = useState(false);
+	useEffect(() => {
+		setHasMounted(true);
+	}, []);
 	const { tasks, refresh } = useGuestDomainTasks();
 	const guestScope = useMemo(() => ({ mode: "guest" as const }), []);
+
+	if (!hasMounted) {
+		return <FocusWorkbenchSkeleton />;
+	}
 
 	return (
 		<PomodoroDashboardBody
@@ -1263,13 +1310,7 @@ export function PomodoroDashboard() {
 	}
 
 	return (
-		<Suspense
-			fallback={
-				<p className="text-sm text-text-dimmed" data-testid="dashboard-loading">
-					Loading tasks…
-				</p>
-			}
-		>
+		<Suspense fallback={<FocusWorkbenchSkeleton />}>
 			<AuthenticatedPomodoroDashboard />
 		</Suspense>
 	);

@@ -21,6 +21,11 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 	useRepositories: () => createGuestRepositories(),
 }));
 
+const { suggestionNextMutate, recordDecisionMutate } = vi.hoisted(() => ({
+	suggestionNextMutate: vi.fn(),
+	recordDecisionMutate: vi.fn(),
+}));
+
 vi.mock("~/trpc/react", () => ({
 	api: {
 		useUtils: () => ({
@@ -40,12 +45,12 @@ vi.mock("~/trpc/react", () => ({
 		suggestion: {
 			next: {
 				useMutation: () => ({
-					mutateAsync: vi.fn(),
+					mutateAsync: suggestionNextMutate,
 				}),
 			},
 			recordDecision: {
 				useMutation: () => ({
-					mutateAsync: vi.fn(),
+					mutateAsync: recordDecisionMutate,
 				}),
 			},
 		},

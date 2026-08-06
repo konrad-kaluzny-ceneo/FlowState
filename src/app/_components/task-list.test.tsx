@@ -297,7 +297,7 @@ describe("TaskList", () => {
 		expect(reorderTasks).toHaveBeenCalledWith({ orderedIds: [2, 1] });
 	});
 
-	it("marks a task complete with the completion animation", () => {
+	it("marks a task complete from the more-actions menu with the completion animation", () => {
 		renderTaskList(
 			<TaskList
 				{...defaultProps}
@@ -307,11 +307,30 @@ describe("TaskList", () => {
 
 		const row = screen.getByTestId("active-task-row");
 		expect(row.className).not.toContain("animate-task-complete");
+		expect(screen.queryByTestId("task-complete-button")).toBeNull();
 
-		fireEvent.click(screen.getByRole("button", { name: "Mark complete" }));
+		fireEvent.click(screen.getByTestId("task-more-actions"));
+		fireEvent.click(screen.getByTestId("task-complete-button"));
 
 		expect(row.className).toContain("animate-task-complete");
 		expect(updateTask).toHaveBeenCalledWith({ id: 1, status: "completed" });
+	});
+
+	it("puts Focus as the primary row action before opening more options", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Focus me" })]}
+			/>,
+		);
+
+		const focusBtn = screen.getByTestId("task-focus-button");
+		expect(focusBtn.textContent).toContain("Focus");
+		fireEvent.click(focusBtn);
+		expect(onFocusTask).toHaveBeenCalledWith(
+			1,
+			expect.objectContaining({ id: 1 }),
+		);
 	});
 
 	it("reverts a completed task back to active", () => {
@@ -422,6 +441,7 @@ describe("TaskList", () => {
 			/>,
 		);
 
+		fireEvent.click(screen.getByTestId("task-more-actions"));
 		const blockBtn = screen.getByTestId("task-block-button");
 		fireEvent.click(blockBtn);
 

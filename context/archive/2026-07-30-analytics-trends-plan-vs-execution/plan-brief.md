@@ -1,6 +1,6 @@
 # Analytics: Weekly/Monthly Trends, Plan vs Execution — Plan Brief
 
-> Full plan: `context/changes/analytics-trends-plan-vs-execution/plan.md`
+> Full plan: `context/archive/2026-07-30-analytics-trends-plan-vs-execution/plan.md`
 > Research: `context/foundation/roadmap-references/items/S-48.md`
 
 ## What & Why

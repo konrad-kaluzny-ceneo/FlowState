@@ -15,9 +15,17 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Plus, Settings2, Target } from "lucide-react";
+import {
+	Ban,
+	CheckCircle,
+	MoreHorizontal,
+	Plus,
+	Settings2,
+	Target,
+	Trash2,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AddTaskModal } from "~/app/_components/add-task-modal";
 import { EmptyActiveTasksGuide } from "~/app/_components/empty-active-tasks-guide";
@@ -118,126 +126,214 @@ type TaskRowProps = {
 	t: ReturnType<typeof useTranslations<"Tasks">>;
 };
 
-function TaskCompleteButton({
-	task,
-	markCompleteLocked,
-	isMutating,
-	canMidCycleMarkComplete,
-	onMidCycleMarkComplete,
-	onUpdateTask,
-	onBeginComplete,
-	t,
-}: {
-	task: DomainTask;
-	markCompleteLocked: boolean;
-	isMutating: boolean;
-	canMidCycleMarkComplete: boolean;
-	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
-	onUpdateTask: TaskRowProps["onUpdateTask"];
-	onBeginComplete: (taskId: DomainTaskId) => void;
-	t: ReturnType<typeof useTranslations<"Tasks">>;
-}) {
-	return (
-		<button
-			aria-label={t("markCompleteAria")}
-			className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-border-subtle transition hover:border-accent-success hover:bg-accent-success/20 disabled:cursor-not-allowed disabled:opacity-40"
-			data-testid="task-complete-button"
-			disabled={markCompleteLocked || isMutating}
-			onClick={() => {
-				if (canMidCycleMarkComplete && onMidCycleMarkComplete != null) {
-					onMidCycleMarkComplete(task.id, task);
-					return;
-				}
-
-				onBeginComplete(task.id);
-				void onUpdateTask({ id: task.id, status: "completed" });
-			}}
-			type="button"
-		/>
-	);
-}
-
-function TaskRowFooter({
+function TaskFocusButton({
 	task,
 	focusedTaskId,
 	focusLocked,
-	cycleLocked,
-	isMutating,
-	canMidCycleBlock,
-	onMidCycleBlock,
 	onFocusTask,
-	onDeleteTask,
-	onUpdateTask,
-	locale,
 	t,
 }: {
 	task: DomainTask;
 	focusedTaskId: DomainTaskId | null;
 	focusLocked: boolean;
-	cycleLocked: boolean;
-	isMutating: boolean;
-	canMidCycleBlock: boolean;
-	onMidCycleBlock?: (taskId: DomainTaskId, task: DomainTask) => void;
 	onFocusTask: TaskRowProps["onFocusTask"];
-	onDeleteTask: TaskRowProps["onDeleteTask"];
-	onUpdateTask: TaskRowProps["onUpdateTask"];
-	locale: UserLocale;
 	t: ReturnType<typeof useTranslations<"Tasks">>;
 }) {
+	const isFocused = focusedTaskId === task.id;
+	return (
+		<button
+			aria-label={isFocused ? t("focusedAria") : t("focusAria")}
+			aria-pressed={isFocused}
+			className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40 ${
+				isFocused
+					? "border-accent-cta/40 bg-accent-cta text-on-cta"
+					: "border-border-subtle bg-surface-panel text-text-section hover:bg-surface-card-muted"
+			}`}
+			data-testid="task-focus-button"
+			disabled={focusLocked}
+			onClick={() => void onFocusTask(task.id, task)}
+			type="button"
+		>
+			<Target aria-hidden="true" className="h-4 w-4" />
+			<span className="font-semibold text-xs">{t("focusLabel")}</span>
+		</button>
+	);
+}
+
+function TaskRowMoreMenu({
+	task,
+	focusedTaskId,
+	markCompleteLocked,
+	isMutating,
+	canMidCycleMarkComplete,
+	canMidCycleBlock,
+	cycleLocked,
+	onBeginComplete,
+	onMidCycleMarkComplete,
+	onMidCycleBlock,
+	onUpdateTask,
+	onDeleteTask,
+	t,
+}: {
+	task: DomainTask;
+	focusedTaskId: DomainTaskId | null;
+	markCompleteLocked: boolean;
+	isMutating: boolean;
+	canMidCycleMarkComplete: boolean;
+	canMidCycleBlock: boolean;
+	cycleLocked: boolean;
+	onBeginComplete: (taskId: DomainTaskId) => void;
+	onMidCycleMarkComplete?: (taskId: DomainTaskId, task: DomainTask) => void;
+	onMidCycleBlock?: (taskId: DomainTaskId, task: DomainTask) => void;
+	onUpdateTask: TaskRowProps["onUpdateTask"];
+	onDeleteTask: TaskRowProps["onDeleteTask"];
+	t: ReturnType<typeof useTranslations<"Tasks">>;
+}) {
+	const [open, setOpen] = useState(false);
+	const menuRef = useRef<HTMLDivElement>(null);
+	const triggerRef = useRef<HTMLButtonElement>(null);
 	const isFocusedTask = task.id === focusedTaskId;
 	const blockViasMidCycle = canMidCycleBlock && isFocusedTask;
+	const completeViaMidCycle =
+		canMidCycleMarkComplete && isFocusedTask && onMidCycleMarkComplete != null;
+
+	useEffect(() => {
+		if (!open) {
+			return;
+		}
+		const onPointerDown = (event: PointerEvent) => {
+			if (
+				menuRef.current != null &&
+				!menuRef.current.contains(event.target as Node)
+			) {
+				setOpen(false);
+			}
+		};
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				setOpen(false);
+				triggerRef.current?.focus();
+			}
+		};
+		document.addEventListener("pointerdown", onPointerDown);
+		document.addEventListener("keydown", onKeyDown);
+		return () => {
+			document.removeEventListener("pointerdown", onPointerDown);
+			document.removeEventListener("keydown", onKeyDown);
+		};
+	}, [open]);
+
+	const menuItemClass =
+		"flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-primary transition hover:bg-surface-card-muted disabled:cursor-not-allowed disabled:opacity-40";
+
 	return (
-		<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-9">
+		<div className="relative shrink-0" ref={menuRef}>
+			<button
+				aria-expanded={open}
+				aria-haspopup="true"
+				aria-label={t("moreActionsAria")}
+				className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface-panel px-2.5 py-1 text-text-section transition hover:bg-surface-card-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+				data-testid="task-more-actions"
+				onClick={() => setOpen((prev) => !prev)}
+				ref={triggerRef}
+				type="button"
+			>
+				<MoreHorizontal aria-hidden="true" className="h-4 w-4" />
+				<span className="font-semibold text-xs">{t("moreActionsLabel")}</span>
+			</button>
+			{open ? (
+				<div
+					className="absolute top-full right-0 z-20 mt-1 min-w-[11rem] rounded-xl border border-card-border bg-surface-card p-1 shadow-md"
+					data-testid="task-more-menu"
+				>
+					<button
+						aria-label={t("markCompleteAria")}
+						className={menuItemClass}
+						data-testid="task-complete-button"
+						disabled={markCompleteLocked || isMutating}
+						onClick={() => {
+							setOpen(false);
+							if (completeViaMidCycle && onMidCycleMarkComplete != null) {
+								onMidCycleMarkComplete(task.id, task);
+								return;
+							}
+							onBeginComplete(task.id);
+							void onUpdateTask({ id: task.id, status: "completed" });
+						}}
+						type="button"
+					>
+						<CheckCircle
+							aria-hidden="true"
+							className="h-4 w-4 text-accent-success"
+						/>
+						<span className="font-semibold text-xs">
+							{t("markCompleteLabel")}
+						</span>
+					</button>
+					<button
+						aria-label={t("blockAria")}
+						className={menuItemClass}
+						data-testid="task-block-button"
+						disabled={
+							blockViasMidCycle ? isMutating : cycleLocked || isMutating
+						}
+						onClick={() => {
+							setOpen(false);
+							if (blockViasMidCycle && onMidCycleBlock != null) {
+								onMidCycleBlock(task.id, task);
+								return;
+							}
+							void onUpdateTask({ id: task.id, status: "blocked" });
+						}}
+						type="button"
+					>
+						<Ban aria-hidden="true" className="h-4 w-4 text-amber-400" />
+						<span className="font-semibold text-xs">{t("blockLabel")}</span>
+					</button>
+					<button
+						aria-label={t("deleteAria")}
+						className={menuItemClass}
+						data-testid="task-delete-button"
+						disabled={cycleLocked || isMutating}
+						onClick={() => {
+							setOpen(false);
+							void onDeleteTask({ id: task.id });
+						}}
+						type="button"
+					>
+						<Trash2 aria-hidden="true" className="h-4 w-4 text-red-400" />
+						<span className="font-semibold text-xs">{t("deleteLabel")}</span>
+					</button>
+				</div>
+			) : null}
+		</div>
+	);
+}
+
+function TaskRowBadgesRow({
+	task,
+	locale,
+	t,
+	padClass,
+	dimmed = false,
+}: {
+	task: DomainTask;
+	locale: UserLocale;
+	t: ReturnType<typeof useTranslations<"Tasks">>;
+	padClass: string;
+	dimmed?: boolean;
+}) {
+	return (
+		<div
+			className={`flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 ${padClass}`}
+		>
 			<TaskBadges
+				dimmed={dimmed}
 				effortMinutes={task.effortMinutes}
 				locale={locale}
 				t={t}
 				workType={task.workType}
 			/>
-			<div className="flex shrink-0 items-center gap-1">
-				<button
-					aria-label={t("blockAria")}
-					className="shrink-0 rounded-lg p-2 text-text-dimmed transition hover:bg-amber-400/20 hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40"
-					data-testid="task-block-button"
-					disabled={blockViasMidCycle ? isMutating : cycleLocked || isMutating}
-					onClick={() => {
-						if (blockViasMidCycle && onMidCycleBlock != null) {
-							onMidCycleBlock(task.id, task);
-							return;
-						}
-						void onUpdateTask({ id: task.id, status: "blocked" });
-					}}
-					type="button"
-				>
-					⊘
-				</button>
-				<button
-					aria-label={
-						focusedTaskId === task.id ? t("focusedAria") : t("focusAria")
-					}
-					className={`rounded-lg p-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
-						focusedTaskId === task.id
-							? "bg-accent-cta text-on-cta"
-							: "bg-surface-panel text-text-section hover:bg-surface-card-muted"
-					}`}
-					disabled={focusLocked}
-					onClick={() => void onFocusTask(task.id, task)}
-					type="button"
-				>
-					<Target aria-hidden="true" className="h-4 w-4" />
-				</button>
-				<button
-					aria-label={t("deleteAria")}
-					className="shrink-0 px-1 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
-					disabled={cycleLocked || isMutating}
-					onClick={() => {
-						void onDeleteTask({ id: task.id });
-					}}
-					type="button"
-				>
-					✕
-				</button>
-			</div>
 		</div>
 	);
 }
@@ -322,15 +418,10 @@ function SortableTaskRow({
 				>
 					⋮⋮
 				</button>
-				<TaskCompleteButton
-					canMidCycleMarkComplete={
-						canMidCycleMarkComplete && task.id === focusedTaskId
-					}
-					isMutating={isMutating}
-					markCompleteLocked={markCompleteLocked}
-					onBeginComplete={onBeginComplete}
-					onMidCycleMarkComplete={onMidCycleMarkComplete}
-					onUpdateTask={onUpdateTask}
+				<TaskFocusButton
+					focusedTaskId={focusedTaskId}
+					focusLocked={focusLocked}
+					onFocusTask={onFocusTask}
 					t={t}
 					task={task}
 				/>
@@ -347,33 +438,35 @@ function SortableTaskRow({
 				>
 					{task.title}
 				</button>
+				<TaskRowMoreMenu
+					canMidCycleBlock={canMidCycleBlock}
+					canMidCycleMarkComplete={canMidCycleMarkComplete}
+					cycleLocked={cycleLocked}
+					focusedTaskId={focusedTaskId}
+					isMutating={isMutating}
+					markCompleteLocked={markCompleteLocked}
+					onBeginComplete={onBeginComplete}
+					onDeleteTask={onDeleteTask}
+					onMidCycleBlock={onMidCycleBlock}
+					onMidCycleMarkComplete={onMidCycleMarkComplete}
+					onUpdateTask={onUpdateTask}
+					t={t}
+					task={task}
+				/>
 			</div>
 			{isContinueRow && (
 				<p
-					className="flex items-center gap-1 pl-9 text-accent-suggestion text-sm"
+					className="flex items-center gap-1 text-accent-suggestion text-sm"
 					data-testid="continue-here-row"
 				>
 					<span aria-hidden="true">→</span>
 					{t("continueHere")}
 				</p>
 			)}
-			<TaskRowFooter
-				canMidCycleBlock={canMidCycleBlock}
-				cycleLocked={cycleLocked}
-				focusedTaskId={focusedTaskId}
-				focusLocked={focusLocked}
-				isMutating={isMutating}
-				locale={locale}
-				onDeleteTask={onDeleteTask}
-				onFocusTask={onFocusTask}
-				onMidCycleBlock={onMidCycleBlock}
-				onUpdateTask={onUpdateTask}
-				t={t}
-				task={task}
-			/>
+			<TaskRowBadgesRow locale={locale} padClass="" t={t} task={task} />
 			{showFootprint && (
 				<p
-					className="pl-9 text-sm text-text-secondary"
+					className="text-sm text-text-secondary"
 					data-testid={`task-footprint-${task.id}`}
 				>
 					{t("footprint", {
@@ -398,11 +491,13 @@ function StaticTaskRow({
 	markCompleteLocked,
 	isMutating,
 	canMidCycleMarkComplete,
+	canMidCycleBlock,
 	focusLocked,
 	cycleLocked,
 	completingTaskId,
 	onBeginComplete,
 	onMidCycleMarkComplete,
+	onMidCycleBlock,
 	onUpdateTask,
 	onFocusTask,
 	onDeleteTask,
@@ -466,15 +561,10 @@ function StaticTaskRow({
 						type="button"
 					/>
 				) : (
-					<TaskCompleteButton
-						canMidCycleMarkComplete={
-							canMidCycleMarkComplete && task.id === focusedTaskId
-						}
-						isMutating={isMutating}
-						markCompleteLocked={markCompleteLocked}
-						onBeginComplete={onBeginComplete}
-						onMidCycleMarkComplete={onMidCycleMarkComplete}
-						onUpdateTask={onUpdateTask}
+					<TaskFocusButton
+						focusedTaskId={focusedTaskId}
+						focusLocked={focusLocked}
+						onFocusTask={onFocusTask}
 						t={t}
 						task={task}
 					/>
@@ -488,72 +578,57 @@ function StaticTaskRow({
 				>
 					{task.title}
 				</button>
-			</div>
-			{isContinueRow && (
-				<p
-					className="flex items-center gap-1 pl-7 text-accent-suggestion text-sm"
-					data-testid="continue-here-row"
-				>
-					<span aria-hidden="true">→</span>
-					{t("continueHere")}
-				</p>
-			)}
-			<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 pl-7">
-				<TaskBadges
-					dimmed={dimmed}
-					effortMinutes={task.effortMinutes}
-					locale={locale}
-					t={t}
-					workType={task.workType}
-				/>
-				<div className="flex shrink-0 items-center gap-1">
-					{!dimmed && !blocked && !delegated && (
-						<button
-							aria-label={t("blockAria")}
-							className="shrink-0 rounded-lg p-2 text-text-dimmed transition hover:bg-amber-400/20 hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40"
-							data-testid="task-block-button"
-							disabled={cycleLocked || isMutating}
-							onClick={() => {
-								void onUpdateTask({ id: task.id, status: "blocked" });
-							}}
-							type="button"
-						>
-							⊘
-						</button>
-					)}
-					{!dimmed && !blocked && !delegated && (
-						<button
-							aria-label={
-								focusedTaskId === task.id ? t("focusedAria") : t("focusAria")
-							}
-							className={`rounded-lg p-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
-								focusedTaskId === task.id
-									? "bg-accent-cta text-on-cta"
-									: "bg-surface-panel text-text-section hover:bg-surface-card-muted"
-							}`}
-							disabled={focusLocked}
-							onClick={() => void onFocusTask(task.id, task)}
-							type="button"
-						>
-							<Target aria-hidden="true" className="h-4 w-4" />
-						</button>
-					)}
+				{!dimmed && !blocked && !delegated ? (
+					<TaskRowMoreMenu
+						canMidCycleBlock={canMidCycleBlock}
+						canMidCycleMarkComplete={canMidCycleMarkComplete}
+						cycleLocked={cycleLocked}
+						focusedTaskId={focusedTaskId}
+						isMutating={isMutating}
+						markCompleteLocked={markCompleteLocked}
+						onBeginComplete={onBeginComplete}
+						onDeleteTask={onDeleteTask}
+						onMidCycleBlock={onMidCycleBlock}
+						onMidCycleMarkComplete={onMidCycleMarkComplete}
+						onUpdateTask={onUpdateTask}
+						t={t}
+						task={task}
+					/>
+				) : (
 					<button
 						aria-label={t("deleteAria")}
-						className="shrink-0 px-1 text-text-dimmed transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+						className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border-subtle bg-surface-panel px-2.5 py-1 text-text-section transition hover:border-red-400/40 hover:bg-red-400/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+						data-testid="task-delete-button"
 						disabled={cycleLocked || isMutating}
 						onClick={() => {
 							void onDeleteTask({ id: task.id });
 						}}
 						type="button"
 					>
-						✕
+						<Trash2 aria-hidden="true" className="h-4 w-4" />
+						<span className="font-semibold text-xs">{t("deleteLabel")}</span>
 					</button>
-				</div>
+				)}
 			</div>
+			{isContinueRow && (
+				<p
+					className="flex items-center gap-1 text-accent-suggestion text-sm"
+					data-testid="continue-here-row"
+				>
+					<span aria-hidden="true">→</span>
+					{t("continueHere")}
+				</p>
+			)}
+			<TaskRowBadgesRow
+				dimmed={dimmed}
+				locale={locale}
+				padClass=""
+				t={t}
+				task={task}
+			/>
 			{showFootprint && (
 				<p
-					className="pl-7 text-sm text-text-secondary"
+					className="text-sm text-text-secondary"
 					data-testid={`task-footprint-${task.id}`}
 				>
 					{t("footprint", {
