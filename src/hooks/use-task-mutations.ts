@@ -84,7 +84,7 @@ function buildOptimisticCreateRow(
 		id: tempId,
 		title: input.title,
 		userId,
-		status: isDailyStanding ? "active" : "planned",
+		status: "planned",
 		workType: input.workType ?? "OPERATIONAL",
 		weight: urgency,
 		importance: (input.importance ?? 2) as 1 | 2 | 3,

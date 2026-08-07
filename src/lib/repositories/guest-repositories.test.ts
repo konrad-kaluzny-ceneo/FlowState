@@ -13,6 +13,20 @@ import {
 	STALE_TASK_ARCHIVE_DAYS,
 } from "~/lib/task/stale-task-archive";
 
+async function createActiveGuestTask(
+	tasks: ReturnType<typeof createGuestRepositories>["tasks"],
+	title: string,
+) {
+	const created = await tasks.create({ title });
+	await tasks.update({ id: created.id, status: "active" });
+	const list = await tasks.list();
+	const updated = list.find((task) => task.id === created.id);
+	if (updated == null) {
+		throw new Error(`Expected active task ${String(created.id)}`);
+	}
+	return updated;
+}
+
 describe("guest repositories", () => {
 	beforeEach(() => {
 		localStorage.clear();
@@ -50,7 +64,7 @@ describe("guest repositories", () => {
 		expect(list[0]?.effortMinutes).toBe(15);
 	});
 
-	it("creates a normal task as planned and a daily-standing task as active", async () => {
+	it("creates normal and daily-standing tasks as planned", async () => {
 		const { tasks } = createGuestRepositories();
 		const backlog = await tasks.create({ title: "Backlog item" });
 		const standing = await tasks.create({
@@ -59,7 +73,8 @@ describe("guest repositories", () => {
 		});
 
 		expect(backlog.status).toBe("planned");
-		expect(standing.status).toBe("active");
+		expect(standing.status).toBe("planned");
+		expect(standing.isDailyStanding).toBe(true);
 	});
 
 	it("promotes a planned task to active when a WORK cycle focuses it", async () => {
@@ -218,11 +233,8 @@ describe("guest repositories", () => {
 
 	it("appends new tasks at the tail sortOrder", async () => {
 		const { tasks } = createGuestRepositories();
-		const first = await tasks.create({ title: "First", isDailyStanding: true });
-		const second = await tasks.create({
-			title: "Second",
-			isDailyStanding: true,
-		});
+		const first = await createActiveGuestTask(tasks, "First");
+		const second = await createActiveGuestTask(tasks, "Second");
 
 		expect(first.sortOrder).toBe(0);
 		expect(second.sortOrder).toBe(1);
@@ -233,12 +245,9 @@ describe("guest repositories", () => {
 
 	it("reorders active tasks and persists sortOrder in snapshot", async () => {
 		const { tasks } = createGuestRepositories();
-		const first = await tasks.create({ title: "First", isDailyStanding: true });
-		const second = await tasks.create({
-			title: "Second",
-			isDailyStanding: true,
-		});
-		const third = await tasks.create({ title: "Third", isDailyStanding: true });
+		const first = await createActiveGuestTask(tasks, "First");
+		const second = await createActiveGuestTask(tasks, "Second");
+		const third = await createActiveGuestTask(tasks, "Third");
 
 		await tasks.reorder({
 			orderedIds: [third.id, first.id, second.id],
@@ -279,13 +288,10 @@ describe("guest repositories", () => {
 
 	it("reactivates completed task at the tail sortOrder", async () => {
 		const { tasks } = createGuestRepositories();
-		const task = await tasks.create({
-			title: "Reopen me",
-			isDailyStanding: true,
-		});
+		const task = await createActiveGuestTask(tasks, "Reopen me");
 
 		await tasks.update({ id: task.id, status: "completed" });
-		await tasks.create({ title: "Active tail", isDailyStanding: true });
+		await createActiveGuestTask(tasks, "Active tail");
 		await tasks.update({ id: task.id, status: "active" });
 
 		const list = await tasks.list();
@@ -298,10 +304,7 @@ describe("guest repositories", () => {
 
 	it("sets a task to blocked and reads it back as blocked", async () => {
 		const { tasks } = createGuestRepositories();
-		const task = await tasks.create({
-			title: "Block me",
-			isDailyStanding: true,
-		});
+		const task = await createActiveGuestTask(tasks, "Block me");
 
 		await tasks.update({ id: task.id, status: "blocked" });
 
@@ -312,13 +315,10 @@ describe("guest repositories", () => {
 
 	it("reactivates blocked task at the tail sortOrder", async () => {
 		const { tasks } = createGuestRepositories();
-		const task = await tasks.create({
-			title: "Unblock me",
-			isDailyStanding: true,
-		});
+		const task = await createActiveGuestTask(tasks, "Unblock me");
 
 		await tasks.update({ id: task.id, status: "blocked" });
-		await tasks.create({ title: "Active tail", isDailyStanding: true });
+		await createActiveGuestTask(tasks, "Active tail");
 		await tasks.update({ id: task.id, status: "active" });
 
 		const list = await tasks.list();
@@ -401,11 +401,8 @@ describe("guest repositories", () => {
 
 	it("rejects invalid reorder requests", async () => {
 		const { tasks } = createGuestRepositories();
-		const first = await tasks.create({ title: "First", isDailyStanding: true });
-		const second = await tasks.create({
-			title: "Second",
-			isDailyStanding: true,
-		});
+		const first = await createActiveGuestTask(tasks, "First");
+		const second = await createActiveGuestTask(tasks, "Second");
 
 		await expect(tasks.reorder({ orderedIds: [first.id] })).rejects.toThrow(
 			"Invalid reorder",
