@@ -1,10 +1,10 @@
 ---
 change_id: fix-suggestion-decision-save
 title: Fix spurious suggestion preference save failures
-status: implementing
+status: archived
 created: 2026-08-04
-updated: 2026-08-04
-archived_at: null
+updated: 2026-08-07
+archived_at: 2026-08-07T15:05:31Z
 ---
 
 ## Notes
