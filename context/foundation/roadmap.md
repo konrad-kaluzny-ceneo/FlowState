@@ -3,12 +3,12 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-08-04
+updated: 2026-08-07
 structure: split
 active_slices: []
 prd_version: 3
 main_goal: quality
-top_blocker: flow-coherence (S-21 / S-34 unblocked)
+top_blocker: none (PRD v3 horizon done; next via roadmap-expand)
 ---
 
 # Roadmap: FlowState
@@ -102,8 +102,8 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-48 | analytics-trends-plan-vs-execution | [FLO-99](https://linear.app/flowstate-10xdev/issue/FLO-99/analytics-weeklymonthly-trends-plan-vs-execution-s-48) | [#193](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/193) | weekly/monthly trends in Podsumowanie; plan-vs-execution comparison; context-switch pattern analytics | S-45 (Podsumowanie) | follow-up ui-refactor | done |
 | S-49 | workspace-setup-advisor | [FLO-100](https://linear.app/flowstate-10xdev/issue/FLO-100/workspace-setup-advisor-environment-config-tips-s-49) | [#194](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/194) | advisory tips for configuring work environment (Cursor/Claude agent settings, Slack/Teams DND, notification batching) surfaced in Ustawienia or onboarding; no physical blocking — coaching only | S-45 (Ustawienia), F-14 | new | done |
 | S-50 | complete-task-mid-cycle-surface | _pending_ | [#199](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/199) | finish the focused task (from Fokus or Zadania) → mandatory user-chosen break (short/long ★, override resets cadence); non-focused completion leaves the session untouched; early-completion focus time counted; removes mid-cycle "continue with another task" | F-07, S-03, S-30 | **US-01**, US-03 | done |
-| S-51 | blocked-task-status | — | — | mark a started task as blocked (waiting on someone/something) from the task list, at session end, and next to "Gotowe" mid-cycle; blocking mid-cycle hands off to a break like completion does; blocked tasks leave the suggestion pool | F-07, S-45, S-50 | **US-06** | done |
-| S-52 | focus-and-break-time-totals | — | — | see honest "Twój dzień" totals — all time actually spent in focus cycles **and** on breaks, including cycles/breaks stopped early and cycles ended by finishing the task; paused time excluded; counts forward only (no backfill of past days) | S-24, S-30, S-42, S-45, S-50 | **US-07** | done |
+| S-51 | blocked-task-status | [FLO-104](https://linear.app/flowstate-10xdev/issue/FLO-104) | — | mark a started task as blocked (waiting on someone/something) from the task list, at session end, and next to "Gotowe" mid-cycle; blocking mid-cycle hands off to a break like completion does; blocked tasks leave the suggestion pool | F-07, S-45, S-50 | **US-06** | done |
+| S-52 | focus-and-break-time-totals | [FLO-105](https://linear.app/flowstate-10xdev/issue/FLO-105) | — | see honest "Twój dzień" totals — all time actually spent in focus cycles **and** on breaks, including cycles/breaks stopped early and cycles ended by finishing the task; paused time excluded; counts forward only (no backfill of past days) | S-24, S-30, S-42, S-45, S-50 | **US-07** | done |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -176,10 +176,10 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-47 | delegation-suggestion-in-plan | **done** | FLO-98 / #192; merged PR [#214](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/214) 2026-07-30; Linear Done, GitHub closed |
 | S-48 | analytics-trends-plan-vs-execution | **done** | FLO-99 / #193; archived 2026-08-04 → `context/archive/2026-07-30-analytics-trends-plan-vs-execution/`; PR #215 |
 | S-49 | workspace-setup-advisor | **no** | FLO-100 / #194; after S-45 Ustawienia; content-first (tips authored); no external integration |
-| S-51 | blocked-task-status | **done** | US-06; implemented + merged PR [#206](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/206) 2026-07-17; archived 2026-07-23. Linear/GitHub pair never created (code shipped directly) |
-| S-52 | focus-and-break-time-totals | **done** | US-07; implemented + merged PR [#205](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/205) 2026-07-17; archived 2026-07-23. Linear/GitHub pair never created (code shipped directly) |
+| S-51 | blocked-task-status | **done** | US-06; implemented + merged PR [#206](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/206) 2026-07-17; archived 2026-07-23. Linear [FLO-104](https://linear.app/flowstate-10xdev/issue/FLO-104) closed 2026-08-07; no GitHub issue (code shipped directly) |
+| S-52 | focus-and-break-time-totals | **done** | US-07; implemented + merged PR [#205](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/205) 2026-07-17; archived 2026-07-23. Linear [FLO-105](https://linear.app/flowstate-10xdev/issue/FLO-105) closed 2026-08-07; no GitHub issue (code shipped directly) |
 
-**Recommended next:** **F-15** `platform-refactor-batch` — timer hub + data-mode refactor batch (FLO-96 / [#190](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/190)); `ui-improvement` archived → `context/archive/2026-07-05-ui-improvement/`; PR [#196](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/196) merged 2026-07-05.
+**Recommended next:** Roadmap glance backlog empty (PRD v3 horizon done). Run `/10x-roadmap-expand` for the next quality batch. Archived `fix-suggestion-decision-save` → `context/archive/2026-08-04-fix-suggestion-decision-save/` (2026-08-07).
 
 ## Reference appendix (load on demand)
 
