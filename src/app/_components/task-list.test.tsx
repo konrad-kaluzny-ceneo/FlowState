@@ -259,6 +259,16 @@ describe("TaskList", () => {
 		).toBe("");
 	});
 
+	it("uses the placeholder plus without a duplicate leading icon", () => {
+		renderTaskList(<TaskList {...defaultProps} />);
+
+		const input = screen.getByPlaceholderText("+ Add a task");
+		const form = input.closest("form");
+		expect(form).toBeTruthy();
+		// Submit (Plus) + details (Settings2) — no decorative left Plus.
+		expect(form?.querySelectorAll("svg")).toHaveLength(2);
+	});
+
 	it("creates a planned task via the quick-add input", async () => {
 		renderTaskList(<TaskList {...defaultProps} />);
 
@@ -314,6 +324,23 @@ describe("TaskList", () => {
 
 		expect(row.className).toContain("animate-task-complete");
 		expect(updateTask).toHaveBeenCalledWith({ id: 1, status: "completed" });
+	});
+
+	it("does not clip the more-actions menu inside the task card", () => {
+		renderTaskList(
+			<TaskList
+				{...defaultProps}
+				tasks={[makeTask({ id: 1, title: "Open menu" })]}
+			/>,
+		);
+
+		const row = screen.getByTestId("active-task-row");
+		expect(row.className).not.toContain("overflow-hidden");
+
+		fireEvent.click(screen.getByTestId("task-more-actions"));
+
+		expect(screen.getByTestId("task-more-menu")).toBeTruthy();
+		expect(screen.getByTestId("task-complete-button")).toBeTruthy();
 	});
 
 	it("puts Focus as the primary row action before opening more options", () => {

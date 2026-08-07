@@ -384,12 +384,6 @@ export async function addTaskWithAttributes(
 	await setEisenhowerAxis(modal, /^(Urgency|Pilność)/, weight);
 	await setEisenhowerAxis(modal, /^(Importance|Ważność)/, weight);
 
-	// Check "Daily standing" so the task is created as active (matching pre-refactor behavior)
-	const dailyToggle = modal.getByTestId("daily-standing-toggle");
-	if (!(await dailyToggle.isChecked())) {
-		await modal.locator('label[for="daily-standing-add-modal"]').click();
-	}
-
 	// Fill title
 	await modal.getByTestId("task-fields-title").fill(title);
 
@@ -399,8 +393,8 @@ export async function addTaskWithAttributes(
 		.click();
 	await expect(modal).toBeHidden({ timeout: 10_000 });
 
-	// Task is created as active (isDailyStanding) — should appear in Active tab
-	await page.getByRole("tab", { name: /Active|Aktywne/i }).click();
+	// New tasks always land in Planned (Daily standing is a flag, not a list fork)
+	await page.getByRole("tab", { name: /Planned|Planowane/i }).click();
 	await expect(
 		page.getByRole("listitem").filter({ hasText: title }).first(),
 	).toBeVisible({ timeout: 15_000 });

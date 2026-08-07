@@ -407,12 +407,13 @@ describe("default-status fork", () => {
 		expect(capturedData?.status).toBe("planned");
 	});
 
-	it("creates a daily-standing task as active", async () => {
+	it("creates a daily-standing task as planned (flag does not change list)", async () => {
 		await taskCaller().create({
 			title: "Daily standing item",
 			isDailyStanding: true,
 		});
-		expect(capturedData?.status).toBe("active");
+		expect(capturedData?.status).toBe("planned");
+		expect(capturedData?.isDailyStanding).toBe(true);
 	});
 });
 

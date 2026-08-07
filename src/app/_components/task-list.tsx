@@ -339,7 +339,7 @@ function TaskRowBadgesRow({
 }
 
 const taskRowCardClass =
-	"flex max-w-full flex-col gap-2.5 overflow-hidden rounded-card border border-card-border bg-surface-card px-5 py-4 shadow-sm";
+	"flex max-w-full flex-col gap-2.5 rounded-card border border-card-border bg-surface-card px-5 py-4 shadow-sm has-[[data-testid=task-more-menu]]:relative has-[[data-testid=task-more-menu]]:z-30";
 
 function SortableTaskRow({
 	task,
@@ -925,10 +925,6 @@ export function TaskList({
 						})();
 					}}
 				>
-					<Plus
-						aria-hidden="true"
-						className="hidden h-5 w-5 shrink-0 text-text-dimmed sm:block"
-					/>
 					<div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
 						<input
 							className="w-full min-w-0 flex-1 border-0 bg-transparent py-1 text-primary placeholder:text-text-dimmed focus:outline-none"

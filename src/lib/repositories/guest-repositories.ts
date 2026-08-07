@@ -196,7 +196,7 @@ export function createGuestTaskRepository(): TaskRepository {
 			const task = {
 				id: newGuestId(),
 				title: input.title,
-				status: isDailyStanding ? ("active" as const) : ("planned" as const),
+				status: "planned" as const,
 				workType: input.workType ?? "OPERATIONAL",
 				weight: urgency,
 				importance,

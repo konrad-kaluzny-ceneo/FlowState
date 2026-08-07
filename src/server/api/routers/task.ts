@@ -105,7 +105,6 @@ export const taskRouter = createTRPCRouter({
 			const sortOrder = await nextActiveSortOrder(ctx.db, ctx.session.user.id);
 			const urgency = input.urgency ?? input.weight ?? 2;
 			const importance = input.importance ?? 2;
-			const isDailyStanding = input.isDailyStanding ?? false;
 
 			const row = await ctx.db.task.create({
 				data: {
@@ -115,7 +114,7 @@ export const taskRouter = createTRPCRouter({
 					importance,
 					urgency,
 					weight: urgency,
-					status: isDailyStanding ? "active" : "planned",
+					status: "planned",
 					effortMinutes: input.effortMinutes ?? null,
 					commitmentHorizon: input.commitmentHorizon ?? "WHEN_POSSIBLE",
 					...(input.workType != null ? { workType: input.workType } : {}),
