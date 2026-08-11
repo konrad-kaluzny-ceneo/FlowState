@@ -2,7 +2,8 @@
 
 # PRD v4 day schedule & habits (batch 8)
 
-> `/10x-roadmap-expand` 2026-08-11 — **Commit** synced to `roadmap.md` + GitHub #219–#227. Linear pairs `_pending_` (MCP auth skipped).
+> `/10x-roadmap-expand` 2026-08-11 — **Commit** synced to `roadmap.md` + GitHub #219–#227. Linear pairs `_pending_` (MCP auth skipped).  
+> **2026-08-11:** absorbed habit-return methodology batch into **S-59** (FR-008/019) and **S-60** (FR-013/020) — see [`batch-8-habit-return-methodology.md`](batch-8-habit-return-methodology.md). No new roadmap IDs.
 
 **Themes:** `user-capabilities`, `custom` (harmonogram / nawyki)  
 **Goal:** Land PRD v4 as roadmap slices S-53–S-61  

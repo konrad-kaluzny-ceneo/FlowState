@@ -111,8 +111,8 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-56 | recurrence-weekly-patterns | _pending_ | [#222](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/222) | recurring RRULE patterns materialize editable blocks on each new local day | S-54 | **US-09**, FR-003, FR-006 | proposed |
 | S-57 | work-day-segments-off-session | _pending_ | [#223](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/223) | declare work segments and see off-session time accrue only inside active windows | S-54, S-55 | **US-16**, US-17, FR-009–011 | proposed |
 | S-58 | plan-to-focus-handoff | _pending_ | [#224](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/224) | tap start on a plan block and land on Fokus with a kickoff suggestion in ≤2 actions | S-54, S-55, S-15 | **US-10**, FR-007 | proposed |
-| S-59 | day-open-wedge-steering | _pending_ | [#225](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/225) | first visit on a new day shows day memory plus one calm path to plan or start the next block | S-53, S-54, S-58, S-42, F-07 | **US-11**, FR-008 | proposed |
-| S-60 | idle-focus-attention-signals | _pending_ | [#226](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/226) | opt-in browser nudge or favicon pulse when idle or a block starts while tab is backgrounded | S-54, S-15, S-20 | **US-13**, FR-012–013 | proposed |
+| S-59 | day-open-wedge-steering | _pending_ | [#225](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/225) | first visit on a new day: day memory + one calm path to plan/start next block; named ≈5-beat method literacy (habit-return absorb) | S-53, S-54, S-58, S-42, F-07 | **US-11**, US-19, FR-008, FR-019 | proposed |
+| S-60 | idle-focus-attention-signals | _pending_ | [#226](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/226) | opt-in nudge / title-favicon pulse (unfinished day); optional PWA install + badge — no SW push | S-54, S-15, S-20 | **US-13**, US-20, FR-012–013, FR-020 | proposed |
 | S-61 | schedule-plan-vs-execution | _pending_ | [#227](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/227) | Podsumowanie compares planned blocks vs actual focus, planning, and break time with in-session % | S-54, S-55, S-57, S-48 | **US-12**, FR-011 | proposed |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
@@ -144,7 +144,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | U | Agent integration | F-15 → **S-46** → **S-47** | MCP server for AI agents; delegation proposals in Plan dnia |
 | V | Analytics depth | S-45 → **S-52** → **S-48** | S-52 makes the daily totals honest (partial cycles + break time) before S-48 builds weekly/monthly trends, plan-vs-execution, and context-switch patterns on top of them |
 | W | Workspace coaching | S-45 + F-14 → **S-49** | Advisory tips for Cursor/Claude/Teams/Slack config; coaching, not blocking |
-| X | PRD v4 day schedule & habits | **S-53** → **S-54** → (**S-55** ∥ **S-56**) → **S-57** → **S-58** → **S-59**; **S-60** ∥ **S-61** | [`prd-v4.md`](prd-v4.md) expand batch 8; replaces Plan dnia calendar placeholder |
+| X | PRD v4 day schedule & habits | **S-53** → **S-54** → (**S-55** ∥ **S-56**) → **S-57** → **S-58** → **S-59**; **S-60** ∥ **S-61** | [`prd-v4.md`](prd-v4.md); S-59/S-60 absorb habit-return expand |
 
 ## Backlog Handoff
 
@@ -195,8 +195,8 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-56 | recurrence-weekly-patterns | **no** | after S-54; parallel S-55; RRULE library in plan; GitHub [#222](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/222) |
 | S-57 | work-day-segments-off-session | **no** | after S-54, S-55; GitHub [#223](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/223) |
 | S-58 | plan-to-focus-handoff | **no** | after S-54, S-55; highest wedge activation; GitHub [#224](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/224) |
-| S-59 | day-open-wedge-steering | **no** | after S-53, S-54, S-58; F-07 conductor; GitHub [#225](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/225) |
-| S-60 | idle-focus-attention-signals | **no** | after S-54; extends break-alerts + S-20; GitHub [#226](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/226) |
+| S-59 | day-open-wedge-steering | **no** | after S-53, S-54, S-58; F-07; absorbs habit-return P-101–104/108; GitHub [#225](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/225) |
+| S-60 | idle-focus-attention-signals | **no** | after S-54; FR-012–013 + PWA FR-020 phase; absorbs P-105/106; GitHub [#226](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/226) |
 | S-61 | schedule-plan-vs-execution | **no** | capstone after S-54, S-55, S-57; extends S-48; GitHub [#227](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/227) |
 
 **Recommended next:** `/10x-plan fix-cross-day-stale-session` (S-53, `ready`). Linear pairs for S-53–S-61 pending — run `/10x-linear-backlog create` after Linear MCP auth. PRD v4 contract: [`prd-v4.md`](prd-v4.md).

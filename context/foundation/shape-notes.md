@@ -913,4 +913,4 @@ Acknowledged on 2026-08-11: Full PRD v4 contract spans multiple roadmap slices (
 
 ### Forward: roadmap phasing (informational — not PRD)
 
-Suggested slice order after `/10x-prd`: `fix-cross-day-stale-session` → `day-schedule-timeline` → `planning-session-mode` → `recurrence-weekly-patterns` → `work-day-segments-off-session` → `plan-to-focus-handoff` → `day-open-wedge-steering` → `idle-focus-attention-signals` → `schedule-plan-vs-execution`.
+Suggested slice order after `/10x-prd`: `fix-cross-day-stale-session` → `day-schedule-timeline` → `planning-session-mode` → `recurrence-weekly-patterns` → `work-day-segments-off-session` → `plan-to-focus-handoff` → `day-open-wedge-steering` (includes habit-return absorb: next-day activation + named Co teraz? method) → `idle-focus-attention-signals` (includes unfinished-day pulse + PWA install phase) → `schedule-plan-vs-execution`.

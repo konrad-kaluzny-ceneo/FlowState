@@ -16,10 +16,13 @@ timeline_budget:
   after_hours_only: true
 supersedes_for:
   - "Day schedule, habit activation, GTD/Atomic Habits operating model — builds on prd.md v3"
+  - "Habit-return / named-methodology expand (batch-8-habit-return-methodology) — absorbed into day-open + attention signals; not separate roadmap IDs"
 amends_non_goals:
   - "No full recurring rule engine (§Non-Goals v3) — RRULE schedule patterns in scope for v4"
   - "Plan dnia budget-only / no timeline (ui-refactor thread) — real daily time axis in scope for v4"
   - "In-tab signals only (v3) — browser notification carve-out extended for calm day-start nudge (≤1/local day), same precedent as break-alerts"
+absorbs_expand:
+  - "context/foundation/roadmap-references/expand-batches/batch-8-habit-return-methodology.md → FR-008/019 (S-59), FR-013/020 (S-60)"
 source_shape_thread: "context/foundation/shape-notes.md#change-thread-prd-v4--day-schedule-habit-activation-gtdatomic-habits"
 ---
 
@@ -70,8 +73,10 @@ A developer, analyst, or team contributor whose workday is genuinely interrupt-d
 ### Secondary
 
 - User defines **work-day segment(s)** (start/end work, multiple per day) and sees **off-session time** and **in-session %** trend in Podsumowanie.
-- User who opts in receives calm **browser notification** (≤1 per local day) and/or **title/favicon pulse** when idle/kickoff-ready or a scheduled block starts while the tab is not focused.
+- User who opts in receives calm **browser notification** (≤1 per local day) and/or **title/favicon pulse** (and, when installed, optional badge) when idle/kickoff-ready, unfinished plan, or a scheduled block starts while the tab is not focused.
 - Podsumowanie compares **planned blocks vs actual** focus, planning, and break time (extends S-48 plan-vs-execution).
+- User can **name and recall** the in-session loop as a short teachable method (≈5 beats, “Co teraz?” framing) without a second product or streak checklist.
+- User can **install** FlowState as a desktop PWA (manifest + calm install affordance) so opening the day’s methodology is one dock/taskbar click — no service-worker push.
 
 ### Guardrails
 
@@ -108,10 +113,11 @@ A developer, analyst, or team contributor whose workday is genuinely interrupt-d
 
 ### US-11: User day-open on return
 
-- **Given** a returning user on first visit of a new local day with prior history
+- **Given** a returning user on first visit of a new local day with prior history (including after only 1–2 prior sessions)
 - **When** they open FlowState idle with zero cycles today
-- **Then** they see day memory and one dominant path to plan or start the next block — not a false break state
-- **Before:** day memory hidden on calm landing; cross-day stale session confused state.
+- **Then** they see day memory (“Wróć tutaj” / prior close cue when present) and **one** dominant F-07-gated path to plan or start the next block / kickoff — not a false break state, not a streak nudge, not a second first-run modal
+- **Before:** day memory hidden on calm landing; cross-day stale session confused state; no deliberate next-day activation bridge.
+- **Absorbs:** habit-return expand P-102 (next-day return), thin P-109 (no MIT triad), progressive coach beat from P-104 when still early in product literacy.
 
 ### US-12: User tracks plan vs execution
 
@@ -122,10 +128,11 @@ A developer, analyst, or team contributor whose workday is genuinely interrupt-d
 
 ### US-13: User receives calm attention signals
 
-- **Given** a user who opted in and has kickoff-ready state or scheduled block start while the tab is backgrounded
-- **When** eligibility conditions are met (≤1 notification per local day)
-- **Then** browser notification and/or favicon pulse draws attention without notification-hub behavior
+- **Given** a user who opted in and has kickoff-ready state, an unfinished planned day (blocks or standing commitments present, no session started), or scheduled block start while the tab is backgrounded
+- **When** eligibility conditions are met (≤1 notification per local day; pulse stops on session start or focus)
+- **Then** browser notification and/or title/favicon pulse (optional installed badge for unfinished plan) draws attention without notification-hub behavior or streak language
 - **Before:** out-of-tab alerts only on break start.
+- **Absorbs:** habit-return expand P-106 (unfinished-day title/badge cues).
 
 ### US-14: User runs planning session
 
@@ -162,6 +169,22 @@ A developer, analyst, or team contributor whose workday is genuinely interrupt-d
 - **Then** the prior day closes calmly and the UI reflects a fresh day (no spurious break prompt)
 - **Before:** the app suggested break though the user had just started the second day.
 
+### US-19: User recalls the named in-session method
+
+- **Given** a logged-in user who has completed at least one real session (or returns after 1–2 sessions)
+- **When** they see day-open coaching or wedge transition chrome
+- **Then** the existing loop is labeled as a short named method (≈5 beats: Steer → Suggest → Focus → Check → Close — exact EN/PL TBD under F-14) mapped 1:1 to shipped beats — no new gates, no completeness checklist, no streak
+- **Before:** methodology existed only as lived behavior; users could not retell it like GTD / Atomic Habits.
+- **Absorbs:** habit-return expand P-101 (Co teraz? five), P-103 (method-step beat cues as chrome on existing interstitial/gate), progressive map from P-104; rejects P-111 completeness glance.
+
+### US-20: User installs FlowState for one-click return
+
+- **Given** a user on a supported desktop browser
+- **When** they install via calm Ustawienia / browser affordance (manifest + icons)
+- **Then** they can reopen FlowState as a standalone window from dock/taskbar — no service-worker push; install enables optional Badging for unfinished-day cues (US-13)
+- **Before:** web tab only; no install path.
+- **Absorbs:** habit-return expand P-105 (`pwa-installable-shell`).
+
 ## Scope of Change
 
 ### New capabilities (must-have)
@@ -173,12 +196,14 @@ A developer, analyst, or team contributor whose workday is genuinely interrupt-d
 - [new] **Planning session mode** — distinct from focus Pomodoro; elapsed time counts as work; no wedge check-in/suggestion gates during planning. Refs: US-14, FR-005.
 - [new] **Default daily planning block** — e.g. 15 minutes via schedule or RRULE. Refs: FR-006.
 - [new] **Plan-to-focus handoff** — start from Plan dnia block → Fokus + kickoff suggestion. Refs: US-10, FR-007.
-- [new] **Day-open steering** — first visit of new local day (zero cycles today): day memory + next block or kickoff path; single F-07-gated beat. Refs: US-11, FR-008.
+- [new] **Day-open steering** — first visit of new local day (zero cycles today): day memory + next block or kickoff path; single F-07-gated beat; includes next-day return activation and early progressive loop literacy (not a second first-run modal). Refs: US-11, US-19, FR-008, FR-019.
 - [new] **Work-day segments** — user-declared start/end work (multiple per day). Refs: US-16, FR-009.
 - [new] **Off-session time metric** — within active segments: segment elapsed minus focus, planning, and break session time. Refs: US-16, US-17, FR-010.
 - [new] **In-session % in Podsumowanie** — extends plan-vs-execution analytics. Refs: US-12, US-17, FR-011.
 - [new] **Calm day-start browser notification** — opt-in, ≤1 per local day when tab not focused and kickoff-ready or block start. Refs: US-13, FR-012.
-- [new] **Idle title/favicon pulse** — when tab open, idle/kickoff-ready, until session starts or tab focused; respects reduced-motion. Refs: US-13, FR-013.
+- [new] **Idle / unfinished-day title/favicon pulse** — when tab open and idle/kickoff-ready or planned day unfinished, until session starts or tab focused; respects reduced-motion; optional installed badge. Refs: US-13, FR-013.
+- [new] **Named Co teraz? method packaging** — teachable ≈5-beat labels on day-open / existing wedge chrome (F-14 voice); no new product surface stack. Refs: US-19, FR-019.
+- [new] **Installable desktop PWA shell** — manifest + icons + calm install affordance; no SW push. Refs: US-20, FR-020.
 
 ### Modified behavior
 
@@ -186,6 +211,7 @@ A developer, analyst, or team contributor whose workday is genuinely interrupt-d
 - [modified] **US-03 daily planning** — Plan dnia is harmonogram + budget + standing commitments, not budget-only.
 - [modified] **Podsumowanie analytics** — plan-vs-execution includes schedule blocks, planning time, off-session % (extends S-48).
 - [modified] **Kickoff/suggestion inputs** — active block context may inform scorer; override freedom unchanged.
+- [modified] **Wind-down / closure (optional thin trail)** — at session wind-down, user may optionally leave one tomorrow cue that seeds next day-open (not a full Daily Shutdown ritual). Refs: US-11, FR-008; absorbs habit-return P-108.
 
 ### Preserved behavior
 
@@ -226,8 +252,8 @@ Requirements from shaping; `Change:` tags map to Scope categories above.
 
 - FR-007: User can start focus from a plan block (Plan dnia → Fokus + kickoff suggestion). Priority: must-have. Change: new
   > Socrates: Duplicates idle kickoff (S-15). Resolution: explicit plan→do bridge; conductor mutex defines precedence.
-- FR-008: On first visit of a new local day (no cycles today), user sees day-open steering — day memory + next block or kickoff path. Priority: must-have. Change: new
-  > Socrates: Overlays stack with energy gate. Resolution: single F-07-gated day-open beat.
+- FR-008: On first visit of a new local day (no cycles today), user sees day-open steering — day memory (including “Wróć tutaj” / optional authored tomorrow cue from prior wind-down) + next block or kickoff path; early users may see one progressive loop-map line — still a single F-07-gated beat; no streak language. Priority: must-have. Change: new
+  > Socrates: Overlays stack with energy gate. Resolution: single F-07-gated day-open beat. Absorbs habit-return P-102/P-104/P-108.
 
 #### Work-day segments and off-session metrics
 
@@ -242,8 +268,15 @@ Requirements from shaping; `Change:` tags map to Scope categories above.
 
 - FR-012: While idle/kickoff-ready or at scheduled block start, user can opt into browser notification (≤1/day calm nudge) when tab not focused. Priority: must-have. Change: new
   > Socrates: Notification hub. Resolution: single opt-in nudge; break-alerts precedent.
-- FR-013: While tab open and idle/kickoff-ready, user sees calm title/favicon pulse until session starts or tab focused. Priority: must-have. Change: new
-  > Socrates: Annoying pulse. Resolution: S-20 reduced-motion pattern; stop on start.
+- FR-013: While tab open and idle/kickoff-ready **or** planned day unfinished (blocks/standing present, no session started today), user sees calm title/favicon pulse until session starts or tab focused; when installed (FR-020), optional Badging API for unfinished plan — no streak encoding. Priority: must-have. Change: new
+  > Socrates: Annoying pulse. Resolution: S-20 reduced-motion pattern; stop on start. Absorbs habit-return P-106.
+
+#### Methodology packaging & install (habit-return absorb)
+
+- FR-019: User sees the in-session loop packaged as a named ≈5-beat method (“Co teraz?” framing; exact labels under F-14) on day-open and as quiet chrome on existing wedge beats — no new gates, no completeness checklist. Priority: must-have (craft). Change: new
+  > Socrates: Second framework product. Resolution: labels map 1:1 to shipped beats only; absorbs P-101/P-103; rejects P-111.
+- FR-020: User can install FlowState as a desktop PWA (manifest + icons + calm install affordance); no service-worker push; enables optional badge path for FR-013. Priority: must-have (platform). Change: new
+  > Socrates: Safari/Firefox install variance. Resolution: Chromium-first calm path + honest fallback copy; absorbs P-105.
 
 #### Correctness
 
@@ -290,6 +323,10 @@ Requirements from shaping; `Change:` tags map to Scope categories above.
 
 6. **Cross-day boundary:** Local date rollover triggers calm closure of stale prior-day session state before day-open steering.
 
+7. **Named method packaging:** The shipped wedge loop is teachable as ≈5 labeled beats on day-open and existing transition chrome — packaging only; conductor and scorer rules unchanged.
+
+8. **Install for return:** Desktop PWA install is an activation affordance for reopening the day contract — not a push channel.
+
 ## Access Control Changes
 
 No access control changes — current model preserved. Single-user flat role model. Schedule, RRULE patterns, work-day segments, and planning sessions are scoped per authenticated account; guest follows existing device-local rules where schedule is supported.
@@ -300,11 +337,15 @@ No access control changes — current model preserved. Single-user flat role mod
 - **Avoid:** Native mobile push notification hub — browser notification carve-out only (≤1 calm nudge per local day), same family as break-alerts.
 - **Avoid:** Full GTD system — no someday/maybe backlog, weekly review project management, or reference filing beyond the daily planning session and batch blocks.
 - **Avoid:** AI/ML schedule optimization or auto-rescheduling.
-- **Avoid:** Streak counters, guilt copy, or punitive missed-block alerts.
+- **Avoid:** Streak counters, guilt copy, or punitive missed-block alerts — includes parked habit-return P-106 streak nudge and P-111 methodology-completeness checklist.
 - **Avoid:** Physical environment blocking — S-49 workspace coaching remains advisory only.
 - **Avoid:** Team/shared calendars or multi-user scheduling.
 - **Avoid:** Replacing the wedge loop with calendar-driven auto-timer — schedule proposes; user starts explicitly.
 - **Avoid:** Full external notification aggregation — unchanged from PRD v3.
+- **Avoid:** Session Work Mode Guard / workType-driven conductor beat-density profiles (habit-return P-110 revise / beat-profiles reject) — batching is via **schedule batch blocks** (US-15), not alternate wedge profiles or multi-task-in-one-Pomodoro (ops-batch reject).
+- **Avoid:** Authored start-work ritual checklist competing with kickoff (habit-return P-112).
+- **Avoid:** Scoring “laws” lecture UI as a separate product surface (habit-return P-107) — optional calm factor wording may follow F-14 later outside this must-have set.
+- **Avoid:** Service-worker push or offline-first shell beyond installability (FR-020) — no native push by another name.
 
 ## Open Questions
 
@@ -316,3 +357,6 @@ No access control changes — current model preserved. Single-user flat role mod
 6. **Cross-day close trigger** — automatic at local midnight vs prompt on first open. Owner: implementer. Block: no for bug-fix slice.
 7. **Week view in v4.1** — must ship in first code phase or after day axis stable. Owner: user. Block: no.
 8. **Planning session UI** — dedicated timer surface vs minimal banner on Plan dnia. Owner: implementer. Block: no.
+9. **Method beat labels (EN/PL)** — exact five names for FR-019 under F-14 voice. Owner: user. Block: no for S-59 ship (placeholders OK).
+10. **PWA phase order** — ship FR-013 title pulse before FR-020 install, or install first for badge? Owner: implementer. Block: no (S-60 may phase).
+11. **Tomorrow cue at wind-down** — skippable invite vs omit until day-open alone proves enough. Owner: user. Block: no.

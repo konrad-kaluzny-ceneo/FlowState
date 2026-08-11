@@ -4,9 +4,27 @@
 
 ## Follow-up scope merges (batch 8 — PRD v4 day schedule & habits)
 
-> `/10x-roadmap-expand` 2026-08-11 — **Commit** synced to `roadmap.md` + GitHub #219–#227. Linear pairs pending MCP auth.
+> `/10x-roadmap-expand` 2026-08-11 — **Commit** synced to `roadmap.md` + GitHub #219–#227. Linear pairs pending MCP auth.  
+> **2026-08-11 absorb:** best ideas from [habit-return methodology batch](batch-8-habit-return-methodology.md) folded into `prd-v4.md` + **S-59** / **S-60** (no new roadmap IDs).
 
 Detail: [`batch-8-prd-v4-day-schedule-habits.md`](batch-8-prd-v4-day-schedule-habits.md).
+
+## Absorbed — habit return + methodology (2026-08-07 expand, paused → folded into v4)
+
+> Original pause file kept for lineage. **Do not** Phase-6 commit as standalone slices — outcomes live on S-59 / S-60 / PRD v4 FR-008, FR-013, FR-019, FR-020.
+
+| Habit-batch P-ID | Score | Disposition |
+| --- | --- | --- |
+| P-102 next-day return | 7.9 | **→ S-59** / FR-008 |
+| P-101 Co teraz? five + P-103 beat cues | 8.1 / 7.4 | **→ S-59** / FR-019 |
+| P-104 second-session loop map | 6.9 | **→ S-59** (progressive coach) |
+| P-108 evening tomorrow cue | 6.2 | **→ S-59** (thin optional seed) |
+| P-106 unfinished-day cues | 6.6 | **→ S-60** / FR-013 |
+| P-105 PWA installable shell | 6.7 | **→ S-60** phase / FR-020 |
+| P-109 MIT opening ritual | 5.8 | merge reject (thin path already in S-59) |
+| P-107 scoring laws, P-110–P-112, day-start nudge reject set | — | **parked** — not in v4 must-have |
+
+Detail: [`batch-8-habit-return-methodology.md`](batch-8-habit-return-methodology.md).
 
 ## Follow-up scope merges (batch 7 — UX/UI story chapter)
 
