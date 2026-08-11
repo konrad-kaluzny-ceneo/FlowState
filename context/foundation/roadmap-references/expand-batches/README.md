@@ -2,6 +2,12 @@
 
 # Follow-up scope merges
 
+## Follow-up scope merges (batch 8 — PRD v4 day schedule & habits)
+
+> `/10x-roadmap-expand` 2026-08-11 — **Commit** synced to `roadmap.md` + GitHub #219–#227. Linear pairs pending MCP auth.
+
+Detail: [`batch-8-prd-v4-day-schedule-habits.md`](batch-8-prd-v4-day-schedule-habits.md).
+
 ## Follow-up scope merges (batch 7 — UX/UI story chapter)
 
 > `/10x-roadmap-expand` UX/UI pass 2026-06-26 — **Commit** synced to `roadmap.md` 2026-06-26. Linear/GitHub pairs pending user accept (Phase 4).

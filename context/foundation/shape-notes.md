@@ -1,8 +1,9 @@
 ---
 project: "FlowState"
 status: living-document
-updated: 2026-06-19
+updated: 2026-08-11
 canonical: context/foundation/prd.md
+prd_v4_target: context/foundation/prd-v4.md
 archived_snapshot: context/foundation/archive/2026-06-13-shape-notes-v3-final.md
 active_change_threads:
   - id: break-alerts-out-of-tab
@@ -19,6 +20,10 @@ active_change_threads:
     shaped: 2026-06-19
     status: shaped-complete
     change: context/changes/revisit-user-choices/change.md
+  - id: prd-v4-day-schedule-habits
+    shaped: 2026-08-11
+    status: prd-draft
+    prd: context/foundation/prd-v4.md
 ---
 
 # Shape notes
@@ -608,3 +613,304 @@ Authenticated users and guest users both retain existing access boundaries. The 
 | Timeline-cost ack | present — delivery_weeks: 2, day job |
 | Non-Goals | present |
 | Preserved behavior | present |
+
+---
+
+## Change thread: PRD v4 — day schedule, habit activation, GTD/Atomic Habits
+
+**Shaped:** 2026-08-11  
+**Status:** PRD draft → [`prd-v4.md`](prd-v4.md) (2026-08-11)  
+**Seed (verbatim):** skup się na funkcjonalnościach, które sprawią, że nie będę zapominał uruchomić system, że będę pracować w tym systemie (może być to zarówno funkcjonalność techniczna, jak i usprawnienie samego konceptu modelu pracy); metodologie Atomic Habits (atomowe nawyki, planowanie w kalendarzu) i GTD (batching podobnych zadań w slocie czasowym); pełna funkcja planowania wliczana w czas pracy (np. 15 min/dzień z możliwością oznaczenia „teraz planuję”); poprawa błędu cross-day stale session (fałszywa przerwa drugiego dnia); notyfikacje i animacje favicona gdy zapominam uruchomić sesję; zliczanie czasu bez sesji w segmentach dnia pracy (start/koniec definiowane przez użytkownika, wiele segmentów/dzień); prawdziwy harmonogram z RRULE; integracje zewnętrznego kalendarza odłożone.
+
+### Checkpoint
+
+```yaml
+context_type: brownfield
+current_phase: 8
+phases_completed: [1, 2, 3, 4, 5, 6, 7]
+gray_areas_resolved:
+  - topic: schedule model
+    decision: "Day timeline MVP + RRULE materialization; week view deferred to v4.1 phase inside same PRD contract"
+  - topic: prd scope
+    decision: "Harmonogram + aktywacja nawyku + RRULE + planning-session + off-session metrics + cross-day bug fix + attention signals"
+  - topic: recurrence
+    decision: "Full RRULE — consciously amends PRD v3 non-goal"
+  - topic: external calendar
+    decision: "Deferred — not in v4"
+  - topic: methodologies
+    decision: "Atomic Habits (implementation intentions, obvious cues) + GTD (contexts, batch blocks, daily planning session) — not full GTD project system"
+  - topic: timeline
+    decision: "Phased roadmap delivery; delivery_weeks: 0; after-hours continuous iteration; user accepted multi-slice scope exceeds 3-week single slice"
+  - topic: must preserve
+    decision: "Wedge loop, F-07 mutex, S-52 honest totals, guest/auth data-mode, no streak-shaming"
+frs_drafted: 18
+quality_check_status: accepted
+product_type: web-app
+target_scale:
+  users: small
+timeline_budget:
+  delivery_weeks: 0
+  hard_deadline: null
+  after_hours_only: true
+```
+
+### Current System
+
+**What exists:** FlowState — shipped single-user web app: Pomodoro wedge loop (check-in → suggestion → break), 5-section nav (Fokus/Zadania/Plan dnia/Podsumowanie/Ustawienia), Plan dnia with **focus-hours budget only** (S-27) plus blurred **“Kalendarz wkrótce”** mock (`plan-dnia-view.tsx`), standing tasks via `isDailyStanding` on task detail (not on Plan dnia), day memory S-42, analytics S-48, break-alerts out-of-tab, MCP. PRD v3 horizon slices S-01–S-52 done.
+
+**Users today:** Solo builder + early users — interrupt-driven knowledge workers (Dynamic Knowledge Worker persona).
+
+**Must preserve:** Session-aware wedge with override freedom; transition conductor mutex (F-07); timer ±2s; no silent data loss; guest/auth repository split; calm product voice (no guilt/streaks); existing focus/break time totals (S-52); deterministic scorer (no ML).
+
+### Vision & Problem Statement
+
+**Pain:** User forgets to open FlowState and start work; Plan dnia promises “harmonogram” but shows only a placeholder; planning happens outside the app; returning next day with stale session state shows wrong break/kickoff; no visibility into time spent **outside** Pomodoro sessions during declared work windows.
+
+**Person:** Dynamic Knowledge Worker — developer/analyst with interrupt-driven days.
+
+**Moment:** Morning (plan the day, forget to start timer); mid-day (batch phone calls at 10:00 but no slot); evening (want to see plan vs execution and % time in-session).
+
+**Cost today:** FlowState is a timer + task list, not the **operating system of the workday**; Atomic Habits “make it obvious” and GTD batching/contexts are unsupported; 15 min daily planning is untracked; cross-day session bug breaks trust on return.
+
+**Insight:** Habit formation requires **scheduled cues in time** (AH implementation intentions) plus **honest measurement** of in-session vs off-session time within user-declared work segments — without becoming a guilt/streak product.
+
+### User & Persona
+
+**Primary persona — Dynamic Knowledge Worker** (unchanged from PRD v3)
+
+- Uses FlowState to answer “what now?” and recover context after interruption.
+- PRD v4 adds: plans the day **in time**, batches similar work (GTD), tracks planning as real work, improves % in-session over weeks.
+
+### Access Control
+
+**No changes planned — current model preserved.**
+
+Single-user; authenticated vs guest data-mode unchanged. Schedule, RRULE patterns, work-day segments, and planning sessions are user-scoped per account; guest gets local-only parity where existing guest rules apply.
+
+### Success Criteria
+
+#### Primary
+
+- User plans a local day with **time blocks** (including planning and batch/context types), materializes **RRULE patterns**, starts focus from a block in ≤2 actions, and completes ≥1 Pomodoro linked to the plan.
+- User can run a **planning session** (“teraz planuję”) with elapsed time counted as work.
+- On **new local day** with stale prior-day session, user sees calm day-open — **not** a false break prompt.
+
+#### Secondary
+
+- User defines **work-day segment(s)** (start/end, multiple allowed) and sees **off-session time** and **in-session %** trend in Podsumowanie.
+- Optional browser notification + favicon/title pulse when idle/kickoff-ready or scheduled block starts (tab not focused).
+- Plan vs execution compares blocks + planning time + focus time (extends S-48).
+
+#### Guardrails
+
+- Wedge mutex and ≤1 interstitial + 1 gate per beat preserved.
+- RRULE and schedule **propose** — user always overrides; no auto-start Pomodoro without explicit action.
+- No streak-shaming or punitive copy for missed sessions/blocks.
+- Timer ±2s; no silent data loss on cross-day recovery.
+- External calendar import/sync **out of scope** v4.
+
+### Timeline acknowledgment
+
+Acknowledged on 2026-08-11: Full PRD v4 contract spans multiple roadmap slices (harmonogram, RRULE, planning mode, segments, activation, bug fix). User accepted **phased after-hours delivery** (`delivery_weeks: 0`) rather than a single 3-week slice.
+
+### Functional Requirements
+
+#### Day schedule & recurrence
+
+- FR-001: User can view and edit a **daily time axis** with blocks (focus, meeting, break, personal, **planning**, **batch/context**). Priority: must-have. Change: new
+  > Socrates: Counter-argument: duplicates mock calendar without value. Resolution: mock is removed/replaced; blocks persist and drive activation metrics.
+- FR-002: User can attach **zero or one focus task** per focus block; **multiple tasks** per batch block (GTD). Priority: must-have. Change: new
+  > Socrates: Scope creep vs task list. Resolution: batch block is explicit GTD batching — kept.
+- FR-003: User can define **recurring patterns (RRULE)** that materialize blocks onto future local days; user can edit a day without breaking the pattern. Priority: must-have. Change: new
+  > Socrates: RRULE complexity vs boolean standing (S-27). Resolution: user explicitly chose full RRULE; amends v3 non-goal.
+- FR-004: User can assign **GTD context** (e.g. phone, computer, office) to blocks and/or filter batch tasks by context. Priority: must-have. Change: new
+  > Socrates: Tag taxonomy creep. Resolution: bounded context enum + optional labels — not free-form project system.
+
+#### Planning as work
+
+- FR-005: User can start a **planning session** distinct from focus Pomodoro; elapsed time counts toward **work time** and appears separately in Podsumowanie. Priority: must-have. Change: new
+  > Socrates: Planning session bypasses wedge — good or bad? Resolution: planning session does not trigger check-in/suggestion gates; kept by user request.
+- FR-006: User can schedule a default **daily planning block** (e.g. 15 min) via schedule or RRULE. Priority: must-have. Change: new
+  > Socrates: Overlap with FR-005. Resolution: FR-006 is schedule slot; FR-005 is runtime mode — both kept.
+
+#### Activation & handoff
+
+- FR-007: User can **start focus from a plan block** (Plan dnia → Fokus + kickoff suggestion). Priority: must-have. Change: new
+  > Socrates: Duplicates idle kickoff (S-15). Resolution: handoff is explicit plan→do bridge; conductor mutex defines precedence.
+- FR-008: On **first visit of a new local day** (no cycles today), user sees **day-open steering** — day memory + next block or kickoff path. Priority: must-have. Change: new
+  > Socrates: Overlays stack with energy gate. Resolution: single F-07-gated day-open beat; user accepted merged design.
+
+#### Work-day segments & off-session metrics
+
+- FR-009: User can declare **work-day segment(s)** (start work / end work) one or more times per local day. Priority: must-have. Change: new
+  > Socrates: Manual burden. Resolution: user explicitly wants definable segments; kept.
+- FR-010: Within active segments, app tracks **off-session time** (segment elapsed minus focus, planning, and break session time). Priority: must-have. Change: new
+  > Socrates: Surveillance feel. Resolution: calm analytics only; no alerts/shame — user goal is self-improvement metric.
+- FR-011: User sees **in-session %** and trend in Podsumowanie (extends plan-vs-execution). Priority: must-have. Change: modified
+  > Socrates: Analytics non-goal. Resolution: carve-out same as S-48 Podsumowanie charts.
+
+#### Attention signals
+
+- FR-012: While idle/kickoff-ready or at scheduled block start, user can opt into **browser notification** (≤1/day calm nudge) when tab not focused. Priority: must-have. Change: new
+  > Socrates: Notification hub. Resolution: single opt-in nudge; precedents break-alerts carve-out.
+- FR-013: While tab open and idle/kickoff-ready, user sees calm **title/favicon pulse** until session starts or tab focused. Priority: must-have. Change: new
+  > Socrates: Annoying pulse. Resolution: reuse S-20 reduced-motion pattern; stop on start.
+
+#### Correctness
+
+- FR-014: On **local date rollover**, stale prior-day session/cycle is **calmly closed**; day-open does not offer false break. Priority: must-have. Change: modified
+  > Socrates: Auto-close vs data loss. Resolution: closure preserves S-52 totals; no silent loss — user reported bug.
+
+#### Preserved
+
+- FR-015: Wedge check-in → suggestion → break flow with conductor mutex unchanged. Priority: must-have. Change: preserved
+  > Socrates: Schedule might stack gates. Resolution: schedule surfaces route through F-07 — preserved.
+- FR-016: Focus and break time totals (S-52) remain honest for partial cycles. Priority: must-have. Change: preserved
+  > Socrates: Planning time might double-count. Resolution: planning is separate category — explicit in business logic.
+- FR-017: Guest trial remains narrower than authenticated product. Priority: must-have. Change: preserved
+  > Socrates: Full schedule for guest? Resolution: guest schedule local-only if supported; may be reduced in plan — Open Question.
+- FR-018: Deterministic task suggestion; user override freedom. Priority: must-have. Change: preserved
+  > Socrates: Schedule auto-picks tasks. Resolution: suggestion only; never forced start.
+
+### User Stories
+
+### US-08: User plans day with time blocks
+
+- **Given** a logged-in user on Plan dnia
+- **When** they add and resize blocks on the daily axis (including planning and batch types)
+- **Then** blocks persist for that local day and replace the “Kalendarz wkrótce” placeholder
+- **Before:** only focus budget + blurred mock calendar.
+
+### US-09: User applies recurring schedule patterns
+
+- **Given** a logged-in user with an RRULE pattern (e.g. Mon–Fri 9:00 planning block)
+- **When** a new local day begins and they open Plan dnia
+- **Then** blocks materialize from the pattern and remain editable for that day
+- **Before:** no recurrence beyond boolean daily standing tasks.
+
+### US-10: User starts focus from plan block
+
+- **Given** a logged-in user with a upcoming or current focus block
+- **When** they tap start from Plan dnia
+- **Then** they land on Fokus with kickoff suggestion respecting block context and standing tasks
+- **Before:** Plan dnia and Fokus disconnected.
+
+### US-11: User day-open on return
+
+- **Given** a returning user on first visit of a new local day with prior history
+- **When** they open FlowState idle with zero cycles today
+- **Then** they see day memory and one dominant path to plan or start next block — not a false break state
+- **Before:** day memory hidden on calm landing; cross-day stale session confuses state.
+
+### US-12: User tracks plan vs execution
+
+- **Given** a logged-in user with planned blocks and completed sessions
+- **When** they open Podsumowanie for that day
+- **Then** they see planned vs actual (focus, planning, breaks) including in-session % within work segments
+- **Before:** S-48 trends without schedule blocks or off-session metric.
+
+### US-13: User receives calm attention signals
+
+- **Given** a user who opted in and has kickoff-ready state or scheduled block start while tab is backgrounded
+- **When** eligibility conditions met (≤1 notification per local day)
+- **Then** browser notification and/or favicon pulse draws attention without notification hub behavior
+- **Before:** break alerts only on break start.
+
+### US-14: User runs planning session
+
+- **Given** a logged-in user in a planning block or who taps “Teraz planuję”
+- **When** they start and end planning session
+- **Then** elapsed time counts as work (planning category) in day totals
+- **Before:** planning untracked; not distinguished from idle time.
+
+### US-15: User batches similar tasks in one slot
+
+- **Given** a logged-in user with a batch block (e.g. “Telefony 10:00–10:30”)
+- **When** they attach multiple tasks to the block
+- **Then** they can work through batch with context visible; suggestion respects batch context when starting focus from block
+- **Before:** no batch slot; tasks only in flat list.
+
+### US-16: User declares work-day segments
+
+- **Given** a logged-in user
+- **When** they tap Start dnia pracy / Koniec dnia pracy (possibly multiple segments)
+- **Then** off-session time accrues only inside active segments
+- **Before:** no work-window concept.
+
+### US-17: User improves in-session ratio over time
+
+- **Given** a logged-in user with ≥2 weeks of segment data
+- **When** they view Podsumowanie trends
+- **Then** they see calm trend of in-session % without streak language
+- **Before:** no off-session metric.
+
+### US-18: User not misled by cross-day stale session
+
+- **Given** a logged-in user whose session/cycle was active across local midnight
+- **When** they open the app on the new local day
+- **Then** prior day closes calmly and UI reflects fresh day (no spurious break prompt)
+- **Before:** app suggests break though user just started second day.
+
+### Business Logic
+
+**Rule:** A local workday is a user-authored **time contract** (blocks + optional RRULE patterns + work segments); FlowState measures execution against that contract and proposes focus entry points — it never auto-starts work or punishes missed blocks.
+
+**Supporting behavior:**
+
+- RRULE materializes **proposals** editable per day.
+- Planning session time is a **first-class work category** separate from Pomodoro focus and breaks.
+- Off-session time = active segment elapsed minus (focus + planning + break session time).
+- Scorer may use active block context as input; override always available.
+
+### Constraints & Preserved Behavior
+
+- Existing `DayPlan` (budget, energy) **merges** with same `localDateKey` schedule — not duplicate day models.
+- Standing tasks (`isDailyStanding`) remain; may appear on plan panel and in batch blocks — mapping in Open Questions.
+- Cross-day recovery must not lose S-52 totals or day memory anchors.
+- Placeholder `ComingSoonPreview` calendar removed when real schedule ships.
+- Phased implementation order recommended: cross-day bug fix → day timeline → planning session → RRULE → segments/metrics → handoff/day-open → attention signals.
+
+### Non-Functional Requirements
+
+- Schedule edit and block drag perceived ≤200ms for local feedback (same guardrail family as task mutations).
+- Cross-day recovery on first open ≤1s before day-open renders (no flash of false break state).
+- RRULE materialization for one day ≤200ms perceived on Plan dnia open.
+- Notification + favicon signals respect reduced-motion preference.
+- All schedule and segment data isolated per user account.
+
+### Non-Goals
+
+- **Avoid:** Google/Outlook/ICS import or two-way sync in v4 (deferred).
+- **Avoid:** Native mobile push notification hub.
+- **Avoid:** Full GTD system (projects, someday/maybe, weekly review backlog management beyond planning session).
+- **Avoid:** AI/ML schedule optimization or auto-rescheduling.
+- **Avoid:** Streak counters, guilt copy, or punitive missed-block alerts.
+- **Avoid:** Physical environment blocking (S-49 remains coaching-only).
+- **Avoid:** Team/shared calendars or multi-user scheduling.
+- **Avoid:** Replacing wedge loop with calendar-driven auto-timer.
+
+### Open Questions
+
+1. **Guest schedule parity** — full local schedule for guest or auth-only? Owner: user. Block: no (plan may default auth-first).
+2. **Batch block UX** — checklist of tasks vs single meta-task “Telefony”. Owner: user. Block: no.
+3. **Context enum** — fixed set (Phone/Computer/Office/…) vs user-defined tags. Owner: user. Block: no.
+4. **Work segment start** — manual button only vs offered at day-open. Owner: user. Block: no.
+5. **Off-session while in app** — count idle time on FlowState without running timer, or only segment-minus-sessions. Owner: implementer. Block: no.
+6. **Cross-day close trigger** — automatic at local midnight vs prompt on first open. Owner: implementer. Block: no for bug fix slice.
+7. **Week view in v4.1** — must ship in first code phase or after day axis stable. Owner: user. Block: no.
+8. **Planning session UI** — dedicated timer surface vs minimal banner on Plan dnia. Owner: implementer. Block: no.
+
+### Quality cross-check
+
+| Element | Status |
+|---|---|
+| Access Control | present |
+| Business Logic (one-sentence rule) | present |
+| Project artifacts | present |
+| Timeline-cost ack | present — phased delivery acknowledged |
+| Non-Goals | present |
+| Preserved behavior | present |
+
+### Forward: roadmap phasing (informational — not PRD)
+
+Suggested slice order after `/10x-prd`: `fix-cross-day-stale-session` → `day-schedule-timeline` → `planning-session-mode` → `recurrence-weekly-patterns` → `work-day-segments-off-session` → `plan-to-focus-handoff` → `day-open-wedge-steering` → `idle-focus-attention-signals` → `schedule-plan-vs-execution`.
