@@ -3,7 +3,7 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-08-11
+updated: 2026-08-12
 structure: split
 active_slices: []
 prd_version: 3
@@ -14,7 +14,7 @@ top_blocker: S-53 fix-cross-day-stale-session (ready)
 
 # Roadmap: FlowState
 
-> Derived from `context/foundation/prd.md` (v3). MVP shipped 2026-06-07; PRD v3 contracts post-MVP deepening under `main_goal: quality`. **PRD v4 horizon** (day schedule, habits, work segments): [`prd-v4.md`](prd-v4.md) → S-53–S-61.
+> Derived from `context/foundation/prd.md` (v3). MVP shipped 2026-06-07; PRD v3 contracts post-MVP deepening under `main_goal: quality`. **PRD v4 horizon** (day schedule, habits, work segments): [`prd-v4.md`](prd-v4.md) → S-53–S-61. **Agent Skill IDLE metrics:** S-62. **Środowisko authored tips + blog:** S-63.
 > **Detail on demand:** slice/foundation Outcome, Unknowns, Risk, expand batches, Done log → [`roadmap-references/`](roadmap-references/README.md). **PRD v3 → slice map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). This file is the **index only** (~165 lines).
 > **Issue tracking:** Linear team `FLO` + GitHub `konrad-kaluzny-ceneo/FlowState`; IDs in glance table.
 > **No Linear ↔ GitHub auto-sync** — this file is the pairing table; update both on ship.
@@ -114,6 +114,8 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-59 | day-open-wedge-steering | _pending_ | [#225](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/225) | first visit on a new day: day memory + one calm path to plan/start next block; named ≈5-beat method literacy (habit-return absorb) | S-53, S-54, S-58, S-42, F-07 | **US-11**, US-19, FR-008, FR-019 | proposed |
 | S-60 | idle-focus-attention-signals | _pending_ | [#226](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/226) | opt-in nudge / title-favicon pulse (unfinished day); optional PWA install + badge — no SW push | S-54, S-15, S-20 | **US-13**, US-20, FR-012–013, FR-020 | proposed |
 | S-61 | schedule-plan-vs-execution | _pending_ | [#227](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/227) | Podsumowanie compares planned blocks vs actual focus, planning, and break time with in-session % | S-54, S-55, S-57, S-48 | **US-12**, FR-011 | proposed |
+| S-62 | agent-idle-skill-wait-metrics | [FLO-106](https://linear.app/flowstate-10xdev/issue/FLO-106) | [#228](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/228) | downloadable min-token agent Skill updates FlowState (task start/end/waiting); see agent IDLE wait for parallel capacity; deep-work-aware wait notifications | S-46, S-31, S-37 | proposed-FR-agent-idle-skill | ready |
+| S-63 | srodowisko-authored-tips-blog | [FLO-107](https://linear.app/flowstate-10xdev/issue/FLO-107) | [#229](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/229) | Środowisko shows human-authored tips; each tip has a public blog subpage (work-life balance education + Google organic traffic) | S-49, F-14, S-45 | proposed-FR-srodowisko-blog | ready |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -141,9 +143,9 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | R | UX/UI story chapter | **F-14** → **S-40** → **S-41** → **S-42** → **S-43** | UX/UI craft after quality hardening; expand batch 7; S-43 may parallel S-41 once rail slot exists |
 | S | Task inventory hygiene | **S-44** | Stale-task archive + bulk delete; parallel S-40 for nav placement |
 | T | UI redesign (makiety) | **S-45** (phased in plan.md) | Builds on Stream R craft (S-40/S-41/S-43) + F-06 tokens; nav shell + 5 sections + green retint; 2 PRD amendments (Podsumowanie charts, Ustawienia page); graphics entry-gated |
-| U | Agent integration | F-15 → **S-46** → **S-47** | MCP server for AI agents; delegation proposals in Plan dnia |
+| U | Agent integration | F-15 → **S-46** → **S-47**; **S-62** | MCP server for AI agents; delegation proposals in Plan dnia; Skill + IDLE wait metrics + deep-work-aware agent wait cues |
 | V | Analytics depth | S-45 → **S-52** → **S-48** | S-52 makes the daily totals honest (partial cycles + break time) before S-48 builds weekly/monthly trends, plan-vs-execution, and context-switch patterns on top of them |
-| W | Workspace coaching | S-45 + F-14 → **S-49** | Advisory tips for Cursor/Claude/Teams/Slack config; coaching, not blocking |
+| W | Workspace coaching | S-45 + F-14 → **S-49** → **S-63** | Advisory tips; then authored Środowisko series + public blog subpages (SEO / work-life balance) |
 | X | PRD v4 day schedule & habits | **S-53** → **S-54** → (**S-55** ∥ **S-56**) → **S-57** → **S-58** → **S-59**; **S-60** ∥ **S-61** | [`prd-v4.md`](prd-v4.md); S-59/S-60 absorb habit-return expand |
 
 ## Backlog Handoff
@@ -198,8 +200,10 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-59 | day-open-wedge-steering | **no** | after S-53, S-54, S-58; F-07; absorbs habit-return P-101–104/108; GitHub [#225](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/225) |
 | S-60 | idle-focus-attention-signals | **no** | after S-54; FR-012–013 + PWA FR-020 phase; absorbs P-105/106; GitHub [#226](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/226) |
 | S-61 | schedule-plan-vs-execution | **no** | capstone after S-54, S-55, S-57; extends S-48; GitHub [#227](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/227) |
+| S-62 | agent-idle-skill-wait-metrics | **yes** | after S-46/S-31/S-37 (done); Skill + IDLE wait + deep-work-aware notify; [FLO-106](https://linear.app/flowstate-10xdev/issue/FLO-106) / [#228](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/228) |
+| S-63 | srodowisko-authored-tips-blog | **yes** | after S-49; content authorship is critical path; [FLO-107](https://linear.app/flowstate-10xdev/issue/FLO-107) / [#229](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/229) |
 
-**Recommended next:** `/10x-plan fix-cross-day-stale-session` (S-53, `ready`). Linear pairs for S-53–S-61 pending — run `/10x-linear-backlog create` after Linear MCP auth. PRD v4 contract: [`prd-v4.md`](prd-v4.md).
+**Recommended next:** `/10x-plan fix-cross-day-stale-session` (S-53) for v4 correctness, `/10x-plan agent-idle-skill-wait-metrics` (S-62) for agent parallelism, or `/10x-plan srodowisko-authored-tips-blog` (S-63) when tip content is ready to write.
 
 ## Reference appendix (load on demand)
 
