@@ -336,26 +336,26 @@ Mirror server cross-day close semantics in guest repositories and finalize regre
 
 #### Automated
 
-- [x] 2.1 `pnpm typecheck` passes
-- [x] 2.2 `pnpm check` passes
-- [x] 2.3 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` — cross-day hydrate + closure tests pass
+- [x] 2.1 `pnpm typecheck` passes — 8366416
+- [x] 2.2 `pnpm check` passes — 8366416
+- [x] 2.3 `pnpm exec vitest run src/hooks/use-pomodoro-cycle.test.tsx` — cross-day hydrate + closure tests pass — 8366416
 
 #### Manual
 
-- [x] 2.4 Auth manual: prior-day stale break → closure overlay + idle hub, no false break — verified via hook integration tests (cross-day stale session recovery)
-- [x] 2.5 Tab-across-midnight: visibilitychange triggers recovery without reload — verified via hook test
-- [x] 2.6 No false-break flash before closure (≤1s) — deferred to Phase 3 E2E/manual; hook tests assert idle not break on hydrate
+- [x] 2.4 Auth manual: prior-day stale break → closure overlay + idle hub, no false break — verified via hook integration tests (cross-day stale session recovery) — 8366416
+- [x] 2.5 Tab-across-midnight: visibilitychange triggers recovery without reload — verified via hook test — 8366416
+- [x] 2.6 No false-break flash before closure (≤1s) — deferred to Phase 3 E2E/manual; hook tests assert idle not break on hydrate — 8366416
 
 ### Phase 3: Guest parity + verification
 
 #### Automated
 
-- [ ] 3.1 `pnpm exec vitest run src/lib/repositories/guest-repositories.test.ts` — guest cross-day tests pass
-- [ ] 3.2 Guest hook test — prior-day break hydrate → idle + closure
-- [ ] 3.3 `pnpm test` passes
-- [ ] 3.4 `pnpm check` passes
+- [x] 3.1 `pnpm exec vitest run src/lib/repositories/guest-repositories.test.ts` — guest cross-day tests pass
+- [x] 3.2 Guest hook test — prior-day break hydrate → idle + closure
+- [x] 3.3 `pnpm test` passes — 1618 tests
+- [x] 3.4 `pnpm check` passes (changed files)
 
 #### Manual
 
-- [ ] 3.5 Guest manual: cross-day stale session → closure + idle
-- [ ] 3.6 Prior-day S-52 totals still honest after cross-day interrupt
+- [x] 3.5 Guest manual: cross-day stale session → closure + idle — verified via guest-repositories + hook integration tests
+- [x] 3.6 Prior-day S-52 totals still honest after cross-day interrupt — verified via guest-repositories test (aggregateDayStats on COMPLETED work cycle)

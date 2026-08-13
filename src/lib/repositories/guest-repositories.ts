@@ -11,10 +11,13 @@ import {
 	markGuestTaskDoneForToday,
 } from "~/lib/guest/day-completions";
 import { loadSnapshot, mutateSnapshot } from "~/lib/guest/store";
+import { isCrossDayStaleSession } from "~/lib/session/cross-day-stale-session";
+import { computeGuestSessionEndMetadata } from "~/lib/session/guest-session-end-metadata";
 import {
 	getStaleArchiveCutoff,
 	matchesStaleArchivePredicate,
 } from "~/lib/task/stale-task-archive";
+import { formatLocalDateKey } from "~/lib/time/local-date-key";
 
 const GUEST_USER_ID = "guest";
 
@@ -489,9 +492,63 @@ function resolveGuestLastFocusedTaskId(
 	return lastWorkCycle?.taskId ?? null;
 }
 
+function closeGuestCrossDayStaleSessionIfNeeded(localDateKey: string): boolean {
+	const snapshot = loadSnapshot();
+	const active = snapshot.sessions.find(
+		(session) => session.state === "ACTIVE",
+	);
+
+	if (active == null || !isCrossDayStaleSession(active, localDateKey)) {
+		return false;
+	}
+
+	const { closureLine, lastFocusedTaskId } = computeGuestSessionEndMetadata(
+		snapshot,
+		active.id,
+		"cross_day",
+	);
+	const now = new Date();
+
+	const { error } = mutateSnapshot((current) => ({
+		...current,
+		cycles: current.cycles.map((cycle) =>
+			cycle.sessionId === active.id &&
+			(cycle.state === "RUNNING" || cycle.state === "PAUSED")
+				? {
+						...cycle,
+						state: "INTERRUPTED" as const,
+						endedAt: now,
+						pausedAt: null,
+						remainingDurationSec: null,
+					}
+				: cycle,
+		),
+		sessions: current.sessions.map((session) =>
+			session.id === active.id
+				? {
+						...session,
+						state: "ENDED_BY_CROSS_DAY" as const,
+						endedAt: now,
+						closureLine,
+						lastFocusedTaskId,
+					}
+				: session,
+		),
+	}));
+
+	if (error != null) {
+		throw new Error(error);
+	}
+
+	return true;
+}
+
 export function createGuestSessionRepository(): SessionRepository {
 	return {
 		async getOrCreateActive() {
+			const localDateKey = formatLocalDateKey();
+			closeGuestCrossDayStaleSessionIfNeeded(localDateKey);
+
 			const snapshot = loadSnapshot();
 			const active = snapshot.sessions.find((s) => s.state === "ACTIVE");
 
@@ -592,7 +649,9 @@ export function createGuestSessionRepository(): SessionRepository {
 
 export function createGuestCycleRepository(): CycleRepository {
 	return {
-		async getActive(_input: { localDateKey: string }) {
+		async getActive(input: { localDateKey: string }) {
+			closeGuestCrossDayStaleSessionIfNeeded(input.localDateKey);
+
 			const snapshot = loadSnapshot();
 			const cycle =
 				snapshot.cycles.find(

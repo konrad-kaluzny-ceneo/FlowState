@@ -3,8 +3,16 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GUEST_STORAGE_KEY } from "~/lib/guest/schema";
+import {
+	createEmptyGuestSnapshot,
+	GUEST_STORAGE_KEY,
+} from "~/lib/guest/schema";
+import { loadSnapshot, saveSnapshot } from "~/lib/guest/store";
 import { createGuestRepositories } from "~/lib/repositories/guest-repositories";
+import {
+	formatLocalDateKey,
+	subtractLocalDateKey,
+} from "~/lib/time/local-date-key";
 import { assertRemainingMsWithinTolerance } from "~/test-utils/countdown-tolerance";
 
 vi.mock("~/lib/audio", () => ({
@@ -158,6 +166,72 @@ describe("usePomodoroCycle guest recovery", () => {
 
 		await waitFor(() => {
 			expect(result.current.state).toBe("completed");
+		});
+	});
+});
+
+describe("usePomodoroCycle guest cross-day stale session", () => {
+	const YESTERDAY_KEY = subtractLocalDateKey(formatLocalDateKey(), 1);
+
+	beforeEach(() => {
+		localStorage.clear();
+		resetActiveCycleRecoveryForTests();
+	});
+
+	afterEach(() => {
+		localStorage.clear();
+	});
+
+	it("shows closure overlay and idle hub instead of false break on hydrate", async () => {
+		const sessionId = crypto.randomUUID();
+		const cycleId = crypto.randomUUID();
+		const lastActivityAt = new Date(`${YESTERDAY_KEY}T23:30:00`);
+
+		saveSnapshot({
+			...createEmptyGuestSnapshot(),
+			sessions: [
+				{
+					id: sessionId,
+					state: "ACTIVE",
+					startedAt: new Date(`${YESTERDAY_KEY}T09:00:00`),
+					endedAt: null,
+					lastActivityAt,
+					interruptionCount: 0,
+				},
+			],
+			cycles: [
+				{
+					id: cycleId,
+					sessionId,
+					taskId: null,
+					kind: "SHORT_BREAK",
+					state: "RUNNING",
+					configuredDurationSec: 300,
+					startedAt: lastActivityAt,
+					endedAt: null,
+				},
+			],
+		});
+
+		const { result } = renderHook(() => usePomodoroCycle(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(() => {
+			expect(result.current.isActiveCycleReady).toBe(true);
+		});
+
+		expect(result.current.state).toBe("idle");
+		expect(result.current.cycleKind).toBeNull();
+		expect(result.current.hasActiveSession).toBe(false);
+		expect(
+			loadSnapshot().sessions.some(
+				(session) => session.state === "ENDED_BY_CROSS_DAY",
+			),
+		).toBe(true);
+
+		await waitFor(() => {
+			expect(result.current.pendingClosureLine).not.toBeNull();
 		});
 	});
 });

@@ -1,5 +1,5 @@
 import type { Session } from "~/lib/persistence/prisma/client-types";
-import { formatLocalDateKey } from "~/lib/time/local-date-key";
+import { isCrossDayStaleSession } from "~/lib/session/cross-day-stale-session";
 
 import { computeSessionEndMetadata } from "~/server/api/lib/session-end-metadata";
 import type { db } from "~/server/db/index";
@@ -10,15 +10,7 @@ export const SESSION_INACTIVITY_TIMEOUT_MS = 4 * 60 * 60 * 1000;
 
 export type ActiveSessionCloseReason = "timeout" | "cross_day";
 
-export function isCrossDayStaleSession(
-	session: Pick<Session, "state" | "lastActivityAt">,
-	localDateKey: string,
-): boolean {
-	return (
-		session.state === "ACTIVE" &&
-		formatLocalDateKey(session.lastActivityAt) !== localDateKey
-	);
-}
+export { isCrossDayStaleSession };
 
 export async function closeActiveSession(
 	database: Db,
