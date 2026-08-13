@@ -32,7 +32,7 @@ export type ClosureLineInput = {
 	cyclesCompleted: number;
 	tasksCompleted: number;
 	latestEnergy: EnergyLevel | null;
-	endedBy: "user" | "timeout" | "pause_cap";
+	endedBy: "user" | "timeout" | "pause_cap" | "cross_day";
 	/** S-38: user ended during an in-progress work block — clarify it is excluded from stats. */
 	interruptedMidCycle?: boolean;
 };

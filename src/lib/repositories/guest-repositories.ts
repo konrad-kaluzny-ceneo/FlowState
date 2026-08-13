@@ -592,7 +592,7 @@ export function createGuestSessionRepository(): SessionRepository {
 
 export function createGuestCycleRepository(): CycleRepository {
 	return {
-		async getActive() {
+		async getActive(_input: { localDateKey: string }) {
 			const snapshot = loadSnapshot();
 			const cycle =
 				snapshot.cycles.find(

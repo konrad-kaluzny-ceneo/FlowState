@@ -12,6 +12,9 @@ import {
 	getStaleArchiveCutoff,
 	STALE_TASK_ARCHIVE_DAYS,
 } from "~/lib/task/stale-task-archive";
+import { formatLocalDateKey } from "~/lib/time/local-date-key";
+
+const TODAY_KEY = formatLocalDateKey();
 
 async function createActiveGuestTask(
 	tasks: ReturnType<typeof createGuestRepositories>["tasks"],
@@ -102,7 +105,7 @@ describe("guest repositories", () => {
 			taskId: task.id,
 		});
 
-		const active = await cycles.getActive();
+		const active = await cycles.getActive({ localDateKey: TODAY_KEY });
 		expect(active?.id).toBe(cycle.id);
 		expect(active?.task?.title).toBe("Focus me");
 	});
@@ -117,7 +120,7 @@ describe("guest repositories", () => {
 		});
 
 		const { cycles: cyclesAgain } = createGuestRepositories();
-		const active = await cyclesAgain.getActive();
+		const active = await cyclesAgain.getActive({ localDateKey: TODAY_KEY });
 
 		expect(active?.state).toBe("RUNNING");
 		expect(active?.task?.title).toBe("Persist me");
@@ -140,7 +143,9 @@ describe("guest repositories", () => {
 		expect(paused.state).toBe("PAUSED");
 		expect(paused.remainingDurationSec).toBe(420);
 
-		const activeWhilePaused = await cycles.getActive();
+		const activeWhilePaused = await cycles.getActive({
+			localDateKey: TODAY_KEY,
+		});
 		expect(activeWhilePaused?.state).toBe("PAUSED");
 
 		const resumed = await cycles.resume({ cycleId: created.id });
@@ -218,7 +223,7 @@ describe("guest repositories", () => {
 		saveSnapshot(snapshot);
 
 		const { cycles } = createGuestRepositories();
-		const active = await cycles.getActive();
+		const active = await cycles.getActive({ localDateKey: TODAY_KEY });
 
 		expect(active?.state).toBe("RUNNING");
 		expect(active?.startedAt).toEqual(startedAt);
@@ -370,7 +375,7 @@ describe("guest repositories", () => {
 
 		await cycles.complete({ cycleId: cycle.id, markTaskDone: true });
 
-		const active = await cycles.getActive();
+		const active = await cycles.getActive({ localDateKey: TODAY_KEY });
 		expect(active).toBeNull();
 
 		const updatedTask = (await tasks.list()).find(
@@ -390,7 +395,7 @@ describe("guest repositories", () => {
 
 		await cycles.complete({ cycleId: cycle.id, markTaskBlocked: true });
 
-		const active = await cycles.getActive();
+		const active = await cycles.getActive({ localDateKey: TODAY_KEY });
 		expect(active).toBeNull();
 
 		const updatedTask = (await tasks.list()).find(
@@ -448,7 +453,7 @@ describe("guest repositories", () => {
 		}));
 
 		const { cycles } = createGuestRepositories();
-		const active = await cycles.getActive();
+		const active = await cycles.getActive({ localDateKey: TODAY_KEY });
 
 		expect(active?.task).toBeNull();
 		expect(active?.taskId).not.toBeNull();

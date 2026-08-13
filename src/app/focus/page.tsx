@@ -22,7 +22,7 @@ export default async function FocusPage() {
 		const localDateKey = formatLocalDateKey();
 		await Promise.all([
 			api.task.list.prefetch(),
-			api.cycle.getActive.prefetch(),
+			api.cycle.getActive.prefetch({ localDateKey }),
 			api.recap.getDaily.prefetch({ localDateKey }),
 		]);
 	}

@@ -1,7 +1,27 @@
 ﻿import { beforeEach, describe, expect, it, vi } from "vitest";
+import { formatLocalDateKey } from "~/lib/time/local-date-key";
+
+const TODAY_KEY = formatLocalDateKey();
 
 vi.mock("~/lib/auth/server", () => ({
 	auth: { getSession: vi.fn() },
+}));
+
+vi.mock("~/server/api/lib/session-end-metadata", () => ({
+	computeSessionEndMetadata: vi.fn(
+		async (
+			_database: unknown,
+			_userId: string,
+			sessionId: number,
+			endedBy: "timeout" | "user" | "pause_cap" | "cross_day",
+		) => ({
+			closureLine:
+				endedBy === "cross_day"
+					? "Session complete — 1 cycle. Take a breath."
+					: "Session complete — 2 cycles. Take a breath.",
+			lastFocusedTaskId: sessionId,
+		}),
+	),
 }));
 
 type CycleWhereState = string | { in: string[] };
@@ -37,6 +57,8 @@ let sessions: Array<{
 	archivedAt: null;
 	lastActivityAt: Date;
 	interruptionCount: number;
+	endedAt?: Date | null;
+	closureLine?: string | null;
 }>;
 let nextCycleId = 1;
 let nextSessionId = 1;
@@ -239,6 +261,7 @@ vi.mock("~/server/db/index", () => {
 						where: {
 							id?: number;
 							userId?: string;
+							sessionId?: number;
 							state?: CycleWhereState;
 						};
 						data: Partial<
@@ -256,6 +279,12 @@ vi.mock("~/server/db/index", () => {
 							if (args.where.id != null && c.id !== args.where.id) return false;
 							if (args.where.userId != null && c.userId !== args.where.userId)
 								return false;
+							if (
+								args.where.sessionId != null &&
+								c.sessionId !== args.where.sessionId
+							) {
+								return false;
+							}
 							if (!matchesState(c.state, args.where.state)) return false;
 							return true;
 						});
@@ -305,22 +334,26 @@ vi.mock("~/server/db/index", () => {
 					return Promise.resolve(session);
 				}),
 				update: vi.fn(
-					(args: {
-						where: { id: number };
-						data: {
-							lastActivityAt?: Date;
-							interruptionCount?: { increment: number };
-						};
-					}) => {
+					(args: { where: { id: number }; data: Record<string, unknown> }) => {
 						const session = sessions.find((s) => s.id === args.where.id);
 						if (!session) throw new Error("session not found");
-						if (args.data.lastActivityAt != null) {
-							session.lastActivityAt = args.data.lastActivityAt;
+
+						const { interruptionCount, ...rest } = args.data;
+						Object.assign(session, rest);
+
+						if (interruptionCount != null) {
+							if (
+								typeof interruptionCount === "object" &&
+								interruptionCount !== null &&
+								"increment" in interruptionCount &&
+								typeof interruptionCount.increment === "number"
+							) {
+								session.interruptionCount += interruptionCount.increment;
+							} else if (typeof interruptionCount === "number") {
+								session.interruptionCount = interruptionCount;
+							}
 						}
-						if (args.data.interruptionCount?.increment != null) {
-							session.interruptionCount +=
-								args.data.interruptionCount.increment;
-						}
+
 						return Promise.resolve(session);
 					},
 				),
@@ -463,7 +496,7 @@ describe("cycle router lifecycle", () => {
 	});
 
 	it("getActive returns null when no running cycle", async () => {
-		const result = await caller().getActive();
+		const result = await caller().getActive({ localDateKey: TODAY_KEY });
 		expect(result).toBeNull();
 	});
 
@@ -495,9 +528,46 @@ describe("cycle router lifecycle", () => {
 			},
 		];
 
-		const result = await caller().getActive();
+		const result = await caller().getActive({ localDateKey: TODAY_KEY });
 		expect(result).toMatchObject({ id: 1, state: "RUNNING", taskId: 10 });
 		expect(result?.task).toMatchObject({ id: 10, title: "Focus task" });
+	});
+
+	it("getActive closes cross-day stale session and returns null for stale break", async () => {
+		const yesterday = new Date();
+		yesterday.setDate(yesterday.getDate() - 1);
+
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: yesterday,
+				interruptionCount: 0,
+			},
+		];
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "SHORT_BREAK",
+				state: "RUNNING",
+				configuredDurationSec: 300,
+				startedAt: yesterday,
+				endedAt: null,
+			},
+		];
+
+		const result = await caller().getActive({ localDateKey: TODAY_KEY });
+
+		expect(result).toBeNull();
+		expect(sessions[0]?.state).toBe("ENDED_BY_CROSS_DAY");
+		expect(sessions[0]?.endedAt).not.toBeNull();
+		expect(cycles[0]?.state).toBe("INTERRUPTED");
+		expect(cycles[0]?.endedAt).not.toBeNull();
 	});
 
 	it("complete transitions cycle to COMPLETED", async () => {
@@ -750,7 +820,7 @@ describe("cycle router lifecycle", () => {
 			remainingDurationSec: 600,
 		});
 
-		const active = await caller().getActive();
+		const active = await caller().getActive({ localDateKey: TODAY_KEY });
 		expect(active).toMatchObject({
 			id: 1,
 			sessionId: 1,
@@ -832,7 +902,7 @@ describe("cycle router lifecycle", () => {
 			},
 		];
 
-		const result = await caller().getActive();
+		const result = await caller().getActive({ localDateKey: TODAY_KEY });
 		expect(result).toMatchObject({
 			id: 1,
 			state: "PAUSED",
@@ -1053,7 +1123,7 @@ describe("cycle router lifecycle", () => {
 		});
 		expect(created.state).toBe("RUNNING");
 
-		const active = await c.getActive();
+		const active = await c.getActive({ localDateKey: TODAY_KEY });
 		expect(active?.id).toBe(created.id);
 		expect(active).toMatchObject({
 			state: "RUNNING",
@@ -1065,7 +1135,7 @@ describe("cycle router lifecycle", () => {
 		expect(active?.startedAt).toBeInstanceOf(Date);
 
 		await c.complete({ cycleId: created.id });
-		const after = await c.getActive();
+		const after = await c.getActive({ localDateKey: TODAY_KEY });
 		expect(after).toBeNull();
 	});
 
@@ -1334,7 +1404,9 @@ describe("cycle router lifecycle", () => {
 				},
 			];
 
-			const result = await callerAs(ATTACKER_ID).getActive();
+			const result = await callerAs(ATTACKER_ID).getActive({
+				localDateKey: TODAY_KEY,
+			});
 			expect(result).toBeNull();
 		});
 
@@ -1423,7 +1495,7 @@ describe("cycle router lifecycle", () => {
 				},
 			];
 
-			const result = await caller().getActive();
+			const result = await caller().getActive({ localDateKey: TODAY_KEY });
 			expect(result).toBeNull();
 		});
 	});

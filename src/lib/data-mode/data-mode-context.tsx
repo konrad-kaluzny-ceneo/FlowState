@@ -88,7 +88,10 @@ export function DataModeProvider({
 				},
 			},
 			cycle: {
-				getActive: { fetch: () => utils.client.cycle.getActive.query() },
+				getActive: {
+					fetch: (input: { localDateKey: string }) =>
+						utils.client.cycle.getActive.query(input),
+				},
 				create: {
 					mutate: (
 						input: Parameters<typeof utils.client.cycle.create.mutate>[0],

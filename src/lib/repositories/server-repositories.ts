@@ -89,7 +89,11 @@ type TrpcClient = {
 		};
 	};
 	cycle: {
-		getActive: { fetch: () => Promise<DomainActiveCycle | null> };
+		getActive: {
+			fetch: (input: {
+				localDateKey: string;
+			}) => Promise<DomainActiveCycle | null>;
+		};
 		create: {
 			mutate: (
 				input: CreateCycleInput,
@@ -185,7 +189,8 @@ export function createServerCycleRepository(
 	client: TrpcClient,
 ): CycleRepository {
 	return {
-		getActive: () => client.cycle.getActive.fetch(),
+		getActive: (input: { localDateKey: string }) =>
+			client.cycle.getActive.fetch(input),
 		create: (input) =>
 			client.cycle.create.mutate({
 				kind: input.kind,

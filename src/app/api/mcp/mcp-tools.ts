@@ -4,7 +4,6 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { ApiKeyScope } from "@prisma/generated";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-
 import {
 	buildMcpContext,
 	type VerifiedApiKey,
@@ -14,6 +13,7 @@ import {
 	energyLevelSchema,
 	workTypeSchema,
 } from "~/lib/domain";
+import { formatLocalDateKey } from "~/lib/time/local-date-key";
 import { createCaller } from "~/server/api/root";
 
 /**
@@ -183,7 +183,9 @@ export function getSessionState(
 	_scope: ApiKeyScope,
 ): Promise<CallToolResult> {
 	return runTool(async () => {
-		const activeCycle = await caller.cycle.getActive();
+		const activeCycle = await caller.cycle.getActive({
+			localDateKey: formatLocalDateKey(),
+		});
 		const sessionId =
 			activeCycle?.sessionId ?? (await resolveActiveSessionId(caller));
 

@@ -111,7 +111,8 @@ export function findGuestLastEndedSession(
 		(session) =>
 			session.endedAt != null &&
 			(session.state === "ENDED_BY_USER" ||
-				session.state === "ENDED_BY_TIMEOUT"),
+				session.state === "ENDED_BY_TIMEOUT" ||
+				session.state === "ENDED_BY_CROSS_DAY"),
 	);
 	if (ended.length === 0) {
 		return null;

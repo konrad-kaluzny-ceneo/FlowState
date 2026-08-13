@@ -1016,7 +1016,9 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		const recoveryGeneration = ++activeCycleRecoveryGenRef.current;
 
 		try {
-			const active = await cycles.getActive();
+			const active = await cycles.getActive({
+				localDateKey: formatLocalDateKey(),
+			});
 
 			if (active != null) {
 				resumeFromActiveCycle(active);
