@@ -76,6 +76,10 @@ export const cycleRouter = createTRPCRouter({
 			where: {
 				userId: ctx.session.user.id,
 				state: { in: ["RUNNING", "PAUSED"] },
+				session: {
+					state: "ACTIVE",
+					archivedAt: null,
+				},
 			},
 			orderBy: { startedAt: "desc" },
 			include: { task: true },

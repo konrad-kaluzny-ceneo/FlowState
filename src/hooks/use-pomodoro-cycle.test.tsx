@@ -1,5 +1,6 @@
 ﻿import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { TRPCClientError } from "@trpc/client";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -274,6 +275,33 @@ async function startWorkCycle(
 	await waitFor(() => {
 		expect(result.current.state).toBe("running");
 	});
+}
+
+function makeCheckInConflictError() {
+	return new TRPCClientError("A check-in already exists for this cycle", {
+		result: {
+			error: {
+				code: "CONFLICT",
+				message: "A check-in already exists for this cycle",
+				data: { code: "CONFLICT" },
+			},
+		},
+	});
+}
+
+async function driveRecoveredExpiredCycleToCheckIn(
+	result: PomodoroCycleHookResult,
+) {
+	await waitFor(() => {
+		expect(result.current.state).toBe("completed");
+		expect(result.current.catchUp?.gate).toBe("WORK_CONFIRM");
+	});
+
+	await act(async () => {
+		await result.current.onCycleCompleteConfirm("keep");
+	});
+
+	expect(result.current.awaitingCheckIn).toBe(true);
 }
 
 async function driveWorkCycleToCheckIn(result: PomodoroCycleHookResult) {
@@ -3333,6 +3361,80 @@ describe("usePomodoroCycle", () => {
 
 			expect(result.current.state).toBe("running");
 			expect(result.current.cycleKind).toBe("SHORT_BREAK");
+		});
+
+		it("does not re-open check-in gate when createCheckIn returns CONFLICT", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 76,
+				startedAt: new Date(Date.now() - 120_000),
+				configuredDurationSec: 60,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+
+			createCheckInMutate.mockRejectedValueOnce(makeCheckInConflictError());
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await driveRecoveredExpiredCycleToCheckIn(result);
+
+			await act(async () => {
+				await result.current.submitCheckIn("STEADY");
+			});
+
+			await waitFor(() => {
+				expect(result.current.awaitingCheckIn).toBe(false);
+				expect(result.current.awaitingBreakChoice).toBe(true);
+				expect(result.current.pendingWedgeRecovery).toBeNull();
+				expect(result.current.state).toBe("completed");
+			});
+
+			expect(completeCycle).toHaveBeenCalledWith(
+				expect.objectContaining({
+					cycleId: 76,
+					markTaskDone: false,
+				}),
+			);
+		});
+
+		it("retry after CONFLICT proceeds to break choice without looping check-in", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 77,
+				configuredDurationSec: 300,
+				taskId: 4,
+				task: { id: 4, title: "Ship" },
+			});
+
+			createCheckInMutate
+				.mockRejectedValueOnce(new Error("network"))
+				.mockRejectedValueOnce(makeCheckInConflictError());
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await driveWorkCycleToCheckIn(result);
+
+			await act(async () => {
+				await result.current.submitCheckIn("STEADY");
+			});
+
+			await waitFor(() => {
+				expect(result.current.awaitingCheckIn).toBe(true);
+				expect(result.current.pendingWedgeRecovery?.phase).toBe("check_in");
+			});
+
+			await act(async () => {
+				await result.current.retryWedgeSync();
+			});
+
+			await waitFor(() => {
+				expect(result.current.awaitingCheckIn).toBe(false);
+				expect(result.current.awaitingBreakChoice).toBe(true);
+				expect(result.current.pendingWedgeRecovery).toBeNull();
+			});
 		});
 
 		const kickoffActiveTaskList = [

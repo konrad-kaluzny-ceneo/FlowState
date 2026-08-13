@@ -14,6 +14,15 @@ let sessions: Array<{
 	closureLine: string | null;
 	lastFocusedTaskId: number | null;
 }> = [];
+let cycles: Array<{
+	id: number;
+	sessionId: number;
+	userId: string;
+	state: string;
+	endedAt: Date | null;
+	pausedAt: Date | null;
+	remainingDurationSec: number | null;
+}> = [];
 let nextId = 1;
 
 vi.mock("~/server/db/index", () => ({
@@ -107,6 +116,46 @@ vi.mock("~/server/db/index", () => ({
 		cycle: {
 			findFirst: vi.fn(() => Promise.resolve(null)),
 			count: vi.fn(() => Promise.resolve(0)),
+			updateMany: vi.fn(
+				(args: {
+					where: {
+						sessionId?: number;
+						userId?: string;
+						state?: { in: string[] };
+					};
+					data: {
+						state?: string;
+						endedAt?: Date;
+						pausedAt?: null;
+						remainingDurationSec?: null;
+					};
+				}) => {
+					let count = 0;
+					for (const cycle of cycles) {
+						if (
+							args.where.sessionId != null &&
+							cycle.sessionId !== args.where.sessionId
+						) {
+							continue;
+						}
+						if (
+							args.where.userId != null &&
+							cycle.userId !== args.where.userId
+						) {
+							continue;
+						}
+						if (
+							args.where.state?.in != null &&
+							!args.where.state.in.includes(cycle.state)
+						) {
+							continue;
+						}
+						Object.assign(cycle, args.data);
+						count++;
+					}
+					return Promise.resolve({ count });
+				},
+			),
 		},
 		checkIn: {
 			findFirst: vi.fn(() => Promise.resolve(null)),
@@ -164,6 +213,7 @@ function sessionCaller() {
 describe("session router", () => {
 	beforeEach(() => {
 		sessions = [];
+		cycles = [];
 		nextId = 1;
 		vi.clearAllMocks();
 	});
@@ -239,6 +289,38 @@ describe("session router", () => {
 			);
 			expect(session.state).toBe("ACTIVE");
 			expect(sessions).toHaveLength(2);
+		});
+
+		it("interrupts orphan RUNNING cycles when stale session times out", async () => {
+			const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
+			sessions = [
+				{
+					id: 50,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: fiveHoursAgo,
+					endedAt: null,
+					closureLine: null,
+					lastFocusedTaskId: null,
+				},
+			];
+			cycles = [
+				{
+					id: 7,
+					sessionId: 50,
+					userId: USER_ID,
+					state: "RUNNING",
+					endedAt: null,
+					pausedAt: null,
+					remainingDurationSec: null,
+				},
+			];
+
+			await sessionCaller().getOrCreateActive();
+
+			expect(cycles[0]?.state).toBe("INTERRUPTED");
+			expect(cycles[0]?.endedAt).not.toBeNull();
 		});
 
 		it("returns existing session when lastActivityAt < 4h", async () => {

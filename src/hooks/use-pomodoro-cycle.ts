@@ -79,6 +79,7 @@ import {
 	OVERRIDE_ACK_VISIBLE_MS,
 } from "~/lib/suggestion/override-ack-copy";
 import { formatLocalDateKey } from "~/lib/time/local-date-key";
+import { isTrpcErrorCode } from "~/lib/trpc/error-code";
 import { beginSuggestionFetch } from "~/lib/trpc/suggestion-priority";
 import {
 	computeKickoffEligible,
@@ -2703,9 +2704,11 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 								cycleId: workCycleId,
 								energy,
 							});
-						} catch {
-							failureMessage = tErrors("checkInSaveFailed");
-							throw new Error("check-in-failed");
+						} catch (checkInError) {
+							if (!isTrpcErrorCode(checkInError, "CONFLICT")) {
+								failureMessage = tErrors("checkInSaveFailed");
+								throw new Error("check-in-failed");
+							}
 						}
 					}
 
@@ -3176,20 +3179,38 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 							setPendingMarkTaskDone(null);
 							setPendingMarkTaskBlocked(null);
 							setAwaitingWindDown(true);
-						} catch {
-							const recoveryMessage = tErrors("checkInSaveFailed");
-							pendingWedgeIntentRef.current = {
-								phase: "check_in",
-								energy,
-								markTaskDone,
-								workCycleId,
-							};
-							setPendingWedgeRecovery({
-								message: recoveryMessage,
-								phase: "check_in",
-								energy,
-							});
-							setError(recoveryMessage);
+						} catch (checkInError) {
+							if (isTrpcErrorCode(checkInError, "CONFLICT")) {
+								pendingWindDownMarkTaskDoneRef.current = markTaskDone;
+								pendingWindDownMarkTaskBlockedRef.current = markTaskBlocked;
+								pendingWindDownWorkCycleIdRef.current = workCycleId;
+								setWindDownRationale(
+									buildWindDownRationale({
+										energy,
+										completedWorkCycles,
+										interruptionCount: session.interruptionCount,
+										dismissed: windDownDismissed,
+									}),
+								);
+								setAwaitingCheckIn(false);
+								setPendingMarkTaskDone(null);
+								setPendingMarkTaskBlocked(null);
+								setAwaitingWindDown(true);
+							} else {
+								const recoveryMessage = tErrors("checkInSaveFailed");
+								pendingWedgeIntentRef.current = {
+									phase: "check_in",
+									energy,
+									markTaskDone,
+									workCycleId,
+								};
+								setPendingWedgeRecovery({
+									message: recoveryMessage,
+									phase: "check_in",
+									energy,
+								});
+								setError(recoveryMessage);
+							}
 						} finally {
 							setIsConfirming(false);
 						}

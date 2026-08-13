@@ -32,6 +32,20 @@ export async function findOrCreateActiveSession(
 					"timeout",
 				);
 
+			await database.cycle.updateMany({
+				where: {
+					sessionId: existing.id,
+					userId,
+					state: { in: ["RUNNING", "PAUSED"] },
+				},
+				data: {
+					state: "INTERRUPTED",
+					endedAt: new Date(),
+					pausedAt: null,
+					remainingDurationSec: null,
+				},
+			});
+
 			await database.session.update({
 				where: { id: existing.id },
 				data: {
