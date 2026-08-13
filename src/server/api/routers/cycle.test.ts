@@ -81,10 +81,24 @@ vi.mock("~/server/db/index", () => {
 	const findLatestCycle = (where: {
 		userId?: string;
 		state?: CycleWhereState;
+		session?: { state?: string; archivedAt?: null };
 	}) => {
 		const matching = cycles.filter((c) => {
 			if (where.userId != null && c.userId !== where.userId) return false;
 			if (!matchesState(c.state, where.state)) return false;
+			if (where.session != null) {
+				const session = sessions.find((s) => s.id === c.sessionId);
+				if (session == null) return false;
+				if (
+					where.session.state != null &&
+					session.state !== where.session.state
+				) {
+					return false;
+				}
+				if (where.session.archivedAt === null && session.archivedAt != null) {
+					return false;
+				}
+			}
 			return true;
 		});
 		matching.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
@@ -100,6 +114,7 @@ vi.mock("~/server/db/index", () => {
 							id?: number;
 							userId?: string;
 							state?: CycleWhereState;
+							session?: { state?: string; archivedAt?: null };
 						};
 						orderBy?: { startedAt: "desc" };
 						include?: { task: boolean };
@@ -456,6 +471,16 @@ describe("cycle router lifecycle", () => {
 		tasks = [
 			{ id: 10, title: "Focus task", status: "active", userId: USER_ID },
 		];
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+		];
 		cycles = [
 			{
 				id: 1,
@@ -781,6 +806,16 @@ describe("cycle router lifecycle", () => {
 	});
 
 	it("getActive returns PAUSED cycle", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+		];
 		cycles = [
 			{
 				id: 1,
@@ -1363,8 +1398,7 @@ describe("cycle router lifecycle", () => {
 			expect(result).toEqual([]);
 		});
 
-		it("documents getActive when session ended but cycle still RUNNING", async () => {
-			// getActive filters userId + RUNNING only â€” no session state join (cycle.ts:37-45)
+		it("getActive ignores RUNNING cycles on ended sessions", async () => {
 			sessions = [
 				{
 					id: 1,
@@ -1390,7 +1424,7 @@ describe("cycle router lifecycle", () => {
 			];
 
 			const result = await caller().getActive();
-			expect(result).toMatchObject({ id: 1, state: "RUNNING" });
+			expect(result).toBeNull();
 		});
 	});
 
