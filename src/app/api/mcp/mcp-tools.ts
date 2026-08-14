@@ -4,7 +4,6 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { ApiKeyScope } from "@prisma/generated";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-
 import {
 	buildMcpContext,
 	type VerifiedApiKey,
@@ -156,6 +155,12 @@ export type NextSuggestionInput = z.infer<typeof nextSuggestionSchema>;
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 export type CompleteTaskInput = z.infer<typeof completeTaskSchema>;
+export const getSessionStateSchema = z.object({
+	localDateKey: localDateKeySchema.optional(),
+	timeZone: z.string().min(1).optional(),
+});
+
+export type GetSessionStateInput = z.infer<typeof getSessionStateSchema>;
 
 // --- Shared context resolution -----------------------------------------------
 
@@ -180,10 +185,16 @@ export function listTasks(
 
 export function getSessionState(
 	caller: McpCaller,
+	input: GetSessionStateInput,
 	_scope: ApiKeyScope,
 ): Promise<CallToolResult> {
 	return runTool(async () => {
-		const activeCycle = await caller.cycle.getActive();
+		const localDateKey =
+			input.localDateKey ?? new Date().toISOString().slice(0, 10);
+		const activeCycle = await caller.cycle.getActive({
+			localDateKey,
+			timeZone: input.timeZone,
+		});
 		const sessionId =
 			activeCycle?.sessionId ?? (await resolveActiveSessionId(caller));
 
@@ -346,12 +357,13 @@ export function registerMcpTools(server: McpServer): void {
 		{
 			description:
 				"Read the current focus-session state: active cycle/task, completed work cycles, and latest check-in energy.",
+			inputSchema: getSessionStateSchema.shape,
 			annotations: { readOnlyHint: true },
 		},
-		(extra) => {
+		(args, extra) => {
 			const auth = resolveAuth(extra.authInfo);
 			if (auth == null) return unauthorizedResult();
-			return getSessionState(auth.caller, auth.scope);
+			return getSessionState(auth.caller, args, auth.scope);
 		},
 	);
 

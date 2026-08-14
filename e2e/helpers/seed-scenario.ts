@@ -8,6 +8,7 @@
 import { expect, type Page } from "@playwright/test";
 import { MIN_WORK_DURATION_SEC } from "../../src/lib/duration-bounds";
 import { STALE_TASK_ARCHIVE_DAYS } from "../../src/lib/task/stale-task-archive";
+import { formatLocalDateKey } from "../../src/lib/time/local-date-key";
 import { rehydrateFatigueSeedState } from "./cycle-recovery";
 import { dismissKickoffReadinessIfVisible } from "./idle-cycle";
 import { expectFocusPageReady } from "./task-list-locator";
@@ -107,11 +108,13 @@ async function endActiveSessionIfAny(page: Page) {
 /** Interrupt every RUNNING cycle until getActive is null (retries races with UI sync). */
 async function drainActiveCycles(page: Page, timeoutMs = 15_000) {
 	const deadline = Date.now() + timeoutMs;
+	const getActiveInput = { localDateKey: formatLocalDateKey() };
 
 	while (Date.now() < deadline) {
 		const active = await trpcQuery<{ id: number } | null>(
 			page,
 			"cycle.getActive",
+			getActiveInput,
 		);
 		if (active == null) {
 			return;
@@ -136,6 +139,7 @@ async function drainActiveCycles(page: Page, timeoutMs = 15_000) {
 	const remaining = await trpcQuery<{ id: number } | null>(
 		page,
 		"cycle.getActive",
+		getActiveInput,
 	);
 	if (remaining != null) {
 		throw new Error(

@@ -11,10 +11,16 @@ import {
 	markGuestTaskDoneForToday,
 } from "~/lib/guest/day-completions";
 import { loadSnapshot, mutateSnapshot } from "~/lib/guest/store";
+import { isCrossDayStaleSession } from "~/lib/session/cross-day-stale-session";
+import {
+	computeGuestSessionEndMetadata,
+	resolveGuestLastFocusedTaskId,
+} from "~/lib/session/guest-session-end-metadata";
 import {
 	getStaleArchiveCutoff,
 	matchesStaleArchivePredicate,
 } from "~/lib/task/stale-task-archive";
+import { formatLocalDateKey } from "~/lib/time/local-date-key";
 
 const GUEST_USER_ID = "guest";
 
@@ -452,46 +458,64 @@ export function createGuestTaskRepository(): TaskRepository {
 	};
 }
 
-function resolveGuestLastFocusedTaskId(
-	snapshot: ReturnType<typeof loadSnapshot>,
-	sessionId: string,
-): string | null {
-	const activeWorkCycle = [...snapshot.cycles]
-		.filter(
-			(cycle) =>
-				cycle.sessionId === sessionId &&
-				cycle.kind === "WORK" &&
-				(cycle.state === "RUNNING" || cycle.state === "PAUSED") &&
-				cycle.taskId != null,
-		)
-		.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())[0];
+function closeGuestCrossDayStaleSessionIfNeeded(localDateKey: string): void {
+	const snapshot = loadSnapshot();
+	const active = snapshot.sessions.find(
+		(session) => session.state === "ACTIVE",
+	);
 
-	if (activeWorkCycle?.taskId != null) {
-		return activeWorkCycle.taskId;
+	if (active == null || !isCrossDayStaleSession(active, localDateKey)) {
+		return;
 	}
 
-	const lastWorkCycle = [...snapshot.cycles]
-		.filter(
-			(cycle) =>
-				cycle.sessionId === sessionId &&
-				cycle.kind === "WORK" &&
-				cycle.taskId != null,
-		)
-		.sort((a, b) => {
-			const endedDiff =
-				(b.endedAt?.getTime() ?? 0) - (a.endedAt?.getTime() ?? 0);
-			if (endedDiff !== 0) {
-				return endedDiff;
-			}
-			return b.startedAt.getTime() - a.startedAt.getTime();
-		})[0];
+	const { closureLine, lastFocusedTaskId } = computeGuestSessionEndMetadata(
+		snapshot,
+		active.id,
+		"cross_day",
+	);
+	const now = new Date();
 
-	return lastWorkCycle?.taskId ?? null;
+	const { error } = mutateSnapshot((current) => ({
+		...current,
+		cycles: current.cycles.map((cycle) =>
+			cycle.sessionId === active.id &&
+			(cycle.state === "RUNNING" || cycle.state === "PAUSED")
+				? {
+						...cycle,
+						state: "INTERRUPTED" as const,
+						endedAt: now,
+						pausedAt: null,
+						remainingDurationSec: null,
+					}
+				: cycle,
+		),
+		sessions: current.sessions.map((session) =>
+			session.id === active.id
+				? {
+						...session,
+						state: "ENDED_BY_CROSS_DAY" as const,
+						endedAt: now,
+						closureLine,
+						lastFocusedTaskId,
+					}
+				: session,
+		),
+	}));
+
+	if (error != null) {
+		throw new Error(error);
+	}
 }
 
 export function createGuestSessionRepository(): SessionRepository {
 	return {
-		async getOrCreateActive() {
+		async getOrCreateActive(input?: {
+			localDateKey?: string;
+			timeZone?: string;
+		}) {
+			const localDateKey = input?.localDateKey ?? formatLocalDateKey();
+			closeGuestCrossDayStaleSessionIfNeeded(localDateKey);
+
 			const snapshot = loadSnapshot();
 			const active = snapshot.sessions.find((s) => s.state === "ACTIVE");
 
@@ -592,7 +616,9 @@ export function createGuestSessionRepository(): SessionRepository {
 
 export function createGuestCycleRepository(): CycleRepository {
 	return {
-		async getActive() {
+		async getActive(input: { localDateKey: string }) {
+			closeGuestCrossDayStaleSessionIfNeeded(input.localDateKey);
+
 			const snapshot = loadSnapshot();
 			const cycle =
 				snapshot.cycles.find(

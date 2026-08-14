@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { formatLocalDateKey } from "~/lib/time/local-date-key";
 
 vi.mock("~/lib/auth/server", () => ({
 	auth: { getSession: vi.fn() },
@@ -27,8 +28,37 @@ let nextId = 1;
 
 vi.mock("~/server/db/index", () => ({
 	db: {
+		$transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
 		session: {
-			findMany: vi.fn(() => Promise.resolve(sessions)),
+			findMany: vi.fn(
+				(args: {
+					where: {
+						userId?: string;
+						state?: string;
+						archivedAt?: null;
+					};
+					orderBy?: { lastActivityAt: "desc" };
+				}) => {
+					const matches = sessions.filter((s) => {
+						if (args.where.userId != null && s.userId !== args.where.userId)
+							return false;
+						if (args.where.state != null && s.state !== args.where.state)
+							return false;
+						if (args.where.archivedAt === null && s.archivedAt !== null) {
+							return false;
+						}
+						return true;
+					});
+
+					if (args.orderBy?.lastActivityAt === "desc") {
+						matches.sort(
+							(a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime(),
+						);
+					}
+
+					return Promise.resolve(matches);
+				},
+			),
 			findFirst: vi.fn(
 				(args: {
 					where: {
@@ -92,6 +122,7 @@ vi.mock("~/server/db/index", () => ({
 			updateMany: vi.fn(
 				(args: {
 					where: {
+						id?: number;
 						userId?: string;
 						state?: string;
 						archivedAt?: null;
@@ -100,6 +131,7 @@ vi.mock("~/server/db/index", () => ({
 				}) => {
 					let count = 0;
 					for (const s of sessions) {
+						if (args.where.id != null && s.id !== args.where.id) continue;
 						if (args.where.userId != null && s.userId !== args.where.userId)
 							continue;
 						if (args.where.state != null && s.state !== args.where.state)
@@ -169,12 +201,14 @@ vi.mock("~/server/api/lib/session-end-metadata", () => ({
 			_database: unknown,
 			_userId: string,
 			sessionId: number,
-			endedBy: "timeout" | "user" | "pause_cap",
+			endedBy: "timeout" | "user" | "pause_cap" | "cross_day",
 		) => ({
 			closureLine:
 				endedBy === "timeout"
 					? "Session complete — 2 cycles. Take a breath."
-					: "Session complete — 1 cycle. Take a breath.",
+					: endedBy === "cross_day"
+						? "Session complete — 1 cycle. Take a breath."
+						: "Session complete — 1 cycle. Take a breath.",
 			lastFocusedTaskId: sessionId === 50 ? 12 : 7,
 		}),
 	),
@@ -342,6 +376,56 @@ describe("session router", () => {
 
 			expect(session.id).toBe(60);
 			expect(sessions).toHaveLength(1);
+		});
+
+		it("ends cross-day stale session and creates new one when localDateKey differs", async () => {
+			const yesterday = new Date();
+			yesterday.setDate(yesterday.getDate() - 1);
+			sessions = [
+				{
+					id: 70,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: yesterday,
+					endedAt: null,
+					closureLine: null,
+					lastFocusedTaskId: null,
+				},
+			];
+			cycles = [
+				{
+					id: 8,
+					sessionId: 70,
+					userId: USER_ID,
+					state: "RUNNING",
+					endedAt: null,
+					pausedAt: null,
+					remainingDurationSec: null,
+				},
+			];
+
+			const todayKey = formatLocalDateKey();
+
+			const session = await sessionCaller().getOrCreateActive({
+				localDateKey: todayKey,
+			});
+
+			expect(session.id).not.toBe(70);
+			expect(sessions[0]?.state).toBe("ENDED_BY_CROSS_DAY");
+			expect(sessions[0]?.endedAt).not.toBeNull();
+			expect(sessions[0]?.closureLine).toBe(
+				"Session complete — 1 cycle. Take a breath.",
+			);
+			expect(cycles[0]?.state).toBe("INTERRUPTED");
+			expect(computeSessionEndMetadata).toHaveBeenCalledWith(
+				expect.anything(),
+				USER_ID,
+				70,
+				"cross_day",
+			);
+			expect(session.state).toBe("ACTIVE");
+			expect(sessions).toHaveLength(2);
 		});
 
 		it("does not reuse another user's active session", async () => {

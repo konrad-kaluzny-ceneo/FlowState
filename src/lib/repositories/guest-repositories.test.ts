@@ -6,12 +6,18 @@ import {
 	GUEST_STORAGE_KEY,
 	type GuestSnapshotV1,
 } from "~/lib/guest/schema";
-import { mutateSnapshot, saveSnapshot } from "~/lib/guest/store";
+import { loadSnapshot, mutateSnapshot, saveSnapshot } from "~/lib/guest/store";
 import { createGuestRepositories } from "~/lib/repositories/guest-repositories";
 import {
 	getStaleArchiveCutoff,
 	STALE_TASK_ARCHIVE_DAYS,
 } from "~/lib/task/stale-task-archive";
+import {
+	formatLocalDateKey,
+	subtractLocalDateKey,
+} from "~/lib/time/local-date-key";
+
+const TODAY_KEY = formatLocalDateKey();
 
 async function createActiveGuestTask(
 	tasks: ReturnType<typeof createGuestRepositories>["tasks"],
@@ -102,7 +108,7 @@ describe("guest repositories", () => {
 			taskId: task.id,
 		});
 
-		const active = await cycles.getActive();
+		const active = await cycles.getActive({ localDateKey: TODAY_KEY });
 		expect(active?.id).toBe(cycle.id);
 		expect(active?.task?.title).toBe("Focus me");
 	});
@@ -117,7 +123,7 @@ describe("guest repositories", () => {
 		});
 
 		const { cycles: cyclesAgain } = createGuestRepositories();
-		const active = await cyclesAgain.getActive();
+		const active = await cyclesAgain.getActive({ localDateKey: TODAY_KEY });
 
 		expect(active?.state).toBe("RUNNING");
 		expect(active?.task?.title).toBe("Persist me");
@@ -140,7 +146,9 @@ describe("guest repositories", () => {
 		expect(paused.state).toBe("PAUSED");
 		expect(paused.remainingDurationSec).toBe(420);
 
-		const activeWhilePaused = await cycles.getActive();
+		const activeWhilePaused = await cycles.getActive({
+			localDateKey: TODAY_KEY,
+		});
 		expect(activeWhilePaused?.state).toBe("PAUSED");
 
 		const resumed = await cycles.resume({ cycleId: created.id });
@@ -218,7 +226,7 @@ describe("guest repositories", () => {
 		saveSnapshot(snapshot);
 
 		const { cycles } = createGuestRepositories();
-		const active = await cycles.getActive();
+		const active = await cycles.getActive({ localDateKey: TODAY_KEY });
 
 		expect(active?.state).toBe("RUNNING");
 		expect(active?.startedAt).toEqual(startedAt);
@@ -370,7 +378,7 @@ describe("guest repositories", () => {
 
 		await cycles.complete({ cycleId: cycle.id, markTaskDone: true });
 
-		const active = await cycles.getActive();
+		const active = await cycles.getActive({ localDateKey: TODAY_KEY });
 		expect(active).toBeNull();
 
 		const updatedTask = (await tasks.list()).find(
@@ -390,7 +398,7 @@ describe("guest repositories", () => {
 
 		await cycles.complete({ cycleId: cycle.id, markTaskBlocked: true });
 
-		const active = await cycles.getActive();
+		const active = await cycles.getActive({ localDateKey: TODAY_KEY });
 		expect(active).toBeNull();
 
 		const updatedTask = (await tasks.list()).find(
@@ -448,7 +456,7 @@ describe("guest repositories", () => {
 		}));
 
 		const { cycles } = createGuestRepositories();
-		const active = await cycles.getActive();
+		const active = await cycles.getActive({ localDateKey: TODAY_KEY });
 
 		expect(active?.task).toBeNull();
 		expect(active?.taskId).not.toBeNull();
@@ -662,5 +670,223 @@ describe("guest repositories", () => {
 		await expect(tasks.deleteArchived({ ids: [activeId] })).rejects.toThrow(
 			"Only archived tasks can be deleted",
 		);
+	});
+});
+
+describe("guest repositories cross-day stale session", () => {
+	const YESTERDAY_KEY = subtractLocalDateKey(TODAY_KEY, 1);
+
+	function yesterdayAt(hour: number, minute = 0): Date {
+		const date = new Date(`${YESTERDAY_KEY}T12:00:00`);
+		date.setHours(hour, minute, 0, 0);
+		return date;
+	}
+
+	function seedStaleBreakSession() {
+		const sessionId = crypto.randomUUID();
+		const cycleId = crypto.randomUUID();
+		const lastActivityAt = yesterdayAt(23, 30);
+
+		saveSnapshot({
+			...createEmptyGuestSnapshot(),
+			sessions: [
+				{
+					id: sessionId,
+					state: "ACTIVE",
+					startedAt: yesterdayAt(9),
+					endedAt: null,
+					lastActivityAt,
+					interruptionCount: 0,
+				},
+			],
+			cycles: [
+				{
+					id: cycleId,
+					sessionId,
+					taskId: null,
+					kind: "SHORT_BREAK",
+					state: "RUNNING",
+					configuredDurationSec: 300,
+					startedAt: lastActivityAt,
+					endedAt: null,
+				},
+			],
+		});
+
+		return { sessionId, cycleId };
+	}
+
+	beforeEach(() => {
+		localStorage.clear();
+	});
+
+	afterEach(() => {
+		localStorage.clear();
+	});
+
+	it("getActive closes cross-day stale break and returns null", async () => {
+		const { sessionId, cycleId } = seedStaleBreakSession();
+		const { cycles } = createGuestRepositories();
+
+		const result = await cycles.getActive({ localDateKey: TODAY_KEY });
+
+		expect(result).toBeNull();
+		const snapshot = loadSnapshot();
+		expect(
+			snapshot.sessions.find((session) => session.id === sessionId)?.state,
+		).toBe("ENDED_BY_CROSS_DAY");
+		expect(
+			snapshot.sessions.find((session) => session.id === sessionId)
+				?.closureLine,
+		).toBeTruthy();
+		expect(snapshot.cycles.find((cycle) => cycle.id === cycleId)?.state).toBe(
+			"INTERRUPTED",
+		);
+		expect(
+			snapshot.cycles.find((cycle) => cycle.id === cycleId)?.endedAt,
+		).not.toBeNull();
+	});
+
+	it("getOrCreateActive closes stale session and creates a fresh active session", async () => {
+		seedStaleBreakSession();
+		const { sessions } = createGuestRepositories();
+
+		const session = await sessions.getOrCreateActive();
+
+		expect(session.state).toBe("ACTIVE");
+		const snapshot = loadSnapshot();
+		expect(
+			snapshot.sessions.filter((entry) => entry.state === "ACTIVE"),
+		).toHaveLength(1);
+		expect(
+			snapshot.sessions.filter((entry) => entry.state === "ACTIVE")[0]?.id,
+		).toBe(session.id);
+		expect(
+			snapshot.sessions.filter((entry) => entry.state === "ENDED_BY_CROSS_DAY"),
+		).toHaveLength(1);
+	});
+
+	it("same-day active break is returned unchanged", async () => {
+		const sessionId = crypto.randomUUID();
+		const cycleId = crypto.randomUUID();
+		const now = new Date();
+
+		saveSnapshot({
+			...createEmptyGuestSnapshot(),
+			sessions: [
+				{
+					id: sessionId,
+					state: "ACTIVE",
+					startedAt: now,
+					endedAt: null,
+					lastActivityAt: now,
+					interruptionCount: 0,
+				},
+			],
+			cycles: [
+				{
+					id: cycleId,
+					sessionId,
+					taskId: null,
+					kind: "SHORT_BREAK",
+					state: "RUNNING",
+					configuredDurationSec: 300,
+					startedAt: now,
+					endedAt: null,
+				},
+			],
+		});
+
+		const { cycles } = createGuestRepositories();
+		const result = await cycles.getActive({ localDateKey: TODAY_KEY });
+
+		expect(result).toMatchObject({
+			id: cycleId,
+			kind: "SHORT_BREAK",
+			state: "RUNNING",
+		});
+		expect(
+			loadSnapshot().sessions.find((session) => session.id === sessionId)
+				?.state,
+		).toBe("ACTIVE");
+	});
+
+	it("preserves prior-day completed work minutes after cross-day interrupt (S-52)", async () => {
+		const sessionId = crypto.randomUUID();
+		const workCycleId = crypto.randomUUID();
+		const breakCycleId = crypto.randomUUID();
+		const taskId = crypto.randomUUID();
+		const workStarted = yesterdayAt(10);
+		const workEnded = new Date(workStarted.getTime() + 20 * 60 * 1000);
+		const breakStarted = yesterdayAt(10, 25);
+
+		saveSnapshot({
+			...createEmptyGuestSnapshot(),
+			tasks: [
+				{
+					id: taskId,
+					title: "Yesterday work",
+					status: "active",
+					workType: "DEEP_WORK",
+					weight: 2,
+					...defaultEisenhowerFields(2),
+					sortOrder: 0,
+					resumeNote: null,
+					project: null,
+					createdAt: workStarted,
+					updatedAt: null,
+				},
+			],
+			sessions: [
+				{
+					id: sessionId,
+					state: "ACTIVE",
+					startedAt: yesterdayAt(9),
+					endedAt: null,
+					lastActivityAt: breakStarted,
+					interruptionCount: 0,
+				},
+			],
+			cycles: [
+				{
+					id: workCycleId,
+					sessionId,
+					taskId,
+					kind: "WORK",
+					state: "COMPLETED",
+					configuredDurationSec: 1500,
+					startedAt: workStarted,
+					endedAt: workEnded,
+				},
+				{
+					id: breakCycleId,
+					sessionId,
+					taskId: null,
+					kind: "SHORT_BREAK",
+					state: "RUNNING",
+					configuredDurationSec: 300,
+					startedAt: breakStarted,
+					endedAt: null,
+				},
+			],
+		});
+
+		const { cycles, recap } = createGuestRepositories();
+		await cycles.getActive({ localDateKey: TODAY_KEY });
+
+		const snapshot = loadSnapshot();
+		const workCycle = snapshot.cycles.find((cycle) => cycle.id === workCycleId);
+		expect(workCycle?.state).toBe("COMPLETED");
+
+		const yesterdayKey = formatLocalDateKey(workStarted);
+		const trend = await recap.getTrendStats({
+			todayLocalMidnightUtc: new Date(),
+			todayLocalDateKey: TODAY_KEY,
+			windowDays: 7,
+		});
+		const yesterdayPoint = trend.find(
+			(point) => point.localDateKey === yesterdayKey,
+		);
+		expect(yesterdayPoint?.focusMinutes).toBe(20);
 	});
 });

@@ -5,6 +5,23 @@ export function formatLocalDateKey(date: Date = new Date()): string {
 	return `${year}-${month}-${day}`;
 }
 
+/** Formats a date as YYYY-MM-DD in the given IANA timezone (for server-side cross-day checks). */
+export function formatLocalDateKeyInTimeZone(
+	date: Date,
+	timeZone: string,
+): string {
+	return new Intl.DateTimeFormat("en-CA", {
+		timeZone,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+	}).format(date);
+}
+
+export function getClientTimeZone(): string {
+	return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
 /** Subtracts whole calendar days from a YYYY-MM-DD key without a timezone. */
 export function subtractLocalDateKey(
 	localDateKey: string,

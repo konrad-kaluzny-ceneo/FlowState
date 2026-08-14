@@ -34,9 +34,24 @@ export const sessionRouter = createTRPCRouter({
 		}
 	}),
 
-	getOrCreateActive: protectedProcedure.mutation(async ({ ctx }) => {
-		return findOrCreateActiveSession(ctx.db, ctx.session.user.id);
-	}),
+	getOrCreateActive: protectedProcedure
+		.input(
+			z
+				.object({
+					localDateKey: z
+						.string()
+						.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD local date key")
+						.optional(),
+					timeZone: z.string().min(1).optional(),
+				})
+				.optional(),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return findOrCreateActiveSession(ctx.db, ctx.session.user.id, {
+				localDateKey: input?.localDateKey,
+				timeZone: input?.timeZone,
+			});
+		}),
 
 	end: protectedProcedure
 		.input(
@@ -113,7 +128,9 @@ export const sessionRouter = createTRPCRouter({
 				userId: ctx.session.user.id,
 				archivedAt: null,
 				endedAt: { not: null },
-				state: { in: ["ENDED_BY_USER", "ENDED_BY_TIMEOUT"] },
+				state: {
+					in: ["ENDED_BY_USER", "ENDED_BY_TIMEOUT", "ENDED_BY_CROSS_DAY"],
+				},
 			},
 			orderBy: { endedAt: "desc" },
 		});

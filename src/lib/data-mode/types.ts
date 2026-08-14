@@ -71,7 +71,7 @@ export type DomainActiveCycle = {
 export type DomainSession = {
 	id: DomainTaskId;
 	userId: string;
-	state: "ACTIVE" | "ENDED_BY_USER" | "ENDED_BY_TIMEOUT";
+	state: "ACTIVE" | "ENDED_BY_USER" | "ENDED_BY_TIMEOUT" | "ENDED_BY_CROSS_DAY";
 	startedAt: Date;
 	endedAt: Date | null;
 	lastActivityAt: Date;
@@ -129,7 +129,10 @@ export interface TaskRepository {
 }
 
 export interface CycleRepository {
-	getActive(): Promise<DomainActiveCycle | null>;
+	getActive(input: {
+		localDateKey: string;
+		timeZone?: string;
+	}): Promise<DomainActiveCycle | null>;
 	create(input: {
 		kind: "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 		configuredDurationSec: number;
@@ -154,7 +157,10 @@ export interface CycleRepository {
 }
 
 export interface SessionRepository {
-	getOrCreateActive(): Promise<DomainSession>;
+	getOrCreateActive(input?: {
+		localDateKey?: string;
+		timeZone?: string;
+	}): Promise<DomainSession>;
 	end(input?: {
 		closureLine?: string | null;
 		lastFocusedTaskId?: DomainTaskId | null;

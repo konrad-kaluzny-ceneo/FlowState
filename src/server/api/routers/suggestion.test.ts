@@ -7,7 +7,11 @@ vi.mock("~/lib/auth/server", () => ({
 type EnergyLevel = "FOCUSED" | "STEADY" | "FADING";
 type WorkType = "DEEP_WORK" | "OPERATIONAL" | "REACTIVE";
 type SuggestionContext = "POST_CHECK_IN" | "KICKOFF";
-type SessionState = "ACTIVE" | "ENDED_BY_USER" | "ENDED_BY_TIMEOUT";
+type SessionState =
+	| "ACTIVE"
+	| "ENDED_BY_USER"
+	| "ENDED_BY_TIMEOUT"
+	| "ENDED_BY_CROSS_DAY";
 
 type CycleRow = {
 	id: number;

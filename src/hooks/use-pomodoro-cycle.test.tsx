@@ -123,8 +123,11 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 }));
 
 vi.mock("~/lib/time/local-date-key", () => ({
-	formatLocalDateKey: () => "2026-06-19",
+	formatLocalDateKey: () => mockedLocalDateKey,
+	getClientTimeZone: () => "Europe/Warsaw",
 }));
+
+let mockedLocalDateKey = "2026-06-19";
 
 vi.mock("~/trpc/react", () => ({
 	api: {
@@ -422,6 +425,7 @@ describe("usePomodoroCycle", () => {
 
 	beforeEach(() => {
 		sessionStorage.clear();
+		mockedLocalDateKey = "2026-06-19";
 		resetActiveCycleRecoveryForTests();
 		activeCycleData = null;
 		fakeWorkers.length = 0;
@@ -1587,6 +1591,106 @@ describe("usePomodoroCycle", () => {
 			});
 
 			expect(result.current.pendingClosureLine).toBeNull();
+		});
+	});
+
+	describe("cross-day stale session recovery", () => {
+		it("presents closure on hydrate when last session ended by cross-day", async () => {
+			activeCycleData = null;
+			getActiveCycle.mockResolvedValue(null);
+			getLastEndedQuery.mockResolvedValue({
+				id: 55,
+				state: "ENDED_BY_CROSS_DAY",
+				closureLine: "Session complete — 1 cycle. Take a breath.",
+				endedAt: new Date(),
+			});
+			taskListQuery.mockResolvedValue([]);
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.pendingClosureLine).toBe(
+					"Session complete — 1 cycle. Take a breath.",
+				);
+			});
+			expect(result.current.state).toBe("idle");
+			expect(result.current.cycleKind).toBeNull();
+		});
+
+		it("does not resume false break when getActive returns null after cross-day close", async () => {
+			activeCycleData = null;
+			getActiveCycle.mockResolvedValue(null);
+			getLastEndedQuery.mockResolvedValue(null);
+			taskListQuery.mockResolvedValue([]);
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.isActiveCycleReady).toBe(true);
+			});
+
+			expect(result.current.state).toBe("idle");
+			expect(result.current.cycleKind).not.toBe("SHORT_BREAK");
+			expect(result.current.cycleKind).not.toBe("LONG_BREAK");
+			expect(result.current.hasActiveSession).toBe(false);
+		});
+
+		it("re-runs recovery when local date key changes on visibilitychange", async () => {
+			activeCycleData = makeActiveCycle({
+				id: 9,
+				kind: "SHORT_BREAK",
+				configuredDurationSec: 300,
+				taskId: null,
+				task: null,
+			});
+			getActiveCycle.mockImplementation(async () => activeCycleData);
+			getLastEndedQuery.mockResolvedValue(null);
+			taskListQuery.mockResolvedValue([]);
+
+			const { result } = renderHook(() => usePomodoroCycle(), {
+				wrapper: createWrapper(),
+			});
+
+			await waitFor(() => {
+				expect(result.current.cycleKind).toBe("SHORT_BREAK");
+			});
+			expect(getActiveCycle).toHaveBeenCalledTimes(1);
+
+			activeCycleData = null;
+			getLastEndedQuery.mockResolvedValue({
+				id: 55,
+				state: "ENDED_BY_CROSS_DAY",
+				closureLine: "Session complete — 1 cycle. Take a breath.",
+				endedAt: new Date(),
+			});
+			mockedLocalDateKey = "2026-06-20";
+
+			Object.defineProperty(document, "visibilityState", {
+				configurable: true,
+				get: () => "visible",
+			});
+
+			act(() => {
+				document.dispatchEvent(new Event("visibilitychange"));
+			});
+
+			await waitFor(() => {
+				expect(getActiveCycle).toHaveBeenCalledTimes(2);
+			});
+			expect(getActiveCycle).toHaveBeenLastCalledWith(
+				expect.objectContaining({ localDateKey: "2026-06-20" }),
+			);
+			await waitFor(() => {
+				expect(result.current.state).toBe("idle");
+			});
+			expect(result.current.cycleKind).toBeNull();
+			expect(result.current.pendingClosureLine).toBe(
+				"Session complete — 1 cycle. Take a breath.",
+			);
 		});
 	});
 

@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "SessionState" ADD VALUE 'ENDED_BY_CROSS_DAY';

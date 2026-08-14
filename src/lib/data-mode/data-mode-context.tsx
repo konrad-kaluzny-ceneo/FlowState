@@ -17,6 +17,7 @@ import {
 	createServerSessionRepository,
 	createServerTaskRepository,
 } from "~/lib/repositories/server-repositories";
+import { createTrpcRepositoryClient } from "~/lib/repositories/trpc-repository-client";
 import { api } from "~/trpc/react";
 
 type DataModeContextValue = Repositories & {
@@ -50,96 +51,7 @@ export function DataModeProvider({
 			};
 		}
 
-		const client = {
-			task: {
-				list: { fetch: () => utils.client.task.list.query() },
-				create: {
-					mutate: (
-						input: Parameters<typeof utils.client.task.create.mutate>[0],
-					) => utils.client.task.create.mutate(input),
-				},
-				update: {
-					mutate: (
-						input: Parameters<typeof utils.client.task.update.mutate>[0],
-					) => utils.client.task.update.mutate(input),
-				},
-				delete: {
-					mutate: (
-						input: Parameters<typeof utils.client.task.delete.mutate>[0],
-					) => utils.client.task.delete.mutate(input),
-				},
-				reorder: {
-					mutate: (
-						input: Parameters<typeof utils.client.task.reorder.mutate>[0],
-					) => utils.client.task.reorder.mutate(input),
-				},
-				archiveList: { fetch: () => utils.client.task.archiveList.query() },
-				restore: {
-					mutate: (
-						input: Parameters<typeof utils.client.task.restore.mutate>[0],
-					) => utils.client.task.restore.mutate(input),
-				},
-				deleteArchived: {
-					mutate: (
-						input: Parameters<
-							typeof utils.client.task.deleteArchived.mutate
-						>[0],
-					) => utils.client.task.deleteArchived.mutate(input),
-				},
-			},
-			cycle: {
-				getActive: { fetch: () => utils.client.cycle.getActive.query() },
-				create: {
-					mutate: (
-						input: Parameters<typeof utils.client.cycle.create.mutate>[0],
-					) => utils.client.cycle.create.mutate(input),
-				},
-				complete: {
-					mutate: (
-						input: Parameters<typeof utils.client.cycle.complete.mutate>[0],
-					) => utils.client.cycle.complete.mutate(input),
-				},
-				interrupt: {
-					mutate: (
-						input: Parameters<typeof utils.client.cycle.interrupt.mutate>[0],
-					) => utils.client.cycle.interrupt.mutate(input),
-				},
-				pause: {
-					mutate: (
-						input: Parameters<typeof utils.client.cycle.pause.mutate>[0],
-					) => utils.client.cycle.pause.mutate(input),
-				},
-				resume: {
-					mutate: (
-						input: Parameters<typeof utils.client.cycle.resume.mutate>[0],
-					) => utils.client.cycle.resume.mutate(input),
-				},
-			},
-			session: {
-				getOrCreateActive: {
-					mutate: () => utils.client.session.getOrCreateActive.mutate(),
-				},
-				end: {
-					mutate: (input?: {
-						closureLine?: string | null;
-						lastFocusedTaskId?: number;
-					}) =>
-						utils.client.session.end.mutate({
-							closureLine: input?.closureLine ?? undefined,
-							lastFocusedTaskId: input?.lastFocusedTaskId ?? undefined,
-						}),
-				},
-			},
-			recap: {
-				getTrendStats: {
-					fetch: (input: {
-						todayLocalMidnightUtc: Date;
-						todayLocalDateKey: string;
-						windowDays: 7 | 30;
-					}) => utils.client.recap.getTrendStats.query(input),
-				},
-			},
-		};
+		const client = createTrpcRepositoryClient(utils);
 
 		return {
 			mode,

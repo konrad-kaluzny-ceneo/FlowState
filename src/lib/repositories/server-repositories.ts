@@ -75,7 +75,7 @@ type TrendPoint = {
 	switchCount: number;
 };
 
-type TrpcClient = {
+export type TrpcClient = {
 	task: {
 		list: { fetch: () => Promise<DomainTask[]> };
 		create: { mutate: (input: CreateTaskInput) => Promise<DomainTask> };
@@ -89,7 +89,12 @@ type TrpcClient = {
 		};
 	};
 	cycle: {
-		getActive: { fetch: () => Promise<DomainActiveCycle | null> };
+		getActive: {
+			fetch: (input: {
+				localDateKey: string;
+				timeZone?: string;
+			}) => Promise<DomainActiveCycle | null>;
+		};
 		create: {
 			mutate: (
 				input: CreateCycleInput,
@@ -116,7 +121,12 @@ type TrpcClient = {
 		};
 	};
 	session: {
-		getOrCreateActive: { mutate: () => Promise<ServerSessionRow> };
+		getOrCreateActive: {
+			mutate: (input?: {
+				localDateKey?: string;
+				timeZone?: string;
+			}) => Promise<ServerSessionRow>;
+		};
 		end: {
 			mutate: (input: {
 				closureLine?: string;
@@ -185,7 +195,8 @@ export function createServerCycleRepository(
 	client: TrpcClient,
 ): CycleRepository {
 	return {
-		getActive: () => client.cycle.getActive.fetch(),
+		getActive: (input: { localDateKey: string; timeZone?: string }) =>
+			client.cycle.getActive.fetch(input),
 		create: (input) =>
 			client.cycle.create.mutate({
 				kind: input.kind,
@@ -246,8 +257,13 @@ export function createServerSessionRepository(
 	client: TrpcClient,
 ): SessionRepository {
 	return {
-		getOrCreateActive: async () =>
-			normalizeDomainSession(await client.session.getOrCreateActive.mutate()),
+		getOrCreateActive: async (input?: {
+			localDateKey?: string;
+			timeZone?: string;
+		}) =>
+			normalizeDomainSession(
+				await client.session.getOrCreateActive.mutate(input),
+			),
 		end: async (input?: {
 			closureLine?: string | null;
 			lastFocusedTaskId?: DomainTaskId | null;

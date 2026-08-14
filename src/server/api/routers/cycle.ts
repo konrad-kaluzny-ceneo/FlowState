@@ -9,11 +9,24 @@ import {
 } from "~/lib/duration-bounds";
 import { computeCycleFocusedMinutes } from "~/lib/recap/compute-cycle-focused-minutes";
 import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
-import { findOrCreateActiveSession } from "~/server/api/lib/active-session";
+import {
+	closeActiveSession,
+	findOrCreateActiveSession,
+	isCrossDayStaleSession,
+} from "~/server/api/lib/active-session";
 import { nextActiveSortOrder } from "~/server/api/routers/task";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const minWorkCycleSec = getMinWorkDurationSec();
+
+const localDateKeySchema = z
+	.string()
+	.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD local date key");
+
+const hydrateLocalContextSchema = z.object({
+	localDateKey: localDateKeySchema,
+	timeZone: z.string().min(1).optional(),
+});
 
 export const cycleRouter = createTRPCRouter({
 	list: protectedProcedure
@@ -71,20 +84,45 @@ export const cycleRouter = createTRPCRouter({
 			return checkIn?.energy ?? null;
 		}),
 
-	getActive: protectedProcedure.query(async ({ ctx }) => {
-		return ctx.db.cycle.findFirst({
-			where: {
-				userId: ctx.session.user.id,
-				state: { in: ["RUNNING", "PAUSED"] },
-				session: {
+	getActive: protectedProcedure
+		.input(hydrateLocalContextSchema)
+		.query(async ({ ctx, input }) => {
+			const activeSessions = await ctx.db.session.findMany({
+				where: {
+					userId: ctx.session.user.id,
 					state: "ACTIVE",
 					archivedAt: null,
 				},
-			},
-			orderBy: { startedAt: "desc" },
-			include: { task: true },
-		});
-	}),
+			});
+
+			for (const activeSession of activeSessions) {
+				if (
+					isCrossDayStaleSession(activeSession, input.localDateKey, {
+						timeZone: input.timeZone,
+					})
+				) {
+					await closeActiveSession(
+						ctx.db,
+						ctx.session.user.id,
+						activeSession.id,
+						"cross_day",
+					);
+				}
+			}
+
+			return ctx.db.cycle.findFirst({
+				where: {
+					userId: ctx.session.user.id,
+					state: { in: ["RUNNING", "PAUSED"] },
+					session: {
+						state: "ACTIVE",
+						archivedAt: null,
+					},
+				},
+				orderBy: { startedAt: "desc" },
+				include: { task: true },
+			});
+		}),
 
 	create: protectedProcedure
 		.input(

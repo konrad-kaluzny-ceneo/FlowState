@@ -91,7 +91,7 @@ function normalizeGuestTasks(
 export const guestSessionSchema = z.object({
 	id: z.string().uuid(),
 	state: z
-		.enum(["ACTIVE", "ENDED_BY_USER", "ENDED_BY_TIMEOUT"])
+		.enum(["ACTIVE", "ENDED_BY_USER", "ENDED_BY_TIMEOUT", "ENDED_BY_CROSS_DAY"])
 		.default("ACTIVE"),
 	startedAt: z.coerce.date(),
 	endedAt: z.coerce.date().nullable(),
