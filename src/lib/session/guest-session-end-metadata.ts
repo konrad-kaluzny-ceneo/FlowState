@@ -9,7 +9,7 @@ export type GuestSessionEndMetadata = {
 	lastFocusedTaskId: string | null;
 };
 
-function resolveGuestLastFocusedTaskId(
+export function resolveGuestLastFocusedTaskId(
 	snapshot: GuestSnapshotV1,
 	sessionId: string,
 ): string | null {

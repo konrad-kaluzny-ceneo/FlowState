@@ -7,7 +7,6 @@ import {
 	type GuestSnapshotV1,
 } from "~/lib/guest/schema";
 import { loadSnapshot, mutateSnapshot, saveSnapshot } from "~/lib/guest/store";
-import { aggregateDayStats } from "~/lib/recap/aggregate-day-stats";
 import { createGuestRepositories } from "~/lib/repositories/guest-repositories";
 import {
 	getStaleArchiveCutoff,
@@ -872,28 +871,22 @@ describe("guest repositories cross-day stale session", () => {
 			],
 		});
 
-		const { cycles } = createGuestRepositories();
+		const { cycles, recap } = createGuestRepositories();
 		await cycles.getActive({ localDateKey: TODAY_KEY });
 
 		const snapshot = loadSnapshot();
 		const workCycle = snapshot.cycles.find((cycle) => cycle.id === workCycleId);
 		expect(workCycle?.state).toBe("COMPLETED");
 
-		const stats = aggregateDayStats(
-			[
-				{
-					id: 1,
-					taskId: 1,
-					kind: "WORK",
-					state: "COMPLETED",
-					configuredDurationSec: workCycle?.configuredDurationSec ?? 0,
-					startedAt: workCycle?.startedAt ?? new Date(),
-					endedAt: workCycle?.endedAt ?? null,
-					task: { id: 1, status: "active", workType: "DEEP_WORK" },
-				},
-			],
-			0,
+		const yesterdayKey = formatLocalDateKey(workStarted);
+		const trend = await recap.getTrendStats({
+			todayLocalMidnightUtc: new Date(),
+			todayLocalDateKey: TODAY_KEY,
+			windowDays: 7,
+		});
+		const yesterdayPoint = trend.find(
+			(point) => point.localDateKey === yesterdayKey,
 		);
-		expect(stats.focusMinutes).toBe(20);
+		expect(yesterdayPoint?.focusMinutes).toBe(20);
 	});
 });

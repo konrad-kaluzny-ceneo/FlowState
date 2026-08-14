@@ -124,6 +124,7 @@ vi.mock("~/lib/data-mode/data-mode-context", () => ({
 
 vi.mock("~/lib/time/local-date-key", () => ({
 	formatLocalDateKey: () => mockedLocalDateKey,
+	getClientTimeZone: () => "Europe/Warsaw",
 }));
 
 let mockedLocalDateKey = "2026-06-19";
@@ -1680,6 +1681,9 @@ describe("usePomodoroCycle", () => {
 			await waitFor(() => {
 				expect(getActiveCycle).toHaveBeenCalledTimes(2);
 			});
+			expect(getActiveCycle).toHaveBeenLastCalledWith(
+				expect.objectContaining({ localDateKey: "2026-06-20" }),
+			);
 			await waitFor(() => {
 				expect(result.current.state).toBe("idle");
 			});

@@ -23,6 +23,11 @@ const localDateKeySchema = z
 	.string()
 	.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD local date key");
 
+const hydrateLocalContextSchema = z.object({
+	localDateKey: localDateKeySchema,
+	timeZone: z.string().min(1).optional(),
+});
+
 export const cycleRouter = createTRPCRouter({
 	list: protectedProcedure
 		.input(z.object({ sessionId: z.number().int().optional() }))
@@ -80,9 +85,9 @@ export const cycleRouter = createTRPCRouter({
 		}),
 
 	getActive: protectedProcedure
-		.input(z.object({ localDateKey: localDateKeySchema }))
+		.input(hydrateLocalContextSchema)
 		.query(async ({ ctx, input }) => {
-			const activeSession = await ctx.db.session.findFirst({
+			const activeSessions = await ctx.db.session.findMany({
 				where: {
 					userId: ctx.session.user.id,
 					state: "ACTIVE",
@@ -90,17 +95,19 @@ export const cycleRouter = createTRPCRouter({
 				},
 			});
 
-			if (
-				activeSession != null &&
-				isCrossDayStaleSession(activeSession, input.localDateKey)
-			) {
-				await closeActiveSession(
-					ctx.db,
-					ctx.session.user.id,
-					activeSession.id,
-					"cross_day",
-				);
-				return null;
+			for (const activeSession of activeSessions) {
+				if (
+					isCrossDayStaleSession(activeSession, input.localDateKey, {
+						timeZone: input.timeZone,
+					})
+				) {
+					await closeActiveSession(
+						ctx.db,
+						ctx.session.user.id,
+						activeSession.id,
+						"cross_day",
+					);
+				}
 			}
 
 			return ctx.db.cycle.findFirst({

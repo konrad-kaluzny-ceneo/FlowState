@@ -129,7 +129,10 @@ export interface TaskRepository {
 }
 
 export interface CycleRepository {
-	getActive(input: { localDateKey: string }): Promise<DomainActiveCycle | null>;
+	getActive(input: {
+		localDateKey: string;
+		timeZone?: string;
+	}): Promise<DomainActiveCycle | null>;
 	create(input: {
 		kind: "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 		configuredDurationSec: number;
@@ -154,7 +157,10 @@ export interface CycleRepository {
 }
 
 export interface SessionRepository {
-	getOrCreateActive(): Promise<DomainSession>;
+	getOrCreateActive(input?: {
+		localDateKey?: string;
+		timeZone?: string;
+	}): Promise<DomainSession>;
 	end(input?: {
 		closureLine?: string | null;
 		lastFocusedTaskId?: DomainTaskId | null;

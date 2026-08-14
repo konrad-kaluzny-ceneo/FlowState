@@ -78,7 +78,10 @@ import {
 	getOverrideAckLine,
 	OVERRIDE_ACK_VISIBLE_MS,
 } from "~/lib/suggestion/override-ack-copy";
-import { formatLocalDateKey } from "~/lib/time/local-date-key";
+import {
+	formatLocalDateKey,
+	getClientTimeZone,
+} from "~/lib/time/local-date-key";
 import { isTrpcErrorCode } from "~/lib/trpc/error-code";
 import { beginSuggestionFetch } from "~/lib/trpc/suggestion-priority";
 import {
@@ -449,6 +452,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	const audioRef = useRef(createAudioManager());
 	const recoveredRef = useRef(false);
 	const hydrateLocalDateKeyRef = useRef(formatLocalDateKey());
+	const hydrateTimeZoneRef = useRef(getClientTimeZone());
 	const prevDataModeRef = useRef(mode);
 	const activeCycleRecoveryGenRef = useRef(0);
 	const pendingIncrementInterruptionRef = useRef(false);
@@ -595,6 +599,14 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		setFocusedTask(null);
 		setFocusedTaskId(null);
 		setRemainingMs(0);
+		setAwaitingCheckIn(false);
+		awaitingCheckInRef.current = false;
+		setAwaitingBreakChoice(false);
+		setBreakChoicePending(false);
+		setAwaitingWindDown(false);
+		setPendingMarkTaskDone(null);
+		setPendingMarkTaskBlocked(null);
+		setCatchUp(null);
 		endTimeRef.current = null;
 		breakOvertimeEnteredRef.current = false;
 		tabWasHiddenWhileRunningRef.current = false;
@@ -1045,7 +1057,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		const recoveryGeneration = ++activeCycleRecoveryGenRef.current;
 
 		try {
-			const active = await cycles.getActive({ localDateKey });
+			const active = await cycles.getActive({
+				localDateKey,
+				timeZone: hydrateTimeZoneRef.current,
+			});
 
 			if (active != null) {
 				resumeFromActiveCycle(active);
@@ -1145,6 +1160,7 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		activeCycleRecoveredForMode = null;
 		activeCycleRecoveryDateKey = null;
 		hydrateLocalDateKeyRef.current = formatLocalDateKey();
+		hydrateTimeZoneRef.current = getClientTimeZone();
 		activeCycleRecoveryGenRef.current += 1;
 		setIsActiveCycleReady(false);
 	}, [mode]);
@@ -1237,8 +1253,12 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 	useEffect(() => {
 		const onVisibilityChange = () => {
 			const nextLocalDateKey = formatLocalDateKey();
-			if (nextLocalDateKey !== hydrateLocalDateKeyRef.current) {
+			if (
+				document.visibilityState === "visible" &&
+				nextLocalDateKey !== hydrateLocalDateKeyRef.current
+			) {
 				hydrateLocalDateKeyRef.current = nextLocalDateKey;
+				hydrateTimeZoneRef.current = getClientTimeZone();
 				clearRecoveredCycleUiState();
 				recoveredRef.current = false;
 				activeCycleRecoveredForMode = null;
@@ -1611,7 +1631,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				let sessionId =
 					_activeSessionId != null ? Number(_activeSessionId) : null;
 				if (sessionId == null) {
-					const session = await sessions.getOrCreateActive();
+					const session = await sessions.getOrCreateActive({
+						localDateKey: formatLocalDateKey(),
+						timeZone: getClientTimeZone(),
+					});
 					setActiveSessionId(session.id);
 					sessionId = Number(session.id);
 				}
@@ -1677,7 +1700,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 		void (async () => {
 			const gen = kickoffFetchGenRef.current;
 			try {
-				const session = await sessions.getOrCreateActive();
+				const session = await sessions.getOrCreateActive({
+					localDateKey: formatLocalDateKey(),
+					timeZone: getClientTimeZone(),
+				});
 				if (gen !== kickoffFetchGenRef.current) {
 					return;
 				}
@@ -1931,7 +1957,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 					}
 				}
 
-				const session = await sessions.getOrCreateActive();
+				const session = await sessions.getOrCreateActive({
+					localDateKey: formatLocalDateKey(),
+					timeZone: getClientTimeZone(),
+				});
 
 				if (cancelPendingStartRef.current) {
 					return;
@@ -2399,7 +2428,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 			setError(null);
 
 			try {
-				const session = await sessions.getOrCreateActive();
+				const session = await sessions.getOrCreateActive({
+					localDateKey: formatLocalDateKey(),
+					timeZone: getClientTimeZone(),
+				});
 				setActiveSessionId(session.id);
 				setHasActiveSession(true);
 
@@ -3200,7 +3232,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 
 			if (mode !== "guest") {
 				try {
-					const session = await sessions.getOrCreateActive();
+					const session = await sessions.getOrCreateActive({
+						localDateKey: formatLocalDateKey(),
+						timeZone: getClientTimeZone(),
+					});
 					const cyclesAtCheckIn =
 						effectiveWorkCyclesAtCheckIn(completedWorkCycles);
 
@@ -3358,7 +3393,10 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 				case "kickoff_session": {
 					const failureMessage = tErrors("sessionStartFailed");
 					try {
-						const session = await sessions.getOrCreateActive();
+						const session = await sessions.getOrCreateActive({
+							localDateKey: formatLocalDateKey(),
+							timeZone: getClientTimeZone(),
+						});
 						setActiveSessionId(session.id);
 						setSessionEnergyPending(true);
 						setPendingKickoffSuggestion({ status: "idle" });

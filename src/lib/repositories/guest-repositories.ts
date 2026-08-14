@@ -12,7 +12,10 @@ import {
 } from "~/lib/guest/day-completions";
 import { loadSnapshot, mutateSnapshot } from "~/lib/guest/store";
 import { isCrossDayStaleSession } from "~/lib/session/cross-day-stale-session";
-import { computeGuestSessionEndMetadata } from "~/lib/session/guest-session-end-metadata";
+import {
+	computeGuestSessionEndMetadata,
+	resolveGuestLastFocusedTaskId,
+} from "~/lib/session/guest-session-end-metadata";
 import {
 	getStaleArchiveCutoff,
 	matchesStaleArchivePredicate,
@@ -455,51 +458,14 @@ export function createGuestTaskRepository(): TaskRepository {
 	};
 }
 
-function resolveGuestLastFocusedTaskId(
-	snapshot: ReturnType<typeof loadSnapshot>,
-	sessionId: string,
-): string | null {
-	const activeWorkCycle = [...snapshot.cycles]
-		.filter(
-			(cycle) =>
-				cycle.sessionId === sessionId &&
-				cycle.kind === "WORK" &&
-				(cycle.state === "RUNNING" || cycle.state === "PAUSED") &&
-				cycle.taskId != null,
-		)
-		.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())[0];
-
-	if (activeWorkCycle?.taskId != null) {
-		return activeWorkCycle.taskId;
-	}
-
-	const lastWorkCycle = [...snapshot.cycles]
-		.filter(
-			(cycle) =>
-				cycle.sessionId === sessionId &&
-				cycle.kind === "WORK" &&
-				cycle.taskId != null,
-		)
-		.sort((a, b) => {
-			const endedDiff =
-				(b.endedAt?.getTime() ?? 0) - (a.endedAt?.getTime() ?? 0);
-			if (endedDiff !== 0) {
-				return endedDiff;
-			}
-			return b.startedAt.getTime() - a.startedAt.getTime();
-		})[0];
-
-	return lastWorkCycle?.taskId ?? null;
-}
-
-function closeGuestCrossDayStaleSessionIfNeeded(localDateKey: string): boolean {
+function closeGuestCrossDayStaleSessionIfNeeded(localDateKey: string): void {
 	const snapshot = loadSnapshot();
 	const active = snapshot.sessions.find(
 		(session) => session.state === "ACTIVE",
 	);
 
 	if (active == null || !isCrossDayStaleSession(active, localDateKey)) {
-		return false;
+		return;
 	}
 
 	const { closureLine, lastFocusedTaskId } = computeGuestSessionEndMetadata(
@@ -539,14 +505,15 @@ function closeGuestCrossDayStaleSessionIfNeeded(localDateKey: string): boolean {
 	if (error != null) {
 		throw new Error(error);
 	}
-
-	return true;
 }
 
 export function createGuestSessionRepository(): SessionRepository {
 	return {
-		async getOrCreateActive() {
-			const localDateKey = formatLocalDateKey();
+		async getOrCreateActive(input?: {
+			localDateKey?: string;
+			timeZone?: string;
+		}) {
+			const localDateKey = input?.localDateKey ?? formatLocalDateKey();
 			closeGuestCrossDayStaleSessionIfNeeded(localDateKey);
 
 			const snapshot = loadSnapshot();

@@ -67,7 +67,7 @@ Add `ENDED_BY_CROSS_DAY` session state, shared close helper, and cross-day guard
 
 **Intent**: Add `ENDED_BY_CROSS_DAY` to `SessionState` enum so cross-day closes are distinguishable from inactivity timeout.
 
-**Contract**: `enum SessionState { ACTIVE ENDED_BY_USER ENDED_BY_TIMEOUT ENDED_BY_CROSS_DAY }` — run `pnpm prisma migrate dev`.
+**Contract**: `enum SessionState { ACTIVE ENDED_BY_USER ENDED_BY_TIMEOUT ENDED_BY_CROSS_DAY }` — run `pnpm db:migrate`.
 
 #### 2. Narrative builder endedBy
 
@@ -125,7 +125,7 @@ Add `ENDED_BY_CROSS_DAY` session state, shared close helper, and cross-day guard
 
 #### Automated Verification:
 
-- `pnpm prisma migrate dev` applies cleanly
+- `pnpm db:migrate` applies cleanly
 - `pnpm typecheck` passes
 - `pnpm check` passes
 - `pnpm exec vitest run src/server/api/routers/session.test.ts` — add cross-day close tests for `getOrCreateActive`
@@ -322,7 +322,7 @@ Mirror server cross-day close semantics in guest repositories and finalize regre
 
 #### Automated
 
-- [x] 1.1 `pnpm prisma migrate dev` applies cleanly — ace8fe2
+- [x] 1.1 `pnpm db:migrate` applies cleanly — ace8fe2
 - [x] 1.2 `pnpm typecheck` passes — ace8fe2
 - [x] 1.3 `pnpm check` passes — ace8fe2
 - [x] 1.4 `pnpm exec vitest run src/server/api/routers/session.test.ts` — cross-day close tests pass — ace8fe2
@@ -342,9 +342,9 @@ Mirror server cross-day close semantics in guest repositories and finalize regre
 
 #### Manual
 
-- [x] 2.4 Auth manual: prior-day stale break → closure overlay + idle hub, no false break — verified via hook integration tests (cross-day stale session recovery) — 8366416
-- [x] 2.5 Tab-across-midnight: visibilitychange triggers recovery without reload — verified via hook test — 8366416
-- [x] 2.6 No false-break flash before closure (≤1s) — deferred to Phase 3 E2E/manual; hook tests assert idle not break on hydrate — 8366416
+- [ ] 2.4 Auth manual: prior-day stale break → closure overlay + idle hub, no false break
+- [ ] 2.5 Tab-across-midnight: visibilitychange triggers recovery without reload
+- [ ] 2.6 No false-break flash before closure (≤1s) — deferred to Phase 3 E2E/manual; hook tests assert idle not break on hydrate
 
 ### Phase 3: Guest parity + verification
 
@@ -357,5 +357,5 @@ Mirror server cross-day close semantics in guest repositories and finalize regre
 
 #### Manual
 
-- [x] 3.5 Guest manual: cross-day stale session → closure + idle — verified via guest-repositories + hook integration tests
-- [x] 3.6 Prior-day S-52 totals still honest after cross-day interrupt — verified via guest-repositories test (aggregateDayStats on COMPLETED work cycle)
+- [ ] 3.5 Guest manual: cross-day stale session → closure + idle
+- [ ] 3.6 Prior-day S-52 totals still honest after cross-day interrupt — automated coverage via guest-repositories recap test

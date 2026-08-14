@@ -28,8 +28,37 @@ let nextId = 1;
 
 vi.mock("~/server/db/index", () => ({
 	db: {
+		$transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
 		session: {
-			findMany: vi.fn(() => Promise.resolve(sessions)),
+			findMany: vi.fn(
+				(args: {
+					where: {
+						userId?: string;
+						state?: string;
+						archivedAt?: null;
+					};
+					orderBy?: { lastActivityAt: "desc" };
+				}) => {
+					const matches = sessions.filter((s) => {
+						if (args.where.userId != null && s.userId !== args.where.userId)
+							return false;
+						if (args.where.state != null && s.state !== args.where.state)
+							return false;
+						if (args.where.archivedAt === null && s.archivedAt !== null) {
+							return false;
+						}
+						return true;
+					});
+
+					if (args.orderBy?.lastActivityAt === "desc") {
+						matches.sort(
+							(a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime(),
+						);
+					}
+
+					return Promise.resolve(matches);
+				},
+			),
 			findFirst: vi.fn(
 				(args: {
 					where: {
@@ -93,6 +122,7 @@ vi.mock("~/server/db/index", () => ({
 			updateMany: vi.fn(
 				(args: {
 					where: {
+						id?: number;
 						userId?: string;
 						state?: string;
 						archivedAt?: null;
@@ -101,6 +131,7 @@ vi.mock("~/server/db/index", () => ({
 				}) => {
 					let count = 0;
 					for (const s of sessions) {
+						if (args.where.id != null && s.id !== args.where.id) continue;
 						if (args.where.userId != null && s.userId !== args.where.userId)
 							continue;
 						if (args.where.state != null && s.state !== args.where.state)
@@ -383,6 +414,9 @@ describe("session router", () => {
 			expect(session.id).not.toBe(70);
 			expect(sessions[0]?.state).toBe("ENDED_BY_CROSS_DAY");
 			expect(sessions[0]?.endedAt).not.toBeNull();
+			expect(sessions[0]?.closureLine).toBe(
+				"Session complete — 1 cycle. Take a breath.",
+			);
 			expect(cycles[0]?.state).toBe("INTERRUPTED");
 			expect(computeSessionEndMetadata).toHaveBeenCalledWith(
 				expect.anything(),

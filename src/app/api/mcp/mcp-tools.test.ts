@@ -368,7 +368,7 @@ describe("Feature: MCP server (S-46), curated tool delegation + scope gating", (
 	});
 
 	it("get_session_state reports no active session when none exists", async () => {
-		const result = await tools.getSessionState(callerFor(USER_A), "READ");
+		const result = await tools.getSessionState(callerFor(USER_A), {}, "READ");
 
 		expect(result.isError).toBeUndefined();
 		const payload = JSON.parse(textOf(result)) as {

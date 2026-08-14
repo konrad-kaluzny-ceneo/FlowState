@@ -296,6 +296,28 @@ vi.mock("~/server/db/index", () => {
 				),
 			},
 			session: {
+				findMany: vi.fn(
+					(args: {
+						where: {
+							userId?: string;
+							state?: string;
+							archivedAt?: null;
+						};
+					}) => {
+						return Promise.resolve(
+							sessions.filter((s) => {
+								if (args.where.userId != null && s.userId !== args.where.userId)
+									return false;
+								if (args.where.state != null && s.state !== args.where.state)
+									return false;
+								if (args.where.archivedAt === null && s.archivedAt !== null) {
+									return false;
+								}
+								return true;
+							}),
+						);
+					},
+				),
 				findFirst: vi.fn(
 					(args: {
 						where: {
@@ -355,6 +377,28 @@ vi.mock("~/server/db/index", () => {
 						}
 
 						return Promise.resolve(session);
+					},
+				),
+				updateMany: vi.fn(
+					(args: {
+						where: { id?: number; userId?: string };
+						data: Record<string, unknown>;
+					}) => {
+						let count = 0;
+						for (const session of sessions) {
+							if (args.where.id != null && session.id !== args.where.id) {
+								continue;
+							}
+							if (
+								args.where.userId != null &&
+								session.userId !== args.where.userId
+							) {
+								continue;
+							}
+							Object.assign(session, args.data);
+							count++;
+						}
+						return Promise.resolve({ count });
 					},
 				),
 			},
@@ -447,8 +491,15 @@ vi.mock("~/server/db/index", () => {
 				),
 			},
 			$transaction: vi.fn(
-				async (fn: (tx: typeof import("~/server/db/index").db) => unknown) => {
-					return fn((await import("~/server/db/index")).db);
+				async (
+					arg:
+						| Promise<unknown>[]
+						| ((tx: typeof import("~/server/db/index").db) => unknown),
+				) => {
+					if (Array.isArray(arg)) {
+						return Promise.all(arg);
+					}
+					return arg((await import("~/server/db/index")).db);
 				},
 			),
 		},
@@ -566,6 +617,9 @@ describe("cycle router lifecycle", () => {
 		expect(result).toBeNull();
 		expect(sessions[0]?.state).toBe("ENDED_BY_CROSS_DAY");
 		expect(sessions[0]?.endedAt).not.toBeNull();
+		expect(sessions[0]?.closureLine).toBe(
+			"Session complete — 1 cycle. Take a breath.",
+		);
 		expect(cycles[0]?.state).toBe("INTERRUPTED");
 		expect(cycles[0]?.endedAt).not.toBeNull();
 	});

@@ -18,7 +18,6 @@ export async function closeActiveSession(
 	sessionId: number,
 	reason: ActiveSessionCloseReason,
 ): Promise<void> {
-	const endedBy = reason === "timeout" ? "timeout" : "cross_day";
 	const sessionState =
 		reason === "timeout" ? "ENDED_BY_TIMEOUT" : "ENDED_BY_CROSS_DAY";
 
@@ -26,36 +25,40 @@ export async function closeActiveSession(
 		database,
 		userId,
 		sessionId,
-		endedBy,
+		reason,
 	);
 
-	await database.cycle.updateMany({
-		where: {
-			sessionId,
-			userId,
-			state: { in: ["RUNNING", "PAUSED"] },
-		},
-		data: {
-			state: "INTERRUPTED",
-			endedAt: new Date(),
-			pausedAt: null,
-			remainingDurationSec: null,
-		},
-	});
+	const endedAt = new Date();
 
-	await database.session.update({
-		where: { id: sessionId },
-		data: {
-			state: sessionState,
-			endedAt: new Date(),
-			closureLine,
-			lastFocusedTaskId,
-		},
-	});
+	await database.$transaction([
+		database.cycle.updateMany({
+			where: {
+				sessionId,
+				userId,
+				state: { in: ["RUNNING", "PAUSED"] },
+			},
+			data: {
+				state: "INTERRUPTED",
+				endedAt,
+				pausedAt: null,
+				remainingDurationSec: null,
+			},
+		}),
+		database.session.updateMany({
+			where: { id: sessionId, userId },
+			data: {
+				state: sessionState,
+				endedAt,
+				closureLine,
+				lastFocusedTaskId,
+			},
+		}),
+	]);
 }
 
 export type FindOrCreateActiveSessionOptions = {
 	localDateKey?: string;
+	timeZone?: string;
 };
 
 export async function findOrCreateActiveSession(
@@ -63,26 +66,38 @@ export async function findOrCreateActiveSession(
 	userId: string,
 	options?: FindOrCreateActiveSessionOptions,
 ): Promise<Session> {
-	const existing = await database.session.findFirst({
+	const activeSessions = await database.session.findMany({
 		where: {
 			userId,
 			state: "ACTIVE",
 			archivedAt: null,
 		},
+		orderBy: { lastActivityAt: "desc" },
 	});
 
-	if (existing) {
+	for (const existing of activeSessions) {
 		if (
 			options?.localDateKey != null &&
-			isCrossDayStaleSession(existing, options.localDateKey)
+			isCrossDayStaleSession(existing, options.localDateKey, {
+				timeZone: options.timeZone,
+			})
 		) {
 			await closeActiveSession(database, userId, existing.id, "cross_day");
-
-			return database.session.create({
-				data: { userId },
-			});
 		}
+	}
 
+	const remainingSessions = await database.session.findMany({
+		where: {
+			userId,
+			state: "ACTIVE",
+			archivedAt: null,
+		},
+		orderBy: { lastActivityAt: "desc" },
+	});
+
+	const existing = remainingSessions[0];
+
+	if (existing != null) {
 		const now = Date.now();
 		const lastActivity = existing.lastActivityAt.getTime();
 

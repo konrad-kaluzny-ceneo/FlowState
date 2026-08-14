@@ -42,12 +42,14 @@ export const sessionRouter = createTRPCRouter({
 						.string()
 						.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD local date key")
 						.optional(),
+					timeZone: z.string().min(1).optional(),
 				})
 				.optional(),
 		)
 		.mutation(async ({ ctx, input }) => {
 			return findOrCreateActiveSession(ctx.db, ctx.session.user.id, {
 				localDateKey: input?.localDateKey,
+				timeZone: input?.timeZone,
 			});
 		}),
 
