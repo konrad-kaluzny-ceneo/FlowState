@@ -16,14 +16,14 @@ Plan dnia today shows a blurred “Kalendarz wkrótce” mock while focus budget
 
 ## Desired End State
 
-A logged-in user opens Plan dnia, sees a **06:00–22:00 scrollable timeline**, adds/moves/resizes blocks with **15-minute snap**, attaches **one focus task** or **multiple batch tasks** (with optional meta label), assigns **fixed or custom GTD context**, and all changes persist per `localDateKey` with **optimistic UI** and **overlap prevention**. Guest users still see the blurred mock. Budget panel and delegation card remain unchanged below the timeline.
+A logged-in user opens Plan dnia, sees a **06:00–22:00 scrollable timeline**, adds/moves/resizes blocks with **15-minute snap**, attaches **one focus task** or **multiple batch tasks** (with optional meta label), assigns **fixed or custom GTD context**, and all changes persist per `localDateKey` with **optimistic UI** and **overlap prevention**. Guest users see the `guestEmpty` sign-in card only — no blurred “coming soon” calendar. Budget panel and delegation card remain unchanged below the timeline.
 
 ## Key Decisions Made
 
 | Decision | Choice | Why (1 sentence) | Source |
 | -------- | ------ | ------------------ | ------ |
-| Guest schedule | Auth-only | Matches current day-plan auth pattern; avoids guest snapshot scope creep | Plan |
-| GTD context | Fixed enum + per-user custom tags table | Bounded defaults with reusable user labels — not free-form per block | Plan |
+| Guest schedule | Auth-only; guest UI is `guestEmpty` (no calendar mock) | Matches day-plan auth pattern; “coming soon” would be false once the timeline ships | Plan + review F1 |
+| GTD context | Fixed enum + per-user custom tags; XOR on the block | Bounded defaults; at most one context source | Plan + review F9 |
 | Block attachments | Full FR-002 in S-54 | Focus 0–1 task; batch checklist + optional meta label | Plan |
 | Timeline UX | Drag + resize on axis | Custom `@dnd-kit/core` Draggable + Y→minute mapping — not task-list SortableContext | Plan |
 | Overlaps | Prevent (server reject) | Keeps axis readable; simpler than column stacking | Plan |
@@ -40,7 +40,7 @@ A logged-in user opens Plan dnia, sees a **06:00–22:00 scrollable timeline**, 
 
 ## Architecture / Approach
 
-New `ScheduleBlock` (+ join table for batch tasks, `UserContextTag` for custom contexts) keyed by `(userId, localDateKey)` — independent of whether a `DayPlan` budget row exists. Extend `dayPlan` tRPC with block CRUD and overlap validation. New `useDaySchedule` hook wraps optimistic mutations. `DayScheduleTimeline` component replaces `ComingSoonPreview` for auth users; guest branch unchanged.
+New `ScheduleBlock` (+ join table for batch tasks, `UserContextTag` for custom contexts) keyed by `(userId, localDateKey)` — independent of whether a `DayPlan` budget row exists. Extend `dayPlan` tRPC with block CRUD and overlap validation. New `useDaySchedule` hook wraps optimistic mutations. `DayScheduleTimeline` replaces `ComingSoonPreview` for auth users; guest keeps `guestEmpty` only (mock calendar deleted).
 
 ```
 Plan page (auth) → useDaySchedule → dayPlan.listBlocks / mutations → ScheduleBlock tables

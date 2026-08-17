@@ -5,11 +5,11 @@ status: draft
 created: 2026-05-26
 updated: 2026-08-17
 structure: split
-active_slices: []
+active_slices: ["S-54"]
 prd_version: 3
 prd_v4_horizon: context/foundation/prd-v4.md
 main_goal: quality
-top_blocker: S-54 day-schedule-timeline (proposed)
+top_blocker: S-54 day-schedule-timeline (active)
 ---
 
 # Roadmap: FlowState
@@ -106,7 +106,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-51 | blocked-task-status | [FLO-104](https://linear.app/flowstate-10xdev/issue/FLO-104) | — | mark a started task as blocked (waiting on someone/something) from the task list, at session end, and next to "Gotowe" mid-cycle; blocking mid-cycle hands off to a break like completion does; blocked tasks leave the suggestion pool | F-07, S-45, S-50 | **US-06** | done |
 | S-52 | focus-and-break-time-totals | [FLO-105](https://linear.app/flowstate-10xdev/issue/FLO-105) | — | see honest "Twój dzień" totals — all time actually spent in focus cycles **and** on breaks, including cycles/breaks stopped early and cycles ended by finishing the task; paused time excluded; counts forward only (no backfill of past days) | S-24, S-30, S-42, S-45, S-50 | **US-07** | done |
 | S-53 | fix-cross-day-stale-session | [FLO-108](https://linear.app/flowstate-10xdev/issue/FLO-108) | [#219](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/219) | returning on a new day no longer shows a false break — prior session closes calmly with honest totals | S-52, F-07 | **US-18**, FR-014 | done |
-| S-54 | day-schedule-timeline | _pending_ | [#220](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/220) | Plan dnia shows a real daily time axis with editable blocks replacing the calendar placeholder | S-53, S-45, S-27 | **US-08**, US-15, FR-001–004 | proposed |
+| S-54 | day-schedule-timeline | _pending_ | [#220](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/220) | Plan dnia shows a real daily time axis with editable blocks replacing the calendar placeholder | S-53, S-45, S-27 | **US-08**, US-15, FR-001–004 | active |
 | S-55 | planning-session-mode | _pending_ | [#221](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/221) | start "Teraz planuję" and elapsed planning time counts as work in day totals | S-54 | **US-14**, FR-005 | proposed |
 | S-56 | recurrence-weekly-patterns | _pending_ | [#222](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/222) | recurring RRULE patterns materialize editable blocks on each new local day | S-54 | **US-09**, FR-003, FR-006 | proposed |
 | S-57 | work-day-segments-off-session | _pending_ | [#223](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/223) | declare work segments and see off-session time accrue only inside active windows | S-54, S-55 | **US-16**, US-17, FR-009–011 | proposed |
@@ -192,7 +192,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-51 | blocked-task-status | **done** | US-06; implemented + merged PR [#206](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/206) 2026-07-17; archived 2026-07-23. Linear [FLO-104](https://linear.app/flowstate-10xdev/issue/FLO-104) closed 2026-08-07; no GitHub issue (code shipped directly) |
 | S-52 | focus-and-break-time-totals | **done** | US-07; implemented + merged PR [#205](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/205) 2026-07-17; archived 2026-07-23. Linear [FLO-105](https://linear.app/flowstate-10xdev/issue/FLO-105) closed 2026-08-07; no GitHub issue (code shipped directly) |
 | S-53 | fix-cross-day-stale-session | **done** | PRD v4 batch 8; US-18; merged PR [#232](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/232); [FLO-108](https://linear.app/flowstate-10xdev/issue/FLO-108) / [#219](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/219) closed |
-| S-54 | day-schedule-timeline | **no** | after S-53; v4 foundation; GitHub [#220](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/220) |
+| S-54 | day-schedule-timeline | **yes** | after S-53; v4 foundation; GitHub [#220](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/220); implementing on `features/day-schedule-timeline` |
 | S-55 | planning-session-mode | **no** | after S-54; parallel S-56; outside wedge gates; GitHub [#221](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/221) |
 | S-56 | recurrence-weekly-patterns | **no** | after S-54; parallel S-55; RRULE library in plan; GitHub [#222](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/222) |
 | S-57 | work-day-segments-off-session | **no** | after S-54, S-55; GitHub [#223](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/223) |

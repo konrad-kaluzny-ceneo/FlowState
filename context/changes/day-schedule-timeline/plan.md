@@ -2,7 +2,7 @@
 
 ## Overview
 
-Replace the Plan dnia “Kalendarz wkrótce” placeholder with a real, persisted daily time axis for authenticated users. Blocks (focus, meeting, break, personal, planning, batch) are created, moved, and resized on a 06:00–22:00 timeline with 15-minute snap, optimistic mutations, overlap prevention, task attachments (FR-002), and GTD context (FR-004). Guest users keep the existing blurred mock.
+Replace the Plan dnia “Kalendarz wkrótce” placeholder with a real, persisted daily time axis for authenticated users. Blocks (focus, meeting, break, personal, planning, batch) are created, moved, and resized on a 06:00–22:00 timeline with 15-minute snap, optimistic mutations, overlap prevention, task attachments (FR-002), and GTD context (FR-004). Guest users see the existing `guestEmpty` sign-in card only — no blurred calendar mock (the calendar exists for accounts; teasing “coming soon” would be false).
 
 ## Current State Analysis
 
@@ -30,7 +30,7 @@ A logged-in user on `/plan`:
 4. Gets a **validation error** (no silent overlap) if a move would conflict with another block.
 5. Edits a block to attach **0–1 focus task** or **multiple batch tasks**, optional **meta label** on batch blocks, and **fixed or custom GTD context**.
 6. Reloads the page — blocks remain for today's `localDateKey`.
-7. Guest users still see `ComingSoonPreview` + `DayCalendarMock` unchanged.
+7. Guest users see `guestEmpty` only — no `ComingSoonPreview`, no `DayCalendarMock`.
 
 ### Verification
 
@@ -62,11 +62,13 @@ Greenfield schedule domain attached to `(userId, localDateKey)`. Phase 1 lands s
 
 **Block persistence without budget:** `ScheduleBlock` uses `(userId, localDateKey)` directly — do not require a `DayPlan` row. Budget panel continues to lazy-create `DayPlan` only on `setBudget` / `setEnergy`.
 
-**Task IDs:** `Task.id` is `Int` (autoincrement) — `focusTaskId` and batch `taskIds` use `number` / `z.number().int()`, not string cuids.
+**Task IDs:** `Task.id` is `Int` (autoincrement) — `focusTaskId` and batch `taskIds` use `number` / `z.number().int()`, not string cuids. `ScheduleBlock.id` and `UserContextTag.id` are also `Int @default(autoincrement())`; `blockId` / `tagId` / `customContextTagId` use `z.number().int()`.
 
-**Guest branch:** Do not mount `DayScheduleTimeline` or call block queries when `mode === "guest"`. Preserve `ComingSoonPreview` path exactly. Guest `Repositories` includes a `schedule` stub that throws if invoked — UI must never call it.
+**Context XOR:** At most one of `fixedContext` and `customContextTagId` may be non-null. Both null is allowed (no context). Reject payloads that set both; the edit modal clears the other field in the same mutation.
 
-**localDateKey rollover:** `useDaySchedule` must consume the same `localDateKey` as `useDayPlan` (compose in view or export from `useDayPlan`). On visibility rollover, invalidate `dayPlan.listBlocks` for the new key alongside existing `getOrCreate` / `task.list` invalidations.
+**Guest branch:** Do not mount `DayScheduleTimeline` or call block queries when `mode === "guest"`. Delete `DayCalendarMock`, `CALENDAR_HOURS`, `CALENDAR_BLOCKS`, and the `ComingSoonPreview` wrapper — guest keeps the `guestEmpty` card (“Plan dnia jest dostępny po zalogowaniu.”). Guest `Repositories` includes a `schedule` stub that throws if invoked — UI must never call it.
+
+**localDateKey rollover:** `useDaySchedule` must consume the same `localDateKey` as `useDayPlan` — passed from `AuthenticatedPlanPage` (do not maintain a separate date key in the view). On visibility rollover, invalidate `dayPlan.listBlocks` for the new key alongside existing `getOrCreate` / `task.list` invalidations (in `useDayPlan`'s existing listener or a `useEffect` in `useDaySchedule` keyed on `localDateKey`).
 
 **PLANNING blocks:** Schedule slot only in S-54 — no “Teraz planuję” runtime, elapsed tracking, or wedge gates (S-55 / FR-005).
 
@@ -87,9 +89,11 @@ Introduce persisted schedule entities, enums, and shared domain types used by ro
 **Contract**:
 - Enum `ScheduleBlockType`: `FOCUS`, `MEETING`, `BREAK`, `PERSONAL`, `PLANNING`, `BATCH`
 - Enum `GtdFixedContext`: `PHONE`, `COMPUTER`, `OFFICE`, `ERRANDS` (nullable on block — context optional)
-- Model `UserContextTag`: `id`, `userId`, `label` (varchar bounded, e.g. 32), `createdAt`; `@@unique([userId, label])`; `@@map("flow_state_user_context_tag")`
-- Model `ScheduleBlock`: `id`, `userId`, `localDateKey` (VarChar 10), `blockType`, `startMinute` (Int, axis-validated 360–1305), `durationMinutes` (Int ≥ 15), optional `metaLabel` (batch display), optional `fixedContext`, optional `customContextTagId` FK, optional `focusTaskId` Int FK → `Task` (FOCUS only), timestamps; index `(userId, localDateKey)`; `@@map("flow_state_schedule_block")`
-- Model `ScheduleBlockTask`: `scheduleBlockId`, `taskId`, `sortOrder`; `@@unique([scheduleBlockId, taskId])`; `@@map("flow_state_schedule_block_task")`
+- Model `UserContextTag`: `id Int @id @default(autoincrement())`, `userId` (plain string, no User FK), `label` (varchar bounded, e.g. 32), `createdAt`, `updatedAt`; `@@unique([userId, label])`; `@@map("flow_state_user_context_tag")`
+- Model `ScheduleBlock`: `id Int @id @default(autoincrement())`, `userId`, `localDateKey` (VarChar 10), `blockType`, `startMinute` (Int, axis-validated 360–1305), `durationMinutes` (Int ≥ 15), optional `metaLabel` (batch display), optional `fixedContext`, optional `customContextTagId` FK, optional `focusTaskId` Int FK → `Task` (`onDelete: SetNull`, FOCUS only), `createdAt` / `updatedAt`; index `(userId, localDateKey)`; `@@map("flow_state_schedule_block")`
+- Model `ScheduleBlockTask`: `scheduleBlockId`, `taskId` (`onDelete: Cascade` — join rows drop when the task is deleted; batch block remains), `sortOrder`; `@@unique([scheduleBlockId, taskId])`; `@@map("flow_state_schedule_block_task")`
+- Add opposite Prisma relations on `Task` (`scheduleFocusBlocks`, `scheduleBatchLinks`) — required for the FKs; no `User` model (plain `userId` string, same as `DayPlan`)
+- When `focusTaskId` is null after task delete, timeline chip shows block type only (no task title)
 - Run `pnpm prisma migrate dev` — never hand-write SQL.
 
 #### 2. Domain types & validation helpers
@@ -107,7 +111,7 @@ Introduce persisted schedule entities, enums, and shared domain types used by ro
 
 **Files**: `messages/pl.json`, `messages/en.json`
 
-**Intent**: Add `PlanDnia` namespace keys for block type labels, axis errors, context names, edit panel copy — remove reliance on mock-only `blockFocus` etc. where superseded.
+**Intent**: Add `PlanDnia` namespace keys for block type labels, axis errors, context names, edit panel copy. Remove mock-only keys (`blockFocus`, `blockMeeting`, `blockBreak`, `blockPersonal`, `calendarComingSoon`) once `DayCalendarMock` is deleted in Phase 3. Keep `guestEmpty`.
 
 **Contract**: Keys for six block types, overlap error, add/edit/delete actions, fixed context enum labels, custom tag create placeholder.
 
@@ -148,6 +152,7 @@ Extend `dayPlan` router with block and context-tag procedures; add auth reposito
 - `createBlock`, `updateBlock`, `deleteBlock` — validate snap (% 15 === 0), duration ≥ 15, axis bounds (see Critical Implementation Details), no overlap; each mutator runs in a transaction with same-day block re-read before write
 - `focusTaskId` allowed only when `blockType === FOCUS`; at most one non-null
 - `ScheduleBlockTask` rows only when `blockType === BATCH`
+- **Type change (same transaction):** FOCUS → other nulls `focusTaskId`; BATCH → other deletes `ScheduleBlockTask` rows and nulls `metaLabel`; other → FOCUS/BATCH starts with empty attachments. Reject a payload that keeps leftover attachments on an incompatible type
 - Map Prisma rows to `DomainScheduleBlock`
 
 #### 2. Extend dayPlan router
@@ -158,14 +163,14 @@ Extend `dayPlan` router with block and context-tag procedures; add auth reposito
 
 **Contract** (all `protectedProcedure`):
 - `listBlocks({ localDateKey })` → `DomainScheduleBlock[]`
-- `createBlock({ localDateKey, blockType, startMinute, durationMinutes, metaLabel?, fixedContext?, customContextTagId? })`
-- `updateBlock({ blockId, ...partial fields including startMinute/durationMinutes })`
-- `deleteBlock({ blockId })`
+- `createBlock({ localDateKey, blockType, startMinute, durationMinutes, metaLabel?, fixedContext?, customContextTagId? })` — reject if both context fields are non-null; `customContextTagId` is `z.number().int()`
+- `updateBlock({ blockId: z.number().int(), ...partial fields including blockType, startMinute, durationMinutes, fixedContext, customContextTagId })` — type change follows schedule-blocks cleanup rules above; context XOR same as create
+- `deleteBlock({ blockId: z.number().int() })`
 - `setBlockFocusTask({ blockId, taskId | null })`
 - `setBlockBatchTasks({ blockId, taskIds: number[] })`
 - `listContextTags()` → user tags
 - `createContextTag({ label })` — trim, strip control chars, max 32 chars, dedupe via unique constraint; reject when user already has 50 tags
-- `deleteContextTag({ tagId })` — reject with calm message if any block still references the tag (do not null FK silently)
+- `deleteContextTag({ tagId: z.number().int() })` — reject with calm message if any block still references the tag (do not null FK silently)
 - Overlap failure → `TRPCError` code `CONFLICT` with calm message key for i18n
 
 #### 3. Repository interface (auth-only impl)
@@ -221,7 +226,7 @@ Extend `dayPlan` router with block and context-tag procedures; add auth reposito
 
 ### Overview
 
-Replace `ComingSoonPreview` calendar mock for authenticated users with interactive `DayScheduleTimeline` — 06:00–22:00 axis, drag, resize, 15-minute snap, optimistic block CRUD.
+Replace `ComingSoonPreview` + `DayCalendarMock` with interactive `DayScheduleTimeline` for authenticated users — 06:00–22:00 axis, drag, resize, 15-minute snap, optimistic block CRUD. Delete the mock entirely; guests keep `guestEmpty` only.
 
 ### Changes Required:
 
@@ -254,26 +259,26 @@ Replace `ComingSoonPreview` calendar mock for authenticated users with interacti
 
 **File**: `src/app/_components/plan-dnia-view.tsx`
 
-**Intent**: Swap mock for real timeline when auth + schedule loaded; remove `DayCalendarMock`, `CALENDAR_HOURS`, `CALENDAR_BLOCKS` constants.
+**Intent**: Auth path renders `DayScheduleTimeline`. Delete `DayCalendarMock`, `CALENDAR_HOURS`, `CALENDAR_BLOCKS`, and `ComingSoonPreview` from this view — the calendar is no longer “coming soon”.
 
 **Contract**:
 - Auth path: render `<DayScheduleTimeline />` above budget panel
-- Guest path: unchanged `ComingSoonPreview` + `DayCalendarMock` until guest parity slice
+- Guest path: `guestEmpty` card only (no calendar preview, no “Kalendarz wkrótce”)
 - Loading skeleton for timeline while `useDaySchedule.isLoading`
 
 #### 4. Plan page wiring
 
 **File**: `src/app/plan/page.tsx`
 
-**Intent**: Pass schedule hook into view or let view compose hooks internally (prefer view composes if `useDayPlan` already there).
+**Intent**: `AuthenticatedPlanPage` calls `useDayPlan` and `useDaySchedule` and passes both into `PlanDniaView`. Do not compose `useDaySchedule` inside the view while `useDayPlan` stays on the page. Guest page stays hook-free (`dayPlan={undefined}`).
 
-**Contract**: Authenticated page mounts timeline without regressing budget/delegation sections.
+**Contract**: Authenticated page mounts timeline without regressing budget/delegation sections. `useDaySchedule` receives `localDateKey` from the page's `useDayPlan()` return (single source).
 
 #### 5. Component tests
 
 **File**: `src/app/_components/day-schedule-timeline.test.tsx` (new), update `plan-dnia-view.test.tsx`
 
-**Intent**: Assert auth renders timeline test ids; guest still sees `plan-dnia-calendar-preview`; overlap error surfaces.
+**Intent**: Assert auth renders timeline test ids; guest does **not** render `plan-dnia-calendar-preview` and still shows `plan-dnia-guest-empty`; overlap error surfaces.
 
 **Contract**: Mock `useDaySchedule`; do not require full dnd pointer simulation in unit tests — test render + callback wiring.
 
@@ -289,7 +294,7 @@ Replace `ComingSoonPreview` calendar mock for authenticated users with interacti
 
 - Add block at 09:00, drag to 10:30, resize to 45 min — reload persists
 - Attempt overlap — block snaps back with error message
-- Guest `/plan` still shows blurred mock
+- Guest `/plan` shows `guestEmpty` only — no blurred calendar
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
 
@@ -307,14 +312,15 @@ Block edit panel for FR-002 (focus task picker, batch checklist + meta label) an
 
 **File**: `src/app/_components/schedule-block-edit-panel.tsx` (new)
 
-**Intent**: Sheet or inline popover opened from block click — edit type, times, context, attachments.
+**Intent**: `ModalShell` (same primitive as `TaskDetailPanel` in `overlay-shell.tsx`) opened from block click — edit type, times, context, attachments. Do not add Sheet/Popover/Dialog primitives.
 
 **Contract**:
-- FOCUS: single task combobox from active tasks (reuse task list filtering patterns)
-- BATCH: multi-select checklist of active tasks + optional `metaLabel` text field (both per user decision)
-- Context: radio/select for fixed enum + dropdown of `UserContextTag` + “Add tag” inline create
+- FOCUS: single task combobox from **active or planned** tasks (same filter as Fokus picker / delegation pool; reuse task list filtering patterns)
+- BATCH: multi-select checklist of **active or planned** tasks + optional `metaLabel` text field (both per user decision)
+- Context: radio/select for fixed enum + dropdown of `UserContextTag` + “Add tag” inline create; choosing one clears the other (XOR with server reject if both set)
 - Delete block action with confirm
 - Meeting/break/personal/planning: context optional; no task attachments except batch/focus rules
+- Tiny time tweaks may stay on the timeline chip; type / attachments / context open `ModalShell`
 
 #### 2. Wire panel to timeline
 
@@ -328,7 +334,7 @@ Block edit panel for FR-002 (focus task picker, batch checklist + meta label) an
 
 **File**: `src/server/api/lib/schedule-blocks.ts`
 
-**Intent**: Reject attaching tasks not owned by user or not `active` status.
+**Intent**: Reject attaching tasks not owned by user or not `active`/`planned` status (reject `completed`, `archived`, `blocked`, `delegated`).
 
 **Contract**: Validate `taskId` on attachment mutations; batch preserves `sortOrder` from input array.
 
@@ -381,8 +387,8 @@ Harden test coverage, add belt e2e smoke for Plan dnia schedule, update roadmap 
 **Intent**: Authenticated worker opens `/plan`, creates block via API seed or UI, asserts timeline renders block chip.
 
 **Contract**: Tag `@skip-belt` only for cases requiring fragile drag simulation; belt case uses tRPC seed + visibility assert.
-- Follow `e2e/seed.spec.ts` auth fixture pattern
-- Use `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` from `.env` per lessons L-04
+- Import `{ expect, test }` from `e2e/fixtures.ts` (worker `storageState` from `e2e/.auth/worker-{n}.json` — same as `e2e/seed.spec.ts`). Do **not** UI-login with `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD`.
+- Seed blocks via `page.request` tRPC helpers modeled on `e2e/helpers/daily-plan.ts` (`trpcMutation` / `dayPlan.setBudget`), calling `dayPlan.createBlock` once Phase 2 exists.
 
 #### 3. MCP optional read extension
 
@@ -409,7 +415,7 @@ Harden test coverage, add belt e2e smoke for Plan dnia schedule, update roadmap 
 
 #### Manual Verification:
 
-- Full auth manual walkthrough on `/plan`: create day, edit attachments, next-day empty timeline (new `localDateKey`)
+- Full auth manual walkthrough on `/plan`: create day, edit attachments, next-day empty timeline (new `localDateKey`). For agent browser login, read `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` from `.env` (lessons — manual verification only; never paste values into the plan).
 - Verify budget panel and delegation still work below timeline
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
@@ -430,7 +436,7 @@ Harden test coverage, add belt e2e smoke for Plan dnia schedule, update roadmap 
 
 - Two-user isolation on same date key
 - Delete context tag blocked when in use (reject, not cascade null)
-- Attach completed/archived task rejected
+- Attach completed/archived/blocked/delegated task rejected; `active` and `planned` allowed
 - Axis overflow (block ending after 22:00) rejected
 - Concurrent overlap attempt: second transaction returns CONFLICT (mock or integration)
 
@@ -440,7 +446,7 @@ Harden test coverage, add belt e2e smoke for Plan dnia schedule, update roadmap 
 2. Create batch block 10:00–10:30 with meta label + 2 tasks.
 3. Drag focus block to overlap batch — expect error, no persistence.
 4. Reload — blocks remain.
-5. Open as guest — mock calendar still blurred.
+5. Open as guest — `guestEmpty` sign-in card, no calendar mock.
 
 ## Performance Considerations
 
@@ -451,7 +457,7 @@ Harden test coverage, add belt e2e smoke for Plan dnia schedule, update roadmap 
 ## Migration Notes
 
 - New tables only — no backfill; existing users see empty timeline until they add blocks.
-- Removing mock strings from i18n optional if still used by guest mock labels.
+- Remove unused mock i18n keys (`calendarComingSoon`, `blockFocus`, etc.) in Phase 3 when `DayCalendarMock` is deleted. Keep `guestEmpty`.
 
 ## References
 
@@ -470,14 +476,14 @@ Harden test coverage, add belt e2e smoke for Plan dnia schedule, update roadmap 
 
 #### Automated
 
-- [ ] 1.1 Migration applies cleanly: `pnpm prisma migrate dev`
-- [ ] 1.2 `pnpm check` and `pnpm typecheck` pass
-- [ ] 1.3 `pnpm exec vitest run src/lib/schedule/overlap.test.ts`
-- [ ] 1.4 `pnpm exec vitest run src/lib/schedule/snap.test.ts`
+- [x] 1.1 Migration applies cleanly: `pnpm prisma migrate dev`
+- [x] 1.2 `pnpm check` and `pnpm typecheck` pass
+- [x] 1.3 `pnpm exec vitest run src/lib/schedule/overlap.test.ts`
+- [x] 1.4 `pnpm exec vitest run src/lib/schedule/snap.test.ts`
 
 #### Manual
 
-- [ ] 1.5 Prisma Studio shows new tables after migrate
+- [x] 1.5 Prisma Studio shows new tables after migrate
 
 ### Phase 2: Repository & tRPC
 
@@ -501,7 +507,7 @@ Harden test coverage, add belt e2e smoke for Plan dnia schedule, update roadmap 
 
 #### Manual
 
-- [ ] 3.4 Manual drag/resize/reload persist; guest still sees mock
+- [ ] 3.4 Manual drag/resize/reload persist; guest sees `guestEmpty` only (no calendar mock)
 
 ### Phase 4: Attachments & Context
 
