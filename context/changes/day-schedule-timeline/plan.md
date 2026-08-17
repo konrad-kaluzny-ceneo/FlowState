@@ -489,25 +489,25 @@ Harden test coverage, add belt e2e smoke for Plan dnia schedule, update roadmap 
 
 #### Automated
 
-- [x] 2.1 `pnpm check` and `pnpm typecheck` pass
-- [x] 2.2 `pnpm exec vitest run src/server/api/routers/day-plan.test.ts src/server/api/routers/day-plan-schedule.integration.test.ts src/server/api/routers/day-plan-schedule-isolation.test.ts`
-- [x] 2.3 `pnpm test` full suite green
+- [x] 2.1 `pnpm check` and `pnpm typecheck` pass — 4ad0efc
+- [x] 2.2 `pnpm exec vitest run src/server/api/routers/day-plan.test.ts src/server/api/routers/day-plan-schedule.integration.test.ts src/server/api/routers/day-plan-schedule-isolation.test.ts` — 4ad0efc
+- [x] 2.3 `pnpm test` full suite green — 4ad0efc
 
 #### Manual
 
-- [x] 2.4 tRPC manual: overlap CONFLICT and context tag assign persist
+- [x] 2.4 tRPC manual: overlap CONFLICT and context tag assign persist — 4ad0efc
 
 ### Phase 3: Timeline UI
 
 #### Automated
 
-- [ ] 3.1 `pnpm check` and `pnpm typecheck` pass
-- [ ] 3.2 `pnpm exec vitest run src/app/_components/day-schedule-timeline.test.tsx src/app/_components/plan-dnia-view.test.tsx`
-- [ ] 3.3 `pnpm test` full suite green
+- [x] 3.1 `pnpm check` and `pnpm typecheck` pass
+- [x] 3.2 `pnpm exec vitest run src/app/_components/day-schedule-timeline.test.tsx src/app/_components/plan-dnia-view.test.tsx`
+- [x] 3.3 `pnpm test` full suite green
 
 #### Manual
 
-- [ ] 3.4 Manual drag/resize/reload persist; guest sees `guestEmpty` only (no calendar mock)
+- [x] 3.4 Manual drag/resize/reload persist; guest sees `guestEmpty` only (no calendar mock)
 
 ### Phase 4: Attachments & Context
 

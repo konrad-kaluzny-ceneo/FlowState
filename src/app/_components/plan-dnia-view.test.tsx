@@ -2,12 +2,14 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { useDayPlan } from "~/hooks/use-day-plan";
+import type { useDaySchedule } from "~/hooks/use-day-schedule";
 import type { useDelegationSuggestion } from "~/hooks/use-delegation-suggestion";
 import { IntlTestWrapper } from "~/i18n/test-intl";
 
 import { PlanDniaView } from "./plan-dnia-view";
 
 type DayPlan = ReturnType<typeof useDayPlan>;
+type DaySchedule = ReturnType<typeof useDaySchedule>;
 type DelegationSuggestion = ReturnType<typeof useDelegationSuggestion>;
 
 const delegationSuggestionMock = vi.fn<() => DelegationSuggestion>();
@@ -67,6 +69,23 @@ function makeDayPlan(overrides: Partial<DayPlan> = {}): DayPlan {
 	};
 }
 
+function makeDaySchedule(overrides: Partial<DaySchedule> = {}): DaySchedule {
+	return {
+		blocks: [],
+		isLoading: false,
+		error: null,
+		createBlock: vi.fn().mockResolvedValue(undefined),
+		updateBlock: vi.fn().mockResolvedValue(undefined),
+		deleteBlock: vi.fn().mockResolvedValue(undefined),
+		setBlockFocusTask: vi.fn().mockResolvedValue(undefined),
+		setBlockBatchTasks: vi.fn().mockResolvedValue(undefined),
+		contextTags: [],
+		createContextTag: vi.fn().mockResolvedValue(undefined),
+		deleteContextTag: vi.fn().mockResolvedValue(undefined),
+		...overrides,
+	};
+}
+
 function renderView(ui: ReactElement) {
 	return render(<IntlTestWrapper>{ui}</IntlTestWrapper>);
 }
@@ -83,10 +102,14 @@ describe("PlanDniaView", () => {
 		renderView(<PlanDniaView dayPlan={undefined} />);
 
 		expect(screen.getByTestId("plan-dnia-guest-empty")).toBeTruthy();
+		expect(screen.queryByTestId("plan-dnia-calendar-preview")).toBeNull();
+		expect(screen.queryByTestId("schedule-timeline")).toBeNull();
 	});
 
 	it("shows the set-budget prompt when no budget is set", () => {
-		renderView(<PlanDniaView dayPlan={makeDayPlan()} />);
+		renderView(
+			<PlanDniaView dayPlan={makeDayPlan()} daySchedule={makeDaySchedule()} />,
+		);
 
 		expect(screen.getByTestId("focus-budget-prompt")).toBeTruthy();
 		expect(screen.queryByTestId("plan-dnia-summary")).toBeNull();
@@ -101,6 +124,7 @@ describe("PlanDniaView", () => {
 					usedMinutes: 60,
 					remainingMinutes: 180,
 				})}
+				daySchedule={makeDaySchedule()}
 			/>,
 		);
 
@@ -109,16 +133,27 @@ describe("PlanDniaView", () => {
 		expect(screen.getByTestId("plan-dnia-change-btn")).toBeTruthy();
 	});
 
-	it("shows the blurred calendar coming-soon preview", () => {
-		renderView(<PlanDniaView dayPlan={makeDayPlan()} />);
+	it("renders the auth timeline and never the calendar coming-soon preview", () => {
+		renderView(
+			<PlanDniaView dayPlan={makeDayPlan()} daySchedule={makeDaySchedule()} />,
+		);
 
-		expect(screen.getByTestId("plan-dnia-calendar-preview")).toBeTruthy();
-		expect(screen.getByText("Calendar coming soon")).toBeTruthy();
-		expect(
-			screen
-				.getByTestId("plan-dnia-calendar-preview-mock")
-				.getAttribute("aria-hidden"),
-		).toBe("true");
+		expect(screen.getByTestId("schedule-timeline")).toBeTruthy();
+		expect(screen.queryByTestId("plan-dnia-calendar-preview")).toBeNull();
+		expect(screen.queryByText("Calendar coming soon")).toBeNull();
+	});
+
+	it("surfaces an overlap error from the schedule hook", () => {
+		renderView(
+			<PlanDniaView
+				dayPlan={makeDayPlan()}
+				daySchedule={makeDaySchedule({
+					error: "This block overlaps another — pick a different time.",
+				})}
+			/>,
+		);
+
+		expect(screen.getByRole("alert").textContent).toContain("overlaps");
 	});
 
 	it("lets the user change an already-set budget", async () => {
@@ -132,6 +167,7 @@ describe("PlanDniaView", () => {
 					remainingMinutes: 180,
 					setBudget,
 				})}
+				daySchedule={makeDaySchedule()}
 			/>,
 		);
 
@@ -161,6 +197,7 @@ describe("PlanDniaView", () => {
 					usedMinutes: 60,
 					remainingMinutes: 180,
 				})}
+				daySchedule={makeDaySchedule()}
 			/>,
 		);
 
@@ -188,6 +225,7 @@ describe("PlanDniaView", () => {
 					usedMinutes: 60,
 					remainingMinutes: 180,
 				})}
+				daySchedule={makeDaySchedule()}
 			/>,
 		);
 
@@ -216,7 +254,12 @@ describe("PlanDniaView", () => {
 	});
 
 	it("shows nothing for the delegation card while the day plan is loading", () => {
-		renderView(<PlanDniaView dayPlan={makeDayPlan({ isLoading: true })} />);
+		renderView(
+			<PlanDniaView
+				dayPlan={makeDayPlan({ isLoading: true })}
+				daySchedule={makeDaySchedule({ isLoading: true })}
+			/>,
+		);
 
 		expect(screen.queryByTestId("delegation-suggestion-card")).toBeNull();
 		expect(delegationSuggestionMock).not.toHaveBeenCalled();

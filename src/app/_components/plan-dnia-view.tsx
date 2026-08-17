@@ -3,10 +3,11 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 
+import { DayScheduleTimeline } from "~/app/_components/day-schedule-timeline";
 import { DelegationSuggestionCard } from "~/app/_components/delegation-suggestion-card";
 import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
-import { ComingSoonPreview } from "~/app/_components/ui/coming-soon-preview";
 import type { useDayPlan } from "~/hooks/use-day-plan";
+import type { useDaySchedule } from "~/hooks/use-day-schedule";
 import { useDelegationSuggestion } from "~/hooks/use-delegation-suggestion";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
 import { formatFocusMinutes } from "~/lib/time/format-focus-minutes";
@@ -14,85 +15,10 @@ import { api } from "~/trpc/react";
 
 const PRESET_HOURS_MINUTES = [120, 240, 360] as const;
 
-const CALENDAR_HOURS = [
-	"08:00",
-	"09:00",
-	"10:00",
-	"11:00",
-	"12:00",
-	"13:00",
-	"14:00",
-	"15:00",
-	"16:00",
-	"17:00",
-	"18:00",
-] as const;
-
-const CALENDAR_BLOCKS = [
-	{
-		topRem: 2.5,
-		heightRem: 5,
-		className: "bg-worktype-deep-bg text-worktype-deep-text",
-		labelKey: "blockFocus" as const,
-	},
-	{
-		topRem: 8,
-		heightRem: 2.5,
-		className: "bg-worktype-ops-bg text-worktype-ops-text",
-		labelKey: "blockMeeting" as const,
-	},
-	{
-		topRem: 11,
-		heightRem: 2.5,
-		className: "bg-surface-break text-accent-break",
-		labelKey: "blockBreak" as const,
-	},
-	{
-		topRem: 14.5,
-		heightRem: 3.5,
-		className: "bg-energy-fading-bg text-energy-fading",
-		labelKey: "blockPersonal" as const,
-	},
-] as const;
-
 type PlanDniaViewProps = {
 	dayPlan: ReturnType<typeof useDayPlan> | undefined;
+	daySchedule?: ReturnType<typeof useDaySchedule>;
 };
-
-function DayCalendarMock() {
-	const t = useTranslations("PlanDnia");
-
-	return (
-		<div className="min-h-[22rem] p-5">
-			<div className="relative ml-12">
-				{CALENDAR_HOURS.map((hour) => (
-					<div
-						className="flex h-10 items-start border-border-subtle/60 border-t first:border-t-0"
-						key={hour}
-					>
-						<span className="-ml-12 w-10 shrink-0 text-right text-text-dimmed text-xs">
-							{hour}
-						</span>
-					</div>
-				))}
-				<div className="absolute inset-x-0 top-0">
-					{CALENDAR_BLOCKS.map((block) => (
-						<div
-							className={`absolute right-0 left-0 rounded-lg px-3 py-2 font-medium text-xs ${block.className}`}
-							key={block.labelKey}
-							style={{
-								top: `${block.topRem}rem`,
-								height: `${block.heightRem}rem`,
-							}}
-						>
-							{t(block.labelKey)}
-						</div>
-					))}
-				</div>
-			</div>
-		</div>
-	);
-}
 
 function BudgetPanel({
 	dayPlan,
@@ -277,7 +203,7 @@ function DelegationSuggestionSection() {
 	);
 }
 
-export function PlanDniaView({ dayPlan }: PlanDniaViewProps) {
+export function PlanDniaView({ dayPlan, daySchedule }: PlanDniaViewProps) {
 	const t = useTranslations("PlanDnia");
 
 	return (
@@ -289,18 +215,23 @@ export function PlanDniaView({ dayPlan }: PlanDniaViewProps) {
 				<p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
 			</div>
 
-			<ComingSoonPreview
-				label={t("calendarComingSoon")}
-				testId="plan-dnia-calendar-preview"
-			>
-				<DayCalendarMock />
-			</ComingSoonPreview>
+			{dayPlan != null && daySchedule != null ? (
+				<DayScheduleTimeline
+					blocks={daySchedule.blocks}
+					createBlock={daySchedule.createBlock}
+					error={daySchedule.error}
+					isLoading={daySchedule.isLoading}
+					localDateKey={dayPlan.localDateKey}
+					updateBlock={daySchedule.updateBlock}
+				/>
+			) : null}
 
 			{dayPlan == null ? (
 				<div
 					className="w-full rounded-card border border-card-border bg-surface-card px-5 py-4 shadow-sm"
 					data-testid="plan-dnia-guest-empty"
 				>
+					{/* Guest exception (PRD OQ #1): schedule is auth-only — no calendar tease. */}
 					<p className="text-sm text-text-secondary">{t("guestEmpty")}</p>
 				</div>
 			) : dayPlan.isLoading ? (
