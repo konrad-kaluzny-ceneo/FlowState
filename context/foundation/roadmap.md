@@ -3,13 +3,13 @@ project: FlowState
 version: 3
 status: draft
 created: 2026-05-26
-updated: 2026-08-12
+updated: 2026-08-17
 structure: split
 active_slices: []
 prd_version: 3
 prd_v4_horizon: context/foundation/prd-v4.md
 main_goal: quality
-top_blocker: S-53 fix-cross-day-stale-session (ready)
+top_blocker: S-54 day-schedule-timeline (proposed)
 ---
 
 # Roadmap: FlowState
@@ -105,7 +105,7 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-50 | complete-task-mid-cycle-surface | _pending_ | [#199](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/199) | finish the focused task (from Fokus or Zadania) → mandatory user-chosen break (short/long ★, override resets cadence); non-focused completion leaves the session untouched; early-completion focus time counted; removes mid-cycle "continue with another task" | F-07, S-03, S-30 | **US-01**, US-03 | done |
 | S-51 | blocked-task-status | [FLO-104](https://linear.app/flowstate-10xdev/issue/FLO-104) | — | mark a started task as blocked (waiting on someone/something) from the task list, at session end, and next to "Gotowe" mid-cycle; blocking mid-cycle hands off to a break like completion does; blocked tasks leave the suggestion pool | F-07, S-45, S-50 | **US-06** | done |
 | S-52 | focus-and-break-time-totals | [FLO-105](https://linear.app/flowstate-10xdev/issue/FLO-105) | — | see honest "Twój dzień" totals — all time actually spent in focus cycles **and** on breaks, including cycles/breaks stopped early and cycles ended by finishing the task; paused time excluded; counts forward only (no backfill of past days) | S-24, S-30, S-42, S-45, S-50 | **US-07** | done |
-| S-53 | fix-cross-day-stale-session | _pending_ | [#219](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/219) | returning on a new day no longer shows a false break — prior session closes calmly with honest totals | S-52, F-07 | **US-18**, FR-014 | ready |
+| S-53 | fix-cross-day-stale-session | _pending_ | [#219](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/219) | returning on a new day no longer shows a false break — prior session closes calmly with honest totals | S-52, F-07 | **US-18**, FR-014 | done |
 | S-54 | day-schedule-timeline | _pending_ | [#220](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/220) | Plan dnia shows a real daily time axis with editable blocks replacing the calendar placeholder | S-53, S-45, S-27 | **US-08**, US-15, FR-001–004 | proposed |
 | S-55 | planning-session-mode | _pending_ | [#221](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/221) | start "Teraz planuję" and elapsed planning time counts as work in day totals | S-54 | **US-14**, FR-005 | proposed |
 | S-56 | recurrence-weekly-patterns | _pending_ | [#222](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/222) | recurring RRULE patterns materialize editable blocks on each new local day | S-54 | **US-09**, FR-003, FR-006 | proposed |
@@ -191,7 +191,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-49 | workspace-setup-advisor | **no** | FLO-100 / #194; after S-45 Ustawienia; content-first (tips authored); no external integration |
 | S-51 | blocked-task-status | **done** | US-06; implemented + merged PR [#206](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/206) 2026-07-17; archived 2026-07-23. Linear [FLO-104](https://linear.app/flowstate-10xdev/issue/FLO-104) closed 2026-08-07; no GitHub issue (code shipped directly) |
 | S-52 | focus-and-break-time-totals | **done** | US-07; implemented + merged PR [#205](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/205) 2026-07-17; archived 2026-07-23. Linear [FLO-105](https://linear.app/flowstate-10xdev/issue/FLO-105) closed 2026-08-07; no GitHub issue (code shipped directly) |
-| S-53 | fix-cross-day-stale-session | **yes** | PRD v4 batch 8; US-18; Linear pair pending MCP auth; GitHub [#219](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/219) |
+| S-53 | fix-cross-day-stale-session | **done** | PRD v4 batch 8; US-18; merged PR [#232](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/232); GitHub [#219](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/219) closed |
 | S-54 | day-schedule-timeline | **no** | after S-53; v4 foundation; GitHub [#220](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/220) |
 | S-55 | planning-session-mode | **no** | after S-54; parallel S-56; outside wedge gates; GitHub [#221](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/221) |
 | S-56 | recurrence-weekly-patterns | **no** | after S-54; parallel S-55; RRULE library in plan; GitHub [#222](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/222) |
@@ -203,7 +203,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-62 | agent-idle-skill-wait-metrics | **yes** | after S-46/S-31/S-37 (done); Skill + IDLE wait + deep-work-aware notify; [FLO-106](https://linear.app/flowstate-10xdev/issue/FLO-106) / [#228](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/228) |
 | S-63 | srodowisko-authored-tips-blog | **yes** | after S-49; content authorship is critical path; [FLO-107](https://linear.app/flowstate-10xdev/issue/FLO-107) / [#229](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/229) |
 
-**Recommended next:** `/10x-plan fix-cross-day-stale-session` (S-53) for v4 correctness, `/10x-plan agent-idle-skill-wait-metrics` (S-62) for agent parallelism, or `/10x-plan srodowisko-authored-tips-blog` (S-63) when tip content is ready to write.
+**Recommended next:** `/10x-plan day-schedule-timeline` (S-54) for v4 foundation, `/10x-plan agent-idle-skill-wait-metrics` (S-62) for agent parallelism, or `/10x-plan srodowisko-authored-tips-blog` (S-63) when tip content is ready to write.
 
 ## Reference appendix (load on demand)
 
@@ -260,6 +260,7 @@ Full evaluator tables: [`expand-batches/README.md`](roadmap-references/expand-ba
 
 ## Done
 
+- **S-53: returning on a new day no longer shows a false break — prior session closes calmly with honest totals** — Archived 2026-08-17 → `context/archive/2026-08-13-fix-cross-day-stale-session/`. Merged PR [#232](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/232). Lesson: —.
 - **S-48: weekly/monthly trends in Podsumowanie; plan-vs-execution comparison; context-switch pattern analytics** — Archived 2026-08-04 → `context/archive/2026-07-30-analytics-trends-plan-vs-execution/`. Lesson: —.
 - **S-47: in Plan dnia view, scorer proposes tasks suitable for delegation (to AI agent or human) with one-line rationale; user accepts/skips** — Archived 2026-07-30 → `context/archive/2026-07-28-delegation-suggestion-in-plan/`. PR [#214](https://github.com/konrad-kaluzny-ceneo/FlowState/pull/214) merged 2026-07-30. Lesson: —.
 - **S-46: expose MCP server so AI agents (Cursor, Claude, Copilot) can read/write tasks + session state; enables agent-driven task delegation proposals** — Archived 2026-07-28 → `context/archive/2026-07-24-mcp-server-for-agents/`. Lesson: —.
