@@ -151,6 +151,7 @@ vi.mock("~/server/db/index", () => {
 		findFirst: vi.fn(() => Promise.resolve(null)),
 		findMany: vi.fn(() => Promise.resolve([])),
 		count: vi.fn(() => Promise.resolve(0)),
+		updateMany: vi.fn(() => Promise.resolve({ count: 0 })),
 	};
 	const checkIn = {
 		findFirst: vi.fn(() => Promise.resolve(null)),

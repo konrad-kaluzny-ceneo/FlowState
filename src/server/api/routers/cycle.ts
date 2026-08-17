@@ -12,6 +12,7 @@ import { DEFAULT_LIST_LIMIT } from "~/server/api/config";
 import {
 	closeActiveSession,
 	findOrCreateActiveSession,
+	interruptOrphanCyclesOnInactiveSessions,
 	isCrossDayStaleSession,
 } from "~/server/api/lib/active-session";
 import { nextActiveSortOrder } from "~/server/api/routers/task";
@@ -110,6 +111,11 @@ export const cycleRouter = createTRPCRouter({
 				}
 			}
 
+			await interruptOrphanCyclesOnInactiveSessions(
+				ctx.db,
+				ctx.session.user.id,
+			);
+
 			return ctx.db.cycle.findFirst({
 				where: {
 					userId: ctx.session.user.id,
@@ -183,6 +189,11 @@ export const cycleRouter = createTRPCRouter({
 
 			try {
 				return await ctx.db.$transaction(async (tx) => {
+					await interruptOrphanCyclesOnInactiveSessions(
+						tx,
+						ctx.session.user.id,
+					);
+
 					const existingActive = await tx.cycle.findFirst({
 						where: {
 							userId: ctx.session.user.id,

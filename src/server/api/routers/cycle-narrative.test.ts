@@ -141,6 +141,7 @@ vi.mock("~/server/db/index", () => ({
 			fn({
 				cycle: {
 					findFirst: vi.fn(() => Promise.resolve(null)),
+					updateMany: vi.fn(() => Promise.resolve({ count: 0 })),
 					create: vi.fn(
 						(args: {
 							data: Omit<CycleRecord, "id" | "state" | "startedAt" | "endedAt">;

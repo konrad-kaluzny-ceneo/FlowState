@@ -76,6 +76,22 @@ export const sessionRouter = createTRPCRouter({
 				});
 			}
 
+			const endedAt = new Date();
+
+			await ctx.db.cycle.updateMany({
+				where: {
+					userId: ctx.session.user.id,
+					sessionId: active.id,
+					state: { in: ["RUNNING", "PAUSED"] },
+				},
+				data: {
+					state: "INTERRUPTED",
+					endedAt,
+					pausedAt: null,
+					remainingDurationSec: null,
+				},
+			});
+
 			const derived = await computeSessionEndMetadata(
 				ctx.db,
 				ctx.session.user.id,
@@ -94,7 +110,7 @@ export const sessionRouter = createTRPCRouter({
 				},
 				data: {
 					state: "ENDED_BY_USER",
-					endedAt: new Date(),
+					endedAt,
 					closureLine: input.closureLine ?? derived.closureLine,
 					lastFocusedTaskId,
 				},
