@@ -501,13 +501,13 @@ Harden test coverage, add belt e2e smoke for Plan dnia schedule, update roadmap 
 
 #### Automated
 
-- [x] 3.1 `pnpm check` and `pnpm typecheck` pass
-- [x] 3.2 `pnpm exec vitest run src/app/_components/day-schedule-timeline.test.tsx src/app/_components/plan-dnia-view.test.tsx`
-- [x] 3.3 `pnpm test` full suite green
+- [x] 3.1 `pnpm check` and `pnpm typecheck` pass — a156e70
+- [x] 3.2 `pnpm exec vitest run src/app/_components/day-schedule-timeline.test.tsx src/app/_components/plan-dnia-view.test.tsx` — a156e70
+- [x] 3.3 `pnpm test` full suite green — a156e70
 
 #### Manual
 
-- [x] 3.4 Manual drag/resize/reload persist; guest sees `guestEmpty` only (no calendar mock)
+- [x] 3.4 Manual drag/resize/reload persist; guest sees `guestEmpty` only (no calendar mock) — a156e70
 
 ### Phase 4: Attachments & Context
 
