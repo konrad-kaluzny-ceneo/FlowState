@@ -478,6 +478,37 @@ describe("session router", () => {
 			expect(result.endedAt).not.toBeNull();
 		});
 
+		it("interrupts RUNNING cycles on the active session before ending", async () => {
+			sessions = [
+				{
+					id: 1,
+					userId: USER_ID,
+					state: "ACTIVE",
+					archivedAt: null,
+					lastActivityAt: new Date(),
+					endedAt: null,
+					closureLine: null,
+					lastFocusedTaskId: null,
+				},
+			];
+			cycles = [
+				{
+					id: 7,
+					sessionId: 1,
+					userId: USER_ID,
+					state: "RUNNING",
+					endedAt: null,
+					pausedAt: null,
+					remainingDurationSec: null,
+				},
+			];
+
+			await sessionCaller().end({});
+
+			expect(cycles[0]?.state).toBe("INTERRUPTED");
+			expect(cycles[0]?.endedAt).not.toBeNull();
+		});
+
 		it("throws NOT_FOUND when no active session exists", async () => {
 			await expect(sessionCaller().end({})).rejects.toMatchObject({
 				code: "NOT_FOUND",

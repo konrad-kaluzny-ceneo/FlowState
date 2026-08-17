@@ -263,6 +263,12 @@ vi.mock("~/server/db/index", () => {
 							userId?: string;
 							sessionId?: number;
 							state?: CycleWhereState;
+							session?: {
+								OR?: Array<{
+									state?: { not: string };
+									archivedAt?: { not: null };
+								}>;
+							};
 						};
 						data: Partial<
 							Pick<
@@ -275,6 +281,32 @@ vi.mock("~/server/db/index", () => {
 							>
 						>;
 					}) => {
+						const matchesSessionOrFilter = (cycle: CycleRecord): boolean => {
+							const orConditions = args.where.session?.OR;
+							if (orConditions == null) {
+								return true;
+							}
+							const session = sessions.find((s) => s.id === cycle.sessionId);
+							if (session == null) {
+								return false;
+							}
+							return orConditions.some((condition) => {
+								if (
+									condition.state?.not != null &&
+									session.state !== condition.state.not
+								) {
+									return true;
+								}
+								if (
+									condition.archivedAt?.not === null &&
+									session.archivedAt != null
+								) {
+									return true;
+								}
+								return false;
+							});
+						};
+
 						const matching = cycles.filter((c) => {
 							if (args.where.id != null && c.id !== args.where.id) return false;
 							if (args.where.userId != null && c.userId !== args.where.userId)
@@ -286,6 +318,7 @@ vi.mock("~/server/db/index", () => {
 								return false;
 							}
 							if (!matchesState(c.state, args.where.state)) return false;
+							if (!matchesSessionOrFilter(c)) return false;
 							return true;
 						});
 						for (const cycle of matching) {
@@ -1225,6 +1258,52 @@ describe("cycle router lifecycle", () => {
 				configuredDurationSec: 1500,
 			}),
 		).rejects.toMatchObject({ code: "CONFLICT" });
+	});
+
+	it("create interrupts orphan RUNNING cycle on ended session and succeeds", async () => {
+		sessions = [
+			{
+				id: 1,
+				userId: USER_ID,
+				state: "ENDED_BY_USER",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+			{
+				id: 2,
+				userId: USER_ID,
+				state: "ACTIVE",
+				archivedAt: null,
+				lastActivityAt: new Date(),
+				interruptionCount: 0,
+			},
+		];
+		cycles = [
+			{
+				id: 1,
+				sessionId: 1,
+				userId: USER_ID,
+				taskId: null,
+				kind: "WORK",
+				state: "RUNNING",
+				configuredDurationSec: 1500,
+				startedAt: new Date(),
+				endedAt: null,
+			},
+		];
+		tasks = [{ id: 3, title: "Task", status: "active", userId: USER_ID }];
+
+		const created = await caller().create({
+			sessionId: 2,
+			kind: "WORK",
+			configuredDurationSec: 1500,
+			taskId: 3,
+		});
+
+		expect(cycles[0]?.state).toBe("INTERRUPTED");
+		expect(cycles[0]?.endedAt).not.toBeNull();
+		expect(created).toMatchObject({ state: "RUNNING", sessionId: 2 });
 	});
 
 	it("create without sessionId auto-creates active session", async () => {

@@ -6,6 +6,10 @@ import type { db } from "~/server/db/index";
 
 type Db = typeof db;
 
+type CycleInterruptDb = {
+	cycle: Pick<typeof db.cycle, "updateMany">;
+};
+
 export const SESSION_INACTIVITY_TIMEOUT_MS = 4 * 60 * 60 * 1000;
 
 export type ActiveSessionCloseReason = "timeout" | "cross_day";
@@ -60,6 +64,30 @@ export type FindOrCreateActiveSessionOptions = {
 	localDateKey?: string;
 	timeZone?: string;
 };
+
+/** RUNNING/PAUSED cycles on non-active sessions block create but are hidden from getActive. */
+export async function interruptOrphanCyclesOnInactiveSessions(
+	database: CycleInterruptDb,
+	userId: string,
+): Promise<void> {
+	const endedAt = new Date();
+
+	await database.cycle.updateMany({
+		where: {
+			userId,
+			state: { in: ["RUNNING", "PAUSED"] },
+			session: {
+				OR: [{ state: { not: "ACTIVE" } }, { archivedAt: { not: null } }],
+			},
+		},
+		data: {
+			state: "INTERRUPTED",
+			endedAt,
+			pausedAt: null,
+			remainingDurationSec: null,
+		},
+	});
+}
 
 export async function findOrCreateActiveSession(
 	database: Db,
