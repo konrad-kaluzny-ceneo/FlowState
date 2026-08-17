@@ -51,6 +51,13 @@ export type DomainScheduleBlock = {
 	updatedAt: Date;
 };
 
+export type DomainContextTag = {
+	id: number;
+	label: string;
+	createdAt: Date;
+	updatedAt: Date;
+};
+
 export type MinuteInterval = {
 	startMinute: number;
 	durationMinutes: number;

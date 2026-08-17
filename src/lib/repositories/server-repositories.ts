@@ -1,12 +1,17 @@
 ﻿import type {
 	CommitmentHorizon,
+	CreateScheduleBlockInput,
 	CycleRepository,
 	DomainActiveCycle,
+	DomainContextTag,
+	DomainScheduleBlock,
 	DomainSession,
 	DomainTask,
 	DomainTaskId,
+	ScheduleRepository,
 	SessionRepository,
 	TaskRepository,
+	UpdateScheduleBlockInput,
 } from "~/lib/data-mode/types";
 import type { WorkType } from "~/lib/domain/work-type";
 
@@ -142,6 +147,37 @@ export type TrpcClient = {
 				windowDays: 7 | 30;
 			}) => Promise<TrendPoint[]>;
 		};
+	};
+	dayPlan: {
+		listBlocks: {
+			fetch: (input: {
+				localDateKey: string;
+			}) => Promise<DomainScheduleBlock[]>;
+		};
+		createBlock: {
+			mutate: (input: CreateScheduleBlockInput) => Promise<DomainScheduleBlock>;
+		};
+		updateBlock: {
+			mutate: (input: UpdateScheduleBlockInput) => Promise<DomainScheduleBlock>;
+		};
+		deleteBlock: { mutate: (input: { blockId: number }) => Promise<void> };
+		setBlockFocusTask: {
+			mutate: (input: {
+				blockId: number;
+				taskId: number | null;
+			}) => Promise<DomainScheduleBlock>;
+		};
+		setBlockBatchTasks: {
+			mutate: (input: {
+				blockId: number;
+				taskIds: number[];
+			}) => Promise<DomainScheduleBlock>;
+		};
+		listContextTags: { fetch: () => Promise<DomainContextTag[]> };
+		createContextTag: {
+			mutate: (input: { label: string }) => Promise<DomainContextTag>;
+		};
+		deleteContextTag: { mutate: (input: { tagId: number }) => Promise<void> };
 	};
 };
 
@@ -287,5 +323,25 @@ export function createServerRecapRepository(client: TrpcClient) {
 			todayLocalDateKey: string;
 			windowDays: 7 | 30;
 		}) => client.recap.getTrendStats.fetch(input),
+	};
+}
+
+export function createServerScheduleRepository(
+	client: TrpcClient,
+): ScheduleRepository {
+	return {
+		listBlocks: (localDateKey) =>
+			client.dayPlan.listBlocks.fetch({ localDateKey }),
+		createBlock: (input) => client.dayPlan.createBlock.mutate(input),
+		updateBlock: (input) => client.dayPlan.updateBlock.mutate(input),
+		deleteBlock: (id) => client.dayPlan.deleteBlock.mutate({ blockId: id }),
+		setBlockFocusTask: (input) =>
+			client.dayPlan.setBlockFocusTask.mutate(input),
+		setBlockBatchTasks: (input) =>
+			client.dayPlan.setBlockBatchTasks.mutate(input),
+		listContextTags: () => client.dayPlan.listContextTags.fetch(),
+		createContextTag: (input) => client.dayPlan.createContextTag.mutate(input),
+		deleteContextTag: (tagId) =>
+			client.dayPlan.deleteContextTag.mutate({ tagId }),
 	};
 }

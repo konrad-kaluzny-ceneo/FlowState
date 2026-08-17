@@ -476,26 +476,26 @@ Harden test coverage, add belt e2e smoke for Plan dnia schedule, update roadmap 
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly: `pnpm prisma migrate dev`
-- [x] 1.2 `pnpm check` and `pnpm typecheck` pass
-- [x] 1.3 `pnpm exec vitest run src/lib/schedule/overlap.test.ts`
-- [x] 1.4 `pnpm exec vitest run src/lib/schedule/snap.test.ts`
+- [x] 1.1 Migration applies cleanly: `pnpm prisma migrate dev` — 42925aa
+- [x] 1.2 `pnpm check` and `pnpm typecheck` pass — 42925aa
+- [x] 1.3 `pnpm exec vitest run src/lib/schedule/overlap.test.ts` — 42925aa
+- [x] 1.4 `pnpm exec vitest run src/lib/schedule/snap.test.ts` — 42925aa
 
 #### Manual
 
-- [x] 1.5 Prisma Studio shows new tables after migrate
+- [x] 1.5 Prisma Studio shows new tables after migrate — 42925aa
 
 ### Phase 2: Repository & tRPC
 
 #### Automated
 
-- [ ] 2.1 `pnpm check` and `pnpm typecheck` pass
-- [ ] 2.2 `pnpm exec vitest run src/server/api/routers/day-plan.test.ts src/server/api/routers/day-plan-schedule.integration.test.ts src/server/api/routers/day-plan-schedule-isolation.test.ts`
-- [ ] 2.3 `pnpm test` full suite green
+- [x] 2.1 `pnpm check` and `pnpm typecheck` pass
+- [x] 2.2 `pnpm exec vitest run src/server/api/routers/day-plan.test.ts src/server/api/routers/day-plan-schedule.integration.test.ts src/server/api/routers/day-plan-schedule-isolation.test.ts`
+- [x] 2.3 `pnpm test` full suite green
 
 #### Manual
 
-- [ ] 2.4 tRPC manual: overlap CONFLICT and context tag assign persist
+- [x] 2.4 tRPC manual: overlap CONFLICT and context tag assign persist
 
 ### Phase 3: Timeline UI
 

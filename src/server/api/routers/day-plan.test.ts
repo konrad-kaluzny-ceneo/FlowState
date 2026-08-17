@@ -234,6 +234,24 @@ vi.mock("~/server/db/index", () => ({
 				},
 			),
 		},
+		scheduleBlock: {
+			findMany: vi.fn(() => Promise.resolve([])),
+		},
+		userContextTag: {
+			findMany: vi.fn(() => Promise.resolve([])),
+		},
+		$transaction: vi.fn(
+			async (
+				arg:
+					| Promise<unknown>[]
+					| ((tx: typeof import("~/server/db/index").db) => unknown),
+			) => {
+				if (Array.isArray(arg)) {
+					return Promise.all(arg);
+				}
+				return arg((await import("~/server/db/index")).db);
+			},
+		),
 	},
 }));
 
@@ -632,6 +650,20 @@ describe("dayPlan router", () => {
 			if (second.status === "ok") {
 				expect(second.task.id).toBe(2);
 			}
+		});
+	});
+
+	describe("schedule procedures", () => {
+		it("listBlocks returns an empty list when the day has no blocks", async () => {
+			const result = await dayPlanCaller(USER_A).listBlocks({
+				localDateKey: DATE_KEY,
+			});
+			expect(result).toEqual([]);
+		});
+
+		it("listContextTags returns an empty list when the user has no tags", async () => {
+			const result = await dayPlanCaller(USER_A).listContextTags();
+			expect(result).toEqual([]);
 		});
 	});
 });

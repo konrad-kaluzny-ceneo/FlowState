@@ -2,6 +2,8 @@ import type {
 	CycleRepository,
 	DomainActiveCycle,
 	DomainTask,
+	Repositories,
+	ScheduleRepository,
 	SessionRepository,
 	TaskRepository,
 } from "~/lib/data-mode/types";
@@ -862,11 +864,33 @@ export function createGuestRecapRepository() {
 	};
 }
 
-export function createGuestRepositories() {
+const GUEST_SCHEDULE_UNAVAILABLE = "Schedule not available in guest mode";
+
+function guestScheduleUnavailable(): never {
+	throw new Error(GUEST_SCHEDULE_UNAVAILABLE);
+}
+
+/** Auth-only schedule seam. UI must not call this in guest mode. */
+export function createGuestScheduleRepository(): ScheduleRepository {
+	return {
+		listBlocks: guestScheduleUnavailable,
+		createBlock: guestScheduleUnavailable,
+		updateBlock: guestScheduleUnavailable,
+		deleteBlock: guestScheduleUnavailable,
+		setBlockFocusTask: guestScheduleUnavailable,
+		setBlockBatchTasks: guestScheduleUnavailable,
+		listContextTags: guestScheduleUnavailable,
+		createContextTag: guestScheduleUnavailable,
+		deleteContextTag: guestScheduleUnavailable,
+	};
+}
+
+export function createGuestRepositories(): Omit<Repositories, "mode"> {
 	return {
 		tasks: createGuestTaskRepository(),
 		sessions: createGuestSessionRepository(),
 		cycles: createGuestCycleRepository(),
 		recap: createGuestRecapRepository(),
+		schedule: createGuestScheduleRepository(),
 	};
 }
