@@ -525,9 +525,9 @@ Harden test coverage, add belt e2e smoke for Plan dnia schedule, update roadmap 
 
 #### Automated
 
-- [x] 5.1 `pnpm check`, `pnpm typecheck`, `pnpm test` pass
-- [x] 5.2 `set CI=true && pnpm test:e2e:belt` pass
+- [x] 5.1 `pnpm check`, `pnpm typecheck`, `pnpm test` pass — b1eb911
+- [x] 5.2 `set CI=true && pnpm test:e2e:belt` pass — b1eb911
 
 #### Manual
 
-- [x] 5.3 Full auth manual walkthrough; budget and delegation regression check
+- [x] 5.3 Full auth manual walkthrough; budget and delegation regression check — b1eb911

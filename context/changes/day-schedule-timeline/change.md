@@ -1,7 +1,7 @@
 ---
 change_id: day-schedule-timeline
 title: Day schedule timeline
-status: implementing
+status: implemented
 created: 2026-08-17
 updated: 2026-08-18
 ---
