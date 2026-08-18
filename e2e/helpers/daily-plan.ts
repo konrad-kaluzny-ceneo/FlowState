@@ -179,3 +179,60 @@ export async function markStandingComplete(page: Page, taskTitle: string) {
 	const row = page.getByRole("listitem").filter({ hasText: taskTitle }).first();
 	await row.getByTestId("task-complete-button").click();
 }
+
+type ScheduleBlockSeed = {
+	id: number;
+	blockType: string;
+	startMinute: number;
+	durationMinutes: number;
+	metaLabel: string | null;
+};
+
+/** Clears existing blocks for the browser-local day, then creates one FOCUS block. */
+export async function seedScheduleBlockViaApi(
+	page: Page,
+	options?: {
+		startMinute?: number;
+		durationMinutes?: number;
+		blockType?:
+			| "FOCUS"
+			| "MEETING"
+			| "BREAK"
+			| "PERSONAL"
+			| "PLANNING"
+			| "BATCH";
+		metaLabel?: string;
+	},
+): Promise<ScheduleBlockSeed> {
+	const localDateKey = await getBrowserLocalDateKey(page);
+	const existing = await trpcQuery<Array<{ id: number }>>(
+		page,
+		"dayPlan.listBlocks",
+		{ localDateKey },
+	);
+	for (const block of existing) {
+		await trpcMutation(page, "dayPlan.deleteBlock", { blockId: block.id });
+	}
+
+	const blockType = options?.blockType ?? "FOCUS";
+	const created = await trpcMutation<
+		{
+			localDateKey: string;
+			blockType: typeof blockType;
+			startMinute: number;
+			durationMinutes: number;
+			metaLabel?: string;
+		},
+		ScheduleBlockSeed
+	>(page, "dayPlan.createBlock", {
+		localDateKey,
+		blockType,
+		startMinute: options?.startMinute ?? 540,
+		durationMinutes: options?.durationMinutes ?? 30,
+		...(blockType === "BATCH" && options?.metaLabel != null
+			? { metaLabel: options.metaLabel }
+			: {}),
+	});
+
+	return created;
+}
