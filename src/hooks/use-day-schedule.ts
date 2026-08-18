@@ -4,7 +4,10 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
-import type { DomainScheduleBlock } from "~/lib/schedule/types";
+import type {
+	DomainContextTag,
+	DomainScheduleBlock,
+} from "~/lib/schedule/types";
 import { isTrpcErrorCode } from "~/lib/trpc/error-code";
 import type { RouterInputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
@@ -24,7 +27,13 @@ type MutationContext = {
 	tempId?: number;
 };
 
+type TagMutationContext = {
+	previous: DomainContextTag[] | undefined;
+	tempId?: number;
+};
+
 let nextTempBlockId = 0;
+let nextTempTagId = 0;
 
 function allocateTempBlockId(): number {
 	nextTempBlockId -= 1;
@@ -33,6 +42,11 @@ function allocateTempBlockId(): number {
 
 function isTempBlockId(id: number): boolean {
 	return id < 0;
+}
+
+function allocateTempTagId(): number {
+	nextTempTagId -= 1;
+	return nextTempTagId;
 }
 
 function sortBlocks(blocks: DomainScheduleBlock[]): DomainScheduleBlock[] {
@@ -81,10 +95,19 @@ function patchBlock(
 	);
 }
 
+function replaceBlock(
+	list: DomainScheduleBlock[] | undefined,
+	updated: DomainScheduleBlock,
+): DomainScheduleBlock[] {
+	return sortBlocks(
+		(list ?? []).map((block) => (block.id === updated.id ? updated : block)),
+	);
+}
+
 /**
  * Auth-only day schedule. Pass `localDateKey` from `useDayPlan()` — do not
  * invent a second date key. Create/move/resize/delete are optimistic (S-09);
- * attachment and context-tag mutators stay pessimistic until Phase 4.
+ * attachment and context mutators use the same rollback pattern (L-04).
  */
 export function useDaySchedule(localDateKey: string) {
 	const t = useTranslations("PlanDnia");
@@ -162,6 +185,17 @@ export function useDaySchedule(localDateKey: string) {
 		onMutate: async (input) => {
 			await utils.dayPlan.listBlocks.cancel(listInput);
 			const previous = utils.dayPlan.listBlocks.getData(listInput);
+			const nextContextLabel =
+				input.fixedContext != null
+					? input.fixedContext
+					: input.customContextTagId != null
+						? (utils.dayPlan.listContextTags
+								.getData()
+								?.find((tag) => tag.id === input.customContextTagId)?.label ??
+							null)
+						: input.fixedContext === null || input.customContextTagId === null
+							? null
+							: undefined;
 			utils.dayPlan.listBlocks.setData(listInput, (old) =>
 				patchBlock(old, input.blockId, {
 					...(input.blockType != null ? { blockType: input.blockType } : {}),
@@ -180,11 +214,25 @@ export function useDaySchedule(localDateKey: string) {
 					...(input.customContextTagId !== undefined
 						? { customContextTagId: input.customContextTagId }
 						: {}),
+					...(nextContextLabel !== undefined
+						? { contextLabel: nextContextLabel }
+						: {}),
+					...(input.blockType != null && input.blockType !== "FOCUS"
+						? { focusTaskId: null, focusTask: null }
+						: {}),
+					...(input.blockType != null && input.blockType !== "BATCH"
+						? { batchTaskIds: [], metaLabel: null }
+						: {}),
 				}),
 			);
 			return { previous } satisfies MutationContext;
 		},
 		onError: rollbackList,
+		onSuccess: (updated) => {
+			utils.dayPlan.listBlocks.setData(listInput, (old) =>
+				replaceBlock(old, updated),
+			);
+		},
 		onSettled: settleList,
 	});
 	const deleteBlockMutation = api.dayPlan.deleteBlock.useMutation({
@@ -200,22 +248,92 @@ export function useDaySchedule(localDateKey: string) {
 		onSettled: settleList,
 	});
 	const setFocusTaskMutation = api.dayPlan.setBlockFocusTask.useMutation({
-		onSuccess: () => {
-			void utils.dayPlan.listBlocks.invalidate(listInput);
+		onMutate: async (input) => {
+			await utils.dayPlan.listBlocks.cancel(listInput);
+			const previous = utils.dayPlan.listBlocks.getData(listInput);
+			utils.dayPlan.listBlocks.setData(listInput, (old) =>
+				patchBlock(old, input.blockId, {
+					focusTaskId: input.taskId,
+					focusTask:
+						input.taskId == null
+							? null
+							: ((old ?? []).find((block) => block.id === input.blockId)
+									?.focusTask ?? null),
+				}),
+			);
+			return { previous } satisfies MutationContext;
 		},
+		onError: rollbackList,
+		onSuccess: (updated) => {
+			utils.dayPlan.listBlocks.setData(listInput, (old) =>
+				replaceBlock(old, updated),
+			);
+		},
+		onSettled: settleList,
 	});
 	const setBatchTasksMutation = api.dayPlan.setBlockBatchTasks.useMutation({
-		onSuccess: () => {
-			void utils.dayPlan.listBlocks.invalidate(listInput);
+		onMutate: async (input) => {
+			await utils.dayPlan.listBlocks.cancel(listInput);
+			const previous = utils.dayPlan.listBlocks.getData(listInput);
+			utils.dayPlan.listBlocks.setData(listInput, (old) =>
+				patchBlock(old, input.blockId, { batchTaskIds: input.taskIds }),
+			);
+			return { previous } satisfies MutationContext;
 		},
+		onError: rollbackList,
+		onSuccess: (updated) => {
+			utils.dayPlan.listBlocks.setData(listInput, (old) =>
+				replaceBlock(old, updated),
+			);
+		},
+		onSettled: settleList,
 	});
 	const createTagMutation = api.dayPlan.createContextTag.useMutation({
-		onSuccess: () => {
+		onMutate: async (input) => {
+			await utils.dayPlan.listContextTags.cancel();
+			const previous = utils.dayPlan.listContextTags.getData();
+			const tempId = allocateTempTagId();
+			const now = new Date();
+			utils.dayPlan.listContextTags.setData(undefined, (old) => [
+				...(old ?? []),
+				{
+					id: tempId,
+					label: input.label.trim(),
+					createdAt: now,
+					updatedAt: now,
+				},
+			]);
+			return { previous, tempId } satisfies TagMutationContext;
+		},
+		onError: (_err, _input, context) => {
+			if (context) {
+				utils.dayPlan.listContextTags.setData(undefined, context.previous);
+			}
+		},
+		onSuccess: (created, _input, context) => {
+			utils.dayPlan.listContextTags.setData(undefined, (old) =>
+				(old ?? []).map((tag) => (tag.id === context?.tempId ? created : tag)),
+			);
+		},
+		onSettled: () => {
 			void utils.dayPlan.listContextTags.invalidate();
 		},
 	});
 	const deleteTagMutation = api.dayPlan.deleteContextTag.useMutation({
-		onSuccess: () => {
+		onMutate: async (input) => {
+			await utils.dayPlan.listContextTags.cancel();
+			const previous = utils.dayPlan.listContextTags.getData();
+			utils.dayPlan.listContextTags.setData(undefined, (old) =>
+				(old ?? []).filter((tag) => tag.id !== input.tagId),
+			);
+			return { previous } satisfies TagMutationContext;
+		},
+		onError: (_err, _input, context) => {
+			if (context) {
+				utils.dayPlan.listContextTags.setData(undefined, context.previous);
+			}
+		},
+		onSettled: () => {
 			void utils.dayPlan.listContextTags.invalidate();
 		},
 	});

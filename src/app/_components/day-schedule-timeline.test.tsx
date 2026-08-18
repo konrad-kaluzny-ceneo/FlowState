@@ -131,7 +131,7 @@ describe("DayScheduleTimeline", () => {
 		});
 	});
 
-	it("creates a snapped focus block when an empty slot is clicked", () => {
+	it("creates a snapped focus block when an empty slot is double-clicked", () => {
 		const createBlock = vi.fn().mockResolvedValue(undefined);
 		renderTimeline(
 			<DayScheduleTimeline
@@ -158,12 +158,48 @@ describe("DayScheduleTimeline", () => {
 		});
 
 		fireEvent.click(axis, { clientY: 3 * SCHEDULE_HOUR_HEIGHT_PX });
+		expect(createBlock).not.toHaveBeenCalled();
+
+		fireEvent.doubleClick(axis, { clientY: 3 * SCHEDULE_HOUR_HEIGHT_PX });
 
 		expect(createBlock).toHaveBeenCalledWith({
 			blockType: "FOCUS",
 			startMinute: 540,
 			durationMinutes: DEFAULT_BLOCK_DURATION_MINUTES,
 		});
+	});
+
+	it("does not call createBlock when a double-click would overlap", async () => {
+		const createBlock = vi.fn().mockResolvedValue(undefined);
+		renderTimeline(
+			<DayScheduleTimeline
+				blocks={[makeBlock({ startMinute: 540, durationMinutes: 30 })]}
+				createBlock={createBlock}
+				localDateKey="2026-08-17"
+				updateBlock={vi.fn().mockResolvedValue(undefined)}
+			/>,
+		);
+
+		const axis = screen.getByTestId("schedule-timeline-axis");
+		vi.spyOn(axis, "getBoundingClientRect").mockReturnValue({
+			x: 0,
+			y: 0,
+			top: 0,
+			left: 0,
+			bottom: 16 * SCHEDULE_HOUR_HEIGHT_PX,
+			right: 200,
+			width: 200,
+			height: 16 * SCHEDULE_HOUR_HEIGHT_PX,
+			toJSON() {
+				return {};
+			},
+		});
+
+		fireEvent.doubleClick(axis, { clientY: 3 * SCHEDULE_HOUR_HEIGHT_PX });
+
+		expect(createBlock).not.toHaveBeenCalled();
+		expect(await screen.findByRole("alert")).toBeTruthy();
+		expect(screen.getByRole("alert").textContent).toContain("overlaps");
 	});
 
 	it("shows an overlap error from the error prop", () => {

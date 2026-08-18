@@ -18,9 +18,12 @@ import {
 	useState,
 } from "react";
 
+import { ScheduleBlockEditPanel } from "~/app/_components/schedule-block-edit-panel";
+import type { DomainTask } from "~/lib/data-mode/types";
 import { intervalsOverlap } from "~/lib/schedule/overlap";
 import { snapMinute } from "~/lib/schedule/snap";
 import type {
+	DomainContextTag,
 	DomainScheduleBlock,
 	ScheduleBlockType,
 } from "~/lib/schedule/types";
@@ -76,17 +79,33 @@ type CreateBlockInput = {
 
 type UpdateBlockInput = {
 	blockId: number;
+	blockType?: ScheduleBlockType;
 	startMinute?: number;
 	durationMinutes?: number;
+	metaLabel?: string | null;
+	fixedContext?: "PHONE" | "COMPUTER" | "OFFICE" | "ERRANDS" | null;
+	customContextTagId?: number | null;
 };
 
 export type DayScheduleTimelineProps = {
 	blocks: DomainScheduleBlock[];
+	tasks?: DomainTask[];
+	contextTags?: DomainContextTag[];
 	localDateKey: string;
 	isLoading?: boolean;
 	error?: string | null;
 	createBlock: (input: CreateBlockInput) => Promise<unknown>;
 	updateBlock: (input: UpdateBlockInput) => Promise<unknown>;
+	deleteBlock?: (blockId: number) => Promise<unknown>;
+	setBlockFocusTask?: (input: {
+		blockId: number;
+		taskId: number | null;
+	}) => Promise<unknown>;
+	setBlockBatchTasks?: (input: {
+		blockId: number;
+		taskIds: number[];
+	}) => Promise<unknown>;
+	createContextTag?: (label: string) => Promise<DomainContextTag>;
 };
 
 type BlockDragData = {
@@ -201,6 +220,7 @@ function ScheduleBlockChip({
 	block,
 	preview,
 	onResizePointerDown,
+	onOpen,
 }: {
 	block: DomainScheduleBlock;
 	preview: ResizePreview | null;
@@ -209,6 +229,7 @@ function ScheduleBlockChip({
 		edge: "start" | "end",
 		event: ReactPointerEvent<HTMLButtonElement>,
 	) => void;
+	onOpen: (blockId: number) => void;
 }) {
 	const t = useTranslations("PlanDnia");
 	const { attributes, listeners, setNodeRef, transform, isDragging } =
@@ -256,8 +277,10 @@ function ScheduleBlockChip({
 				onPointerDown={(event) => onResizePointerDown(block, "start", event)}
 				type="button"
 			/>
-			<div
-				className="flex h-full cursor-grab flex-col justify-center px-3 py-0.5 active:cursor-grabbing"
+			<button
+				className="flex h-full w-full cursor-grab flex-col justify-center px-3 py-0.5 text-left active:cursor-grabbing"
+				onClick={() => onOpen(block.id)}
+				type="button"
 				{...listeners}
 				{...attributes}
 			>
@@ -265,7 +288,7 @@ function ScheduleBlockChip({
 				{durationMinutes >= 30 ? (
 					<p className="truncate text-[0.65rem] opacity-80">{timeRange}</p>
 				) : null}
-			</div>
+			</button>
 			<button
 				aria-label={t("resizeEndAria")}
 				className="absolute inset-x-0 bottom-0 z-10 h-1.5 cursor-ns-resize"
@@ -278,10 +301,16 @@ function ScheduleBlockChip({
 
 export function DayScheduleTimeline({
 	blocks,
+	tasks = [],
+	contextTags = [],
 	isLoading = false,
 	error = null,
 	createBlock,
 	updateBlock,
+	deleteBlock,
+	setBlockFocusTask,
+	setBlockBatchTasks,
+	createContextTag,
 }: DayScheduleTimelineProps) {
 	const t = useTranslations("PlanDnia");
 	const axisRef = useRef<HTMLButtonElement>(null);
@@ -293,6 +322,7 @@ export function DayScheduleTimeline({
 		null,
 	);
 	const [localError, setLocalError] = useState<string | null>(null);
+	const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: { distance: 8 },
@@ -346,7 +376,7 @@ export function DayScheduleTimeline({
 		});
 	}, [blocks, runCreate]);
 
-	const handleAxisClick = useCallback(
+	const handleAxisDoubleClick = useCallback(
 		(event: React.MouseEvent<HTMLButtonElement>) => {
 			if (dragMovedRef.current || resizedRef.current) {
 				return;
@@ -364,13 +394,17 @@ export function DayScheduleTimeline({
 				minuteFromAxisY(event.clientY, axisTop),
 				DEFAULT_BLOCK_DURATION_MINUTES,
 			);
+			if (blocks.some((block) => intervalsOverlap(block, snapped))) {
+				setLocalError(t("overlapError"));
+				return;
+			}
 			void runCreate({
 				blockType: "FOCUS",
 				startMinute: snapped.startMinute,
 				durationMinutes: snapped.durationMinutes,
 			});
 		},
-		[runCreate],
+		[blocks, runCreate, t],
 	);
 
 	const handleDragEnd = useCallback(
@@ -494,79 +528,113 @@ export function DayScheduleTimeline({
 		return <TimelineSkeleton />;
 	}
 
+	const selectedBlock =
+		selectedBlockId == null
+			? null
+			: (blocks.find((block) => block.id === selectedBlockId) ?? null);
+	const canEdit =
+		deleteBlock != null &&
+		setBlockFocusTask != null &&
+		setBlockBatchTasks != null &&
+		createContextTag != null;
+
 	return (
-		<section
-			aria-label={t("timelineAria")}
-			className="w-full rounded-card border border-card-border bg-surface-card px-5 py-4 shadow-sm"
-			data-testid="schedule-timeline"
-		>
-			<div className="mb-3 flex items-center justify-end">
-				<button
-					className="rounded-lg border border-border-subtle px-3 py-1.5 text-sm text-text-secondary transition hover:bg-surface-card-muted"
-					data-testid="schedule-add-block"
-					onClick={handleAddBlock}
-					type="button"
-				>
-					{t("addBlock")}
-				</button>
-			</div>
-			{displayedError != null ? (
-				<p className="mb-3 text-red-300 text-xs" role="alert">
-					{displayedError}
-				</p>
-			) : null}
-			<div
-				className="max-h-[32rem] overflow-y-auto"
-				onPointerMove={handleResizePointerMove}
-				onPointerUp={handleResizePointerUp}
+		<>
+			<section
+				aria-label={t("timelineAria")}
+				className="w-full rounded-card border border-card-border bg-surface-card px-5 py-4 shadow-sm"
+				data-testid="schedule-timeline"
 			>
-				<DndContext
-					modifiers={[restrictMoveToAxis]}
-					onDragEnd={handleDragEnd}
-					sensors={sensors}
+				<div className="mb-3 flex items-center justify-end">
+					<button
+						className="rounded-lg border border-border-subtle px-3 py-1.5 text-sm text-text-secondary transition hover:bg-surface-card-muted"
+						data-testid="schedule-add-block"
+						onClick={handleAddBlock}
+						type="button"
+					>
+						{t("addBlock")}
+					</button>
+				</div>
+				{displayedError != null ? (
+					<p className="mb-3 text-red-300 text-xs" role="alert">
+						{displayedError}
+					</p>
+				) : null}
+				<div
+					className="max-h-[32rem] overflow-y-auto"
+					onPointerMove={handleResizePointerMove}
+					onPointerUp={handleResizePointerUp}
 				>
-					<div className="relative ml-12 min-h-[22rem] select-none">
-						{AXIS_HOURS.map((hour) => (
-							<div
-								className="flex items-start border-border-subtle/60 border-t first:border-t-0"
-								key={hour}
-								style={{ height: SCHEDULE_HOUR_HEIGHT_PX }}
-							>
+					<DndContext
+						modifiers={[restrictMoveToAxis]}
+						onDragEnd={handleDragEnd}
+						sensors={sensors}
+					>
+						<div className="relative ml-12 min-h-[22rem] select-none">
+							{AXIS_HOURS.map((hour) => (
+								<div
+									className="flex items-start border-border-subtle/60 border-t first:border-t-0"
+									key={hour}
+									style={{ height: SCHEDULE_HOUR_HEIGHT_PX }}
+								>
+									<span className="-ml-12 w-10 shrink-0 text-right text-text-dimmed text-xs">
+										{formatHourLabel(hour)}
+									</span>
+								</div>
+							))}
+							<div className="flex items-start border-border-subtle/60 border-t">
 								<span className="-ml-12 w-10 shrink-0 text-right text-text-dimmed text-xs">
-									{formatHourLabel(hour)}
+									{formatHourLabel(22)}
 								</span>
 							</div>
-						))}
-						<div className="flex items-start border-border-subtle/60 border-t">
-							<span className="-ml-12 w-10 shrink-0 text-right text-text-dimmed text-xs">
-								{formatHourLabel(22)}
-							</span>
+							<button
+								aria-label={t("addBlockDoubleClickAria")}
+								className="absolute inset-x-0 top-0"
+								data-testid="schedule-timeline-axis"
+								onDoubleClick={handleAxisDoubleClick}
+								ref={axisRef}
+								style={{ height: AXIS_HEIGHT_PX }}
+								type="button"
+							/>
+							<ul
+								className="pointer-events-none absolute inset-x-0 top-0 m-0 list-none p-0"
+								style={{ height: AXIS_HEIGHT_PX }}
+							>
+								{blocks.map((block) => (
+									<ScheduleBlockChip
+										block={block}
+										key={block.id}
+										onOpen={(blockId) => {
+											if (canEdit && blockId >= 0) {
+												setSelectedBlockId(blockId);
+											}
+										}}
+										onResizePointerDown={handleResizePointerDown}
+										preview={resizePreview}
+									/>
+								))}
+							</ul>
 						</div>
-						<button
-							aria-label={t("addBlock")}
-							className="absolute inset-x-0 top-0"
-							data-testid="schedule-timeline-axis"
-							onClick={handleAxisClick}
-							ref={axisRef}
-							style={{ height: AXIS_HEIGHT_PX }}
-							type="button"
-						/>
-						<ul
-							className="pointer-events-none absolute inset-x-0 top-0 m-0 list-none p-0"
-							style={{ height: AXIS_HEIGHT_PX }}
-						>
-							{blocks.map((block) => (
-								<ScheduleBlockChip
-									block={block}
-									key={block.id}
-									onResizePointerDown={handleResizePointerDown}
-									preview={resizePreview}
-								/>
-							))}
-						</ul>
-					</div>
-				</DndContext>
-			</div>
-		</section>
+					</DndContext>
+				</div>
+			</section>
+			{selectedBlock != null &&
+			deleteBlock != null &&
+			setBlockFocusTask != null &&
+			setBlockBatchTasks != null &&
+			createContextTag != null ? (
+				<ScheduleBlockEditPanel
+					block={selectedBlock}
+					contextTags={contextTags}
+					createContextTag={createContextTag}
+					deleteBlock={deleteBlock}
+					onClose={() => setSelectedBlockId(null)}
+					setBlockBatchTasks={setBlockBatchTasks}
+					setBlockFocusTask={setBlockFocusTask}
+					tasks={tasks}
+					updateBlock={updateBlock}
+				/>
+			) : null}
+		</>
 	);
 }

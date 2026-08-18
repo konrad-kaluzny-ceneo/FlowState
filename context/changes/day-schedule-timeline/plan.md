@@ -513,13 +513,13 @@ Harden test coverage, add belt e2e smoke for Plan dnia schedule, update roadmap 
 
 #### Automated
 
-- [ ] 4.1 `pnpm check` and `pnpm typecheck` pass
-- [ ] 4.2 `pnpm exec vitest run src/app/_components/schedule-block-edit-panel.test.tsx`
-- [ ] 4.3 Router tests cover invalid task attachment rejection
+- [x] 4.1 `pnpm check` and `pnpm typecheck` pass
+- [x] 4.2 `pnpm exec vitest run src/app/_components/schedule-block-edit-panel.test.tsx`
+- [x] 4.3 Router tests cover invalid task attachment rejection
 
 #### Manual
 
-- [ ] 4.4 Manual focus/batch/context attachment walkthrough
+- [x] 4.4 Manual focus/batch/context attachment walkthrough
 
 ### Phase 5: Tests & Verification
 

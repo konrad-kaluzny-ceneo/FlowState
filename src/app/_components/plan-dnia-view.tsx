@@ -10,6 +10,7 @@ import type { useDayPlan } from "~/hooks/use-day-plan";
 import type { useDaySchedule } from "~/hooks/use-day-schedule";
 import { useDelegationSuggestion } from "~/hooks/use-delegation-suggestion";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
+import type { DomainTask } from "~/lib/data-mode/types";
 import { formatFocusMinutes } from "~/lib/time/format-focus-minutes";
 import { api } from "~/trpc/react";
 
@@ -18,6 +19,7 @@ const PRESET_HOURS_MINUTES = [120, 240, 360] as const;
 type PlanDniaViewProps = {
 	dayPlan: ReturnType<typeof useDayPlan> | undefined;
 	daySchedule?: ReturnType<typeof useDaySchedule>;
+	tasks?: DomainTask[];
 };
 
 function BudgetPanel({
@@ -203,7 +205,11 @@ function DelegationSuggestionSection() {
 	);
 }
 
-export function PlanDniaView({ dayPlan, daySchedule }: PlanDniaViewProps) {
+export function PlanDniaView({
+	dayPlan,
+	daySchedule,
+	tasks = [],
+}: PlanDniaViewProps) {
 	const t = useTranslations("PlanDnia");
 
 	return (
@@ -218,10 +224,16 @@ export function PlanDniaView({ dayPlan, daySchedule }: PlanDniaViewProps) {
 			{dayPlan != null && daySchedule != null ? (
 				<DayScheduleTimeline
 					blocks={daySchedule.blocks}
+					contextTags={daySchedule.contextTags}
 					createBlock={daySchedule.createBlock}
+					createContextTag={daySchedule.createContextTag}
+					deleteBlock={daySchedule.deleteBlock}
 					error={daySchedule.error}
 					isLoading={daySchedule.isLoading}
 					localDateKey={dayPlan.localDateKey}
+					setBlockBatchTasks={daySchedule.setBlockBatchTasks}
+					setBlockFocusTask={daySchedule.setBlockFocusTask}
+					tasks={tasks}
 					updateBlock={daySchedule.updateBlock}
 				/>
 			) : null}
