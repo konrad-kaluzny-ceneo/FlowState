@@ -60,6 +60,8 @@ type UpdateBlockInput = {
 	metaLabel?: string | null;
 	fixedContext?: GtdFixedContext | null;
 	customContextTagId?: number | null;
+	focusTaskId?: number | null;
+	batchTaskIds?: number[];
 };
 
 export type ScheduleBlockEditPanelProps = {
@@ -69,14 +71,6 @@ export type ScheduleBlockEditPanelProps = {
 	onClose: () => void;
 	updateBlock: (input: UpdateBlockInput) => Promise<unknown>;
 	deleteBlock: (blockId: number) => Promise<unknown>;
-	setBlockFocusTask: (input: {
-		blockId: number;
-		taskId: number | null;
-	}) => Promise<unknown>;
-	setBlockBatchTasks: (input: {
-		blockId: number;
-		taskIds: number[];
-	}) => Promise<unknown>;
 	createContextTag: (label: string) => Promise<DomainContextTag>;
 };
 
@@ -101,8 +95,6 @@ export function ScheduleBlockEditPanel({
 	onClose,
 	updateBlock,
 	deleteBlock,
-	setBlockFocusTask,
-	setBlockBatchTasks,
 	createContextTag,
 }: ScheduleBlockEditPanelProps) {
 	const t = useTranslations("PlanDnia");
@@ -211,13 +203,9 @@ export function ScheduleBlockEditPanel({
 				metaLabel: blockType === "BATCH" ? metaLabel : null,
 				fixedContext,
 				customContextTagId,
+				...(blockType === "FOCUS" ? { focusTaskId } : {}),
+				...(blockType === "BATCH" ? { batchTaskIds } : {}),
 			});
-
-			if (blockType === "FOCUS") {
-				await setBlockFocusTask({ blockId: block.id, taskId: focusTaskId });
-			} else if (blockType === "BATCH") {
-				await setBlockBatchTasks({ blockId: block.id, taskIds: batchTaskIds });
-			}
 			onClose();
 		} catch {
 			setError(t("scheduleSaveError"));

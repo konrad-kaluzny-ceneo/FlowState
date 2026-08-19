@@ -85,6 +85,8 @@ type UpdateBlockInput = {
 	metaLabel?: string | null;
 	fixedContext?: "PHONE" | "COMPUTER" | "OFFICE" | "ERRANDS" | null;
 	customContextTagId?: number | null;
+	focusTaskId?: number | null;
+	batchTaskIds?: number[];
 };
 
 export type DayScheduleTimelineProps = {
@@ -97,14 +99,6 @@ export type DayScheduleTimelineProps = {
 	createBlock: (input: CreateBlockInput) => Promise<unknown>;
 	updateBlock: (input: UpdateBlockInput) => Promise<unknown>;
 	deleteBlock?: (blockId: number) => Promise<unknown>;
-	setBlockFocusTask?: (input: {
-		blockId: number;
-		taskId: number | null;
-	}) => Promise<unknown>;
-	setBlockBatchTasks?: (input: {
-		blockId: number;
-		taskIds: number[];
-	}) => Promise<unknown>;
 	createContextTag?: (label: string) => Promise<DomainContextTag>;
 };
 
@@ -308,8 +302,6 @@ export function DayScheduleTimeline({
 	createBlock,
 	updateBlock,
 	deleteBlock,
-	setBlockFocusTask,
-	setBlockBatchTasks,
 	createContextTag,
 }: DayScheduleTimelineProps) {
 	const t = useTranslations("PlanDnia");
@@ -532,11 +524,7 @@ export function DayScheduleTimeline({
 		selectedBlockId == null
 			? null
 			: (blocks.find((block) => block.id === selectedBlockId) ?? null);
-	const canEdit =
-		deleteBlock != null &&
-		setBlockFocusTask != null &&
-		setBlockBatchTasks != null &&
-		createContextTag != null;
+	const canEdit = deleteBlock != null && createContextTag != null;
 
 	return (
 		<>
@@ -620,8 +608,6 @@ export function DayScheduleTimeline({
 			</section>
 			{selectedBlock != null &&
 			deleteBlock != null &&
-			setBlockFocusTask != null &&
-			setBlockBatchTasks != null &&
 			createContextTag != null ? (
 				<ScheduleBlockEditPanel
 					block={selectedBlock}
@@ -629,8 +615,6 @@ export function DayScheduleTimeline({
 					createContextTag={createContextTag}
 					deleteBlock={deleteBlock}
 					onClose={() => setSelectedBlockId(null)}
-					setBlockBatchTasks={setBlockBatchTasks}
-					setBlockFocusTask={setBlockFocusTask}
 					tasks={tasks}
 					updateBlock={updateBlock}
 				/>

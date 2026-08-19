@@ -69,8 +69,6 @@ function renderPanel(options?: {
 		onClose: vi.fn(),
 		updateBlock: vi.fn().mockResolvedValue(undefined),
 		deleteBlock: vi.fn().mockResolvedValue(undefined),
-		setBlockFocusTask: vi.fn().mockResolvedValue(undefined),
-		setBlockBatchTasks: vi.fn().mockResolvedValue(undefined),
 		createContextTag: vi.fn().mockResolvedValue({
 			id: 12,
 			label: "Home",
@@ -109,9 +107,15 @@ describe("ScheduleBlockEditPanel", () => {
 		fireEvent.click(screen.getByTestId("schedule-save-block"));
 
 		await waitFor(() => {
-			expect(callbacks.setBlockFocusTask).toHaveBeenCalledWith({
+			expect(callbacks.updateBlock).toHaveBeenCalledWith({
 				blockId: 7,
-				taskId: 2,
+				blockType: "FOCUS",
+				startMinute: 540,
+				durationMinutes: 30,
+				metaLabel: null,
+				fixedContext: null,
+				customContextTagId: null,
+				focusTaskId: 2,
 			});
 		});
 		expect(callbacks.onClose).toHaveBeenCalled();
@@ -132,12 +136,12 @@ describe("ScheduleBlockEditPanel", () => {
 
 		await waitFor(() => {
 			expect(callbacks.updateBlock).toHaveBeenCalledWith(
-				expect.objectContaining({ blockId: 7, metaLabel: "Calls" }),
+				expect.objectContaining({
+					blockId: 7,
+					metaLabel: "Calls",
+					batchTaskIds: [2, 1],
+				}),
 			);
-			expect(callbacks.setBlockBatchTasks).toHaveBeenCalledWith({
-				blockId: 7,
-				taskIds: [2, 1],
-			});
 		});
 	});
 

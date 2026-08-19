@@ -25,7 +25,7 @@ Replace the Plan dnia “Kalendarz wkrótce” placeholder with a real, persiste
 A logged-in user on `/plan`:
 
 1. Sees a scrollable **06:00–22:00** timeline instead of the blurred mock.
-2. **Clicks** an empty slot or uses an **Add block** affordance to create a typed block.
+2. **Double-clicks** an empty slot or uses an **Add block** affordance to create a typed block.
 3. **Drags** to move and **resizes** block edges; times snap to **15-minute** increments.
 4. Gets a **validation error** (no silent overlap) if a move would conflict with another block.
 5. Edits a block to attach **0–1 focus task** or **multiple batch tasks**, optional **meta label** on batch blocks, and **fixed or custom GTD context**.
@@ -56,7 +56,9 @@ Greenfield schedule domain attached to `(userId, localDateKey)`. Phase 1 lands s
 
 ## Critical Implementation Details
 
-**Overlap validation:** Server is source of truth — reject any block whose `[startMinute, startMinute + durationMinutes)` intersects another block for the same `(userId, localDateKey)`. Client may pre-check for UX but must handle `CONFLICT` tRPC error with optimistic rollback. **Concurrency:** wrap create/update in a DB transaction — re-list blocks for the day inside the transaction before insert/update so two concurrent mutations cannot both pass a stale overlap check (read-modify-write race).
+**Empty-slot create (Phase 3 UX):** Creating from the axis uses **double-click** on empty space (plus the **Add block** button), not single-click — single-click would fight drag/resize pointer handling. Plan Desired End State wording (“Clicks an empty slot”) is superseded by this interaction; i18n `addBlockDoubleClickAria` documents it.
+
+**Overlap validation:** Server is source of truth — reject any block whose `[startMinute, startMinute + durationMinutes)` intersects another block for the same `(userId, localDateKey)`. Client may pre-check for UX but must handle `CONFLICT` tRPC error with optimistic rollback. **Concurrency:** wrap create/update in a DB transaction — re-list blocks for the day inside the transaction before insert/update so two concurrent mutations cannot both pass a stale overlap check (read-modify-write race). Take a per-`(userId, localDateKey)` `pg_advisory_xact_lock` (seed 1) so Read Committed cannot double-book empty days.
 
 **Axis bounds:** Blocks must lie fully within the visible axis: `startMinute >= AXIS_START_MINUTE (360)` and `startMinute + durationMinutes <= AXIS_END_MINUTE (1320)`. Reject (do not silently clamp) on server; client snap/clamp may assist UX but server validates.
 

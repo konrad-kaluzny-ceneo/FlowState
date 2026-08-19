@@ -39,6 +39,7 @@ export const SCHEDULE_TAG_DUPLICATE_MESSAGE = "That context already exists.";
 
 export const MAX_CONTEXT_TAGS_PER_USER = 50;
 export const MAX_CONTEXT_TAG_LABEL_LENGTH = 32;
+export const MAX_BATCH_TASKS_PER_BLOCK = 50;
 
 const ATTACHABLE_TASK_STATUSES = new Set(["active", "planned"]);
 
@@ -92,6 +93,10 @@ export type UpdateScheduleBlockFields = {
 	metaLabel?: string | null;
 	fixedContext?: GtdFixedContext | null;
 	customContextTagId?: number | null;
+	/** When set and resulting type is FOCUS, applied in the same transaction. */
+	focusTaskId?: number | null;
+	/** When set and resulting type is BATCH, applied in the same transaction. */
+	batchTaskIds?: number[];
 };
 
 function isPrismaCode(error: unknown, code: string): boolean {
@@ -102,14 +107,6 @@ function isPrismaCode(error: unknown, code: string): boolean {
 	);
 }
 
-function normalizeMetaLabel(value: string | null | undefined): string | null {
-	if (value == null) {
-		return null;
-	}
-	const trimmed = value.trim();
-	return trimmed.length === 0 ? null : trimmed;
-}
-
 export function sanitizeContextLabel(raw: string): string {
 	return [...raw]
 		.filter((char) => {
@@ -118,6 +115,29 @@ export function sanitizeContextLabel(raw: string): string {
 		})
 		.join("")
 		.trim();
+}
+
+function normalizeMetaLabel(value: string | null | undefined): string | null {
+	if (value == null) {
+		return null;
+	}
+	const sanitized = sanitizeContextLabel(value);
+	return sanitized.length === 0 ? null : sanitized;
+}
+
+function assertUniqueBatchTaskIds(taskIds: number[]): void {
+	if (taskIds.length > MAX_BATCH_TASKS_PER_BLOCK) {
+		throw new TRPCError({
+			code: "BAD_REQUEST",
+			message: SCHEDULE_TASK_ATTACH_MESSAGE,
+		});
+	}
+	if (new Set(taskIds).size !== taskIds.length) {
+		throw new TRPCError({
+			code: "BAD_REQUEST",
+			message: SCHEDULE_TASK_ATTACH_MESSAGE,
+		});
+	}
 }
 
 function mapToDomain(row: ScheduleBlockRow): DomainScheduleBlock {
@@ -200,6 +220,28 @@ export function assertContextXor(
 	}
 }
 
+/**
+ * Serializes concurrent create/update for one user's day so overlap
+ * re-reads under Read Committed cannot both pass on an empty/stale view.
+ * Seed 1 namespaces away from api-key advisory locks (seed 0).
+ */
+async function lockDaySchedule(
+	tx: { $executeRaw: PrismaClient["$executeRaw"] },
+	userId: string,
+	localDateKey: string,
+): Promise<void> {
+	const lockKey = `${userId}:${localDateKey}`;
+	await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 1))`;
+}
+
+/** Serializes per-user context-tag creates (50-cap). Seed 2 vs api-key(0)/day(1). */
+async function lockUserContextTags(
+	tx: { $executeRaw: PrismaClient["$executeRaw"] },
+	userId: string,
+): Promise<void> {
+	await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${userId}, 2))`;
+}
+
 async function assertNoOverlap(
 	tx: ScheduleTx,
 	userId: string,
@@ -269,18 +311,31 @@ async function assertAttachableTask(
 	userId: string,
 	taskId: number,
 ): Promise<void> {
-	const task = await tx.task.findFirst({
-		where: { id: taskId, userId },
+	await assertAttachableTasks(tx, userId, [taskId]);
+}
+
+async function assertAttachableTasks(
+	tx: ScheduleTx,
+	userId: string,
+	taskIds: number[],
+): Promise<void> {
+	if (taskIds.length === 0) {
+		return;
+	}
+	const tasks = await tx.task.findMany({
+		where: { id: { in: taskIds }, userId },
 		select: { id: true, status: true },
 	});
-	if (task == null) {
+	if (tasks.length !== taskIds.length) {
 		throw new TRPCError({ code: "NOT_FOUND" });
 	}
-	if (!ATTACHABLE_TASK_STATUSES.has(task.status)) {
-		throw new TRPCError({
-			code: "BAD_REQUEST",
-			message: SCHEDULE_TASK_ATTACH_MESSAGE,
-		});
+	for (const task of tasks) {
+		if (!ATTACHABLE_TASK_STATUSES.has(task.status)) {
+			throw new TRPCError({
+				code: "BAD_REQUEST",
+				message: SCHEDULE_TASK_ATTACH_MESSAGE,
+			});
+		}
 	}
 }
 
@@ -317,6 +372,8 @@ export async function createBlock(
 	}
 
 	return database.$transaction(async (tx) => {
+		await lockDaySchedule(tx, userId, input.localDateKey);
+
 		if (input.customContextTagId != null) {
 			await assertOwnedContextTag(tx, userId, input.customContextTagId);
 		}
@@ -349,8 +406,14 @@ export async function updateBlock(
 	userId: string,
 	input: UpdateScheduleBlockFields,
 ): Promise<DomainScheduleBlock> {
+	if (input.batchTaskIds != null) {
+		assertUniqueBatchTaskIds(input.batchTaskIds);
+	}
+
 	return database.$transaction(async (tx) => {
 		const existing = await requireOwnedBlock(tx, userId, input.blockId);
+		await lockDaySchedule(tx, userId, existing.localDateKey);
+
 		const nextType = input.blockType ?? existing.blockType;
 		const nextStart = input.startMinute ?? existing.startMinute;
 		const nextDuration = input.durationMinutes ?? existing.durationMinutes;
@@ -397,9 +460,20 @@ export async function updateBlock(
 					? normalizeMetaLabel(input.metaLabel)
 					: existing.metaLabel
 				: null;
-		const nextFocus = nextType === "FOCUS" ? existing.focusTaskId : null;
 
-		const updated = await tx.scheduleBlock.update({
+		let nextFocus: number | null = null;
+		if (nextType === "FOCUS") {
+			if (input.focusTaskId !== undefined) {
+				if (input.focusTaskId != null) {
+					await assertAttachableTask(tx, userId, input.focusTaskId);
+				}
+				nextFocus = input.focusTaskId;
+			} else {
+				nextFocus = existing.focusTaskId;
+			}
+		}
+
+		await tx.scheduleBlock.update({
 			where: { id: existing.id },
 			data: {
 				blockType: nextType,
@@ -410,10 +484,25 @@ export async function updateBlock(
 				customContextTagId: nextCustom,
 				focusTaskId: nextFocus,
 			},
-			include: scheduleBlockInclude,
 		});
 
-		return mapToDomain(updated);
+		if (nextType === "BATCH" && input.batchTaskIds !== undefined) {
+			await assertAttachableTasks(tx, userId, input.batchTaskIds);
+			await tx.scheduleBlockTask.deleteMany({
+				where: { scheduleBlockId: existing.id },
+			});
+			if (input.batchTaskIds.length > 0) {
+				await tx.scheduleBlockTask.createMany({
+					data: input.batchTaskIds.map((taskId, sortOrder) => ({
+						scheduleBlockId: existing.id,
+						taskId,
+						sortOrder,
+					})),
+				});
+			}
+		}
+
+		return loadBlock(tx, userId, existing.id);
 	});
 }
 
@@ -462,12 +551,7 @@ export async function setBlockBatchTasks(
 	blockId: number,
 	taskIds: number[],
 ): Promise<DomainScheduleBlock> {
-	if (new Set(taskIds).size !== taskIds.length) {
-		throw new TRPCError({
-			code: "BAD_REQUEST",
-			message: SCHEDULE_TASK_ATTACH_MESSAGE,
-		});
-	}
+	assertUniqueBatchTaskIds(taskIds);
 
 	return database.$transaction(async (tx) => {
 		const existing = await requireOwnedBlock(tx, userId, blockId);
@@ -478,9 +562,7 @@ export async function setBlockBatchTasks(
 			});
 		}
 
-		for (const taskId of taskIds) {
-			await assertAttachableTask(tx, userId, taskId);
-		}
+		await assertAttachableTasks(tx, userId, taskIds);
 
 		await tx.scheduleBlockTask.deleteMany({
 			where: { scheduleBlockId: existing.id },
@@ -532,6 +614,8 @@ export async function createContextTag(
 
 	try {
 		return await database.$transaction(async (tx) => {
+			await lockUserContextTags(tx, userId);
+
 			const count = await tx.userContextTag.count({ where: { userId } });
 			if (count >= MAX_CONTEXT_TAGS_PER_USER) {
 				throw new TRPCError({

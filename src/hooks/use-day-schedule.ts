@@ -223,6 +223,22 @@ export function useDaySchedule(localDateKey: string) {
 					...(input.blockType != null && input.blockType !== "BATCH"
 						? { batchTaskIds: [], metaLabel: null }
 						: {}),
+					...(input.focusTaskId !== undefined
+						? {
+								focusTaskId: input.focusTaskId,
+								focusTask:
+									input.focusTaskId == null
+										? null
+										: (old ?? []).find((block) => block.id === input.blockId)
+													?.focusTask?.id === input.focusTaskId
+											? ((old ?? []).find((block) => block.id === input.blockId)
+													?.focusTask ?? null)
+											: null,
+							}
+						: {}),
+					...(input.batchTaskIds !== undefined
+						? { batchTaskIds: input.batchTaskIds }
+						: {}),
 				}),
 			);
 			return { previous } satisfies MutationContext;
@@ -257,8 +273,11 @@ export function useDaySchedule(localDateKey: string) {
 					focusTask:
 						input.taskId == null
 							? null
-							: ((old ?? []).find((block) => block.id === input.blockId)
-									?.focusTask ?? null),
+							: (old ?? []).find((block) => block.id === input.blockId)
+										?.focusTask?.id === input.taskId
+								? ((old ?? []).find((block) => block.id === input.blockId)
+										?.focusTask ?? null)
+								: null,
 				}),
 			);
 			return { previous } satisfies MutationContext;

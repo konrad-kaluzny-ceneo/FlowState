@@ -208,6 +208,8 @@ export type UpdateScheduleBlockInput = {
 	metaLabel?: string | null;
 	fixedContext?: GtdFixedContext | null;
 	customContextTagId?: number | null;
+	focusTaskId?: number | null;
+	batchTaskIds?: number[];
 };
 
 export interface ScheduleRepository {

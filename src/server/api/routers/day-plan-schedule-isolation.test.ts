@@ -120,6 +120,40 @@ describe("Feature: day-schedule-timeline, schedule block isolation", () => {
 		expect(stillThere[0]?.startMinute).toBe(600);
 	});
 
+	it("denies cross-user focus and batch attachment mutations", async () => {
+		const focus = await scheduleCaller(USER_B).createBlock({
+			localDateKey: DATE_KEY,
+			blockType: "FOCUS",
+			startMinute: 540,
+			durationMinutes: 30,
+		});
+		const batch = await scheduleCaller(USER_B).createBlock({
+			localDateKey: DATE_KEY,
+			blockType: "BATCH",
+			startMinute: 600,
+			durationMinutes: 30,
+		});
+
+		await expect(
+			scheduleCaller(USER_A).setBlockFocusTask({
+				blockId: focus.id,
+				taskId: null,
+			}),
+		).rejects.toMatchObject({ code: "NOT_FOUND" });
+		await expect(
+			scheduleCaller(USER_A).setBlockBatchTasks({
+				blockId: batch.id,
+				taskIds: [],
+			}),
+		).rejects.toMatchObject({ code: "NOT_FOUND" });
+		await expect(
+			scheduleCaller(USER_A).updateBlock({
+				blockId: focus.id,
+				focusTaskId: null,
+			}),
+		).rejects.toMatchObject({ code: "NOT_FOUND" });
+	});
+
 	fcTest.prop(
 		[
 			fc

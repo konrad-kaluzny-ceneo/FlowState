@@ -401,6 +401,8 @@ export const scheduleTestDb = {
 			},
 		),
 	},
+	// No real concurrency in this in-memory fake — advisory lock is a no-op.
+	$executeRaw: vi.fn(() => Promise.resolve(0)),
 	$transaction: vi.fn(
 		async (arg: Promise<unknown>[] | ((tx: unknown) => unknown)) => {
 			if (Array.isArray(arg)) {

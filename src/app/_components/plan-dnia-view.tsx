@@ -231,8 +231,6 @@ export function PlanDniaView({
 					error={daySchedule.error}
 					isLoading={daySchedule.isLoading}
 					localDateKey={dayPlan.localDateKey}
-					setBlockBatchTasks={daySchedule.setBlockBatchTasks}
-					setBlockFocusTask={daySchedule.setBlockFocusTask}
 					tasks={tasks}
 					updateBlock={daySchedule.updateBlock}
 				/>

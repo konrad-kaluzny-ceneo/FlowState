@@ -21,6 +21,7 @@ import {
 	deleteContextTag,
 	listBlocksForDay,
 	listContextTags,
+	MAX_BATCH_TASKS_PER_BLOCK,
 	setBlockBatchTasks,
 	setBlockFocusTask,
 	updateBlock,
@@ -40,6 +41,9 @@ const fixedContextSchema = z.enum(gtdFixedContextSchema);
 const blockIdSchema = z.number().int();
 const tagIdSchema = z.number().int();
 const metaLabelSchema = z.string().max(120).nullable();
+const batchTaskIdsSchema = z
+	.array(z.number().int())
+	.max(MAX_BATCH_TASKS_PER_BLOCK);
 
 export const dayPlanRouter = createTRPCRouter({
 	getOrCreate: protectedProcedure
@@ -303,6 +307,8 @@ export const dayPlanRouter = createTRPCRouter({
 				metaLabel: metaLabelSchema.optional(),
 				fixedContext: fixedContextSchema.nullable().optional(),
 				customContextTagId: z.number().int().nullable().optional(),
+				focusTaskId: z.number().int().nullable().optional(),
+				batchTaskIds: batchTaskIdsSchema.optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -335,7 +341,7 @@ export const dayPlanRouter = createTRPCRouter({
 		.input(
 			z.object({
 				blockId: blockIdSchema,
-				taskIds: z.array(z.number().int()),
+				taskIds: batchTaskIdsSchema,
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
