@@ -5,11 +5,13 @@ import {
 	type DragEndEvent,
 	type DragMoveEvent,
 	type DragStartEvent,
+	type Modifier,
 	PointerSensor,
 	useDraggable,
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { useTranslations } from "next-intl";
 import {
 	type PointerEvent as ReactPointerEvent,
@@ -168,6 +170,12 @@ function minuteFromAxisY(clientY: number, axisTop: number): number {
 	return AXIS_START_MINUTE + (clientY - axisTop) / PIXELS_PER_MINUTE;
 }
 
+/** Keep drag on the Y axis only — X is always 0. */
+const restrictMoveToAxis: Modifier = ({ transform }) => ({
+	...transform,
+	x: 0,
+});
+
 function localDateKeyToday(): string {
 	const now = new Date();
 	const y = now.getFullYear();
@@ -219,28 +227,39 @@ function ScheduleBlockChip({
 	onOpen: (blockId: number) => void;
 }) {
 	const t = useTranslations("PlanDnia");
-	const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-		id: String(block.id),
-		data: {
-			blockId: block.id,
-			startMinute: block.startMinute,
-			durationMinutes: block.durationMinutes,
-		} satisfies BlockDragData,
-	});
+	const { attributes, listeners, setNodeRef, transform, isDragging } =
+		useDraggable({
+			id: String(block.id),
+			data: {
+				blockId: block.id,
+				startMinute: block.startMinute,
+				durationMinutes: block.durationMinutes,
+			} satisfies BlockDragData,
+		});
 
 	const activePreview = preview?.blockId === block.id ? preview : null;
-	const startMinute = activePreview?.startMinute ?? block.startMinute;
-	const durationMinutes =
-		activePreview?.durationMinutes ?? block.durationMinutes;
+	// Labels always follow preview (live hours). Layout: during drag keep the
+	// committed top + dnd-kit transform so the chip tracks the cursor; after
+	// drop / during resize use preview top so there is no snap-back jump.
+	const labelStart = activePreview?.startMinute ?? block.startMinute;
+	const labelDuration = activePreview?.durationMinutes ?? block.durationMinutes;
+	const layoutFromPreview =
+		activePreview != null && (activePreview.mode === "resize" || !isDragging);
+	const layoutStart = layoutFromPreview
+		? activePreview.startMinute
+		: block.startMinute;
+	const layoutDuration = layoutFromPreview
+		? activePreview.durationMinutes
+		: block.durationMinutes;
 	const isInvalid = activePreview != null && !activePreview.isValid;
 	const title =
 		block.metaLabel ??
 		block.focusTask?.title ??
 		t(BLOCK_TYPE_I18N[block.blockType]);
-	const timeRange = `${formatAxisTime(startMinute)}–${formatAxisTime(startMinute + durationMinutes)}`;
-	const compact = durationMinutes < 30;
+	const timeRange = `${formatAxisTime(labelStart)}–${formatAxisTime(labelStart + labelDuration)}`;
+	const compact = labelDuration < 30;
 	const chipHeight = Math.max(
-		durationMinutes * PIXELS_PER_MINUTE,
+		layoutDuration * PIXELS_PER_MINUTE,
 		MIN_CHIP_HEIGHT_PX,
 	);
 
@@ -254,8 +273,11 @@ function ScheduleBlockChip({
 			data-testid={`schedule-block-${block.id}`}
 			ref={setNodeRef}
 			style={{
-				top: (startMinute - AXIS_START_MINUTE) * PIXELS_PER_MINUTE,
+				top: (layoutStart - AXIS_START_MINUTE) * PIXELS_PER_MINUTE,
 				height: chipHeight,
+				transform: CSS.Translate.toString(
+					isDragging && transform != null ? { ...transform, x: 0 } : null,
+				),
 			}}
 			title={`${title} · ${timeRange}`}
 		>
@@ -274,7 +296,7 @@ function ScheduleBlockChip({
 			>
 				{compact ? (
 					<p className="truncate font-medium text-[0.65rem] leading-tight">
-						{title} · {formatAxisTime(startMinute)}
+						{title} · {formatAxisTime(labelStart)}
 					</p>
 				) : (
 					<>
@@ -484,11 +506,11 @@ export function DayScheduleTimeline({
 		(event: DragEndEvent) => {
 			const data = event.active.data.current as BlockDragData | undefined;
 			const preview = previewRef.current;
-			publishPreview(null);
 			window.setTimeout(() => {
 				dragMovedRef.current = false;
 			}, 0);
 			if (data == null) {
+				publishPreview(null);
 				return;
 			}
 			const next =
@@ -511,6 +533,7 @@ export function DayScheduleTimeline({
 					data.blockId,
 				);
 				if (snapped == null) {
+					publishPreview(null);
 					setLocalError(t("overlapError"));
 					return;
 				}
@@ -520,6 +543,15 @@ export function DayScheduleTimeline({
 				};
 			}
 
+			// Hold final layout via preview while transform clears — avoids jump.
+			publishPreview({
+				blockId: data.blockId,
+				startMinute: target.startMinute,
+				durationMinutes: target.durationMinutes,
+				mode: "drag",
+				isValid: true,
+			});
+
 			if (
 				target.startMinute !== data.startMinute ||
 				target.durationMinutes !== data.durationMinutes
@@ -528,8 +560,14 @@ export function DayScheduleTimeline({
 					blockId: data.blockId,
 					startMinute: target.startMinute,
 					durationMinutes: target.durationMinutes,
+				}).finally(() => {
+					if (previewRef.current?.blockId === data.blockId) {
+						publishPreview(null);
+					}
 				});
+				return;
 			}
+			publishPreview(null);
 		},
 		[blocks, publishPreview, runUpdate, t],
 	);
@@ -717,6 +755,7 @@ export function DayScheduleTimeline({
 					ref={scrollRef}
 				>
 					<DndContext
+						modifiers={[restrictMoveToAxis]}
 						onDragEnd={handleDragEnd}
 						onDragMove={handleDragMove}
 						onDragStart={handleDragStart}
