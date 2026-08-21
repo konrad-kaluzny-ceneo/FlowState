@@ -361,4 +361,51 @@ describe("useDaySchedule", () => {
 			);
 		});
 	});
+
+	it("queues update on a temp block and flushes after create succeeds", async () => {
+		blocksCache = [];
+		updateMutateAsync.mockResolvedValue(
+			sampleBlock({ id: 42, startMinute: 600, durationMinutes: 30 }),
+		);
+
+		const { result } = renderHook(() => useDaySchedule("2026-08-18"), {
+			wrapper: createWrapper(),
+		});
+
+		const createInput = {
+			localDateKey: "2026-08-18",
+			blockType: "FOCUS" as const,
+			startMinute: 540,
+			durationMinutes: 30,
+		};
+
+		await act(async () => {
+			const context =
+				await mutationLifecycles.createBlock.onMutate?.(createInput);
+			const tempId = blocksCache?.[0]?.id;
+			expect(tempId).toBeLessThan(0);
+
+			await result.current.updateBlock({
+				blockId: tempId as number,
+				startMinute: 600,
+				durationMinutes: 30,
+			});
+			expect(blocksCache?.[0]?.startMinute).toBe(600);
+
+			const created = sampleBlock({
+				id: 42,
+				startMinute: 540,
+				durationMinutes: 30,
+			});
+			mutationLifecycles.createBlock.onSuccess?.(created, createInput, context);
+		});
+
+		await waitFor(() => {
+			expect(updateMutateAsync).toHaveBeenCalledWith({
+				blockId: 42,
+				startMinute: 600,
+				durationMinutes: 30,
+			});
+		});
+	});
 });

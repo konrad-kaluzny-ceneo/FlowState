@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useDataMode } from "~/lib/data-mode/data-mode-context";
 import type {
@@ -31,6 +31,10 @@ type TagMutationContext = {
 	previous: DomainContextTag[] | undefined;
 	tempId?: number;
 };
+
+type PendingTempMutation =
+	| { kind: "update"; patch: Omit<UpdateBlockInput, "blockId"> }
+	| { kind: "delete" };
 
 let nextTempBlockId = 0;
 let nextTempTagId = 0;
@@ -115,6 +119,13 @@ export function useDaySchedule(localDateKey: string) {
 	const enabled = mode === "authenticated";
 	const utils = api.useUtils();
 	const [error, setError] = useState<string | null>(null);
+	const pendingByTempIdRef = useRef(new Map<number, PendingTempMutation[]>());
+	const updateMutateAsyncRef = useRef<
+		((input: UpdateBlockInput) => Promise<DomainScheduleBlock>) | null
+	>(null);
+	const deleteMutateAsyncRef = useRef<
+		((input: { blockId: number }) => Promise<unknown>) | null
+	>(null);
 	const listInput = useMemo<ListBlocksInput>(
 		() => ({ localDateKey }),
 		[localDateKey],
@@ -178,6 +189,18 @@ export function useDaySchedule(localDateKey: string) {
 					),
 				),
 			);
+			const pending = pendingByTempIdRef.current.get(context.tempId) ?? [];
+			pendingByTempIdRef.current.delete(context.tempId);
+			for (const item of pending) {
+				if (item.kind === "delete") {
+					void deleteMutateAsyncRef.current?.({ blockId: created.id });
+					break;
+				}
+				void updateMutateAsyncRef.current?.({
+					blockId: created.id,
+					...item.patch,
+				});
+			}
 		},
 		onSettled: settleList,
 	});
@@ -365,26 +388,68 @@ export function useDaySchedule(localDateKey: string) {
 		[createBlockMutation, localDateKey],
 	);
 
+	updateMutateAsyncRef.current = updateBlockMutation.mutateAsync;
+	deleteMutateAsyncRef.current = deleteBlockMutation.mutateAsync;
+
 	const updateBlock = useCallback(
 		async (input: UpdateBlockInput) => {
 			setError(null);
 			if (isTempBlockId(input.blockId)) {
+				const { blockId, ...patch } = input;
+				utils.dayPlan.listBlocks.setData(listInput, (old) =>
+					patchBlock(old, blockId, {
+						...(patch.blockType != null ? { blockType: patch.blockType } : {}),
+						...(patch.startMinute != null
+							? { startMinute: patch.startMinute }
+							: {}),
+						...(patch.durationMinutes != null
+							? { durationMinutes: patch.durationMinutes }
+							: {}),
+						...(patch.metaLabel !== undefined
+							? { metaLabel: patch.metaLabel ?? null }
+							: {}),
+						...(patch.fixedContext !== undefined
+							? { fixedContext: patch.fixedContext }
+							: {}),
+						...(patch.customContextTagId !== undefined
+							? { customContextTagId: patch.customContextTagId }
+							: {}),
+						...(patch.focusTaskId !== undefined
+							? {
+									focusTaskId: patch.focusTaskId,
+									focusTask: null,
+								}
+							: {}),
+						...(patch.batchTaskIds !== undefined
+							? { batchTaskIds: patch.batchTaskIds }
+							: {}),
+					}),
+				);
+				const queue = pendingByTempIdRef.current.get(blockId) ?? [];
+				queue.push({ kind: "update", patch });
+				pendingByTempIdRef.current.set(blockId, queue);
 				return;
 			}
 			return updateBlockMutation.mutateAsync(input);
 		},
-		[updateBlockMutation],
+		[listInput, updateBlockMutation, utils],
 	);
 
 	const deleteBlock = useCallback(
 		async (blockId: number) => {
 			setError(null);
 			if (isTempBlockId(blockId)) {
+				utils.dayPlan.listBlocks.setData(listInput, (old) =>
+					(old ?? []).filter((block) => block.id !== blockId),
+				);
+				const queue = pendingByTempIdRef.current.get(blockId) ?? [];
+				queue.push({ kind: "delete" });
+				pendingByTempIdRef.current.set(blockId, queue);
 				return;
 			}
 			await deleteBlockMutation.mutateAsync({ blockId });
 		},
-		[deleteBlockMutation],
+		[deleteBlockMutation, listInput, utils],
 	);
 
 	const setBlockFocusTask = useCallback(
