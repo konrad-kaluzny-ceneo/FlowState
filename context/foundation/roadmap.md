@@ -116,6 +116,9 @@ FlowState is a single-user web app for interrupt-driven knowledge work: mindful 
 | S-61 | schedule-plan-vs-execution | _pending_ | [#227](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/227) | Podsumowanie compares planned blocks vs actual focus, planning, and break time with in-session % | S-54, S-55, S-57, S-48 | **US-12**, FR-011 | proposed |
 | S-62 | agent-idle-skill-wait-metrics | [FLO-106](https://linear.app/flowstate-10xdev/issue/FLO-106) | [#228](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/228) | downloadable min-token agent Skill updates FlowState (task start/end/waiting); see agent IDLE wait for parallel capacity; deep-work-aware wait notifications | S-46, S-31, S-37 | proposed-FR-agent-idle-skill | ready |
 | S-63 | srodowisko-authored-tips-blog | [FLO-107](https://linear.app/flowstate-10xdev/issue/FLO-107) | [#229](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/229) | Środowisko shows human-authored tips; each tip has a public blog subpage (work-life balance education + Google organic traffic) | S-49, F-14, S-45 | proposed-FR-srodowisko-blog | ready |
+| S-64 | day-schedule-timeline-ux | [FLO-109](https://linear.app/flowstate-10xdev/issue/FLO-109) | [#235](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/235) | harmonogram: live drag hours, overlap preview, no jump, optimistic panel, discoverability — UX follow-up S-54 | S-54 | US-08, US-15, FR-001–004 | active |
+| S-65 | schedule-block-templates | [FLO-110](https://linear.app/flowstate-10xdev/issue/FLO-110) | [#236](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/236) | same-day duplicate + Pomodoro presets (45+15); not RRULE | S-54, S-64 | US-08, US-15 | proposed |
+| S-66 | schedule-timeline-a11y | [FLO-111](https://linear.app/flowstate-10xdev/issue/FLO-111) | [#237](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/237) | keyboard move/resize on day axis (WCAG 2.2 drag alternative) | S-54, S-64 | US-08; a11y guardrails | proposed |
 
 Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/items/). **PRD v3 scope map:** [`roadmap-references/prd-v3-horizon.md`](roadmap-references/prd-v3-horizon.md). **Flow coherence (B-05–B-08):** [`roadmap-references/flow-coherence-recommendations.md`](roadmap-references/flow-coherence-recommendations.md).
 
@@ -146,7 +149,7 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | U | Agent integration | F-15 → **S-46** → **S-47**; **S-62** | MCP server for AI agents; delegation proposals in Plan dnia; Skill + IDLE wait metrics + deep-work-aware agent wait cues |
 | V | Analytics depth | S-45 → **S-52** → **S-48** | S-52 makes the daily totals honest (partial cycles + break time) before S-48 builds weekly/monthly trends, plan-vs-execution, and context-switch patterns on top of them |
 | W | Workspace coaching | S-45 + F-14 → **S-49** → **S-63** | Advisory tips; then authored Środowisko series + public blog subpages (SEO / work-life balance) |
-| X | PRD v4 day schedule & habits | **S-53** → **S-54** → (**S-55** ∥ **S-56**) → **S-57** → **S-58** → **S-59**; **S-60** ∥ **S-61** | [`prd-v4.md`](prd-v4.md); S-59/S-60 absorb habit-return expand |
+| X | PRD v4 day schedule & habits | **S-53** → **S-54** → **S-64** → (**S-55** ∥ **S-56** ∥ **S-65**) → **S-57** → **S-58** → **S-59**; **S-60** ∥ **S-61**; **S-66** ∥ S-64 | [`prd-v4.md`](prd-v4.md); S-59/S-60 absorb habit-return; S-64 UX follow-up |
 
 ## Backlog Handoff
 
@@ -202,8 +205,11 @@ Detail for any row: [`roadmap-references/items/{ID}.md`](roadmap-references/item
 | S-61 | schedule-plan-vs-execution | **no** | capstone after S-54, S-55, S-57; extends S-48; GitHub [#227](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/227) |
 | S-62 | agent-idle-skill-wait-metrics | **yes** | after S-46/S-31/S-37 (done); Skill + IDLE wait + deep-work-aware notify; [FLO-106](https://linear.app/flowstate-10xdev/issue/FLO-106) / [#228](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/228) |
 | S-63 | srodowisko-authored-tips-blog | **yes** | after S-49; content authorship is critical path; [FLO-107](https://linear.app/flowstate-10xdev/issue/FLO-107) / [#229](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/229) |
+| S-64 | day-schedule-timeline-ux | **yes** | after S-54; UX audit 2026-08-21; [FLO-109](https://linear.app/flowstate-10xdev/issue/FLO-109) / [#235](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/235); implementing on `features/day-schedule-timeline-ux` |
+| S-65 | schedule-block-templates | **no** | after S-54/S-64; same-day presets; distinct from S-56 RRULE; [FLO-110](https://linear.app/flowstate-10xdev/issue/FLO-110) / [#236](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/236) |
+| S-66 | schedule-timeline-a11y | **no** | after S-54/S-64; keyboard timeline; [FLO-111](https://linear.app/flowstate-10xdev/issue/FLO-111) / [#237](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/237) |
 
-**Recommended next:** `/10x-plan day-schedule-timeline` (S-54) for v4 foundation, `/10x-plan agent-idle-skill-wait-metrics` (S-62) for agent parallelism, or `/10x-plan srodowisko-authored-tips-blog` (S-63) when tip content is ready to write.
+**Recommended next:** `/10x-plan day-schedule-timeline-ux` (S-64) for timeline ergonomics, `/10x-plan agent-idle-skill-wait-metrics` (S-62) for agent parallelism, or `/10x-plan srodowisko-authored-tips-blog` (S-63) when tip content is ready to write.
 
 ## Reference appendix (load on demand)
 

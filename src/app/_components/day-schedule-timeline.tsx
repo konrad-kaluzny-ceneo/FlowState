@@ -3,24 +3,29 @@
 import {
 	DndContext,
 	type DragEndEvent,
-	type Modifier,
+	type DragMoveEvent,
+	type DragStartEvent,
 	PointerSensor,
 	useDraggable,
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 import { useTranslations } from "next-intl";
 import {
 	type PointerEvent as ReactPointerEvent,
 	useCallback,
+	useEffect,
 	useRef,
 	useState,
 } from "react";
 
 import { ScheduleBlockEditPanel } from "~/app/_components/schedule-block-edit-panel";
 import type { DomainTask } from "~/lib/data-mode/types";
-import { intervalsOverlap } from "~/lib/schedule/overlap";
+import {
+	findNearestOpenSlot,
+	findOpenSlot,
+	wouldOverlap,
+} from "~/lib/schedule/overlap";
 import { snapMinute } from "~/lib/schedule/snap";
 import type {
 	DomainContextTag,
@@ -36,6 +41,7 @@ import { isTrpcErrorCode } from "~/lib/trpc/error-code";
 
 export const SCHEDULE_HOUR_HEIGHT_PX = 56;
 export const DEFAULT_BLOCK_DURATION_MINUTES = 30;
+export const MIN_CHIP_HEIGHT_PX = 22;
 
 const PIXELS_PER_MINUTE = SCHEDULE_HOUR_HEIGHT_PX / 60;
 const AXIS_HOUR_COUNT = (AXIS_END_MINUTE - AXIS_START_MINUTE) / 60;
@@ -70,6 +76,15 @@ const BLOCK_TYPE_I18N: Record<
 	PLANNING: "blockPlanning",
 	BATCH: "blockBatch",
 };
+
+const LEGEND_TYPES: ScheduleBlockType[] = [
+	"FOCUS",
+	"MEETING",
+	"BREAK",
+	"PERSONAL",
+	"PLANNING",
+	"BATCH",
+];
 
 type CreateBlockInput = {
 	blockType: ScheduleBlockType;
@@ -108,10 +123,12 @@ type BlockDragData = {
 	durationMinutes: number;
 };
 
-type ResizePreview = {
+type InteractionPreview = {
 	blockId: number;
 	startMinute: number;
 	durationMinutes: number;
+	mode: "drag" | "resize";
+	isValid: boolean;
 };
 
 type ResizeSession = {
@@ -147,46 +164,22 @@ function snapBlock(
 	return { startMinute: start, durationMinutes: duration };
 }
 
-function findOpenSlot(
-	blocks: DomainScheduleBlock[],
-	durationMinutes: number,
-): number | null {
-	for (
-		let start = AXIS_START_MINUTE;
-		start + durationMinutes <= AXIS_END_MINUTE;
-		start += SNAP_MINUTES
-	) {
-		const candidate = { startMinute: start, durationMinutes };
-		if (!blocks.some((block) => intervalsOverlap(block, candidate))) {
-			return start;
-		}
-	}
-	return null;
-}
-
 function minuteFromAxisY(clientY: number, axisTop: number): number {
 	return AXIS_START_MINUTE + (clientY - axisTop) / PIXELS_PER_MINUTE;
 }
 
-const restrictMoveToAxis: Modifier = ({ transform, active }) => {
-	const data = active?.data.current as BlockDragData | undefined;
-	const snappedY =
-		Math.round(transform.y / (SNAP_MINUTES * PIXELS_PER_MINUTE)) *
-		SNAP_MINUTES *
-		PIXELS_PER_MINUTE;
-	if (data == null) {
-		return { ...transform, x: 0, y: snappedY };
-	}
-	const minY = (AXIS_START_MINUTE - data.startMinute) * PIXELS_PER_MINUTE;
-	const maxY =
-		(AXIS_END_MINUTE - data.durationMinutes - data.startMinute) *
-		PIXELS_PER_MINUTE;
-	return {
-		...transform,
-		x: 0,
-		y: Math.min(maxY, Math.max(minY, snappedY)),
-	};
-};
+function localDateKeyToday(): string {
+	const now = new Date();
+	const y = now.getFullYear();
+	const m = String(now.getMonth() + 1).padStart(2, "0");
+	const d = String(now.getDate()).padStart(2, "0");
+	return `${y}-${m}-${d}`;
+}
+
+function nowMinuteOfDay(): number {
+	const now = new Date();
+	return now.getHours() * 60 + now.getMinutes();
+}
 
 function TimelineSkeleton() {
 	const t = useTranslations("PlanDnia");
@@ -217,7 +210,7 @@ function ScheduleBlockChip({
 	onOpen,
 }: {
 	block: DomainScheduleBlock;
-	preview: ResizePreview | null;
+	preview: InteractionPreview | null;
 	onResizePointerDown: (
 		block: DomainScheduleBlock,
 		edge: "start" | "end",
@@ -226,48 +219,49 @@ function ScheduleBlockChip({
 	onOpen: (blockId: number) => void;
 }) {
 	const t = useTranslations("PlanDnia");
-	const { attributes, listeners, setNodeRef, transform, isDragging } =
-		useDraggable({
-			id: String(block.id),
-			data: {
-				blockId: block.id,
-				startMinute: block.startMinute,
-				durationMinutes: block.durationMinutes,
-			} satisfies BlockDragData,
-		});
+	const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+		id: String(block.id),
+		data: {
+			blockId: block.id,
+			startMinute: block.startMinute,
+			durationMinutes: block.durationMinutes,
+		} satisfies BlockDragData,
+	});
 
-	const startMinute =
-		preview?.blockId === block.id ? preview.startMinute : block.startMinute;
+	const activePreview = preview?.blockId === block.id ? preview : null;
+	const startMinute = activePreview?.startMinute ?? block.startMinute;
 	const durationMinutes =
-		preview?.blockId === block.id
-			? preview.durationMinutes
-			: block.durationMinutes;
+		activePreview?.durationMinutes ?? block.durationMinutes;
+	const isInvalid = activePreview != null && !activePreview.isValid;
 	const title =
 		block.metaLabel ??
 		block.focusTask?.title ??
 		t(BLOCK_TYPE_I18N[block.blockType]);
 	const timeRange = `${formatAxisTime(startMinute)}–${formatAxisTime(startMinute + durationMinutes)}`;
+	const compact = durationMinutes < 30;
+	const chipHeight = Math.max(
+		durationMinutes * PIXELS_PER_MINUTE,
+		MIN_CHIP_HEIGHT_PX,
+	);
 
 	return (
 		<li
 			aria-label={`${title}, ${timeRange}`}
 			className={`pointer-events-auto absolute right-0 left-0 touch-none overflow-hidden rounded-lg ${BLOCK_TYPE_CLASS[block.blockType]} ${
-				isDragging ? "z-10 shadow-sm" : ""
-			}`}
+				isDragging || activePreview != null ? "z-10 shadow-sm" : ""
+			} ${isInvalid ? "opacity-70 ring-2 ring-red-400" : ""}`}
 			data-schedule-block=""
 			data-testid={`schedule-block-${block.id}`}
 			ref={setNodeRef}
 			style={{
 				top: (startMinute - AXIS_START_MINUTE) * PIXELS_PER_MINUTE,
-				height: durationMinutes * PIXELS_PER_MINUTE,
-				transform: CSS.Translate.toString(
-					transform ? { ...transform, x: 0 } : null,
-				),
+				height: chipHeight,
 			}}
+			title={`${title} · ${timeRange}`}
 		>
 			<button
 				aria-label={t("resizeStartAria")}
-				className="absolute inset-x-0 top-0 z-10 h-1.5 cursor-ns-resize"
+				className="absolute inset-x-0 top-0 z-10 h-3 cursor-ns-resize after:absolute after:inset-x-2 after:top-1 after:h-0.5 after:rounded-full after:bg-current after:opacity-0 after:transition-opacity hover:after:opacity-40 focus-visible:after:opacity-40"
 				onPointerDown={(event) => onResizePointerDown(block, "start", event)}
 				type="button"
 			/>
@@ -278,14 +272,20 @@ function ScheduleBlockChip({
 				{...listeners}
 				{...attributes}
 			>
-				<p className="truncate font-medium text-xs">{title}</p>
-				{durationMinutes >= 30 ? (
-					<p className="truncate text-[0.65rem] opacity-80">{timeRange}</p>
-				) : null}
+				{compact ? (
+					<p className="truncate font-medium text-[0.65rem] leading-tight">
+						{title} · {formatAxisTime(startMinute)}
+					</p>
+				) : (
+					<>
+						<p className="truncate font-medium text-xs">{title}</p>
+						<p className="truncate text-[0.65rem] opacity-80">{timeRange}</p>
+					</>
+				)}
 			</button>
 			<button
 				aria-label={t("resizeEndAria")}
-				className="absolute inset-x-0 bottom-0 z-10 h-1.5 cursor-ns-resize"
+				className="absolute inset-x-0 bottom-0 z-10 h-3 cursor-ns-resize after:absolute after:inset-x-2 after:bottom-1 after:h-0.5 after:rounded-full after:bg-current after:opacity-0 after:transition-opacity hover:after:opacity-40 focus-visible:after:opacity-40"
 				onPointerDown={(event) => onResizePointerDown(block, "end", event)}
 				type="button"
 			/>
@@ -297,6 +297,7 @@ export function DayScheduleTimeline({
 	blocks,
 	tasks = [],
 	contextTags = [],
+	localDateKey,
 	isLoading = false,
 	error = null,
 	createBlock,
@@ -306,15 +307,16 @@ export function DayScheduleTimeline({
 }: DayScheduleTimelineProps) {
 	const t = useTranslations("PlanDnia");
 	const axisRef = useRef<HTMLButtonElement>(null);
+	const scrollRef = useRef<HTMLDivElement>(null);
 	const dragMovedRef = useRef(false);
 	const resizedRef = useRef(false);
 	const resizeSessionRef = useRef<ResizeSession | null>(null);
-	const resizePreviewRef = useRef<ResizePreview | null>(null);
-	const [resizePreview, setResizePreview] = useState<ResizePreview | null>(
-		null,
-	);
+	const previewRef = useRef<InteractionPreview | null>(null);
+	const [interactionPreview, setInteractionPreview] =
+		useState<InteractionPreview | null>(null);
 	const [localError, setLocalError] = useState<string | null>(null);
 	const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
+	const [legendOpen, setLegendOpen] = useState(false);
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: { distance: 8 },
@@ -322,6 +324,13 @@ export function DayScheduleTimeline({
 	);
 
 	const displayedError = error ?? localError;
+	const isToday = localDateKey === localDateKeyToday();
+	const nowMinute = isToday ? nowMinuteOfDay() : null;
+
+	const publishPreview = useCallback((next: InteractionPreview | null) => {
+		previewRef.current = next;
+		setInteractionPreview(next);
+	}, []);
 
 	const reportMutationError = useCallback(
 		(err: unknown) => {
@@ -358,15 +367,44 @@ export function DayScheduleTimeline({
 		[reportMutationError, updateBlock],
 	);
 
+	const preferredAddStart = useCallback(() => {
+		const viewportCenter =
+			scrollRef.current != null && axisRef.current != null
+				? minuteFromAxisY(
+						scrollRef.current.getBoundingClientRect().top +
+							scrollRef.current.clientHeight / 2,
+						axisRef.current.getBoundingClientRect().top,
+					)
+				: AXIS_START_MINUTE + 180;
+		const preferred =
+			nowMinute != null ? Math.max(nowMinute, viewportCenter) : viewportCenter;
+		return Math.min(
+			AXIS_END_MINUTE - DEFAULT_BLOCK_DURATION_MINUTES,
+			Math.max(AXIS_START_MINUTE, preferred),
+		);
+	}, [nowMinute]);
+
+	const scrollBlockIntoView = useCallback((startMinute: number) => {
+		const scroller = scrollRef.current;
+		if (scroller == null || typeof scroller.scrollTo !== "function") {
+			return;
+		}
+		const top = (startMinute - AXIS_START_MINUTE) * PIXELS_PER_MINUTE - 48;
+		scroller.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+	}, []);
+
 	const handleAddBlock = useCallback(() => {
+		const preferred = preferredAddStart();
 		const startMinute =
-			findOpenSlot(blocks, DEFAULT_BLOCK_DURATION_MINUTES) ?? AXIS_START_MINUTE;
+			findOpenSlot(blocks, DEFAULT_BLOCK_DURATION_MINUTES, preferred) ??
+			AXIS_START_MINUTE;
 		void runCreate({
 			blockType: "FOCUS",
 			startMinute,
 			durationMinutes: DEFAULT_BLOCK_DURATION_MINUTES,
 		});
-	}, [blocks, runCreate]);
+		scrollBlockIntoView(startMinute);
+	}, [blocks, preferredAddStart, runCreate, scrollBlockIntoView]);
 
 	const handleAxisDoubleClick = useCallback(
 		(event: React.MouseEvent<HTMLButtonElement>) => {
@@ -386,7 +424,7 @@ export function DayScheduleTimeline({
 				minuteFromAxisY(event.clientY, axisTop),
 				DEFAULT_BLOCK_DURATION_MINUTES,
 			);
-			if (blocks.some((block) => intervalsOverlap(block, snapped))) {
+			if (wouldOverlap(snapped, blocks)) {
 				setLocalError(t("overlapError"));
 				return;
 			}
@@ -399,11 +437,28 @@ export function DayScheduleTimeline({
 		[blocks, runCreate, t],
 	);
 
-	const handleDragEnd = useCallback(
-		(event: DragEndEvent) => {
+	const handleDragStart = useCallback(
+		(event: DragStartEvent) => {
 			const data = event.active.data.current as BlockDragData | undefined;
 			if (data == null) {
-				dragMovedRef.current = false;
+				return;
+			}
+			dragMovedRef.current = false;
+			publishPreview({
+				blockId: data.blockId,
+				startMinute: data.startMinute,
+				durationMinutes: data.durationMinutes,
+				mode: "drag",
+				isValid: true,
+			});
+		},
+		[publishPreview],
+	);
+
+	const handleDragMove = useCallback(
+		(event: DragMoveEvent) => {
+			const data = event.active.data.current as BlockDragData | undefined;
+			if (data == null) {
 				return;
 			}
 			if (Math.abs(event.delta.y) >= 2) {
@@ -413,27 +468,71 @@ export function DayScheduleTimeline({
 				data.startMinute + event.delta.y / PIXELS_PER_MINUTE,
 				data.durationMinutes,
 			);
-			if (
-				next.startMinute !== data.startMinute ||
-				next.durationMinutes !== data.durationMinutes
-			) {
-				void runUpdate({
-					blockId: data.blockId,
-					startMinute: next.startMinute,
-					durationMinutes: next.durationMinutes,
-				});
-			}
+			const isValid = !wouldOverlap(next, blocks, data.blockId);
+			publishPreview({
+				blockId: data.blockId,
+				startMinute: next.startMinute,
+				durationMinutes: next.durationMinutes,
+				mode: "drag",
+				isValid,
+			});
+		},
+		[blocks, publishPreview],
+	);
+
+	const handleDragEnd = useCallback(
+		(event: DragEndEvent) => {
+			const data = event.active.data.current as BlockDragData | undefined;
+			const preview = previewRef.current;
+			publishPreview(null);
 			window.setTimeout(() => {
 				dragMovedRef.current = false;
 			}, 0);
-		},
-		[runUpdate],
-	);
+			if (data == null) {
+				return;
+			}
+			const next =
+				preview?.blockId === data.blockId
+					? {
+							startMinute: preview.startMinute,
+							durationMinutes: preview.durationMinutes,
+						}
+					: snapBlock(
+							data.startMinute + event.delta.y / PIXELS_PER_MINUTE,
+							data.durationMinutes,
+						);
 
-	const publishResizePreview = useCallback((next: ResizePreview | null) => {
-		resizePreviewRef.current = next;
-		setResizePreview(next);
-	}, []);
+			let target = next;
+			if (wouldOverlap(target, blocks, data.blockId)) {
+				const snapped = findNearestOpenSlot(
+					blocks,
+					target.durationMinutes,
+					target.startMinute,
+					data.blockId,
+				);
+				if (snapped == null) {
+					setLocalError(t("overlapError"));
+					return;
+				}
+				target = {
+					startMinute: snapped,
+					durationMinutes: target.durationMinutes,
+				};
+			}
+
+			if (
+				target.startMinute !== data.startMinute ||
+				target.durationMinutes !== data.durationMinutes
+			) {
+				void runUpdate({
+					blockId: data.blockId,
+					startMinute: target.startMinute,
+					durationMinutes: target.durationMinutes,
+				});
+			}
+		},
+		[blocks, publishPreview, runUpdate, t],
+	);
 
 	const handleResizePointerDown = useCallback(
 		(
@@ -452,8 +551,15 @@ export function DayScheduleTimeline({
 				startMinute: block.startMinute,
 				durationMinutes: block.durationMinutes,
 			};
+			publishPreview({
+				blockId: block.id,
+				startMinute: block.startMinute,
+				durationMinutes: block.durationMinutes,
+				mode: "resize",
+				isValid: true,
+			});
 		},
-		[],
+		[publishPreview],
 	);
 
 	const handleResizePointerMove = useCallback(
@@ -467,32 +573,35 @@ export function DayScheduleTimeline({
 			if (Math.abs(deltaMinutes) >= 1) {
 				resizedRef.current = true;
 			}
+			let next: { startMinute: number; durationMinutes: number };
 			if (session.edge === "end") {
-				publishResizePreview({
-					blockId: session.blockId,
-					...snapBlock(
-						session.startMinute,
-						session.durationMinutes + deltaMinutes,
-					),
-				});
-				return;
+				next = snapBlock(
+					session.startMinute,
+					session.durationMinutes + deltaMinutes,
+				);
+			} else {
+				const endMinute = session.startMinute + session.durationMinutes;
+				const nextStart = snapMinute(session.startMinute + deltaMinutes);
+				const duration = Math.max(SNAP_MINUTES, endMinute - nextStart);
+				next = snapBlock(nextStart, duration);
 			}
-			const endMinute = session.startMinute + session.durationMinutes;
-			const nextStart = snapMinute(session.startMinute + deltaMinutes);
-			const duration = Math.max(SNAP_MINUTES, endMinute - nextStart);
-			publishResizePreview({
+			const isValid = !wouldOverlap(next, blocks, session.blockId);
+			publishPreview({
 				blockId: session.blockId,
-				...snapBlock(nextStart, duration),
+				startMinute: next.startMinute,
+				durationMinutes: next.durationMinutes,
+				mode: "resize",
+				isValid,
 			});
 		},
-		[publishResizePreview],
+		[blocks, publishPreview],
 	);
 
 	const handleResizePointerUp = useCallback(() => {
 		const session = resizeSessionRef.current;
-		const preview = resizePreviewRef.current;
+		const preview = previewRef.current;
 		resizeSessionRef.current = null;
-		publishResizePreview(null);
+		publishPreview(null);
 		window.setTimeout(() => {
 			resizedRef.current = false;
 		}, 0);
@@ -503,18 +612,49 @@ export function DayScheduleTimeline({
 		) {
 			return;
 		}
+		let target = {
+			startMinute: preview.startMinute,
+			durationMinutes: preview.durationMinutes,
+		};
+		if (wouldOverlap(target, blocks, session.blockId)) {
+			const snapped = findNearestOpenSlot(
+				blocks,
+				target.durationMinutes,
+				target.startMinute,
+				session.blockId,
+			);
+			if (snapped == null) {
+				setLocalError(t("overlapError"));
+				return;
+			}
+			target = {
+				startMinute: snapped,
+				durationMinutes: target.durationMinutes,
+			};
+		}
 		if (
-			preview.startMinute === session.startMinute &&
-			preview.durationMinutes === session.durationMinutes
+			target.startMinute === session.startMinute &&
+			target.durationMinutes === session.durationMinutes
 		) {
 			return;
 		}
 		void runUpdate({
 			blockId: session.blockId,
-			startMinute: preview.startMinute,
-			durationMinutes: preview.durationMinutes,
+			startMinute: target.startMinute,
+			durationMinutes: target.durationMinutes,
 		});
-	}, [publishResizePreview, runUpdate]);
+	}, [blocks, publishPreview, runUpdate, t]);
+
+	useEffect(() => {
+		if (!isToday || nowMinute == null || isLoading) {
+			return;
+		}
+		const clamped = Math.min(
+			AXIS_END_MINUTE - 60,
+			Math.max(AXIS_START_MINUTE, nowMinute - 60),
+		);
+		scrollBlockIntoView(clamped);
+	}, [isLoading, isToday, nowMinute, scrollBlockIntoView]);
 
 	if (isLoading) {
 		return <TimelineSkeleton />;
@@ -525,6 +665,10 @@ export function DayScheduleTimeline({
 			? null
 			: (blocks.find((block) => block.id === selectedBlockId) ?? null);
 	const canEdit = deleteBlock != null && createContextTag != null;
+	const showNowLine =
+		nowMinute != null &&
+		nowMinute >= AXIS_START_MINUTE &&
+		nowMinute <= AXIS_END_MINUTE;
 
 	return (
 		<>
@@ -533,9 +677,10 @@ export function DayScheduleTimeline({
 				className="w-full rounded-card border border-card-border bg-surface-card px-5 py-4 shadow-sm"
 				data-testid="schedule-timeline"
 			>
-				<div className="mb-3 flex items-center justify-end">
+				<div className="mb-2 flex items-center justify-between gap-3">
+					<p className="text-text-dimmed text-xs">{t("timelineHint")}</p>
 					<button
-						className="rounded-lg border border-border-subtle px-3 py-1.5 text-sm text-text-secondary transition hover:bg-surface-card-muted"
+						className="shrink-0 rounded-lg border border-border-subtle px-3 py-1.5 text-sm text-text-secondary transition hover:bg-surface-card-muted"
 						data-testid="schedule-add-block"
 						onClick={handleAddBlock}
 						type="button"
@@ -543,19 +688,38 @@ export function DayScheduleTimeline({
 						{t("addBlock")}
 					</button>
 				</div>
+				{blocks.length === 0 ? (
+					<p
+						className="mb-3 text-sm text-text-secondary"
+						data-testid="schedule-timeline-empty"
+					>
+						{t("timelineEmpty")}
+					</p>
+				) : null}
 				{displayedError != null ? (
 					<p className="mb-3 text-red-300 text-xs" role="alert">
 						{displayedError}
+					</p>
+				) : null}
+				{interactionPreview != null && !interactionPreview.isValid ? (
+					<p
+						className="mb-2 text-red-300 text-xs"
+						data-testid="schedule-overlap-inline"
+						role="status"
+					>
+						{t("overlapInline")}
 					</p>
 				) : null}
 				<div
 					className="max-h-[32rem] overflow-y-auto"
 					onPointerMove={handleResizePointerMove}
 					onPointerUp={handleResizePointerUp}
+					ref={scrollRef}
 				>
 					<DndContext
-						modifiers={[restrictMoveToAxis]}
 						onDragEnd={handleDragEnd}
+						onDragMove={handleDragMove}
+						onDragStart={handleDragStart}
 						sensors={sensors}
 					>
 						<div className="relative ml-12 min-h-[22rem] select-none">
@@ -575,6 +739,20 @@ export function DayScheduleTimeline({
 									{formatHourLabel(22)}
 								</span>
 							</div>
+							{showNowLine && nowMinute != null ? (
+								<div
+									aria-hidden="true"
+									className="pointer-events-none absolute right-0 left-0 z-[5] border-accent-cta border-t border-dashed"
+									data-testid="schedule-now-line"
+									style={{
+										top: (nowMinute - AXIS_START_MINUTE) * PIXELS_PER_MINUTE,
+									}}
+								>
+									<span className="absolute top-[-0.55rem] left-0 -ml-12 w-10 text-right font-medium text-[0.65rem] text-accent-cta">
+										{t("timelineNow")}
+									</span>
+								</div>
+							) : null}
 							<button
 								aria-label={t("addBlockDoubleClickAria")}
 								className="absolute inset-x-0 top-0"
@@ -593,17 +771,45 @@ export function DayScheduleTimeline({
 										block={block}
 										key={block.id}
 										onOpen={(blockId) => {
+											if (dragMovedRef.current || resizedRef.current) {
+												return;
+											}
 											if (canEdit && blockId >= 0) {
 												setSelectedBlockId(blockId);
 											}
 										}}
 										onResizePointerDown={handleResizePointerDown}
-										preview={resizePreview}
+										preview={interactionPreview}
 									/>
 								))}
 							</ul>
 						</div>
 					</DndContext>
+				</div>
+				<div className="mt-3 border-border-subtle border-t pt-3">
+					<button
+						className="text-text-dimmed text-xs hover:text-text-secondary"
+						data-testid="schedule-legend-toggle"
+						onClick={() => setLegendOpen((open) => !open)}
+						type="button"
+					>
+						{legendOpen ? t("legendHide") : t("legendShow")}
+					</button>
+					{legendOpen ? (
+						<ul
+							className="mt-2 flex flex-wrap gap-2"
+							data-testid="schedule-legend"
+						>
+							{LEGEND_TYPES.map((type) => (
+								<li
+									className={`rounded-md px-2 py-0.5 text-[0.65rem] ${BLOCK_TYPE_CLASS[type]}`}
+									key={type}
+								>
+									{t(BLOCK_TYPE_I18N[type])}
+								</li>
+							))}
+						</ul>
+					) : null}
 				</div>
 			</section>
 			{selectedBlock != null &&

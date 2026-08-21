@@ -185,33 +185,31 @@ export function ScheduleBlockEditPanel({
 	}, [durationMinutes, startMinute]);
 
 	async function handleSave() {
-		setIsSaving(true);
 		setError(null);
-		try {
-			const fixedContext = contextValue.startsWith("fixed:")
-				? (contextValue.slice(6) as GtdFixedContext)
-				: null;
-			const customContextTagId = contextValue.startsWith("tag:")
-				? Number(contextValue.slice(4))
-				: null;
+		const fixedContext = contextValue.startsWith("fixed:")
+			? (contextValue.slice(6) as GtdFixedContext)
+			: null;
+		const customContextTagId = contextValue.startsWith("tag:")
+			? Number(contextValue.slice(4))
+			: null;
 
-			await updateBlock({
-				blockId: block.id,
-				blockType,
-				startMinute,
-				durationMinutes,
-				metaLabel: blockType === "BATCH" ? metaLabel : null,
-				fixedContext,
-				customContextTagId,
-				...(blockType === "FOCUS" ? { focusTaskId } : {}),
-				...(blockType === "BATCH" ? { batchTaskIds } : {}),
-			});
-			onClose();
-		} catch {
-			setError(t("scheduleSaveError"));
-		} finally {
-			setIsSaving(false);
-		}
+		const input = {
+			blockId: block.id,
+			blockType,
+			startMinute,
+			durationMinutes,
+			metaLabel: blockType === "BATCH" ? metaLabel : null,
+			fixedContext,
+			customContextTagId,
+			...(blockType === "FOCUS" ? { focusTaskId } : {}),
+			...(blockType === "BATCH" ? { batchTaskIds } : {}),
+		};
+
+		// Optimistic close — hook already patches list cache (S-09 ≤200ms).
+		onClose();
+		void updateBlock(input).catch(() => {
+			// Parent timeline surfaces scheduleSaveError via hook error state.
+		});
 	}
 
 	async function handleCreateTag() {
