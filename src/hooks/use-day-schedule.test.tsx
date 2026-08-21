@@ -362,6 +362,35 @@ describe("useDaySchedule", () => {
 		});
 	});
 
+	it("resyncs block list from server only after failed mutations", () => {
+		renderHook(() => useDaySchedule("2026-08-18"), {
+			wrapper: createWrapper(),
+		});
+		invalidateListBlocks.mockClear();
+
+		mutationLifecycles.updateBlock.onSettled?.(
+			undefined,
+			conflictError(),
+			{ blockId: 1, blockType: "MEETING" },
+			{ previous: [sampleBlock()] },
+		);
+
+		expect(invalidateListBlocks).toHaveBeenCalledWith({
+			localDateKey: "2026-08-18",
+		});
+
+		invalidateListBlocks.mockClear();
+
+		mutationLifecycles.updateBlock.onSettled?.(
+			sampleBlock({ blockType: "MEETING" }),
+			undefined,
+			{ blockId: 1, blockType: "MEETING" },
+			{ previous: [sampleBlock()] },
+		);
+
+		expect(invalidateListBlocks).not.toHaveBeenCalled();
+	});
+
 	it("queues update on a temp block and flushes after create succeeds", async () => {
 		blocksCache = [];
 		updateMutateAsync.mockResolvedValue(

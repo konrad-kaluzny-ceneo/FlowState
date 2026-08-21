@@ -69,8 +69,10 @@ export function useDayPlan() {
 				utils.dayPlan.getOrCreate.setData({ localDateKey }, context.previous);
 			}
 		},
-		onSettled: () => {
-			void utils.dayPlan.getOrCreate.invalidate({ localDateKey });
+		onSuccess: ({ energyLevel }) => {
+			utils.dayPlan.getOrCreate.setData({ localDateKey }, (current) =>
+				current == null ? current : { ...current, energyLevel },
+			);
 		},
 	});
 
@@ -97,8 +99,12 @@ export function useDayPlan() {
 				utils.dayPlan.getOrCreate.setData({ localDateKey }, context.previous);
 			}
 		},
-		onSettled: () => {
-			void utils.dayPlan.getOrCreate.invalidate({ localDateKey });
+		onSuccess: ({ workStartMinute, workEndMinute }) => {
+			utils.dayPlan.getOrCreate.setData({ localDateKey }, (current) =>
+				current == null
+					? current
+					: { ...current, workStartMinute, workEndMinute },
+			);
 		},
 	});
 

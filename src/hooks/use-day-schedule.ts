@@ -163,9 +163,23 @@ export function useDaySchedule(localDateKey: string) {
 		[listInput, scheduleErrorMessage, utils],
 	);
 
-	const settleList = useCallback(() => {
-		void utils.dayPlan.listBlocks.invalidate(listInput);
-	}, [listInput, utils]);
+	const resyncListOnError = useCallback(
+		(_data: unknown, error: unknown) => {
+			if (error != null) {
+				void utils.dayPlan.listBlocks.invalidate(listInput);
+			}
+		},
+		[listInput, utils],
+	);
+
+	const resyncTagsOnError = useCallback(
+		(_data: unknown, error: unknown) => {
+			if (error != null) {
+				void utils.dayPlan.listContextTags.invalidate();
+			}
+		},
+		[utils],
+	);
 
 	const createBlockMutation = api.dayPlan.createBlock.useMutation({
 		onMutate: async (input) => {
@@ -202,7 +216,7 @@ export function useDaySchedule(localDateKey: string) {
 				});
 			}
 		},
-		onSettled: settleList,
+		onSettled: resyncListOnError,
 	});
 	const updateBlockMutation = api.dayPlan.updateBlock.useMutation({
 		onMutate: async (input) => {
@@ -272,7 +286,7 @@ export function useDaySchedule(localDateKey: string) {
 				replaceBlock(old, updated),
 			);
 		},
-		onSettled: settleList,
+		onSettled: resyncListOnError,
 	});
 	const deleteBlockMutation = api.dayPlan.deleteBlock.useMutation({
 		onMutate: async (input) => {
@@ -284,7 +298,7 @@ export function useDaySchedule(localDateKey: string) {
 			return { previous } satisfies MutationContext;
 		},
 		onError: rollbackList,
-		onSettled: settleList,
+		onSettled: resyncListOnError,
 	});
 	const setFocusTaskMutation = api.dayPlan.setBlockFocusTask.useMutation({
 		onMutate: async (input) => {
@@ -311,7 +325,7 @@ export function useDaySchedule(localDateKey: string) {
 				replaceBlock(old, updated),
 			);
 		},
-		onSettled: settleList,
+		onSettled: resyncListOnError,
 	});
 	const setBatchTasksMutation = api.dayPlan.setBlockBatchTasks.useMutation({
 		onMutate: async (input) => {
@@ -328,7 +342,7 @@ export function useDaySchedule(localDateKey: string) {
 				replaceBlock(old, updated),
 			);
 		},
-		onSettled: settleList,
+		onSettled: resyncListOnError,
 	});
 	const createTagMutation = api.dayPlan.createContextTag.useMutation({
 		onMutate: async (input) => {
@@ -357,9 +371,7 @@ export function useDaySchedule(localDateKey: string) {
 				(old ?? []).map((tag) => (tag.id === context?.tempId ? created : tag)),
 			);
 		},
-		onSettled: () => {
-			void utils.dayPlan.listContextTags.invalidate();
-		},
+		onSettled: resyncTagsOnError,
 	});
 	const deleteTagMutation = api.dayPlan.deleteContextTag.useMutation({
 		onMutate: async (input) => {
@@ -375,9 +387,7 @@ export function useDaySchedule(localDateKey: string) {
 				utils.dayPlan.listContextTags.setData(undefined, context.previous);
 			}
 		},
-		onSettled: () => {
-			void utils.dayPlan.listContextTags.invalidate();
-		},
+		onSettled: resyncTagsOnError,
 	});
 
 	const createBlock = useCallback(
