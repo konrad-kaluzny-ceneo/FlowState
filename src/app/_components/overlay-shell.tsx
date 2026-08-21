@@ -251,6 +251,8 @@ export const overlayButtonClass = {
 		"rounded-lg border border-border-subtle bg-surface-panel py-3 font-semibold text-primary transition hover:bg-surface-card-muted disabled:opacity-50",
 	secondaryFull:
 		"w-full rounded-lg border border-border-subtle bg-surface-panel py-3 font-semibold text-primary transition hover:bg-surface-card-muted disabled:opacity-50",
+	danger:
+		"rounded-lg bg-danger py-3 font-semibold text-on-danger transition hover:bg-danger-hover disabled:opacity-50",
 	success:
 		"rounded-lg bg-accent-success py-3 font-semibold text-on-cta transition hover:opacity-90 disabled:opacity-50",
 	breakPrimary:

@@ -9,6 +9,8 @@ type DayPlanData = {
 	usedFocusMinutes: number;
 	remainingFocusMinutes: number | null;
 	energyLevel: "FOCUSED" | "STEADY" | "FADING" | null;
+	workStartMinute: number | null;
+	workEndMinute: number | null;
 };
 
 let dataMode: "authenticated" | "guest" = "authenticated";
@@ -18,6 +20,8 @@ let dayPlanData: DayPlanData = {
 	usedFocusMinutes: 30,
 	remainingFocusMinutes: 90,
 	energyLevel: "FOCUSED",
+	workStartMinute: null,
+	workEndMinute: null,
 };
 let queryInput: { localDateKey: string } | undefined;
 const invalidateDayPlan = vi.fn();
@@ -27,6 +31,7 @@ const getDataDayPlan = vi.fn(() => dayPlanData);
 const setDataDayPlan = vi.fn();
 const setBudgetMutateAsync = vi.fn().mockResolvedValue(undefined);
 const setEnergyMutateAsync = vi.fn().mockResolvedValue(undefined);
+const setWorkHoursMutateAsync = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("~/lib/data-mode/data-mode-context", () => ({
 	useDataMode: () => dataMode,
@@ -81,6 +86,12 @@ vi.mock("~/trpc/react", () => ({
 					isPending: false,
 				}),
 			},
+			setWorkHours: {
+				useMutation: () => ({
+					mutateAsync: setWorkHoursMutateAsync,
+					isPending: false,
+				}),
+			},
 		},
 	},
 }));
@@ -109,6 +120,8 @@ describe("useDayPlan", () => {
 			usedFocusMinutes: 30,
 			remainingFocusMinutes: 90,
 			energyLevel: "FOCUSED",
+			workStartMinute: null,
+			workEndMinute: null,
 		};
 		queryInput = undefined;
 		vi.mocked(formatLocalDateKey).mockReturnValue("2026-06-19");

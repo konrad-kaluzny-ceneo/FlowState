@@ -889,4 +889,11 @@ describe("guest repositories cross-day stale session", () => {
 		);
 		expect(yesterdayPoint?.focusMinutes).toBe(20);
 	});
+
+	it("schedule stub throws because guest mode has no calendar", async () => {
+		const { schedule } = createGuestRepositories();
+		expect(() => schedule.listBlocks(TODAY_KEY)).toThrow(
+			"Schedule not available in guest mode",
+		);
+	});
 });

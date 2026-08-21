@@ -68,6 +68,22 @@ enum ApiKeyScope {
   READ_WRITE
 }
 
+enum ScheduleBlockType {
+  FOCUS
+  MEETING
+  BREAK
+  PERSONAL
+  PLANNING
+  BATCH
+}
+
+enum GtdFixedContext {
+  PHONE
+  COMPUTER
+  OFFICE
+  ERRANDS
+}
+
 // --- Models ---
 
 model Task {
@@ -98,6 +114,9 @@ model Task {
 
   suggestedDecisions SuggestionDecision[] @relation("SuggestedTask")
   chosenDecisions    SuggestionDecision[] @relation("ChosenTask")
+
+  scheduleFocusBlocks ScheduleBlock[]     @relation("ScheduleFocusBlocks")
+  scheduleBatchLinks  ScheduleBlockTask[]
 
   @@index([status], name: "task_status_idx")
   @@index([userId], name: "task_user_id_idx")
@@ -205,6 +224,8 @@ model DayPlan {
   focusBudgetMinutes Int?         @map("focus_budget_minutes")
   usedFocusMinutes   Int          @default(0) @map("used_focus_minutes")
   energyLevel        EnergyLevel? @map("energy_level")
+  workStartMinute    Int?         @map("work_start_minute")
+  workEndMinute      Int?         @map("work_end_minute")
   createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -257,4 +278,52 @@ model ApiKey {
 
   @@index([userId], name: "api_key_user_id_idx")
   @@map("flow_state_api_key")
+}
+
+model UserContextTag {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id") @db.VarChar(255)
+  label     String   @db.VarChar(32)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  scheduleBlocks ScheduleBlock[]
+
+  @@unique([userId, label], name: "user_context_tag_user_label")
+  @@map("flow_state_user_context_tag")
+}
+
+model ScheduleBlock {
+  id                 Int               @id @default(autoincrement())
+  userId             String            @map("user_id") @db.VarChar(255)
+  localDateKey       String            @map("local_date_key") @db.VarChar(10)
+  blockType          ScheduleBlockType @map("block_type")
+  startMinute        Int               @map("start_minute")
+  durationMinutes    Int               @map("duration_minutes")
+  metaLabel          String?           @map("meta_label") @db.VarChar(120)
+  fixedContext       GtdFixedContext?  @map("fixed_context")
+  customContextTagId Int?              @map("custom_context_tag_id")
+  focusTaskId        Int?              @map("focus_task_id")
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  customContextTag UserContextTag?     @relation(fields: [customContextTagId], references: [id], onDelete: Restrict)
+  focusTask        Task?               @relation("ScheduleFocusBlocks", fields: [focusTaskId], references: [id], onDelete: SetNull)
+  batchTasks       ScheduleBlockTask[]
+
+  @@index([userId, localDateKey], name: "schedule_block_user_date_idx")
+  @@map("flow_state_schedule_block")
+}
+
+model ScheduleBlockTask {
+  id              Int @id @default(autoincrement())
+  scheduleBlockId Int @map("schedule_block_id")
+  taskId          Int @map("task_id")
+  sortOrder       Int @default(0) @map("sort_order")
+
+  scheduleBlock ScheduleBlock @relation(fields: [scheduleBlockId], references: [id], onDelete: Cascade)
+  task          Task          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleBlockId, taskId], name: "schedule_block_task_block_task")
+  @@map("flow_state_schedule_block_task")
 }

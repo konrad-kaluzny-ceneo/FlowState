@@ -14,6 +14,7 @@ import { createGuestRepositories } from "~/lib/repositories/guest-repositories";
 import {
 	createServerCycleRepository,
 	createServerRecapRepository,
+	createServerScheduleRepository,
 	createServerSessionRepository,
 	createServerTaskRepository,
 } from "~/lib/repositories/server-repositories";
@@ -59,6 +60,7 @@ export function DataModeProvider({
 			cycles: createServerCycleRepository(client),
 			sessions: createServerSessionRepository(client),
 			recap: createServerRecapRepository(client),
+			schedule: createServerScheduleRepository(client),
 			refreshKey,
 			refreshGuest,
 		};

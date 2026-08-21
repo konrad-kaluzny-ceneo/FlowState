@@ -31,6 +31,27 @@ type TrpcUtils = {
 		recap: {
 			getTrendStats: { query: TrpcClient["recap"]["getTrendStats"]["fetch"] };
 		};
+		dayPlan: {
+			listBlocks: { query: TrpcClient["dayPlan"]["listBlocks"]["fetch"] };
+			createBlock: { mutate: TrpcClient["dayPlan"]["createBlock"]["mutate"] };
+			updateBlock: { mutate: TrpcClient["dayPlan"]["updateBlock"]["mutate"] };
+			deleteBlock: { mutate: TrpcClient["dayPlan"]["deleteBlock"]["mutate"] };
+			setBlockFocusTask: {
+				mutate: TrpcClient["dayPlan"]["setBlockFocusTask"]["mutate"];
+			};
+			setBlockBatchTasks: {
+				mutate: TrpcClient["dayPlan"]["setBlockBatchTasks"]["mutate"];
+			};
+			listContextTags: {
+				query: TrpcClient["dayPlan"]["listContextTags"]["fetch"];
+			};
+			createContextTag: {
+				mutate: TrpcClient["dayPlan"]["createContextTag"]["mutate"];
+			};
+			deleteContextTag: {
+				mutate: TrpcClient["dayPlan"]["deleteContextTag"]["mutate"];
+			};
+		};
 	};
 };
 
@@ -94,6 +115,36 @@ export function createTrpcRepositoryClient(utils: TrpcUtils): TrpcClient {
 		recap: {
 			getTrendStats: {
 				fetch: (input) => utils.client.recap.getTrendStats.query(input),
+			},
+		},
+		dayPlan: {
+			listBlocks: {
+				fetch: (input) => utils.client.dayPlan.listBlocks.query(input),
+			},
+			createBlock: {
+				mutate: (input) => utils.client.dayPlan.createBlock.mutate(input),
+			},
+			updateBlock: {
+				mutate: (input) => utils.client.dayPlan.updateBlock.mutate(input),
+			},
+			deleteBlock: {
+				mutate: (input) => utils.client.dayPlan.deleteBlock.mutate(input),
+			},
+			setBlockFocusTask: {
+				mutate: (input) => utils.client.dayPlan.setBlockFocusTask.mutate(input),
+			},
+			setBlockBatchTasks: {
+				mutate: (input) =>
+					utils.client.dayPlan.setBlockBatchTasks.mutate(input),
+			},
+			listContextTags: {
+				fetch: () => utils.client.dayPlan.listContextTags.query(),
+			},
+			createContextTag: {
+				mutate: (input) => utils.client.dayPlan.createContextTag.mutate(input),
+			},
+			deleteContextTag: {
+				mutate: (input) => utils.client.dayPlan.deleteContextTag.mutate(input),
 			},
 		},
 	};

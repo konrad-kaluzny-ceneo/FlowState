@@ -46,7 +46,11 @@ describe("DataModeProvider", () => {
 		expect(result.current.tasks).toBeDefined();
 		expect(result.current.cycles).toBeDefined();
 		expect(result.current.sessions).toBeDefined();
+		expect(result.current.schedule).toBeDefined();
 		expect(result.current.refreshGuest()).toBeUndefined();
+		expect(() => result.current.schedule.listBlocks("2026-08-17")).toThrow(
+			"Schedule not available in guest mode",
+		);
 	});
 
 	it("wires authenticated server repositories from tRPC utils", () => {
@@ -60,6 +64,7 @@ describe("DataModeProvider", () => {
 		expect(typeof result.current.tasks.list).toBe("function");
 		expect(typeof result.current.cycles.getActive).toBe("function");
 		expect(typeof result.current.sessions.getOrCreateActive).toBe("function");
+		expect(typeof result.current.schedule.listBlocks).toBe("function");
 		expect(result.current.refreshGuest()).toBeUndefined();
 	});
 });

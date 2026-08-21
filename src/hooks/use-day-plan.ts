@@ -69,8 +69,10 @@ export function useDayPlan() {
 				utils.dayPlan.getOrCreate.setData({ localDateKey }, context.previous);
 			}
 		},
-		onSettled: () => {
-			void utils.dayPlan.getOrCreate.invalidate({ localDateKey });
+		onSuccess: ({ energyLevel }) => {
+			utils.dayPlan.getOrCreate.setData({ localDateKey }, (current) =>
+				current == null ? current : { ...current, energyLevel },
+			);
 		},
 	});
 
@@ -81,6 +83,42 @@ export function useDayPlan() {
 		[localDateKey, setEnergyMutation],
 	);
 
+	const setWorkHoursMutation = api.dayPlan.setWorkHours.useMutation({
+		onMutate: async ({ workStartMinute, workEndMinute }) => {
+			await utils.dayPlan.getOrCreate.cancel({ localDateKey });
+			const previous = utils.dayPlan.getOrCreate.getData({ localDateKey });
+			utils.dayPlan.getOrCreate.setData({ localDateKey }, (current) =>
+				current == null
+					? current
+					: { ...current, workStartMinute, workEndMinute },
+			);
+			return { previous };
+		},
+		onError: (_error, _input, context) => {
+			if (context?.previous !== undefined) {
+				utils.dayPlan.getOrCreate.setData({ localDateKey }, context.previous);
+			}
+		},
+		onSuccess: ({ workStartMinute, workEndMinute }) => {
+			utils.dayPlan.getOrCreate.setData({ localDateKey }, (current) =>
+				current == null
+					? current
+					: { ...current, workStartMinute, workEndMinute },
+			);
+		},
+	});
+
+	const setWorkHours = useCallback(
+		async (workStartMinute: number, workEndMinute: number) => {
+			await setWorkHoursMutation.mutateAsync({
+				localDateKey,
+				workStartMinute,
+				workEndMinute,
+			});
+		},
+		[localDateKey, setWorkHoursMutation],
+	);
+
 	return {
 		localDateKey,
 		budgetMinutes: query.data?.focusBudgetMinutes ?? null,
@@ -88,10 +126,14 @@ export function useDayPlan() {
 		usedMinutes: query.data?.usedFocusMinutes ?? 0,
 		hasBudget: query.data?.focusBudgetMinutes != null,
 		energy: query.data?.energyLevel ?? null,
+		workStartMinute: query.data?.workStartMinute ?? null,
+		workEndMinute: query.data?.workEndMinute ?? null,
 		isLoading: enabled && query.isLoading,
 		isSettingBudget: setBudgetMutation.isPending,
 		isSettingEnergy: setEnergyMutation.isPending,
+		isSettingWorkHours: setWorkHoursMutation.isPending,
 		setBudget,
 		setEnergy,
+		setWorkHours,
 	};
 }

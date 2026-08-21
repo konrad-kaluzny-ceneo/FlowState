@@ -72,6 +72,20 @@ export function getFactorContributions(
 			? base * 0.15
 			: 0;
 
+	const planActiveContribution =
+		context.planActiveFocusTaskId === task.id
+			? base * 1.5
+			: context.planActiveBatchTaskIds?.includes(task.id)
+				? base * 1
+				: 0;
+
+	const planUpcomingContribution =
+		planActiveContribution === 0 &&
+		(context.planPlannedFocusTaskIds?.includes(task.id) ||
+			context.planPlannedBatchTaskIds?.includes(task.id))
+			? base * 0.4
+			: 0;
+
 	const contributions: Array<{ key: RationaleKey; magnitude: number }> = [
 		{
 			key: "eisenhower_priority",
@@ -96,6 +110,14 @@ export function getFactorContributions(
 		{
 			key: "capacity_fit",
 			magnitude: Math.max(0, capacityFitContribution),
+		},
+		{
+			key: "plan_block_active",
+			magnitude: Math.max(0, planActiveContribution),
+		},
+		{
+			key: "plan_block_upcoming",
+			magnitude: Math.max(0, planUpcomingContribution),
 		},
 		{
 			key: "interruptions",
@@ -145,6 +167,8 @@ const KICKOFF_FALLBACK_KEYS: RationaleKey[] = [
 	"interruptions",
 	"late_day",
 	"capacity_fit",
+	"plan_block_active",
+	"plan_block_upcoming",
 ];
 
 export function formatKickoffRationale(

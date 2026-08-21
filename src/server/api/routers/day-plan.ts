@@ -5,11 +5,28 @@ import { z } from "zod";
 import { remainingFocusMinutes } from "~/lib/day-plan/remaining-focus-minutes";
 import { mapTaskFromPrisma } from "~/lib/persistence/prisma/task-mapper";
 import {
+	gtdFixedContextSchema,
+	scheduleBlockTypeSchema,
+} from "~/lib/schedule/types";
+import { isValidWorkDayBounds } from "~/lib/schedule/work-day-bounds";
+import {
 	type DelegationCandidateTask,
 	pickDelegationCandidate,
 } from "~/lib/scoring/delegation-score";
 import { formatDelegationRationale } from "~/lib/scoring/dominant-factor";
 import { buildSuggestionPool } from "~/lib/suggestion/build-suggestion-pool";
+import {
+	createBlock,
+	createContextTag,
+	deleteBlock,
+	deleteContextTag,
+	listBlocksForDay,
+	listContextTags,
+	MAX_BATCH_TASKS_PER_BLOCK,
+	setBlockBatchTasks,
+	setBlockFocusTask,
+	updateBlock,
+} from "~/server/api/lib/schedule-blocks";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const localDateKeySchema = z
@@ -18,7 +35,18 @@ const localDateKeySchema = z
 
 const focusBudgetMinutesSchema = z.number().int().min(15).max(720);
 
+const workMinuteSchema = z.number().int().min(360).max(1320);
+
 const energySchema = z.enum(["FOCUSED", "STEADY", "FADING"]);
+
+const blockTypeSchema = z.enum(scheduleBlockTypeSchema);
+const fixedContextSchema = z.enum(gtdFixedContextSchema);
+const blockIdSchema = z.number().int();
+const tagIdSchema = z.number().int();
+const metaLabelSchema = z.string().max(120).nullable();
+const batchTaskIdsSchema = z
+	.array(z.number().int())
+	.max(MAX_BATCH_TASKS_PER_BLOCK);
 
 export const dayPlanRouter = createTRPCRouter({
 	getOrCreate: protectedProcedure
@@ -41,6 +69,8 @@ export const dayPlanRouter = createTRPCRouter({
 					usedFocusMinutes: 0,
 					remainingFocusMinutes: null as number | null,
 					energyLevel: null as EnergyLevel | null,
+					workStartMinute: null as number | null,
+					workEndMinute: null as number | null,
 				};
 			}
 
@@ -56,6 +86,8 @@ export const dayPlanRouter = createTRPCRouter({
 								existing.usedFocusMinutes,
 							),
 				energyLevel: existing.energyLevel,
+				workStartMinute: existing.workStartMinute,
+				workEndMinute: existing.workEndMinute,
 			};
 		}),
 
@@ -142,6 +174,53 @@ export const dayPlanRouter = createTRPCRouter({
 			return {
 				localDateKey: row.localDateKey,
 				energyLevel: row.energyLevel,
+			};
+		}),
+
+	setWorkHours: protectedProcedure
+		.input(
+			z
+				.object({
+					localDateKey: localDateKeySchema,
+					workStartMinute: workMinuteSchema,
+					workEndMinute: workMinuteSchema,
+				})
+				.refine(
+					(input) =>
+						isValidWorkDayBounds(input.workStartMinute, input.workEndMinute),
+					{
+						message:
+							"Work hours must be on 15-minute marks with end after start.",
+					},
+				),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+
+			const row = await ctx.db.dayPlan.upsert({
+				where: {
+					day_plan_user_date_key: {
+						userId,
+						localDateKey: input.localDateKey,
+					},
+				},
+				create: {
+					userId,
+					localDateKey: input.localDateKey,
+					usedFocusMinutes: 0,
+					workStartMinute: input.workStartMinute,
+					workEndMinute: input.workEndMinute,
+				},
+				update: {
+					workStartMinute: input.workStartMinute,
+					workEndMinute: input.workEndMinute,
+				},
+			});
+
+			return {
+				localDateKey: row.localDateKey,
+				workStartMinute: row.workStartMinute,
+				workEndMinute: row.workEndMinute,
 			};
 		}),
 
@@ -248,5 +327,99 @@ export const dayPlanRouter = createTRPCRouter({
 				},
 				update: {},
 			});
+		}),
+
+	listBlocks: protectedProcedure
+		.input(z.object({ localDateKey: localDateKeySchema }))
+		.query(async ({ ctx, input }) => {
+			return listBlocksForDay(ctx.db, ctx.session.user.id, input.localDateKey);
+		}),
+
+	createBlock: protectedProcedure
+		.input(
+			z.object({
+				localDateKey: localDateKeySchema,
+				blockType: blockTypeSchema,
+				startMinute: z.number().int(),
+				durationMinutes: z.number().int(),
+				metaLabel: metaLabelSchema.optional(),
+				fixedContext: fixedContextSchema.nullable().optional(),
+				customContextTagId: z.number().int().nullable().optional(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return createBlock(ctx.db, ctx.session.user.id, input);
+		}),
+
+	updateBlock: protectedProcedure
+		.input(
+			z.object({
+				blockId: blockIdSchema,
+				blockType: blockTypeSchema.optional(),
+				startMinute: z.number().int().optional(),
+				durationMinutes: z.number().int().optional(),
+				metaLabel: metaLabelSchema.optional(),
+				fixedContext: fixedContextSchema.nullable().optional(),
+				customContextTagId: z.number().int().nullable().optional(),
+				focusTaskId: z.number().int().nullable().optional(),
+				batchTaskIds: batchTaskIdsSchema.optional(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return updateBlock(ctx.db, ctx.session.user.id, input);
+		}),
+
+	deleteBlock: protectedProcedure
+		.input(z.object({ blockId: blockIdSchema }))
+		.mutation(async ({ ctx, input }) => {
+			await deleteBlock(ctx.db, ctx.session.user.id, input.blockId);
+		}),
+
+	setBlockFocusTask: protectedProcedure
+		.input(
+			z.object({
+				blockId: blockIdSchema,
+				taskId: z.number().int().nullable(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return setBlockFocusTask(
+				ctx.db,
+				ctx.session.user.id,
+				input.blockId,
+				input.taskId,
+			);
+		}),
+
+	setBlockBatchTasks: protectedProcedure
+		.input(
+			z.object({
+				blockId: blockIdSchema,
+				taskIds: batchTaskIdsSchema,
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			return setBlockBatchTasks(
+				ctx.db,
+				ctx.session.user.id,
+				input.blockId,
+				input.taskIds,
+			);
+		}),
+
+	listContextTags: protectedProcedure.query(async ({ ctx }) => {
+		return listContextTags(ctx.db, ctx.session.user.id);
+	}),
+
+	createContextTag: protectedProcedure
+		.input(z.object({ label: z.string().max(64) }))
+		.mutation(async ({ ctx, input }) => {
+			return createContextTag(ctx.db, ctx.session.user.id, input.label);
+		}),
+
+	deleteContextTag: protectedProcedure
+		.input(z.object({ tagId: tagIdSchema }))
+		.mutation(async ({ ctx, input }) => {
+			await deleteContextTag(ctx.db, ctx.session.user.id, input.tagId);
 		}),
 });

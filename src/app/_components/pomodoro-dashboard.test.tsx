@@ -1543,10 +1543,14 @@ const mockDayPlanWithBudget = {
 	remainingMinutes: 120,
 	usedMinutes: 120,
 	energy: null,
+	workStartMinute: null,
+	workEndMinute: null,
 	isSettingBudget: false,
 	isSettingEnergy: false,
+	isSettingWorkHours: false,
 	setBudget: vi.fn(),
 	setEnergy: vi.fn(),
+	setWorkHours: vi.fn(),
 };
 
 describe("PomodoroDashboardBody rail illustration variant", () => {

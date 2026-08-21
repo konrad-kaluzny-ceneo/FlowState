@@ -1,5 +1,13 @@
 ﻿import type { CommitmentHorizon } from "~/lib/domain/commitment-horizon";
 import type { WorkType } from "~/lib/domain/work-type";
+import type {
+	DomainContextTag,
+	DomainScheduleBlock,
+	GtdFixedContext,
+	ScheduleBlockType,
+} from "~/lib/schedule/types";
+
+export type { DomainContextTag, DomainScheduleBlock };
 
 export type DomainTaskId = string | number;
 
@@ -182,10 +190,51 @@ export interface RecapRepository {
 	}): Promise<TrendPoint[]>;
 }
 
+export type CreateScheduleBlockInput = {
+	localDateKey: string;
+	blockType: ScheduleBlockType;
+	startMinute: number;
+	durationMinutes: number;
+	metaLabel?: string | null;
+	fixedContext?: GtdFixedContext | null;
+	customContextTagId?: number | null;
+};
+
+export type UpdateScheduleBlockInput = {
+	blockId: number;
+	blockType?: ScheduleBlockType;
+	startMinute?: number;
+	durationMinutes?: number;
+	metaLabel?: string | null;
+	fixedContext?: GtdFixedContext | null;
+	customContextTagId?: number | null;
+	focusTaskId?: number | null;
+	batchTaskIds?: number[];
+};
+
+export interface ScheduleRepository {
+	listBlocks(localDateKey: string): Promise<DomainScheduleBlock[]>;
+	createBlock(input: CreateScheduleBlockInput): Promise<DomainScheduleBlock>;
+	updateBlock(input: UpdateScheduleBlockInput): Promise<DomainScheduleBlock>;
+	deleteBlock(id: number): Promise<void>;
+	setBlockFocusTask(input: {
+		blockId: number;
+		taskId: number | null;
+	}): Promise<DomainScheduleBlock>;
+	setBlockBatchTasks(input: {
+		blockId: number;
+		taskIds: number[];
+	}): Promise<DomainScheduleBlock>;
+	listContextTags(): Promise<DomainContextTag[]>;
+	createContextTag(input: { label: string }): Promise<DomainContextTag>;
+	deleteContextTag(tagId: number): Promise<void>;
+}
+
 export type Repositories = {
 	mode: DataMode;
 	tasks: TaskRepository;
 	cycles: CycleRepository;
 	sessions: SessionRepository;
 	recap: RecapRepository;
+	schedule: ScheduleRepository;
 };

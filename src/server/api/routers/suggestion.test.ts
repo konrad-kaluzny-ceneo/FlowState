@@ -58,6 +58,16 @@ type DayPlanRow = {
 	usedFocusMinutes: number;
 };
 
+type ScheduleBlockRow = {
+	userId: string;
+	localDateKey: string;
+	blockType: "FOCUS" | "MEETING" | "BREAK" | "PERSONAL" | "PLANNING" | "BATCH";
+	startMinute: number;
+	durationMinutes: number;
+	focusTaskId: number | null;
+	batchTasks: Array<{ taskId: number; sortOrder: number }>;
+};
+
 const LOCAL_DATE_KEY = "2026-06-19";
 
 function taskDefaults(
@@ -107,6 +117,7 @@ let checkIns: CheckInRow[] = [];
 let decisions: DecisionRow[] = [];
 let taskDayCompletions: TaskDayCompletionRow[] = [];
 let dayPlans: DayPlanRow[] = [];
+let scheduleBlocks: ScheduleBlockRow[] = [];
 let nextDecisionId = 1;
 
 function matchesLastOverrideWhere(
@@ -452,6 +463,35 @@ vi.mock("~/server/db/index", () => ({
 				},
 			),
 		},
+		scheduleBlock: {
+			findMany: vi.fn(
+				(args: {
+					where: { userId?: string; localDateKey?: string };
+					orderBy?: { startMinute: "asc" };
+					select?: unknown;
+				}) => {
+					let rows = scheduleBlocks.filter((block) => {
+						if (
+							args.where.userId != null &&
+							block.userId !== args.where.userId
+						) {
+							return false;
+						}
+						if (
+							args.where.localDateKey != null &&
+							block.localDateKey !== args.where.localDateKey
+						) {
+							return false;
+						}
+						return true;
+					});
+					if (args.orderBy?.startMinute === "asc") {
+						rows = [...rows].sort((a, b) => a.startMinute - b.startMinute);
+					}
+					return Promise.resolve(rows);
+				},
+			),
+		},
 	},
 }));
 
@@ -541,6 +581,7 @@ describe("suggestion router", () => {
 		decisions = [];
 		taskDayCompletions = [];
 		dayPlans = [];
+		scheduleBlocks = [];
 		nextDecisionId = 1;
 		vi.clearAllMocks();
 	});
@@ -808,6 +849,38 @@ describe("suggestion router", () => {
 		});
 		expect(result).not.toHaveProperty("cycleId");
 		expectBreakdownShape(result);
+	});
+
+	it("kickoff next prefers a task linked to the active focus block on the day plan", async () => {
+		sessions = [
+			{ id: 1, userId: USER_ID, interruptionCount: 0, state: "ACTIVE" },
+		];
+		seedTasks();
+		scheduleBlocks = [
+			{
+				userId: USER_ID,
+				localDateKey: LOCAL_DATE_KEY,
+				blockType: "FOCUS",
+				startMinute: 600,
+				durationMinutes: 60,
+				focusTaskId: 3,
+				batchTasks: [],
+			},
+		];
+
+		const result = await caller().next({
+			context: "kickoff",
+			sessionId: 1,
+			localHour: 10,
+			localMinuteOfDay: 630,
+			localDateKey: LOCAL_DATE_KEY,
+			energy: "STEADY",
+		});
+
+		expect(result).toMatchObject({
+			taskId: 3,
+			rationaleKey: "plan_block_active",
+		});
 	});
 
 	it("kickoff next rejects missing energy", async () => {

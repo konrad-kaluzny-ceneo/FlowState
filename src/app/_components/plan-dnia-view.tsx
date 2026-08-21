@@ -1,98 +1,158 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { DayScheduleTimeline } from "~/app/_components/day-schedule-timeline";
 import { DelegationSuggestionCard } from "~/app/_components/delegation-suggestion-card";
 import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
-import { ComingSoonPreview } from "~/app/_components/ui/coming-soon-preview";
 import type { useDayPlan } from "~/hooks/use-day-plan";
+import type { useDaySchedule } from "~/hooks/use-day-schedule";
 import { useDelegationSuggestion } from "~/hooks/use-delegation-suggestion";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
+import type { DomainTask } from "~/lib/data-mode/types";
+import {
+	AXIS_END_MINUTE,
+	AXIS_START_MINUTE,
+	SNAP_MINUTES,
+} from "~/lib/schedule/types";
+import { resolveWorkDayBounds } from "~/lib/schedule/work-day-bounds";
 import { formatFocusMinutes } from "~/lib/time/format-focus-minutes";
 import { api } from "~/trpc/react";
 
 const PRESET_HOURS_MINUTES = [120, 240, 360] as const;
 
-const CALENDAR_HOURS = [
-	"08:00",
-	"09:00",
-	"10:00",
-	"11:00",
-	"12:00",
-	"13:00",
-	"14:00",
-	"15:00",
-	"16:00",
-	"17:00",
-	"18:00",
-] as const;
+function formatAxisTime(minute: number): string {
+	const hours = Math.floor(minute / 60);
+	const minutes = minute % 60;
+	return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
 
-const CALENDAR_BLOCKS = [
-	{
-		topRem: 2.5,
-		heightRem: 5,
-		className: "bg-worktype-deep-bg text-worktype-deep-text",
-		labelKey: "blockFocus" as const,
-	},
-	{
-		topRem: 8,
-		heightRem: 2.5,
-		className: "bg-worktype-ops-bg text-worktype-ops-text",
-		labelKey: "blockMeeting" as const,
-	},
-	{
-		topRem: 11,
-		heightRem: 2.5,
-		className: "bg-surface-break text-accent-break",
-		labelKey: "blockBreak" as const,
-	},
-	{
-		topRem: 14.5,
-		heightRem: 3.5,
-		className: "bg-energy-fading-bg text-energy-fading",
-		labelKey: "blockPersonal" as const,
-	},
-] as const;
+function workHourOptions(): number[] {
+	const values: number[] = [];
+	for (
+		let minute = AXIS_START_MINUTE;
+		minute <= AXIS_END_MINUTE;
+		minute += SNAP_MINUTES
+	) {
+		values.push(minute);
+	}
+	return values;
+}
 
-type PlanDniaViewProps = {
-	dayPlan: ReturnType<typeof useDayPlan> | undefined;
-};
+const WORK_HOUR_OPTIONS = workHourOptions();
 
-function DayCalendarMock() {
+function WorkHoursPanel({
+	dayPlan,
+	workStartMinute,
+	workEndMinute,
+}: {
+	dayPlan: NonNullable<PlanDniaViewProps["dayPlan"]>;
+	workStartMinute: number;
+	workEndMinute: number;
+}) {
 	const t = useTranslations("PlanDnia");
+	const [startMinute, setStartMinute] = useState(workStartMinute);
+	const [endMinute, setEndMinute] = useState(workEndMinute);
+	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		setStartMinute(workStartMinute);
+		setEndMinute(workEndMinute);
+	}, [workEndMinute, workStartMinute]);
+
+	const handleSave = useCallback(
+		async (nextStart: number, nextEnd: number) => {
+			if (nextEnd - nextStart < SNAP_MINUTES) {
+				setError(t("workHoursValidationError"));
+				return;
+			}
+			setError(null);
+			try {
+				await dayPlan.setWorkHours(nextStart, nextEnd);
+			} catch {
+				setError(t("workHoursSaveError"));
+			}
+		},
+		[dayPlan, t],
+	);
 
 	return (
-		<div className="min-h-[22rem] p-5">
-			<div className="relative ml-12">
-				{CALENDAR_HOURS.map((hour) => (
-					<div
-						className="flex h-10 items-start border-border-subtle/60 border-t first:border-t-0"
-						key={hour}
-					>
-						<span className="-ml-12 w-10 shrink-0 text-right text-text-dimmed text-xs">
-							{hour}
-						</span>
-					</div>
-				))}
-				<div className="absolute inset-x-0 top-0">
-					{CALENDAR_BLOCKS.map((block) => (
-						<div
-							className={`absolute right-0 left-0 rounded-lg px-3 py-2 font-medium text-xs ${block.className}`}
-							key={block.labelKey}
-							style={{
-								top: `${block.topRem}rem`,
-								height: `${block.heightRem}rem`,
-							}}
-						>
-							{t(block.labelKey)}
-						</div>
-					))}
-				</div>
+		<div
+			className="mb-3 flex flex-wrap items-end gap-3"
+			data-testid="plan-work-hours"
+		>
+			<div>
+				<label
+					className="mb-1 block text-text-dimmed text-xs"
+					htmlFor="plan-work-start"
+				>
+					{t("workHoursStartLabel")}
+				</label>
+				<select
+					className="rounded-md border border-border-subtle bg-surface-card px-2 py-1.5 text-primary text-sm"
+					data-testid="plan-work-start"
+					disabled={dayPlan.isSettingWorkHours}
+					id="plan-work-start"
+					onChange={(event) => {
+						const nextStart = Number(event.target.value);
+						setStartMinute(nextStart);
+						void handleSave(nextStart, endMinute);
+					}}
+					value={startMinute}
+				>
+					{WORK_HOUR_OPTIONS.filter((minute) => minute < endMinute).map(
+						(minute) => (
+							<option key={minute} value={minute}>
+								{formatAxisTime(minute)}
+							</option>
+						),
+					)}
+				</select>
 			</div>
+			<span className="pb-2 text-sm text-text-dimmed">–</span>
+			<div>
+				<label
+					className="mb-1 block text-text-dimmed text-xs"
+					htmlFor="plan-work-end"
+				>
+					{t("workHoursEndLabel")}
+				</label>
+				<select
+					className="rounded-md border border-border-subtle bg-surface-card px-2 py-1.5 text-primary text-sm"
+					data-testid="plan-work-end"
+					disabled={dayPlan.isSettingWorkHours}
+					id="plan-work-end"
+					onChange={(event) => {
+						const nextEnd = Number(event.target.value);
+						setEndMinute(nextEnd);
+						void handleSave(startMinute, nextEnd);
+					}}
+					value={endMinute}
+				>
+					{WORK_HOUR_OPTIONS.filter((minute) => minute > startMinute).map(
+						(minute) => (
+							<option key={minute} value={minute}>
+								{formatAxisTime(minute)}
+							</option>
+						),
+					)}
+				</select>
+			</div>
+			{error != null ? (
+				<p className="text-red-300 text-xs" role="alert">
+					{error}
+				</p>
+			) : null}
 		</div>
 	);
 }
+
+type PlanDniaViewProps = {
+	dayPlan: ReturnType<typeof useDayPlan> | undefined;
+	daySchedule?: ReturnType<typeof useDaySchedule>;
+	tasks?: DomainTask[];
+};
 
 function BudgetPanel({
 	dayPlan,
@@ -277,8 +337,16 @@ function DelegationSuggestionSection() {
 	);
 }
 
-export function PlanDniaView({ dayPlan }: PlanDniaViewProps) {
+export function PlanDniaView({
+	dayPlan,
+	daySchedule,
+	tasks = [],
+}: PlanDniaViewProps) {
 	const t = useTranslations("PlanDnia");
+	const workBounds =
+		dayPlan == null
+			? null
+			: resolveWorkDayBounds(dayPlan.workStartMinute, dayPlan.workEndMinute);
 
 	return (
 		<div className="w-full space-y-section" data-testid="plan-dnia-view">
@@ -289,18 +357,41 @@ export function PlanDniaView({ dayPlan }: PlanDniaViewProps) {
 				<p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
 			</div>
 
-			<ComingSoonPreview
-				label={t("calendarComingSoon")}
-				testId="plan-dnia-calendar-preview"
-			>
-				<DayCalendarMock />
-			</ComingSoonPreview>
+			{dayPlan != null && daySchedule != null && workBounds != null ? (
+				<DayScheduleTimeline
+					blocks={daySchedule.blocks}
+					contextTags={daySchedule.contextTags}
+					createBlock={daySchedule.createBlock}
+					createContextTag={daySchedule.createContextTag}
+					deleteBlock={daySchedule.deleteBlock}
+					error={daySchedule.error}
+					isLoading={daySchedule.isLoading}
+					localDateKey={dayPlan.localDateKey}
+					tasks={tasks}
+					updateBlock={daySchedule.updateBlock}
+					workEndMinute={workBounds.workEndMinute}
+					workHoursControl={
+						<div className="mb-4 border-border-subtle border-b pb-4">
+							<p className="mb-3 font-medium text-primary text-sm">
+								{t("workHoursHeading")}
+							</p>
+							<WorkHoursPanel
+								dayPlan={dayPlan}
+								workEndMinute={workBounds.workEndMinute}
+								workStartMinute={workBounds.workStartMinute}
+							/>
+						</div>
+					}
+					workStartMinute={workBounds.workStartMinute}
+				/>
+			) : null}
 
 			{dayPlan == null ? (
 				<div
 					className="w-full rounded-card border border-card-border bg-surface-card px-5 py-4 shadow-sm"
 					data-testid="plan-dnia-guest-empty"
 				>
+					{/* Guest exception (PRD OQ #1): schedule is auth-only — no calendar tease. */}
 					<p className="text-sm text-text-secondary">{t("guestEmpty")}</p>
 				</div>
 			) : dayPlan.isLoading ? (
