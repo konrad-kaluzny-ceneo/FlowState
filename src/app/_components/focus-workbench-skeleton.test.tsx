@@ -18,12 +18,13 @@ describe("FocusWorkbenchSkeleton", () => {
 
 		expect(screen.getByText("Active and planned")).toBeTruthy();
 		expect(screen.getByText("View all tasks →")).toBeTruthy();
+		expect(screen.getByText("Today")).toBeTruthy();
 		expect(screen.getByText("Your day")).toBeTruthy();
 		expect(screen.getByTestId("focus-tip")).toBeTruthy();
-		expect(screen.queryByTestId("quick-actions")).toBeNull();
+		expect(screen.getByTestId("quick-actions")).toBeTruthy();
 		expect(screen.getByTestId("focus-info-banner")).toBeTruthy();
 
 		const pulses = root.querySelectorAll(".animate-pulse");
-		expect(pulses.length).toBeGreaterThanOrEqual(4);
+		expect(pulses.length).toBeGreaterThanOrEqual(3);
 	});
 });

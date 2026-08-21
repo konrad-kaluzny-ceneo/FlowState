@@ -46,7 +46,7 @@ const INPUT_BASE =
 
 function inputClass(showError: boolean): string {
 	return showError
-		? `${INPUT_BASE} border-red-400 outline-1 outline-red-400/50`
+		? `${INPUT_BASE} border-danger outline-1 outline-danger/50`
 		: `${INPUT_BASE} border-border-subtle focus:border-accent-cta focus:outline-none focus:ring-2 focus:ring-focus/30`;
 }
 
@@ -157,7 +157,7 @@ export function DurationPicker({
 				</div>
 				{showError && (
 					<p
-						className={`text-red-600 text-xs ${isSettings ? "" : "text-center"}`}
+						className={`text-danger text-xs ${isSettings ? "" : "text-center"}`}
 					>
 						{t("validationError", { bounds: boundsLabel })}
 					</p>

@@ -209,11 +209,13 @@ describe("TaskSuggestionCard", () => {
 				suggestion={{
 					...baseSuggestion,
 					commitmentHorizon: "ASAP",
+					workType: "REACTIVE",
 				}}
 			/>,
 		);
 
-		expect(screen.getByTestId("suggestion-asap-badge")).toBeTruthy();
+		expect(screen.queryByTestId("suggestion-asap-badge")).toBeNull();
+		expect(screen.getByText("Reactive")).toBeTruthy();
 	});
 
 	it("renders coachLine alongside expander without duplicate rationale stacking", () => {

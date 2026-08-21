@@ -15,7 +15,10 @@ const HORIZON_VALUES: CommitmentHorizon[] = [
 ];
 
 const TITLE_FIELD_CLASS =
-	"w-full rounded-lg border border-border-subtle bg-surface-card px-4 py-2 text-primary placeholder:text-text-dimmed focus:border-text-secondary focus:outline-none";
+	"w-full rounded-control border border-border-subtle bg-surface-card px-4 py-2 text-primary placeholder:text-text-dimmed focus:border-text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-focus";
+
+export const FIELD_ERROR_CLASS =
+	"border-danger focus:border-danger focus-visible:ring-2 focus-visible:ring-danger/30";
 
 type EisenhowerAttributeFieldsProps = {
 	urgency: 1 | 2 | 3;
@@ -83,7 +86,7 @@ function EisenhowerAttributeFields({
 					{t("fieldEffort")}
 				</span>
 				<input
-					className="w-24 rounded-md bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
+					className="w-24 rounded-control border border-border-subtle bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:border-text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 					inputMode="numeric"
 					max={240}
 					min={5}
@@ -217,7 +220,7 @@ export function TaskFieldsPanel({
 						{t("resumeNoteLabel")}
 					</label>
 					<textarea
-						className="w-full resize-none rounded-lg border border-border-subtle bg-surface-card px-4 py-2 text-primary text-sm focus:border-text-secondary focus:outline-none"
+						className="w-full resize-none rounded-control border border-border-subtle bg-surface-card px-4 py-2 text-primary text-sm focus:border-text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 						id={resumeNoteFieldId}
 						maxLength={120}
 						onChange={(event) => onResumeNoteChange(event.target.value)}
@@ -242,7 +245,7 @@ export function TaskFieldsPanel({
 						{t("fieldProject")}
 					</span>
 					<input
-						className="min-w-[8rem] flex-1 rounded-md bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:outline-none"
+						className="min-w-[8rem] flex-1 rounded-control border border-border-subtle bg-surface-panel px-2 py-1 text-primary text-xs placeholder:text-text-dimmed focus:border-text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
 						data-testid="task-project-input"
 						id={projectFieldId}
 						list={
@@ -270,7 +273,7 @@ export function TaskFieldsPanel({
 				<div
 					className={
 						mode === "create"
-							? "space-y-2 rounded-lg border border-border-subtle bg-surface-panel p-3"
+							? "space-y-2 rounded-card border border-border-subtle bg-surface-panel p-3"
 							: "flex flex-wrap items-center gap-2"
 					}
 					data-testid={

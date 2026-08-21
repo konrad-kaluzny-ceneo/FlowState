@@ -11,9 +11,7 @@ import {
 	FocusReadyKickoffPending,
 	FocusReadyState,
 } from "~/app/_components/focus-ready-state";
-import { FocusTip } from "~/app/_components/focus-tip";
-import { FocusWidgetCard } from "~/app/_components/focus-widget-card";
-import { QuickActions } from "~/app/_components/quick-actions";
+import { FocusTodayPanel } from "~/app/_components/focus-today-panel";
 import type { DomainTask } from "~/lib/data-mode/types";
 
 /**
@@ -74,8 +72,19 @@ export function FocusWorkbenchSkeleton() {
 					className="order-2 flex w-full flex-col gap-4 max-lg:order-3"
 					data-testid="home-context-rail"
 				>
-					<FocusDaySummarySkeleton />
-					<FocusTip />
+					<FocusTodayPanel
+						summary={{
+							budgetMinutes: null,
+							forceShow: true,
+							hasBudget: false,
+							isLoading: true,
+							remainingMinutes: null,
+							sessionsCompleted: 0,
+							tasksDone: 0,
+							tasksTotal: 0,
+							usedMinutes: 0,
+						}}
+					/>
 				</div>
 			</div>
 		</div>
@@ -139,9 +148,20 @@ export function FocusWorkbenchPending({
 					className="order-2 flex w-full flex-col gap-4 max-lg:order-3"
 					data-testid="home-context-rail"
 				>
-					<FocusDaySummarySkeleton />
-					<FocusTip />
-					<QuickActions onAddTask={onAddTask} />
+					<FocusTodayPanel
+						onAddTask={onAddTask}
+						summary={{
+							budgetMinutes: null,
+							forceShow: true,
+							hasBudget: false,
+							isLoading: false,
+							remainingMinutes: null,
+							sessionsCompleted: 0,
+							tasksDone: 0,
+							tasksTotal: 0,
+							usedMinutes: 0,
+						}}
+					/>
 				</div>
 			</div>
 		</div>
@@ -170,38 +190,5 @@ function FocusTaskRowSkeleton({ titleClassName }: { titleClassName: string }) {
 				/>
 			</div>
 		</li>
-	);
-}
-
-function FocusDaySummarySkeleton() {
-	const t = useTranslations("HomeFocusSummary");
-
-	return (
-		<FocusWidgetCard testId="home-focus-summary-skeleton" title={t("heading")}>
-			<dl className="space-y-2 text-sm">
-				<div className="flex items-center justify-between gap-3">
-					<dt className="text-text-secondary">{t("tasksLabel")}</dt>
-					<dd
-						aria-hidden="true"
-						className="h-4 w-12 animate-pulse rounded bg-surface-panel"
-					/>
-				</div>
-				<div className="flex items-center justify-between gap-3">
-					<dt className="text-text-secondary">{t("sessionsLabel")}</dt>
-					<dd
-						aria-hidden="true"
-						className="h-4 w-6 animate-pulse rounded bg-surface-panel"
-					/>
-				</div>
-				<div className="flex items-center justify-between gap-3">
-					<dt className="text-text-secondary">{t("focusTimeLabel")}</dt>
-					<dd
-						aria-hidden="true"
-						className="h-4 w-14 animate-pulse rounded bg-surface-panel"
-					/>
-				</div>
-			</dl>
-			<p className="mt-4 text-text-dimmed text-xs">{t("emptyPlan")}</p>
-		</FocusWidgetCard>
 	);
 }

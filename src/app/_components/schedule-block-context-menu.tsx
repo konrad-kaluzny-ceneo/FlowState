@@ -211,7 +211,7 @@ export function ScheduleBlockContextMenu({
 			<div aria-hidden="true" className="my-1 border-border-subtle border-t" />
 			<button
 				className={`${menuItemClass} ${
-					confirmDelete ? "text-red-300 hover:bg-red-950/20" : ""
+					confirmDelete ? "text-danger hover:bg-danger/10" : ""
 				}`}
 				data-testid="schedule-context-delete"
 				disabled={isBusy}

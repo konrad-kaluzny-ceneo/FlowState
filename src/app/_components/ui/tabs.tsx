@@ -97,7 +97,7 @@ export function Tabs({
 						aria-selected={isActive}
 						className={`rounded-chip px-3 py-1.5 font-medium text-sm transition ${
 							isActive
-								? "bg-segment-active text-on-cta"
+								? "bg-accent-cta/10 text-accent-cta"
 								: "bg-segment-inactive text-text-secondary hover:bg-surface-card-muted"
 						}`}
 						id={`${id ?? ariaLabel}-tab-${item.value}`}

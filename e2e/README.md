@@ -129,3 +129,17 @@ Required repository secrets: `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `NEON_AUTH
 - Pomodoro specs reset stray cycles in `beforeEach` (interrupt / dismiss overlay) so **Focus** is not disabled by a leftover `RUNNING` cycle.
 - Short work cycles: fill `work-duration-min` and `work-duration-sec` via `setWorkDurationSec` in `e2e/helpers/work-cycle.ts`.
 - Vitest (`pnpm test`) and Playwright (`pnpm test:e2e`) are fully isolated — different configs, directories, and scripts.
+
+## Visual calm baselines (`improve-styles`)
+
+Screenshot regression for Focus, Tasks, Plan, and Summary in light + dark (`@skip-belt`):
+
+```bash
+# Generate or refresh baselines after intentional visual changes
+pnpm exec playwright test e2e/visual-calm-baseline.spec.ts --update-snapshots
+
+# Verify against committed baselines
+pnpm exec playwright test e2e/visual-calm-baseline.spec.ts
+```
+
+Fixed viewport `1280×720`, worker auth pool, `prefers-reduced-motion: reduce`.

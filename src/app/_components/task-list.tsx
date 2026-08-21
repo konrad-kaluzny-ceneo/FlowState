@@ -20,11 +20,14 @@ import {
 	CheckCircle,
 	MoreHorizontal,
 	Plus,
+	RotateCcw,
 	Settings2,
 	Target,
 	Trash2,
+	Users,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AddTaskModal } from "~/app/_components/add-task-modal";
@@ -49,6 +52,47 @@ type TabValue = "active" | "planned" | "completed" | "blocked" | "delegated";
 type TypeFilterValue = "all" | WorkType;
 type SortValue = "manual" | "priority" | "effort";
 
+const taskStatusIconButtonClass =
+	"inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-control border border-border-subtle bg-surface-panel transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40";
+
+const taskStatusIconVariantClass = {
+	warn: "text-accent-warn hover:border-accent-warn-border hover:bg-accent-warn-bg",
+	delegated:
+		"text-accent-delegated hover:border-accent-delegated-border hover:bg-accent-delegated-bg",
+	success:
+		"text-accent-success hover:border-accent-success/30 hover:bg-accent-success/10",
+	danger: "text-danger hover:border-danger/40 hover:bg-danger/10",
+} as const;
+
+function TaskStatusIconButton({
+	ariaLabel,
+	testId,
+	disabled = false,
+	onClick,
+	variant,
+	children,
+}: {
+	ariaLabel: string;
+	testId?: string;
+	disabled?: boolean;
+	onClick: () => void;
+	variant: keyof typeof taskStatusIconVariantClass;
+	children: ReactNode;
+}) {
+	return (
+		<button
+			aria-label={ariaLabel}
+			className={`${taskStatusIconButtonClass} ${taskStatusIconVariantClass[variant]}`}
+			data-testid={testId}
+			disabled={disabled}
+			onClick={onClick}
+			type="button"
+		>
+			{children}
+		</button>
+	);
+}
+
 function TaskBadges({
 	workType,
 	effortMinutes,
@@ -67,7 +111,7 @@ function TaskBadges({
 	return (
 		<span className={`flex flex-wrap items-center gap-1.5 ${dimClass}`}>
 			<span
-				className={`rounded-full px-2.5 py-1 font-semibold text-xs ring-1 ${config.bg} ${config.text} ${config.badgeRing}`}
+				className={`rounded-full px-2.5 py-1 font-medium text-xs ${config.bg} ${config.text}`}
 				data-testid="task-type-badge"
 			>
 				{getWorkTypeLabel(workType, locale)}
@@ -243,7 +287,7 @@ function TaskRowMoreMenu({
 			</button>
 			{open ? (
 				<div
-					className="absolute top-full right-0 z-20 mt-1 min-w-[11rem] rounded-xl border border-card-border bg-surface-card p-1 shadow-md"
+					className="absolute top-full right-0 z-20 mt-1 min-w-[11rem] rounded-card border border-card-border bg-surface-card p-1 shadow-md"
 					data-testid="task-more-menu"
 				>
 					<button
@@ -287,7 +331,7 @@ function TaskRowMoreMenu({
 						}}
 						type="button"
 					>
-						<Ban aria-hidden="true" className="h-4 w-4 text-amber-400" />
+						<Ban aria-hidden="true" className="h-4 w-4 text-accent-warn" />
 						<span className="font-semibold text-xs">{t("blockLabel")}</span>
 					</button>
 					<button
@@ -301,7 +345,7 @@ function TaskRowMoreMenu({
 						}}
 						type="button"
 					>
-						<Trash2 aria-hidden="true" className="h-4 w-4 text-red-400" />
+						<Trash2 aria-hidden="true" className="h-4 w-4 text-danger" />
 						<span className="font-semibold text-xs">{t("deleteLabel")}</span>
 					</button>
 				</div>
@@ -385,14 +429,16 @@ function SortableTaskRow({
 
 	const isContinueRow = continueTaskId === task.id;
 	const isHighlightedRow = highlightedTaskId === task.id || isContinueRow;
+	const isFocusedRow = focusedTaskId === task.id;
+	const showSuggestionRing = isHighlightedRow && !isFocusedRow;
 	const footprint = footprints[String(task.id)];
 	const showFootprint = footprint != null && focusedTaskId === task.id;
 
 	return (
 		<li
 			className={`${taskRowCardClass} ${
-				focusedTaskId === task.id ? "ring-2 ring-focus" : ""
-			} ${isHighlightedRow ? "ring-2 ring-accent-suggestion" : ""} ${
+				isFocusedRow ? "ring-2 ring-focus" : ""
+			} ${showSuggestionRing ? "ring-2 ring-accent-suggestion" : ""} ${
 				isDragging ? "z-10 opacity-80" : ""
 			} ${completingTaskId === task.id ? "animate-task-complete" : ""} ${
 				task.doneForToday ? "opacity-60" : ""
@@ -515,6 +561,8 @@ function StaticTaskRow({
 	delegated?: boolean;
 }) {
 	const isContinueRow = continueTaskId === task.id;
+	const isFocusedRow = focusedTaskId === task.id;
+	const showSuggestionRing = isContinueRow && !isFocusedRow;
 	const footprint = footprints[String(task.id)];
 	const showFootprint = footprint != null && focusedTaskId === task.id;
 
@@ -522,44 +570,47 @@ function StaticTaskRow({
 		<li
 			className={`${taskRowCardClass} ${
 				dimmed ? "bg-surface-card-muted/80" : ""
-			} ${blocked ? "bg-surface-card-muted/60 opacity-80" : ""} ${delegated ? "bg-surface-card-muted/60 opacity-80" : ""} ${focusedTaskId === task.id ? "ring-2 ring-focus" : ""} ${
-				isContinueRow ? "ring-2 ring-accent-suggestion" : ""
+			} ${blocked ? "bg-surface-card-muted/60 opacity-80" : ""} ${delegated ? "bg-surface-card-muted/60 opacity-80" : ""} ${isFocusedRow ? "ring-2 ring-focus" : ""} ${
+				showSuggestionRing ? "ring-2 ring-accent-suggestion" : ""
 			} ${completingTaskId === task.id ? "animate-task-complete" : ""}`}
 			data-testid={testId}
 		>
 			<div className="flex w-full min-w-0 items-start gap-2">
 				{blocked ? (
-					<button
-						aria-label={t("unblockAria")}
-						className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-amber-400 bg-amber-400/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
-						data-testid="task-unblock-button"
+					<TaskStatusIconButton
+						ariaLabel={t("unblockAria")}
 						disabled={cycleLocked || isMutating}
 						onClick={() => {
 							void onUpdateTask({ id: task.id, status: "active" });
 						}}
-						type="button"
-					/>
+						testId="task-unblock-button"
+						variant="warn"
+					>
+						<RotateCcw aria-hidden="true" className="h-4 w-4" />
+					</TaskStatusIconButton>
 				) : delegated ? (
-					<button
-						aria-label={t("undelegateAria")}
-						className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-sky-400 bg-sky-400/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
-						data-testid="task-undelegate-button"
+					<TaskStatusIconButton
+						ariaLabel={t("undelegateAria")}
 						disabled={cycleLocked || isMutating}
 						onClick={() => {
 							void onUpdateTask({ id: task.id, status: "active" });
 						}}
-						type="button"
-					/>
+						testId="task-undelegate-button"
+						variant="delegated"
+					>
+						<Users aria-hidden="true" className="h-4 w-4" />
+					</TaskStatusIconButton>
 				) : dimmed ? (
-					<button
-						aria-label={t("revertAria")}
-						className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-accent-success bg-accent-success/30 transition hover:border-border-subtle hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
+					<TaskStatusIconButton
+						ariaLabel={t("revertAria")}
 						disabled={cycleLocked || isMutating}
 						onClick={() => {
 							void onUpdateTask({ id: task.id, status: "active" });
 						}}
-						type="button"
-					/>
+						variant="success"
+					>
+						<RotateCcw aria-hidden="true" className="h-4 w-4" />
+					</TaskStatusIconButton>
 				) : (
 					<TaskFocusButton
 						focusedTaskId={focusedTaskId}
@@ -597,7 +648,7 @@ function StaticTaskRow({
 				) : (
 					<button
 						aria-label={t("deleteAria")}
-						className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border-subtle bg-surface-panel px-2.5 py-1 text-text-section transition hover:border-red-400/40 hover:bg-red-400/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+						className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border-subtle bg-surface-panel px-2.5 py-1 text-text-section transition hover:border-danger/40 hover:bg-danger/10 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40"
 						data-testid="task-delete-button"
 						disabled={cycleLocked || isMutating}
 						onClick={() => {
@@ -890,7 +941,7 @@ export function TaskList({
 		>
 			{error != null && (
 				<div
-					className="rounded-lg border border-red-400/40 bg-red-500/20 px-4 py-3 text-red-100 text-sm"
+					className="rounded-control border border-danger/40 bg-danger/10 px-4 py-3 text-danger text-sm"
 					data-testid="task-list-error"
 					role="alert"
 				>
@@ -927,14 +978,14 @@ export function TaskList({
 				>
 					<div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
 						<input
-							className="w-full min-w-0 flex-1 border-0 bg-transparent py-1 text-primary placeholder:text-text-dimmed focus:outline-none"
+							className="w-full min-w-0 flex-1 border-0 bg-transparent py-1 text-primary placeholder:text-text-secondary/70 focus:outline-none"
 							onChange={(e) => setQuickTitle(e.target.value)}
 							placeholder={t("inlineAddPlaceholder")}
 							ref={addTaskInputRef}
 							type="text"
 							value={quickTitle}
 						/>
-						<span className="text-text-dimmed text-xs">
+						<span className="text-text-secondary text-xs">
 							{t("inlineAddHint")}
 						</span>
 					</div>
@@ -965,7 +1016,7 @@ export function TaskList({
 				</form>
 			</div>
 
-			<div className="flex flex-wrap items-center justify-between gap-3 border-border-subtle border-b pb-4">
+			<div className="space-y-2">
 				<Tabs
 					aria-label={t("tabsAriaLabel")}
 					id="zadania-tabs"
@@ -973,7 +1024,7 @@ export function TaskList({
 					onChange={(value) => setActiveTab(value as TabValue)}
 					value={activeTab}
 				/>
-				<div className="flex items-center gap-2">
+				<div className="flex flex-wrap items-center gap-2">
 					<Select
 						aria-label={t("filterTypeAria")}
 						onChange={(value) => setTypeFilter(value as TypeFilterValue)}

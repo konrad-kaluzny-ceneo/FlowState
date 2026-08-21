@@ -7,13 +7,16 @@ type GuestBannerProps = {
 	variant?: "header" | "rail-activation";
 };
 
+const BANNER_CLASS =
+	"w-full max-w-lg rounded-card border border-accent-warn-border bg-accent-warn-bg px-4 py-3 text-primary text-sm";
+
 export function GuestBanner({ variant = "header" }: GuestBannerProps) {
 	const t = useTranslations("Guest.banner");
 
 	const className =
 		variant === "header"
-			? "w-full max-w-lg rounded-lg border border-amber-400/30 bg-surface-card px-4 py-3 text-amber-900 text-sm lg:hidden"
-			: "w-full max-w-lg rounded-lg border border-amber-400/30 bg-surface-card px-4 py-3 text-amber-900 text-sm lg:max-w-none";
+			? `${BANNER_CLASS} lg:hidden`
+			: `${BANNER_CLASS} lg:max-w-none`;
 
 	const testId =
 		variant === "header" ? "guest-banner" : "guest-rail-activation-hint";
@@ -23,14 +26,14 @@ export function GuestBanner({ variant = "header" }: GuestBannerProps) {
 			<p>
 				{t("deviceOnly")}{" "}
 				<Link
-					className="font-medium text-amber-700 underline hover:text-accent-cta"
+					className="font-medium text-accent-warn underline hover:text-accent-cta"
 					href="/auth/sign-in"
 				>
 					{t("signIn")}
 				</Link>{" "}
 				{t("or")}{" "}
 				<Link
-					className="font-medium text-amber-700 underline hover:text-accent-cta"
+					className="font-medium text-accent-warn underline hover:text-accent-cta"
 					href="/auth/sign-up"
 				>
 					{t("signUp")}

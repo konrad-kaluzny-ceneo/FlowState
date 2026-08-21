@@ -318,7 +318,7 @@ export function UstawieniaView({ scope, userName }: UstawieniaViewProps) {
 								</SettingsRow>
 							)}
 							{signOutError && (
-								<p className="pt-2 text-red-400 text-sm" role="alert">
+								<p className="pt-2 text-danger text-sm" role="alert">
 									{signOutError}
 								</p>
 							)}
@@ -487,6 +487,8 @@ function ThemeSelector({
 		labelKey: "light" | "dark" | "system";
 		Icon: LucideIcon;
 		previewClass: string;
+		previewTheme?: "dark";
+		previewSplit?: boolean;
 	}[] = [
 		{
 			value: "light",
@@ -499,14 +501,15 @@ function ThemeSelector({
 			value: "dark",
 			labelKey: "dark",
 			Icon: Moon,
-			previewClass: "bg-gradient-to-b from-[#1e2433] to-[#252b3d]",
+			previewClass: "bg-gradient-to-b from-shell-top to-shell-bottom",
+			previewTheme: "dark",
 		},
 		{
 			value: "system",
 			labelKey: "system",
 			Icon: Monitor,
-			previewClass:
-				"bg-gradient-to-r from-shell-top via-shell-top to-[#252b3d]",
+			previewSplit: true,
+			previewClass: "",
 		},
 	];
 
@@ -535,10 +538,23 @@ function ThemeSelector({
 							type="radio"
 							value={option.value}
 						/>
-						<div
-							aria-hidden="true"
-							className={`aspect-[4/3] ${option.previewClass}`}
-						/>
+						{option.previewSplit ? (
+							<div aria-hidden="true" className="flex aspect-[4/3]">
+								<div className="w-1/2 bg-gradient-to-b from-shell-top to-shell-bottom" />
+								<div
+									className="w-1/2 bg-gradient-to-b from-shell-top to-shell-bottom"
+									data-theme="dark"
+								/>
+							</div>
+						) : (
+							<div
+								aria-hidden="true"
+								className={`aspect-[4/3] ${option.previewClass}`}
+								{...(option.previewTheme != null
+									? { "data-theme": option.previewTheme }
+									: {})}
+							/>
+						)}
 						<div className="flex items-center justify-center gap-1.5 border-border-subtle border-t bg-surface-card px-2 py-2">
 							<option.Icon
 								aria-hidden="true"

@@ -11,6 +11,7 @@ import {
 	TaskSuggestionCard,
 	type TaskSuggestionData,
 } from "~/app/_components/task-suggestion-card";
+import { ProgressRing } from "~/app/_components/ui/progress-ring";
 import type { DomainTask, DomainTaskStatus } from "~/lib/data-mode/types";
 import { CalmGardenSprig } from "~/lib/design/illustrations/calm-garden-sprig";
 import {
@@ -136,6 +137,7 @@ function FocusReadyKickoffChrome({
 	startDisabled,
 	preferredWorkDurationSec,
 	onWorkDurationManualChange,
+	workType,
 	testId,
 }: {
 	titleSlot: ReactNode;
@@ -145,9 +147,11 @@ function FocusReadyKickoffChrome({
 	startDisabled: boolean;
 	preferredWorkDurationSec?: number | null;
 	onWorkDurationManualChange?: () => void;
+	workType?: WorkTypeKey | null;
 	testId: string;
 }) {
 	const t = useTranslations("Timer");
+	const locale = useLocale() as UserLocale;
 	const [workDurationSec, setWorkDurationSec] = useState(
 		() => preferredWorkDurationSec ?? getLastDuration(),
 	);
@@ -175,8 +179,19 @@ function FocusReadyKickoffChrome({
 			<p className="font-semibold text-sm text-text-section">
 				{t("idleReadyToFocusOn")}
 			</p>
-			<div className="flex min-h-7 w-full max-w-full items-center justify-center gap-2">
+			<div className="flex min-h-7 w-full max-w-full flex-col items-center justify-center gap-2">
 				{titleSlot}
+				{workType != null && (
+					<span
+						className={`rounded-chip px-2.5 py-0.5 font-medium text-xs ${WORK_TYPE_CONFIG[workType].bg} ${WORK_TYPE_CONFIG[workType].text}`}
+					>
+						{getWorkTypeLabel(workType, locale)}
+					</span>
+				)}
+			</div>
+
+			<div className="flex justify-center">
+				<ProgressRing progress={0} size={176} strokeWidth={10} />
 			</div>
 
 			<div className="w-full">
@@ -221,6 +236,7 @@ function FocusReadyKickoffHeader({
 	showSuggestionStar = false,
 	suggestionStarAria,
 	onSuggestionStarClick,
+	workType = null,
 }: {
 	task: FocusKickoffTask;
 	preferredWorkDurationSec?: number | null;
@@ -230,6 +246,7 @@ function FocusReadyKickoffHeader({
 	showSuggestionStar?: boolean;
 	suggestionStarAria?: string;
 	onSuggestionStarClick?: () => void;
+	workType?: WorkTypeKey | null;
 }) {
 	const t = useTranslations("Timer");
 
@@ -258,6 +275,7 @@ function FocusReadyKickoffHeader({
 					) : null}
 				</>
 			}
+			workType={workType}
 		/>
 	);
 }
@@ -317,6 +335,11 @@ export function FocusReadyState({
 	const openSuggestionPopup = () => setSuggestionOpen(true);
 	const kickoffShowsSuggestionStar =
 		showKickoff && kickoffTask != null && isAutoSuggestedTask(kickoffTask.id);
+	const kickoffWorkType =
+		kickoffTask != null
+			? (tasks.find((task) => domainTaskIdsMatch(task.id, kickoffTask.id))
+					?.workType as WorkTypeKey | undefined)
+			: undefined;
 
 	const heroContent = showKickoff ? (
 		<FocusReadyKickoffHeader
@@ -328,6 +351,7 @@ export function FocusReadyState({
 			showSuggestionStar={kickoffShowsSuggestionStar}
 			suggestionStarAria={t("suggestionStarAria")}
 			task={kickoffTask}
+			workType={kickoffWorkType ?? null}
 		/>
 	) : kickoffPending ? (
 		<FocusReadyKickoffPending

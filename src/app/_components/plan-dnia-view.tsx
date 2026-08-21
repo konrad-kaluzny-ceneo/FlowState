@@ -140,7 +140,7 @@ function WorkHoursPanel({
 				</select>
 			</div>
 			{error != null ? (
-				<p className="text-red-300 text-xs" role="alert">
+				<p className="text-danger text-xs" role="alert">
 					{error}
 				</p>
 			) : null}
@@ -192,7 +192,9 @@ function BudgetPanel({
 			className="w-full rounded-card border border-card-border bg-surface-card px-5 py-4 shadow-sm"
 			data-testid="plan-dnia-summary"
 		>
-			<p className="font-medium text-primary text-sm">{t("budgetHeading")}</p>
+			<p className="font-semibold text-sm text-text-section">
+				{t("budgetHeading")}
+			</p>
 			<p className="mt-2 text-text-secondary text-xs">
 				{t("budgetLine", {
 					used: formatFocusMinutes(dayPlan.usedMinutes),
@@ -285,7 +287,7 @@ function BudgetPanel({
 			)}
 
 			{error != null && (
-				<p className="mt-2 text-red-300 text-xs" role="alert">
+				<p className="mt-2 text-danger text-xs" role="alert">
 					{error}
 				</p>
 			)}
@@ -372,7 +374,7 @@ export function PlanDniaView({
 					workEndMinute={workBounds.workEndMinute}
 					workHoursControl={
 						<div className="mb-4 border-border-subtle border-b pb-4">
-							<p className="mb-3 font-medium text-primary text-sm">
+							<p className="mb-3 font-semibold text-sm text-text-section">
 								{t("workHoursHeading")}
 							</p>
 							<WorkHoursPanel

@@ -25,8 +25,9 @@ import { FocusBudgetPrompt } from "~/app/_components/focus-budget-prompt";
 import { FocusEmptyState } from "~/app/_components/focus-empty-state";
 import { FocusGettingStarted } from "~/app/_components/focus-getting-started";
 import { FocusInfoBanner } from "~/app/_components/focus-info-banner";
+import { useFocusLandingChrome } from "~/app/_components/focus-landing-chrome-context";
 import { FocusReadyState } from "~/app/_components/focus-ready-state";
-import { FocusTip } from "~/app/_components/focus-tip";
+import { FocusTodayPanel } from "~/app/_components/focus-today-panel";
 import {
 	FocusWorkbenchPending,
 	FocusWorkbenchSkeleton,
@@ -35,7 +36,6 @@ import { GuestContextRail } from "~/app/_components/guest-context-rail";
 import { HomeFocusSummary } from "~/app/_components/home-focus-summary";
 import { KickoffDurationChips } from "~/app/_components/kickoff-duration-chips";
 import { usePomodoroCycleContext } from "~/app/_components/pomodoro-cycle-provider";
-import { QuickActions } from "~/app/_components/quick-actions";
 import { SessionClosureOverlay } from "~/app/_components/session-closure-overlay";
 import { SessionEnergyCard } from "~/app/_components/session-steering-card";
 import { TabReturnCatchUp } from "~/app/_components/tab-return-catchup";
@@ -68,6 +68,7 @@ import {
 } from "~/lib/design/illustration-variant";
 import { HomeHeroSprig } from "~/lib/design/illustrations/home-hero-sprig";
 import { shouldShowWorkFocusShell } from "~/lib/design/work-focus-shell";
+import type { WorkTypeKey } from "~/lib/design/work-type-config";
 import type { UserLocale } from "~/lib/domain/user-locale";
 import {
 	deriveHomeSessionState,
@@ -154,6 +155,7 @@ export function PomodoroDashboardBody({
 	onSuggestionCoachSeen?: () => void;
 }) {
 	const pomodoro = usePomodoroCycleContext();
+	const { setDemotePageHeader } = useFocusLandingChrome();
 	const { stats: dayStats } = useDayStats();
 	const pomodoroRef = useRef(pomodoro);
 	pomodoroRef.current = pomodoro;
@@ -606,6 +608,11 @@ export function PomodoroDashboardBody({
 		pomodoro.pendingKickoffSuggestion.status,
 	]);
 
+	useEffect(() => {
+		setDemotePageHeader(showCalmLanding && showFocusReadyState);
+		return () => setDemotePageHeader(false);
+	}, [showCalmLanding, showFocusReadyState, setDemotePageHeader]);
+
 	const dayMemoryOnCalmLanding = dayMemoryVisible && !showCalmLanding;
 
 	const calmKickoffTask = useMemo(() => {
@@ -676,6 +683,49 @@ export function PomodoroDashboardBody({
 		return { total, done };
 	}, [recap?.todayPlan]);
 
+	const calmTodaySummary = useMemo(
+		() => ({
+			budgetMinutes: dayPlan?.budgetMinutes ?? null,
+			forceShow: showCalmLanding,
+			hasBudget: dayPlan?.hasBudget ?? false,
+			isLoading: dayPlan?.isLoading ?? false,
+			remainingMinutes: dayPlan?.remainingMinutes ?? null,
+			sessionsCompleted: pomodoro.completedWorkCycles,
+			tasksDone: todayPlanStats.done,
+			tasksTotal: todayPlanStats.total,
+			usedMinutes: dayPlan?.usedMinutes ?? dayStats?.focusMinutes ?? 0,
+		}),
+		[
+			dayPlan?.budgetMinutes,
+			dayPlan?.hasBudget,
+			dayPlan?.isLoading,
+			dayPlan?.remainingMinutes,
+			dayPlan?.usedMinutes,
+			dayStats?.focusMinutes,
+			pomodoro.completedWorkCycles,
+			showCalmLanding,
+			todayPlanStats.done,
+			todayPlanStats.total,
+		],
+	);
+
+	const focusedTimerTaskId =
+		showCalmKickoffTimer && calmKickoffTask != null
+			? calmKickoffTask.id
+			: pomodoro.focusedTaskId;
+	const focusedTimerWorkType = useMemo((): WorkTypeKey | null => {
+		if (focusedTimerTaskId == null) {
+			return null;
+		}
+		const match = tasks.find(
+			(task) => String(task.id) === String(focusedTimerTaskId),
+		);
+		if (match?.workType == null) {
+			return null;
+		}
+		return match.workType as WorkTypeKey;
+	}, [focusedTimerTaskId, tasks]);
+
 	const nextFocusUiActive = showKickoffDurationChips;
 
 	const timerShown =
@@ -721,7 +771,7 @@ export function PomodoroDashboardBody({
 					<button
 						aria-atomic="true"
 						aria-live="polite"
-						className="w-full rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
+						className="w-full rounded-lg border border-accent-info-border bg-accent-info-bg px-4 py-3 text-center text-sm text-text-secondary"
 						data-testid="break-transition-line"
 						onClick={pomodoro.clearBreakTransitionLine}
 						type="button"
@@ -817,6 +867,7 @@ export function PomodoroDashboardBody({
 			preferredWorkDurationSec={pomodoro.stagedKickoffDurationSec}
 			remainingMs={pomodoro.remainingMs}
 			state={pomodoro.state}
+			workType={focusedTimerWorkType}
 		/>
 	) : null;
 
@@ -840,46 +891,16 @@ export function PomodoroDashboardBody({
 			/>
 		) : null;
 
-	const calmFocusSummary =
-		dayPlan != null ? (
-			<HomeFocusSummary
-				budgetMinutes={dayPlan.budgetMinutes}
-				forceShow={showCalmLanding}
-				hasBudget={dayPlan.hasBudget}
-				isLoading={dayPlan.isLoading}
-				remainingMinutes={dayPlan.remainingMinutes}
-				sessionsCompleted={pomodoro.completedWorkCycles}
-				tasksDone={todayPlanStats.done}
-				tasksTotal={todayPlanStats.total}
-				usedMinutes={dayStats?.focusMinutes ?? 0}
-			/>
-		) : showCalmLanding ? (
-			<HomeFocusSummary
-				budgetMinutes={null}
-				forceShow
-				hasBudget={false}
-				isLoading={false}
-				remainingMinutes={null}
-				sessionsCompleted={pomodoro.completedWorkCycles}
-				tasksDone={todayPlanStats.done}
-				tasksTotal={todayPlanStats.total}
-				usedMinutes={dayStats?.focusMinutes ?? 0}
-			/>
-		) : null;
-
-	const calmWidgetsRail = showCalmLanding ? (
-		<div className="flex w-full flex-col gap-4">
-			{calmFocusSummary}
-			<FocusTip />
-			<QuickActions
-				onAddTask={() => setShowAddModal(true)}
-				onStartBreak={pomodoro.startAdHocBreak}
-			/>
-		</div>
+	const calmTodayPanel = showCalmLanding ? (
+		<FocusTodayPanel
+			onAddTask={() => setShowAddModal(true)}
+			onStartBreak={pomodoro.startAdHocBreak}
+			summary={calmTodaySummary}
+		/>
 	) : null;
 
 	const authenticatedContextRail = showCalmLanding ? (
-		calmWidgetsRail
+		calmTodayPanel
 	) : (
 		<>
 			<div className="w-full" data-testid="home-rail-illustration">
@@ -908,7 +929,7 @@ export function PomodoroDashboardBody({
 		dataMode === "authenticated" ? (
 			authenticatedContextRail
 		) : showCalmLanding ? (
-			calmWidgetsRail
+			calmTodayPanel
 		) : (
 			<GuestContextRail />
 		);
@@ -1029,7 +1050,7 @@ export function PomodoroDashboardBody({
 			) : (
 				pomodoro.error != null && (
 					<div
-						className="w-full rounded-lg border border-red-400/40 bg-red-500/20 px-4 py-3 text-red-100 text-sm"
+						className="w-full rounded-lg border border-danger/40 bg-danger/20 px-4 py-3 text-primary text-sm"
 						data-testid="pomodoro-error"
 						role="alert"
 					>
@@ -1076,7 +1097,7 @@ export function PomodoroDashboardBody({
 								<p
 									aria-atomic="true"
 									aria-live="polite"
-									className="w-full rounded-lg border border-energy-steady-border bg-energy-steady-bg px-4 py-3 text-center text-sm text-text-secondary"
+									className="w-full rounded-lg border border-accent-info-border bg-accent-info-bg px-4 py-3 text-center text-sm text-text-secondary"
 									data-testid="suggestion-override-ack"
 								>
 									{pomodoro.overrideAcknowledgement}
@@ -1213,7 +1234,7 @@ export function PomodoroDashboardBody({
 			{pomodoro.hasActiveSession && (
 				<div className="flex flex-col items-center gap-2">
 					<button
-						className="rounded-lg border border-border-subtle px-4 py-2 text-sm text-text-secondary transition hover:border-red-400/40 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+						className="rounded-lg border border-border-subtle px-4 py-2 text-sm text-text-secondary transition hover:border-danger/40 hover:text-danger disabled:cursor-not-allowed disabled:opacity-40"
 						data-testid="end-session-btn"
 						disabled={pomodoro.isConfirming || isEndingSession}
 						onClick={handleEndSessionClick}

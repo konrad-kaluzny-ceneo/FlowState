@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 
 import { useAppUser } from "~/app/_components/app-user-context";
+import { useFocusLandingChrome } from "~/app/_components/focus-landing-chrome-context";
 import { UserMenu } from "~/app/_components/user-menu";
 
 export function FocusPageHeader() {
 	const t = useTranslations("FocusPage");
+	const { demotePageHeader } = useFocusLandingChrome();
 	const { scope, userName } = useAppUser();
 	const isAuthenticated = scope.mode === "authenticated";
 
@@ -28,14 +30,24 @@ export function FocusPageHeader() {
 
 	return (
 		<header
-			className="flex w-full items-start justify-between gap-4"
+			className={`flex w-full items-start justify-between gap-4 ${demotePageHeader ? "opacity-80" : ""}`}
 			data-testid="focus-page-header"
 		>
 			<div className="min-w-0">
-				<h1 className="text-balance font-semibold text-2xl text-primary tracking-tight">
+				<h1
+					className={`text-balance font-semibold tracking-tight ${
+						demotePageHeader
+							? "text-lg text-text-secondary"
+							: "text-2xl text-primary"
+					}`}
+				>
 					{greeting}
 				</h1>
-				<p className="mt-1 text-sm text-text-secondary">{subtitle}</p>
+				<p
+					className={`mt-1 text-sm text-text-secondary ${demotePageHeader ? "sr-only" : ""}`}
+				>
+					{subtitle}
+				</p>
 			</div>
 
 			{isAuthenticated && userName != null && (

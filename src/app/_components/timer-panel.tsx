@@ -1,7 +1,7 @@
 "use client";
 
 import { Ban, CheckCircle, Pause, Play, Square } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import type {
@@ -9,6 +9,12 @@ import type {
 	FocusedTask,
 	PomodoroCycleState,
 } from "~/hooks/use-pomodoro-cycle";
+import {
+	getWorkTypeLabel,
+	WORK_TYPE_CONFIG,
+	type WorkTypeKey,
+} from "~/lib/design/work-type-config";
+import type { UserLocale } from "~/lib/domain/user-locale";
 import {
 	getMaxWorkDurationSec,
 	getMinWorkDurationSec,
@@ -32,6 +38,73 @@ function OutOfTabBreakAlertsSection({
 	return <OutOfTabBreakAlertsControl enabled={enabled} onChange={onChange} />;
 }
 
+const neutralTaskActionClass =
+	"inline-flex shrink-0 items-center justify-center rounded-control border border-border-subtle bg-surface-card-muted p-2 text-text-secondary transition hover:bg-surface-panel hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40";
+
+function WorkTypePill({
+	workType,
+	locale,
+}: {
+	workType: WorkTypeKey;
+	locale: UserLocale;
+}) {
+	const config = WORK_TYPE_CONFIG[workType];
+	return (
+		<span
+			className={`inline-flex rounded-chip px-2.5 py-0.5 font-medium text-xs ${config.bg} ${config.text}`}
+		>
+			{getWorkTypeLabel(workType, locale)}
+		</span>
+	);
+}
+
+function FocusedTaskActions({
+	onCompleteFocusedTask,
+	onBlockFocusedTask,
+	isCompletingFocusedTask,
+	completeAria,
+	blockAria,
+}: {
+	onCompleteFocusedTask?: () => void;
+	onBlockFocusedTask?: () => void;
+	isCompletingFocusedTask: boolean;
+	completeAria: string;
+	blockAria: string;
+}) {
+	if (onCompleteFocusedTask == null && onBlockFocusedTask == null) {
+		return null;
+	}
+
+	return (
+		<div className="mt-3 flex items-center justify-center gap-2">
+			{onCompleteFocusedTask != null && (
+				<button
+					aria-label={completeAria}
+					className={neutralTaskActionClass}
+					data-testid="focus-complete-focused-task"
+					disabled={isCompletingFocusedTask}
+					onClick={onCompleteFocusedTask}
+					type="button"
+				>
+					<CheckCircle aria-hidden="true" className="h-4 w-4" />
+				</button>
+			)}
+			{onBlockFocusedTask != null && (
+				<button
+					aria-label={blockAria}
+					className={neutralTaskActionClass}
+					data-testid="focus-block-focused-task"
+					disabled={isCompletingFocusedTask}
+					onClick={onBlockFocusedTask}
+					type="button"
+				>
+					<Ban aria-hidden="true" className="h-4 w-4" />
+				</button>
+			)}
+		</div>
+	);
+}
+
 type TimerPanelProps = {
 	state: PomodoroCycleState;
 	remainingMs: number;
@@ -51,6 +124,7 @@ type TimerPanelProps = {
 	onCompleteFocusedTask?: () => void;
 	onBlockFocusedTask?: () => void;
 	isCompletingFocusedTask?: boolean;
+	workType?: WorkTypeKey | null;
 };
 
 export function TimerPanel({
@@ -72,8 +146,10 @@ export function TimerPanel({
 	onCompleteFocusedTask,
 	onBlockFocusedTask,
 	isCompletingFocusedTask = false,
+	workType = null,
 }: TimerPanelProps) {
 	const t = useTranslations("Timer");
+	const locale = useLocale() as UserLocale;
 	const [workDurationSec, setWorkDurationSec] = useState(
 		() => preferredWorkDurationSec ?? getLastDuration(),
 	);
@@ -142,41 +218,25 @@ export function TimerPanel({
 								: t("statusFocusingOn")}
 				</p>
 				{!isBreak && (
-					<div className="mt-1 flex items-center justify-center gap-3">
-						<p className="font-semibold text-primary text-xl">
+					<>
+						<p className="mt-1 font-semibold text-primary text-xl">
 							{focusedTask?.title ?? t("focusedTaskFallback")}
 						</p>
-						{onCompleteFocusedTask != null && !isPaused && (
-							<button
-								aria-label={t("completeFocusedTaskAria")}
-								className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent-success/30 bg-accent-success/10 px-2.5 py-1 text-accent-success transition hover:border-accent-success/50 hover:bg-accent-success/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40"
-								data-testid="focus-complete-focused-task"
-								disabled={isCompletingFocusedTask}
-								onClick={onCompleteFocusedTask}
-								type="button"
-							>
-								<CheckCircle aria-hidden="true" className="h-4 w-4" />
-								<span className="font-semibold text-xs">
-									{t("completeFocusedTaskLabel")}
-								</span>
-							</button>
+						{workType != null && (
+							<div className="mt-2 flex justify-center">
+								<WorkTypePill locale={locale} workType={workType} />
+							</div>
 						)}
-						{onBlockFocusedTask != null && !isPaused && (
-							<button
-								aria-label={t("blockFocusedTaskAria")}
-								className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-amber-400 transition hover:border-amber-400/50 hover:bg-amber-400/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40"
-								data-testid="focus-block-focused-task"
-								disabled={isCompletingFocusedTask}
-								onClick={onBlockFocusedTask}
-								type="button"
-							>
-								<Ban aria-hidden="true" className="h-4 w-4" />
-								<span className="font-semibold text-xs">
-									{t("blockFocusedTaskLabel")}
-								</span>
-							</button>
+						{!isPaused && (
+							<FocusedTaskActions
+								blockAria={t("blockFocusedTaskAria")}
+								completeAria={t("completeFocusedTaskAria")}
+								isCompletingFocusedTask={isCompletingFocusedTask}
+								onBlockFocusedTask={onBlockFocusedTask}
+								onCompleteFocusedTask={onCompleteFocusedTask}
+							/>
 						)}
-					</div>
+					</>
 				)}
 				<div className="mt-4 flex justify-center">
 					<ProgressRing
@@ -277,17 +337,26 @@ export function TimerPanel({
 	return (
 		<section
 			aria-label={t("sectionReadyAria")}
-			className="w-full rounded-card border border-card-border bg-surface-card p-6 shadow-sm"
+			className="w-full rounded-card border border-card-border bg-surface-card p-6 text-center shadow-sm"
 			data-testid="timer-panel-idle"
 		>
-			<p className="text-center font-semibold text-sm text-text-section">
+			<p className="font-semibold text-sm text-text-section">
 				{t("idleReadyToFocusOn")}
 			</p>
-			<p className="text-center font-semibold text-primary text-xl">
+			<p className="mt-1 font-semibold text-primary text-xl">
 				{focusedTask?.title}
 			</p>
+			{workType != null && (
+				<div className="mt-2 flex justify-center">
+					<WorkTypePill locale={locale} workType={workType} />
+				</div>
+			)}
 
-			<p className="mt-4 text-center text-sm text-text-secondary">
+			<div className="mt-4 flex justify-center">
+				<ProgressRing progress={0} size={200} strokeWidth={10} />
+			</div>
+
+			<p className="mt-4 text-sm text-text-secondary">
 				{t("idleWorkDuration")}
 			</p>
 			<DurationPicker
