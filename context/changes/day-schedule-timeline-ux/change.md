@@ -10,7 +10,11 @@ updated: 2026-08-21
 
 S-64 (follow-up to S-54). GitHub [#235](https://github.com/konrad-kaluzny-ceneo/FlowState/issues/235). Linear [FLO-109](https://linear.app/flowstate-10xdev/issue/FLO-109).
 
-Ergonomics for the day schedule timeline: unified drag/resize preview, client overlap feedback, temp-block mutation queue, optimistic edit-panel close, smart add slot, 15-min chip layout, discoverability (empty state, hint, legend, scroll-to-now).
+Shipped on PR with S-54 (`features/day-schedule-timeline`).
+
+Ergonomics: unified drag/resize preview, client overlap feedback, temp-block mutation queue, optimistic edit-panel close, smart add slot, 15-min chip layout, discoverability (empty state, hint, legend, scroll-to-now).
+
+**Follow-up polish:** single-click create on empty axis; separate drag handle vs click-to-edit; edit panel progressive disclosure (context under “More”).
 
 ## Deferred to roadmap
 

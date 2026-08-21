@@ -148,6 +148,7 @@ describe("ScheduleBlockEditPanel", () => {
 	it("creates and selects a reusable custom context", async () => {
 		const callbacks = renderPanel();
 
+		fireEvent.click(screen.getByTestId("schedule-edit-more-toggle"));
 		fireEvent.change(screen.getByTestId("schedule-new-context-tag"), {
 			target: { value: "Home" },
 		});
@@ -159,5 +160,12 @@ describe("ScheduleBlockEditPanel", () => {
 		expect(
 			(screen.getByTestId("schedule-context") as HTMLSelectElement).value,
 		).toBe("tag:12");
+	});
+
+	it("keeps context fields collapsed until More is opened", () => {
+		renderPanel();
+		expect(screen.queryByTestId("schedule-context")).toBeNull();
+		fireEvent.click(screen.getByTestId("schedule-edit-more-toggle"));
+		expect(screen.getByTestId("schedule-context")).toBeTruthy();
 	});
 });

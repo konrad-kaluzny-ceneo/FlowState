@@ -170,7 +170,7 @@ describe("DayScheduleTimeline", () => {
 		});
 	});
 
-	it("creates a snapped focus block when an empty slot is double-clicked", () => {
+	it("creates a snapped focus block when an empty slot is clicked", () => {
 		const createBlock = vi.fn().mockResolvedValue(undefined);
 		renderTimeline(
 			<DayScheduleTimeline
@@ -197,9 +197,6 @@ describe("DayScheduleTimeline", () => {
 		});
 
 		fireEvent.click(axis, { clientY: 3 * SCHEDULE_HOUR_HEIGHT_PX });
-		expect(createBlock).not.toHaveBeenCalled();
-
-		fireEvent.doubleClick(axis, { clientY: 3 * SCHEDULE_HOUR_HEIGHT_PX });
 
 		expect(createBlock).toHaveBeenCalledWith({
 			blockType: "FOCUS",
@@ -208,7 +205,7 @@ describe("DayScheduleTimeline", () => {
 		});
 	});
 
-	it("does not call createBlock when a double-click would overlap", async () => {
+	it("does not call createBlock when a click would overlap", async () => {
 		const createBlock = vi.fn().mockResolvedValue(undefined);
 		renderTimeline(
 			<DayScheduleTimeline
@@ -234,11 +231,27 @@ describe("DayScheduleTimeline", () => {
 			},
 		});
 
-		fireEvent.doubleClick(axis, { clientY: 3 * SCHEDULE_HOUR_HEIGHT_PX });
+		fireEvent.click(axis, { clientY: 3 * SCHEDULE_HOUR_HEIGHT_PX });
 
 		expect(createBlock).not.toHaveBeenCalled();
 		expect(await screen.findByRole("alert")).toBeTruthy();
 		expect(screen.getByRole("alert").textContent).toContain("overlaps");
+	});
+
+	it("exposes a separate drag handle from the edit surface", () => {
+		renderTimeline(
+			<DayScheduleTimeline
+				blocks={[makeBlock()]}
+				createBlock={vi.fn().mockResolvedValue(undefined)}
+				createContextTag={vi.fn()}
+				deleteBlock={vi.fn()}
+				localDateKey="2026-08-17"
+				updateBlock={vi.fn().mockResolvedValue(undefined)}
+			/>,
+		);
+
+		expect(screen.getByTestId("schedule-block-drag-1")).toBeTruthy();
+		expect(screen.getByTestId("schedule-block-edit-1")).toBeTruthy();
 	});
 
 	it("shows an overlap error from the error prop", () => {

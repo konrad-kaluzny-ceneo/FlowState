@@ -287,24 +287,35 @@ function ScheduleBlockChip({
 				onPointerDown={(event) => onResizePointerDown(block, "start", event)}
 				type="button"
 			/>
-			<button
-				className="flex h-full w-full cursor-grab flex-col justify-center px-3 py-0.5 text-left active:cursor-grabbing"
-				onClick={() => onOpen(block.id)}
-				type="button"
-				{...listeners}
-				{...attributes}
-			>
-				{compact ? (
-					<p className="truncate font-medium text-[0.65rem] leading-tight">
-						{title} · {formatAxisTime(labelStart)}
-					</p>
-				) : (
-					<>
-						<p className="truncate font-medium text-xs">{title}</p>
-						<p className="truncate text-[0.65rem] opacity-80">{timeRange}</p>
-					</>
-				)}
-			</button>
+			<div className="flex h-full min-h-0 w-full items-stretch">
+				<button
+					aria-label={t("dragBlockAria")}
+					className="flex w-5 shrink-0 cursor-grab items-center justify-center border-current/15 border-r text-[0.65rem] opacity-70 active:cursor-grabbing"
+					data-testid={`schedule-block-drag-${block.id}`}
+					type="button"
+					{...listeners}
+					{...attributes}
+				>
+					⋮⋮
+				</button>
+				<button
+					className="flex min-w-0 flex-1 cursor-pointer flex-col justify-center px-2 py-0.5 text-left"
+					data-testid={`schedule-block-edit-${block.id}`}
+					onClick={() => onOpen(block.id)}
+					type="button"
+				>
+					{compact ? (
+						<p className="truncate font-medium text-[0.65rem] leading-tight">
+							{title} · {formatAxisTime(labelStart)}
+						</p>
+					) : (
+						<>
+							<p className="truncate font-medium text-xs">{title}</p>
+							<p className="truncate text-[0.65rem] opacity-80">{timeRange}</p>
+						</>
+					)}
+				</button>
+			</div>
 			<button
 				aria-label={t("resizeEndAria")}
 				className="absolute inset-x-0 bottom-0 z-10 h-3 cursor-ns-resize after:absolute after:inset-x-2 after:bottom-1 after:h-0.5 after:rounded-full after:bg-current after:opacity-0 after:transition-opacity hover:after:opacity-40 focus-visible:after:opacity-40"
@@ -428,7 +439,7 @@ export function DayScheduleTimeline({
 		scrollBlockIntoView(startMinute);
 	}, [blocks, preferredAddStart, runCreate, scrollBlockIntoView]);
 
-	const handleAxisDoubleClick = useCallback(
+	const handleAxisClick = useCallback(
 		(event: React.MouseEvent<HTMLButtonElement>) => {
 			if (dragMovedRef.current || resizedRef.current) {
 				return;
@@ -793,10 +804,10 @@ export function DayScheduleTimeline({
 								</div>
 							) : null}
 							<button
-								aria-label={t("addBlockDoubleClickAria")}
+								aria-label={t("addBlockClickAria")}
 								className="absolute inset-x-0 top-0"
 								data-testid="schedule-timeline-axis"
-								onDoubleClick={handleAxisDoubleClick}
+								onClick={handleAxisClick}
 								ref={axisRef}
 								style={{ height: AXIS_HEIGHT_PX }}
 								type="button"
@@ -810,9 +821,6 @@ export function DayScheduleTimeline({
 										block={block}
 										key={block.id}
 										onOpen={(blockId) => {
-											if (dragMovedRef.current || resizedRef.current) {
-												return;
-											}
 											if (canEdit && blockId >= 0) {
 												setSelectedBlockId(blockId);
 											}

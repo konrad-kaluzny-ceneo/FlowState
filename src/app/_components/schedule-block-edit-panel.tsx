@@ -120,6 +120,9 @@ export function ScheduleBlockEditPanel({
 	const [confirmDelete, setConfirmDelete] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [showMore, setShowMore] = useState(
+		block.fixedContext != null || block.customContextTagId != null,
+	);
 
 	useEffect(() => {
 		setBlockType(block.blockType);
@@ -138,6 +141,7 @@ export function ScheduleBlockEditPanel({
 		setLocalContextTags(contextTags);
 		setConfirmDelete(false);
 		setError(null);
+		setShowMore(block.fixedContext != null || block.customContextTagId != null);
 	}, [block, contextTags]);
 
 	const availableTasks = useMemo(
@@ -393,49 +397,63 @@ export function ScheduleBlockEditPanel({
 					</div>
 				) : null}
 
-				<div className="space-y-3">
-					<label className="block text-sm text-text-secondary">
-						<span className="mb-1 block font-medium text-text-section">
-							{t("contextLabel")}
-						</span>
-						<select
-							className="w-full rounded-control border border-border-subtle bg-surface-panel px-3 py-2 text-primary"
-							data-testid="schedule-context"
-							onChange={(event) => setContextValue(event.target.value)}
-							value={contextValue}
-						>
-							<option value="">{t("noContextOption")}</option>
-							{FIXED_CONTEXTS.map((context) => (
-								<option key={context} value={`fixed:${context}`}>
-									{t(FIXED_CONTEXT_KEY[context])}
-								</option>
-							))}
-							{localContextTags.map((tag) => (
-								<option key={tag.id} value={`tag:${tag.id}`}>
-									{tag.label}
-								</option>
-							))}
-						</select>
-					</label>
-					<div className="flex gap-2">
-						<input
-							className="min-w-0 flex-1 rounded-control border border-border-subtle bg-surface-panel px-3 py-2 text-primary"
-							data-testid="schedule-new-context-tag"
-							maxLength={32}
-							onChange={(event) => setNewTagLabel(event.target.value)}
-							placeholder={t("customTagPlaceholder")}
-							value={newTagLabel}
-						/>
-						<button
-							className="rounded-control border border-border-subtle px-3 py-2 text-sm text-text-section disabled:opacity-50"
-							data-testid="schedule-create-context-tag"
-							disabled={isSaving || newTagLabel.trim().length === 0}
-							onClick={() => void handleCreateTag()}
-							type="button"
-						>
-							{t("addContextTag")}
-						</button>
-					</div>
+				<p className="text-text-dimmed text-xs">{t("editTimeHint")}</p>
+
+				<div className="border-border-subtle border-t pt-3">
+					<button
+						className="text-sm text-text-secondary hover:text-text-section"
+						data-testid="schedule-edit-more-toggle"
+						onClick={() => setShowMore((open) => !open)}
+						type="button"
+					>
+						{showMore ? t("editLessDetails") : t("editMoreDetails")}
+					</button>
+					{showMore ? (
+						<div className="mt-3 space-y-3">
+							<label className="block text-sm text-text-secondary">
+								<span className="mb-1 block font-medium text-text-section">
+									{t("contextLabel")}
+								</span>
+								<select
+									className="w-full rounded-control border border-border-subtle bg-surface-panel px-3 py-2 text-primary"
+									data-testid="schedule-context"
+									onChange={(event) => setContextValue(event.target.value)}
+									value={contextValue}
+								>
+									<option value="">{t("noContextOption")}</option>
+									{FIXED_CONTEXTS.map((context) => (
+										<option key={context} value={`fixed:${context}`}>
+											{t(FIXED_CONTEXT_KEY[context])}
+										</option>
+									))}
+									{localContextTags.map((tag) => (
+										<option key={tag.id} value={`tag:${tag.id}`}>
+											{tag.label}
+										</option>
+									))}
+								</select>
+							</label>
+							<div className="flex gap-2">
+								<input
+									className="min-w-0 flex-1 rounded-control border border-border-subtle bg-surface-panel px-3 py-2 text-primary"
+									data-testid="schedule-new-context-tag"
+									maxLength={32}
+									onChange={(event) => setNewTagLabel(event.target.value)}
+									placeholder={t("customTagPlaceholder")}
+									value={newTagLabel}
+								/>
+								<button
+									className="rounded-control border border-border-subtle px-3 py-2 text-sm text-text-section disabled:opacity-50"
+									data-testid="schedule-create-context-tag"
+									disabled={isSaving || newTagLabel.trim().length === 0}
+									onClick={() => void handleCreateTag()}
+									type="button"
+								>
+									{t("addContextTag")}
+								</button>
+							</div>
+						</div>
+					) : null}
 				</div>
 
 				{error != null ? (
