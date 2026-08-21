@@ -303,6 +303,8 @@ describe("dayPlan router", () => {
 			usedFocusMinutes: 0,
 			remainingFocusMinutes: null,
 			energyLevel: null,
+			workStartMinute: null,
+			workEndMinute: null,
 		});
 	});
 

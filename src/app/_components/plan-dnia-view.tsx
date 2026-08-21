@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { DayScheduleTimeline } from "~/app/_components/day-schedule-timeline";
 import { DelegationSuggestionCard } from "~/app/_components/delegation-suggestion-card";
@@ -11,10 +11,142 @@ import type { useDaySchedule } from "~/hooks/use-day-schedule";
 import { useDelegationSuggestion } from "~/hooks/use-delegation-suggestion";
 import { useTaskMutations } from "~/hooks/use-task-mutations";
 import type { DomainTask } from "~/lib/data-mode/types";
+import {
+	AXIS_END_MINUTE,
+	AXIS_START_MINUTE,
+	SNAP_MINUTES,
+} from "~/lib/schedule/types";
+import { resolveWorkDayBounds } from "~/lib/schedule/work-day-bounds";
 import { formatFocusMinutes } from "~/lib/time/format-focus-minutes";
 import { api } from "~/trpc/react";
 
 const PRESET_HOURS_MINUTES = [120, 240, 360] as const;
+
+function formatAxisTime(minute: number): string {
+	const hours = Math.floor(minute / 60);
+	const minutes = minute % 60;
+	return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function workHourOptions(): number[] {
+	const values: number[] = [];
+	for (
+		let minute = AXIS_START_MINUTE;
+		minute <= AXIS_END_MINUTE;
+		minute += SNAP_MINUTES
+	) {
+		values.push(minute);
+	}
+	return values;
+}
+
+const WORK_HOUR_OPTIONS = workHourOptions();
+
+function WorkHoursPanel({
+	dayPlan,
+	workStartMinute,
+	workEndMinute,
+}: {
+	dayPlan: NonNullable<PlanDniaViewProps["dayPlan"]>;
+	workStartMinute: number;
+	workEndMinute: number;
+}) {
+	const t = useTranslations("PlanDnia");
+	const [startMinute, setStartMinute] = useState(workStartMinute);
+	const [endMinute, setEndMinute] = useState(workEndMinute);
+	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		setStartMinute(workStartMinute);
+		setEndMinute(workEndMinute);
+	}, [workEndMinute, workStartMinute]);
+
+	const handleSave = useCallback(
+		async (nextStart: number, nextEnd: number) => {
+			if (nextEnd - nextStart < SNAP_MINUTES) {
+				setError(t("workHoursValidationError"));
+				return;
+			}
+			setError(null);
+			try {
+				await dayPlan.setWorkHours(nextStart, nextEnd);
+			} catch {
+				setError(t("workHoursSaveError"));
+			}
+		},
+		[dayPlan, t],
+	);
+
+	return (
+		<div
+			className="mb-3 flex flex-wrap items-end gap-3"
+			data-testid="plan-work-hours"
+		>
+			<div>
+				<label
+					className="mb-1 block text-text-dimmed text-xs"
+					htmlFor="plan-work-start"
+				>
+					{t("workHoursStartLabel")}
+				</label>
+				<select
+					className="rounded-md border border-border-subtle bg-surface-card px-2 py-1.5 text-primary text-sm"
+					data-testid="plan-work-start"
+					disabled={dayPlan.isSettingWorkHours}
+					id="plan-work-start"
+					onChange={(event) => {
+						const nextStart = Number(event.target.value);
+						setStartMinute(nextStart);
+						void handleSave(nextStart, endMinute);
+					}}
+					value={startMinute}
+				>
+					{WORK_HOUR_OPTIONS.filter((minute) => minute < endMinute).map(
+						(minute) => (
+							<option key={minute} value={minute}>
+								{formatAxisTime(minute)}
+							</option>
+						),
+					)}
+				</select>
+			</div>
+			<span className="pb-2 text-sm text-text-dimmed">–</span>
+			<div>
+				<label
+					className="mb-1 block text-text-dimmed text-xs"
+					htmlFor="plan-work-end"
+				>
+					{t("workHoursEndLabel")}
+				</label>
+				<select
+					className="rounded-md border border-border-subtle bg-surface-card px-2 py-1.5 text-primary text-sm"
+					data-testid="plan-work-end"
+					disabled={dayPlan.isSettingWorkHours}
+					id="plan-work-end"
+					onChange={(event) => {
+						const nextEnd = Number(event.target.value);
+						setEndMinute(nextEnd);
+						void handleSave(startMinute, nextEnd);
+					}}
+					value={endMinute}
+				>
+					{WORK_HOUR_OPTIONS.filter((minute) => minute > startMinute).map(
+						(minute) => (
+							<option key={minute} value={minute}>
+								{formatAxisTime(minute)}
+							</option>
+						),
+					)}
+				</select>
+			</div>
+			{error != null ? (
+				<p className="text-red-300 text-xs" role="alert">
+					{error}
+				</p>
+			) : null}
+		</div>
+	);
+}
 
 type PlanDniaViewProps = {
 	dayPlan: ReturnType<typeof useDayPlan> | undefined;
@@ -211,6 +343,10 @@ export function PlanDniaView({
 	tasks = [],
 }: PlanDniaViewProps) {
 	const t = useTranslations("PlanDnia");
+	const workBounds =
+		dayPlan == null
+			? null
+			: resolveWorkDayBounds(dayPlan.workStartMinute, dayPlan.workEndMinute);
 
 	return (
 		<div className="w-full space-y-section" data-testid="plan-dnia-view">
@@ -221,7 +357,7 @@ export function PlanDniaView({
 				<p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
 			</div>
 
-			{dayPlan != null && daySchedule != null ? (
+			{dayPlan != null && daySchedule != null && workBounds != null ? (
 				<DayScheduleTimeline
 					blocks={daySchedule.blocks}
 					contextTags={daySchedule.contextTags}
@@ -233,6 +369,20 @@ export function PlanDniaView({
 					localDateKey={dayPlan.localDateKey}
 					tasks={tasks}
 					updateBlock={daySchedule.updateBlock}
+					workEndMinute={workBounds.workEndMinute}
+					workHoursControl={
+						<div className="mb-4 border-border-subtle border-b pb-4">
+							<p className="mb-3 font-medium text-primary text-sm">
+								{t("workHoursHeading")}
+							</p>
+							<WorkHoursPanel
+								dayPlan={dayPlan}
+								workEndMinute={workBounds.workEndMinute}
+								workStartMinute={workBounds.workStartMinute}
+							/>
+						</div>
+					}
+					workStartMinute={workBounds.workStartMinute}
 				/>
 			) : null}
 

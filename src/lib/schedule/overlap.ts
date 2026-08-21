@@ -87,8 +87,8 @@ export function findNearestOpenSlot(
 }
 
 /**
- * First open slot at or after preferredStart (falls back to axis start when
- * preferredStart is omitted).
+ * First open slot at or after preferredStart. When `minStartMinute` is set,
+ * never scans earlier than that floor (use for "from now" / work-day bounds).
  */
 export function findOpenSlot(
 	blocks: readonly Pick<
@@ -97,15 +97,21 @@ export function findOpenSlot(
 	>[],
 	durationMinutes: number,
 	preferredStart: number = AXIS_START_MINUTE,
+	minStartMinute: number = AXIS_START_MINUTE,
 ): number | null {
 	const maxStart = AXIS_END_MINUTE - durationMinutes;
+	const floor = Math.max(
+		AXIS_START_MINUTE,
+		Math.round(minStartMinute / SNAP_MINUTES) * SNAP_MINUTES,
+	);
 	const startFrom = Math.min(
 		maxStart,
-		Math.max(
-			AXIS_START_MINUTE,
-			Math.round(preferredStart / SNAP_MINUTES) * SNAP_MINUTES,
-		),
+		Math.max(floor, Math.round(preferredStart / SNAP_MINUTES) * SNAP_MINUTES),
 	);
+
+	if (startFrom > maxStart) {
+		return null;
+	}
 
 	for (let start = startFrom; start <= maxStart; start += SNAP_MINUTES) {
 		const candidate = { startMinute: start, durationMinutes };
@@ -114,14 +120,16 @@ export function findOpenSlot(
 		}
 	}
 
-	for (
-		let start = AXIS_START_MINUTE;
-		start < startFrom;
-		start += SNAP_MINUTES
-	) {
-		const candidate = { startMinute: start, durationMinutes };
-		if (!wouldOverlap(candidate, blocks)) {
-			return start;
+	if (floor <= AXIS_START_MINUTE) {
+		for (
+			let start = AXIS_START_MINUTE;
+			start < startFrom;
+			start += SNAP_MINUTES
+		) {
+			const candidate = { startMinute: start, durationMinutes };
+			if (!wouldOverlap(candidate, blocks)) {
+				return start;
+			}
 		}
 	}
 

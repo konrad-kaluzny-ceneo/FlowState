@@ -92,4 +92,9 @@ describe("findOpenSlot", () => {
 		const blocks = [{ id: 1, startMinute: 540, durationMinutes: 780 }];
 		expect(findOpenSlot(blocks, 30, 540)).toBe(360);
 	});
+
+	it("does not scan before minStartMinute", () => {
+		const blocks = [{ id: 1, startMinute: 540, durationMinutes: 780 }];
+		expect(findOpenSlot(blocks, 30, 540, 540)).toBeNull();
+	});
 });

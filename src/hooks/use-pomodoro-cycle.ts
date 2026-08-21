@@ -1425,6 +1425,8 @@ export function usePomodoroCycle(options?: UsePomodoroCycleOptions) {
 						context: "kickoff",
 						sessionId,
 						localHour: new Date().getHours(),
+						localMinuteOfDay:
+							new Date().getHours() * 60 + new Date().getMinutes(),
 						localDateKey: formatLocalDateKey(),
 						energy,
 						...(trimmedIntention != null && trimmedIntention.length > 0

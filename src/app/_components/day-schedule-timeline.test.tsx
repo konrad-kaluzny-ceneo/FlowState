@@ -9,6 +9,10 @@ import type { ComponentProps, ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IntlTestWrapper } from "~/i18n/test-intl";
 import type { DomainScheduleBlock } from "~/lib/schedule/types";
+import {
+	DEFAULT_WORK_END_MINUTE,
+	DEFAULT_WORK_START_MINUTE,
+} from "~/lib/schedule/work-day-bounds";
 
 import {
 	DayScheduleTimeline,
@@ -92,6 +96,11 @@ function dragPayload(overrides?: {
 	};
 }
 
+const defaultWorkBounds = {
+	workStartMinute: DEFAULT_WORK_START_MINUTE,
+	workEndMinute: DEFAULT_WORK_END_MINUTE,
+};
+
 function renderTimeline(
 	ui: ReactElement = (
 		<DayScheduleTimeline
@@ -99,6 +108,7 @@ function renderTimeline(
 			createBlock={vi.fn().mockResolvedValue(undefined)}
 			localDateKey="2026-08-17"
 			updateBlock={vi.fn().mockResolvedValue(undefined)}
+			{...defaultWorkBounds}
 		/>
 	),
 ) {
@@ -119,6 +129,7 @@ describe("DayScheduleTimeline", () => {
 				createBlock={vi.fn().mockResolvedValue(undefined)}
 				localDateKey="2026-08-17"
 				updateBlock={vi.fn().mockResolvedValue(undefined)}
+				{...defaultWorkBounds}
 			/>,
 		);
 
@@ -143,6 +154,7 @@ describe("DayScheduleTimeline", () => {
 				isLoading
 				localDateKey="2026-08-17"
 				updateBlock={vi.fn().mockResolvedValue(undefined)}
+				{...defaultWorkBounds}
 			/>,
 		);
 
@@ -158,6 +170,7 @@ describe("DayScheduleTimeline", () => {
 				createBlock={createBlock}
 				localDateKey="2026-08-17"
 				updateBlock={vi.fn().mockResolvedValue(undefined)}
+				{...defaultWorkBounds}
 			/>,
 		);
 
@@ -165,7 +178,7 @@ describe("DayScheduleTimeline", () => {
 
 		expect(createBlock).toHaveBeenCalledWith({
 			blockType: "FOCUS",
-			startMinute: 360,
+			startMinute: DEFAULT_WORK_START_MINUTE,
 			durationMinutes: DEFAULT_BLOCK_DURATION_MINUTES,
 		});
 	});
@@ -178,6 +191,7 @@ describe("DayScheduleTimeline", () => {
 				createBlock={createBlock}
 				localDateKey="2026-08-17"
 				updateBlock={vi.fn().mockResolvedValue(undefined)}
+				{...defaultWorkBounds}
 			/>,
 		);
 
@@ -213,6 +227,7 @@ describe("DayScheduleTimeline", () => {
 				createBlock={createBlock}
 				localDateKey="2026-08-17"
 				updateBlock={vi.fn().mockResolvedValue(undefined)}
+				{...defaultWorkBounds}
 			/>,
 		);
 
@@ -247,11 +262,47 @@ describe("DayScheduleTimeline", () => {
 				deleteBlock={vi.fn()}
 				localDateKey="2026-08-17"
 				updateBlock={vi.fn().mockResolvedValue(undefined)}
+				{...defaultWorkBounds}
 			/>,
 		);
 
 		expect(screen.getByTestId("schedule-block-drag-1")).toBeTruthy();
 		expect(screen.getByTestId("schedule-block-edit-1")).toBeTruthy();
+	});
+
+	it("opens a context menu on right-click when editing is enabled", () => {
+		renderTimeline(
+			<DayScheduleTimeline
+				blocks={[makeBlock()]}
+				createBlock={vi.fn().mockResolvedValue(undefined)}
+				createContextTag={vi.fn()}
+				deleteBlock={vi.fn().mockResolvedValue(undefined)}
+				localDateKey="2026-08-17"
+				updateBlock={vi.fn().mockResolvedValue(undefined)}
+				{...defaultWorkBounds}
+			/>,
+		);
+
+		fireEvent.contextMenu(screen.getByTestId("schedule-block-1"));
+
+		expect(screen.getByTestId("schedule-block-context-menu")).toBeTruthy();
+		expect(screen.getByTestId("schedule-context-edit")).toBeTruthy();
+	});
+
+	it("does not open a context menu when editing is disabled", () => {
+		renderTimeline(
+			<DayScheduleTimeline
+				blocks={[makeBlock()]}
+				createBlock={vi.fn().mockResolvedValue(undefined)}
+				localDateKey="2026-08-17"
+				updateBlock={vi.fn().mockResolvedValue(undefined)}
+				{...defaultWorkBounds}
+			/>,
+		);
+
+		fireEvent.contextMenu(screen.getByTestId("schedule-block-1"));
+
+		expect(screen.queryByTestId("schedule-block-context-menu")).toBeNull();
 	});
 
 	it("shows an overlap error from the error prop", () => {
@@ -262,6 +313,7 @@ describe("DayScheduleTimeline", () => {
 				error="This block overlaps another — pick a different time."
 				localDateKey="2026-08-17"
 				updateBlock={vi.fn().mockResolvedValue(undefined)}
+				{...defaultWorkBounds}
 			/>,
 		);
 
@@ -276,6 +328,7 @@ describe("DayScheduleTimeline", () => {
 				createBlock={createBlock}
 				localDateKey="2026-08-17"
 				updateBlock={vi.fn().mockResolvedValue(undefined)}
+				{...defaultWorkBounds}
 			/>,
 		);
 
@@ -292,6 +345,7 @@ describe("DayScheduleTimeline", () => {
 				createBlock={vi.fn().mockResolvedValue(undefined)}
 				localDateKey="2026-08-17"
 				updateBlock={vi.fn().mockResolvedValue(undefined)}
+				{...defaultWorkBounds}
 			/>,
 		);
 
@@ -313,6 +367,7 @@ describe("DayScheduleTimeline", () => {
 				createBlock={vi.fn().mockResolvedValue(undefined)}
 				localDateKey="2026-08-17"
 				updateBlock={updateBlock}
+				{...defaultWorkBounds}
 			/>,
 		);
 
@@ -336,6 +391,7 @@ describe("DayScheduleTimeline", () => {
 				createBlock={vi.fn().mockResolvedValue(undefined)}
 				localDateKey="2026-08-17"
 				updateBlock={updateBlock}
+				{...defaultWorkBounds}
 			/>,
 		);
 
@@ -355,6 +411,7 @@ describe("DayScheduleTimeline", () => {
 				createBlock={vi.fn().mockResolvedValue(undefined)}
 				localDateKey="2026-08-17"
 				updateBlock={vi.fn().mockResolvedValue(undefined)}
+				{...defaultWorkBounds}
 			/>,
 		);
 

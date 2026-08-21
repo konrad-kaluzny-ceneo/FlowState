@@ -16,6 +16,8 @@ export type RationaleKey =
 	| "kickoff_fresh"
 	| "kickoff_resume"
 	| "capacity_fit"
+	| "plan_block_active"
+	| "plan_block_upcoming"
 	| "delegation_low_effort"
 	| "delegation_operational"
 	| "default";
@@ -65,6 +67,10 @@ export function buildRationale(
 			const minutes = context.remainingFocusMinutes ?? 0;
 			return t("capacity_fit", { minutes });
 		}
+		case "plan_block_active":
+			return t("plan_block_active");
+		case "plan_block_upcoming":
+			return t("plan_block_upcoming");
 		case "delegation_low_effort":
 			return t("delegation_low_effort");
 		case "delegation_operational":

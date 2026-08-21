@@ -8,6 +8,7 @@ import {
 	gtdFixedContextSchema,
 	scheduleBlockTypeSchema,
 } from "~/lib/schedule/types";
+import { isValidWorkDayBounds } from "~/lib/schedule/work-day-bounds";
 import {
 	type DelegationCandidateTask,
 	pickDelegationCandidate,
@@ -33,6 +34,8 @@ const localDateKeySchema = z
 	.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD local date key");
 
 const focusBudgetMinutesSchema = z.number().int().min(15).max(720);
+
+const workMinuteSchema = z.number().int().min(360).max(1320);
 
 const energySchema = z.enum(["FOCUSED", "STEADY", "FADING"]);
 
@@ -66,6 +69,8 @@ export const dayPlanRouter = createTRPCRouter({
 					usedFocusMinutes: 0,
 					remainingFocusMinutes: null as number | null,
 					energyLevel: null as EnergyLevel | null,
+					workStartMinute: null as number | null,
+					workEndMinute: null as number | null,
 				};
 			}
 
@@ -81,6 +86,8 @@ export const dayPlanRouter = createTRPCRouter({
 								existing.usedFocusMinutes,
 							),
 				energyLevel: existing.energyLevel,
+				workStartMinute: existing.workStartMinute,
+				workEndMinute: existing.workEndMinute,
 			};
 		}),
 
@@ -167,6 +174,53 @@ export const dayPlanRouter = createTRPCRouter({
 			return {
 				localDateKey: row.localDateKey,
 				energyLevel: row.energyLevel,
+			};
+		}),
+
+	setWorkHours: protectedProcedure
+		.input(
+			z
+				.object({
+					localDateKey: localDateKeySchema,
+					workStartMinute: workMinuteSchema,
+					workEndMinute: workMinuteSchema,
+				})
+				.refine(
+					(input) =>
+						isValidWorkDayBounds(input.workStartMinute, input.workEndMinute),
+					{
+						message:
+							"Work hours must be on 15-minute marks with end after start.",
+					},
+				),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
+
+			const row = await ctx.db.dayPlan.upsert({
+				where: {
+					day_plan_user_date_key: {
+						userId,
+						localDateKey: input.localDateKey,
+					},
+				},
+				create: {
+					userId,
+					localDateKey: input.localDateKey,
+					usedFocusMinutes: 0,
+					workStartMinute: input.workStartMinute,
+					workEndMinute: input.workEndMinute,
+				},
+				update: {
+					workStartMinute: input.workStartMinute,
+					workEndMinute: input.workEndMinute,
+				},
+			});
+
+			return {
+				localDateKey: row.localDateKey,
+				workStartMinute: row.workStartMinute,
+				workEndMinute: row.workEndMinute,
 			};
 		}),
 

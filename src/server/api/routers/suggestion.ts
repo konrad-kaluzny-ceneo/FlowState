@@ -20,12 +20,14 @@ import {
 	loadRemainingFocusMinutes,
 	SUGGESTION_POOL_STATUSES,
 } from "~/lib/suggestion/build-suggestion-pool";
+import { loadPlanScoringFields } from "~/lib/suggestion/plan-scoring-context";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import type { db as dbClient } from "~/server/db/index";
 
 const energyLevelSchemaZod = z.enum(energyLevelSchema);
 
 const localHourSchema = z.number().int().min(0).max(23);
+const localMinuteOfDaySchema = z.number().int().min(0).max(1439);
 const localDateKeySchema = z
 	.string()
 	.regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD local date key");
@@ -35,12 +37,14 @@ const nextInputSchema = z.discriminatedUnion("context", [
 		context: z.literal("post_check_in"),
 		cycleId: z.number().int(),
 		localHour: localHourSchema,
+		localMinuteOfDay: localMinuteOfDaySchema.optional(),
 		localDateKey: localDateKeySchema,
 	}),
 	z.object({
 		context: z.literal("kickoff"),
 		sessionId: z.number().int(),
 		localHour: localHourSchema,
+		localMinuteOfDay: localMinuteOfDaySchema.optional(),
 		localDateKey: localDateKeySchema,
 		energy: energyLevelSchemaZod,
 		sessionIntention: z.string().max(80).optional(),
@@ -82,6 +86,7 @@ async function buildScoringContextForSession(
 	energy: EnergyLevel,
 	remainingFocusMinutes: number | null,
 	preferredWorkType?: WorkType,
+	planFields?: Awaited<ReturnType<typeof loadPlanScoringFields>>,
 ): Promise<ScoringContext> {
 	const lastOverride = await db.suggestionDecision.findFirst({
 		where: {
@@ -113,7 +118,15 @@ async function buildScoringContextForSession(
 		lastOverrideWorkType: lastOverride?.chosenTask.workType,
 		preferredWorkType,
 		remainingFocusMinutes,
+		...planFields,
 	};
+}
+
+function resolveLocalMinuteOfDay(input: {
+	localHour: number;
+	localMinuteOfDay?: number;
+}): number {
+	return input.localMinuteOfDay ?? input.localHour * 60;
 }
 
 async function verifyOwnedTasks(
@@ -222,6 +235,14 @@ export const suggestionRouter = createTRPCRouter({
 					input.localDateKey,
 				);
 
+				const localMinuteOfDay = resolveLocalMinuteOfDay(input);
+				const planFields = await loadPlanScoringFields(
+					ctx.db,
+					userId,
+					input.localDateKey,
+					localMinuteOfDay,
+				);
+
 				const scoringContext = await buildScoringContextForSession(
 					ctx.db,
 					cycle.session,
@@ -229,6 +250,8 @@ export const suggestionRouter = createTRPCRouter({
 					input.localHour,
 					cycle.checkIn.energy,
 					remainingFocusMinutes,
+					undefined,
+					planFields,
 				);
 
 				const winner = pickBestTask(
@@ -322,6 +345,14 @@ export const suggestionRouter = createTRPCRouter({
 				input.sessionIntention,
 			);
 
+			const localMinuteOfDay = resolveLocalMinuteOfDay(input);
+			const planFields = await loadPlanScoringFields(
+				ctx.db,
+				userId,
+				input.localDateKey,
+				localMinuteOfDay,
+			);
+
 			const scoringContext = await buildScoringContextForSession(
 				ctx.db,
 				session,
@@ -330,6 +361,7 @@ export const suggestionRouter = createTRPCRouter({
 				input.energy,
 				remainingFocusMinutes,
 				preferredWorkType,
+				planFields,
 			);
 
 			const winner = pickBestTask(

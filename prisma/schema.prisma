@@ -224,6 +224,8 @@ model DayPlan {
   focusBudgetMinutes Int?         @map("focus_budget_minutes")
   usedFocusMinutes   Int          @default(0) @map("used_focus_minutes")
   energyLevel        EnergyLevel? @map("energy_level")
+  workStartMinute    Int?         @map("work_start_minute")
+  workEndMinute      Int?         @map("work_end_minute")
   createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 

@@ -389,4 +389,48 @@ describe("scoreTask", () => {
 		expect(withoutPreference?.id).toBe(2);
 		expect(withDeepPreference?.id).toBe(1);
 	});
+
+	it("prefers tasks attached to the active focus block on the day plan", () => {
+		const planned = mkTask({
+			id: 1,
+			workType: "OPERATIONAL",
+			urgency: 2,
+			importance: 2,
+			sortOrder: 1,
+		});
+		const other = mkTask({
+			id: 2,
+			workType: "OPERATIONAL",
+			urgency: 3,
+			importance: 3,
+			sortOrder: 0,
+		});
+		const context: ScoringContext = {
+			...steadyContext,
+			planActiveFocusTaskId: 1,
+		};
+		expect(pickBestTask([other, planned], context)?.id).toBe(1);
+	});
+
+	it("prefers tasks on upcoming focus blocks when none is active", () => {
+		const planned = mkTask({
+			id: 1,
+			workType: "OPERATIONAL",
+			urgency: 2,
+			importance: 2,
+			sortOrder: 1,
+		});
+		const other = mkTask({
+			id: 2,
+			workType: "OPERATIONAL",
+			urgency: 2,
+			importance: 2,
+			sortOrder: 0,
+		});
+		const context: ScoringContext = {
+			...steadyContext,
+			planPlannedFocusTaskIds: [1],
+		};
+		expect(pickBestTask([other, planned], context)?.id).toBe(1);
+	});
 });

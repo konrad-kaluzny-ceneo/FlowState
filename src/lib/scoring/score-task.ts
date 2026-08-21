@@ -8,6 +8,10 @@ export type ScoringContext = {
 	lastOverrideWorkType?: WorkType;
 	preferredWorkType?: WorkType;
 	remainingFocusMinutes?: number | null;
+	planActiveFocusTaskId?: number | null;
+	planActiveBatchTaskIds?: readonly number[];
+	planPlannedFocusTaskIds?: readonly number[];
+	planPlannedBatchTaskIds?: readonly number[];
 };
 
 export type ScoringTask = {
@@ -104,6 +108,16 @@ export function scoreTask(task: ScoringTask, context: ScoringContext): number {
 		} else {
 			score *= 0.85;
 		}
+	}
+
+	if (context.planActiveFocusTaskId === task.id) {
+		score *= 2.5;
+	} else if (context.planActiveBatchTaskIds?.includes(task.id)) {
+		score *= 2;
+	} else if (context.planPlannedFocusTaskIds?.includes(task.id)) {
+		score *= 1.4;
+	} else if (context.planPlannedBatchTaskIds?.includes(task.id)) {
+		score *= 1.25;
 	}
 
 	return score;

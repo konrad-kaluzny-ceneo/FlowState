@@ -25,6 +25,8 @@ const FACTOR_CHIP_KEYS: Partial<Record<RationaleKey, string>> = {
 	low_effort_fit: "low_effort_fit",
 	horizon_asap: "horizon_asap",
 	capacity_fit: "capacity_fit",
+	plan_block_active: "plan_block_active",
+	plan_block_upcoming: "plan_block_upcoming",
 };
 
 const EXCLUDED_CHIP_KEYS = new Set<RationaleKey>([

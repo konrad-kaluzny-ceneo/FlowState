@@ -14,13 +14,19 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslations } from "next-intl";
 import {
+	type MouseEvent as ReactMouseEvent,
+	type ReactNode,
 	type PointerEvent as ReactPointerEvent,
 	useCallback,
 	useEffect,
 	useRef,
 	useState,
 } from "react";
-
+import {
+	openScheduleBlockContextMenu,
+	ScheduleBlockContextMenu,
+	type ScheduleBlockContextMenuState,
+} from "~/app/_components/schedule-block-context-menu";
 import { ScheduleBlockEditPanel } from "~/app/_components/schedule-block-edit-panel";
 import type { DomainTask } from "~/lib/data-mode/types";
 import {
@@ -28,7 +34,7 @@ import {
 	findOpenSlot,
 	wouldOverlap,
 } from "~/lib/schedule/overlap";
-import { snapMinute } from "~/lib/schedule/snap";
+import { ceilSnapMinute, snapMinute } from "~/lib/schedule/snap";
 import type {
 	DomainContextTag,
 	DomainScheduleBlock,
@@ -111,6 +117,9 @@ export type DayScheduleTimelineProps = {
 	tasks?: DomainTask[];
 	contextTags?: DomainContextTag[];
 	localDateKey: string;
+	workStartMinute: number;
+	workEndMinute: number;
+	workHoursControl?: ReactNode;
 	isLoading?: boolean;
 	error?: string | null;
 	createBlock: (input: CreateBlockInput) => Promise<unknown>;
@@ -189,6 +198,36 @@ function nowMinuteOfDay(): number {
 	return now.getHours() * 60 + now.getMinutes();
 }
 
+function blockFitsWorkHours(
+	startMinute: number,
+	durationMinutes: number,
+	workStartMinute: number,
+	workEndMinute: number,
+): boolean {
+	return (
+		startMinute >= workStartMinute &&
+		startMinute + durationMinutes <= workEndMinute
+	);
+}
+
+function snapBlockWithinWorkHours(
+	startMinute: number,
+	durationMinutes: number,
+	workStartMinute: number,
+	workEndMinute: number,
+): { startMinute: number; durationMinutes: number } {
+	const duration = snapDuration(durationMinutes);
+	const maxStart = Math.min(
+		AXIS_END_MINUTE - duration,
+		workEndMinute - duration,
+	);
+	const start = Math.min(
+		maxStart,
+		Math.max(workStartMinute, snapMinute(startMinute)),
+	);
+	return { startMinute: start, durationMinutes: duration };
+}
+
 function TimelineSkeleton() {
 	const t = useTranslations("PlanDnia");
 
@@ -216,6 +255,7 @@ function ScheduleBlockChip({
 	preview,
 	onResizePointerDown,
 	onOpen,
+	onContextMenu,
 }: {
 	block: DomainScheduleBlock;
 	preview: InteractionPreview | null;
@@ -225,6 +265,10 @@ function ScheduleBlockChip({
 		event: ReactPointerEvent<HTMLButtonElement>,
 	) => void;
 	onOpen: (blockId: number) => void;
+	onContextMenu: (
+		block: DomainScheduleBlock,
+		event: ReactMouseEvent<HTMLLIElement>,
+	) => void;
 }) {
 	const t = useTranslations("PlanDnia");
 	const { attributes, listeners, setNodeRef, transform, isDragging } =
@@ -271,6 +315,7 @@ function ScheduleBlockChip({
 			} ${isInvalid ? "opacity-70 ring-2 ring-red-400" : ""}`}
 			data-schedule-block=""
 			data-testid={`schedule-block-${block.id}`}
+			onContextMenu={(event) => onContextMenu(block, event)}
 			ref={setNodeRef}
 			style={{
 				top: (layoutStart - AXIS_START_MINUTE) * PIXELS_PER_MINUTE,
@@ -331,6 +376,9 @@ export function DayScheduleTimeline({
 	tasks = [],
 	contextTags = [],
 	localDateKey,
+	workStartMinute,
+	workEndMinute,
+	workHoursControl,
 	isLoading = false,
 	error = null,
 	createBlock,
@@ -349,6 +397,8 @@ export function DayScheduleTimeline({
 		useState<InteractionPreview | null>(null);
 	const [localError, setLocalError] = useState<string | null>(null);
 	const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
+	const [blockContextMenu, setBlockContextMenu] =
+		useState<ScheduleBlockContextMenuState | null>(null);
 	const [legendOpen, setLegendOpen] = useState(false);
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
@@ -359,6 +409,10 @@ export function DayScheduleTimeline({
 	const displayedError = error ?? localError;
 	const isToday = localDateKey === localDateKeyToday();
 	const nowMinute = isToday ? nowMinuteOfDay() : null;
+	const minCreateStart =
+		nowMinute != null
+			? Math.max(workStartMinute, ceilSnapMinute(nowMinute))
+			: workStartMinute;
 
 	const publishPreview = useCallback((next: InteractionPreview | null) => {
 		previewRef.current = next;
@@ -408,14 +462,16 @@ export function DayScheduleTimeline({
 							scrollRef.current.clientHeight / 2,
 						axisRef.current.getBoundingClientRect().top,
 					)
-				: AXIS_START_MINUTE + 180;
+				: workStartMinute + 180;
 		const preferred =
-			nowMinute != null ? Math.max(nowMinute, viewportCenter) : viewportCenter;
+			nowMinute != null
+				? Math.max(minCreateStart, viewportCenter)
+				: viewportCenter;
 		return Math.min(
-			AXIS_END_MINUTE - DEFAULT_BLOCK_DURATION_MINUTES,
-			Math.max(AXIS_START_MINUTE, preferred),
+			workEndMinute - DEFAULT_BLOCK_DURATION_MINUTES,
+			Math.max(workStartMinute, preferred),
 		);
-	}, [nowMinute]);
+	}, [minCreateStart, nowMinute, workEndMinute, workStartMinute]);
 
 	const scrollBlockIntoView = useCallback((startMinute: number) => {
 		const scroller = scrollRef.current;
@@ -428,16 +484,30 @@ export function DayScheduleTimeline({
 
 	const handleAddBlock = useCallback(() => {
 		const preferred = preferredAddStart();
-		const startMinute =
-			findOpenSlot(blocks, DEFAULT_BLOCK_DURATION_MINUTES, preferred) ??
-			AXIS_START_MINUTE;
+		const startMinute = findOpenSlot(
+			blocks,
+			DEFAULT_BLOCK_DURATION_MINUTES,
+			preferred,
+			minCreateStart,
+		);
+		if (startMinute == null) {
+			setLocalError(t("noSlotError"));
+			return;
+		}
 		void runCreate({
 			blockType: "FOCUS",
 			startMinute,
 			durationMinutes: DEFAULT_BLOCK_DURATION_MINUTES,
 		});
 		scrollBlockIntoView(startMinute);
-	}, [blocks, preferredAddStart, runCreate, scrollBlockIntoView]);
+	}, [
+		blocks,
+		minCreateStart,
+		preferredAddStart,
+		runCreate,
+		scrollBlockIntoView,
+		t,
+	]);
 
 	const handleAxisClick = useCallback(
 		(event: React.MouseEvent<HTMLButtonElement>) => {
@@ -453,10 +523,30 @@ export function DayScheduleTimeline({
 			const axisTop =
 				axisRef.current?.getBoundingClientRect().top ??
 				event.currentTarget.getBoundingClientRect().top;
-			const snapped = snapBlock(
+			const snapped = snapBlockWithinWorkHours(
 				minuteFromAxisY(event.clientY, axisTop),
 				DEFAULT_BLOCK_DURATION_MINUTES,
+				workStartMinute,
+				workEndMinute,
 			);
+			if (
+				nowMinute != null &&
+				snapped.startMinute < ceilSnapMinute(nowMinute)
+			) {
+				setLocalError(t("pastBlockError"));
+				return;
+			}
+			if (
+				!blockFitsWorkHours(
+					snapped.startMinute,
+					snapped.durationMinutes,
+					workStartMinute,
+					workEndMinute,
+				)
+			) {
+				setLocalError(t("outsideWorkHoursError"));
+				return;
+			}
 			if (wouldOverlap(snapped, blocks)) {
 				setLocalError(t("overlapError"));
 				return;
@@ -467,7 +557,7 @@ export function DayScheduleTimeline({
 				durationMinutes: snapped.durationMinutes,
 			});
 		},
-		[blocks, runCreate, t],
+		[blocks, nowMinute, runCreate, t, workEndMinute, workStartMinute],
 	);
 
 	const handleDragStart = useCallback(
@@ -705,6 +795,24 @@ export function DayScheduleTimeline({
 		scrollBlockIntoView(clamped);
 	}, [isLoading, isToday, nowMinute, scrollBlockIntoView]);
 
+	const canEdit = deleteBlock != null && createContextTag != null;
+
+	const handleBlockContextMenu = useCallback(
+		(block: DomainScheduleBlock, event: ReactMouseEvent<HTMLLIElement>) => {
+			openScheduleBlockContextMenu(
+				event,
+				block.id,
+				canEdit,
+				setBlockContextMenu,
+			);
+		},
+		[canEdit],
+	);
+
+	const closeBlockContextMenu = useCallback(() => {
+		setBlockContextMenu(null);
+	}, []);
+
 	if (isLoading) {
 		return <TimelineSkeleton />;
 	}
@@ -713,11 +821,17 @@ export function DayScheduleTimeline({
 		selectedBlockId == null
 			? null
 			: (blocks.find((block) => block.id === selectedBlockId) ?? null);
-	const canEdit = deleteBlock != null && createContextTag != null;
+	const contextMenuBlock =
+		blockContextMenu == null
+			? null
+			: (blocks.find((block) => block.id === blockContextMenu.blockId) ?? null);
+
 	const showNowLine =
 		nowMinute != null &&
 		nowMinute >= AXIS_START_MINUTE &&
 		nowMinute <= AXIS_END_MINUTE;
+	const workBandTop = (workStartMinute - AXIS_START_MINUTE) * PIXELS_PER_MINUTE;
+	const workBandHeight = (workEndMinute - workStartMinute) * PIXELS_PER_MINUTE;
 
 	return (
 		<>
@@ -726,6 +840,7 @@ export function DayScheduleTimeline({
 				className="w-full rounded-card border border-card-border bg-surface-card px-5 py-4 shadow-sm"
 				data-testid="schedule-timeline"
 			>
+				{workHoursControl}
 				<div className="mb-2 flex items-center justify-between gap-3">
 					<p className="text-text-dimmed text-xs">{t("timelineHint")}</p>
 					<button
@@ -803,6 +918,25 @@ export function DayScheduleTimeline({
 									</span>
 								</div>
 							) : null}
+							<div
+								aria-hidden="true"
+								className="pointer-events-none absolute right-0 left-0 z-[1] rounded-sm bg-accent-cta/5 ring-1 ring-accent-cta/20 ring-inset"
+								data-testid="schedule-work-band"
+								style={{ top: workBandTop, height: workBandHeight }}
+							>
+								<span
+									className="absolute top-0 left-0 -ml-12 w-10 text-right font-medium text-[0.65rem] text-accent-cta/80"
+									data-testid="schedule-work-start-label"
+								>
+									{t("workStartLabel")}
+								</span>
+								<span
+									className="absolute bottom-0 left-0 -ml-12 w-10 text-right font-medium text-[0.65rem] text-accent-cta/80"
+									data-testid="schedule-work-end-label"
+								>
+									{t("workEndLabel")}
+								</span>
+							</div>
 							<button
 								aria-label={t("addBlockClickAria")}
 								className="absolute inset-x-0 top-0"
@@ -820,6 +954,7 @@ export function DayScheduleTimeline({
 									<ScheduleBlockChip
 										block={block}
 										key={block.id}
+										onContextMenu={handleBlockContextMenu}
 										onOpen={(blockId) => {
 											if (canEdit && blockId >= 0) {
 												setSelectedBlockId(blockId);
@@ -859,6 +994,40 @@ export function DayScheduleTimeline({
 					) : null}
 				</div>
 			</section>
+			{contextMenuBlock != null &&
+			blockContextMenu != null &&
+			deleteBlock != null ? (
+				<ScheduleBlockContextMenu
+					block={contextMenuBlock}
+					onChangeType={async (blockType) => {
+						setLocalError(null);
+						try {
+							await updateBlock({
+								blockId: contextMenuBlock.id,
+								blockType,
+							});
+						} catch (err) {
+							reportMutationError(err);
+						}
+					}}
+					onClose={closeBlockContextMenu}
+					onDelete={async () => {
+						setLocalError(null);
+						try {
+							await deleteBlock(contextMenuBlock.id);
+						} catch {
+							setLocalError(t("scheduleDeleteError"));
+						}
+					}}
+					onEdit={() => {
+						setSelectedBlockId(contextMenuBlock.id);
+					}}
+					position={{
+						x: blockContextMenu.clientX,
+						y: blockContextMenu.clientY,
+					}}
+				/>
+			) : null}
 			{selectedBlock != null &&
 			deleteBlock != null &&
 			createContextTag != null ? (
