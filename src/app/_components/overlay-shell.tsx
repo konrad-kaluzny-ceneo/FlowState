@@ -181,7 +181,7 @@ export function OverlayCard({
 
 	return (
 		<div
-			className={`overlay-enter w-full ${widthClass} rounded-xl border shadow-xl ${CARD_VARIANT_CLASS[variant]} ${padding} ${alignClass} ${className}`}
+			className={`overlay-enter w-full ${widthClass} rounded-card border shadow-xl ${CARD_VARIANT_CLASS[variant]} ${padding} ${alignClass} ${className}`}
 		>
 			{children}
 		</div>
@@ -244,19 +244,19 @@ export function ModalShell({
 
 export const overlayButtonClass = {
 	primary:
-		"rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50",
+		"rounded-control bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
 	primaryFull:
-		"w-full rounded-lg bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover disabled:opacity-50",
+		"w-full rounded-control bg-accent-cta py-3 font-semibold text-on-cta transition hover:bg-accent-cta-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
 	secondary:
-		"rounded-lg border border-border-subtle bg-surface-panel py-3 font-semibold text-primary transition hover:bg-surface-card-muted disabled:opacity-50",
+		"rounded-control border border-border-subtle bg-surface-panel py-3 font-semibold text-primary transition hover:bg-surface-card-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
 	secondaryFull:
-		"w-full rounded-lg border border-border-subtle bg-surface-panel py-3 font-semibold text-primary transition hover:bg-surface-card-muted disabled:opacity-50",
+		"w-full rounded-control border border-border-subtle bg-surface-panel py-3 font-semibold text-primary transition hover:bg-surface-card-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
 	danger:
-		"rounded-lg bg-danger py-3 font-semibold text-on-danger transition hover:bg-danger-hover disabled:opacity-50",
+		"rounded-control bg-danger py-3 font-semibold text-on-danger transition hover:bg-danger-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
 	success:
-		"rounded-lg bg-accent-success py-3 font-semibold text-on-cta transition hover:opacity-90 disabled:opacity-50",
+		"rounded-control bg-accent-success py-3 font-semibold text-on-cta transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
 	breakPrimary:
-		"w-full rounded-lg bg-accent-break py-3 font-semibold text-on-cta transition hover:opacity-90 disabled:opacity-50",
+		"w-full rounded-control bg-accent-break py-3 font-semibold text-on-cta transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
 	breakSecondary:
-		"w-full rounded-lg border border-border-break py-3 font-semibold text-accent-break transition hover:bg-surface-panel disabled:opacity-50",
+		"w-full rounded-control border border-border-break py-3 font-semibold text-accent-break transition hover:bg-surface-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
 } as const;

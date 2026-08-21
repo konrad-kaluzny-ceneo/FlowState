@@ -123,7 +123,7 @@ export function AddTaskModal({
 			title={t("addTaskModalTitle")}
 			titleId="add-task-modal-title"
 		>
-			<form className="space-y-3" onSubmit={handleSubmit}>
+			<form className="space-y-4" onSubmit={handleSubmit}>
 				<TaskFieldsPanel
 					commitmentHorizon={commitmentHorizon}
 					dailyStandingFieldId="daily-standing-add-modal"

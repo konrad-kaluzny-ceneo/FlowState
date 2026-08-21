@@ -312,7 +312,7 @@ function ScheduleBlockChip({
 			aria-label={`${title}, ${timeRange}`}
 			className={`pointer-events-auto absolute right-0 left-0 touch-none overflow-hidden rounded-lg ${BLOCK_TYPE_CLASS[block.blockType]} ${
 				isDragging || activePreview != null ? "z-10 shadow-sm" : ""
-			} ${isInvalid ? "opacity-70 ring-2 ring-red-400" : ""}`}
+			} ${isInvalid ? "opacity-70 ring-2 ring-danger" : ""}`}
 			data-schedule-block=""
 			data-testid={`schedule-block-${block.id}`}
 			onContextMenu={(event) => onContextMenu(block, event)}
@@ -861,13 +861,13 @@ export function DayScheduleTimeline({
 					</p>
 				) : null}
 				{displayedError != null ? (
-					<p className="mb-3 text-red-300 text-xs" role="alert">
+					<p className="mb-3 text-danger text-xs" role="alert">
 						{displayedError}
 					</p>
 				) : null}
 				{interactionPreview != null && !interactionPreview.isValid ? (
 					<p
-						className="mb-2 text-red-300 text-xs"
+						className="mb-2 text-danger text-xs"
 						data-testid="schedule-overlap-inline"
 						role="status"
 					>
@@ -984,7 +984,7 @@ export function DayScheduleTimeline({
 						>
 							{LEGEND_TYPES.map((type) => (
 								<li
-									className={`rounded-md px-2 py-0.5 text-[0.65rem] ${BLOCK_TYPE_CLASS[type]}`}
+									className={`rounded-full px-2.5 py-0.5 font-medium text-[0.65rem] ring-1 ring-border-subtle/60 ring-inset ${BLOCK_TYPE_CLASS[type]}`}
 									key={type}
 								>
 									{t(BLOCK_TYPE_I18N[type])}

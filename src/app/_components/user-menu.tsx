@@ -40,7 +40,7 @@ export function UserMenu({
 				{isSigningOut ? t("signingOut") : t("signOut")}
 			</button>
 			{error && (
-				<span className="text-red-400 text-sm" role="alert">
+				<span className="text-danger text-sm" role="alert">
 					{error}
 				</span>
 			)}

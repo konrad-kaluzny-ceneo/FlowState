@@ -150,7 +150,7 @@ export function TaskArchiveView({
 
 			{error != null && (
 				<div
-					className="rounded-lg border border-red-400/40 bg-red-500/20 px-4 py-3 text-red-100 text-sm"
+					className="rounded-lg border border-danger/40 bg-danger/20 px-4 py-3 text-primary text-sm"
 					data-testid="task-archive-error"
 					role="alert"
 				>
@@ -227,7 +227,7 @@ export function TaskArchiveView({
 
 					{someSelected && (
 						<button
-							className="w-full rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-2 font-medium text-red-200 text-sm transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50"
+							className="w-full rounded-lg border border-danger/40 bg-danger/10 px-4 py-2 font-medium text-danger text-sm transition hover:bg-danger/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50"
 							data-testid="task-archive-delete-selected"
 							disabled={isMutating}
 							onClick={() => setDeleteConfirmOpen(true)}

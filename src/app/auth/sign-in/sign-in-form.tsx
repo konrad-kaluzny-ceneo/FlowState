@@ -39,13 +39,13 @@ export function SignInForm() {
 		<>
 			{oauthError && (
 				<div
-					className="mb-4 flex items-center justify-between rounded-md bg-red-500/10 p-3 text-red-300 text-sm"
+					className="mb-4 flex items-center justify-between rounded-md bg-danger/10 p-3 text-danger text-sm"
 					role="alert"
 				>
 					<span>{t("oauthError")}</span>
 					<button
 						aria-label={tAuth("dismissErrorAria")}
-						className="ml-2 text-red-300 hover:text-red-200"
+						className="ml-2 text-danger hover:text-danger-hover"
 						onClick={dismissOAuthError}
 						type="button"
 					>
@@ -56,13 +56,13 @@ export function SignInForm() {
 
 			{!oauthError && resetSuccess && (
 				<div
-					className="mb-4 flex items-center justify-between rounded-md bg-green-500/10 p-3 text-green-300 text-sm"
+					className="mb-4 flex items-center justify-between rounded-md bg-accent-success/10 p-3 text-accent-success text-sm"
 					role="status"
 				>
 					<span>{t("resetSuccess")}</span>
 					<button
 						aria-label={tAuth("dismissMessageAria")}
-						className="ml-2 text-green-300 hover:text-green-200"
+						className="ml-2 text-accent-success hover:opacity-80"
 						onClick={dismissResetSuccess}
 						type="button"
 					>
@@ -75,7 +75,7 @@ export function SignInForm() {
 				{state.error && (
 					<div
 						aria-live="assertive"
-						className="rounded-md bg-red-500/10 p-3 text-red-300 text-sm"
+						className="rounded-md bg-danger/10 p-3 text-danger text-sm"
 						role="alert"
 					>
 						{state.error}

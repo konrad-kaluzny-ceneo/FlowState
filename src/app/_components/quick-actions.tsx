@@ -24,7 +24,7 @@ type QuickActionsProps = {
 		kind: "SHORT_BREAK" | "LONG_BREAK",
 		durationSec: number,
 	) => Promise<void>;
-	variant?: "inline" | "widget";
+	variant?: "inline" | "widget" | "embedded";
 };
 
 export function QuickActions({
@@ -240,6 +240,10 @@ export function QuickActions({
 				{breakPicker}
 			</div>
 		);
+	}
+
+	if (variant === "embedded") {
+		return list;
 	}
 
 	return (

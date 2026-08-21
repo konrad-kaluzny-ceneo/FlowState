@@ -1716,7 +1716,9 @@ describe("PomodoroDashboardBody context rail content", () => {
 			/>,
 		);
 
+		const rail = screen.getByTestId("home-context-rail");
 		const blocks = getAcceptedRailBlocks(CALM_RAIL_BLOCK_IDS);
+		expect(within(rail).getByTestId("focus-today-panel")).toBeTruthy();
 		expect(blocks).toHaveLength(3);
 		expect(blocks).toContain("home-focus-summary");
 		expect(blocks).toContain("focus-tip");

@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { FirstRunOverlay } from "~/app/_components/first-run-overlay";
+import { FocusLandingChromeProvider } from "~/app/_components/focus-landing-chrome-context";
 import { FocusPageFooter } from "~/app/_components/focus-page-footer";
 import { FocusPageHeader } from "~/app/_components/focus-page-header";
 import { GuestBanner } from "~/app/_components/guest-banner";
@@ -54,7 +55,7 @@ function OfflineBanner() {
 
 	return (
 		<div
-			className="w-full max-w-lg rounded-lg border border-energy-steady-border bg-energy-steady-bg/90 px-4 py-2 text-center text-sm text-text-secondary"
+			className="w-full max-w-lg rounded-card border border-accent-warn-border bg-accent-warn-bg px-4 py-2 text-center text-sm text-text-secondary"
 			data-testid="offline-banner"
 			role="status"
 		>
@@ -89,19 +90,21 @@ function HomeShellContent({
 					isFirstRunVisible && !cycleCompleteVisible && !mergeSuccessVisible
 				}
 			/>
-			<main
-				className="flex flex-1 flex-col bg-gradient-to-b from-shell-top to-shell-bottom text-primary transition-colors duration-300 motion-reduce:transition-none"
-				id="home-shell-main"
-			>
-				<div className="container flex w-full flex-1 flex-col gap-6 px-4 py-6 lg:max-w-7xl lg:px-8 lg:py-8">
-					<h1 className="sr-only">{t("brand")}</h1>
-					<FocusPageHeader />
-					<OfflineBanner />
-					{!isAuthenticated && <GuestBanner />}
-					<PomodoroDashboard />
-					<FocusPageFooter />
-				</div>
-			</main>
+			<FocusLandingChromeProvider>
+				<main
+					className="flex flex-1 flex-col bg-gradient-to-b from-shell-top to-shell-bottom text-primary transition-colors duration-300 motion-reduce:transition-none"
+					id="home-shell-main"
+				>
+					<div className="container flex w-full flex-1 flex-col gap-6 px-4 py-6 lg:max-w-7xl lg:px-8 lg:py-8">
+						<h1 className="sr-only">{t("brand")}</h1>
+						<FocusPageHeader />
+						<OfflineBanner />
+						{!isAuthenticated && <GuestBanner />}
+						<PomodoroDashboard />
+						<FocusPageFooter />
+					</div>
+				</main>
+			</FocusLandingChromeProvider>
 		</>
 	);
 }

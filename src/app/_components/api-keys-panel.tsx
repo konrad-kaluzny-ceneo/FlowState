@@ -288,7 +288,7 @@ function AuthenticatedApiKeysPanel() {
 				</div>
 				<p className="text-text-dimmed text-xs">{t("scopeHelp")}</p>
 				{formError != null && (
-					<p className="text-red-400 text-sm" role="alert">
+					<p className="text-danger text-sm" role="alert">
 						{formError}
 					</p>
 				)}
@@ -297,14 +297,14 @@ function AuthenticatedApiKeysPanel() {
 			<div className="space-y-3">
 				<h4 className="font-semibold text-primary text-sm">{t("listTitle")}</h4>
 				{revokeError != null && (
-					<p className="text-red-400 text-sm" role="alert">
+					<p className="text-danger text-sm" role="alert">
 						{revokeError}
 					</p>
 				)}
 				{listQuery.isLoading ? (
 					<p className="text-sm text-text-dimmed">{t("loading")}</p>
 				) : listQuery.isError ? (
-					<p className="text-red-400 text-sm" role="alert">
+					<p className="text-danger text-sm" role="alert">
 						{t("listError")}
 					</p>
 				) : keys.length === 0 ? (
@@ -333,7 +333,7 @@ function AuthenticatedApiKeysPanel() {
 												{t(`scope.${key.scope}`)}
 											</span>
 											{isRevoked && (
-												<span className="rounded-full bg-red-500/12 px-2 py-0.5 font-medium text-red-400 text-xs">
+												<span className="rounded-full bg-danger/12 px-2 py-0.5 font-medium text-danger text-xs">
 													{t("revokedBadge")}
 												</span>
 											)}
@@ -356,7 +356,7 @@ function AuthenticatedApiKeysPanel() {
 									</div>
 									{!isRevoked && (
 										<button
-											className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-control border border-border-subtle px-3 py-1.5 font-medium text-red-400 text-xs transition-colors hover:bg-red-500/10 disabled:opacity-50 sm:self-auto"
+											className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-control border border-border-subtle px-3 py-1.5 font-medium text-danger text-xs transition-colors hover:bg-danger/10 disabled:opacity-50 sm:self-auto"
 											data-testid="api-key-revoke"
 											disabled={revokeMutation.isPending}
 											onClick={() => revokeMutation.mutate({ id: key.id })}

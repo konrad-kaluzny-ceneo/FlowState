@@ -23,7 +23,7 @@ export function ForgotPasswordForm() {
 		return (
 			<div className="flex flex-col gap-4">
 				<div
-					className="rounded-md bg-green-500/10 p-3 text-green-300 text-sm"
+					className="rounded-md bg-accent-success/10 p-3 text-accent-success text-sm"
 					role="status"
 				>
 					{t("successMessage")}
@@ -57,7 +57,7 @@ export function ForgotPasswordForm() {
 				{state.error && (
 					<div
 						aria-live="assertive"
-						className="rounded-md bg-red-500/10 p-3 text-red-300 text-sm"
+						className="rounded-md bg-danger/10 p-3 text-danger text-sm"
 						role="alert"
 					>
 						{state.error}

@@ -86,43 +86,16 @@ type TaskSuggestionCardProps =
 function TaskBadges({
 	suggestion,
 	locale,
-	t,
 }: {
 	suggestion: TaskSuggestionData;
 	locale: UserLocale;
-	t: ReturnType<typeof useTranslations<"Suggestion">>;
 }) {
 	const config = WORK_TYPE_CONFIG[suggestion.workType];
-	const urgency = suggestion.urgency ?? suggestion.weight;
-	const importance = suggestion.importance ?? 2;
-	const weightLabel = (level: 1 | 2 | 3) => {
-		if (level === 1) return t("weightLight");
-		if (level === 2) return t("weightMedium");
-		return t("weightHeavy");
-	};
 	return (
-		<span className="flex flex-wrap items-center gap-1">
-			<span
-				className={`rounded-full px-2 py-0.5 font-medium text-xs ${config.bg} ${config.text}`}
-			>
-				{getWorkTypeLabel(suggestion.workType, locale)}
-			</span>
-			<span className="rounded-full bg-surface-panel px-2 py-0.5 font-medium text-text-secondary text-xs">
-				{t("urgencyPrefix")}
-				{weightLabel(urgency)}
-			</span>
-			<span className="rounded-full bg-worktype-deep-bg px-2 py-0.5 font-medium text-worktype-deep-text text-xs">
-				{t("importancePrefix")}
-				{weightLabel(importance)}
-			</span>
-			{suggestion.commitmentHorizon === "ASAP" && (
-				<span
-					className="rounded-full bg-worktype-reactive-bg px-2 py-0.5 font-medium text-worktype-reactive-text text-xs"
-					data-testid="suggestion-asap-badge"
-				>
-					{t("asap")}
-				</span>
-			)}
+		<span
+			className={`rounded-full px-2 py-0.5 font-medium text-xs ${config.bg} ${config.text}`}
+		>
+			{getWorkTypeLabel(suggestion.workType, locale)}
 		</span>
 	);
 }
@@ -156,7 +129,7 @@ function ReadySuggestionContent({
 				>
 					{suggestion.title}
 				</p>
-				<TaskBadges locale={locale} suggestion={suggestion} t={t} />
+				<TaskBadges locale={locale} suggestion={suggestion} />
 			</div>
 			{suggestion.resumeNote != null && suggestion.resumeNote.length > 0 && (
 				<p
@@ -324,7 +297,7 @@ export function TaskSuggestionCard(props: TaskSuggestionCardProps) {
 						)}
 
 						{props.status === "error" && (
-							<p className="text-red-600 text-sm">{t("statusError")}</p>
+							<p className="text-danger text-sm">{t("statusError")}</p>
 						)}
 					</div>
 				)}

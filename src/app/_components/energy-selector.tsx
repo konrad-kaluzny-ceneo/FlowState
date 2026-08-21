@@ -20,8 +20,8 @@ const ENERGY_OPTION_DEFS: {
 		messageKey: "focused",
 		testId: "check-in-energy-focused",
 		buttonClass:
-			"border-energy-focused-border bg-energy-focused-bg hover:border-energy-focused-border hover:bg-energy-focused-bg",
-		iconClass: "text-energy-focused",
+			"border-border-subtle bg-surface-card-muted hover:border-border-subtle hover:bg-surface-panel",
+		iconClass: "text-energy-focused/80",
 	},
 	{
 		ui: "steady",
@@ -29,8 +29,8 @@ const ENERGY_OPTION_DEFS: {
 		messageKey: "steady",
 		testId: "check-in-energy-steady",
 		buttonClass:
-			"border-energy-steady-border bg-energy-steady-bg hover:border-energy-steady-border hover:bg-energy-steady-bg",
-		iconClass: "text-energy-steady",
+			"border-border-subtle bg-surface-card-muted hover:border-border-subtle hover:bg-surface-panel",
+		iconClass: "text-energy-steady/80",
 	},
 	{
 		ui: "fading",
@@ -38,8 +38,8 @@ const ENERGY_OPTION_DEFS: {
 		messageKey: "fading",
 		testId: "check-in-energy-fading",
 		buttonClass:
-			"border-energy-fading-border bg-energy-fading-bg hover:border-energy-fading-border hover:bg-energy-fading-bg",
-		iconClass: "text-energy-fading",
+			"border-border-subtle bg-surface-card-muted hover:border-border-subtle hover:bg-surface-panel",
+		iconClass: "text-energy-fading/80",
 	},
 ];
 

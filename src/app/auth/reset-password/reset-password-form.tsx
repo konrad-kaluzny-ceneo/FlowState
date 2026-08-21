@@ -21,7 +21,7 @@ function InvalidLinkMessage({
 	return (
 		<div className="flex flex-col gap-4">
 			<div
-				className="rounded-md bg-red-500/10 p-3 text-red-300 text-sm"
+				className="rounded-md bg-danger/10 p-3 text-danger text-sm"
 				role="alert"
 			>
 				{invalidLink}
@@ -73,13 +73,13 @@ export function ResetPasswordForm() {
 			<div className="flex flex-col gap-4">
 				{urlError && (
 					<div
-						className="flex items-center justify-between rounded-md bg-red-500/10 p-3 text-red-300 text-sm"
+						className="flex items-center justify-between rounded-md bg-danger/10 p-3 text-danger text-sm"
 						role="alert"
 					>
 						<span>{t("invalidLink")}</span>
 						<button
 							aria-label={tAuth("dismissErrorAria")}
-							className="ml-2 text-red-300 hover:text-red-200"
+							className="ml-2 text-danger hover:text-danger-hover"
 							onClick={dismissUrlError}
 							type="button"
 						>
@@ -103,13 +103,13 @@ export function ResetPasswordForm() {
 		<>
 			{urlError && (
 				<div
-					className="mb-4 flex items-center justify-between rounded-md bg-red-500/10 p-3 text-red-300 text-sm"
+					className="mb-4 flex items-center justify-between rounded-md bg-danger/10 p-3 text-danger text-sm"
 					role="alert"
 				>
 					<span>{t("invalidLink")}</span>
 					<button
 						aria-label={tAuth("dismissErrorAria")}
-						className="ml-2 text-red-300 hover:text-red-200"
+						className="ml-2 text-danger hover:text-danger-hover"
 						onClick={dismissUrlError}
 						type="button"
 					>
@@ -124,7 +124,7 @@ export function ResetPasswordForm() {
 				{state.errors.form && (
 					<div
 						aria-live="assertive"
-						className="rounded-md bg-red-500/10 p-3 text-red-300 text-sm"
+						className="rounded-md bg-danger/10 p-3 text-danger text-sm"
 						role="alert"
 					>
 						<p>{state.errors.form}</p>
@@ -164,11 +164,7 @@ export function ResetPasswordForm() {
 						type="password"
 					/>
 					{state.errors.password && (
-						<p
-							className="text-red-300 text-sm"
-							id="password-error"
-							role="alert"
-						>
+						<p className="text-danger text-sm" id="password-error" role="alert">
 							{state.errors.password}
 						</p>
 					)}
@@ -200,7 +196,7 @@ export function ResetPasswordForm() {
 					/>
 					{state.errors.confirmPassword && (
 						<p
-							className="text-red-300 text-sm"
+							className="text-danger text-sm"
 							id="confirm-password-error"
 							role="alert"
 						>

@@ -154,7 +154,7 @@ export function TaskDetailPanel({
 			title={
 				<span className="flex items-center gap-2">
 					<span
-						className="rounded-full bg-surface-panel px-2 py-0.5 font-medium text-text-secondary text-xs"
+						className="rounded-control bg-surface-panel px-2 py-0.5 font-medium text-text-secondary text-xs"
 						data-testid="task-detail-status-pill"
 					>
 						{statusLabel}

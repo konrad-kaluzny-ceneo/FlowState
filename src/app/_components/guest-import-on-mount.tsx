@@ -114,7 +114,7 @@ export function GuestImportOnMount({ userId }: { userId: string }) {
 
 	return (
 		<div
-			className="fixed top-16 right-4 z-50 max-w-sm rounded-lg border border-amber-400/40 bg-amber-500/20 px-4 py-3 text-amber-50 text-sm shadow-lg"
+			className="fixed top-16 right-4 z-50 max-w-sm rounded-lg border border-accent-warn-border bg-accent-warn-bg px-4 py-3 text-primary text-sm shadow-lg"
 			data-testid="guest-import-error"
 			role="alert"
 		>

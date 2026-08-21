@@ -393,6 +393,9 @@
 		"offlineBanner": "You're offline — retry when you're back online.",
 		"dashboardLoading": "Loading your focus view…"
 	},
+	"FocusTodayPanel": {
+		"heading": "Today"
+	},
 	"HomeFocusSummary": {
 		"heading": "Your day",
 		"tasksLabel": "Tasks",

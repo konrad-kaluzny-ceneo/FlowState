@@ -12,7 +12,7 @@ colors:
   border-break: "#3D8F824D"
   text-primary: "#2D2A35"
   text-secondary: "#5C5768"
-  text-dimmed: "#9B96A8"
+  text-dimmed: "#7A7585"
   text-section: "#3D3848"
   scrim: "#F8F6F3B8"
   accent-cta: "#5D8265"
@@ -20,24 +20,33 @@ colors:
   on-cta: "#FFFFFF"
   accent-break: "#3D8F82"
   accent-success: "#3A8F65"
-  accent-suggestion: "#D4A017CC"
+  accent-suggestion: "#C49A3A8C"
+  accent-warn: "#9A7B2E"
+  accent-warn-bg: "#9A7B2E1A"
+  accent-warn-border: "#9A7B2E38"
+  accent-info: "#5A7A94"
+  accent-info-bg: "#5A7A941A"
+  accent-info-border: "#5A7A9438"
+  accent-delegated: "#6B7F9F"
+  accent-delegated-bg: "#6B7F9F1A"
+  accent-delegated-border: "#6B7F9F38"
   danger: "#DC2626"
   danger-hover: "#EF4444"
   on-danger: "#FFFFFF"
   focus-ring: "#5D8265"
-  segment-active: "#5D8265"
+  segment-active: "#4E6F56"
   segment-inactive: "#E8E5DF"
   card-border: "#E0DDD6"
   card-shadow: "#2D2A3514"
-  energy-focused: "#5B7FC4"
-  energy-steady: "#736D62"
-  energy-fading: "#B26A82"
-  worktype-deep-bg: "#3D5A8F1F"
-  worktype-deep-text: "#3D5A8F"
-  worktype-ops-bg: "#B5822A1F"
-  worktype-ops-text: "#8A6520"
-  worktype-reactive-bg: "#B2445A1F"
-  worktype-reactive-text: "#9E3D52"
+  energy-focused: "#6D88B5"
+  energy-steady: "#78736A"
+  energy-fading: "#A87D90"
+  worktype-deep-bg: "#6B7F9F17"
+  worktype-deep-text: "#6B7F9F"
+  worktype-ops-bg: "#A88A5817"
+  worktype-ops-text: "#8F7750"
+  worktype-reactive-bg: "#A87D9017"
+  worktype-reactive-text: "#9A7080"
 typography:
   display:
     fontFamily: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif"
@@ -163,7 +172,10 @@ A blocking inline script in `layout.tsx` `<head>` sets `data-theme` before first
 | `on-cta` | `#FFFFFF` | Text on filled CTAs |
 | `accent-break` | `#3D8F82` | Break timer, break complete |
 | `accent-success` | `#3A8F65` | Mark done, completion |
-| `accent-suggestion` | `amber` ring | Suggested task row highlight |
+| `accent-suggestion` | muted amber ring | Suggested task row highlight |
+| `accent-warn` | `#9A7B2E` | Blocked/warning banners and actions |
+| `accent-info` | `#5A7A94` | Informational/delegated actions |
+| `accent-delegated` | `#6B7F9F` | Delegated-task affordances |
 | `danger` / `danger-hover` | `#DC2626` / `#EF4444` | Destructive/interrupt only |
 | `focus-ring` | `#5D8265` | Selected task focus ring (sage green) |
 
@@ -200,9 +212,9 @@ Each state uses `energy-*-border` + `energy-*-bg` token pairs. Label + optional 
 
 | Type | Light bg/text | Dark bg/text |
 | --- | --- | --- |
-| DEEP_WORK | `#3D5A8F` wash | `#93c5fd` on indigo wash |
-| OPERATIONAL | amber wash | `#fcd34d` on amber wash |
-| REACTIVE | rose wash | `#fda4af` on rose wash |
+| DEEP_WORK | `#6B7F9F` wash | `#8FA3BF` on soft blue wash |
+| OPERATIONAL | `#8F7750` wash | `#C4B080` on soft amber wash |
+| REACTIVE | `#9A7080` wash | `#C4A0B0` on soft rose wash |
 
 ### Task list hierarchy
 

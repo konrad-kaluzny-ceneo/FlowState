@@ -20,7 +20,7 @@ function dayOfYear(date: Date): number {
 }
 
 type FocusTipProps = {
-	variant?: "inline" | "widget";
+	variant?: "inline" | "widget" | "embedded";
 };
 
 export function FocusTip({ variant = "widget" }: FocusTipProps) {
@@ -57,6 +57,14 @@ export function FocusTip({ variant = "widget" }: FocusTipProps) {
 				</p>
 				<p className="mt-1 text-sm text-text-primary">{t(tipKey)}</p>
 			</div>
+		);
+	}
+
+	if (variant === "embedded") {
+		return (
+			<p className="text-pretty font-medium text-primary text-sm leading-relaxed">
+				{t(tipKey)}
+			</p>
 		);
 	}
 

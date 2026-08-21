@@ -38,7 +38,7 @@
 	--color-text-primary: #2d2a35;
 	--color-primary: #2d2a35;
 	--color-text-secondary: #5c5768;
-	--color-text-dimmed: #6f6a7a;
+	--color-text-dimmed: #7a7585;
 	--color-text-section: #3d3848;
 
 	/* Scrim & focus */
@@ -52,35 +52,46 @@
 	--color-on-cta: #ffffff;
 	--color-accent-break: #3d8f82;
 	--color-accent-success: #3a8f65;
-	--color-accent-suggestion: rgb(212 160 23 / 0.8);
+	--color-accent-suggestion: rgb(196 154 58 / 0.55);
+
+	/* Status accents — muted replacements for raw amber/sky utilities */
+	--color-accent-warn: #9a7b2e;
+	--color-accent-warn-bg: rgb(154 123 46 / 0.1);
+	--color-accent-warn-border: rgb(154 123 46 / 0.22);
+	--color-accent-info: #5a7a94;
+	--color-accent-info-bg: rgb(90 122 148 / 0.1);
+	--color-accent-info-border: rgb(90 122 148 / 0.22);
+	--color-accent-delegated: #6b7f9f;
+	--color-accent-delegated-bg: rgb(107 127 159 / 0.1);
+	--color-accent-delegated-border: rgb(107 127 159 / 0.22);
 
 	/* Danger — destructive/interrupt (tokenizes the timer interrupt button) */
 	--color-danger: #dc2626;
 	--color-danger-hover: #ef4444;
 	--color-on-danger: #ffffff;
 
-	/* Segmented controls */
-	--color-segment-active: #4e7156;
+	/* Segmented controls — sage family; hover shade for WCAG on-cta contrast */
+	--color-segment-active: #4e6f56;
 	--color-segment-inactive: #e8e5df;
 
-	/* Energy identity */
-	--color-energy-focused: #5b7fc4;
-	--color-energy-focused-border: rgb(91 127 196 / 0.4);
-	--color-energy-focused-bg: rgb(91 127 196 / 0.1);
-	--color-energy-steady: #736d62;
-	--color-energy-steady-border: rgb(115 109 98 / 0.4);
-	--color-energy-steady-bg: rgb(115 109 98 / 0.1);
-	--color-energy-fading: #b26a82;
-	--color-energy-fading-border: rgb(178 106 130 / 0.35);
-	--color-energy-fading-bg: rgb(178 106 130 / 0.08);
+	/* Energy identity — desaturated pastels for calm category reads */
+	--color-energy-focused: #6d88b5;
+	--color-energy-focused-border: rgb(109 136 181 / 0.32);
+	--color-energy-focused-bg: rgb(109 136 181 / 0.08);
+	--color-energy-steady: #78736a;
+	--color-energy-steady-border: rgb(120 115 106 / 0.32);
+	--color-energy-steady-bg: rgb(120 115 106 / 0.08);
+	--color-energy-fading: #a87d90;
+	--color-energy-fading-border: rgb(168 125 144 / 0.28);
+	--color-energy-fading-bg: rgb(168 125 144 / 0.07);
 
-	/* Work-type badges */
-	--color-worktype-deep-bg: rgb(61 90 143 / 0.12);
-	--color-worktype-deep-text: #3d5a8f;
-	--color-worktype-ops-bg: rgb(181 130 42 / 0.12);
-	--color-worktype-ops-text: #8a6520;
-	--color-worktype-reactive-bg: rgb(178 68 90 / 0.12);
-	--color-worktype-reactive-text: #9e3d52;
+	/* Work-type badges — soft promo-style pastels */
+	--color-worktype-deep-bg: rgb(107 127 159 / 0.09);
+	--color-worktype-deep-text: #6b7f9f;
+	--color-worktype-ops-bg: rgb(168 138 88 / 0.09);
+	--color-worktype-ops-text: #8f7750;
+	--color-worktype-reactive-bg: rgb(168 125 144 / 0.09);
+	--color-worktype-reactive-text: #9a7080;
 }
 
 /* Calm dark — overrides same semantic tokens */
@@ -112,7 +123,17 @@
 	--color-on-cta: #ffffff;
 	--color-accent-break: #4a9a8e;
 	--color-accent-success: #4a9468;
-	--color-accent-suggestion: rgb(212 175 55 / 0.75);
+	--color-accent-suggestion: rgb(196 160 70 / 0.5);
+
+	--color-accent-warn: #c4a44a;
+	--color-accent-warn-bg: rgb(196 164 74 / 0.12);
+	--color-accent-warn-border: rgb(196 164 74 / 0.28);
+	--color-accent-info: #7a9ab2;
+	--color-accent-info-bg: rgb(122 154 178 / 0.12);
+	--color-accent-info-border: rgb(122 154 178 / 0.28);
+	--color-accent-delegated: #8fa3bf;
+	--color-accent-delegated-bg: rgb(143 163 191 / 0.12);
+	--color-accent-delegated-border: rgb(143 163 191 / 0.28);
 
 	--color-danger: #e5534b;
 	--color-danger-hover: #f06a62;
@@ -121,22 +142,22 @@
 	--color-segment-active: #638a6c;
 	--color-segment-inactive: rgb(255 255 255 / 0.08);
 
-	--color-energy-focused: #818cf8;
-	--color-energy-focused-border: rgb(129 140 248 / 0.45);
-	--color-energy-focused-bg: rgb(99 102 241 / 0.12);
-	--color-energy-steady: #9a9489;
-	--color-energy-steady-border: rgb(154 148 137 / 0.45);
-	--color-energy-steady-bg: rgb(154 148 137 / 0.12);
-	--color-energy-fading: #d49ab0;
-	--color-energy-fading-border: rgb(212 154 170 / 0.4);
-	--color-energy-fading-bg: rgb(212 154 170 / 0.08);
+	--color-energy-focused: #8b9fd4;
+	--color-energy-focused-border: rgb(139 159 212 / 0.38);
+	--color-energy-focused-bg: rgb(139 159 212 / 0.1);
+	--color-energy-steady: #a39d92;
+	--color-energy-steady-border: rgb(163 157 146 / 0.38);
+	--color-energy-steady-bg: rgb(163 157 146 / 0.1);
+	--color-energy-fading: #c4a0b0;
+	--color-energy-fading-border: rgb(196 160 176 / 0.35);
+	--color-energy-fading-bg: rgb(196 160 176 / 0.08);
 
-	--color-worktype-deep-bg: rgb(147 197 253 / 0.15);
-	--color-worktype-deep-text: #93c5fd;
-	--color-worktype-ops-bg: rgb(252 211 77 / 0.15);
-	--color-worktype-ops-text: #fcd34d;
-	--color-worktype-reactive-bg: rgb(253 164 175 / 0.15);
-	--color-worktype-reactive-text: #fda4af;
+	--color-worktype-deep-bg: rgb(143 163 191 / 0.12);
+	--color-worktype-deep-text: #8fa3bf;
+	--color-worktype-ops-bg: rgb(196 172 120 / 0.12);
+	--color-worktype-ops-text: #c4b080;
+	--color-worktype-reactive-bg: rgb(196 160 176 / 0.12);
+	--color-worktype-reactive-text: #c4a0b0;
 }
 
 @keyframes overlay-enter {
@@ -228,27 +249,27 @@
 
 #home-shell-main[data-work-focus-shell="true"]::before {
 	background-image:
-		linear-gradient(to bottom, rgb(244 242 239 / 82%), rgb(244 242 239 / 92%)),
+		linear-gradient(to bottom, rgb(244 242 239 / 68%), rgb(244 242 239 / 82%)),
 		url("/images/heroes/focus-session-bg.png");
 	opacity: 1;
 }
 
 [data-theme="dark"] #home-shell-main[data-work-focus-shell="true"]::before {
 	background-image:
-		linear-gradient(to bottom, rgb(30 28 26 / 82%), rgb(30 28 26 / 92%)),
+		linear-gradient(to bottom, rgb(30 28 26 / 68%), rgb(30 28 26 / 82%)),
 		url("/images/heroes/focus-session-bg-dark.png");
 }
 
 #home-shell-main[data-break-atmosphere="true"]::before {
 	background-image:
-		linear-gradient(to bottom, rgb(238 246 244 / 78%), rgb(238 246 244 / 90%)),
+		linear-gradient(to bottom, rgb(238 246 244 / 62%), rgb(238 246 244 / 78%)),
 		url("/images/heroes/break-restoration.png");
 	opacity: 1;
 }
 
 [data-theme="dark"] #home-shell-main[data-break-atmosphere="true"]::before {
 	background-image:
-		linear-gradient(to bottom, rgb(26 40 48 / 78%), rgb(26 40 48 / 90%)),
+		linear-gradient(to bottom, rgb(26 40 48 / 62%), rgb(26 40 48 / 78%)),
 		url("/images/heroes/break-restoration-dark.png");
 }
 

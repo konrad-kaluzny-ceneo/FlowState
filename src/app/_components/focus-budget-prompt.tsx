@@ -138,7 +138,7 @@ export function FocusBudgetPrompt({
 				</button>
 			</div>
 			{error != null && (
-				<p className="mt-2 text-red-300 text-xs" role="alert">
+				<p className="mt-2 text-danger text-xs" role="alert">
 					{error}
 				</p>
 			)}

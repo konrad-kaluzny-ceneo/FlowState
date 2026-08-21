@@ -34,13 +34,13 @@ export function SignUpForm() {
 		<form action={formAction} className="flex w-full flex-col gap-4" noValidate>
 			{oauthError && (
 				<div
-					className="flex items-center justify-between rounded-md bg-red-500/10 px-4 py-3 text-red-400 text-sm"
+					className="flex items-center justify-between rounded-md bg-danger/10 px-4 py-3 text-danger text-sm"
 					role="alert"
 				>
 					<span>{t("oauthError")}</span>
 					<button
 						aria-label={tAuth("dismissErrorAria")}
-						className="ml-2 text-red-400 hover:text-red-300"
+						className="ml-2 text-danger hover:text-danger-hover"
 						onClick={dismissOAuthError}
 						type="button"
 					>
@@ -51,7 +51,7 @@ export function SignUpForm() {
 
 			{state.errors.form && (
 				<div
-					className="rounded-md bg-red-500/10 px-4 py-3 text-red-400 text-sm"
+					className="rounded-md bg-danger/10 px-4 py-3 text-danger text-sm"
 					role="alert"
 				>
 					{state.errors.form}
@@ -75,7 +75,7 @@ export function SignUpForm() {
 					type="text"
 				/>
 				{state.errors.name && (
-					<p className="text-red-400 text-sm" id="name-error" role="alert">
+					<p className="text-danger text-sm" id="name-error" role="alert">
 						{state.errors.name}
 					</p>
 				)}
@@ -98,7 +98,7 @@ export function SignUpForm() {
 					type="email"
 				/>
 				{state.errors.email && (
-					<p className="text-red-400 text-sm" id="email-error" role="alert">
+					<p className="text-danger text-sm" id="email-error" role="alert">
 						{state.errors.email}
 					</p>
 				)}
@@ -123,7 +123,7 @@ export function SignUpForm() {
 					type="password"
 				/>
 				{state.errors.password && (
-					<p className="text-red-400 text-sm" id="password-error" role="alert">
+					<p className="text-danger text-sm" id="password-error" role="alert">
 						{state.errors.password}
 					</p>
 				)}

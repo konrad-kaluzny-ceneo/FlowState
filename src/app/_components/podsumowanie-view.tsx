@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 import { ComingSoonPreview } from "~/app/_components/ui/coming-soon-preview";
 import { SegmentedControl } from "~/app/_components/ui/segmented-control";
@@ -63,6 +64,9 @@ function KpiCard({ label, value, progress }: KpiCardProps) {
 
 // ─── Hourly bar chart (pure SVG, no lib dependency) ──────────────────────────
 
+const CHART_SAGE_ACTIVE = "fill-accent-cta opacity-80";
+const CHART_SAGE_SECONDARY = "fill-accent-cta opacity-45";
+const CHART_SAGE_INACTIVE = "fill-segment-inactive";
 const CHART_HEIGHT = 80;
 const CHART_WIDTH = 288; // reference width; scales via viewBox
 const BAR_PADDING = 1;
@@ -93,9 +97,7 @@ function HourlyBarChart({ buckets, ariaLabel }: HourlyChartProps) {
 				const y = CHART_HEIGHT - barH;
 				return (
 					<rect
-						className={
-							barH > 0 ? "fill-accent-cta opacity-80" : "fill-segment-inactive"
-						}
+						className={barH > 0 ? CHART_SAGE_ACTIVE : CHART_SAGE_INACTIVE}
 						height={Math.max(barH, 2)}
 						key={bucket.hour}
 						rx={2}
@@ -224,7 +226,7 @@ function PlanVsExecutionChart({
 					<g key={point.localDateKey}>
 						{hasPlanned && (
 							<rect
-								className="fill-accent-break opacity-80"
+								className={CHART_SAGE_SECONDARY}
 								height={Math.max(plannedH, 2)}
 								rx={2}
 								width={pairedBarWidth}
@@ -233,11 +235,7 @@ function PlanVsExecutionChart({
 							/>
 						)}
 						<rect
-							className={
-								actualH > 0
-									? "fill-accent-cta opacity-80"
-									: "fill-segment-inactive"
-							}
+							className={actualH > 0 ? CHART_SAGE_ACTIVE : CHART_SAGE_INACTIVE}
 							height={Math.max(actualH, 2)}
 							rx={2}
 							width={pairedBarWidth}
@@ -267,11 +265,11 @@ type DonutChartProps = {
 
 const DONUT_COLORS: Record<string, string> = {
 	DEEP_WORK: "stroke-accent-cta",
-	OPERATIONAL: "stroke-accent-break",
-	REACTIVE: "stroke-accent-success",
-	uncategorized: "stroke-border-subtle",
+	OPERATIONAL: "stroke-accent-cta opacity-70",
+	REACTIVE: "stroke-accent-cta opacity-45",
+	uncategorized: "stroke-segment-inactive",
 	done: "stroke-accent-cta",
-	partial: "stroke-accent-break",
+	partial: "stroke-accent-cta opacity-60",
 	undone: "stroke-segment-inactive",
 };
 
@@ -428,7 +426,7 @@ function CompletedTasksSection({
 			className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
 			data-testid="podsumowanie-completed-list"
 		>
-			<h3 className="mb-3 font-medium text-primary text-sm">
+			<h3 className="mb-3 font-semibold text-sm text-text-section">
 				{tPodsumowanie("completedListTitle")}
 			</h3>
 			{rows.length === 0 ? (
@@ -455,7 +453,38 @@ function CompletedTasksSection({
 	);
 }
 
-// ─── Work-type label map (translation keys) ───────────────────────────────────
+function ExpandableChartSection({
+	testId,
+	title,
+	children,
+	defaultOpen = false,
+}: {
+	testId: string;
+	title: string;
+	children: ReactNode;
+	defaultOpen?: boolean;
+}) {
+	return (
+		<details
+			className="group rounded-card border border-card-border bg-surface-card shadow-sm"
+			data-testid={testId}
+			open={defaultOpen}
+		>
+			<summary className="cursor-pointer list-none px-4 py-3 font-semibold text-sm text-text-section marker:content-none [&::-webkit-details-marker]:hidden">
+				<span className="flex items-center justify-between gap-2">
+					{title}
+					<span
+						aria-hidden="true"
+						className="text-text-dimmed text-xs transition group-open:rotate-180"
+					>
+						▼
+					</span>
+				</span>
+			</summary>
+			<div className="border-border-subtle border-t px-4 py-4">{children}</div>
+		</details>
+	);
+}
 
 const WORK_TYPE_LABEL_KEY: Record<string, string> = {
 	DEEP_WORK: "workTypeDeep",
@@ -619,46 +648,124 @@ export function PodsumowanieView({
 				</div>
 			) : (
 				<>
-					{/* KPI grid */}
-					<div
-						className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
-						data-testid="podsumowanie-kpis"
-					>
-						<KpiCard
-							label={t("kpiTasksDone")}
-							value={String(stats.doneTasksCount)}
-						/>
-						<KpiCard
-							label={t("kpiFocusTime")}
-							progress={focusProgress}
-							value={t("kpiMinutes", { minutes: stats.focusMinutes })}
-						/>
-						<KpiCard
-							label={t("kpiBreakTime")}
-							value={t("kpiMinutes", { minutes: stats.breakMinutes })}
-						/>
-						<KpiCard
-							label={t("kpiSessions")}
-							value={String(stats.sessionCount)}
-						/>
-						<KpiCard
-							label={t("kpiAvgSession")}
-							value={
-								stats.avgSessionMinutes > 0
-									? t("kpiMinutes", { minutes: stats.avgSessionMinutes })
-									: "—"
-							}
-						/>
-					</div>
-
-					{/* Hourly bar chart */}
-					<div
+					{/* Calm hero — session donut + key stats + task breakdown */}
+					<section
 						className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
-						data-testid="podsumowanie-hourly-chart"
+						data-testid="podsumowanie-hero"
 					>
-						<p className="mb-3 font-medium text-primary text-sm">
-							{t("hourlyChartTitle")}
-						</p>
+						<div className="grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr]">
+							<div
+								className="flex flex-col gap-4 sm:flex-row lg:flex-col"
+								data-testid="podsumowanie-session-type-donut"
+							>
+								<div>
+									<p className="mb-3 font-semibold text-sm text-text-section">
+										{t("sessionTypeTitle")}
+									</p>
+									{workTypeSlices.length === 0 ? (
+										<p className="text-text-dimmed text-xs">
+											{t("noDataBody")}
+										</p>
+									) : (
+										<div className="flex items-center gap-4">
+											<div className="flex-shrink-0">
+												<DonutChart
+													ariaLabel={t("sessionTypeAria")}
+													slices={workTypeSlices}
+												/>
+											</div>
+											<div className="flex min-w-0 flex-1 flex-col gap-1.5">
+												{stats.workTypeStats.map((wt) => (
+													<LegendRow
+														colorClass={
+															DONUT_COLORS[wt.workType] ??
+															"stroke-segment-inactive"
+														}
+														key={wt.workType}
+														label={workTypeLabel(wt.workType)}
+														total={totalWorkTypeMinutes}
+														value={wt.focusMinutes}
+													/>
+												))}
+											</div>
+										</div>
+									)}
+								</div>
+								<div data-testid="podsumowanie-task-donut">
+									<p className="mb-3 font-semibold text-sm text-text-section">
+										{t("taskBreakdownTitle")}
+									</p>
+									{totalTasks === 0 ? (
+										<p className="text-text-dimmed text-xs">
+											{t("noDataBody")}
+										</p>
+									) : (
+										<div className="flex items-center gap-4">
+											<div className="flex-shrink-0">
+												<DonutChart
+													ariaLabel={t("taskBreakdownAria")}
+													slices={taskSlices.filter((s) => s.value > 0)}
+												/>
+											</div>
+											<div className="flex min-w-0 flex-1 flex-col gap-1.5">
+												{done > 0 && (
+													<LegendRow
+														colorClass={DONUT_COLORS.done ?? ""}
+														label={t("taskDone")}
+														total={totalTasks}
+														value={done}
+													/>
+												)}
+												{partial > 0 && (
+													<LegendRow
+														colorClass={DONUT_COLORS.partial ?? ""}
+														label={t("taskPartial")}
+														total={totalTasks}
+														value={partial}
+													/>
+												)}
+												{undone > 0 && (
+													<LegendRow
+														colorClass={DONUT_COLORS.undone ?? ""}
+														label={t("taskUndone")}
+														total={totalTasks}
+														value={undone}
+													/>
+												)}
+											</div>
+										</div>
+									)}
+								</div>
+							</div>
+							<div
+								className="grid grid-cols-2 gap-3 sm:grid-cols-2"
+								data-testid="podsumowanie-kpis"
+							>
+								<KpiCard
+									label={t("kpiTasksDone")}
+									value={String(stats.doneTasksCount)}
+								/>
+								<KpiCard
+									label={t("kpiFocusTime")}
+									progress={focusProgress}
+									value={t("kpiMinutes", { minutes: stats.focusMinutes })}
+								/>
+								<KpiCard
+									label={t("kpiBreakTime")}
+									value={t("kpiMinutes", { minutes: stats.breakMinutes })}
+								/>
+								<KpiCard
+									label={t("kpiSessions")}
+									value={String(stats.sessionCount)}
+								/>
+							</div>
+						</div>
+					</section>
+
+					<ExpandableChartSection
+						testId="podsumowanie-hourly-chart"
+						title={t("hourlyChartTitle")}
+					>
 						<HourlyBarChart
 							ariaLabel={t("hourlyChartAria")}
 							buckets={stats.hourBuckets}
@@ -666,93 +773,7 @@ export function PodsumowanieView({
 						<div className="mt-1">
 							<HourAxisLabels />
 						</div>
-					</div>
-
-					{/* Donuts row */}
-					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-						{/* Session-type donut */}
-						<div
-							className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
-							data-testid="podsumowanie-session-type-donut"
-						>
-							<p className="mb-3 font-medium text-primary text-sm">
-								{t("sessionTypeTitle")}
-							</p>
-							{workTypeSlices.length === 0 ? (
-								<p className="text-text-dimmed text-xs">{t("noDataBody")}</p>
-							) : (
-								<div className="flex items-center gap-4">
-									<div className="flex-shrink-0">
-										<DonutChart
-											ariaLabel={t("sessionTypeAria")}
-											slices={workTypeSlices}
-										/>
-									</div>
-									<div className="flex min-w-0 flex-1 flex-col gap-1.5">
-										{stats.workTypeStats.map((wt) => (
-											<LegendRow
-												colorClass={
-													DONUT_COLORS[wt.workType] ?? "stroke-border-subtle"
-												}
-												key={wt.workType}
-												label={workTypeLabel(wt.workType)}
-												total={totalWorkTypeMinutes}
-												value={wt.focusMinutes}
-											/>
-										))}
-									</div>
-								</div>
-							)}
-						</div>
-
-						{/* Tasks donut */}
-						<div
-							className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
-							data-testid="podsumowanie-task-donut"
-						>
-							<p className="mb-3 font-medium text-primary text-sm">
-								{t("taskBreakdownTitle")}
-							</p>
-							{totalTasks === 0 ? (
-								<p className="text-text-dimmed text-xs">{t("noDataBody")}</p>
-							) : (
-								<div className="flex items-center gap-4">
-									<div className="flex-shrink-0">
-										<DonutChart
-											ariaLabel={t("taskBreakdownAria")}
-											slices={taskSlices.filter((s) => s.value > 0)}
-										/>
-									</div>
-									<div className="flex min-w-0 flex-1 flex-col gap-1.5">
-										{done > 0 && (
-											<LegendRow
-												colorClass={DONUT_COLORS.done ?? ""}
-												label={t("taskDone")}
-												total={totalTasks}
-												value={done}
-											/>
-										)}
-										{partial > 0 && (
-											<LegendRow
-												colorClass={DONUT_COLORS.partial ?? ""}
-												label={t("taskPartial")}
-												total={totalTasks}
-												value={partial}
-											/>
-										)}
-										{undone > 0 && (
-											<LegendRow
-												colorClass={DONUT_COLORS.undone ?? ""}
-												label={t("taskUndone")}
-												total={totalTasks}
-												value={undone}
-											/>
-										)}
-									</div>
-								</div>
-							)}
-						</div>
-					</div>
+					</ExpandableChartSection>
 				</>
 			)}
 
@@ -763,86 +784,82 @@ export function PodsumowanieView({
 				tTasks={tTasks}
 			/>
 
-			{/* Trend chart */}
-			<div
-				className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
-				data-testid="podsumowanie-trend-chart"
-			>
-				<div className="mb-3 flex items-center justify-between">
-					<p className="font-medium text-primary text-sm">
-						{t("trendChartTitle")}
-					</p>
-					<div data-testid="podsumowanie-trend-window-toggle">
-						<SegmentedControl
-							onChange={(w) => onTrendWindowDaysChange?.(w)}
-							options={[
-								{ value: 7, label: t("trendWindow7d") },
-								{ value: 30, label: t("trendWindow30d") },
-							]}
-							value={trendWindowDays}
-						/>
+			{hasAnyData ? (
+				<ExpandableChartSection
+					testId="podsumowanie-trend-chart"
+					title={t("trendChartTitle")}
+				>
+					<div className="mb-3 flex items-center justify-end">
+						<div data-testid="podsumowanie-trend-window-toggle">
+							<SegmentedControl
+								onChange={(w) => onTrendWindowDaysChange?.(w)}
+								options={[
+									{ value: 7, label: t("trendWindow7d") },
+									{ value: 30, label: t("trendWindow30d") },
+								]}
+								value={trendWindowDays}
+							/>
+						</div>
 					</div>
-				</div>
-				<MetricBarChart
-					activeBarClassName="fill-accent-cta opacity-80"
-					ariaLabel={t("trendChartAria")}
-					bars={trend.map((point) => ({
-						key: point.localDateKey,
-						value: point.focusMinutes,
-					}))}
-					height={CHART_HEIGHT}
-				/>
-
-				<div className="mt-4" data-testid="podsumowanie-context-switch-chart">
-					<p className="mb-2 font-medium text-primary text-sm">
-						{t("contextSwitchTitle")}
-					</p>
 					<MetricBarChart
-						activeBarClassName="fill-accent-break opacity-80"
-						ariaLabel={t("contextSwitchAria")}
+						activeBarClassName={CHART_SAGE_ACTIVE}
+						ariaLabel={t("trendChartAria")}
 						bars={trend.map((point) => ({
 							key: point.localDateKey,
-							value: point.switchCount,
+							value: point.focusMinutes,
 						}))}
-						height={SWITCH_CHART_HEIGHT}
+						height={CHART_HEIGHT}
 					/>
-				</div>
-			</div>
 
-			{/* Plan vs execution */}
-			<div
-				className="rounded-card border border-card-border bg-surface-card px-4 py-4 shadow-sm"
-				data-testid="podsumowanie-plan-vs-execution-chart"
-			>
-				<p className="mb-3 font-medium text-primary text-sm">
-					{t("planVsExecutionTitle")}
-				</p>
-				{isPlanVsExecutionAvailable ? (
-					<>
-						<PlanVsExecutionChart
-							ariaLabel={t("planVsExecutionAria")}
-							points={planVsExecution}
+					<div className="mt-4" data-testid="podsumowanie-context-switch-chart">
+						<p className="mb-2 font-semibold text-sm text-text-section">
+							{t("contextSwitchTitle")}
+						</p>
+						<MetricBarChart
+							activeBarClassName={CHART_SAGE_SECONDARY}
+							ariaLabel={t("contextSwitchAria")}
+							bars={trend.map((point) => ({
+								key: point.localDateKey,
+								value: point.switchCount,
+							}))}
+							height={SWITCH_CHART_HEIGHT}
 						/>
-						<div className="mt-3 flex items-center gap-4">
-							<span className="flex items-center gap-1.5 text-text-secondary text-xs">
-								<span className="inline-block h-2.5 w-2.5 rounded-full bg-accent-break" />
-								{t("planVsExecutionPlannedLabel")}
-							</span>
-							<span className="flex items-center gap-1.5 text-text-secondary text-xs">
-								<span className="inline-block h-2.5 w-2.5 rounded-full bg-accent-cta" />
-								{t("planVsExecutionActualLabel")}
-							</span>
-						</div>
-					</>
-				) : (
-					<p
-						className="text-sm text-text-secondary"
-						data-testid="podsumowanie-plan-vs-execution-guest-nudge"
-					>
-						{t("planVsExecutionGuestNudge")}
-					</p>
-				)}
-			</div>
+					</div>
+				</ExpandableChartSection>
+			) : null}
+
+			{hasAnyData ? (
+				<ExpandableChartSection
+					testId="podsumowanie-plan-vs-execution-chart"
+					title={t("planVsExecutionTitle")}
+				>
+					{isPlanVsExecutionAvailable ? (
+						<>
+							<PlanVsExecutionChart
+								ariaLabel={t("planVsExecutionAria")}
+								points={planVsExecution}
+							/>
+							<div className="mt-3 flex items-center gap-4">
+								<span className="flex items-center gap-1.5 text-text-secondary text-xs">
+									<span className="inline-block h-2.5 w-2.5 rounded-full bg-accent-cta opacity-45" />
+									{t("planVsExecutionPlannedLabel")}
+								</span>
+								<span className="flex items-center gap-1.5 text-text-secondary text-xs">
+									<span className="inline-block h-2.5 w-2.5 rounded-full bg-accent-cta opacity-80" />
+									{t("planVsExecutionActualLabel")}
+								</span>
+							</div>
+						</>
+					) : (
+						<p
+							className="text-sm text-text-secondary"
+							data-testid="podsumowanie-plan-vs-execution-guest-nudge"
+						>
+							{t("planVsExecutionGuestNudge")}
+						</p>
+					)}
+				</ExpandableChartSection>
+			) : null}
 
 			{/* Deferred widgets */}
 			<div

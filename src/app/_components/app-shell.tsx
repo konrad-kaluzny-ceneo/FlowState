@@ -81,7 +81,7 @@ export function AppShell({ children, scope, userName }: AppShellProps) {
 							<Link
 								className={`flex items-center gap-3 rounded-control px-3 py-2.5 font-medium text-sm transition-colors ${
 									active
-										? "border-accent-cta border-l-[3px] bg-accent-cta/10 pl-[calc(0.75rem-3px)] text-accent-cta"
+										? "bg-accent-cta/10 text-accent-cta"
 										: "text-text-secondary hover:bg-surface-card-muted hover:text-primary"
 								}`}
 								data-testid={`nav-${item.labelKey}`}
@@ -141,7 +141,9 @@ export function AppShell({ children, scope, userName }: AppShellProps) {
 			</header>
 
 			{/* Main content */}
-			<main className="flex flex-1 flex-col pb-16 lg:pb-0">{children}</main>
+			<main className="flex flex-1 flex-col bg-gradient-to-b from-shell-top to-shell-bottom pb-16 text-primary transition-colors duration-300 motion-reduce:transition-none lg:pb-0">
+				{children}
+			</main>
 
 			{/* Mobile bottom nav */}
 			<nav
@@ -154,9 +156,9 @@ export function AppShell({ children, scope, userName }: AppShellProps) {
 					const Icon = item.icon;
 					return (
 						<Link
-							className={`flex flex-col items-center gap-0.5 px-2 py-1 text-xs transition-colors ${
+							className={`flex flex-col items-center gap-0.5 rounded-control px-2 py-1 text-xs transition-colors ${
 								active
-									? "text-primary"
+									? "bg-accent-cta/10 text-accent-cta"
 									: "text-text-secondary hover:text-primary"
 							}`}
 							data-testid={`nav-mobile-${item.labelKey}`}

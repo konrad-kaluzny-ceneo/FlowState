@@ -68,7 +68,7 @@ export function WindDownOverlay({
 						{getWindDownKeepGoingLabel(locale)}
 					</button>
 					<button
-						className="w-full rounded-lg border border-border-subtle py-3 text-sm text-text-secondary transition hover:border-red-400/40 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+						className="w-full rounded-lg border border-border-subtle py-3 text-sm text-text-secondary transition hover:border-danger/40 hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
 						data-testid="wind-down-end-session-btn"
 						disabled={isSubmitting}
 						onClick={onEndSession}

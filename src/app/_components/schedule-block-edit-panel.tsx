@@ -457,7 +457,7 @@ export function ScheduleBlockEditPanel({
 				</div>
 
 				{error != null ? (
-					<p className="text-red-300 text-sm" role="alert">
+					<p className="text-danger text-sm" role="alert">
 						{error}
 					</p>
 				) : null}
