@@ -38,6 +38,8 @@ Nie chodzi o robienie większej liczby rzeczy. Chodzi o wykonywanie właściwych
 
 ## Pracuj z AI, nie przeciwko niemu
 
+![FlowState AI Integration](./promo-ai.png)
+
 FlowState jest projektowany z myślą o pracy z Agentami AI.
 
 AI pozwala prowadzić wiele zadań równolegle, ale jednoczesne zarządzanie nimi może zwiększać obciążenie poznawcze. FlowState pomaga znaleźć równowagę między wykorzystaniem równoległości AI a ochroną własnej uwagi.
