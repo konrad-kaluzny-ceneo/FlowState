@@ -21,6 +21,8 @@ Interfejs został zaprojektowany tak, aby nie rozpraszał. Na ekranie widzisz ty
 - Sesje Pomodoro wspierające zdrowy rytm pracy.
 - Ograniczenie przełączania kontekstu poprzez pracę nad jednym zadaniem.
 - Statystyki pomagające budować dobre nawyki, zamiast rozliczać z produktywności.
+- Cykliczne mierzenie wskaźników: ocena energii, wyczerpania poznawczego, postępu pracy, oceny efektywności.
+- Ocena jak liczba równoległych zadań i sesji Agentów AI wpływa na wskaźniki pracy i samopoczucie po jej zakończeniu.
 
 ## Dla kogo?
 
@@ -34,6 +36,58 @@ Nie chodzi o robienie większej liczby rzeczy. Chodzi o wykonywanie właściwych
 
 ![FlowState](./promo.png)
 
+## Pracuj z AI, nie przeciwko niemu
+
+FlowState jest projektowany z myślą o pracy z Agentami AI.
+
+AI pozwala prowadzić wiele zadań równolegle, ale jednoczesne zarządzanie nimi może zwiększać obciążenie poznawcze. FlowState pomaga znaleźć równowagę między wykorzystaniem równoległości AI a ochroną własnej uwagi.
+
+Zamiast wymuszać jeden sposób pracy, FlowState pozwala określić charakter każdego projektu i dobrać do niego odpowiedni poziom autonomii AI.
+
+### Charakterystyka projektu
+
+Każdy projekt może być opisany za pomocą kilku parametrów:
+
+- Złożoność - ile elementów i zależności trzeba uwzględnić.
+- Trudność - jak wymagające jest rozwiązanie problemu.
+- Jakość dokumentacji - jak dobrze agent może zrozumieć kontekst projektu.
+- Ryzyko - konsekwencje błędnej decyzji lub implementacji.
+- Tag Human-first - zadania celowo przewidziane do wykonania samodzielnie.
+
+Na tej podstawie FlowState może pomóc dobrać sposób delegowania pracy, częstotliwość kontroli i poziom autonomii agenta.
+
+### Zasady pracy z agentami
+
+FlowState promuje kilka prostych zasad:
+
+1. AI może pracować równolegle nad wieloma zadaniami.
+1. Człowiek nie musi równolegle utrzymywać wszystkich tych kontekstów.
+1. Agenci powinni pracować autonomicznie tak długo, jak długo mają jasno określony cel i możliwość samodzielnej walidacji.
+1. Człowiek powinien być angażowany przede wszystkim wtedy, gdy potrzebna jest decyzja, ocena jakości lub wiedza kontekstowa.
+1. Przerwy inżyniera powinny być prawdziwymi przerwami, bez ciągłego sprawdzania postępu agentów.
+1. Praca wymagająca głębokiego skupienia nie powinna być przerywana przez powiadomienia AI.
+1. Część zadań warto wykonywać samodzielnie, aby utrzymywać umiejętności i zdolność samodzielnego rozwiązywania problemów.
+
+### AI jako warstwa wykonawcza
+
+Docelowo FlowState może współpracować z agentami AI poprzez współdzielony kontekst projektu.
+
+FlowState dostarcza informacje o aktualnym stanie pracy, priorytetach i charakterystyce zadania, a agent wykorzystuje je do dobrania odpowiedniego sposobu działania.
+
+Dzięki temu zamiast kopiować ten sam rozbudowany prompt do każdego zadania, zasady pracy mogą być definiowane raz i stosowane konsekwentnie przez różnych agentów.
+
+AI powinno zwiększać przepustowość człowieka, a nie zwiększać liczbę rzeczy, które człowiek musi jednocześnie kontrolować.
+
+Jeśli dłuższy kontekst pozwala agentowi zrobić zadanie dobrze i bez Twojej ingerencji, koszt tokenów może być świetnym trade-offem. Twój najdroższy zasób to prawdopodobnie uwaga, nie tokeny.
+
+### FlowState AI Inbox
+
+FlowState AI Inbox to miejsce, gdzie człowiek może przeglądać i analizować wyniki pracy agentów AI:
+
+- Wskaźniki pracy agentów AI (czas pracy, czas oczekiwania na decyzję).
+- Stan poszczególnych agentów AI (Done, In Progress, Blocked, Decision Required).
+- Priorytet poszczególnych zadań AI (Low, Medium, High).
+- Oznaczenie wybranego poziomu autonomii dla danego agenta AI.
 
 ## What it does
 
